@@ -333,10 +333,53 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
             <marker id="topo-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 z" fill={pal.arrowFill} />
             </marker>
+            {/* Round 45: radial radar sweep gradient — bright at center
+                (where it meets the hub) fading to leading edge. */}
+            <radialGradient id="topo-sweep" cx="0%" cy="50%" r="100%">
+              <stop offset="0%"  stopColor={isLight ? '#0d9488' : '#22d3ee'} stopOpacity={isLight ? 0.18 : 0.32} />
+              <stop offset="70%" stopColor={isLight ? '#0d9488' : '#22d3ee'} stopOpacity={isLight ? 0.10 : 0.18} />
+              <stop offset="100%" stopColor={isLight ? '#0d9488' : '#22d3ee'} stopOpacity="0" />
+            </radialGradient>
           </defs>
 
           <rect width="1000" height="680" fill="url(#topo-panel)" />
           <circle cx={cx} cy={cy} r="330" fill="url(#topo-radar)" />
+
+          {/* Round 45: subtle star field — 24 deterministic dots scattered
+              across the canvas give the radar bg some depth. Skipped on
+              light theme so the white surface stays clean. */}
+          {!isLight && (
+            <g opacity="0.5">
+              {Array.from({ length: 28 }).map((_, i) => {
+                // Deterministic pseudo-random scatter so positions are
+                // stable between renders (no JS hydration mismatch).
+                const seed = i * 9301 + 49297;
+                const x = ((seed * 13) % 1000);
+                const y = ((seed * 7) % 680);
+                const r = (i % 3 === 0) ? 1.2 : 0.7;
+                return <circle key={i} cx={x} cy={y} r={r} fill="#a5b4fc" opacity={0.35 + (i % 4) * 0.05} />;
+              })}
+            </g>
+          )}
+
+          {/* Round 45: rotating radar sweep — a 40° wedge with a soft
+              leading-edge gradient. Slow 6s rotation reads as a radar
+              scan without being noisy. Inline transform-origin on the
+              <g> wrapper ensures Chrome / Firefox rotate around (cx,cy)
+              instead of the SVG viewBox corner. */}
+          <g
+            style={{
+              transformOrigin: `${cx}px ${cy}px`,
+              transformBox: 'view-box',
+            }}
+            className="anet-topo-sweep"
+            opacity={isLight ? 0.7 : 1}
+          >
+            <path
+              d={`M ${cx} ${cy} L ${cx + 330} ${cy} A 330 330 0 0 0 ${cx + 330 * Math.cos(-Math.PI / 4.5)} ${cy + 330 * Math.sin(-Math.PI / 4.5)} Z`}
+              fill="url(#topo-sweep)"
+            />
+          </g>
 
           {/* radar rings */}
           {[90, 170, 250, 330].map(radius => (
