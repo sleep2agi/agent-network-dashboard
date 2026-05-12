@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSessions, useHealth, useStats } from '../lib/hooks';
 import { timeAgo } from '../components/utils';
 import { AliasAvatar } from '../components/AliasAvatar';
+import { STATUS_CHIP_CLASS } from '../lib/status';
 
 export default function AdminPage() {
   const { sessions } = useSessions();
@@ -123,9 +124,13 @@ export default function AdminPage() {
             </div>
           </div>
           {stats?.tasks?.by_status && stats.tasks.by_status.length > 0 && (
+            /* Round 90: adopt the shared STATUS_CHIP_CLASS palette so
+               `acked`/`replied`/`failed` here color-match the same
+               chips on /tasks, Overview r69, and /tasks/[id] r68.
+               Unknown statuses fall back to the previous flat gray. */
             <div className="mt-4 flex flex-wrap gap-2">
               {stats.tasks.by_status.map((s: { status: string; count: number }) => (
-                <span key={s.status} className="text-xs px-2 py-1 rounded bg-[#0a0a15] border border-[#1a1a2a] text-gray-400">
+                <span key={s.status} className={`text-xs px-2 py-1 rounded border ${STATUS_CHIP_CLASS[s.status] || 'bg-[#0a0a15] border-[#1a1a2a] text-gray-400'}`}>
                   {s.status}: {s.count}
                 </span>
               ))}
