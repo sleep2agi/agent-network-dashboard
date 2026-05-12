@@ -77,10 +77,12 @@ export default function LogsPage() {
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Logs</h1>
-        <span className="text-xs bg-gray-900/30 text-gray-400 px-2 py-0.5 rounded-full border border-gray-800/30">
-          Audit Log
-        </span>
+        <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Audit Log</h1>
+        {logs.length > 0 && (
+          <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30">
+            {logs.length}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
