@@ -273,7 +273,11 @@ export default function MessagesPage() {
                         {message.priority === 'high' && <span className="text-xs text-red-400">HIGH</span>}
                         <span className="ml-auto text-xs text-gray-500">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
                       </div>
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-200">
+                      {/* Round 79: break-words + overflow-wrap:anywhere so
+                          long unbroken runs (URLs, ASCII rules like
+                          `═══════════════`) wrap instead of pushing the
+                          chat bubble past the mobile viewport. */}
+                      <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-relaxed text-gray-200">
                         {renderHighlighted(message.content, search)}
                       </div>
                     </div>
@@ -304,7 +308,11 @@ export default function MessagesPage() {
                         </div>
                       )}
 
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-200">
+                      {/* Round 79: break-words + overflow-wrap:anywhere so
+                          long unbroken runs (URLs, ASCII rules like
+                          `═══════════════`) wrap instead of pushing the
+                          chat bubble past the mobile viewport. */}
+                      <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-relaxed text-gray-200">
                         {renderHighlighted(message.content, search)}
                       </div>
 
