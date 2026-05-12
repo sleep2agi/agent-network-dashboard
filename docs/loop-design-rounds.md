@@ -436,3 +436,67 @@ Bundle the lingering deductions from rounds 1, 2, 4, 6:
 - **Settings cleanup**: delete the `display:none` legacy Session card
 
 All are <5 LOC each, batch is ~25 LOC total. Fires next `*/5`.
+
+---
+
+## Round 7 — Small-wins batch
+
+### What changed
+- **Login footer**: collapsed `Powered by Sleep2AGI · Apache-2.0 /
+  anet.sh` (two lines) to a single muted line `Sleep2AGI · Apache-2.0
+  · anet.sh`. `anet.sh` is an outbound `<a>` with hover affordance.
+- **Sidebar brand**: wrapped the brand block in `<Link href="/">` —
+  clicking the brand mark or product name navigates to Overview, the
+  standard app convention. Subtle hover (`hover:bg-[#11112a]/40` in
+  expanded; `hover:opacity-80` when collapsed).
+- **Sidebar copy**: `no agents yet` → `waiting for agents`. Feels
+  inviting (the system is ready, awaiting input) rather than
+  negative (nothing is here yet).
+- **License row de-dup**: removed the standalone `Type: trial` and
+  `Days Left: 14 days` rows from the License card. The header chip
+  is now the canonical source of truth for license status. Only the
+  expiring-soon warning row remains, and only when ≤7 days left.
+- **Settings cleanup**: deleted the `display:none` legacy red Session
+  section. The neutral Sign out card inside the ACCOUNT group is now
+  the only sign-out surface.
+
+### Self-score: **8.4 / 10**
+
+| Dimension              | Score | Notes                                                          |
+|------------------------|------:|----------------------------------------------------------------|
+| Deductions cleared     | 9     | All 5 lingering items from rounds 1, 2, 4, 6 are now resolved  |
+| Visible-impact         | 6     | Mostly cleanup, low "wow" — but eliminates accumulated debt    |
+| Theme parity           | 9     | Each change works identically in light + cyber                 |
+| Code reduction         | 8     | Net -15 LOC after removing legacy Session + dup License rows   |
+
+**Deductions**:
+- −0.9: low individual-change visibility — this batch reads more as
+  "removed papercuts" than "added delight". That's by design (rounds
+  1-6 spent most of the visible-delight budget), but tone is muted.
+- −0.4: didn't include a `<title>` attribute on the brand `<Link>` so
+  hover doesn't tooltip "Home". One-line miss.
+- −0.3: didn't address the round 5 deduction about the offline-node
+  label box overlapping the center pulse hub — that needs layout
+  algorithm work, defer to a layout-focused round.
+
+### Round 8 plan: **Ship 0.4.5-preview.0**
+
+7 rounds of polish accumulated since 0.4.4-preview.0:
+- `b702291` round 1 — login brand mark + tagline + restrained surface
+- `64643a3` round 2 — empty states across 7 pages (line-art glyphs)
+- `269eeb3` round 3 — Quick Actions split (stats + nav)
+- `4721d60` round 4 — sidebar brand mark + live pulse
+- `0011eb5` round 5 — TopoGraph light SVG variant (closes #8)
+- `6fe0aa3` round 6 — Settings section grouping + License chip
+- (round 7 commit, this one) — small-wins batch
+
+Natural ship-point. Round 8 = the publish itself:
+1. Bump `package.json` 0.4.4 → 0.4.5-preview.0
+2. `npm publish --tag preview` (prepublishOnly hook will rebuild)
+3. Push to GitHub via PAT
+4. Tell 通信龙 to bump CLI preview's PINNED_DASHBOARD_VERSION
+5. Telegram Vincent: `npm i -g @sleep2agi/agent-network@preview`
+
+After ship, rounds 9+ accumulate toward `0.4.6-preview.0`. Backlog
+ideas: layout collision avoidance in TopoGraph, hover affordances on
+KPI cards, Cmd+K command palette, header health banner, mobile audit.

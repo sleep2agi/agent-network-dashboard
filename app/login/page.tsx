@@ -107,10 +107,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="text-center mt-6 space-y-1">
-          <p className="text-[11px] text-gray-700">Powered by Sleep2AGI · Apache-2.0</p>
-          <p className="text-[10px] text-gray-700/70">anet.sh</p>
-        </div>
+        <p className="text-center text-[11px] text-gray-700 mt-6">
+          Sleep2AGI · Apache-2.0 · <a href="https://anet.sh" className="hover:text-gray-500 transition-colors">anet.sh</a>
+        </p>
       </div>
     </main>
   );

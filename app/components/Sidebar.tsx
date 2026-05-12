@@ -190,14 +190,18 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
 
   if (collapsed) {
     return (
-      <div className="px-3 py-4 flex justify-center" aria-label="Agent Network">
-        <BrandMark size={28} />
-      </div>
+      <Link href="/" className="block px-3 py-4 flex justify-center hover:opacity-80 transition-opacity" aria-label="Agent Network — home">
+        <BrandMark size={32} />
+      </Link>
     );
   }
 
   return (
-    <div className="px-4 py-4 flex items-center gap-3" aria-label="Agent Network">
+    <Link
+      href="/"
+      className="block px-4 py-4 flex items-center gap-3 hover:bg-[#11112a]/40 transition-colors rounded-r-xl"
+      aria-label="Agent Network — home"
+    >
       <BrandMark size={32} />
       <div className="min-w-0">
         <div className="text-white text-[13px] font-semibold leading-tight">Agent Network</div>
@@ -207,13 +211,13 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
             aria-hidden
           />
           {total === 0 ? (
-            <span>no agents yet</span>
+            <span>waiting for agents</span>
           ) : (
             <span><span className="text-gray-300 font-medium tabular-nums">{online}</span><span className="text-gray-600">/{total}</span> online</span>
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
