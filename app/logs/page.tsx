@@ -78,11 +78,9 @@ export default function LogsPage() {
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       <div className="flex items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Audit Log</h1>
-        {logs.length > 0 && (
-          <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30">
-            {logs.length}
-          </span>
-        )}
+        {/* Round 87: dropped {logs.length} header chip — r43 added
+            `All <count>` to the action-filter strip below, which
+            duplicated this value 40px away. Matches r86 /server-logs. */}
       </div>
 
       {/* Action filter chips (round 43) — same chip pattern as Tasks
