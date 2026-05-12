@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { timeAgo } from './utils';
+import { AliasAvatar } from './AliasAvatar';
 
 interface ChatTask {
   task_id: string;
@@ -386,7 +387,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
               {m.result && (
                 <div className="flex justify-start">
                   <div className="max-w-[85%] bg-green-500/8 border border-green-500/15 rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm">
-                    <div className="text-[10px] text-green-400 font-medium mb-1.5">{m.to_name}</div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      {m.to_name && <AliasAvatar alias={m.to_name} size={14} />}
+                      <span className="text-[10px] text-gray-200 font-medium">{m.to_name}</span>
+                    </div>
                     <div className="text-[13px] text-gray-200">
                       <MarkdownContent text={m.result} />
                     </div>
@@ -422,7 +426,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                   {filteredMentions.map(node => (
                     <button key={node} onClick={() => insertMention(node)}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-cyan-500/10 transition-colors">
-                      <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
+                      <AliasAvatar alias={node} size={16} />
                       <span className="text-gray-300">{node}</span>
                     </button>
                   ))}
@@ -476,9 +480,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a4a] bg-[#0d0d1a]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-500/30 flex items-center justify-center text-xs font-bold text-cyan-300">
-              {alias.slice(0, 2)}
-            </div>
+            <AliasAvatar alias={alias} size={32} />
             <div>
               <div className="text-sm font-semibold text-white">{alias}</div>
               <div className="text-[10px] text-gray-500">{pollingIds.size > 0 ? 'Processing...' : 'Ready'}</div>

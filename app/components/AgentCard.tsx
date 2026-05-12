@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Session } from './types';
 import { timeAgo } from './utils';
+import { AliasAvatar } from './AliasAvatar';
 
 interface AgentCardProps {
   session: Session;
@@ -33,11 +34,14 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
           : 'bg-[#0d0d1a] border-[#1a1a2a] opacity-40'
       }`}
     >
-      {/* Header: name + status */}
+      {/* Header: avatar + name + status. Avatar carries the alias→hue map
+          shared with Messages/Nodes/Tasks/Overview; the live status dot
+          stays as a small pulse-capable indicator. */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 min-w-0">
-          <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${cfg.dot} ${hasSse && s.status === 'working' ? 'animate-pulse' : ''}`} />
+          <AliasAvatar alias={s.alias} size={22} />
           <span className="font-semibold text-white truncate text-sm" title={s.alias}>{s.alias}</span>
+          <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot} ${hasSse && s.status === 'working' ? 'animate-pulse' : ''}`} />
         </div>
         <span className={`text-[11px] px-2 py-0.5 rounded-md border shrink-0 ${cfg.bg} ${cfg.text}`}>
           {hasSse ? s.status : 'offline'}
