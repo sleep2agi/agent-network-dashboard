@@ -92,7 +92,7 @@ export function HealthBanner() {
   return (
     <div
       role="status"
-      className={`anet-health-banner border-b ${styles} px-3 sm:px-6 py-1.5 text-[12px] flex items-center justify-between gap-3`}
+      className={`anet-health-banner border-b ${styles} pl-14 pr-3 sm:px-6 py-1.5 text-[12px] flex items-center justify-between gap-3`}
     >
       <div className="flex items-center gap-2 min-w-0">
         <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} aria-hidden />
@@ -102,9 +102,18 @@ export function HealthBanner() {
         {cta && (
           <Link
             href={cta.href}
-            className="text-[11px] font-medium underline-offset-2 hover:underline opacity-90 hover:opacity-100"
+            className="text-[11px] font-medium underline-offset-2 hover:underline opacity-90 hover:opacity-100 hidden sm:inline"
           >
             {cta.label} →
+          </Link>
+        )}
+        {cta && (
+          <Link
+            href={cta.href}
+            aria-label={cta.label}
+            className="sm:hidden text-[11px] font-medium opacity-90 hover:opacity-100"
+          >
+            →
           </Link>
         )}
         <button
