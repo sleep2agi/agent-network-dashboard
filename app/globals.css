@@ -708,6 +708,45 @@ body {
   background-color: rgba(0, 158, 126, 0.08) !important;
 }
 
+/* Round 20 — matched-char highlight inside cmdk titles/hints. Inherits
+   line color (`color`) instead of forcing one — keeps text readable on
+   both inactive (gray) and active (cyan-300) rows. <mark> default is a
+   garish yellow block, which we override. */
+.anet-cmdk-mark {
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  /* Subtle underline so the mark stays visible even on the active row
+     where the background tint matches the accent color. */
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-skip-ink: none;
+}
+/* Cyber: accent the matched glyph color so it pops on the dark bg. */
+[data-theme="cyber"] .anet-cmdk-mark,
+:root:not([data-theme]) .anet-cmdk-mark {
+  color: #22d3ee;
+}
+/* Light/mint: use the brand teal — undertone matches the active row. */
+[data-theme="light"] .anet-cmdk-mark,
+[data-theme="mint"]  .anet-cmdk-mark {
+  color: #0d9488;
+}
+[data-theme="sunset"] .anet-cmdk-mark {
+  color: #ea580c;
+}
+/* On the active (cyan-tinted) row, the title is already cyan-300 — use
+   white-with-underline so the highlight reads as emphasis, not redundancy. */
+.anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark {
+  color: #f0fdff;
+}
+[data-theme="light"] .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark,
+[data-theme="mint"]  .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark {
+  color: #064e3b;
+}
+
 /* Help overlay — same white-card-with-shadow treatment as cmdk on light */
 [data-theme="light"] .anet-help > div:not([aria-hidden]),
 [data-theme="mint"]  .anet-help > div:not([aria-hidden]) {
