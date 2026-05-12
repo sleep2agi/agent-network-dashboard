@@ -22,6 +22,9 @@ interface Command {
   group: 'Recents' | 'Agents' | 'Tasks' | 'Actions' | 'Navigate';
   icon: React.ReactNode;
   perform: (router: ReturnType<typeof useRouter>) => void;
+  /** Matched char indices (set by fuzzy filter for highlight render). */
+  _titleHi?: number[];
+  _hintHi?: number[];
 }
 
 interface SessionRow { alias?: string; status?: string; agent?: string }
@@ -46,19 +49,21 @@ function pushRecent(id: string) {
   } catch {}
 }
 
-/** Fuzzy match: returns a score (higher = better) if every char in `needle`
- *  appears in `hay` in order (consecutive bonus), else -1. Case-insensitive.
- *  Round 18 — replaces literal `String.includes` so `stg` matches `Settings`. */
-function fuzzyScore(hay: string, needle: string): number {
-  if (!needle) return 0;
+/** Fuzzy match: returns score + matched char positions in `hay`. -1 score
+ *  means no match. Round 18 introduced fuzzy; round 20 returns indices so
+ *  the UI can highlight matched chars (Linear / Raycast style). */
+interface FuzzyResult { score: number; indices: number[]; }
+function fuzzyMatch(hay: string, needle: string): FuzzyResult {
+  if (!needle) return { score: 0, indices: [] };
   const H = hay.toLowerCase();
   const N = needle.toLowerCase();
   let hi = 0, ni = 0, score = 0, streak = 0;
+  const indices: number[] = [];
   while (hi < H.length && ni < N.length) {
     if (H[hi] === N[ni]) {
-      score += 2 + streak; // streak bonus rewards contiguous matches
+      score += 2 + streak;
       streak++;
-      // Word-start bonus
+      indices.push(hi);
       if (hi === 0 || /[\s·:_/-]/.test(H[hi - 1])) score += 4;
       ni++;
     } else {
@@ -66,9 +71,25 @@ function fuzzyScore(hay: string, needle: string): number {
     }
     hi++;
   }
-  if (ni < N.length) return -1; // not all needle chars matched
-  // Shorter strings rank slightly higher (preferring exact hits)
-  return score - Math.max(0, H.length - N.length) * 0.05;
+  if (ni < N.length) return { score: -1, indices: [] };
+  return { score: score - Math.max(0, H.length - N.length) * 0.05, indices };
+}
+
+/** Renders `text` with the chars at `indices` wrapped in <mark>. Handles
+ *  unicode (Chinese aliases, emoji) by iterating code points via Array.from. */
+function Highlight({ text, indices }: { text: string; indices: number[] }) {
+  if (!indices.length) return <>{text}</>;
+  const set = new Set(indices);
+  const chars = Array.from(text);
+  return (
+    <>
+      {chars.map((ch, i) =>
+        set.has(i)
+          ? <mark key={i} className="anet-cmdk-mark">{ch}</mark>
+          : <span key={i}>{ch}</span>
+      )}
+    </>
+  );
 }
 
 function NavIcon({ d }: { d: string }) {
@@ -237,21 +258,27 @@ export function CommandPalette() {
     }
     // Fuzzy match — `stg` matches `Settings`, `taska` matches `Task all-time`.
     // Score against title (weight 1.0), hint (0.6), id (0.3). Drop unmatched.
+    // Round 20: keep matched indices for title + hint so we can highlight.
     const scored = pool
       .map(c => {
-        const sTitle = fuzzyScore(c.title, query);
-        const sHint = c.hint ? fuzzyScore(c.hint, query) : -1;
-        const sId = fuzzyScore(c.id, query);
+        const mt = fuzzyMatch(c.title, query);
+        const mh = c.hint ? fuzzyMatch(c.hint, query) : { score: -1, indices: [] };
+        const mi = fuzzyMatch(c.id, query);
         const best = Math.max(
-          sTitle >= 0 ? sTitle * 1.0 : -Infinity,
-          sHint  >= 0 ? sHint  * 0.6 : -Infinity,
-          sId    >= 0 ? sId    * 0.3 : -Infinity,
+          mt.score >= 0 ? mt.score * 1.0 : -Infinity,
+          mh.score >= 0 ? mh.score * 0.6 : -Infinity,
+          mi.score >= 0 ? mi.score * 0.3 : -Infinity,
         );
-        return { c, score: best };
+        return {
+          c,
+          score: best,
+          _titleHi: mt.score >= 0 ? mt.indices : [],
+          _hintHi: mh.score >= 0 ? mh.indices : [],
+        };
       })
       .filter(x => x.score > -Infinity);
     scored.sort((a, b) => b.score - a.score);
-    return scored.map(x => x.c);
+    return scored.map(x => ({ ...x.c, _titleHi: x._titleHi, _hintHi: x._hintHi }));
   }, [query, recentIds, dynamic]);
 
   // Clamp selected when results shrink
@@ -332,8 +359,14 @@ export function CommandPalette() {
                     >
                       <span className={isActive ? 'text-cyan-400' : 'text-gray-500'}>{c.icon}</span>
                       <span className="flex-1 min-w-0">
-                        <span className="block truncate">{c.title}</span>
-                        {c.hint && <span className="block text-[11px] text-gray-600 truncate">{c.hint}</span>}
+                        <span className="block truncate">
+                          <Highlight text={c.title} indices={c._titleHi || []} />
+                        </span>
+                        {c.hint && (
+                          <span className="block text-[11px] text-gray-600 truncate">
+                            <Highlight text={c.hint} indices={c._hintHi || []} />
+                          </span>
+                        )}
                       </span>
                       {isActive && <span className="text-[10px] text-gray-500">↵</span>}
                     </button>
