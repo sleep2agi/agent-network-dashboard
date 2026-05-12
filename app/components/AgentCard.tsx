@@ -28,7 +28,7 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
     <Link
       href={`/node?alias=${encodeURIComponent(s.alias)}`}
       prefetch={false}
-      className={`block rounded-xl border p-4 transition-all duration-300 cursor-pointer ${
+      className={`anet-agent-card group relative block rounded-xl border p-4 transition-all duration-300 cursor-pointer hover:-translate-y-0.5 ${
         hasSse
           ? `bg-[#111128] border-[#2a2a4a] hover:border-cyan-500/30 hover:shadow-lg ${cfg.glow}`
           : 'bg-[#0d0d1a] border-[#1a1a2a] opacity-40'
@@ -83,9 +83,12 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
         </div>
       )}
 
-      {/* Footer: time + chat */}
+      {/* Footer: time + chat + hover chevron affordance (round 44).
+          The card is a <Link> so it's clickable everywhere, but with no
+          visible cue users may not realise. Chevron appears on hover and
+          slides right ~2px for a "drill in" hint. */}
       <div className="mt-3 flex justify-between items-center text-[10px] text-gray-600">
-        <span>{s.server || '--'}</span>
+        <span className="truncate" title={s.server || ''}>{s.server || '--'}</span>
         <div className="flex items-center gap-2">
           {onChat && hasSse && (
             <button
@@ -96,6 +99,13 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
             </button>
           )}
           <span>{timeAgo(s.updated_at)}</span>
+          <svg
+            aria-hidden
+            className="w-3 h-3 text-gray-700 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
         </div>
       </div>
     </Link>
