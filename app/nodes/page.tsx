@@ -289,12 +289,14 @@ export default function NodesPage() {
         </div>
       ) : (
         <div className="space-y-2">
+          {/* Round 94: AGENT + SERVER merged into one `agent · server`
+              cell; the freed 2 columns expand CURRENT TASK so long task
+              content lines wrap less. Total still 12: 1+2+2+4+1+2. */}
           <div className="hidden sm:grid sm:grid-cols-12 gap-2 px-4 py-2 text-xs text-gray-600 uppercase">
             <div className="col-span-1">Status</div>
             <div className="col-span-2">Alias</div>
-            <div className="col-span-2">Agent</div>
-            <div className="col-span-2">Server</div>
-            <div className="col-span-2">Current Task</div>
+            <div className="col-span-2">Agent · Server</div>
+            <div className="col-span-4">Current Task</div>
             <div className="col-span-1">Updated</div>
             <div className="col-span-2 text-right">Actions</div>
           </div>
@@ -319,9 +321,10 @@ export default function NodesPage() {
                       <span className="truncate text-sm font-medium text-white">{s.alias}</span>
                     </Link>
                   </div>
-                  <div className="col-span-2 truncate text-xs text-gray-400">{s.agent || '--'}</div>
-                  <div className="col-span-2 truncate text-xs text-gray-400" title={s.server || ''}>{shortServer(s.server)}</div>
-                  <div className="col-span-2 truncate text-xs text-gray-500">{s.task || '--'}</div>
+                  <div className="col-span-2 truncate text-xs text-gray-400" title={s.server || ''}>
+                    {s.agent || '--'}<span className="text-gray-700 mx-1.5">·</span>{shortServer(s.server)}
+                  </div>
+                  <div className="col-span-4 truncate text-xs text-gray-500" title={s.task || ''}>{s.task || '--'}</div>
                   <div className="col-span-1 text-xs text-gray-500">{timeAgo(s.last_seen_at || s.updated_at)}</div>
                   <div className="col-span-2 flex justify-end gap-1.5">
                     <button type="button" onClick={() => setChatAlias(s.alias)}
