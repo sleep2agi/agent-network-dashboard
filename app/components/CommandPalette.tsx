@@ -19,10 +19,13 @@ interface Command {
   id: string;
   title: string;
   hint?: string;
-  group: 'Recents' | 'Actions' | 'Navigate';
+  group: 'Recents' | 'Agents' | 'Tasks' | 'Actions' | 'Navigate';
   icon: React.ReactNode;
   perform: (router: ReturnType<typeof useRouter>) => void;
 }
+
+interface SessionRow { alias?: string; status?: string; agent?: string }
+interface TaskRow    { task_id?: string; from_name?: string; to_name?: string; content?: string; status?: string }
 
 const RECENTS_KEY = 'anet-cmdk-recents';
 const RECENTS_MAX = 4;
@@ -146,24 +149,68 @@ export function CommandPalette() {
   const [recentIds, setRecentIds] = useState<string[]>([]);
   useEffect(() => { if (open) setRecentIds(readRecents()); }, [open]);
 
+  // Round 16: per-page surfaces. Pull agents + tasks on palette open so the
+  // user can type an alias / task content and jump directly to it. Both
+  // endpoints are already cached by SWR elsewhere, so this is cheap.
+  const [dynamic, setDynamic] = useState<Command[]>([]);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [sRes, tRes] = await Promise.all([
+          fetch('/api/hub/status').then(r => r.ok ? r.json() : { sessions: [] }),
+          fetch('/api/hub/tasks?limit=20').then(r => r.ok ? r.json() : { tasks: [] }),
+        ]);
+        if (cancelled) return;
+        const agentCmds: Command[] = (sRes.sessions as SessionRow[] || [])
+          .filter(s => s.alias)
+          .slice(0, 20)
+          .map(s => ({
+            id: `agent-${s.alias}`,
+            title: `Go to agent ${s.alias}`,
+            hint: `${s.agent || 'agent'} · ${s.status || 'unknown'}`,
+            group: 'Agents',
+            icon: <NavIcon d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />,
+            perform: (r) => r.push(`/node?alias=${encodeURIComponent(s.alias!)}`),
+          }));
+        const taskCmds: Command[] = (tRes.tasks as TaskRow[] || [])
+          .filter(t => t.task_id)
+          .slice(0, 15)
+          .map(t => ({
+            id: `task-${t.task_id}`,
+            title: `Open task: ${(t.content || t.task_id || '').slice(0, 50)}`,
+            hint: `${t.from_name || '?'} → ${t.to_name || '?'} · ${t.status || ''}`,
+            group: 'Tasks',
+            icon: <NavIcon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />,
+            perform: (r) => r.push(`/tasks/${encodeURIComponent(t.task_id!)}`),
+          }));
+        setDynamic([...agentCmds, ...taskCmds]);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
+
   // Filtered results — when no query, prepend recents as their own group
   const results = useMemo(() => {
+    const pool = [...COMMANDS, ...dynamic];
     if (!query.trim()) {
       const recentCmds: Command[] = recentIds
-        .map(id => COMMANDS.find(c => c.id === id))
+        .map(id => pool.find(c => c.id === id))
         .filter((c): c is Command => Boolean(c))
         .map(c => ({ ...c, group: 'Recents' }));
-      // De-dup: recents appear at top, rest of palette as-is below
       const restIds = new Set(recentIds);
+      // Default view: Recents → Navigate → Actions (no dynamic agents/tasks
+      // until user actually types — keeps the empty-search list short).
       return [...recentCmds, ...COMMANDS.filter(c => !restIds.has(c.id))];
     }
     const q = query.toLowerCase();
-    return COMMANDS.filter(c =>
+    return pool.filter(c =>
       c.title.toLowerCase().includes(q) ||
       c.hint?.toLowerCase().includes(q) ||
       c.id.toLowerCase().includes(q)
     );
-  }, [query, recentIds]);
+  }, [query, recentIds, dynamic]);
 
   // Clamp selected when results shrink
   useEffect(() => {
