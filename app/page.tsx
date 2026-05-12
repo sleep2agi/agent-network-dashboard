@@ -11,6 +11,7 @@ import { InboxPanel } from './components/InboxPanel';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { NodesEmptyState as EmptyState } from './components/EmptyState';
 import { AliasAvatar } from './components/AliasAvatar';
+import { STATUS_DOT_HEX, STATUS_CHIP_CLASS } from './lib/status';
 import { UserBar } from './components/UserBar';
 import { CommandCenter, useCommandCenter } from './components/CommandCenter';
 import { DispatchPanel } from './components/DispatchPanel';
@@ -313,9 +314,10 @@ export default function Dashboard() {
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {tasks.slice(0, 5).map((t: { task_id: string; from_name: string; to_name: string; status: string; content: string; created_at: string }) => (
               <div key={t.task_id} className="flex items-center gap-2 text-xs">
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                  t.status === 'replied' ? 'bg-purple-400' : t.status === 'running' ? 'bg-green-400' : t.status === 'failed' ? 'bg-red-400' : 'bg-blue-400'
-                }`} />
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: STATUS_DOT_HEX[t.status] || '#6b7280' }}
+                />
                 {t.from_name && <AliasAvatar alias={t.from_name} size={14} />}
                 <span className="text-gray-300 shrink-0 max-w-[20%] truncate">{t.from_name || '?'}</span>
                 <span className="text-gray-600">&rarr;</span>
@@ -323,7 +325,7 @@ export default function Dashboard() {
                 <span className="text-gray-300 shrink-0 max-w-[20%] truncate">{t.to_name || '?'}</span>
                 <span className="text-gray-500 truncate flex-1">{t.content?.slice(0, 40) || '--'}</span>
                 <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] border ${
-                  t.status === 'replied' ? 'text-purple-300 border-purple-500/20' : t.status === 'failed' ? 'text-red-300 border-red-500/20' : 'text-gray-500 border-gray-700/30'
+                  STATUS_CHIP_CLASS[t.status] || 'text-gray-500 border-gray-700/30'
                 }`}>{t.status}</span>
               </div>
             ))}
