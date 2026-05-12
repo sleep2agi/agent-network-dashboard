@@ -254,8 +254,13 @@ export default function ServerLogsPage() {
                 <span className={`shrink-0 px-1.5 rounded border text-[9px] uppercase ${LEVEL_BADGE[l.level]}`}>
                   {l.level}
                 </span>
+                {/* Round 85: CommHub stamps each log line with a `[HH:MM:SS]`
+                    prefix, but the row already shows shortTime(l.ts) in its
+                    own 100px column on the left. Strip the duplicate
+                    prefix at display time so the message starts directly
+                    with the alias / agent / action. */}
                 <span className={`break-all whitespace-pre-wrap ${LEVEL_COLOR[l.level]}`}>
-                  {highlightSearch(l.line, search)}
+                  {highlightSearch(l.line.replace(/^\[\d{2}:\d{2}:\d{2}\]\s*/, ''), search)}
                 </span>
               </div>
             ))}
