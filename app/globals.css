@@ -577,6 +577,30 @@ body {
   box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.12);
 }
 
+/* Task row hover bg (round 19) — dark hex would land on a white card and
+   look like a stripe. Re-map to a faint accent tint per theme. */
+[data-theme="light"] .anet-task-row:hover {
+  background-color: #f5f7fb !important;
+}
+[data-theme="mint"] .anet-task-row:hover {
+  background-color: #ecf6f1 !important;
+}
+[data-theme="sunset"] .anet-task-row:hover {
+  background-color: #fff4ec !important;
+}
+/* Open state — slightly stronger fill so users can see "this one is the
+   open row" while scrolling. */
+[data-theme="light"] .anet-task-row[aria-expanded="true"] {
+  background-color: #fafbfd !important;
+  box-shadow: 0 4px 14px -10px rgba(15, 23, 42, 0.14) !important;
+}
+[data-theme="mint"] .anet-task-row[aria-expanded="true"] {
+  background-color: #f3faf6 !important;
+}
+[data-theme="sunset"] .anet-task-row[aria-expanded="true"] {
+  background-color: #fff8f1 !important;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Login surface (round 1 polish)
    Restrained, minimal — first impression for new Agent Network users.
