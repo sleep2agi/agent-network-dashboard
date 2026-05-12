@@ -107,8 +107,16 @@ export default function MessagesPage() {
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       <div className="flex items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Messages</h1>
-        <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30">
-          {messages.length}
+        {/* Round 89: filter-aware chip. When search/type filter is active
+            the visible rows are filtered.length; the total loaded is
+            messages.length (capped at 200 by useMessages). Show
+            `filtered / total` so users notice how much the filter is
+            hiding. Same pattern as r88 /tasks chip. */}
+        <span
+          className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums"
+          title={filtered.length < messages.length ? `Showing ${filtered.length} of ${messages.length} messages` : undefined}
+        >
+          {filtered.length < messages.length ? `${filtered.length} / ${messages.length}` : messages.length}
         </span>
         {filtered.length > 0 && (
           <button
