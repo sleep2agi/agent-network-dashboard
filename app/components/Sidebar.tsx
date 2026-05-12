@@ -82,10 +82,11 @@ export function Sidebar() {
         </svg>
       </button>
 
-      {/* Mobile overlay */}
+      {/* Mobile overlay — round 47: fades in via anet-fade-in (150ms ease-out)
+          matching the TaskDrawer / TaskChatPanel backdrop. */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden anet-fade-in"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -94,13 +95,15 @@ export function Sidebar() {
           but in light/mint we want a distinct surface, so we layer
           `lg:bg-white` / `lg:dark:bg-[#0d0d1a]` via the theme attribute.
           The CSS shim in globals.css upgrades sidebar bg to bg-secondary
-          in light themes so the sidebar reads as its own card. */}
+          in light themes so the sidebar reads as its own card.
+          Round 47: explicit ease-out curve + slight shadow so the drawer
+          edge "leaves a trail" as it slides in. */}
       <aside data-anet-sidebar="true" className={`
         fixed top-0 left-0 h-full z-40 bg-[#0d0d1a] border-r border-[#2a2a4a]
-        transition-all duration-200
+        transition-transform duration-200 ease-out
         ${collapsed ? 'w-16' : 'w-52'}
-        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:shrink-0
+        ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 lg:shadow-none' : '-translate-x-full'}
+        lg:translate-x-0 lg:static lg:shrink-0 lg:shadow-none
       `}>
         {/* Brand header — round 4: 3-node mesh mark matches /login,
             with an inline live "online" pulse so every page surfaces
