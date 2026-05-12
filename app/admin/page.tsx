@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSessions, useHealth, useStats } from '../lib/hooks';
 import { timeAgo } from '../components/utils';
+import { AliasAvatar } from '../components/AliasAvatar';
 
 export default function AdminPage() {
   const { sessions } = useSessions();
@@ -72,9 +73,32 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
-      <h1 className="text-2xl font-bold text-white mb-6 lg:ml-0 ml-10">Admin</h1>
+      <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Admin</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl">
+      {/* Section anchor nav — same pattern as Settings r28. */}
+      <nav className="mb-8 flex flex-wrap gap-1 text-xs">
+        {[
+          { href: '#status',  label: 'Status' },
+          { href: '#actions', label: 'Actions' },
+          { href: '#users',   label: 'Users' },
+        ].map(a => (
+          <a key={a.href} href={a.href}
+            className="rounded-md px-2.5 py-1 text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+            {a.label}
+          </a>
+        ))}
+      </nav>
+
+      <div className="max-w-6xl space-y-10">
+
+        {/* ── Group: Status ─────────────────────────────────────── */}
+        <div id="status" className="space-y-4 scroll-mt-6">
+          <div className="flex items-center gap-2 px-1">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Status</div>
+            <div className="flex-1 h-px bg-[#2a2a4a]" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
         {/* Server Overview */}
         <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Server Overview</h2>
@@ -106,6 +130,43 @@ export default function AdminPage() {
             </div>
           )}
         </section>
+
+        {/* Online Sessions — pulled into Status group (was below Send Task) */}
+        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-gray-300 mb-4">
+            Online Sessions <span className="text-gray-600">({onlineNodes.length})</span>
+          </h2>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {onlineNodes.length === 0 ? (
+              <div className="text-xs text-gray-600 text-center py-4">No online sessions</div>
+            ) : onlineNodes.map(s => (
+              <div key={s.alias} className="flex items-center gap-3 bg-[#0a0a15] rounded-lg px-3 py-2 border border-[#1a1a2a]">
+                <AliasAvatar alias={s.alias} size={20} />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm text-white font-medium truncate">{s.alias}</div>
+                  <div className="text-xs text-gray-500 truncate">{s.agent || '--'} · {s.task || 'idle'}</div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-xs px-2 py-0.5 rounded border ${
+                    s.status === 'working' ? 'bg-green-900/30 text-green-300 border-green-800/30' : 'bg-blue-900/30 text-blue-300 border-blue-800/30'
+                  }`}>{s.status}</span>
+                  <span className="text-[10px] text-gray-600">{timeAgo(s.updated_at)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+          </div>
+        </div>
+
+        {/* ── Group: Actions ────────────────────────────────────── */}
+        <div id="actions" className="space-y-4 scroll-mt-6">
+          <div className="flex items-center gap-2 px-1">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Actions</div>
+            <div className="flex-1 h-px bg-[#2a2a4a]" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Broadcast */}
         <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
@@ -167,30 +228,17 @@ export default function AdminPage() {
           {taskResult && <div className={`mt-2 text-xs ${taskResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{taskResult}</div>}
         </section>
 
-        {/* Online Sessions */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">
-            Online Sessions <span className="text-gray-600">({onlineNodes.length})</span>
-          </h2>
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {onlineNodes.length === 0 ? (
-              <div className="text-xs text-gray-600 text-center py-4">No online sessions</div>
-            ) : onlineNodes.map(s => (
-              <div key={s.alias} className="flex items-center justify-between bg-[#0a0a15] rounded-lg px-3 py-2 border border-[#1a1a2a]">
-                <div className="min-w-0">
-                  <div className="text-sm text-white font-medium truncate">{s.alias}</div>
-                  <div className="text-xs text-gray-500 truncate">{s.agent || '--'} · {s.task || 'idle'}</div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded border ${
-                    s.status === 'working' ? 'bg-green-900/30 text-green-300 border-green-800/30' : 'bg-blue-900/30 text-blue-300 border-blue-800/30'
-                  }`}>{s.status}</span>
-                  <span className="text-[10px] text-gray-600">{timeAgo(s.updated_at)}</span>
-                </div>
-              </div>
-            ))}
           </div>
-        </section>
+        </div>
+
+        {/* ── Group: Users ──────────────────────────────────────── */}
+        <div id="users" className="space-y-4 scroll-mt-6">
+          <div className="flex items-center gap-2 px-1">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Users</div>
+            <div className="flex-1 h-px bg-[#2a2a4a]" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
         {/* User Management (V3 Auth) */}
         <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Register User (V3)</h2>
@@ -219,6 +267,10 @@ export default function AdminPage() {
           </div>
           {regResult && <div className={`mt-2 text-xs ${regResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{regResult}</div>}
         </section>
+
+          </div>
+        </div>
+
       </div>
     </div>
   );
