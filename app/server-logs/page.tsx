@@ -120,11 +120,9 @@ export default function ServerLogsPage() {
       <div className="flex items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <h1 className="text-2xl font-bold text-white">Server Logs</h1>
-          {logs.length > 0 && (
-            <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums">
-              {logs.length}
-            </span>
-          )}
+          {/* Round 86: dropped the {logs.length} header chip — r84 added
+              `all <count>` to the filter strip just below, so this duplicated
+              the value within 40px of itself. */}
           <span className="text-xs text-gray-500 hidden sm:inline">CommHub stdout/stderr</span>
         </div>
         <div className="flex items-center gap-2 text-xs shrink-0">
