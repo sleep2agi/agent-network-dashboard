@@ -63,40 +63,121 @@ function truncate(value: string, max: number) {
   return value.length > max ? `${value.slice(0, max - 1)}...` : value;
 }
 
-function nodeStatus(session: Session, isOnline: boolean) {
+function nodeStatus(session: Session, isOnline: boolean, isLight: boolean) {
   if (!isOnline) {
     return {
       label: 'offline',
-      primary: '#6b7280',
-      halo: '#111827',
-      text: '#9ca3af',
+      primary: isLight ? '#94a3b8' : '#6b7280',
+      halo:    isLight ? '#e2e8f0' : '#111827',
+      text:    isLight ? '#475569' : '#9ca3af',
     };
   }
-
   if (session.status === 'working') {
     return {
       label: 'working',
-      primary: '#22c55e',
-      halo: '#14532d',
-      text: '#dcfce7',
+      primary: isLight ? '#059669' : '#22c55e',
+      halo:    isLight ? '#d1fae5' : '#14532d',
+      text:    isLight ? '#065f46' : '#dcfce7',
     };
   }
-
   if (session.status === 'idle') {
     return {
       label: 'idle',
-      primary: '#2dd4bf',
-      halo: '#134e4a',
-      text: '#ccfbf1',
+      primary: isLight ? '#0d9488' : '#2dd4bf',
+      halo:    isLight ? '#ccfbf1' : '#134e4a',
+      text:    isLight ? '#115e59' : '#ccfbf1',
     };
   }
-
   return {
     label: session.status || 'online',
-    primary: '#38bdf8',
-    halo: '#0c4a6e',
-    text: '#e0f2fe',
+    primary: isLight ? '#0284c7' : '#38bdf8',
+    halo:    isLight ? '#dbeafe' : '#0c4a6e',
+    text:    isLight ? '#0c4a6e' : '#e0f2fe',
   };
+}
+
+/** Theme-aware color palette for the topology SVG. */
+interface Palette {
+  panelStops: [string, string, string];
+  radarStops: { color: string; opacity: number }[];
+  arrowFill: string;
+  ringStroke: string;
+  spokeStroke: { active: string; idle: string };
+  flowEdge: string;
+  flowPath: string;
+  flowParticle: string;
+  nodeFill: { online: string; offline: string };
+  labelBox: { fill: string; stroke: string };
+  legendBox: { fill: string; stroke: string };
+  legendText: string;
+  legendHeadline: string;
+  legendAccent: string;
+  containerBg: string;
+  containerBorder: string;
+  topRailGradient: string;
+}
+
+const DARK_PALETTE: Palette = {
+  panelStops: ['#0b1220', '#080814', '#101018'],
+  radarStops: [
+    { color: '#22d3ee', opacity: 0.18 },
+    { color: '#22c55e', opacity: 0.045 },
+    { color: '#020617', opacity: 0 },
+  ],
+  arrowFill: '#67e8f9',
+  ringStroke: '#164e63',
+  spokeStroke: { active: '#22d3ee', idle: '#155e75' },
+  flowEdge: '#67e8f9',
+  flowPath: '#e0f2fe',
+  flowParticle: '#fef08a',
+  nodeFill: { online: '#020617', offline: '#080814' },
+  labelBox: { fill: '#020617', stroke: '#1f2937' },
+  legendBox: { fill: '#020617', stroke: '#1f2937' },
+  legendText: '#94a3b8',
+  legendHeadline: '#e5e7eb',
+  legendAccent: '#67e8f9',
+  containerBg: '#080814',
+  containerBorder: '#2a2a4a',
+  topRailGradient: 'from-transparent via-cyan-400/70 to-transparent',
+};
+
+const LIGHT_PALETTE: Palette = {
+  panelStops: ['#f8fafc', '#ffffff', '#f1f5f9'],
+  radarStops: [
+    { color: '#10b981', opacity: 0.06 },
+    { color: '#3b82f6', opacity: 0.03 },
+    { color: '#ffffff', opacity: 0 },
+  ],
+  arrowFill: '#10b981',
+  ringStroke: '#cbd5e1',
+  spokeStroke: { active: '#10b981', idle: '#cbd5e1' },
+  flowEdge: '#10b981',
+  flowPath: '#475569',
+  flowParticle: '#f59e0b',
+  nodeFill: { online: '#ffffff', offline: '#f8fafc' },
+  labelBox: { fill: '#ffffff', stroke: '#e2e8f0' },
+  legendBox: { fill: '#ffffff', stroke: '#e2e8f0' },
+  legendText: '#475569',
+  legendHeadline: '#0f172a',
+  legendAccent: '#0d9488',
+  containerBg: '#ffffff',
+  containerBorder: '#e3e6eb',
+  topRailGradient: 'from-transparent via-emerald-500/40 to-transparent',
+};
+
+function useTheme(): 'light' | 'dark' {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  useEffect(() => {
+    const read = () => {
+      const t = document.documentElement.getAttribute('data-theme') || 'cyber';
+      setTheme(t === 'light' || t === 'mint' ? 'light' : 'dark');
+    };
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, []);
+  return theme;
 }
 
 function buildFlowLinks(messages: MessageFlow[], positions: Record<string, Point>) {
@@ -127,6 +208,9 @@ function buildFlowLinks(messages: MessageFlow[], positions: Record<string, Point
 }
 
 export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
+  const theme = useTheme();
+  const isLight = theme === 'light';
+  const pal = isLight ? LIGHT_PALETTE : DARK_PALETTE;
   const [messages, setMessages] = useState<MessageFlow[]>([]);
 
   useEffect(() => {
@@ -206,30 +290,35 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-lg border border-[#2a2a4a] bg-[#080814] shadow-2xl shadow-cyan-950/30">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent" />
+      <div
+        className={`relative overflow-hidden rounded-lg border shadow-2xl ${isLight ? 'shadow-zinc-900/5' : 'shadow-cyan-950/30'}`}
+        style={{ background: pal.containerBg, borderColor: pal.containerBorder }}
+      >
+        <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${pal.topRailGradient}`} />
 
         <svg viewBox="0 0 1000 680" className="w-full h-auto block" preserveAspectRatio="xMidYMid meet">
           <defs>
             <linearGradient id="topo-panel" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="#0b1220" />
-              <stop offset="48%" stopColor="#080814" />
-              <stop offset="100%" stopColor="#101018" />
+              <stop offset="0%"   stopColor={pal.panelStops[0]} />
+              <stop offset="48%"  stopColor={pal.panelStops[1]} />
+              <stop offset="100%" stopColor={pal.panelStops[2]} />
             </linearGradient>
             <radialGradient id="topo-radar" cx="50%" cy="50%" r="55%">
-              <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.18" />
-              <stop offset="45%" stopColor="#22c55e" stopOpacity="0.045" />
-              <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+              <stop offset="0%"   stopColor={pal.radarStops[0].color} stopOpacity={pal.radarStops[0].opacity} />
+              <stop offset="45%"  stopColor={pal.radarStops[1].color} stopOpacity={pal.radarStops[1].opacity} />
+              <stop offset="100%" stopColor={pal.radarStops[2].color} stopOpacity={pal.radarStops[2].opacity} />
             </radialGradient>
-            <filter id="topo-glow">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
+            {!isLight && (
+              <filter id="topo-glow">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            )}
             <marker id="topo-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#67e8f9" />
+              <path d="M 0 0 L 10 5 L 0 10 z" fill={pal.arrowFill} />
             </marker>
           </defs>
 
@@ -238,7 +327,7 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
 
           {/* radar rings */}
           {[90, 170, 250, 330].map(radius => (
-            <circle key={radius} cx={cx} cy={cy} r={radius} fill="none" stroke="#164e63" strokeWidth="1" opacity="0.35" />
+            <circle key={radius} cx={cx} cy={cy} r={radius} fill="none" stroke={pal.ringStroke} strokeWidth="1" opacity={isLight ? 0.6 : 0.35} />
           ))}
           {[0, 30, 60, 90, 120, 150].map(angle => (
             <line
@@ -247,9 +336,9 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
               y1={cy - 360 * Math.sin(angle * Math.PI / 180)}
               x2={cx + 360 * Math.cos(angle * Math.PI / 180)}
               y2={cy + 360 * Math.sin(angle * Math.PI / 180)}
-              stroke="#164e63"
+              stroke={pal.ringStroke}
               strokeWidth="1"
-              opacity="0.18"
+              opacity={isLight ? 0.35 : 0.18}
             />
           ))}
 
@@ -264,7 +353,7 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                 key={`hub-${session.alias}`}
                 d={path}
                 fill="none"
-                stroke={activeAliases.has(session.alias) ? '#22d3ee' : '#155e75'}
+                stroke={activeAliases.has(session.alias) ? pal.spokeStroke.active : pal.spokeStroke.idle}
                 strokeWidth={activeAliases.has(session.alias) ? 2 : 1}
                 strokeDasharray={activeAliases.has(session.alias) ? 'none' : '8 10'}
                 opacity={activeAliases.has(session.alias) ? 0.65 : 0.35}
@@ -288,22 +377,22 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                 <path
                   d={path}
                   fill="none"
-                  stroke="#67e8f9"
+                  stroke={pal.flowEdge}
                   strokeWidth={width}
-                  opacity="0.28"
-                  filter="url(#topo-glow)"
+                  opacity={isLight ? 0.22 : 0.28}
+                  filter={isLight ? undefined : 'url(#topo-glow)'}
                   markerEnd="url(#topo-arrow)"
                 />
                 <path
                   id={`flow-path-${index}`}
                   d={path}
                   fill="none"
-                  stroke="#e0f2fe"
+                  stroke={pal.flowPath}
                   strokeWidth="1"
                   strokeDasharray="2 12"
-                  opacity="0.75"
+                  opacity={isLight ? 0.4 : 0.75}
                 />
-                <circle r="4" fill="#fef08a" filter="url(#topo-glow)">
+                <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'}>
                   <animateMotion dur={`${duration}s`} repeatCount="indefinite" path={path} />
                 </circle>
               </g>
@@ -340,38 +429,38 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
 
             const sseCountFor = (session.network_id ? sseSessions[`${session.network_id}:${session.alias}`] : undefined) ?? sseSessions[session.alias];
             const isOnline = session.status !== 'offline' || !!sseCountFor;
-            const status = nodeStatus(session, isOnline);
+            const status = nodeStatus(session, isOnline, isLight);
             const isActive = activeAliases.has(session.alias);
             const radius = isOnline ? 26 : 18;
 
             return (
               <g key={session.alias} className="transition-opacity">
                 {isActive && (
-                  <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity="0.12">
+                  <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
                     <animate attributeName="r" values={`${radius + 8};${radius + 22};${radius + 8}`} dur="2.4s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.18;0.04;0.18" dur="2.4s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values={isLight ? '0.12;0.02;0.12' : '0.18;0.04;0.18'} dur="2.4s" repeatCount="indefinite" />
                   </circle>
                 )}
-                <circle cx={pos.x} cy={pos.y} r={radius + 8} fill={status.halo} opacity={isOnline ? 0.55 : 0.25} />
+                <circle cx={pos.x} cy={pos.y} r={radius + 8} fill={status.halo} opacity={isOnline ? (isLight ? 0.85 : 0.55) : (isLight ? 0.4 : 0.25)} />
                 <circle
                   cx={pos.x}
                   cy={pos.y}
                   r={radius}
-                  fill={isOnline ? '#020617' : '#080814'}
+                  fill={isOnline ? pal.nodeFill.online : pal.nodeFill.offline}
                   stroke={status.primary}
                   strokeWidth={isOnline ? 3 : 1.5}
                   strokeDasharray={isOnline ? 'none' : '5 5'}
-                  filter={isOnline ? 'url(#topo-glow)' : undefined}
+                  filter={isOnline && !isLight ? 'url(#topo-glow)' : undefined}
                 />
                 <circle cx={pos.x} cy={pos.y} r={isOnline ? 8 : 5} fill={status.primary} />
                 {session.status === 'working' && (
-                  <path d={`M${pos.x - 9},${pos.y + 11} h18`} stroke="#fef08a" strokeWidth="3" strokeLinecap="round">
+                  <path d={`M${pos.x - 9},${pos.y + 11} h18`} stroke={pal.flowParticle} strokeWidth="3" strokeLinecap="round">
                     <animate attributeName="opacity" values="1;0.25;1" dur="1.1s" repeatCount="indefinite" />
                   </path>
                 )}
 
                 <g transform={`translate(${pos.x}, ${pos.y + radius + 22})`}>
-                  <rect x="-62" y="-14" width="124" height="42" rx="6" fill="#020617" stroke="#1f2937" opacity="0.94" />
+                  <rect x="-62" y="-14" width="124" height="42" rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
                   <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize="12" fontFamily="monospace" fontWeight="700">
                     {truncate(session.alias, 14)}
                   </text>
@@ -385,11 +474,11 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
 
           {/* latest flow labels */}
           <g transform="translate(28, 34)">
-            <rect x="0" y="0" width="285" height={60 + Math.min(flowLinks.length, 4) * 20} rx="8" fill="#020617" stroke="#1f2937" opacity="0.94" />
-            <text x="16" y="26" fill="#e5e7eb" fontSize="13" fontFamily="monospace" fontWeight="700">recent signal</text>
-            <text x="178" y="26" fill="#67e8f9" fontSize="11" fontFamily="monospace">{messages.length} messages</text>
+            <rect x="0" y="0" width="285" height={60 + Math.min(flowLinks.length, 4) * 20} rx="8" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 1 : 0.94} />
+            <text x="16" y="26" fill={pal.legendHeadline} fontSize="13" fontFamily="monospace" fontWeight="700">recent signal</text>
+            <text x="178" y="26" fill={pal.legendAccent} fontSize="11" fontFamily="monospace">{messages.length} messages</text>
             {flowLinks.slice(0, 4).map((link, index) => (
-              <text key={link.key} x="16" y={54 + index * 20} fill="#94a3b8" fontSize="10" fontFamily="monospace">
+              <text key={link.key} x="16" y={54 + index * 20} fill={pal.legendText} fontSize="10" fontFamily="monospace">
                 {truncate(link.from, 8)} {'->'} {truncate(link.to, 8)} / {link.count} / {truncate(link.content, 18)}
               </text>
             ))}
@@ -397,14 +486,14 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
 
           {/* legend */}
           <g transform="translate(720, 34)">
-            <rect x="0" y="0" width="250" height="112" rx="8" fill="#020617" stroke="#1f2937" opacity="0.94" />
-            <circle cx="18" cy="26" r="6" fill="#22c55e" />
-            <text x="34" y="30" fill="#94a3b8" fontSize="11" fontFamily="monospace">working node</text>
-            <circle cx="18" cy="52" r="6" fill="#2dd4bf" />
-            <text x="34" y="56" fill="#94a3b8" fontSize="11" fontFamily="monospace">online idle</text>
-            <circle cx="18" cy="78" r="6" fill="#6b7280" />
-            <text x="34" y="82" fill="#94a3b8" fontSize="11" fontFamily="monospace">offline / no SSE</text>
-            <path d="M150,78 Q176,52 210,78" fill="none" stroke="#67e8f9" strokeWidth="3" markerEnd="url(#topo-arrow)" />
+            <rect x="0" y="0" width="250" height="112" rx="8" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 1 : 0.94} />
+            <circle cx="18" cy="26" r="6" fill={isLight ? '#059669' : '#22c55e'} />
+            <text x="34" y="30" fill={pal.legendText} fontSize="11" fontFamily="monospace">working node</text>
+            <circle cx="18" cy="52" r="6" fill={isLight ? '#0d9488' : '#2dd4bf'} />
+            <text x="34" y="56" fill={pal.legendText} fontSize="11" fontFamily="monospace">online idle</text>
+            <circle cx="18" cy="78" r="6" fill={isLight ? '#94a3b8' : '#6b7280'} />
+            <text x="34" y="82" fill={pal.legendText} fontSize="11" fontFamily="monospace">offline / no SSE</text>
+            <path d="M150,78 Q176,52 210,78" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" />
           </g>
         </svg>
       </div>
