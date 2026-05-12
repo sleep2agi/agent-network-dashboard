@@ -100,9 +100,9 @@ export default function NetworksPage() {
       <div className="flex items-center gap-4 mb-6">
         <Link href="/settings" className="text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10">&larr; Settings</Link>
         <h1 className="text-2xl font-bold text-white">Networks</h1>
-        <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30">
-          {networks.length}
-        </span>
+        {/* Round 93: dropped {networks.length} header chip — the
+            My Networks panel below already carries `<N> total` in its
+            own subhead. Matches r86/r87 pattern. */}
       </div>
 
       <div className="max-w-2xl space-y-6">
