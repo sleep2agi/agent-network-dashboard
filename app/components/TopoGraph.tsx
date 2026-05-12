@@ -398,21 +398,27 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
             />
           ))}
 
-          {/* hub links */}
-          {onlineNodes.map(session => {
+          {/* hub links — round 46: idle spokes now have animated
+              stroke-dashoffset so dashes flow outward from the hub
+              ("command relay" feel). Active spokes carrying live message
+              flow stay as solid bright strokes. */}
+          {onlineNodes.map((session, idx) => {
             const pos = nodePositions[session.alias];
             if (!pos) return null;
             const path = curvePath({ x: cx, y: cy }, pos, 0);
+            const isActiveSpoke = activeAliases.has(session.alias);
 
             return (
               <path
                 key={`hub-${session.alias}`}
                 d={path}
                 fill="none"
-                stroke={activeAliases.has(session.alias) ? pal.spokeStroke.active : pal.spokeStroke.idle}
-                strokeWidth={activeAliases.has(session.alias) ? 2 : 1}
-                strokeDasharray={activeAliases.has(session.alias) ? 'none' : '8 10'}
-                opacity={activeAliases.has(session.alias) ? 0.65 : 0.35}
+                stroke={isActiveSpoke ? pal.spokeStroke.active : pal.spokeStroke.idle}
+                strokeWidth={isActiveSpoke ? 2 : 1}
+                strokeDasharray={isActiveSpoke ? 'none' : '6 14'}
+                opacity={isActiveSpoke ? 0.7 : 0.45}
+                className={isActiveSpoke ? undefined : 'anet-topo-spoke-flow'}
+                style={isActiveSpoke ? undefined : { animationDelay: `${-(idx * 0.25)}s` }}
               />
             );
           })}
@@ -502,7 +508,7 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                     <animate attributeName="opacity" values={isLight ? '0.12;0.02;0.12' : '0.18;0.04;0.18'} dur="2.4s" repeatCount="indefinite" />
                   </circle>
                 )}
-                <circle cx={pos.x} cy={pos.y} r={radius + 8} fill={status.halo} opacity={isOnline ? (isLight ? 0.85 : 0.55) : (isLight ? 0.4 : 0.25)} />
+                <circle cx={pos.x} cy={pos.y} r={radius + 8} fill={status.halo} opacity={isOnline ? (isLight ? 0.85 : 0.65) : (isLight ? 0.4 : 0.25)} />
                 <circle
                   cx={pos.x}
                   cy={pos.y}
