@@ -692,6 +692,47 @@ body {
               0 2px 6px -2px rgba(15, 23, 42, 0.10);
 }
 
+/* Tasks tab strip horizontal scroll fade — gradient overlays at left/right
+   edges hint that there's more content when the row overflows. Only
+   applied on <sm (where the strip actually scrolls). The wrapper is
+   `position: relative` and the fades are absolute siblings. */
+.anet-tabstrip-wrap {
+  position: relative;
+}
+.anet-tabstrip-wrap::before,
+.anet-tabstrip-wrap::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 20px;
+  pointer-events: none;
+  z-index: 1;
+}
+.anet-tabstrip-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, #111128, transparent);
+  border-radius: 8px 0 0 8px;
+}
+.anet-tabstrip-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, #111128, transparent);
+  border-radius: 0 8px 8px 0;
+}
+@media (min-width: 640px) {
+  /* sm: stops scrolling, hide the fades */
+  .anet-tabstrip-wrap::before,
+  .anet-tabstrip-wrap::after { display: none; }
+}
+[data-theme="light"] .anet-tabstrip-wrap::before,
+[data-theme="mint"]  .anet-tabstrip-wrap::before {
+  background: linear-gradient(to right, var(--bg-secondary), transparent);
+}
+[data-theme="light"] .anet-tabstrip-wrap::after,
+[data-theme="mint"]  .anet-tabstrip-wrap::after {
+  background: linear-gradient(to left, var(--bg-secondary), transparent);
+}
+
 /* P0-3 baseline: error / warning chip colors for light themes.
    The component-level copy (replacing raw JSON with human text) is fixed
    in the Logs / Server-Logs page components separately. */
