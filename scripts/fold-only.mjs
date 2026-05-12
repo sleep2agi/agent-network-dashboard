@@ -16,6 +16,9 @@ const targets = [
   { name: 'nodes-cyber-mobile',  path: '/nodes', theme: 'cyber', w: 390, h: 844 },
   { name: 'overview-cyber-desktop', path: '/', theme: 'cyber', w: 1440, h: 900 },
   { name: 'overview-light-desktop', path: '/', theme: 'light', w: 1440, h: 900 },
+  { name: 'server-logs-cyber-desktop', path: '/server-logs', theme: 'cyber', w: 1440, h: 900 },
+  { name: 'server-logs-cyber-mobile',  path: '/server-logs', theme: 'cyber', w: 390,  h: 844 },
+  { name: 'admin-cyber-desktop',       path: '/admin',       theme: 'cyber', w: 1440, h: 900 },
 ];
 
 const browser = await chromium.launch({ headless: true });

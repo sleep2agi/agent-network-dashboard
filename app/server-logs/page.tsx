@@ -165,19 +165,30 @@ export default function ServerLogsPage() {
 
       <div className="flex items-center gap-3 mb-3">
         <div className="flex items-center gap-1 text-xs">
-          {(['all', 'log', 'info', 'warn', 'error'] as const).map(lv => (
-            <button
-              key={lv}
-              onClick={() => setFilterLevel(lv)}
-              className={`px-2.5 py-1 rounded border ${
-                filterLevel === lv
-                  ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40'
-                  : 'bg-[#11111c] text-gray-400 border-[#2a2a4a] hover:bg-[#1a1a2a]'
-              }`}
-            >
-              {lv}{lv !== 'all' && counts[lv as LogLine['level']] > 0 ? ` (${counts[lv as LogLine['level']]})` : ''}
-            </button>
-          ))}
+          {/* Round 84: every chip shows its count (matches Tasks r56 +
+              Audit Log r43); zero-count non-active chips are disabled
+              + muted so the eye lands on the levels that actually have
+              entries. */}
+          {(['all', 'log', 'info', 'warn', 'error'] as const).map(lv => {
+            const count = lv === 'all' ? logs.length : counts[lv as LogLine['level']];
+            const isActive = filterLevel === lv;
+            const isEmpty = lv !== 'all' && count === 0 && !isActive;
+            return (
+              <button
+                key={lv}
+                onClick={() => setFilterLevel(lv)}
+                disabled={isEmpty}
+                className={`px-2.5 py-1 rounded border flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed ${
+                  isActive
+                    ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40'
+                    : 'bg-[#11111c] text-gray-400 border-[#2a2a4a] hover:bg-[#1a1a2a]'
+                }`}
+              >
+                <span>{lv}</span>
+                <span className={`text-[10px] tabular-nums ${isActive ? 'opacity-80' : 'text-gray-600'}`}>{count}</span>
+              </button>
+            );
+          })}
         </div>
         <input
           value={search}
