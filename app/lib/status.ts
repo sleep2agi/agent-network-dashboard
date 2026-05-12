@@ -49,6 +49,18 @@ export const STATUS_DOT_HEX: Record<string, string> = {
   expired:   '#fb923c',
 };
 
+/** Session lifecycle (distinct from task lifecycle above). Shared by
+ *  /nodes status pills and /admin Online Sessions row chips so an
+ *  agent in `blocked` state reads the same color everywhere.
+ *  Round 91 — extracted from app/nodes/page.tsx. */
+export const SESSION_STATUS_CHIP_CLASS: Record<string, string> = {
+  working: 'bg-green-500/10 text-green-300 border-green-500/20',
+  idle:    'bg-blue-500/10 text-blue-300 border-blue-500/20',
+  blocked: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
+  error:   'bg-red-500/10 text-red-300 border-red-500/20',
+  offline: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
+};
+
 /** Solid bar segment background for the Tasks distribution bar. */
 export const STATUS_BAR_CLASS: Record<string, string> = {
   created:   'bg-gray-500',

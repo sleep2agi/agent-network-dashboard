@@ -8,6 +8,7 @@ import { TaskChatPanel } from '../components/TaskChatPanel';
 import { EmptyState, NodesEmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
 import type { Session } from '../components/types';
+import { SESSION_STATUS_CHIP_CLASS as STATUS_COLORS } from '../lib/status';
 
 /** Round 81: shorten long server hostnames (Alibaba `iZ…oyZ` style)
  *  for table display. Returns the original string unchanged when ≤12
@@ -16,14 +17,6 @@ function shortServer(server: string | null | undefined): string {
   if (!server) return '—';
   return server.length > 12 ? `${server.slice(0, 8)}…` : server;
 }
-
-const STATUS_COLORS: Record<string, string> = {
-  working: 'bg-green-500/10 text-green-300 border-green-500/20',
-  idle: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-  blocked: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
-  error: 'bg-red-500/10 text-red-300 border-red-500/20',
-  offline: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-};
 
 type ViewMode = 'list' | 'grid';
 type SessionRow = Session & { online: boolean };
