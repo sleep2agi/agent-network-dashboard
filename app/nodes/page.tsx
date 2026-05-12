@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { timeAgo } from '../components/utils';
 import { useSessions, useHealth } from '../lib/hooks';
 import { TaskChatPanel } from '../components/TaskChatPanel';
+import { EmptyState } from '../components/EmptyState';
 import type { Session } from '../components/types';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -163,7 +164,11 @@ export default function NodesPage() {
           {[1,2,3,4].map(i => <div key={i} className="h-16 bg-gray-800/20 rounded-lg" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-600">No nodes match your filters.</div>
+        <EmptyState
+          variant="nodes"
+          title="No nodes match your filters"
+          sub="Try clearing search or status filters, or wait for an agent to register."
+        />
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(s => {

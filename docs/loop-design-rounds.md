@@ -96,3 +96,75 @@ Will start automatically on the next loop fire (`*/5`).
 
 _Loop active: cron `*/5 * * * *`, job `5048a197`, session-only,
 auto-expires in 7 days._
+
+---
+
+## Round 2 — Empty states standardization
+
+### What changed
+- **New shared component** `app/components/EmptyState.tsx`:
+  - 7 variants (`nodes / tasks / messages / logs / tokens / networks /
+    generic`) each with its own line-art SVG glyph (64×64 viewBox, no
+    fills, thin 1.25 stroke, monochrome `currentColor`, dashed where
+    appropriate to signal "incoming").
+  - `<NodesEmptyState hint={...}>` keeps the Overview-specific behavior
+    (cross-network global count hint) but defaults to a "Run `anet
+    quickstart`" CTA when no hint is present.
+  - `compact` prop for in-card empty states (Tokens, Networks).
+- **Wired into 7 pages**:
+  - `app/page.tsx` — Overview "no agents" → mesh-with-dashed-edges glyph
+    + "Run anet quickstart →" CTA linking to anet.sh
+  - `app/tasks/page.tsx` — "no tasks" → 3-bar stack glyph
+  - `app/nodes/page.tsx` — "no nodes" filter-aware variant
+  - `app/messages/page.tsx` — "no messages" → speech bubble outline
+  - `app/logs/page.tsx` — "no audit logs" → document with lines
+  - `app/settings/tokens/page.tsx` — "no API tokens" → key outline
+  - `app/settings/networks/page.tsx` — "no networks" → globe-ish concentric
+
+Every previous instance of the giant `--` text plus inconsistent
+`text-gray-400 text-lg` / `text-gray-600 text-sm` patterns is gone.
+
+### Self-score: **8.2 / 10**
+
+| Dimension                        | Score | Notes                                                                  |
+|----------------------------------|------:|------------------------------------------------------------------------|
+| Visual restraint (no AI noise)   | 9     | Line-art only, no fills, no gradients, no animations                   |
+| Information value per state      | 9     | Each glyph IS the entity ("messages" = bubble, "tokens" = key)         |
+| Theme parity                     | 9     | currentColor + opacity bands work identically in light/dark            |
+| Mobile adaptation                | 8     | All 7 pages reflow cleanly at 390×844                                  |
+| Affordance (next-step CTA)       | 7     | Only Overview has a CTA right now; other pages could link to docs too  |
+| Component reusability            | 9     | Single API, drops into any page in 3 lines                             |
+| Old code removed cleanly         | 8     | Old `EmptyState` export in `LoadingSkeleton.tsx` is now unused (could be deleted next round) |
+
+**Deductions**:
+- −0.4: only Overview has a recovery CTA. Tasks/Messages/Logs could each
+  link to a short docs anchor — but I want to confirm with Vincent
+  before adding outbound link sprawl.
+- −0.3: glyphs are static. The mesh-with-dashed-edges on Overview begs
+  for a tiny one-shot animation (edges fade from 0.6 → 0 opacity on
+  page load only — NOT a loop, that would be AI-noise). Maybe round N.
+- −0.1: the old `EmptyState` export in `LoadingSkeleton.tsx` lingers,
+  unused. Delete in round 3.
+
+### Round 3 plan: **Quick Actions disambiguation**
+
+**Why**: Overview's Quick Actions row currently mixes two intents:
+```
+[0/0 Nodes] [-- Tasks] [0 Failed] [→ Messages] [→ Logs] [→ Admin]
+```
+Three of the cells carry data ("0/0", "--", "0"), three are pure-nav
+placeholders ("→"). The user can't tell at a glance which cells are
+stat affordances vs nav. Worse, the data cells look like they SHOULD be
+clickable for drill-in, while the nav cells look like they have no data
+(false negatives).
+
+**Round 3 changes** (no business logic):
+- Split into 2 visually distinct strips on Overview:
+  - **Top strip** (3 cards): pure stats — Nodes online/total, Tasks
+    total, Failed tasks. Big number + label + small "view all →" link
+    in corner. Hover = subtle elevation, click = navigate.
+  - **Bottom row** (3 small icon-buttons): pure nav — Messages, Logs,
+    Admin. Icon + label, no number, smaller affordance.
+- Drop the leftover `EmptyState` export from `LoadingSkeleton.tsx`.
+
+Estimated work: 30 min. Will fire on next `*/5` loop cycle.
