@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { formatUptime } from './components/utils';
+import { formatUptime, previewContent } from './components/utils';
 import { StatsBar } from './components/StatsBar';
 import { BroadcastBar } from './components/BroadcastBar';
 import { TopoGraph } from './components/TopoGraph';
@@ -333,7 +333,7 @@ export default function Dashboard() {
                 <span className="text-gray-600">&rarr;</span>
                 {t.to_name && <AliasAvatar alias={t.to_name} size={14} />}
                 <span className="text-gray-300 shrink-0 max-w-[20%] truncate">{t.to_name || '?'}</span>
-                <span className="text-gray-500 truncate flex-1">{t.content?.slice(0, 40) || '--'}</span>
+                <span className="text-gray-500 truncate flex-1" title={t.content || ''}>{previewContent(t.content).slice(0, 60)}</span>
                 <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] border ${
                   STATUS_CHIP_CLASS[t.status] || 'text-gray-500 border-gray-700/30'
                 }`}>{t.status}</span>

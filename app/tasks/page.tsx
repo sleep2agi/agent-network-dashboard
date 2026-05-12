@@ -7,6 +7,7 @@ import { useNetworkId } from '../lib/network-context';
 import { TaskDrawer } from '../components/TaskDrawer';
 import { EmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
+import { previewContent } from '../components/utils';
 import { TASK_STATUSES, STATUS_CHIP_CLASS, STATUS_DOT_HEX, STATUS_BAR_CLASS } from '../lib/status';
 
 interface Task {
@@ -286,7 +287,7 @@ function TasksContent() {
                   <span className="truncate text-sm text-gray-200">{t.to_name || '--'}</span>
                 </div>
                 <div className="col-span-4 text-xs text-gray-400 truncate" title={t.content}>
-                  {t.content || '--'}
+                  {previewContent(t.content)}
                 </div>
                 <div className="col-span-1">
                   <span className={`text-xs ${priorityBadge(t.priority)}`}>{t.priority || 'normal'}</span>
@@ -325,7 +326,7 @@ function TasksContent() {
                   {t.to_name && <AliasAvatar alias={t.to_name} size={16} />}
                   <span className="truncate max-w-[40%]">{t.to_name || '--'}</span>
                 </div>
-                <div className="text-xs text-gray-400 line-clamp-1">{t.content || '--'}</div>
+                <div className="text-xs text-gray-400 line-clamp-1" title={t.content}>{previewContent(t.content)}</div>
                 <div className="text-xs text-gray-600">{timeAgo(t.created_at)}</div>
               </div>
 

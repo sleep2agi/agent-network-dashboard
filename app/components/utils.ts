@@ -1,3 +1,16 @@
+/** Round 82: strip the most common markdown markup from agent-to-agent
+ *  task / message bodies so single-line table previews read cleanly.
+ *  Full original content stays in the expanded row / drawer / title=. */
+export function previewContent(raw: string | null | undefined): string {
+  if (!raw) return '--';
+  return raw
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')   // images: ![alt](src) → alt
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')    // links:  [text](href) → text
+    .replace(/`([^`]+)`/g, '$1')                // inline code: `x` → x
+    .replace(/\s+/g, ' ')                       // collapse whitespace
+    .trim() || '--';
+}
+
 export function timeAgo(dateStr: string): string {
   if (!dateStr) return '--';
   const diff = Date.now() - new Date(dateStr.replace(' ', 'T') + 'Z').getTime();
