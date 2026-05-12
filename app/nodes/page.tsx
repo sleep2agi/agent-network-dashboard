@@ -121,6 +121,12 @@ export default function NodesPage() {
         );
       })()}
 
+      {/* Round 74: hide the filter+view chrome when there are no nodes
+          anywhere — these controls have nothing to act on, and they only
+          push the onboarding CTA further down. When at least one session
+          exists, the chrome is back even if the current filter happens
+          to hide everything (so users can clear filters). */}
+      {sessions.length > 0 && (
       <div className="flex flex-wrap gap-3 mb-6">
         <input
           type="text"
@@ -159,6 +165,7 @@ export default function NodesPage() {
           ))}
         </div>
       </div>
+      )}
 
       {loading ? (
         <div className="animate-pulse space-y-2">
