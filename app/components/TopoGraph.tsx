@@ -33,10 +33,14 @@ const cy = 330;
 const onlineRadius = 220;
 const offlineRadius = 315;
 
-function polarPoint(index: number, total: number, radius: number) {
+/** Polar coordinate for a node on a ring. `rotateBy` lets the caller offset
+ *  the whole ring so two stacked rings don't align radially (round 25: the
+ *  offline ring gets a half-step rotation so its nodes sit in the gaps
+ *  between online ones). */
+function polarPoint(index: number, total: number, radius: number, rotateBy = 0) {
   const spread = total <= 2 ? Math.PI : Math.PI * 1.78;
   const start = -Math.PI / 2 - spread / 2;
-  const angle = total <= 1 ? -Math.PI / 2 : start + (spread * index) / (total - 1);
+  const angle = total <= 1 ? -Math.PI / 2 : start + (spread * index) / (total - 1) + rotateBy;
   return {
     x: cx + radius * Math.cos(angle),
     y: cy + radius * Math.sin(angle),
@@ -248,8 +252,17 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
       positions[s.alias] = polarPoint(index, Math.max(online.length, 1), onlineRadius);
     });
 
+    // Offset the offline ring radially by half the online step so offline
+    // bubbles sit in the angular gaps between online bubbles instead of
+    // stacking directly behind them. Also push the outer ring further when
+    // there are many offline nodes so labels don't crowd the legend.
+    const spread = online.length <= 2 ? Math.PI : Math.PI * 1.78;
+    const onlineStep = online.length > 1 ? spread / (online.length - 1) : 0;
+    const offlineRotation = online.length > 0 ? onlineStep / 2 : 0;
+    const offlineR = offlineRadius + Math.max(0, offline.length - 4) * 6;
+
     offline.forEach((s, index) => {
-      positions[s.alias] = polarPoint(index, Math.max(offline.length, 1), offlineRadius);
+      positions[s.alias] = polarPoint(index, Math.max(offline.length, 1), offlineR, offlineRotation);
     });
 
     const links = buildFlowLinks(messages, positions);
