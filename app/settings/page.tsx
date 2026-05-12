@@ -92,7 +92,7 @@ export default function SettingsPage() {
               <span className={`text-gray-300 ${valueClass}`}>{health?.sessions ?? '--'}</span>
             </div>
             <div className={rowClass}>
-              <span className="text-gray-500">SSE Connections</span>
+              <span className="text-gray-500">SSE streams <span className="text-gray-600">· server</span></span>
               <span className={`text-gray-300 ${valueClass}`}>{health?.sse_connections ?? '--'}</span>
             </div>
             <div className={rowClass}>
