@@ -241,13 +241,14 @@ function TasksContent() {
           { key: 'expired', color: 'bg-orange-500', text: 'text-orange-400' },
         ].filter(b => stats[b.key]);
         if (!bars.length) return null;
+        // Round 63: removed the per-status legend row beneath the bar —
+        // it duplicated the counts already shown in the tab chip strip
+        // since r56. The proportional bar stays because it adds a visual
+        // "shape of workload" that the chip numbers don't convey.
         return (
           <div className="mb-6">
             <div className="flex h-2 rounded-full overflow-hidden bg-gray-800">
-              {bars.map(b => <div key={b.key} className={b.color} style={{ width: `${(stats[b.key]/total)*100}%` }} />)}
-            </div>
-            <div className="flex flex-wrap gap-3 mt-1.5 text-[10px] text-gray-500">
-              {bars.map(b => <span key={b.key}><span className={`inline-block w-2 h-2 rounded-full ${b.color} mr-1`} />{stats[b.key]} {b.key}</span>)}
+              {bars.map(b => <div key={b.key} className={b.color} style={{ width: `${(stats[b.key]/total)*100}%` }} title={`${b.key}: ${stats[b.key]}`} />)}
             </div>
           </div>
         );
