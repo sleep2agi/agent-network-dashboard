@@ -180,10 +180,43 @@ export function NodesEmptyState({ hint }: { hint?: { global_count?: number; filt
       />
     );
   }
+  // Round 52: true empty state (zero agents anywhere) — show the
+  // quickstart command inline so users don't have to leave the dashboard
+  // to figure out how to spin up their first agent.
   return (
-    <EmptyState
-      variant="nodes"
-      cta={{ label: 'Run anet quickstart', href: 'https://anet.sh' }}
-    />
+    <div className="text-center py-16 px-4" role="status">
+      <div className="anet-empty-glyph inline-flex items-center justify-center mb-4 text-gray-500" aria-hidden>
+        <svg viewBox="0 0 64 64" width={56} height={56}>
+          <g stroke="currentColor" strokeWidth="1.5" fill="none">
+            <rect x="10" y="20" width="44" height="28" rx="2" />
+            <rect x="20" y="32" width="6" height="8" opacity="0.5" />
+            <rect x="32" y="32" width="6" height="8" opacity="0.5" />
+            <rect x="44" y="32" width="4" height="8" opacity="0.5" />
+            <line x1="10" y1="26" x2="54" y2="26" opacity="0.4" />
+            <circle cx="14" cy="23" r="0.8" fill="currentColor" />
+          </g>
+        </svg>
+      </div>
+      <h3 className="font-medium text-gray-300 text-base">Spin up your first agent</h3>
+      <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto leading-relaxed">
+        Run this in a fresh terminal to register an agent with this CommHub:
+      </p>
+      <div className="mt-4 inline-block">
+        <code className="anet-empty-cmd block bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-4 py-3 text-xs sm:text-sm text-cyan-300 font-mono select-all">
+          npx --yes @sleep2agi/agent-network init
+        </code>
+      </div>
+      <div className="mt-3">
+        <a
+          href="https://anet.sh"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-cyan-300"
+        >
+          Full quickstart guide
+          <span aria-hidden>→</span>
+        </a>
+      </div>
+    </div>
   );
 }
