@@ -9,6 +9,14 @@ import { EmptyState, NodesEmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
 import type { Session } from '../components/types';
 
+/** Round 81: shorten long server hostnames (Alibaba `iZ…oyZ` style)
+ *  for table display. Returns the original string unchanged when ≤12
+ *  chars. Full value should stay in `title=` for hover + screen-readers. */
+function shortServer(server: string | null | undefined): string {
+  if (!server) return '—';
+  return server.length > 12 ? `${server.slice(0, 8)}…` : server;
+}
+
 const STATUS_COLORS: Record<string, string> = {
   working: 'bg-green-500/10 text-green-300 border-green-500/20',
   idle: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
@@ -219,7 +227,7 @@ export default function NodesPage() {
                       </span>
                     </div>
                     <div className="mt-0.5 truncate text-xs text-gray-500">
-                      {(s.agent || '—')}<span className="text-gray-700 mx-1.5">·</span>{(s.server || '—')}
+                      {(s.agent || '—')}<span className="text-gray-700 mx-1.5">·</span><span title={s.server || ''}>{shortServer(s.server)}</span>
                     </div>
                   </Link>
                   <div className="flex gap-1.5 shrink-0">
@@ -319,7 +327,7 @@ export default function NodesPage() {
                     </Link>
                   </div>
                   <div className="col-span-2 truncate text-xs text-gray-400">{s.agent || '--'}</div>
-                  <div className="col-span-2 truncate text-xs text-gray-400">{s.server || '--'}</div>
+                  <div className="col-span-2 truncate text-xs text-gray-400" title={s.server || ''}>{shortServer(s.server)}</div>
                   <div className="col-span-2 truncate text-xs text-gray-500">{s.task || '--'}</div>
                   <div className="col-span-1 text-xs text-gray-500">{timeAgo(s.last_seen_at || s.updated_at)}</div>
                   <div className="col-span-2 flex justify-end gap-1.5">
