@@ -159,23 +159,39 @@ function TasksContent() {
           elements) hinting more content. */}
       <div className="anet-tabstrip-wrap mb-4">
       <div className="anet-tabstrip flex sm:flex-wrap gap-1 bg-[#111128] rounded-lg border border-[#2a2a4a] p-1 overflow-x-auto sm:overflow-x-visible scrollbar-thin">
-        {['', ...STATUS_OPTIONS.filter(Boolean)].map(s => (
-          <button key={s} onClick={() => setFilterStatus(s)}
-            className={`px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              filterStatus === s
-                ? `${STATUS_COLORS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
-                : 'text-gray-500 hover:text-gray-300 hover:bg-[#1a1a2a]/40'
-            }`}>
-            {s && (
-              <span
-                aria-hidden
-                className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: STATUS_DOTS[s] || '#6b7280' }}
-              />
-            )}
-            <span>{s || 'All'}</span>
-          </button>
-        ))}
+        {(() => {
+          // Round 56: compute per-status counts so the tab strip doubles as a
+          // status distribution dashboard. Matches Audit Log (r43) + Overview
+          // agent filter (r34) chip-with-count pattern.
+          const counts: Record<string, number> = {};
+          tasks.forEach(t => { counts[t.status] = (counts[t.status] || 0) + 1; });
+          return ['', ...STATUS_OPTIONS.filter(Boolean)].map(s => {
+            const count = s === '' ? tasks.length : counts[s] || 0;
+            const isActive = filterStatus === s;
+            return (
+              <button
+                key={s}
+                onClick={() => setFilterStatus(s)}
+                disabled={count === 0 && s !== '' && !isActive}
+                className={`px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
+                  isActive
+                    ? `${STATUS_COLORS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#1a1a2a]/40'
+                }`}
+              >
+                {s && (
+                  <span
+                    aria-hidden
+                    className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: STATUS_DOTS[s] || '#6b7280' }}
+                  />
+                )}
+                <span>{s || 'All'}</span>
+                <span className={`text-[10px] tabular-nums ${isActive ? 'opacity-80' : 'text-gray-600'}`}>{count}</span>
+              </button>
+            );
+          });
+        })()}
       </div>
       </div>
 
