@@ -129,6 +129,11 @@ export default function MessagesPage() {
         )}
       </div>
 
+      {/* Round 76: hide search + type filter + view toggle + Debug button
+          when there are no messages at all. Same r70-class fix carried
+          across /nodes (r74) and /tasks (r75). When at least one message
+          exists, the chrome reappears so users can still clear filters. */}
+      {messages.length > 0 && (
       <div className="flex flex-wrap gap-3 mb-3">
         <input
           type="text"
@@ -165,6 +170,7 @@ export default function MessagesPage() {
           {debug ? 'Debug ON' : 'Debug'}
         </button>
       </div>
+      )}
 
       {quickFromChips.length > 0 && (
         <div className="mb-6 flex flex-wrap gap-2">
