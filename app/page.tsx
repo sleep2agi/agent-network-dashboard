@@ -41,6 +41,7 @@ export default function Dashboard() {
   const cmd = useCommandCenter();
   const [showDispatch, setShowDispatch] = useState(false);
   const [inbox, setInbox] = useState<InboxMessage[]>([]);
+  const [agentFilter, setAgentFilter] = useState<'all' | 'working' | 'idle' | 'offline'>('all');
   const { mutate } = useSWRConfig();
 
   // SSE: instant revalidation on CommHub events
@@ -359,13 +360,62 @@ export default function Dashboard() {
 
       {sessions.length === 0 && !sessError ? (
         <EmptyState hint={sessHint} />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
-          {sortedSessions.map(s => (
-            <AgentCard key={s.alias} session={s} hasSse={isOnline(s)} sseCount={sseLookup(s) || 0} onChat={cmd.openTab} />
-          ))}
-        </div>
-      )}
+      ) : (() => {
+        const counts = {
+          all: sortedSessions.length,
+          working: sortedSessions.filter(s => isOnline(s) && s.status === 'working').length,
+          idle: sortedSessions.filter(s => isOnline(s) && s.status !== 'working').length,
+          offline: sortedSessions.filter(s => !isOnline(s)).length,
+        };
+        const filtered = sortedSessions.filter(s => {
+          if (agentFilter === 'all') return true;
+          if (agentFilter === 'offline') return !isOnline(s);
+          if (agentFilter === 'working') return isOnline(s) && s.status === 'working';
+          if (agentFilter === 'idle') return isOnline(s) && s.status !== 'working';
+          return true;
+        });
+        // Filter chip color keyed to status (round 34): working=green, idle=cyan,
+        // offline=gray, all=neutral. Inline hex dots avoid Tailwind v4 purge.
+        const chips: { key: typeof agentFilter; label: string; dot?: string }[] = [
+          { key: 'all',     label: 'All' },
+          { key: 'working', label: 'Working', dot: '#4ade80' },
+          { key: 'idle',    label: 'Idle',    dot: '#22d3ee' },
+          { key: 'offline', label: 'Offline', dot: '#6b7280' },
+        ];
+        return (
+          <>
+            <div className="mb-3 flex flex-wrap items-center gap-1">
+              {chips.map(c => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => setAgentFilter(c.key)}
+                  disabled={counts[c.key] === 0 && c.key !== 'all'}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                    agentFilter === c.key
+                      ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
+                      : 'text-gray-500 hover:text-gray-200 hover:bg-[#1a1a2a] border border-transparent'
+                  }`}
+                >
+                  {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}
+                  <span>{c.label}</span>
+                  <span className={`text-[10px] tabular-nums ${agentFilter === c.key ? 'text-cyan-400' : 'text-gray-600'}`}>{counts[c.key]}</span>
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
+              {filtered.map(s => (
+                <AgentCard key={s.alias} session={s} hasSse={isOnline(s)} sseCount={sseLookup(s) || 0} onChat={cmd.openTab} />
+              ))}
+            </div>
+            {filtered.length === 0 && (
+              <div className="mt-4 text-center text-xs text-gray-600">
+                No agents match "{agentFilter}" — <button onClick={() => setAgentFilter('all')} className="underline hover:text-gray-400">Show all</button>
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       <InboxPanel messages={inbox} />
 
