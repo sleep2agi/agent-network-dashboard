@@ -811,3 +811,41 @@ body {
   color: #92400e !important;
   border-color: rgba(217, 119, 6, 0.28) !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Round 29 — prefers-reduced-motion a11y sweep
+
+   Rounds 19~27 accumulated a lot of small animations: Tasks row 0fr↔1fr
+   expand, chevron rotate, hover bg shifts, Cmd+K popover, TaskChatPanel
+   slide-in, brand/skeleton pulses already had their own guards.
+
+   For users who set system "reduce motion": neutralise everything in one
+   pass. Don't kill state changes outright — only their durations and
+   keyframes. Hover and focus colours still apply, just instantly.
+   ───────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Skeleton pulse already has its own guard; harden in case the bar
+     class is reused without anet-skeleton-pulse. */
+  .anet-skeleton-bar {
+    animation: none !important;
+  }
+  /* Brand pulse hidden — green/red dot still indicates state via color. */
+  .anet-brand-pulse {
+    animation: none !important;
+  }
+  /* TaskChatPanel slide-in keyframe defined inline in component — kill it. */
+  .animate-slide-in {
+    animation: none !important;
+  }
+  /* Tasks row grid 0fr↔1fr keep working (it's the toggle mechanism),
+     but the smooth transition just snaps. Already handled via the
+     blanket transition-duration override above. */
+}
