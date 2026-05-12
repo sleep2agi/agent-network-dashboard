@@ -113,7 +113,9 @@ export default function AdminPage() {
             </div>
             <div>
               <div className="text-3xl font-bold text-cyan-400 tabular-nums">{health?.sse_connections ?? '--'}</div>
-              <div className="text-xs text-gray-500">SSE Connections</div>
+              <div className="text-xs text-gray-500">
+                SSE Streams <span className="text-gray-600">· server</span>
+              </div>
             </div>
             <div>
               <div className="text-3xl font-bold text-white tabular-nums">{stats?.tasks?.total ?? '--'}</div>
