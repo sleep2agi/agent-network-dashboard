@@ -58,12 +58,20 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
     })();
   }, [taskId]);
 
+  /** Timeline steps — same 4 hops every task goes through. `time` is set
+   *  when the hop has happened; missing time means pending. Round 36 adds
+   *  `key` for the "current step" highlight + the `done` flag for layout. */
   const timeline = task ? [
-    { label: 'Created', time: task.created_at, color: 'bg-gray-400' },
-    { label: 'Delivered', time: task.delivered_at, color: 'bg-blue-400' },
-    { label: 'Started', time: task.started_at, color: 'bg-green-400' },
-    { label: 'Completed', time: task.completed_at, color: 'bg-purple-400' },
-  ] : [];
+    { key: 'created',   label: 'Created',   time: task.created_at,    color: 'bg-gray-400'  },
+    { key: 'delivered', label: 'Delivered', time: task.delivered_at,  color: 'bg-blue-400'  },
+    { key: 'started',   label: 'Started',   time: task.started_at,    color: 'bg-green-400' },
+    { key: 'completed', label: 'Completed', time: task.completed_at,  color: 'bg-purple-400'},
+  ].map(s => ({ ...s, done: !!s.time })) : [];
+
+  /** Index of the highest-completed step. The step *after* this index is
+   *  the "current" one (in-progress). When all are done, currentIdx = -1. */
+  const currentStepIdx = timeline.findIndex(s => !s.done);
+  const isActive = task && task.status !== 'completed' && task.status !== 'failed' && task.status !== 'expired' && task.status !== 'cancelled';
 
   const duration = task?.started_at && task?.completed_at
     ? Math.round((new Date(task.completed_at).getTime() - new Date(task.started_at).getTime()) / 1000)
@@ -112,22 +120,57 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
               <span className="text-cyan-400 font-medium">{task.to_name || '--'}</span>
             </div>
 
-            {/* Timeline */}
+            {/* Timeline — round 36 polish: relative timestamps, current-step
+                pulse if task is still in flight, full ISO in title=. */}
             <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
-              <div className="text-xs text-gray-500 uppercase mb-3">Timeline</div>
-              <div className="space-y-3">
-                {timeline.map((step, i) => (
-                  <div key={step.label} className="flex items-center gap-3">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-3 h-3 rounded-full ${step.time ? step.color : 'bg-gray-700'}`} />
-                      {i < timeline.length - 1 && <div className={`w-0.5 h-4 mt-1 ${step.time && timeline[i+1]?.time ? 'bg-gray-600' : 'bg-gray-800'}`} />}
-                    </div>
-                    <div className="flex-1">
-                      <div className={`text-xs font-medium ${step.time ? 'text-gray-300' : 'text-gray-600'}`}>{step.label}</div>
-                      <div className="text-[10px] text-gray-500">{step.time || 'Pending'}</div>
-                    </div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Timeline</div>
+                {duration !== null && (
+                  <div className="text-[10px] text-gray-600">
+                    {duration < 60 ? `${duration}s` : `${Math.floor(duration/60)}m ${duration%60}s`} runtime
                   </div>
-                ))}
+                )}
+              </div>
+              <div className="space-y-3">
+                {timeline.map((step, i) => {
+                  const isCurrent = isActive && i === currentStepIdx;
+                  const isNextDone = !!timeline[i+1]?.done;
+                  return (
+                    <div key={step.key} className="flex items-start gap-3">
+                      <div className="flex flex-col items-center pt-0.5">
+                        <span
+                          className={`relative w-3 h-3 rounded-full shrink-0 ${
+                            step.done ? step.color : 'bg-gray-700'
+                          }`}
+                        >
+                          {isCurrent && (
+                            <span
+                              aria-hidden
+                              className="absolute -inset-1 rounded-full border border-current opacity-60 anet-current-step-pulse"
+                              style={{ borderColor: 'currentColor' }}
+                            />
+                          )}
+                        </span>
+                        {i < timeline.length - 1 && (
+                          <div className={`w-0.5 h-5 mt-1 ${
+                            step.done && isNextDone ? 'bg-gray-500' : step.done ? 'bg-gradient-to-b from-gray-500 to-gray-800' : 'bg-gray-800'
+                          }`} />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-xs font-medium flex items-center gap-2 ${
+                          step.done ? 'text-gray-200' : isCurrent ? 'text-cyan-300' : 'text-gray-600'
+                        }`}>
+                          <span>{step.label}</span>
+                          {isCurrent && <span className="text-[9px] uppercase tracking-wide text-cyan-400">in&nbsp;progress</span>}
+                        </div>
+                        <div className="text-[10px] text-gray-500" title={step.time || undefined}>
+                          {step.time ? timeAgo(step.time) : isCurrent ? '—' : 'Pending'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -172,10 +215,6 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
           </div>
         )}
       </div>
-      <style jsx global>{`
-        @keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        .animate-slide-in { animation: slide-in 0.2s ease-out; }
-      `}</style>
     </>
   );
 }

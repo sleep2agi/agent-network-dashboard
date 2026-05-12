@@ -828,6 +828,16 @@ body {
 }
 .anet-fade-in { animation: anet-fade-in 0.15s ease-out; }
 
+/* Round 36 — current-step ring pulse on TaskDrawer timeline. Halo gently
+   breathes around the active step's dot so users can spot "task is here". */
+@keyframes anet-current-step-pulse-kf {
+  0%, 100% { transform: scale(1);   opacity: 0.6; }
+  50%      { transform: scale(1.25); opacity: 0.0; }
+}
+.anet-current-step-pulse {
+  animation: anet-current-step-pulse-kf 1.6s ease-in-out infinite;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
@@ -859,7 +869,8 @@ body {
   }
   /* Drawer entrance kills — keyframes promoted to globals in r30. */
   .animate-slide-in,
-  .anet-fade-in {
+  .anet-fade-in,
+  .anet-current-step-pulse {
     animation: none !important;
   }
   /* Tasks row grid 0fr↔1fr keep working (it's the toggle mechanism),
