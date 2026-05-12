@@ -250,11 +250,26 @@ function TasksContent() {
             <div className="col-span-2">Time</div>
           </div>
 
-          {tasks.map(t => (
+          {tasks.map(t => {
+            const isOpen = expanded.has(t.task_id);
+            return (
             <div
               key={t.task_id}
-              className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-4 py-3 hover:border-[#3a3a5a] transition-colors cursor-pointer"
+              className={`anet-task-row group bg-[#111128] border rounded-lg px-4 py-3 transition-all duration-200 cursor-pointer ${
+                isOpen
+                  ? 'border-[#3a3a5a] shadow-lg shadow-black/20'
+                  : 'border-[#2a2a4a] hover:border-[#3a3a5a] hover:bg-[#15152e]'
+              }`}
               onClick={() => toggleExpand(t.task_id)}
+              role="button"
+              tabIndex={0}
+              aria-expanded={isOpen}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleExpand(t.task_id);
+                }
+              }}
             >
               {/* Desktop row */}
               <div className="hidden sm:grid sm:grid-cols-12 gap-2 items-center">
@@ -273,8 +288,15 @@ function TasksContent() {
                 <div className="col-span-1">
                   <span className={`text-xs ${priorityBadge(t.priority)}`}>{t.priority || 'normal'}</span>
                 </div>
-                <div className="col-span-2 text-xs text-gray-500" title={t.created_at}>
-                  {timeAgo(t.created_at)}
+                <div className="col-span-2 text-xs text-gray-500 flex items-center justify-between gap-2" title={t.created_at}>
+                  <span className="truncate">{timeAgo(t.created_at)}</span>
+                  <svg
+                    aria-hidden
+                    className={`shrink-0 text-gray-600 group-hover:text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                  </svg>
                 </div>
               </div>
 
@@ -282,20 +304,36 @@ function TasksContent() {
               <div className="sm:hidden space-y-2">
                 <div className="flex items-center justify-between">
                   <span className={statusBadge(t.status)}>{t.status}</span>
-                  <span className={`text-xs ${priorityBadge(t.priority)}`}>{t.priority || 'normal'}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs ${priorityBadge(t.priority)}`}>{t.priority || 'normal'}</span>
+                    <svg
+                      aria-hidden
+                      className={`text-gray-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                    </svg>
+                  </div>
                 </div>
                 <div className="text-xs text-gray-500">
                   <span className="text-blue-400">{t.from_name || '--'}</span>
                   <span className="text-gray-600 mx-1">&rarr;</span>
                   <span className="text-cyan-400">{t.to_name || '--'}</span>
                 </div>
-                <div className="text-xs text-gray-400 truncate">{t.content || '--'}</div>
+                <div className="text-xs text-gray-400 line-clamp-1">{t.content || '--'}</div>
                 <div className="text-xs text-gray-600">{timeAgo(t.created_at)}</div>
               </div>
 
-              {/* Expanded detail */}
-              {expanded.has(t.task_id) && (
-                <div className="mt-3 pt-3 border-t border-[#2a2a4a] space-y-3">
+              {/* Expanded detail — always mounted; grid-rows 0fr↔1fr trick gives
+                  content-aware smooth max-height animation without measuring DOM. */}
+              <div
+                className={`grid transition-all duration-300 ease-out ${
+                  isOpen ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0'
+                }`}
+                aria-hidden={!isOpen}
+              >
+                <div className="overflow-hidden">
+                <div className="pt-3 border-t border-[#2a2a4a] space-y-3">
                   {t.content && (
                     <div>
                       <div className="text-xs text-gray-600 mb-1">Content</div>
@@ -357,9 +395,11 @@ function TasksContent() {
                     </div>
                   </div>
                 </div>
-              )}
+                </div>
+              </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
