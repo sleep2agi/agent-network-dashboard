@@ -812,6 +812,22 @@ body {
   border-color: rgba(217, 119, 6, 0.28) !important;
 }
 
+/* Round 30 — global drawer entrance keyframes so TaskDrawer, TaskChatPanel,
+   and any future right-side panel share one source. Previously the
+   keyframe lived inside TaskChatPanel's <style jsx global>; if that
+   component never mounted, the keyframe was missing for TaskDrawer. */
+@keyframes anet-slide-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0);    }
+}
+.animate-slide-in { animation: anet-slide-in 0.2s ease-out; }
+
+@keyframes anet-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.anet-fade-in { animation: anet-fade-in 0.15s ease-out; }
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
@@ -841,8 +857,9 @@ body {
   .anet-brand-pulse {
     animation: none !important;
   }
-  /* TaskChatPanel slide-in keyframe defined inline in component — kill it. */
-  .animate-slide-in {
+  /* Drawer entrance kills — keyframes promoted to globals in r30. */
+  .animate-slide-in,
+  .anet-fade-in {
     animation: none !important;
   }
   /* Tasks row grid 0fr↔1fr keep working (it's the toggle mechanism),
