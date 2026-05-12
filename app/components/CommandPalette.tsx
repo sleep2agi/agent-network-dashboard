@@ -46,6 +46,31 @@ function pushRecent(id: string) {
   } catch {}
 }
 
+/** Fuzzy match: returns a score (higher = better) if every char in `needle`
+ *  appears in `hay` in order (consecutive bonus), else -1. Case-insensitive.
+ *  Round 18 — replaces literal `String.includes` so `stg` matches `Settings`. */
+function fuzzyScore(hay: string, needle: string): number {
+  if (!needle) return 0;
+  const H = hay.toLowerCase();
+  const N = needle.toLowerCase();
+  let hi = 0, ni = 0, score = 0, streak = 0;
+  while (hi < H.length && ni < N.length) {
+    if (H[hi] === N[ni]) {
+      score += 2 + streak; // streak bonus rewards contiguous matches
+      streak++;
+      // Word-start bonus
+      if (hi === 0 || /[\s·:_/-]/.test(H[hi - 1])) score += 4;
+      ni++;
+    } else {
+      streak = 0;
+    }
+    hi++;
+  }
+  if (ni < N.length) return -1; // not all needle chars matched
+  // Shorter strings rank slightly higher (preferring exact hits)
+  return score - Math.max(0, H.length - N.length) * 0.05;
+}
+
 function NavIcon({ d }: { d: string }) {
   return (
     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -106,6 +131,12 @@ const COMMANDS: Command[] = [
       fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
       try { sessionStorage.removeItem('anet_v3_auth'); } catch {}
       window.location.assign('/login');
+    } },
+  { id: 'act-help', title: 'Show keyboard shortcuts', hint: 'press ? — works on mobile too', group: 'Actions',
+    icon: <NavIcon d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
+    perform: () => {
+      // Dispatch synthetic `?` keydown so HelpOverlay's global listener opens
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
     } },
 ];
 
@@ -204,12 +235,23 @@ export function CommandPalette() {
       // until user actually types — keeps the empty-search list short).
       return [...recentCmds, ...COMMANDS.filter(c => !restIds.has(c.id))];
     }
-    const q = query.toLowerCase();
-    return pool.filter(c =>
-      c.title.toLowerCase().includes(q) ||
-      c.hint?.toLowerCase().includes(q) ||
-      c.id.toLowerCase().includes(q)
-    );
+    // Fuzzy match — `stg` matches `Settings`, `taska` matches `Task all-time`.
+    // Score against title (weight 1.0), hint (0.6), id (0.3). Drop unmatched.
+    const scored = pool
+      .map(c => {
+        const sTitle = fuzzyScore(c.title, query);
+        const sHint = c.hint ? fuzzyScore(c.hint, query) : -1;
+        const sId = fuzzyScore(c.id, query);
+        const best = Math.max(
+          sTitle >= 0 ? sTitle * 1.0 : -Infinity,
+          sHint  >= 0 ? sHint  * 0.6 : -Infinity,
+          sId    >= 0 ? sId    * 0.3 : -Infinity,
+        );
+        return { c, score: best };
+      })
+      .filter(x => x.score > -Infinity);
+    scored.sort((a, b) => b.score - a.score);
+    return scored.map(x => x.c);
   }, [query, recentIds, dynamic]);
 
   // Clamp selected when results shrink

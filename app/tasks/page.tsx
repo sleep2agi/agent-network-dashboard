@@ -154,8 +154,10 @@ function TasksContent() {
           (bg + border + text color), inactive tabs only carry the dot
           + neutral label so the active state remains the strong cue.
           On narrow viewports (<sm) the row scrolls horizontally with
-          subtle fade edges instead of wrapping to 2 lines. */}
-      <div className="anet-tabstrip flex sm:flex-wrap gap-1 mb-4 bg-[#111128] rounded-lg border border-[#2a2a4a] p-1 overflow-x-auto sm:overflow-x-visible scrollbar-thin">
+          subtle gradient fade-edges (via .anet-tabstrip-wrap pseudo
+          elements) hinting more content. */}
+      <div className="anet-tabstrip-wrap mb-4">
+      <div className="anet-tabstrip flex sm:flex-wrap gap-1 bg-[#111128] rounded-lg border border-[#2a2a4a] p-1 overflow-x-auto sm:overflow-x-visible scrollbar-thin">
         {['', ...STATUS_OPTIONS.filter(Boolean)].map(s => (
           <button key={s} onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
@@ -173,6 +175,7 @@ function TasksContent() {
             <span>{s || 'All'}</span>
           </button>
         ))}
+      </div>
       </div>
 
       {/* From/To Filters */}
