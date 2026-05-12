@@ -309,6 +309,66 @@ body {
 [data-theme="light"] .text-indigo-400 {
   color: var(--accent) !important;
 }
+
+/* Light theme: every "-300/400" accent text color needs a darker mid-tone
+   variant. The default Tailwind `-300/-400` shades are designed for dark
+   backgrounds — putting them on white gives "barely visible" text (the
+   problem Vincent flagged: "浅色下很多字体看不见"). Map each family to its
+   `-700` equivalent so contrast against white card is ≥ AA. */
+[data-theme="light"] .text-green-400,
+[data-theme="light"] .text-green-300,
+[data-theme="mint"]  .text-green-400,
+[data-theme="mint"]  .text-green-300 { color: #047857 !important; }
+
+[data-theme="light"] .text-yellow-400,
+[data-theme="light"] .text-yellow-300,
+[data-theme="mint"]  .text-yellow-400,
+[data-theme="mint"]  .text-yellow-300 { color: #92400e !important; }
+
+[data-theme="light"] .text-amber-400,
+[data-theme="light"] .text-amber-300,
+[data-theme="mint"]  .text-amber-400,
+[data-theme="mint"]  .text-amber-300 { color: #92400e !important; }
+
+[data-theme="light"] .text-red-400,
+[data-theme="light"] .text-red-300,
+[data-theme="mint"]  .text-red-400,
+[data-theme="mint"]  .text-red-300 { color: #b91c1c !important; }
+
+[data-theme="light"] .text-purple-400,
+[data-theme="light"] .text-purple-300,
+[data-theme="mint"]  .text-purple-400,
+[data-theme="mint"]  .text-purple-300 { color: #6d28d9 !important; }
+
+[data-theme="light"] .text-orange-400,
+[data-theme="light"] .text-orange-300,
+[data-theme="mint"]  .text-orange-400,
+[data-theme="mint"]  .text-orange-300 { color: #c2410c !important; }
+
+[data-theme="light"] .text-blue-400,
+[data-theme="light"] .text-blue-300,
+[data-theme="mint"]  .text-blue-400,
+[data-theme="mint"]  .text-blue-300 { color: #1d4ed8 !important; }
+
+[data-theme="light"] .text-pink-400,
+[data-theme="light"] .text-pink-300,
+[data-theme="mint"]  .text-pink-400,
+[data-theme="mint"]  .text-pink-300 { color: #be185d !important; }
+
+[data-theme="light"] .text-violet-400,
+[data-theme="light"] .text-violet-300,
+[data-theme="mint"]  .text-violet-400,
+[data-theme="mint"]  .text-violet-300 { color: #6d28d9 !important; }
+
+[data-theme="light"] .text-teal-400,
+[data-theme="light"] .text-teal-300,
+[data-theme="mint"]  .text-teal-400,
+[data-theme="mint"]  .text-teal-300 { color: #0f766e !important; }
+
+/* Light theme: text-gray-700 (used in footers / muted body) is too pale
+   when sitting on slightly-grey page bg. Bump to fg-muted. */
+[data-theme="light"] .text-gray-700,
+[data-theme="mint"]  .text-gray-700 { color: var(--fg-muted) !important; }
 [data-theme="light"] .bg-emerald-500\/10,
 [data-theme="light"] .bg-emerald-500\/20,
 [data-theme="light"] .bg-cyan-500\/10,
