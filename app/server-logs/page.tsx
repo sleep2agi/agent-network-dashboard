@@ -117,24 +117,48 @@ export default function ServerLogsPage() {
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
-      <div className="flex items-baseline justify-between mb-4">
-        <div className="flex items-baseline gap-3">
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <h1 className="text-2xl font-bold text-white">Server Logs</h1>
-          <span className="text-xs text-gray-500">CommHub stdout/stderr · 最新在上</span>
+          {logs.length > 0 && (
+            <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums">
+              {logs.length}
+            </span>
+          )}
+          <span className="text-xs text-gray-500 hidden sm:inline">CommHub stdout/stderr</span>
         </div>
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs shrink-0">
           <button
             onClick={() => setPaused(p => !p)}
-            className={`px-3 py-1 rounded border ${paused ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'}`}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded border ${paused ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'}`}
           >
-            {paused ? '▶ Resume' : '⏸ Pause'}
+            {paused ? (
+              <>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M8 5v14l11-7z" /></svg>
+                Resume
+              </>
+            ) : (
+              <>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <rect x="6" y="5" width="4" height="14" rx="0.5" />
+                  <rect x="14" y="5" width="4" height="14" rx="0.5" />
+                </svg>
+                Pause
+              </>
+            )}
           </button>
           <label className="flex items-center gap-1 text-gray-400 select-none">
             <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="accent-cyan-500" />
-            auto-refresh
+            <span className="hidden sm:inline">auto-refresh</span>
           </label>
-          <button onClick={() => fetchLogs(true)} className="px-3 py-1 rounded border bg-gray-500/10 text-gray-300 border-gray-500/20 hover:bg-gray-500/20">
-            ↻ Reload
+          <button onClick={() => fetchLogs(true)} className="flex items-center gap-1.5 px-3 py-1 rounded border bg-gray-500/10 text-gray-300 border-gray-500/20 hover:bg-gray-500/20">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16" />
+              <path d="M3 21v-5h5" />
+            </svg>
+            <span className="hidden sm:inline">Reload</span>
           </button>
         </div>
       </div>
