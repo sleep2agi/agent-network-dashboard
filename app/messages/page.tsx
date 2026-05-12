@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useMessages } from '../lib/hooks';
-import { timeAgo } from '../components/utils';
+import { timeAgo, previewContent } from '../components/utils';
 import { EmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
 
@@ -225,7 +225,7 @@ export default function MessagesPage() {
                   <div key={m.id} className="flex items-start gap-2 text-xs py-1">
                     {m.from_alias && <AliasAvatar alias={m.from_alias} size={14} />}
                     <span className="shrink-0 font-medium text-gray-200">{m.from_alias}</span>
-                    <span className="text-gray-400 flex-1">{m.content?.slice(0, 120) || '--'}</span>
+                    <span className="text-gray-400 flex-1 truncate" title={m.content || ''}>{previewContent(m.content).slice(0, 120)}</span>
                     <span className="text-[9px] text-gray-600 shrink-0">{timeAgo(m.created_at || '')}</span>
                   </div>
                 ))}

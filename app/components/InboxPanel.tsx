@@ -2,7 +2,7 @@
 
 import { InboxMessage } from './types';
 import { AliasAvatar } from './AliasAvatar';
-import { timeAgo } from './utils';
+import { timeAgo, previewContent } from './utils';
 
 interface InboxPanelProps {
   messages: InboxMessage[];
@@ -27,7 +27,7 @@ export function InboxPanel({ messages }: InboxPanelProps) {
               <span className="text-gray-200 font-medium truncate">{m.from_session}</span>
               <span className="ml-auto text-gray-600 shrink-0" title={m.created_at}>{timeAgo(m.created_at)}</span>
             </div>
-            <div className="text-gray-300 leading-relaxed">{m.content}</div>
+            <div className="text-gray-300 leading-relaxed line-clamp-3" title={m.content || ''}>{previewContent(m.content)}</div>
           </div>
         ))}
       </div>
