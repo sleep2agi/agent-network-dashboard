@@ -849,6 +849,17 @@ body {
   animation: anet-topo-sweep-kf 6s linear infinite;
 }
 
+/* Round 46 — animated dashed spokes flowing from hub outward. Each spoke
+   gets a small animationDelay (set inline) so the dashes don't all flow
+   in sync — reads as "command relay" pulse rather than a metronome. */
+@keyframes anet-topo-spoke-flow-kf {
+  from { stroke-dashoffset: 0;   }
+  to   { stroke-dashoffset: -40; }
+}
+.anet-topo-spoke-flow {
+  animation: anet-topo-spoke-flow-kf 2.4s linear infinite;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
@@ -882,7 +893,8 @@ body {
   .animate-slide-in,
   .anet-fade-in,
   .anet-current-step-pulse,
-  .anet-topo-sweep {
+  .anet-topo-sweep,
+  .anet-topo-spoke-flow {
     animation: none !important;
   }
   /* Tasks row grid 0fr↔1fr keep working (it's the toggle mechanism),
