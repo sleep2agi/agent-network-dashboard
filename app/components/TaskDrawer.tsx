@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { timeAgo } from './utils';
 import Link from 'next/link';
+import { AliasAvatar } from './AliasAvatar';
 
 interface TaskDetail {
   task_id: string;
@@ -113,11 +114,15 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
               )}
             </div>
 
-            {/* From → To */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-blue-400 font-medium">{task.from_name || '--'}</span>
-              <span className="text-gray-600">→</span>
-              <span className="text-cyan-400 font-medium">{task.to_name || '--'}</span>
+            {/* From → To — round 41: use AliasAvatar so from/to colours
+                match the rest of the app instead of the legacy blue/cyan
+                hardcode. */}
+            <div className="flex items-center gap-2 text-sm flex-wrap">
+              {task.from_name && <AliasAvatar alias={task.from_name} size={18} />}
+              <span className="text-gray-200 font-medium">{task.from_name || '--'}</span>
+              <span className="text-gray-600">&rarr;</span>
+              {task.to_name && <AliasAvatar alias={task.to_name} size={18} />}
+              <span className="text-gray-200 font-medium">{task.to_name || '--'}</span>
             </div>
 
             {/* Timeline — round 36 polish: relative timestamps, current-step
