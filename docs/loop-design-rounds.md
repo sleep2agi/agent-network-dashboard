@@ -379,3 +379,60 @@ or "advanced-y".
   ghost outline.
 
 Estimated work: 25 min. Fires next `*/5`.
+
+---
+
+## Round 6 — Settings section grouping + License chip + Session tone
+
+### What changed
+- Wrapped the 8 settings cards into **3 logical groups** with small
+  uppercase `text-[10px] tracking-[0.12em]` section labels:
+  - **CONNECTION** — CommHub Connection, Server Info, Dashboard
+  - **ACCOUNT** — License, Change Password, Sign out
+  - **RESOURCES** — API Tokens + Networks (2-col grid)
+- **License chip**: added inline next to "License" headline. A pill
+  showing `● {type} · {days_left}d left` with theme-aware coloring —
+  green for pro, red when ≤7 days, amber otherwise. Replaces the
+  isolated orange `trial` text inside the value rows.
+- **Session card** (audit P3 finding): renamed "Session" → "Sign out"
+  with neutral grey card border and copy ("Signing out clears your
+  dashboard session cookie. You'll return to the login page."). Red
+  pill button → ghost outline matching the rest of the surface. No
+  longer reads as a "danger zone" warning.
+- Left the legacy red-Session section in place but `display: none` so
+  it can be removed cleanly in round 7's cleanup pass.
+
+### Self-score: **8.8 / 10**
+
+| Dimension                | Score | Notes                                                                |
+|--------------------------|------:|----------------------------------------------------------------------|
+| Hierarchy                | 9     | Three small caps headings give instant orientation                  |
+| License presentation     | 9     | Chip is calm and theme-aware; matches the rest of the chip system   |
+| Session tone             | 9     | No longer looks like a danger zone; reads as a quiet utility action |
+| Theme parity             | 9     | Headings use `text-gray-600` which themes via the shim correctly    |
+| Hidden cruft             | 7     | Legacy red Session section still in DOM (display:none) — clean next round |
+| Information dedup        | 8     | License chip + "Type: trial" row carry the same info; row could go  |
+
+**Deductions**:
+- −0.5: License chip duplicates "Type" row info. Remove the row in
+  round 7 so the chip is the canonical source of truth.
+- −0.4: hidden legacy `Session` section is still in the DOM (`hidden`
+  class). Delete fully in round 7.
+- −0.3: section labels (`CONNECTION / ACCOUNT / RESOURCES`) might
+  benefit from a thin horizontal rule underneath when each group
+  has 2+ cards. Tiny polish.
+
+### Round 7 plan: **Small wins batch**
+
+Bundle the lingering deductions from rounds 1, 2, 4, 6:
+- **Login footer one-line**: collapse `Powered by Sleep2AGI · Apache-2.0
+  / anet.sh` to a single muted line `Sleep2AGI · Apache-2.0 · anet.sh`
+- **Sidebar brand**: wrap in `<Link href="/">` so clicking the brand
+  goes home (common app convention; round 4 deduction)
+- **Sidebar status copy**: `no agents yet` → `waiting for agents` —
+  feels more inviting, less negative (round 4 deduction)
+- **License row de-dup**: remove the standalone `Type / trial` row
+  inside the License card now that the chip carries that fact
+- **Settings cleanup**: delete the `display:none` legacy Session card
+
+All are <5 LOC each, batch is ~25 LOC total. Fires next `*/5`.
