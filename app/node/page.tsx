@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { TaskChatPanel } from '../components/TaskChatPanel';
 import { timeAgo } from '../components/utils';
+import { AliasAvatar } from '../components/AliasAvatar';
 
 interface SessionDetail {
   resume_id: string;
@@ -150,15 +151,23 @@ function NodeDetailContent() {
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/nodes" className="text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10">&larr; Nodes</Link>
-        <div className="flex items-center gap-3">
-          <span className={`inline-block w-3 h-3 rounded-full ${
-            sse > 0 ? (session?.status === 'working' ? 'bg-green-500 animate-pulse' : 'bg-emerald-400') : 'bg-gray-500'
-          }`} />
-          <h1 className="text-2xl font-bold text-white">{alias}</h1>
-          <span className={`text-sm ${statusColor}`}>{session?.status || 'unknown'}</span>
+      {/* Header — round 40: avatar joins the alias for cross-page hue
+          consistency; agent type lives in a subtitle so users know what
+          kind of node they're looking at. */}
+      <div className="flex items-center gap-3 mb-6 lg:ml-0 ml-10">
+        <Link href="/nodes" className="text-gray-500 hover:text-gray-300 text-sm shrink-0">&larr; Nodes</Link>
+        <AliasAvatar alias={alias} size={32} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{alias}</h1>
+            <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${
+              sse > 0 ? (session?.status === 'working' ? 'bg-green-500 animate-pulse' : 'bg-emerald-400') : 'bg-gray-500'
+            }`} />
+            <span className={`text-[10px] uppercase tracking-wide font-semibold ${statusColor}`}>{session?.status || 'unknown'}</span>
+          </div>
+          {session?.agent && (
+            <div className="text-xs text-gray-500 truncate">{session.agent}{session.server ? <> <span className="text-gray-700 mx-1">·</span> {session.server}</> : null}</div>
+          )}
         </div>
       </div>
 
@@ -190,14 +199,22 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
 
   return (
     <div className="bg-[#0d0d1a] border border-[#2a2a4a] rounded-xl overflow-hidden h-[calc(100vh-140px)] flex flex-col">
-      {/* Tab bar */}
+      {/* Tab bar — round 40: emoji icons (💬 📋 📊) replaced with stroke
+          SVG to drop the "AI generated" tell. */}
       <div className="flex border-b border-[#2a2a4a] bg-[#0a0a15] shrink-0">
-        {(['chat', 'events', 'info'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-              tab === t ? 'border-cyan-400 text-cyan-300' : 'border-transparent text-gray-500 hover:text-gray-300'
+        {([
+          { id: 'chat',   label: 'Chat',   icon: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' },
+          { id: 'events', label: 'Events', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
+          { id: 'info',   label: 'Info',   icon: 'M12 21a9 9 0 100-18 9 9 0 000 18z M12 8h.01 M11 12h1v4h1' },
+        ] as const).map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+              tab === t.id ? 'border-cyan-400 text-cyan-300' : 'border-transparent text-gray-500 hover:text-gray-300'
             }`}>
-            {t === 'chat' ? '💬 Chat' : t === 'events' ? '📋 Events' : '📊 Info'}
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d={t.icon} />
+            </svg>
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
