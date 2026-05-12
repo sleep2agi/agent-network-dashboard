@@ -569,3 +569,52 @@ unhover. Both themes. Doesn't affect mobile (touch shows full card
 already).
 
 Estimated work: 25 min. Fires next `*/5`.
+
+---
+
+## Round 10 — KPI card rich hover preview
+
+### What changed
+- The 3-stat strip on Overview (Nodes / Tasks / Failed) now gets a
+  **hover popover** showing the breakdown that the headline number
+  abstracts away.
+  - **Nodes** hover → `● working {n}` / `● idle {n}` / `● offline {n}`
+  - **Tasks** hover → list of all populated statuses in priority
+    order (running → replied → failed → cancelled → expired → closed
+    → created → delivered → acked), each with its color dot + count
+  - **Failed** hover → `no failures yet` or `{n} in current view`
+- **Pure CSS** popover: hidden by default, `opacity-0 translate-y-[-2px]`
+  transitions to `opacity-100 translate-y-0` on `group-hover`. 100ms
+  delay-show so a quick mouse-pass doesn't flicker. No React state.
+- `pointer-events-none` on the popover so it never intercepts the
+  click through to the underlying Link target.
+- **Mobile gate**: `hidden md:block` — touch devices don't get the
+  popover (no `:hover`). The card itself still navigates on tap, so no
+  functionality lost.
+- Dot colors inlined as hex (`#4ade80` green, `#a78bfa` purple, etc.)
+  to dodge Tailwind's purge of dynamic `bg-${family}-400` class names.
+
+### Self-score: **8.5 / 10**
+
+**Deductions**: no `:focus-within` trigger (keyboard users miss
+popover); "Failed" copy doesn't show time bucket; dot hex inlined
+rather than centralized in a constants palette.
+
+### Round 11 plan: **Mobile audit + polish pass**
+
+Nine rounds in, the desktop story is solid. Mobile hasn't gotten a
+dedicated round since the initial audit. Likely findings:
+
+- Health banner at <340px: CTA + dismiss button + truncated message
+  competes for ~280px usable width. Collapse CTA to icon-only or
+  move it below the message.
+- Stat strip 3-col at 360-390px: "View →" affordance shrinks below
+  legibility. Either drop "View →" on mobile or stack 1-col.
+- Sidebar mobile drawer: not screenshot-audited against the latest
+  brand-mark + pulse changes.
+- Footer text spacing on /login at 320px: wraps awkwardly.
+
+Action: capture mobile screenshots across 5-6 key pages at 390×844
+AND 360×740, identify worst offenders, fix the top 3.
+
+Estimated work: 30 min. Fires next `*/5`.

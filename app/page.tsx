@@ -193,20 +193,93 @@ export default function Dashboard() {
           ("0/0", "--", "0") with placeholder arrows ("→ Messages").
           Users couldn't tell which were stats vs which were navigation. */}
       <section className="mb-3 grid grid-cols-3 gap-2 sm:gap-3">
-        {[
-          { href: '/nodes', label: 'Nodes', value: `${online}/${total}`, sub: `${online > 0 ? Math.round((online/total)*100) : 0}% online`, color: 'text-green-400 border-green-500/20' },
-          { href: '/tasks', label: 'Tasks', value: String(Object.values(taskStats).reduce((a, b) => a + b, 0) || 0), sub: 'all-time', color: 'text-cyan-400 border-cyan-500/20' },
-          { href: '/tasks?status=failed', label: 'Failed', value: String(taskStats['failed'] || 0), sub: taskStats['failed'] ? 'needs review' : 'none', color: taskStats['failed'] ? 'text-red-400 border-red-500/25' : 'text-gray-500 border-gray-700/30' },
-        ].map(a => (
-          <Link key={a.href} href={a.href} prefetch={false} className={`anet-stat-link group relative rounded-xl border ${a.color} bg-[#111128] px-3 py-3 transition-all hover:-translate-y-px`}>
-            <div className="flex items-baseline justify-between">
-              <div className={`text-xl font-semibold tabular-nums ${a.color.split(' ')[0]}`}>{a.value}</div>
-              <div className="text-[10px] text-gray-600 group-hover:text-gray-400 transition-colors">View →</div>
-            </div>
-            <div className="text-[11px] text-gray-400 mt-0.5">{a.label}</div>
-            <div className="text-[10px] text-gray-600 mt-px">{a.sub}</div>
-          </Link>
-        ))}
+        {(() => {
+          // Build breakdown popover content per card. Pure data — pure CSS
+          // popover (no JS state) wires the hover-show transition below.
+          const idleCount = sessions.filter(s => isOnline(s) && s.status !== 'working').length;
+          const offlineCount = total - online;
+          const orderedStatuses = ['running', 'replied', 'failed', 'cancelled', 'expired', 'closed', 'created', 'delivered', 'acked'];
+          const failedRecent = tasks.filter((t: { status: string }) => t.status === 'failed').length;
+
+          const cards = [
+            {
+              href: '/nodes', label: 'Nodes',
+              value: `${online}/${total}`,
+              sub: `${total > 0 ? Math.round((online / total) * 100) : 0}% online`,
+              color: 'text-green-400 border-green-500/20',
+              popover: total === 0 ? null : [
+                { k: 'working', v: working, dot: '', color: '#4ade80' },
+                { k: 'idle', v: idleCount, dot: '', color: '#22d3ee' },
+                { k: 'offline', v: offlineCount, dot: '', color: '#9ca3af' },
+              ],
+            },
+            {
+              href: '/tasks', label: 'Tasks',
+              value: String(Object.values(taskStats).reduce((a, b) => a + b, 0) || 0),
+              sub: 'all-time',
+              color: 'text-cyan-400 border-cyan-500/20',
+              popover: Object.keys(taskStats).length === 0 ? null
+                : orderedStatuses
+                    .filter(s => taskStats[s])
+                    .map(s => {
+                      // Inline hex avoids Tailwind purging dynamic
+                      // `bg-${color}-400` class names.
+                      const hex = ({
+                        running:   '#4ade80', replied:   '#a78bfa', failed:    '#f87171',
+                        cancelled: '#facc15', expired:   '#fb923c', closed:    '#9ca3af',
+                        created:   '#9ca3af', delivered: '#60a5fa', acked:     '#22d3ee',
+                      } as Record<string, string>)[s] || '#9ca3af';
+                      return { k: s, v: taskStats[s], dot: '', color: hex };
+                    }),
+            },
+            {
+              href: '/tasks?status=failed', label: 'Failed',
+              value: String(taskStats['failed'] || 0),
+              sub: taskStats['failed'] ? 'needs review' : 'none',
+              color: taskStats['failed'] ? 'text-red-400 border-red-500/25' : 'text-gray-500 border-gray-700/30',
+              popover: !failedRecent ? [{ k: 'no failures yet', v: '', dot: '', color: '#4b5563' }]
+                : [{ k: `${failedRecent} in current view`, v: '', dot: '', color: '#f87171' }],
+            },
+          ];
+
+          return cards.map(a => (
+            <Link
+              key={a.href}
+              href={a.href}
+              prefetch={false}
+              className={`anet-stat-link group relative rounded-xl border ${a.color} bg-[#111128] px-3 py-3 transition-all hover:-translate-y-px`}
+            >
+              <div className="flex items-baseline justify-between">
+                <div className={`text-xl font-semibold tabular-nums ${a.color.split(' ')[0]}`}>{a.value}</div>
+                <div className="text-[10px] text-gray-600 group-hover:text-gray-400 transition-colors">View →</div>
+              </div>
+              <div className="text-[11px] text-gray-400 mt-0.5">{a.label}</div>
+              <div className="text-[10px] text-gray-600 mt-px">{a.sub}</div>
+
+              {/* Hover popover — CSS-only, restrained. Hidden on touch
+                  (no :hover) so mobile is unaffected. Positioned just
+                  below the card so it doesn't fight nav rail. */}
+              {a.popover && a.popover.length > 0 && (
+                <div className="anet-stat-popover hidden md:block pointer-events-none absolute left-2 right-2 top-full mt-1 z-20 rounded-lg border border-[#2a2a4a] bg-[#0d0d1a] shadow-lg shadow-black/30 px-3 py-2 opacity-0 translate-y-[-2px] group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 delay-100">
+                  <div className="text-[10px] text-gray-600 uppercase tracking-wider mb-1.5">Breakdown</div>
+                  <ul className="space-y-1">
+                    {a.popover.map(row => (
+                      <li key={row.k} className="flex items-center gap-2 text-[11px]">
+                        <span
+                          className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: row.color }}
+                          aria-hidden
+                        />
+                        <span className="text-gray-400 capitalize">{row.k}</span>
+                        {row.v !== '' && <span className="ml-auto text-gray-300 tabular-nums font-medium">{row.v}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Link>
+          ));
+        })()}
       </section>
 
       {/* Nav rail — pure navigation, icon + label, no data */}
