@@ -44,21 +44,32 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a1a] text-gray-100 font-mono flex items-center justify-center relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-cyan-500/5 blur-[120px]" />
-        <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] rounded-full bg-blue-500/5 blur-[100px]" />
-      </div>
+    <main className="min-h-screen bg-[#0a0a1a] text-gray-100 font-mono flex items-center justify-center relative overflow-hidden px-4 py-10 sm:py-16">
+      {/* Subtle off-grid background — restraint over AI-glow.
+          Dark themes get a faint radial wash; light themes show a low-contrast
+          dotted grid for surface texture without noise. */}
+      <div className="absolute inset-0 pointer-events-none anet-login-bg" aria-hidden />
 
-      <div className="relative w-full max-w-sm mx-4">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/20 mb-4">
-            <svg className="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+      <div className="relative w-full max-w-sm">
+        <div className="text-center mb-7">
+          {/* Brand mark — uses the favicon 3-node mesh SVG which IS the
+              agent-network concept (nodes + edges). Replaces the previous
+              flat emerald square placeholder. */}
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-[#111128] border border-[#2a2a4a] anet-login-mark">
+            <svg className="w-9 h-9" viewBox="0 0 32 32" aria-hidden>
+              <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.25" className="text-cyan-400 anet-login-mark-ring" />
+              <line x1="16" y1="10" x2="10" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.5" className="text-cyan-400 anet-login-mark-edge" />
+              <line x1="16" y1="10" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.5" className="text-cyan-400 anet-login-mark-edge" />
+              <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.5" className="text-cyan-400 anet-login-mark-edge" />
+              <circle cx="16" cy="10" r="3" fill="currentColor" className="text-cyan-400 anet-login-mark-node-a" />
+              <circle cx="10" cy="20" r="3" fill="currentColor" className="text-green-400 anet-login-mark-node-b" />
+              <circle cx="22" cy="20" r="3" fill="currentColor" className="text-violet-400 anet-login-mark-node-c" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Agent Network</h1>
-          <p className="text-sm text-gray-500 mt-1">Dashboard</p>
+          <h1 className="text-[22px] sm:text-2xl font-semibold text-white tracking-tight">Agent Network</h1>
+          <p className="text-[13px] text-gray-500 mt-1.5 leading-snug">
+            One control plane for your AI agents · <span className="text-gray-600">Tasks · Mesh · Messages</span>
+          </p>
         </div>
 
         {/* Mode toggle */}
@@ -96,7 +107,10 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-700 mt-6">Powered by Sleep2AGI</p>
+        <div className="text-center mt-6 space-y-1">
+          <p className="text-[11px] text-gray-700">Powered by Sleep2AGI · Apache-2.0</p>
+          <p className="text-[10px] text-gray-700/70">anet.sh</p>
+        </div>
       </div>
     </main>
   );

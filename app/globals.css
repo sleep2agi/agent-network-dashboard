@@ -517,6 +517,28 @@ body {
   box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.12);
 }
 
+/* ─────────────────────────────────────────────────────────────────────
+   Login surface (round 1 polish)
+   Restrained, minimal — first impression for new Agent Network users.
+   ─────────────────────────────────────────────────────────────────── */
+.anet-login-bg {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(34, 211, 238, 0.05), transparent 55%),
+    radial-gradient(circle at 33% 75%, rgba(59, 130, 246, 0.045), transparent 55%);
+}
+[data-theme="light"] .anet-login-bg,
+[data-theme="mint"] .anet-login-bg {
+  background-image:
+    radial-gradient(circle at 50% 35%, rgba(0, 158, 126, 0.06), transparent 60%),
+    radial-gradient(circle, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px;
+}
+[data-theme="light"] .anet-login-mark,
+[data-theme="mint"] .anet-login-mark {
+  background: var(--bg-secondary) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px var(--border);
+}
+
 /* P0-3 baseline: error / warning chip colors for light themes.
    The component-level copy (replacing raw JSON with human text) is fixed
    in the Logs / Server-Logs page components separately. */
