@@ -7,6 +7,7 @@ import { Suspense } from 'react';
 import { TaskChatPanel } from '../components/TaskChatPanel';
 import { timeAgo } from '../components/utils';
 import { AliasAvatar } from '../components/AliasAvatar';
+import { SESSION_STATUS_TEXT_CLASS } from '../lib/status';
 
 interface SessionDetail {
   resume_id: string;
@@ -146,8 +147,9 @@ function NodeDetailContent() {
     );
   }
 
-  const statusColor = session?.status === 'working' ? 'text-green-400' :
-    session?.status === 'idle' ? 'text-blue-400' : 'text-gray-500';
+  /* Round 92: shared 5-state palette (was working / idle / other,
+     collapsed blocked + error into gray). */
+  const statusColor = SESSION_STATUS_TEXT_CLASS[session?.status || ''] || SESSION_STATUS_TEXT_CLASS.offline;
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">

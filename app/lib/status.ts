@@ -61,6 +61,16 @@ export const SESSION_STATUS_CHIP_CLASS: Record<string, string> = {
   offline: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
 };
 
+/** Text-only color for session status. Used where a chip background
+ *  would be too heavy — e.g. /node detail header status label. */
+export const SESSION_STATUS_TEXT_CLASS: Record<string, string> = {
+  working: 'text-green-400',
+  idle:    'text-blue-400',
+  blocked: 'text-yellow-400',
+  error:   'text-red-400',
+  offline: 'text-gray-500',
+};
+
 /** Solid bar segment background for the Tasks distribution bar. */
 export const STATUS_BAR_CLASS: Record<string, string> = {
   created:   'bg-gray-500',
