@@ -42,6 +42,10 @@ const pages = [
   { name: 'nodes',    path: '/nodes' },
   { name: 'tasks',    path: '/tasks' },
   { name: 'messages', path: '/messages' },
+  { name: 'admin',    path: '/admin' },
+  { name: 'settings', path: '/settings' },
+  { name: 'networks', path: '/settings/networks' },
+  { name: 'logs',     path: '/logs' },
 ];
 
 const matrix = [];

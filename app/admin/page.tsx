@@ -166,6 +166,15 @@ export default function AdminPage() {
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Actions</div>
             <div className="flex-1 h-px bg-[#2a2a4a]" />
           </div>
+          {sessions.length === 0 ? (
+            /* Round 77: Broadcast and Send Task both require at least one
+               registered agent. Surfacing the empty cards above an empty
+               fleet is the same dead-control class as the Overview
+               Dispatch button (r70). Replace with a single inline hint. */
+            <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl px-5 py-4 text-sm text-gray-500">
+              Broadcast and Send Task become available after the first agent registers.
+            </div>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Broadcast */}
@@ -229,6 +238,7 @@ export default function AdminPage() {
         </section>
 
           </div>
+          )}
         </div>
 
         {/* ── Group: Users ──────────────────────────────────────── */}
