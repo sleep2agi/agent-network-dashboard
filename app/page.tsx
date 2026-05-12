@@ -403,7 +403,12 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
+            {/* Round 48: previous breakpoints had `lg:grid-cols-2 xl:grid-cols-3`
+                which kept lg (1024-1279px) at only 2 columns even though
+                each AgentCard is fine ≥260px wide. With the sidebar (208px),
+                main area at lg is ~816px so 3 cols at ~272px each fits.
+                xl breakpoint auto-inherits lg=3 cols; 2xl bumps to 4. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
               {filtered.map(s => (
                 <AgentCard key={s.alias} session={s} hasSse={isOnline(s)} sseCount={sseLookup(s) || 0} onChat={cmd.openTab} />
               ))}
