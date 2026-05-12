@@ -23,6 +23,30 @@ const LEVEL_BADGE: Record<LogLine['level'], string> = {
   error: 'bg-red-500/10 text-red-300 border-red-500/30',
 };
 
+/** Left-rail strip color per log level — gives the eye a vertical guide
+ *  when scanning long log walls. Plain hex so Tailwind purge can't drop it. */
+const LEVEL_STRIPE: Record<LogLine['level'], string> = {
+  log: 'transparent',
+  info: '#22d3ee',
+  warn: '#f59e0b',
+  error: '#ef4444',
+};
+
+/** Highlight search-matched substring inside a log line. Case-insensitive
+ *  first-match wrap; mark inherits color so log-level coloring stays. */
+function highlightSearch(line: string, q: string) {
+  if (!q) return line;
+  const idx = line.toLowerCase().indexOf(q.toLowerCase());
+  if (idx < 0) return line;
+  return (
+    <>
+      {line.slice(0, idx)}
+      <mark className="bg-yellow-500/30 text-yellow-100 rounded-sm px-0.5">{line.slice(idx, idx + q.length)}</mark>
+      {line.slice(idx + q.length)}
+    </>
+  );
+}
+
 function shortTime(iso: string) {
   try {
     const d = new Date(iso);
@@ -182,12 +206,22 @@ export default function ServerLogsPage() {
         ) : (
           <div className="divide-y divide-[#0d0d18] max-h-[calc(100vh-260px)] overflow-y-auto">
             {filtered.map((l, i) => (
-              <div key={`${l.ts}-${i}`} className="px-3 py-1 hover:bg-[#0a0a14] flex gap-3">
-                <span className="text-gray-600 shrink-0 w-[110px] text-[10px]">{shortTime(l.ts)}</span>
+              <div key={`${l.ts}-${i}`} className="relative pl-3 pr-3 py-1 hover:bg-[#0a0a14] flex gap-3">
+                {/* Round 32: 2px left rail keyed to level. Makes warn/error
+                    spike visible in a wall of `log` lines without users having
+                    to read the level chip on every row. */}
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-0 bottom-0 w-0.5"
+                  style={{ backgroundColor: LEVEL_STRIPE[l.level] }}
+                />
+                <span className="text-gray-600 shrink-0 w-[100px] text-[10px] tabular-nums">{shortTime(l.ts)}</span>
                 <span className={`shrink-0 px-1.5 rounded border text-[9px] uppercase ${LEVEL_BADGE[l.level]}`}>
                   {l.level}
                 </span>
-                <span className={`break-all whitespace-pre-wrap ${LEVEL_COLOR[l.level]}`}>{l.line}</span>
+                <span className={`break-all whitespace-pre-wrap ${LEVEL_COLOR[l.level]}`}>
+                  {highlightSearch(l.line, search)}
+                </span>
               </div>
             ))}
           </div>
