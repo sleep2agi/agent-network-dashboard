@@ -223,3 +223,64 @@ green dot from the topology (subtle, no AI-glow). Gives every page a
 real-time "is my fleet up?" signal without going to /nodes.
 
 Estimated work: 25 min. Fires on next `*/5` loop cycle.
+
+---
+
+## Round 4 — Sidebar brand + live status
+
+### What changed
+- Sidebar header (used to be plain `Agent Network / Dashboard` two-line
+  text) is now `BrandMark + Agent Network + status pulse`.
+- **BrandMark**: same 3-node mesh SVG as `/login` (round 1), 32px in
+  expanded sidebar, 28px when collapsed. Cyan ring + cyan/green/violet
+  nodes use `currentColor` + Tailwind text-color classes so theming is
+  automatic.
+- **Live pulse**: tiny 1.5×1.5px emerald dot + copy. When online > 0 it
+  animates with `anet-brand-pulse` (1.6s slow opacity drift between
+  1.0 and 0.4 — NO scale, NO blur, NO glow). When `total === 0` it
+  reads "no agents yet" with a grey dot, no animation. Respects
+  `prefers-reduced-motion: reduce`.
+- Sidebar uses SWR to poll `/api/hub/status` every 10s (dedupes with
+  the Overview's existing request, so cost is zero).
+- Dropped the `Dashboard` sub-label — replaced with the status line.
+
+### Self-score: **8.6 / 10**
+
+| Dimension                | Score | Notes                                                                       |
+|--------------------------|------:|-----------------------------------------------------------------------------|
+| Brand continuity         | 10    | Same mark on /login and the sidebar — first-impression to power-use loop   |
+| Restraint                | 9     | Opacity-only pulse, no AI-glow; respects reduced-motion                    |
+| Information density      | 9     | 3 facts (brand, online count, total) in the same vertical space as before  |
+| Theme parity             | 9     | currentColor + emerald dot reads identical on both themes                  |
+| Mobile + collapse        | 8     | Both states tested; 28px mark in collapsed mode reads but tight at <16px sidebar |
+| Affordance               | 7     | The brand header isn't clickable; could route to /                          |
+
+**Deductions**:
+- −0.7: "no agents yet" copy feels slightly negative — "waiting for
+  agents" would feel more inviting. Easy copy tweak next round.
+- −0.4: brand block isn't a link. Clicking the brand on most apps
+  navigates home; we should make it a `<Link href="/">`. One-line fix.
+- −0.3: when sidebar is collapsed (`w-16`) the 28px mark looks small.
+  Could bump to 32px in collapsed mode (the row is taller than the
+  icon anyway).
+
+### Round 5 plan: **TopoGraph light SVG variant (close issue #8)**
+
+This is the largest open visual debt. The Command Mesh SVG bg is hard-
+coded `linearGradient #0b1220 → #080814 → #101018` and the radar rings
+are `#164e63`, the hub spokes are `#155e75`, the flow particles are
+`#fef08a`. In Cyber that whole palette sings. In Light it's a black
+square inside an otherwise white page (audit doc P1-2, GitHub issue #8).
+
+**Round 5 changes** (no business logic):
+- Detect theme via `useEffect` + `MutationObserver` on
+  `document.documentElement[data-theme]`, hold in component state.
+- Define two palette objects: `darkPalette` (current values) and
+  `lightPalette` (white bg + subtle grey grid + emerald node + soft
+  zinc edges, no glow filter).
+- Pass through the SVG attribute chain. Same component, same SVG
+  structure, theme-aware fills/strokes.
+- Verify both themes with Playwright (+ desktop + mobile).
+
+Estimated work: 60-80 min — the largest single round so far. Fires on
+next `*/5` cycle but may span 2 cycles.
