@@ -7,6 +7,7 @@ import { useNetworkId } from '../lib/network-context';
 import { TaskDrawer } from '../components/TaskDrawer';
 import { EmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
+import { TASK_STATUSES, STATUS_CHIP_CLASS, STATUS_DOT_HEX, STATUS_BAR_CLASS } from '../lib/status';
 
 interface Task {
   task_id: string;
@@ -24,48 +25,8 @@ interface Task {
   expires_at: string;
 }
 
-const STATUS_OPTIONS = [
-  '',
-  'created',
-  'delivered',
-  'acked',
-  'running',
-  'replied',
-  'closed',
-  'failed',
-  'cancelled',
-  'expired',
-];
-
-const STATUS_COLORS: Record<string, string> = {
-  created: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-  delivered: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-  acked: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
-  running: 'bg-green-500/10 text-green-300 border-green-500/20',
-  replied: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
-  closed: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-  failed: 'bg-red-500/10 text-red-300 border-red-500/20',
-  cancelled: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
-  expired: 'bg-orange-500/10 text-orange-300 border-orange-500/20',
-};
-
-/** Small colored dot per status — visible on every tab (active + inactive)
- *  so users can scan the row at a glance. Hex inlined to avoid Tailwind
- *  purging dynamic `bg-${family}-400` class names. */
-const STATUS_DOTS: Record<string, string> = {
-  created:   '#9ca3af',
-  delivered: '#60a5fa',
-  acked:     '#22d3ee',
-  running:   '#4ade80',
-  replied:   '#a78bfa',
-  closed:    '#6b7280',
-  failed:    '#f87171',
-  cancelled: '#facc15',
-  expired:   '#fb923c',
-};
-
 function statusBadge(status: string) {
-  const color = STATUS_COLORS[status] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+  const color = STATUS_CHIP_CLASS[status] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
   return `text-xs px-2 py-0.5 rounded-md border ${color}`;
 }
 
@@ -165,7 +126,7 @@ function TasksContent() {
           // agent filter (r34) chip-with-count pattern.
           const counts: Record<string, number> = {};
           tasks.forEach(t => { counts[t.status] = (counts[t.status] || 0) + 1; });
-          return ['', ...STATUS_OPTIONS.filter(Boolean)].map(s => {
+          return ['', ...TASK_STATUSES].map(s => {
             const count = s === '' ? tasks.length : counts[s] || 0;
             const isActive = filterStatus === s;
             return (
@@ -175,7 +136,7 @@ function TasksContent() {
                 disabled={count === 0 && s !== '' && !isActive}
                 className={`px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
                   isActive
-                    ? `${STATUS_COLORS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
+                    ? `${STATUS_CHIP_CLASS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
                     : 'text-gray-500 hover:text-gray-300 hover:bg-[#1a1a2a]/40'
                 }`}
               >
@@ -183,7 +144,7 @@ function TasksContent() {
                   <span
                     aria-hidden
                     className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: STATUS_DOTS[s] || '#6b7280' }}
+                    style={{ backgroundColor: STATUS_DOT_HEX[s] || '#6b7280' }}
                   />
                 )}
                 <span>{s || 'All'}</span>
@@ -233,21 +194,12 @@ function TasksContent() {
         const stats: Record<string, number> = {};
         tasks.forEach(t => { stats[t.status] = (stats[t.status] || 0) + 1; });
         const total = tasks.length || 1;
-        // Round 64-65: full coverage of all 9 task lifecycle states.
-        // Chronological-ish order: created → delivered → acked → running
-        // → replied → closed (archived) → failed / cancelled / expired
-        // (terminal-bad). Matches STATUS_OPTIONS exactly.
-        const bars = [
-          { key: 'created',   color: 'bg-gray-500'   },
-          { key: 'delivered', color: 'bg-blue-500'   },
-          { key: 'acked',     color: 'bg-cyan-500'   },
-          { key: 'running',   color: 'bg-green-500'  },
-          { key: 'replied',   color: 'bg-purple-500' },
-          { key: 'closed',    color: 'bg-gray-600'   },
-          { key: 'failed',    color: 'bg-red-500'    },
-          { key: 'cancelled', color: 'bg-yellow-500' },
-          { key: 'expired',   color: 'bg-orange-500' },
-        ].filter(b => stats[b.key]);
+        // Round 67: derive from shared TASK_STATUSES + STATUS_BAR_CLASS in
+        // app/lib/status.ts. Adding a new lifecycle status updates badge,
+        // tab dots, and bar in one edit.
+        const bars = TASK_STATUSES
+          .map(key => ({ key, color: STATUS_BAR_CLASS[key] }))
+          .filter(b => stats[b.key]);
         if (!bars.length) return null;
         // Round 63: removed the per-status legend row beneath the bar —
         // it duplicated the counts already shown in the tab chip strip
