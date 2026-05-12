@@ -127,19 +127,14 @@ export default function SettingsPage() {
           </h2>
           {licData?.license ? (
             <div className="space-y-3 text-sm">
-              <div className={rowClass}>
-                <span className="text-gray-500">Type</span>
-                <span className={`font-medium ${licData.license.type === 'pro' ? 'text-green-400' : 'text-yellow-400'}`}>
-                  {licData.license.type}
-                </span>
-              </div>
-              <div className={rowClass}>
-                <span className="text-gray-500">Days Left</span>
-                <span className={`${licData.license.days_left <= 7 ? 'text-red-400' : 'text-gray-300'}`}>
-                  {licData.license.days_left} days
-                  {licData.license.days_left <= 7 && ' — expiring soon!'}
-                </span>
-              </div>
+              {/* Type + Days Left are summarized in the inline chip in the
+                  header. Surface "expiring soon" only when relevant. */}
+              {licData.license.days_left <= 7 && (
+                <div className={rowClass}>
+                  <span className="text-red-400 font-medium">⚠ Expiring soon</span>
+                  <span className="text-red-400">{licData.license.days_left} days left</span>
+                </div>
+              )}
               <div className={rowClass}>
                 <span className="text-gray-500">Expires</span>
                 <span className={`text-gray-300 ${valueClass}`}>{licData.license.expires_at}</span>
@@ -255,20 +250,6 @@ export default function SettingsPage() {
         </div>
         </div>
 
-        {/* hidden — replaced by neutral Session card inside Account group above */}
-        <section className="hidden bg-[#111128] border border-red-900/30 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-red-400 mb-4">Session (legacy)</h2>
-          <p className="text-xs text-gray-500 mb-3">Sign out will clear your dashboard session cookie.</p>
-          <button
-            onClick={async () => {
-              await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-              window.location.assign('/login');
-            }}
-            className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-300 text-sm rounded-lg border border-red-800/30 transition-colors"
-          >
-            Sign out
-          </button>
-        </section>
       </div>
     </div>
   );
