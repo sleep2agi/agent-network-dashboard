@@ -116,18 +116,27 @@ export default function Dashboard() {
     return bWorking - aWorking;
   });
 
+  /** Round 70: when the fleet is empty, the Overview reorders to lead with
+   *  the "Spin up your first agent" CTA and hides the Quick Navigation /
+   *  Nav rail / Broadcast bar that would otherwise occupy prime real estate
+   *  with zeros and dead-end links. Computed once, used as a gate below. */
+  const fleetEmpty = sessions.length === 0 && !sessError;
+
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       <div className="lg:ml-0 ml-10">
         <StatsBar online={online} working={working} total={total} version={version} uptime={uptime} />
       </div>
 
-      {/* Dispatch + User Bar */}
+      {/* Dispatch + User Bar — Dispatch hidden when fleet empty (nothing to
+          dispatch to); UserBar still useful (account/sign-out menu). */}
       <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => setShowDispatch(true)}
-          className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-cyan-500/10 transition-all active:scale-95 shrink-0">
-          ⚡ Dispatch
-        </button>
+        {!fleetEmpty && (
+          <button onClick={() => setShowDispatch(true)}
+            className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-cyan-500/10 transition-all active:scale-95 shrink-0">
+            ⚡ Dispatch
+          </button>
+        )}
         <div className="flex-1"><UserBar /></div>
       </div>
 
@@ -190,7 +199,11 @@ export default function Dashboard() {
           (1) Top: live stat cards (carry data, drill-in on click)
           (2) Bottom: pure nav rail (no number, icon + label)
           Round 24 — wrap both in a labelled block so the rhythm reads as
-          "here are the main jumps" instead of two disconnected strips. */}
+          "here are the main jumps" instead of two disconnected strips.
+          Round 70 — entire Quick Nav + Nav rail + Broadcast + Recent
+          Activity block is hidden when the fleet is empty so the
+          onboarding CTA gets the page above the fold. */}
+      {!fleetEmpty && <>
       <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 mb-2">Quick navigation</div>
       <section className="mb-3 grid grid-cols-3 gap-2 sm:gap-3">
         {(() => {
@@ -329,6 +342,7 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+      </>}
 
       {sessError && (
         <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-4 py-3 rounded-lg mb-6 text-sm flex items-center justify-between" role="alert">
