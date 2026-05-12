@@ -57,3 +57,6 @@ playwright-report/
 
 # Local Claude Code state
 .claude/
+
+# Screenshots — hosted as GitHub Release assets, not committed
+docs/screenshots/
