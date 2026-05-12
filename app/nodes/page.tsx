@@ -148,7 +148,11 @@ export default function NodesPage() {
           <option value="blocked">Blocked</option>
           <option value="error">Error</option>
         </select>
-        <div className="ml-auto flex rounded-lg border border-[#2a2a4a] bg-[#111128] p-1 text-sm">
+        {/* Round 80: List/Grid toggle hidden on mobile — Grid uses
+            grid-cols-1 below `md` and List degrades to the same single
+            column, so the toggle has no visual effect under sm and only
+            steals a row of vertical space. */}
+        <div className="hidden sm:flex ml-auto rounded-lg border border-[#2a2a4a] bg-[#111128] p-1 text-sm">
           {(['list', 'grid'] as const).map(mode => (
             <button
               key={mode}
