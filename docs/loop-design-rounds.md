@@ -284,3 +284,98 @@ square inside an otherwise white page (audit doc P1-2, GitHub issue #8).
 
 Estimated work: 60-80 min — the largest single round so far. Fires on
 next `*/5` cycle but may span 2 cycles.
+
+---
+
+## Round 5 — TopoGraph light SVG variant · closes issue #8
+
+### What changed
+- Added a `useTheme()` hook that watches `data-theme` on
+  `document.documentElement` via `useEffect + MutationObserver`. Returns
+  `'light'` for `light/mint` themes, `'dark'` for `cyber/sunset`.
+- Defined two `Palette` objects (DARK_PALETTE, LIGHT_PALETTE) covering
+  panel gradient stops, radar wash colors, arrow fill, ring stroke,
+  spoke stroke (active + idle), flow edge, flow path, flow particle,
+  node fills (online + offline), label-box + legend-box backgrounds,
+  legend text/headline/accent, container bg + border, top-rail gradient
+  Tailwind tokens.
+- Threaded the palette through every hardcoded color in the SVG:
+  - `linearGradient #topo-panel` stops
+  - `radialGradient #topo-radar` stops
+  - `filter #topo-glow` is now **omitted** in light (no Gaussian blur
+    halo — that's the AI-glow risk vector)
+  - `marker #topo-arrow` fill
+  - radar rings + radial lines stroke + opacity
+  - hub link spokes (active + idle)
+  - directed message flow edges (with conditional `filter` for glow)
+  - node fill (online vs offline), halo, status indicator
+  - node label box rect fill + stroke
+  - "recent signal" + "legend" boxes (fill, stroke, text colors)
+- `nodeStatus(session, isOnline, isLight)` now also returns
+  theme-appropriate `primary / halo / text` triplets — emerald/teal/
+  zinc in light, neon cyan/green in dark.
+
+### Files touched
+- `app/components/TopoGraph.tsx` — single file, ~50 LOC added (palette
+  + theme hook), ~20 hardcoded colors replaced with palette refs.
+
+### Screenshots
+- `/tmp/loop-r5/light-desktop.png` ✓ — white-ish panel, faint emerald
+  wash, light grey radar rings, calm legend boxes, no glow halos
+- `/tmp/loop-r5/cyber-desktop.png` ✓ — unchanged from 0.4.4 (verified
+  no regression)
+- `/tmp/loop-r5/light-mobile.png` ✓ — "Show Topology" toggle (existing
+  mobile gate behavior preserved)
+- `/tmp/loop-r5/cyber-mobile.png` ✓
+
+### Self-score: **9.0 / 10**
+
+| Dimension                | Score | Notes                                                                          |
+|--------------------------|------:|--------------------------------------------------------------------------------|
+| Issue #8 closure         | 10    | Light theme TopoGraph no longer reads as a black square                       |
+| No Cyber regression      | 10    | Dark theme renders byte-identically; same palette values flow through         |
+| Restraint (AI-glow)      | 9     | Dropped `filter #topo-glow` in light — flat strokes only, no Gaussian halos   |
+| Theme detection robust   | 9     | MutationObserver catches runtime theme switches (live), not just initial paint |
+| Mobile parity            | 9     | Mobile mock gate ("topology hidden") preserved; if user shows it, both work   |
+| Code organization        | 8     | Palette objects + hook are tidy; some hub-pulse `#10b981` literal still inline |
+
+**Deductions**:
+- −0.5: "idle-5" offline node label box overlaps the center pulse hub
+  when offline-row positioning algorithm puts that node high. Pre-
+  existing layout bug, surfaced more clearly in light. Future round
+  could add layout collision avoidance.
+- −0.3: radar wash opacity 0.06 is very subtle in light. Might want
+  0.08–0.10 for slightly more depth. Tune in a future round.
+- −0.2: the 24px pulse hub (from 0.4.3-preview.1) uses `#10b981`
+  literal directly. Works in both themes by accident. Should be
+  palette-driven.
+
+### Round 6 plan: **Settings section grouping + License chip**
+
+The Settings page (audit P1-1) is currently a long flat list:
+```
+CommHub Connection
+Server Info
+Dashboard
+License
+Change Password
+API Tokens
+Networks
+Session
+```
+Each is a separately-bordered card with no visual hierarchy. The user
+can't tell at a glance which sections are "connection-y", "account-y",
+or "advanced-y".
+
+**Round 6 changes** (no business logic):
+- Wrap the cards into 3 logical groups with small uppercase section
+  headings:
+  - **Connection** → CommHub Connection + Server Info + Dashboard
+  - **Account** → License + Change Password + Session
+  - **Resources** → API Tokens + Networks
+- License "trial" text → a proper amber pill ("trial • 14 days left").
+- Session card: tone down the red headline (looks like an error).
+  "Session" → "Sign out", red → neutral grey, red `Sign out` button →
+  ghost outline.
+
+Estimated work: 25 min. Fires next `*/5`.
