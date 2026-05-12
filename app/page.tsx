@@ -186,19 +186,42 @@ export default function Dashboard() {
         </section>
       )}
 
-      {/* Quick Actions */}
-      <section className="mb-6 grid grid-cols-3 sm:grid-cols-6 gap-2">
+      {/* Quick Actions — split into two distinct intents:
+          (1) Top: live stat cards (carry data, drill-in on click)
+          (2) Bottom: pure nav rail (no number, icon + label)
+          Previously these were mixed in one row of 6, mixing data cells
+          ("0/0", "--", "0") with placeholder arrows ("→ Messages").
+          Users couldn't tell which were stats vs which were navigation. */}
+      <section className="mb-3 grid grid-cols-3 gap-2 sm:gap-3">
         {[
-          { href: '/nodes', label: 'Nodes', value: `${online}/${total}`, color: 'text-green-400 border-green-500/15' },
-          { href: '/tasks', label: 'Tasks', value: String(Object.values(taskStats).reduce((a, b) => a + b, 0) || '--'), color: 'text-cyan-400 border-cyan-500/15' },
-          { href: '/tasks?status=failed', label: 'Failed', value: String(taskStats['failed'] || 0), color: taskStats['failed'] ? 'text-red-400 border-red-500/20' : 'text-gray-600 border-gray-700/30' },
-          { href: '/messages', label: 'Messages', value: '→', color: 'text-blue-400 border-blue-500/15' },
-          { href: '/logs', label: 'Logs', value: '→', color: 'text-purple-400 border-purple-500/15' },
-          { href: '/admin', label: 'Admin', value: '→', color: 'text-gray-400 border-gray-500/15' },
+          { href: '/nodes', label: 'Nodes', value: `${online}/${total}`, sub: `${online > 0 ? Math.round((online/total)*100) : 0}% online`, color: 'text-green-400 border-green-500/20' },
+          { href: '/tasks', label: 'Tasks', value: String(Object.values(taskStats).reduce((a, b) => a + b, 0) || 0), sub: 'all-time', color: 'text-cyan-400 border-cyan-500/20' },
+          { href: '/tasks?status=failed', label: 'Failed', value: String(taskStats['failed'] || 0), sub: taskStats['failed'] ? 'needs review' : 'none', color: taskStats['failed'] ? 'text-red-400 border-red-500/25' : 'text-gray-500 border-gray-700/30' },
         ].map(a => (
-          <Link key={a.href} href={a.href} prefetch={false} className={`text-center rounded-xl border ${a.color} bg-[#111128] px-3 py-2.5 hover:bg-[#161630] transition-colors`}>
-            <div className={`text-lg font-bold tabular-nums ${a.color.split(' ')[0]}`}>{a.value}</div>
-            <div className="text-[10px] text-gray-500">{a.label}</div>
+          <Link key={a.href} href={a.href} prefetch={false} className={`anet-stat-link group relative rounded-xl border ${a.color} bg-[#111128] px-3 py-3 transition-all hover:-translate-y-px`}>
+            <div className="flex items-baseline justify-between">
+              <div className={`text-xl font-semibold tabular-nums ${a.color.split(' ')[0]}`}>{a.value}</div>
+              <div className="text-[10px] text-gray-600 group-hover:text-gray-400 transition-colors">View →</div>
+            </div>
+            <div className="text-[11px] text-gray-400 mt-0.5">{a.label}</div>
+            <div className="text-[10px] text-gray-600 mt-px">{a.sub}</div>
+          </Link>
+        ))}
+      </section>
+
+      {/* Nav rail — pure navigation, icon + label, no data */}
+      <section className="mb-6 grid grid-cols-3 gap-2 sm:gap-3">
+        {[
+          { href: '/messages', label: 'Messages', icon: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' },
+          { href: '/logs', label: 'Audit log', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
+          { href: '/admin', label: 'Admin', icon: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2' },
+        ].map(a => (
+          <Link key={a.href} href={a.href} prefetch={false}
+            className="anet-nav-tile flex items-center justify-center gap-2 rounded-xl border border-[#2a2a4a] bg-[#111128] px-3 py-2.5 text-[12px] text-gray-400 hover:text-gray-200 transition-colors">
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d={a.icon} />
+            </svg>
+            <span>{a.label}</span>
           </Link>
         ))}
       </section>
