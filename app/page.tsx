@@ -170,18 +170,15 @@ export default function Dashboard() {
             <Link href="/tasks" prefetch={false} className="text-xs text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
           </div>
           <div className="flex flex-wrap gap-2">
-            {[
-              { key: 'running', color: 'bg-green-500/10 text-green-300 border-green-500/20' },
-              { key: 'delivered', color: 'bg-blue-500/10 text-blue-300 border-blue-500/20' },
-              { key: 'acked', color: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20' },
-              { key: 'replied', color: 'bg-purple-500/10 text-purple-300 border-purple-500/20' },
-              { key: 'failed', color: 'bg-red-500/10 text-red-300 border-red-500/20' },
-              { key: 'cancelled', color: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20' },
-              { key: 'expired', color: 'bg-orange-500/10 text-orange-300 border-orange-500/20' },
-              { key: 'closed', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' },
-            ].filter(({ key }) => taskStats[key])
-              .map(({ key, color }) => (
-                <Link key={key} href={`/tasks?status=${key}`} prefetch={false} className={`px-2.5 py-1 rounded-md border text-xs ${color} hover:opacity-80 transition-opacity`}>
+            {/* Round 69: order is "hot first" — active flow before terminal
+                states — intentionally different from the lifecycle order on
+                /tasks. Colors come from shared STATUS_CHIP_CLASS so a
+                palette tweak in app/lib/status.ts updates here too.
+                'created' added in r69 (was missing — enum-coverage bug). */}
+            {(['running', 'delivered', 'acked', 'replied', 'created', 'failed', 'cancelled', 'expired', 'closed'] as const)
+              .filter((key) => taskStats[key])
+              .map((key) => (
+                <Link key={key} href={`/tasks?status=${key}`} prefetch={false} className={`px-2.5 py-1 rounded-md border text-xs ${STATUS_CHIP_CLASS[key]} hover:opacity-80 transition-opacity`}>
                   {key}: {taskStats[key]}
                 </Link>
               ))}
