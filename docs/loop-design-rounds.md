@@ -684,6 +684,65 @@ Estimated work: 20 min. Fires next `*/5`.
 
 ---
 
+## Round 14 — Cmd+K command palette (scaffold)
+
+### What changed
+- New `app/components/CommandPalette.tsx` mounted in `AppShell` so it's
+  globally available on every non-login page.
+- **Keyboard shortcuts** (global, not per-page):
+  - `⌘K` / `Ctrl+K` toggles open/closed
+  - `/` opens when no input is focused (Linear-style)
+  - `↑↓` navigates results, `Enter` activates, `Esc` closes
+- **Layout**: centered modal at 10vh-15vh from top, max-w-xl, backdrop
+  blur over content. Search input + grouped results + footer hint bar.
+- **Initial command set**: 10 navigation entries covering every
+  primary page (Overview / Tasks / Failed tasks / Nodes / Messages /
+  Networks / Audit Log / Server Logs / Admin / Settings). Each carries
+  a hint subtitle and a thin-stroke icon.
+- **Filter behavior**: case-insensitive search over title + hint + id.
+  Active row gets emerald tint + `↵` glyph; mouse hover updates the
+  selected index so keyboard and pointer stay in sync.
+- **Light/mint surface**: white modal with real soft shadow (vs the
+  default `bg-[#0d0d1a]` navy that CSS shim would translate). Override
+  ruled in globals.css.
+
+### Self-score: **8.7 / 10**
+
+| Dimension              | Score | Notes                                                                  |
+|------------------------|------:|------------------------------------------------------------------------|
+| Adoption signal        | 9     | Stripe/Linear/Vercel staple — sets reader expectation that we're modern |
+| Keyboard-first         | 9     | All keys wired; mouse + keyboard stay in sync                          |
+| Restraint              | 9     | Mono-stroke icons, single accent color, no AI shimmer                   |
+| Theme parity           | 9     | Light gets a proper white surface w/ shadow; cyber uses navy           |
+| Discoverability        | 7     | No visible "press ⌘K" hint anywhere on the page yet                    |
+| Mobile                 | 6     | Works on mobile (tap to open via UI) — but no on-screen launcher yet  |
+
+**Deductions**:
+- −0.7: zero on-page hint that the palette exists. Most users will
+  never find `⌘K` without docs. Should add a tiny "⌘K" badge in
+  sidebar footer or in the UserBar.
+- −0.4: no mobile launcher. Mobile has no obvious affordance.
+- −0.2: command set is navigation-only. Round 15 will add actions
+  (theme toggle / sign out / Dispatch open) and recent-commands.
+
+### Round 15 plan: **Cmd+K actions + recent-commands**
+
+Extend the scaffold with the "Actions" group:
+- Toggle theme (cyber ↔ light)
+- Open Dispatch dialog (current page's Dispatch button)
+- Sign out
+- Copy current URL
+
+Plus add a `Recents` group at the top that surfaces the last 3-5
+commands the user invoked (ring buffer in `sessionStorage`).
+
+Plus a discoverability nudge — tiny `⌘K` chip in sidebar footer +
+UserBar tooltip.
+
+Estimated work: 25 min. Fires next `*/5`.
+
+---
+
 ## Round 12 — Loading skeleton refresh
 
 ### What changed
