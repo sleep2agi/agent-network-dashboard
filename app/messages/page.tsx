@@ -40,6 +40,37 @@ function bubbleVariant(message: MessageItem) {
   return 'incoming';
 }
 
+/** Stable color hash for sender avatars — same alias always gets the same
+ *  ring, so users learn the colors over time. 8 hues, evenly spread. */
+const AVATAR_HUES = [180, 200, 220, 270, 300, 330, 30, 90];
+function avatarColors(alias: string): { bg: string; ring: string; text: string } {
+  let h = 0;
+  for (let i = 0; i < alias.length; i++) h = (h * 31 + alias.charCodeAt(i)) >>> 0;
+  const hue = AVATAR_HUES[h % AVATAR_HUES.length];
+  return {
+    bg: `hsl(${hue} 55% 22%)`,
+    ring: `hsl(${hue} 60% 45%)`,
+    text: `hsl(${hue} 80% 78%)`,
+  };
+}
+function avatarInitial(alias?: string): string {
+  if (!alias) return '·';
+  // Strip non-letter prefix, take first non-ws char; handle CJK directly.
+  const ch = alias.trim().match(/[\p{L}\p{N}]/u)?.[0] || alias.trim()[0] || '·';
+  return ch.toUpperCase();
+}
+
+/** Render message content, highlighting the search match inline (skips the
+ *  `from:` filter prefix since it filters by sender, not by content). */
+function renderHighlighted(content: string | undefined, search: string) {
+  const text = content || '--';
+  const q = search.trim();
+  if (!q || q.startsWith('from:')) return text;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx < 0) return text;
+  return <>{text.slice(0, idx)}<mark className="bg-yellow-500/30 text-yellow-200 rounded px-0.5">{text.slice(idx, idx + q.length)}</mark>{text.slice(idx + q.length)}</>;
+}
+
 export default function MessagesPage() {
   const { messages, isLoading } = useMessages(200);
   const [filterType, setFilterType] = useState('');
@@ -213,13 +244,22 @@ export default function MessagesPage() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-1">
           {filtered.map((message: MessageItem, index) => {
             const previous = filtered[index - 1];
             const gapExceeded = previous
               ? normalizeDate(message.created_at) - normalizeDate(previous.created_at) > 5 * 60 * 1000
               : false;
             const variant = bubbleVariant(message);
+            // Cluster: same sender + same direction + same to_alias and no
+            // time-gap divider → tighter spacing and hide repeated header.
+            const samePrev = !!previous
+              && !gapExceeded
+              && bubbleVariant(previous) === variant
+              && (previous.from_alias || '') === (message.from_alias || '')
+              && (previous.to_alias || '') === (message.to_alias || '');
+            const fromAlias = message.from_alias || '?';
+            const avColors = avatarColors(fromAlias);
 
             return (
               <div key={message.id}>
@@ -231,60 +271,79 @@ export default function MessagesPage() {
                   </div>
                 )}
 
-                <div className={
-                  variant === 'broadcast'
-                    ? ''
-                    : variant === 'outgoing'
-                      ? 'flex justify-end'
-                      : 'flex justify-start'
-                }>
-                  <div className={`rounded-2xl border px-4 py-3 shadow-sm ${
-                    variant === 'broadcast'
-                      ? 'w-full border-purple-500/20 bg-purple-500/10'
-                      : variant === 'outgoing'
-                        ? 'max-w-3xl border-green-500/20 bg-green-500/10'
-                        : 'max-w-3xl border-blue-500/20 bg-blue-500/10'
-                  }`}>
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
-                        {message.type || 'unknown'}
-                      </span>
-                      <span className={`text-sm font-medium ${variant === 'outgoing' ? 'text-green-300' : variant === 'broadcast' ? 'text-purple-200' : 'text-blue-300'}`}>
-                        {message.from_alias || '--'}
-                      </span>
-                      {variant !== 'broadcast' && (
-                        <>
+                {/* Broadcasts span full width — no avatar gutter. */}
+                {variant === 'broadcast' ? (
+                  <div className={samePrev ? 'mt-1' : 'mt-3'}>
+                    <div className="rounded-2xl border border-purple-500/20 bg-purple-500/10 px-4 py-3 shadow-sm w-full">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                          {message.type || 'unknown'}
+                        </span>
+                        <span className="text-sm font-medium text-purple-200">{fromAlias}</span>
+                        {message.to_alias && <span className="text-xs text-purple-200/80">to {message.to_alias}</span>}
+                        {message.priority === 'high' && <span className="text-xs text-red-400">HIGH</span>}
+                        <span className="ml-auto text-xs text-gray-500">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
+                      </div>
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-200">
+                        {renderHighlighted(message.content, search)}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`${samePrev ? 'mt-1' : 'mt-3'} flex gap-2 ${variant === 'outgoing' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {/* Avatar gutter — fixed width keeps bubble columns aligned even on streaks */}
+                    <div className="w-8 shrink-0 pt-1">
+                      {!samePrev && (
+                        <div
+                          className="flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold"
+                          style={{ backgroundColor: avColors.bg, borderColor: avColors.ring, color: avColors.text }}
+                          title={fromAlias}
+                        >
+                          {avatarInitial(fromAlias)}
+                        </div>
+                      )}
+                    </div>
+                    <div className={`min-w-0 max-w-3xl rounded-2xl border px-4 py-3 shadow-sm ${
+                      variant === 'outgoing'
+                        ? 'border-green-500/20 bg-green-500/10'
+                        : 'border-blue-500/20 bg-blue-500/10'
+                    }`}>
+                      {!samePrev && (
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                            {message.type || 'unknown'}
+                          </span>
+                          <span className={`text-sm font-medium ${variant === 'outgoing' ? 'text-green-300' : 'text-blue-300'}`}>
+                            {fromAlias}
+                          </span>
                           <span className="text-xs text-gray-600">&rarr;</span>
                           <span className="text-sm text-gray-300">{message.to_alias || '--'}</span>
-                        </>
+                          {message.priority === 'high' && <span className="text-xs text-red-400">HIGH</span>}
+                          <span className="ml-auto text-xs text-gray-500">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
+                        </div>
                       )}
-                      {variant === 'broadcast' && message.to_alias && (
-                        <span className="text-xs text-purple-200/80">to {message.to_alias}</span>
-                      )}
-                      {message.priority === 'high' && <span className="text-xs text-red-400">HIGH</span>}
-                      <span className="ml-auto text-xs text-gray-500">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
-                    </div>
 
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-200">
-                      {(() => {
-                        const text = message.content || '--';
-                        const q = search.trim();
-                        if (!q || q.startsWith('from:')) return text;
-                        const idx = text.toLowerCase().indexOf(q.toLowerCase());
-                        if (idx < 0) return text;
-                        return <>{text.slice(0, idx)}<mark className="bg-yellow-500/30 text-yellow-200 rounded px-0.5">{text.slice(idx, idx + q.length)}</mark>{text.slice(idx + q.length)}</>;
-                      })()}
-                    </div>
-
-                    {debug && (
-                      <div className="mt-3 border-t border-white/10 pt-3 text-xs text-gray-500 space-y-1">
-                        <div>ID: {message.id}</div>
-                        {message.task_id && <div>Task ID: {message.task_id}</div>}
-                        <div>Created: {message.created_at}</div>
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-200">
+                        {renderHighlighted(message.content, search)}
                       </div>
-                    )}
+
+                      {/* When in a streak, surface the timestamp inline-right so users still know cadence */}
+                      {samePrev && (
+                        <div className="mt-1 text-[10px] text-gray-600 text-right">
+                          {message.created_at ? timeAgo(message.created_at) : ''}
+                        </div>
+                      )}
+
+                      {debug && (
+                        <div className="mt-3 border-t border-white/10 pt-3 text-xs text-gray-500 space-y-1">
+                          <div>ID: {message.id}</div>
+                          {message.task_id && <div>Task ID: {message.task_id}</div>}
+                          <div>Created: {message.created_at}</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             );
           })}
