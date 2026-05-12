@@ -1,6 +1,8 @@
 'use client';
 
 import { InboxMessage } from './types';
+import { AliasAvatar } from './AliasAvatar';
+import { timeAgo } from './utils';
 
 interface InboxPanelProps {
   messages: InboxMessage[];
@@ -20,9 +22,10 @@ export function InboxPanel({ messages }: InboxPanelProps) {
       <div className="space-y-2 max-h-96 overflow-y-auto pr-1 scrollbar-thin">
         {messages.map(m => (
           <div key={m.id} className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-4 py-3 text-sm transition-colors hover:border-[#3a3a5a]">
-            <div className="flex justify-between text-xs text-gray-500 mb-1.5">
-              <span className="text-blue-400 font-medium">{m.from_session}</span>
-              <span>{m.created_at}</span>
+            <div className="flex items-center gap-2 text-xs mb-1.5">
+              {m.from_session && <AliasAvatar alias={m.from_session} size={16} />}
+              <span className="text-gray-200 font-medium truncate">{m.from_session}</span>
+              <span className="ml-auto text-gray-600 shrink-0" title={m.created_at}>{timeAgo(m.created_at)}</span>
             </div>
             <div className="text-gray-300 leading-relaxed">{m.content}</div>
           </div>
