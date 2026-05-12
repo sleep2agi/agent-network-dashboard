@@ -18,12 +18,31 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
-      <h1 className="text-2xl font-bold text-white mb-6 lg:ml-0 ml-10">Settings</h1>
+      <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Settings</h1>
 
-      <div className="max-w-2xl space-y-8">
+      {/* Section anchor nav (round 28) — jump to a group instead of scrolling
+          through the whole page. Mirrors the section headers below; pages
+          with 7+ cards benefit from a visible table-of-contents. */}
+      <nav className="mb-8 flex flex-wrap gap-1 text-xs">
+        {[
+          { href: '#connection', label: 'Connection' },
+          { href: '#account',    label: 'Account' },
+          { href: '#resources',  label: 'Resources' },
+        ].map(a => (
+          <a key={a.href} href={a.href}
+            className="rounded-md px-2.5 py-1 text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+            {a.label}
+          </a>
+        ))}
+      </nav>
+
+      <div className="max-w-2xl space-y-10">
         {/* ── Group: Connection ─────────────────────────────────── */}
-        <div className="space-y-4">
-          <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 px-1">Connection</div>
+        <div id="connection" className="space-y-4 scroll-mt-6">
+          <div className="flex items-center gap-2 px-1">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Connection</div>
+            <div className="flex-1 h-px bg-[#2a2a4a]" />
+          </div>
 
         {/* CommHub Connection */}
         <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
@@ -103,8 +122,11 @@ export default function SettingsPage() {
         </div>
 
         {/* ── Group: Account ────────────────────────────────────── */}
-        <div className="space-y-4">
-          <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 px-1">Account</div>
+        <div id="account" className="space-y-4 scroll-mt-6">
+          <div className="flex items-center gap-2 px-1">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Account</div>
+            <div className="flex-1 h-px bg-[#2a2a4a]" />
+          </div>
 
         {/* License */}
         <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
@@ -232,8 +254,11 @@ export default function SettingsPage() {
         </div>
 
         {/* ── Group: Resources ──────────────────────────────────── */}
-        <div className="space-y-4">
-          <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 px-1">Resources</div>
+        <div id="resources" className="space-y-4 scroll-mt-6">
+          <div className="flex items-center gap-2 px-1">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Resources</div>
+            <div className="flex-1 h-px bg-[#2a2a4a]" />
+          </div>
 
         {/* API Tokens + Networks */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
