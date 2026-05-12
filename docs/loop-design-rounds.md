@@ -681,3 +681,58 @@ restyle. Refresh to use:
 - both themes, no AI-noise
 
 Estimated work: 20 min. Fires next `*/5`.
+
+---
+
+## Round 12 — Loading skeleton refresh
+
+### What changed
+- `LoadingSkeleton` now **mirrors the actual Overview layout** so the
+  page doesn't shift on data arrival. Old version was generic header
+  + broadcast + topology + 4-card grid; new version shows: 4 KPI
+  cards, Dispatch+UserBar row, Config bar, 3-card stat strip, 3-tile
+  nav rail, Broadcast bar, 4-card agent grid.
+- Switched from Tailwind's `animate-pulse` (1s opacity drift) to a
+  custom `anet-skeleton-pulse` (1.6s) to match the same rhythm as
+  `anet-brand-pulse` in the sidebar and the health banner amber dot.
+  Visual cohesion across the design system.
+- Introduced `anet-skeleton-bar` class with explicit per-theme
+  background: `#1a1a2a` on dark (lighter navy on dark card),
+  `#d4d8df` on light/mint (mid-grey on white card). The previous
+  attempt to reuse the `bg-[#1a1a2a]` shim was too subtle (light
+  card #ffffff vs bar mapped to bg-elevated #eef0f4 = only ~7
+  brightness levels different = invisible bars).
+- All bar dimensions use rem-based explicit values via inline style
+  so they don't depend on Tailwind purge correctness.
+- `prefers-reduced-motion: reduce` kills the pulse on both classes.
+
+### Self-score: **9.0 / 10**
+
+| Dimension              | Score | Notes                                                            |
+|------------------------|------:|------------------------------------------------------------------|
+| No content shift       | 9     | Skeleton matches Overview structure cell-for-cell                |
+| Theme parity           | 10    | Both themes get visible bars (the original sin of round 11 plan) |
+| Restraint              | 9     | No shimmer-gradient, no animation noise, just 1.6s opacity drift |
+| Design-system cohesion | 9     | Same pulse rhythm as brand pulse + health banner amber           |
+| Accessibility          | 9     | prefers-reduced-motion respected on both classes                 |
+
+**Deductions**:
+- −0.5: skeleton shows the FULL Overview (8+ blocks). Most actual
+  page-loads complete in <300ms so user barely sees this. Slower
+  hubs may see the whole thing; some users might prefer a shorter
+  skeleton. Could trim agent grid to 2 cards if it feels long in
+  practice.
+- −0.5: the agent-card skeleton is generic (status dot + alias bar
+  + 3 detail bars). Real cards carry status chip + agent type +
+  server hostname + uptime — could mirror more specifically.
+
+### Round 13 plan: **Tasks status tabs — color coding**
+
+The Tasks page filter tab strip (`All / created / delivered / acked /
+running / replied / closed / failed / cancelled / expired`) is all
+neutral-styled — no visual scannability. Color-code each by its
+status family using the same tokens as the chips system used
+elsewhere (running=green, replied=purple, failed=red, etc.), so the
+user can spot "failed" without reading every label.
+
+Estimated work: 20 min. Fires next `*/5`.

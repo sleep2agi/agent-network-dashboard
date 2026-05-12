@@ -635,6 +635,32 @@ body {
   .anet-brand-pulse { animation: none; }
 }
 
+/* Skeleton pulse — same 1.6s rhythm as the brand pulse but applied to a
+   container so all bars inside breathe together. Drifts between full
+   token value and 60% so light themes show a calm grey-to-bg-elevated
+   fade and dark themes show a calm navy-to-elevated fade. */
+@keyframes anet-skeleton-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+.anet-skeleton-pulse {
+  animation: anet-skeleton-kf 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-skeleton-pulse { animation: none; }
+}
+
+/* Skeleton bar fill — different per theme so it's visible against the
+   card bg without being loud. Dark: lighter navy block on dark card.
+   Light: mid-grey on white card (not too light or it disappears). */
+.anet-skeleton-bar {
+  background-color: #1a1a2a;
+}
+[data-theme="light"] .anet-skeleton-bar,
+[data-theme="mint"] .anet-skeleton-bar {
+  background-color: #d4d8df;
+}
+
 /* P0-3 baseline: error / warning chip colors for light themes.
    The component-level copy (replacing raw JSON with human text) is fixed
    in the Logs / Server-Logs page components separately. */
