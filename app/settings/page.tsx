@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAnetConfig, useHealth, useLicense } from '../lib/hooks';
+import { DASHBOARD_VERSION } from '../lib/version';
 
 export default function SettingsPage() {
   const { config } = useAnetConfig();
@@ -107,7 +108,9 @@ export default function SettingsPage() {
           <div className="space-y-3 text-sm">
             <div className={rowClass}>
               <span className="text-gray-500">Version</span>
-              <span className={`text-gray-300 ${valueClass}`}>V2.1</span>
+              <span className={`text-gray-300 font-mono ${valueClass}`} title="From package.json @sleep2agi/agent-network-dashboard">
+                {DASHBOARD_VERSION}
+              </span>
             </div>
             <div className={rowClass}>
               <span className="text-gray-500">Data Layer</span>
@@ -115,7 +118,7 @@ export default function SettingsPage() {
             </div>
             <div className={rowClass}>
               <span className="text-gray-500">Pages</span>
-              <span className={`text-gray-300 ${valueClass}`}>Overview, Tasks, Nodes, Messages, Settings</span>
+              <span className={`text-gray-300 ${valueClass}`}>Overview, Tasks, Nodes, Messages, Networks, Audit, Server Logs, Admin, Settings</span>
             </div>
           </div>
         </section>
