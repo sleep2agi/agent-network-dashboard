@@ -1,0 +1,534 @@
+@import "tailwindcss";
+
+/* ────────────────────────────────────────────────────
+   Design tokens — switch via [data-theme="..."] on <html>
+   See ThemeProvider for runtime selection.
+   ──────────────────────────────────────────────────── */
+
+:root,
+[data-theme="cyber"] {
+  --bg:           #0a0a1a;
+  --bg-secondary: #11112a;
+  --bg-elevated:  #161640;
+  --fg:           #e5e7eb;
+  --fg-muted:     #9ca3af;
+  --fg-dim:       #6b7280;
+  --border:       #2a2a4a;
+  --border-hover: #3a3a5a;
+  --accent:       #8b5cf6;
+  --accent-fg:    #ffffff;
+  --success:      #10b981;
+  --warning:      #f59e0b;
+  --danger:       #ef4444;
+  --info:         #3b82f6;
+  --scrollbar:    #2a2a4a;
+  --scrollbar-hover: #3a3a5a;
+  --code-bg:      #1a1a3a;
+  color-scheme:   dark;
+}
+
+[data-theme="light"] {
+  --bg:           #f6f7f9;
+  --bg-secondary: #ffffff;
+  --bg-elevated:  #eef0f4;
+  --fg:           #0f1419;
+  --fg-muted:     #525a66;
+  --fg-dim:       #8a94a3;
+  --border:       #e3e6eb;
+  --border-hover: #c8cdd6;
+  --accent:       #009e7e;
+  --accent-fg:    #ffffff;
+  --success:      #059669;
+  --warning:      #d97706;
+  --danger:       #dc2626;
+  --info:         #0284c7;
+  --scrollbar:    #d4d8df;
+  --scrollbar-hover: #a1a8b5;
+  --code-bg:      #eef0f4;
+  color-scheme:   light;
+}
+
+[data-theme="mint"] {
+  --bg:           #f0fdf4;
+  --bg-secondary: #ffffff;
+  --bg-elevated:  #dcfce7;
+  --fg:           #052e16;
+  --fg-muted:     #166534;
+  --fg-dim:       #4ade80;
+  --border:       #bbf7d0;
+  --border-hover: #86efac;
+  --accent:       #16a34a;
+  --accent-fg:    #ffffff;
+  --success:      #16a34a;
+  --warning:      #ca8a04;
+  --danger:       #dc2626;
+  --info:         #0891b2;
+  --scrollbar:    #bbf7d0;
+  --scrollbar-hover: #86efac;
+  --code-bg:      #dcfce7;
+  color-scheme:   light;
+}
+
+[data-theme="sunset"] {
+  --bg:           #1a0f1f;
+  --bg-secondary: #2d1633;
+  --bg-elevated:  #3f1d47;
+  --fg:           #fde68a;
+  --fg-muted:     #fbbf24;
+  --fg-dim:       #b45309;
+  --border:       #581c87;
+  --border-hover: #7e22ce;
+  --accent:       #f97316;
+  --accent-fg:    #ffffff;
+  --success:      #84cc16;
+  --warning:      #facc15;
+  --danger:       #f43f5e;
+  --info:         #ec4899;
+  --scrollbar:    #581c87;
+  --scrollbar-hover: #7e22ce;
+  --code-bg:      #2d1633;
+  color-scheme:   dark;
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --font-mono: var(--font-geist-mono);
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Smooth scrollbar — themed */
+.scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
+
+/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Mobile touch targets */
+@media (max-width: 640px) {
+  select, input[type="text"], button {
+    min-height: 44px;
+  }
+}
+
+/* Safe area for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ────────────────────────────────────────────────────
+   Compatibility shims — gradually replace hard-coded
+   #0a0a1a / zinc-9xx / etc. in components with var()
+   over time. These rules let the existing components
+   pick up the active theme even before they are
+   migrated.
+   ──────────────────────────────────────────────────── */
+
+/* page-level dark backgrounds → use --bg */
+[data-theme="light"] .bg-\[\#050510\],
+[data-theme="light"] .bg-\[\#080814\],
+[data-theme="light"] .bg-\[\#0a0a14\],
+[data-theme="light"] .bg-\[\#0a0a15\],
+[data-theme="light"] .bg-\[\#0a0a1a\],
+[data-theme="light"] .bg-\[\#0d0d1a\],
+[data-theme="light"] .bg-\[\#11112a\],
+[data-theme="light"] .bg-\[\#11111c\],
+[data-theme="light"] .bg-\[\#161630\],
+[data-theme="light"] .bg-\[\#161640\],
+[data-theme="mint"] .bg-\[\#050510\],
+[data-theme="mint"] .bg-\[\#080814\],
+[data-theme="mint"] .bg-\[\#0a0a14\],
+[data-theme="mint"] .bg-\[\#0a0a15\],
+[data-theme="mint"] .bg-\[\#0a0a1a\],
+[data-theme="mint"] .bg-\[\#0d0d1a\],
+[data-theme="mint"] .bg-\[\#11112a\],
+[data-theme="mint"] .bg-\[\#11111c\],
+[data-theme="mint"] .bg-\[\#161630\],
+[data-theme="mint"] .bg-\[\#161640\] {
+  background-color: var(--bg) !important;
+}
+
+/* card / elevated backgrounds (incl. opacity variants) */
+[data-theme="light"] .bg-\[\#111128\],
+[data-theme="light"] .bg-\[\#111128\]\/80,
+[data-theme="light"] .bg-\[\#1a1a2a\],
+[data-theme="light"] .bg-\[\#1a1a3a\],
+[data-theme="mint"] .bg-\[\#111128\],
+[data-theme="mint"] .bg-\[\#111128\]\/80,
+[data-theme="mint"] .bg-\[\#1a1a2a\],
+[data-theme="mint"] .bg-\[\#1a1a3a\] {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* hover / input field backgrounds */
+[data-theme="light"] .bg-\[\#2a2a4a\],
+[data-theme="mint"] .bg-\[\#2a2a4a\] {
+  background-color: var(--bg-elevated) !important;
+}
+
+/* hardcoded borders */
+[data-theme="light"] .border-\[\#111128\],
+[data-theme="light"] .border-\[\#1a1a2a\],
+[data-theme="light"] .border-\[\#2a2a4a\],
+[data-theme="light"] .border-\[\#3a3a5a\],
+[data-theme="mint"] .border-\[\#111128\],
+[data-theme="mint"] .border-\[\#1a1a2a\],
+[data-theme="mint"] .border-\[\#2a2a4a\],
+[data-theme="mint"] .border-\[\#3a3a5a\] {
+  border-color: var(--border) !important;
+}
+
+/* dark-tuned gradient buttons → flat brand color in light themes */
+[data-theme="light"] [class*="from-cyan-"][class*="to-blue-"],
+[data-theme="light"] [class*="from-cyan-"][class*="to-emerald-"],
+[data-theme="light"] [class*="from-emerald-"][class*="to-cyan-"],
+[data-theme="light"] [class*="from-blue-"][class*="to-cyan-"] {
+  background: var(--accent) !important;
+  color: var(--accent-fg) !important;
+}
+[data-theme="light"] [class*="from-cyan-"][class*="to-blue-"]:hover,
+[data-theme="light"] [class*="from-cyan-"][class*="to-emerald-"]:hover,
+[data-theme="light"] [class*="from-emerald-"][class*="to-cyan-"]:hover,
+[data-theme="light"] [class*="from-blue-"][class*="to-cyan-"]:hover {
+  background: #00b894 !important;
+  filter: brightness(1.05);
+}
+[data-theme="light"] .text-gray-100,
+[data-theme="light"] .text-gray-200,
+[data-theme="light"] .text-gray-300,
+[data-theme="light"] .text-gray-100\/90,
+[data-theme="mint"] .text-gray-100,
+[data-theme="mint"] .text-gray-200,
+[data-theme="mint"] .text-gray-300,
+[data-theme="mint"] .text-gray-100\/90 {
+  color: var(--fg) !important;
+}
+[data-theme="light"] .text-gray-400,
+[data-theme="light"] .text-gray-500,
+[data-theme="light"] .text-gray-600,
+[data-theme="light"] .placeholder-gray-600::placeholder,
+[data-theme="mint"] .text-gray-400,
+[data-theme="mint"] .text-gray-500,
+[data-theme="mint"] .text-gray-600,
+[data-theme="mint"] .placeholder-gray-600::placeholder {
+  color: var(--fg-muted) !important;
+}
+[data-theme="light"] .text-white,
+[data-theme="mint"] .text-white {
+  color: var(--fg) !important;
+}
+
+[data-theme="light"] .text-zinc-100,
+[data-theme="light"] .text-zinc-200,
+[data-theme="light"] .text-white,
+[data-theme="mint"] .text-zinc-100,
+[data-theme="mint"] .text-zinc-200,
+[data-theme="mint"] .text-white {
+  color: var(--fg) !important;
+}
+
+[data-theme="light"] .text-zinc-400,
+[data-theme="light"] .text-zinc-500,
+[data-theme="mint"] .text-zinc-400,
+[data-theme="mint"] .text-zinc-500 {
+  color: var(--fg-muted) !important;
+}
+
+[data-theme="light"] .bg-zinc-900,
+[data-theme="light"] .bg-zinc-950,
+[data-theme="light"] .bg-black,
+[data-theme="mint"] .bg-zinc-900,
+[data-theme="mint"] .bg-zinc-950,
+[data-theme="mint"] .bg-black {
+  background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="light"] .bg-zinc-800,
+[data-theme="mint"] .bg-zinc-800 {
+  background-color: var(--bg-elevated) !important;
+}
+
+[data-theme="light"] .border-zinc-700,
+[data-theme="light"] .border-zinc-800,
+[data-theme="light"] .border-white\/10,
+[data-theme="light"] .border-white\/5,
+[data-theme="mint"] .border-zinc-700,
+[data-theme="mint"] .border-zinc-800,
+[data-theme="mint"] .border-white\/10,
+[data-theme="mint"] .border-white\/5 {
+  border-color: var(--border) !important;
+}
+
+/* Light theme: additional zinc shades + accent colors override */
+[data-theme="light"] .bg-zinc-700,
+[data-theme="light"] .bg-zinc-600,
+[data-theme="mint"] .bg-zinc-700,
+[data-theme="mint"] .bg-zinc-600 {
+  background-color: var(--bg-elevated) !important;
+}
+[data-theme="light"] .text-zinc-300,
+[data-theme="light"] .text-zinc-600,
+[data-theme="mint"] .text-zinc-300,
+[data-theme="mint"] .text-zinc-600 {
+  color: var(--fg-muted) !important;
+}
+[data-theme="light"] .text-zinc-700,
+[data-theme="light"] .text-zinc-800,
+[data-theme="mint"] .text-zinc-700,
+[data-theme="mint"] .text-zinc-800 {
+  color: var(--fg) !important;
+}
+
+/* Light theme: emerald / cyan / indigo accents → unified brand emerald */
+[data-theme="light"] .text-emerald-400,
+[data-theme="light"] .text-emerald-300,
+[data-theme="light"] .text-cyan-400,
+[data-theme="light"] .text-cyan-300,
+[data-theme="light"] .text-indigo-400 {
+  color: var(--accent) !important;
+}
+[data-theme="light"] .bg-emerald-500\/10,
+[data-theme="light"] .bg-emerald-500\/20,
+[data-theme="light"] .bg-cyan-500\/10,
+[data-theme="light"] .bg-cyan-500\/20 {
+  background-color: rgba(0, 158, 126, 0.08) !important;
+}
+[data-theme="light"] .border-emerald-500\/30,
+[data-theme="light"] .border-emerald-500\/40,
+[data-theme="light"] .border-cyan-500\/30 {
+  border-color: rgba(0, 158, 126, 0.32) !important;
+}
+
+/* Light theme: card-like containers get a subtle elevation shadow
+   (cards in dark mode lean on glow; in light mode they need a real shadow
+   to read as a layer rather than blending into the page background) */
+[data-theme="light"] .bg-zinc-900,
+[data-theme="light"] .bg-zinc-950,
+[data-theme="light"] .bg-\[\#0a0a1a\],
+[data-theme="light"] .bg-\[\#11112a\],
+[data-theme="light"] .bg-\[\#161640\] {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 6px 18px -8px rgba(15, 23, 42, 0.08);
+}
+[data-theme="light"] .bg-zinc-800 {
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* Light theme: kill any leftover ring / shadow-glow that was tuned for dark bg */
+[data-theme="light"] [class*="shadow-emerald"],
+[data-theme="light"] [class*="shadow-cyan"],
+[data-theme="light"] [class*="shadow-indigo"] {
+  --tw-shadow-color: rgba(0, 158, 126, 0.18);
+}
+
+/* Solid-color action buttons (bg-blue-600 / bg-cyan-600 / bg-green-600 / …)
+   stay dark navy in light themes because the gradient-button shim above only
+   matches `from-…-to-…` gradient buttons. Map every primary solid background
+   to the active accent so Broadcast / Send Task / Register / Change Password
+   etc. read as the brand color instead of black-on-white. */
+[data-theme="light"] .bg-blue-600,
+[data-theme="light"] .bg-blue-500,
+[data-theme="light"] .bg-cyan-600,
+[data-theme="light"] .bg-cyan-500,
+[data-theme="light"] .bg-emerald-600,
+[data-theme="light"] .bg-emerald-500,
+[data-theme="light"] .bg-green-600,
+[data-theme="light"] .bg-green-500,
+[data-theme="light"] .bg-indigo-600,
+[data-theme="light"] .bg-indigo-500,
+[data-theme="light"] .bg-purple-600,
+[data-theme="light"] .bg-purple-500,
+[data-theme="mint"] .bg-blue-600,
+[data-theme="mint"] .bg-blue-500,
+[data-theme="mint"] .bg-cyan-600,
+[data-theme="mint"] .bg-cyan-500,
+[data-theme="mint"] .bg-emerald-600,
+[data-theme="mint"] .bg-emerald-500,
+[data-theme="mint"] .bg-green-600,
+[data-theme="mint"] .bg-green-500,
+[data-theme="mint"] .bg-indigo-600,
+[data-theme="mint"] .bg-indigo-500,
+[data-theme="mint"] .bg-purple-600,
+[data-theme="mint"] .bg-purple-500 {
+  background-color: var(--accent) !important;
+  color: var(--accent-fg) !important;
+}
+[data-theme="light"] .hover\:bg-blue-500:hover,
+[data-theme="light"] .hover\:bg-cyan-500:hover,
+[data-theme="light"] .hover\:bg-emerald-500:hover,
+[data-theme="light"] .hover\:bg-green-500:hover,
+[data-theme="light"] .hover\:bg-indigo-500:hover,
+[data-theme="light"] .hover\:bg-purple-500:hover,
+[data-theme="mint"] .hover\:bg-blue-500:hover,
+[data-theme="mint"] .hover\:bg-cyan-500:hover,
+[data-theme="mint"] .hover\:bg-emerald-500:hover,
+[data-theme="mint"] .hover\:bg-green-500:hover,
+[data-theme="mint"] .hover\:bg-indigo-500:hover,
+[data-theme="mint"] .hover\:bg-purple-500:hover {
+  background-color: #00b894 !important;
+  filter: brightness(1.05);
+}
+
+/* Disabled state for the same family — keep contrast against the page bg
+   so disabled buttons don't read as "dark and active" in light mode */
+[data-theme="light"] .disabled\:bg-gray-800:disabled,
+[data-theme="light"] .disabled\:bg-zinc-800:disabled,
+[data-theme="mint"] .disabled\:bg-gray-800:disabled,
+[data-theme="mint"] .disabled\:bg-zinc-800:disabled {
+  background-color: var(--bg-elevated) !important;
+  color: var(--fg-muted) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   v0.4.3 light-theme polish — Phase 3 P0 fixes
+   ─────────────────────────────────────────────────────────────────── */
+
+/* P0-1: Sidebar gets its own surface in light themes (not page-colored).
+   In Cyber (dark) the sidebar already feels separate via depth; in
+   light/mint the page bg == sidebar bg so only the right border separates
+   them. Switch sidebar to bg-secondary (white) + a hairline shadow. */
+[data-theme="light"] aside[data-anet-sidebar="true"],
+[data-theme="mint"] aside[data-anet-sidebar="true"] {
+  background-color: var(--bg-secondary) !important;
+  /* Right edge: solid hairline border + a soft 16px halo so the sidebar
+     reads as a card hovering over the page, not "part of the page". */
+  box-shadow:
+    1px 0 0 var(--border),
+    8px 0 20px -10px rgba(15, 23, 42, 0.10),
+    0 0 0 1px rgba(15, 23, 42, 0.02);
+  border-right-color: transparent !important;
+}
+/* Also tint page bg slightly cooler so the white sidebar pops more */
+[data-theme="light"] {
+  --bg: #f3f5f8; /* was #f6f7f9 — bumped 3pt cooler for sidebar contrast */
+}
+
+/* P0-2: Active nav — collapse the 4-emerald stack (bg + border + text + ring)
+   to a single accent cue: 3px left bar + medium-weight text. Dark themes
+   keep the existing tinted-pill look. */
+[data-theme="light"] .anet-nav-active,
+[data-theme="mint"] .anet-nav-active {
+  /* 通信龙 final spec (Q1 + 3-piece lockdown): active nav = ONE cue.
+     4px left bar emerald, text in --fg (NOT emerald), NO bg tint.
+     Reads as a calm "current page" indicator without competing emerald
+     surfaces. (Earlier 0.4.3 had 3px + faint tint + emerald text.) */
+  background-color: transparent !important;
+  border-color: transparent !important;
+  border-left: 4px solid var(--accent) !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding-left: calc(0.75rem - 4px) !important;
+  color: var(--fg) !important;
+  font-weight: 600;
+}
+[data-theme="light"] .anet-nav-active:hover,
+[data-theme="mint"] .anet-nav-active:hover {
+  background-color: var(--bg-elevated) !important;
+}
+/* When sidebar is collapsed (w-16, justify-center) the left bar would look
+   weird against a centered icon — switch to a left-bg accent instead. */
+[data-theme="light"] aside.w-16 .anet-nav-active,
+[data-theme="mint"] aside.w-16 .anet-nav-active {
+  border-radius: 8px !important;
+  padding-left: 0 !important;
+  border-left: 0 !important;
+  background-color: var(--bg-elevated) !important;
+  color: var(--accent) !important;
+}
+
+/* Q6: native <select> theming for light/mint.
+   Without this, dropdowns on Nodes / Messages / Logs / Settings render with
+   the OS default chrome (heavy chevron, off-spec font weight, no border
+   radius). We strip the native chrome with appearance-none, then paint our
+   own chevron via a background-image SVG. ~10 LOC. */
+[data-theme="light"] select,
+[data-theme="mint"] select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23525a66' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 8l5 5 5-5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.6rem center !important;
+  background-size: 1rem 1rem !important;
+  padding-right: 2rem !important;
+  background-color: var(--bg-secondary) !important;
+  border-radius: 8px;
+}
+[data-theme="light"] select:focus,
+[data-theme="mint"] select:focus {
+  outline: 2px solid rgba(0, 158, 126, 0.2);
+  outline-offset: -1px;
+  border-color: var(--accent) !important;
+}
+/* Mint reuses the same chevron — color picker would need its own gray, but
+   accent is similar enough that the default chevron color reads OK. */
+
+/* KPI stat cards in light mode: kill the gradient wash (which reads as
+   pale-mud on white), replace with a 2px top accent strip per color
+   family + real elevation shadow. Dark themes keep the gradient. */
+[data-theme="light"] .anet-stat-card,
+[data-theme="mint"] .anet-stat-card {
+  border-top-width: 2px;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -8px rgba(15, 23, 42, 0.08);
+}
+[data-theme="light"] .anet-stat-card:hover,
+[data-theme="mint"] .anet-stat-card:hover {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06), 0 12px 24px -12px rgba(15, 23, 42, 0.16);
+}
+/* Top-strip colors per stat family */
+[data-theme="light"] .anet-stat-card[data-anet-stat-card="green"] { border-top-color: #10b981; }
+[data-theme="light"] .anet-stat-card[data-anet-stat-card="cyan"]  { border-top-color: var(--accent); }
+[data-theme="light"] .anet-stat-card[data-anet-stat-card="gray"]  { border-top-color: #94a3b8; }
+[data-theme="light"] .anet-stat-card[data-anet-stat-card="white"] { border-top-color: #3b82f6; }
+[data-theme="mint"]  .anet-stat-card[data-anet-stat-card="green"] { border-top-color: #16a34a; }
+[data-theme="mint"]  .anet-stat-card[data-anet-stat-card="cyan"]  { border-top-color: var(--accent); }
+[data-theme="mint"]  .anet-stat-card[data-anet-stat-card="gray"]  { border-top-color: #4ade80; }
+[data-theme="mint"]  .anet-stat-card[data-anet-stat-card="white"] { border-top-color: #0891b2; }
+/* Drop the gradient wash in light themes — looks like dust on white. */
+[data-theme="light"] .anet-stat-card > .pointer-events-none,
+[data-theme="mint"] .anet-stat-card > .pointer-events-none {
+  display: none;
+}
+
+/* Generic card hover elevation — every white card on light bg gets a
+   subtle lift on hover so clickability is obvious. */
+[data-theme="light"] .bg-\[\#111128\]:hover,
+[data-theme="mint"] .bg-\[\#111128\]:hover {
+  box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.12);
+}
+
+/* P0-3 baseline: error / warning chip colors for light themes.
+   The component-level copy (replacing raw JSON with human text) is fixed
+   in the Logs / Server-Logs page components separately. */
+[data-theme="light"] .anet-error-chip,
+[data-theme="mint"] .anet-error-chip {
+  background-color: rgba(220, 38, 38, 0.06) !important;
+  color: #b91c1c !important;
+  border-color: rgba(220, 38, 38, 0.25) !important;
+}
+[data-theme="light"] .anet-warn-chip,
+[data-theme="mint"] .anet-warn-chip {
+  background-color: rgba(217, 119, 6, 0.08) !important;
+  color: #92400e !important;
+  border-color: rgba(217, 119, 6, 0.28) !important;
+}

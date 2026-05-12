@@ -1,0 +1,47 @@
+{
+  "name": "@sleep2agi/agent-network-dashboard",
+  "version": "0.4.4-preview.0",
+  "description": "Agent Network Dashboard — Web UI for managing AI Agent networks",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "prepublishOnly": "rm -rf .next && npm run build"
+  },
+  "bin": {
+    "agent-network-dashboard": "./bin/start.js"
+  },
+  "homepage": "https://anet.sh",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sleep2agi/agent-network-dashboard"
+  },
+  "bugs": {
+    "url": "https://github.com/sleep2agi/agent-network-dashboard/issues"
+  },
+  "author": "sleep2agi",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "next": "16.2.3",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "swr": "^2.4.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

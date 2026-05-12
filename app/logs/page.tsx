@@ -1,0 +1,154 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { timeAgo } from '../components/utils';
+import { useNetworkId } from '../lib/network-context';
+
+interface AuditLog {
+  id: string;
+  action: string;
+  user_id: string;
+  username: string;
+  target_type: string;
+  target_id: string;
+  detail: string;
+  ip: string;
+  created_at: string;
+}
+
+const ACTION_COLORS: Record<string, string> = {
+  register: 'bg-green-500/10 text-green-300 border-green-500/20',
+  login: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
+  login_failed: 'bg-red-500/10 text-red-300 border-red-500/20',
+  create_network: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
+  send_task: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+};
+
+export default function LogsPage() {
+  const { networkId } = useNetworkId();
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [filterAction, setFilterAction] = useState('');
+
+  const fetchLogs = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({ limit: '100' });
+      if (networkId) params.set('network_id', networkId);
+      if (filterAction) params.set('action', filterAction);
+      // Pass V3 user token if logged in
+      const saved = sessionStorage.getItem('anet_v3_auth');
+      if (saved) {
+        try { const auth = JSON.parse(saved); if (auth.token) params.set('token', auth.token); } catch {}
+      }
+
+      const res = await fetch(`/api/hub/audit-log?${params.toString()}`);
+      if (res.status === 401) { window.location.assign('/login'); return; }
+      const data = await res.json();
+      setLogs(data.logs || []);
+      setError(data.error && !data.logs?.length ? data.error : '');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'fetch failed');
+    } finally { setLoading(false); }
+  }, [filterAction, networkId]);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 10000);
+    return () => clearInterval(interval);
+  }, [fetchLogs]);
+
+  return (
+    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+      <div className="flex items-center gap-4 mb-6">
+        <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Logs</h1>
+        <span className="text-xs bg-gray-900/30 text-gray-400 px-2 py-0.5 rounded-full border border-gray-800/30">
+          Audit Log
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-3 mb-6">
+        <select
+          value={filterAction}
+          onChange={e => setFilterAction(e.target.value)}
+          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500/50 focus:outline-none"
+        >
+          <option value="">All actions</option>
+          <option value="register">register</option>
+          <option value="login">login</option>
+          <option value="login_failed">login_failed</option>
+          <option value="create_network">create_network</option>
+          <option value="send_task">send_task</option>
+        </select>
+      </div>
+
+      {error && (() => {
+        // Don't dump raw error JSON to users — translate known patterns,
+        // and give them a clickable recovery affordance.
+        const isAuth = /unauthor|401|forbidden|403|admin/i.test(error);
+        return (
+          <div className="anet-warn-chip bg-yellow-900/20 border border-yellow-800/40 text-yellow-300 px-4 py-3 rounded-lg mb-6 text-sm flex items-start gap-3" role="alert">
+            <span aria-hidden className="text-base leading-none">⚠</span>
+            <div className="flex-1">
+              {isAuth ? (
+                <>
+                  <div className="font-medium">需要 admin 权限查看审计日志</div>
+                  <div className="text-xs opacity-80 mt-1">
+                    审计日志记录用户注册 / 登录 / 网络变更等事件，需要 admin 角色。
+                  </div>
+                  <Link href="/login" className="inline-block mt-2 text-xs font-medium underline underline-offset-4 hover:opacity-80">
+                    切到 admin 账号 →
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <div className="font-medium">加载失败</div>
+                  <div className="text-xs opacity-80 mt-1">请检查 CommHub 是否在线，或稍后重试。</div>
+                  <button onClick={() => window.location.reload()} className="inline-block mt-2 text-xs font-medium underline underline-offset-4 hover:opacity-80">
+                    重新加载 →
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {loading ? (
+        <div className="animate-pulse space-y-2">
+          {[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-gray-800/20 rounded-lg" />)}
+        </div>
+      ) : logs.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="text-gray-600 text-4xl mb-4">--</div>
+          <h3 className="text-gray-400 text-lg font-medium mb-2">No audit logs</h3>
+          <p className="text-gray-600 text-sm">Events will appear here when users register, login, or perform actions.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {logs.map(log => (
+            <div key={log.id} className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-4 py-3 hover:border-[#3a3a5a] transition-colors">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className={`text-xs px-2 py-0.5 rounded-md border ${ACTION_COLORS[log.action] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                  {log.action}
+                </span>
+                <span className="text-sm text-blue-400 font-medium">{log.username || log.user_id}</span>
+                {log.target_type && (
+                  <>
+                    <span className="text-xs text-gray-600">&rarr;</span>
+                    <span className="text-xs text-gray-400">{log.target_type}{log.target_id ? `:${log.target_id.slice(0, 12)}` : ''}</span>
+                  </>
+                )}
+                <span className="text-xs text-gray-600 ml-auto">{timeAgo(log.created_at)}</span>
+              </div>
+              {log.detail && <div className="text-xs text-gray-500">{log.detail}</div>}
+              {log.ip && log.ip !== 'unknown' && <div className="text-[10px] text-gray-700">IP: {log.ip}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
