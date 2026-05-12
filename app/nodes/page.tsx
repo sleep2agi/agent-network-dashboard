@@ -6,6 +6,7 @@ import { timeAgo } from '../components/utils';
 import { useSessions, useHealth } from '../lib/hooks';
 import { TaskChatPanel } from '../components/TaskChatPanel';
 import { EmptyState } from '../components/EmptyState';
+import { AliasAvatar } from '../components/AliasAvatar';
 import type { Session } from '../components/types';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -188,13 +189,17 @@ export default function NodesPage() {
                     </span>
                   </div>
                 )}
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <AliasAvatar alias={s.alias} size={36} />
                   <Link href={`/node?alias=${encodeURIComponent(s.alias)}`} className="min-w-0 flex-1 hover:text-cyan-300">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-base font-semibold text-white">{s.alias}</span>
-                      <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[11px] ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
+                      <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] uppercase tracking-wide ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
                         {statusKey}
                       </span>
+                    </div>
+                    <div className="mt-0.5 truncate text-xs text-gray-500">
+                      {(s.agent || '—')}<span className="text-gray-700 mx-1.5">·</span>{(s.server || '—')}
                     </div>
                   </Link>
                   <div className="flex gap-1.5 shrink-0">
@@ -209,23 +214,14 @@ export default function NodesPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 space-y-2 text-xs text-gray-500">
-                  <div className="flex justify-between gap-3">
-                    <span>Agent</span>
-                    <span className="truncate text-gray-300">{s.agent || '--'}</span>
+                <div className="mt-3 rounded-lg border border-[#1a1a2a] bg-[#0a0a15] px-3 py-2 text-xs">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[10px] uppercase tracking-wide text-gray-600">Current task</span>
+                    <span className="text-[10px] text-gray-600">{timeAgo(s.last_seen_at || s.updated_at)}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
-                    <span>Server</span>
-                    <span className="truncate text-gray-300">{s.server || '--'}</span>
+                  <div className={`mt-1 line-clamp-2 ${s.task ? 'text-gray-300' : 'text-gray-600 italic'}`}>
+                    {s.task || 'No current task'}
                   </div>
-                  <div className="flex justify-between gap-3">
-                    <span>Updated</span>
-                    <span className="text-gray-300">{timeAgo(s.last_seen_at || s.updated_at)}</span>
-                  </div>
-                </div>
-
-                <div className="mt-3 rounded-lg border border-[#1a1a2a] bg-[#0a0a15] px-3 py-2 text-xs text-gray-400">
-                  {s.task ? s.task : 'No current task'}
                 </div>
 
                 {progress > 0 && progress < 100 && (
@@ -297,8 +293,9 @@ export default function NodesPage() {
                     </span>
                   </div>
                   <div className="col-span-2 min-w-0">
-                    <Link href={`/node?alias=${encodeURIComponent(s.alias)}`} className="truncate text-sm font-medium text-white hover:text-cyan-300">
-                      {s.alias}
+                    <Link href={`/node?alias=${encodeURIComponent(s.alias)}`} className="flex items-center gap-2 min-w-0 hover:text-cyan-300">
+                      <AliasAvatar alias={s.alias} size={20} />
+                      <span className="truncate text-sm font-medium text-white">{s.alias}</span>
                     </Link>
                   </div>
                   <div className="col-span-2 truncate text-xs text-gray-400">{s.agent || '--'}</div>
@@ -317,15 +314,16 @@ export default function NodesPage() {
                   </div>
                 </div>
                 <div className="sm:hidden space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <Link href={`/node?alias=${encodeURIComponent(s.alias)}`} className="truncate text-sm font-medium text-white hover:text-cyan-300">
-                      {s.alias}
+                  <div className="flex items-center gap-2.5">
+                    <AliasAvatar alias={s.alias} size={28} />
+                    <Link href={`/node?alias=${encodeURIComponent(s.alias)}`} className="min-w-0 flex-1 hover:text-cyan-300">
+                      <div className="truncate text-sm font-medium text-white">{s.alias}</div>
+                      <div className="truncate text-[10px] text-gray-500">{s.agent || '—'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
                     </Link>
                     <span className={`shrink-0 text-xs px-2 py-0.5 rounded-md border ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
                       {statusKey}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500">{s.agent || '--'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
                   {s.task && <div className="truncate text-xs text-gray-500">{s.task}</div>}
                   <div className="flex gap-2">
                     <button type="button" onClick={() => setChatAlias(s.alias)}

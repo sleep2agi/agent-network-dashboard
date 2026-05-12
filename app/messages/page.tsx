@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useMessages } from '../lib/hooks';
 import { timeAgo } from '../components/utils';
 import { EmptyState } from '../components/EmptyState';
+import { AliasAvatar } from '../components/AliasAvatar';
 
 interface MessageItem {
   id: string;
@@ -38,26 +39,6 @@ function bubbleVariant(message: MessageItem) {
   if (message.type === 'broadcast') return 'broadcast';
   if ((message.from_alias || '').toLowerCase() === 'dashboard') return 'outgoing';
   return 'incoming';
-}
-
-/** Stable color hash for sender avatars — same alias always gets the same
- *  ring, so users learn the colors over time. 8 hues, evenly spread. */
-const AVATAR_HUES = [180, 200, 220, 270, 300, 330, 30, 90];
-function avatarColors(alias: string): { bg: string; ring: string; text: string } {
-  let h = 0;
-  for (let i = 0; i < alias.length; i++) h = (h * 31 + alias.charCodeAt(i)) >>> 0;
-  const hue = AVATAR_HUES[h % AVATAR_HUES.length];
-  return {
-    bg: `hsl(${hue} 55% 22%)`,
-    ring: `hsl(${hue} 60% 45%)`,
-    text: `hsl(${hue} 80% 78%)`,
-  };
-}
-function avatarInitial(alias?: string): string {
-  if (!alias) return '·';
-  // Strip non-letter prefix, take first non-ws char; handle CJK directly.
-  const ch = alias.trim().match(/[\p{L}\p{N}]/u)?.[0] || alias.trim()[0] || '·';
-  return ch.toUpperCase();
 }
 
 /** Render message content, highlighting the search match inline (skips the
@@ -259,7 +240,6 @@ export default function MessagesPage() {
               && (previous.from_alias || '') === (message.from_alias || '')
               && (previous.to_alias || '') === (message.to_alias || '');
             const fromAlias = message.from_alias || '?';
-            const avColors = avatarColors(fromAlias);
 
             return (
               <div key={message.id}>
@@ -293,15 +273,7 @@ export default function MessagesPage() {
                   <div className={`${samePrev ? 'mt-1' : 'mt-3'} flex gap-2 ${variant === 'outgoing' ? 'flex-row-reverse' : 'flex-row'}`}>
                     {/* Avatar gutter — fixed width keeps bubble columns aligned even on streaks */}
                     <div className="w-8 shrink-0 pt-1">
-                      {!samePrev && (
-                        <div
-                          className="flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold"
-                          style={{ backgroundColor: avColors.bg, borderColor: avColors.ring, color: avColors.text }}
-                          title={fromAlias}
-                        >
-                          {avatarInitial(fromAlias)}
-                        </div>
-                      )}
+                      {!samePrev && <AliasAvatar alias={fromAlias} size={32} />}
                     </div>
                     <div className={`min-w-0 max-w-3xl rounded-2xl border px-4 py-3 shadow-sm ${
                       variant === 'outgoing'
