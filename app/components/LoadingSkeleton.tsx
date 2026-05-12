@@ -45,21 +45,6 @@ export function LoadingSkeleton() {
   );
 }
 
-export function EmptyState({ hint }: { hint?: { global_count?: number; filtered_network?: string } }) {
-  return (
-    <div className="text-center py-16">
-      <div className="text-gray-600 text-4xl mb-4">--</div>
-      <h3 className="text-gray-400 text-lg font-medium mb-2">No agents in this network</h3>
-      {hint?.global_count ? (
-        <p className="text-gray-500 text-sm max-w-md mx-auto">
-          Server has <span className="text-cyan-400 font-medium">{hint.global_count}</span> nodes globally,
-          but none are registered to the current network. Switch network or contact admin.
-        </p>
-      ) : (
-        <p className="text-gray-600 text-sm max-w-md mx-auto">
-          Agent sessions will appear here once they connect to the CommHub.
-        </p>
-      )}
-    </div>
-  );
-}
+// EmptyState export removed in 0.4.5 — replaced by EmptyState.tsx with
+// per-variant glyphs and a NodesEmptyState wrapper for the Overview
+// hint-aware behavior. See app/components/EmptyState.tsx.

@@ -168,3 +168,58 @@ clickable for drill-in, while the nav cells look like they have no data
 - Drop the leftover `EmptyState` export from `LoadingSkeleton.tsx`.
 
 Estimated work: 30 min. Will fire on next `*/5` loop cycle.
+
+---
+
+## Round 3 — Quick Actions disambiguation
+
+### What changed
+- Overview's previous 6-cell mixed row (3 data + 3 placeholder arrows)
+  is now **two intentional strips**:
+  - **Stat strip** (3 cards, larger): `Nodes 0/0 · 0% online`, `Tasks 0
+    · all-time`, `Failed 0 · none`. Big number on the left, "View →"
+    affordance top-right, label + sub-copy below the number. Hover =
+    `-translate-y-px` for a one-pixel lift.
+  - **Nav rail** (3 buttons, smaller): `Messages · Audit log · Admin`
+    each as icon + label, flat 12px text, no data values, neutral
+    border. Clear "navigation only" affordance.
+- Drop the now-unused `EmptyState` export in
+  `app/components/LoadingSkeleton.tsx`; the new
+  `app/components/EmptyState.tsx` is canonical.
+
+### Self-score: **8.5 / 10**
+
+| Dimension                | Score | Notes                                                          |
+|--------------------------|------:|----------------------------------------------------------------|
+| Intent clarity           | 10    | Stats above, nav below — instantly readable role               |
+| Information density      | 8     | Each stat carries 3 facts (value, label, sub) without crowding |
+| Affordance hierarchy     | 9     | "View →" tells you these are clickable, nav rail icons + label |
+| Mobile adaptation        | 7     | 3-col stat strip at 390px is tight; numbers + "View →" squeeze |
+| Theme parity             | 9     | Both render the same structure with theme-correct tokens       |
+| Restraint                | 9     | No gradient washes, no icons-with-color-fills, just lines      |
+
+**Deductions**:
+- −0.7: mobile 3-col is tight at 390px. Should probably collapse to
+  2-col-stat + 3-col-nav on `<sm`. Defer to next round if surfaces.
+- −0.5: "0% online" sub-copy reads wrong when `total=0` (should be
+  "no agents yet" or just "—"). Small copy bug, fix next round.
+- −0.3: nav rail icons are 16px stroke-1.5 SVG, slightly muddy at that
+  size. Bumping to 18px would help.
+
+### Round 4 plan: **Sidebar brand + live status**
+
+The sidebar header is still plain text:
+```
+Agent Network
+Dashboard
+```
+Round 1 introduced the 3-node mesh mark on the Login page. The sidebar
+should pick that up for brand continuity — users see the same visual
+identifier on every page.
+
+Add inline next to "Agent Network": a small **live status pulse** with
+`{online} online · {total} total`. The pulse uses the same 24px-hub
+green dot from the topology (subtle, no AI-glow). Gives every page a
+real-time "is my fleet up?" signal without going to /nodes.
+
+Estimated work: 25 min. Fires on next `*/5` loop cycle.
