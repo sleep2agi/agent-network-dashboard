@@ -85,19 +85,44 @@ export default function LogsPage() {
         )}
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-6">
-        <select
-          value={filterAction}
-          onChange={e => setFilterAction(e.target.value)}
-          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500/50 focus:outline-none"
-        >
-          <option value="">All actions</option>
-          <option value="register">register</option>
-          <option value="login">login</option>
-          <option value="login_failed">login_failed</option>
-          <option value="create_network">create_network</option>
-          <option value="send_task">send_task</option>
-        </select>
+      {/* Action filter chips (round 43) — same chip pattern as Tasks
+          status tabs / Overview agent filter. Each chip carries its
+          ACTION_STRIPE dot so the visual key matches the per-row left
+          rail. Counts come from the currently loaded log set. */}
+      <div className="mb-6 flex flex-wrap items-center gap-1 anet-tabstrip-wrap overflow-x-auto sm:overflow-x-visible">
+        {(() => {
+          const counts: Record<string, number> = {};
+          logs.forEach(l => { counts[l.action] = (counts[l.action] || 0) + 1; });
+          const chips: { key: string; label: string; dot?: string }[] = [
+            { key: '',                label: 'All' },
+            { key: 'login',           label: 'login',           dot: ACTION_STRIPE.login },
+            { key: 'login_failed',    label: 'login_failed',    dot: ACTION_STRIPE.login_failed },
+            { key: 'register',        label: 'register',        dot: ACTION_STRIPE.register },
+            { key: 'create_network',  label: 'create_network',  dot: ACTION_STRIPE.create_network },
+            { key: 'send_task',       label: 'send_task',       dot: ACTION_STRIPE.send_task },
+          ];
+          return chips.map(c => {
+            const count = c.key === '' ? logs.length : counts[c.key] || 0;
+            const isActive = filterAction === c.key;
+            return (
+              <button
+                key={c.key || 'all'}
+                type="button"
+                onClick={() => setFilterAction(c.key)}
+                disabled={count === 0 && c.key !== ''}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 whitespace-nowrap ${
+                  isActive
+                    ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
+                    : 'text-gray-500 hover:text-gray-200 hover:bg-[#1a1a2a] border border-transparent'
+                }`}
+              >
+                {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}
+                <span>{c.label}</span>
+                <span className={`text-[10px] tabular-nums ${isActive ? 'text-cyan-400' : 'text-gray-600'}`}>{count}</span>
+              </button>
+            );
+          });
+        })()}
       </div>
 
       {error && (() => {
