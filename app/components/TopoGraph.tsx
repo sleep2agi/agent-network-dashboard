@@ -412,27 +412,32 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
             );
           })}
 
-          {/* center hub — 24px pulse signal source.
-              Previous design (56px filled circle + 42px animated ring +
-              `+` glyph + "DASHBOARD" / "command relay" labels) over-emphasized
-              the hub and competed with the agent nodes for visual weight.
-              The new design is a calm 12px emerald source with two outward
-              pulse rings — reads as "signal origin" without a placeholder
-              logo or label. Closes agent-network#5. */}
+          {/* center hub — round 39: enlarged from r=6 (12px) to r=10 (20px)
+              core so the "control plane" reads as the network's anchor,
+              not a stray particle. Static halo ring at r=18 grounds it
+              visually; two outward pulses keep the "signal source" idea
+              from r17. Light theme gets a paler core to avoid hot-spotting
+              the bg. */}
           <g>
+            {/* static grounding halo — sits underneath, low opacity */}
+            <circle
+              cx={cx} cy={cy} r="18"
+              fill={isLight ? '#d1fae5' : '#10b981'}
+              opacity={isLight ? 0.35 : 0.10}
+            />
             {/* outer pulse 1 */}
-            <circle cx={cx} cy={cy} r="6" fill="none" stroke="#10b981" strokeWidth="1.5">
-              <animate attributeName="r" values="6;28;6" dur="2.4s" repeatCount="indefinite" />
+            <circle cx={cx} cy={cy} r="10" fill="none" stroke="#10b981" strokeWidth="1.5">
+              <animate attributeName="r" values="10;38;10" dur="2.4s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.55;0;0.55" dur="2.4s" repeatCount="indefinite" />
             </circle>
             {/* outer pulse 2 (delayed 1.2s) */}
-            <circle cx={cx} cy={cy} r="6" fill="none" stroke="#10b981" strokeWidth="1.5" opacity="0">
-              <animate attributeName="r" values="6;28;6" dur="2.4s" begin="1.2s" repeatCount="indefinite" />
+            <circle cx={cx} cy={cy} r="10" fill="none" stroke="#10b981" strokeWidth="1.5" opacity="0">
+              <animate attributeName="r" values="10;38;10" dur="2.4s" begin="1.2s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.45;0;0.45" dur="2.4s" begin="1.2s" repeatCount="indefinite" />
             </circle>
-            {/* core dot — 12px diameter (r=6), emerald with inner highlight */}
-            <circle cx={cx} cy={cy} r="6" fill="#10b981" />
-            <circle cx={cx} cy={cy} r="3" fill="#d1fae5" opacity="0.9" />
+            {/* core — 20px diameter, larger inner highlight reads as a "lit lamp" */}
+            <circle cx={cx} cy={cy} r="10" fill={isLight ? '#059669' : '#10b981'} />
+            <circle cx={cx} cy={cy} r="5" fill="#d1fae5" opacity="0.9" />
           </g>
 
           {/* agent nodes */}
