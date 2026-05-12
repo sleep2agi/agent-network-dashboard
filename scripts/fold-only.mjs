@@ -19,6 +19,9 @@ const targets = [
   { name: 'server-logs-cyber-desktop', path: '/server-logs', theme: 'cyber', w: 1440, h: 900 },
   { name: 'server-logs-cyber-mobile',  path: '/server-logs', theme: 'cyber', w: 390,  h: 844 },
   { name: 'admin-cyber-desktop',       path: '/admin',       theme: 'cyber', w: 1440, h: 900 },
+  { name: 'admin-light-desktop',       path: '/admin',       theme: 'light', w: 1440, h: 900 },
+  { name: 'tasks-light-desktop',       path: '/tasks',       theme: 'light', w: 1440, h: 900 },
+  { name: 'server-logs-light-desktop', path: '/server-logs', theme: 'light', w: 1440, h: 900 },
 ];
 
 const browser = await chromium.launch({ headless: true });
