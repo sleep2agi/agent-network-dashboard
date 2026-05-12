@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 /** Help overlay — press `?` to see keyboard shortcuts.
  *  Restrained: no animation noise, single column, all global keys in one
@@ -23,6 +24,19 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
     ],
   },
   {
+    group: 'Navigate (vim-style)',
+    items: [
+      { keys: ['g', 'o'], label: 'Go to Overview' },
+      { keys: ['g', 't'], label: 'Go to Tasks' },
+      { keys: ['g', 'n'], label: 'Go to Nodes' },
+      { keys: ['g', 'm'], label: 'Go to Messages' },
+      { keys: ['g', 'w'], label: 'Go to Networks' },
+      { keys: ['g', 'a'], label: 'Go to Admin' },
+      { keys: ['g', 'l'], label: 'Go to Audit Log' },
+      { keys: ['g', 's'], label: 'Go to Settings' },
+    ],
+  },
+  {
     group: 'Command palette',
     items: [
       { keys: ['↑', '↓'], label: 'Move selection' },
@@ -30,22 +44,32 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       { keys: ['type'], label: 'Filter — searches commands, agents, tasks' },
     ],
   },
-  {
-    group: 'Pages',
-    items: [
-      { keys: ['click', 'sidebar logo'], label: 'Back to Overview' },
-      { keys: ['Cmd+K', 'Go to agent X'], label: 'Jump straight to a node' },
-    ],
-  },
 ];
+
+const GO_TARGETS: Record<string, string> = {
+  o: '/',
+  t: '/tasks',
+  n: '/nodes',
+  m: '/messages',
+  w: '/settings/networks',
+  a: '/admin',
+  l: '/logs',
+  s: '/settings',
+};
 
 export function HelpOverlay() {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+  /** Timestamp when `g` was last pressed. The next single letter within
+   *  1500ms is interpreted as the target page. vim-style `g o`, `g t`, etc. */
+  const gAtRef = useRef<number>(0);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const tag = document.activeElement?.tagName;
+      const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement as HTMLElement | null)?.isContentEditable;
       // `?` toggles — Shift+/ on US layout. Only when no input is focused.
-      if (e.key === '?' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+      if (e.key === '?' && !inInput) {
         e.preventDefault();
         setOpen(prev => !prev);
         return;
@@ -53,10 +77,26 @@ export function HelpOverlay() {
       if (e.key === 'Escape' && open) {
         setOpen(false);
       }
+      // Vim-style `g + letter` route shortcuts (round 35). Skip when modifier
+      // keys are held (g is a perfectly fine letter when ⌘ is involved) and
+      // when typing into a field.
+      if (inInput || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'g') {
+        gAtRef.current = Date.now();
+        return;
+      }
+      if (Date.now() - gAtRef.current < 1500) {
+        const target = GO_TARGETS[e.key.toLowerCase()];
+        if (target) {
+          e.preventDefault();
+          gAtRef.current = 0;
+          router.push(target);
+        }
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, [open, router]);
 
   if (!open) return null;
 
