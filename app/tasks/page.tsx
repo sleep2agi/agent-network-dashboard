@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useNetworkId } from '../lib/network-context';
 import { TaskDrawer } from '../components/TaskDrawer';
 import { EmptyState } from '../components/EmptyState';
+import { AliasAvatar } from '../components/AliasAvatar';
 
 interface Task {
   task_id: string;
@@ -178,22 +179,37 @@ function TasksContent() {
       </div>
       </div>
 
-      {/* From/To Filters */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <input
-          type="text"
-          value={filterFrom}
-          onChange={e => setFilterFrom(e.target.value)}
-          placeholder="From node..."
-          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none w-40"
-        />
-        <input
-          type="text"
-          value={filterTo}
-          onChange={e => setFilterTo(e.target.value)}
-          placeholder="To node..."
-          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none w-40"
-        />
+      {/* From/To Filters — same visual block as the status tabs above. */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <div className="flex items-center gap-1.5 rounded-lg border border-[#2a2a4a] bg-[#111128] px-2.5 py-1.5 focus-within:border-blue-500/40">
+          <span className="text-[10px] uppercase tracking-wide text-gray-600">From</span>
+          <input
+            type="text"
+            value={filterFrom}
+            onChange={e => setFilterFrom(e.target.value)}
+            placeholder="any node"
+            className="w-28 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none"
+          />
+        </div>
+        <div className="flex items-center gap-1.5 rounded-lg border border-[#2a2a4a] bg-[#111128] px-2.5 py-1.5 focus-within:border-blue-500/40">
+          <span className="text-[10px] uppercase tracking-wide text-gray-600">To</span>
+          <input
+            type="text"
+            value={filterTo}
+            onChange={e => setFilterTo(e.target.value)}
+            placeholder="any node"
+            className="w-28 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none"
+          />
+        </div>
+        {(filterStatus || filterFrom || filterTo) && (
+          <button
+            type="button"
+            onClick={() => { setFilterStatus(''); setFilterFrom(''); setFilterTo(''); }}
+            className="rounded-lg border border-gray-700 px-2.5 py-1.5 text-[11px] text-gray-500 hover:text-gray-200 hover:border-gray-600"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {/* Status distribution */}
@@ -276,11 +292,13 @@ function TasksContent() {
                 <div className="col-span-1">
                   <span className={statusBadge(t.status)}>{t.status}</span>
                 </div>
-                <div className="col-span-2 text-sm text-blue-400 truncate" title={t.from_name}>
-                  {t.from_name || '--'}
+                <div className="col-span-2 flex items-center gap-1.5 min-w-0" title={t.from_name}>
+                  {t.from_name && <AliasAvatar alias={t.from_name} size={18} />}
+                  <span className="truncate text-sm text-gray-200">{t.from_name || '--'}</span>
                 </div>
-                <div className="col-span-2 text-sm text-cyan-400 truncate" title={t.to_name}>
-                  {t.to_name || '--'}
+                <div className="col-span-2 flex items-center gap-1.5 min-w-0" title={t.to_name}>
+                  {t.to_name && <AliasAvatar alias={t.to_name} size={18} />}
+                  <span className="truncate text-sm text-gray-200">{t.to_name || '--'}</span>
                 </div>
                 <div className="col-span-4 text-xs text-gray-400 truncate" title={t.content}>
                   {t.content || '--'}
@@ -315,10 +333,12 @@ function TasksContent() {
                     </svg>
                   </div>
                 </div>
-                <div className="text-xs text-gray-500">
-                  <span className="text-blue-400">{t.from_name || '--'}</span>
-                  <span className="text-gray-600 mx-1">&rarr;</span>
-                  <span className="text-cyan-400">{t.to_name || '--'}</span>
+                <div className="flex items-center gap-1.5 text-xs text-gray-300 min-w-0">
+                  {t.from_name && <AliasAvatar alias={t.from_name} size={16} />}
+                  <span className="truncate max-w-[40%]">{t.from_name || '--'}</span>
+                  <span className="text-gray-600">&rarr;</span>
+                  {t.to_name && <AliasAvatar alias={t.to_name} size={16} />}
+                  <span className="truncate max-w-[40%]">{t.to_name || '--'}</span>
                 </div>
                 <div className="text-xs text-gray-400 line-clamp-1">{t.content || '--'}</div>
                 <div className="text-xs text-gray-600">{timeAgo(t.created_at)}</div>
