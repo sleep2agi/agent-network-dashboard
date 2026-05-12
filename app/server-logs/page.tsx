@@ -161,8 +161,12 @@ export default function ServerLogsPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-3">
-        <div className="flex items-center gap-1 text-xs">
+      {/* Round 95: flex-wrap + min-w-0 on the search wrapper so the
+          search input drops below the chip strip on mobile instead of
+          overflowing past the viewport. Desktop layout (single row)
+          unchanged because the row has room. */}
+      <div className="flex flex-wrap items-center gap-3 mb-3">
+        <div className="flex items-center gap-1 text-xs flex-wrap">
           {/* Round 84: every chip shows its count (matches Tasks r56 +
               Audit Log r43); zero-count non-active chips are disabled
               + muted so the eye lands on the levels that actually have
@@ -192,7 +196,7 @@ export default function ServerLogsPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="搜索关键字 (alias / task_id / error message)"
-          className="flex-1 px-3 py-1.5 text-xs bg-[#11111c] border border-[#2a2a4a] rounded text-gray-200 focus:outline-none focus:border-cyan-500/40"
+          className="flex-1 min-w-[140px] basis-full sm:basis-0 px-3 py-1.5 text-xs bg-[#11111c] border border-[#2a2a4a] rounded text-gray-200 focus:outline-none focus:border-cyan-500/40"
         />
         <span className="text-[10px] text-gray-600">
           {filtered.length} / {logs.length}
