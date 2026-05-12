@@ -152,11 +152,13 @@ function TasksContent() {
       {/* Status Tabs — color-coded dots per status family so users can
           scan the row at a glance. Active tab gets full chip styling
           (bg + border + text color), inactive tabs only carry the dot
-          + neutral label so the active state remains the strong cue. */}
-      <div className="flex flex-wrap gap-1 mb-4 bg-[#111128] rounded-lg border border-[#2a2a4a] p-1">
+          + neutral label so the active state remains the strong cue.
+          On narrow viewports (<sm) the row scrolls horizontally with
+          subtle fade edges instead of wrapping to 2 lines. */}
+      <div className="anet-tabstrip flex sm:flex-wrap gap-1 mb-4 bg-[#111128] rounded-lg border border-[#2a2a4a] p-1 overflow-x-auto sm:overflow-x-visible scrollbar-thin">
         {['', ...STATUS_OPTIONS.filter(Boolean)].map(s => (
           <button key={s} onClick={() => setFilterStatus(s)}
-            className={`px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               filterStatus === s
                 ? `${STATUS_COLORS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
                 : 'text-gray-500 hover:text-gray-300 hover:bg-[#1a1a2a]/40'
