@@ -7,6 +7,7 @@ import Link from 'next/link';
 interface StatsResponse {
   ok?: boolean;
   tasks?: { by_status?: { status: string; count: number }[] };
+  nodes?: { total?: number };
   health?: { version?: string };
   error?: string;
 }
@@ -50,9 +51,10 @@ export function HealthBanner() {
 
   if (dismissed) return null;
 
-  // Determine current state — priority: red > amber > green
+  // Determine current state — priority: red > amber > empty > green
   const hubDown = (statsErr && healthErr) || (health && health.ok === false);
   const failed = stats?.tasks?.by_status?.find(s => s.status === 'failed')?.count || 0;
+  const fleetEmpty = stats?.nodes?.total === 0;
 
   let kind: 'red' | 'amber' | 'green';
   let message: string;
@@ -66,6 +68,13 @@ export function HealthBanner() {
     kind = 'amber';
     message = `${failed} task${failed > 1 ? 's' : ''} failed recently`;
     cta = { label: 'Review failures', href: '/tasks?status=failed' };
+  } else if (fleetEmpty) {
+    // Round 70 — was "All systems go" before, which is misleading when
+    // the fleet is empty. Reuses the green palette (it's not a failure
+    // state) but with onboarding copy + CTA-less for restraint.
+    kind = 'green';
+    message = 'Waiting for first agent';
+    cta = null;
   } else {
     kind = 'green';
     message = 'All systems go';
