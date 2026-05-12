@@ -20,7 +20,11 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       <h1 className="text-2xl font-bold text-white mb-6 lg:ml-0 ml-10">Settings</h1>
 
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-2xl space-y-8">
+        {/* ── Group: Connection ─────────────────────────────────── */}
+        <div className="space-y-4">
+          <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 px-1">Connection</div>
+
         {/* CommHub Connection */}
         <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">CommHub Connection</h2>
@@ -96,10 +100,31 @@ export default function SettingsPage() {
             </div>
           </div>
         </section>
+        </div>
+
+        {/* ── Group: Account ────────────────────────────────────── */}
+        <div className="space-y-4">
+          <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 px-1">Account</div>
 
         {/* License */}
         <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">License</h2>
+          <h2 className="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
+            License
+            {licData?.license && (
+              <span
+                className={`inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full border ${
+                  licData.license.type === 'pro'
+                    ? 'text-green-300 bg-green-500/10 border-green-500/30'
+                    : licData.license.days_left <= 7
+                      ? 'text-red-300 bg-red-500/10 border-red-500/30'
+                      : 'text-amber-300 bg-amber-500/10 border-amber-500/30'
+                }`}
+              >
+                <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-current" />
+                {licData.license.type}{licData.license.days_left ? ` · ${licData.license.days_left}d left` : ''}
+              </span>
+            )}
+          </h2>
           {licData?.license ? (
             <div className="space-y-3 text-sm">
               <div className={rowClass}>
@@ -195,6 +220,26 @@ export default function SettingsPage() {
           {pwdResult && <div className={`mt-2 text-xs ${pwdResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{pwdResult}</div>}
         </section>
 
+        {/* Session — tone-neutral, no longer "danger zone" red */}
+        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-gray-300 mb-4">Sign out</h2>
+          <p className="text-xs text-gray-500 mb-3">Signing out clears your dashboard session cookie. You'll return to the login page.</p>
+          <button
+            onClick={async () => {
+              await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+              window.location.assign('/login');
+            }}
+            className="px-4 py-2 bg-transparent hover:bg-[#1a1a2a] text-gray-300 text-sm rounded-lg border border-[#2a2a4a] hover:border-[#3a3a5a] transition-colors"
+          >
+            Sign out
+          </button>
+        </section>
+        </div>
+
+        {/* ── Group: Resources ──────────────────────────────────── */}
+        <div className="space-y-4">
+          <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 px-1">Resources</div>
+
         {/* API Tokens + Networks */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link href="/settings/tokens" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
@@ -208,10 +253,11 @@ export default function SettingsPage() {
             <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
           </Link>
         </div>
+        </div>
 
-        {/* Danger Zone */}
-        <section className="bg-[#111128] border border-red-900/30 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-red-400 mb-4">Session</h2>
+        {/* hidden — replaced by neutral Session card inside Account group above */}
+        <section className="hidden bg-[#111128] border border-red-900/30 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-red-400 mb-4">Session (legacy)</h2>
           <p className="text-xs text-gray-500 mb-3">Sign out will clear your dashboard session cookie.</p>
           <button
             onClick={async () => {
