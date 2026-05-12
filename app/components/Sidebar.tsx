@@ -101,17 +101,11 @@ export function Sidebar() {
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:shrink-0
       `}>
-        {/* Logo */}
-        <div className={`px-4 py-5 border-b border-[#2a2a4a] ${collapsed ? 'text-center' : ''}`}>
-          {collapsed ? (
-            <span className="text-cyan-400 font-bold text-lg">A</span>
-          ) : (
-            <div>
-              <div className="text-white font-bold text-sm">Agent Network</div>
-              <div className="text-gray-600 text-xs">Dashboard</div>
-            </div>
-          )}
-        </div>
+        {/* Brand header — round 4: 3-node mesh mark matches /login,
+            with an inline live "online" pulse so every page surfaces
+            fleet health without leaving for /nodes. */}
+        <SidebarBrand collapsed={collapsed} />
+        <div className={`border-b border-[#2a2a4a]`} />
 
         {/* Network list */}
         {!collapsed && networks.length > 0 && (
@@ -172,5 +166,68 @@ export function Sidebar() {
         </div>
       </aside>
     </>
+  );
+}
+
+interface StatusData {
+  sessions?: Array<{ status?: string; alias?: string }>;
+}
+
+const statusFetcher = (url: string) =>
+  fetch(url).then(r => r.ok ? r.json() as Promise<StatusData> : { sessions: [] });
+
+function SidebarBrand({ collapsed }: { collapsed: boolean }) {
+  // Live online count — re-uses the same /api/hub/status endpoint the
+  // Overview already polls, so SWR dedupes the request. Pulse is muted —
+  // emerald dot at 4px with a 1.6s slow opacity pulse, no glow, no halo.
+  const { data } = useSWR<StatusData>('/api/hub/status', statusFetcher, {
+    refreshInterval: 10000,
+    dedupingInterval: 4000,
+  });
+  const sessions = data?.sessions || [];
+  const online = sessions.filter(s => s.status && s.status !== 'offline').length;
+  const total = sessions.length;
+
+  if (collapsed) {
+    return (
+      <div className="px-3 py-4 flex justify-center" aria-label="Agent Network">
+        <BrandMark size={28} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 py-4 flex items-center gap-3" aria-label="Agent Network">
+      <BrandMark size={32} />
+      <div className="min-w-0">
+        <div className="text-white text-[13px] font-semibold leading-tight">Agent Network</div>
+        <div className="text-[10px] text-gray-500 flex items-center gap-1.5 mt-0.5">
+          <span
+            className={`inline-block w-1.5 h-1.5 rounded-full ${online > 0 ? 'bg-emerald-400 anet-brand-pulse' : 'bg-gray-600'}`}
+            aria-hidden
+          />
+          {total === 0 ? (
+            <span>no agents yet</span>
+          ) : (
+            <span><span className="text-gray-300 font-medium tabular-nums">{online}</span><span className="text-gray-600">/{total}</span> online</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 3-node mesh mark — same SVG as /login, reusable. */
+function BrandMark({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="shrink-0">
+      <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.2" className="text-cyan-400" />
+      <line x1="16" y1="10" x2="10" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-cyan-400" />
+      <line x1="16" y1="10" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-cyan-400" />
+      <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-cyan-400" />
+      <circle cx="16" cy="10" r="2.5" fill="currentColor" className="text-cyan-400" />
+      <circle cx="10" cy="20" r="2.5" fill="currentColor" className="text-green-400" />
+      <circle cx="22" cy="20" r="2.5" fill="currentColor" className="text-violet-400" />
+    </svg>
   );
 }
