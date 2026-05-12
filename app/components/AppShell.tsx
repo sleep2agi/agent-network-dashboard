@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { HealthBanner } from './HealthBanner';
 import { CommandPalette } from './CommandPalette';
+import { HelpOverlay } from './HelpOverlay';
 
 const NO_SHELL_PATHS = ['/login'];
 
@@ -22,6 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1 min-w-0">{children}</div>
       </main>
       <CommandPalette />
+      <HelpOverlay />
     </div>
   );
 }
