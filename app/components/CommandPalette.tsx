@@ -19,9 +19,28 @@ interface Command {
   id: string;
   title: string;
   hint?: string;
-  group: 'Navigate' | 'Actions';
+  group: 'Recents' | 'Actions' | 'Navigate';
   icon: React.ReactNode;
   perform: (router: ReturnType<typeof useRouter>) => void;
+}
+
+const RECENTS_KEY = 'anet-cmdk-recents';
+const RECENTS_MAX = 4;
+
+function readRecents(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = sessionStorage.getItem(RECENTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function pushRecent(id: string) {
+  try {
+    const list = readRecents().filter(x => x !== id);
+    list.unshift(id);
+    sessionStorage.setItem(RECENTS_KEY, JSON.stringify(list.slice(0, RECENTS_MAX)));
+  } catch {}
 }
 
 function NavIcon({ d }: { d: string }) {
@@ -63,6 +82,28 @@ const COMMANDS: Command[] = [
   { id: 'go-settings', title: 'Go to Settings', hint: 'Connection / Account / Resources', group: 'Navigate',
     icon: <NavIcon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />,
     perform: r => r.push('/settings') },
+
+  // ── Actions group (round 15) ─────────────────────────────────
+  { id: 'act-toggle-theme', title: 'Toggle theme', hint: 'cyber ↔ light', group: 'Actions',
+    icon: <NavIcon d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />,
+    perform: () => {
+      const cur = document.documentElement.getAttribute('data-theme') || 'cyber';
+      const next = (cur === 'light' || cur === 'mint') ? 'cyber' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('anet-theme', next); } catch {}
+    } },
+  { id: 'act-copy-url', title: 'Copy current URL', hint: 'page link to clipboard', group: 'Actions',
+    icon: <NavIcon d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />,
+    perform: () => {
+      try { navigator.clipboard.writeText(window.location.href); } catch {}
+    } },
+  { id: 'act-sign-out', title: 'Sign out', hint: 'clear session', group: 'Actions',
+    icon: <NavIcon d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />,
+    perform: () => {
+      fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      try { sessionStorage.removeItem('anet_v3_auth'); } catch {}
+      window.location.assign('/login');
+    } },
 ];
 
 export function CommandPalette() {
@@ -101,16 +142,28 @@ export function CommandPalette() {
     }
   }, [open]);
 
-  // Filtered results
+  // Read recents on open
+  const [recentIds, setRecentIds] = useState<string[]>([]);
+  useEffect(() => { if (open) setRecentIds(readRecents()); }, [open]);
+
+  // Filtered results — when no query, prepend recents as their own group
   const results = useMemo(() => {
-    if (!query.trim()) return COMMANDS;
+    if (!query.trim()) {
+      const recentCmds: Command[] = recentIds
+        .map(id => COMMANDS.find(c => c.id === id))
+        .filter((c): c is Command => Boolean(c))
+        .map(c => ({ ...c, group: 'Recents' }));
+      // De-dup: recents appear at top, rest of palette as-is below
+      const restIds = new Set(recentIds);
+      return [...recentCmds, ...COMMANDS.filter(c => !restIds.has(c.id))];
+    }
     const q = query.toLowerCase();
     return COMMANDS.filter(c =>
       c.title.toLowerCase().includes(q) ||
       c.hint?.toLowerCase().includes(q) ||
       c.id.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, recentIds]);
 
   // Clamp selected when results shrink
   useEffect(() => {
@@ -125,7 +178,7 @@ export function CommandPalette() {
     if (e.key === 'Enter') {
       e.preventDefault();
       const c = results[selected];
-      if (c) { c.perform(router); setOpen(false); }
+      if (c) { pushRecent(c.id); c.perform(router); setOpen(false); }
     }
   };
 
@@ -183,7 +236,7 @@ export function CommandPalette() {
                     <button
                       key={c.id}
                       onMouseEnter={() => setSelected(idx)}
-                      onClick={() => { c.perform(router); setOpen(false); }}
+                      onClick={() => { pushRecent(c.id); c.perform(router); setOpen(false); }}
                       className={`anet-cmdk-row w-full flex items-center gap-3 px-3 py-2 text-left text-sm ${
                         isActive ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-300 hover:bg-[#1a1a2a]/50'
                       }`}
