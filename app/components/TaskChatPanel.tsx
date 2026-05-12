@@ -475,7 +475,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/30 z-40 lg:hidden anet-fade-in" onClick={onClose} />
       <div className="fixed top-0 right-0 h-full w-full lg:w-[500px] bg-[#0a0a1a] border-l border-[#2a2a4a] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a4a] bg-[#0d0d1a]">
@@ -494,10 +494,6 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
         </div>
         {chatContent}
       </div>
-      <style jsx global>{`
-        @keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        .animate-slide-in { animation: slide-in 0.2s ease-out; }
-      `}</style>
     </>
   );
 }

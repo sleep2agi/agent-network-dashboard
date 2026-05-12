@@ -71,7 +71,7 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/30 z-40 anet-fade-in" onClick={onClose} />
       <div className="fixed top-0 right-0 h-full w-full lg:w-[500px] bg-[#0a0a1a] border-l border-[#2a2a4a] z-50 flex flex-col shadow-2xl shadow-black/60 overflow-y-auto animate-slide-in">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2a4a] bg-[#0d0d1a] sticky top-0">
