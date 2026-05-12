@@ -385,6 +385,33 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
           {[90, 170, 250, 330].map(radius => (
             <circle key={radius} cx={cx} cy={cy} r={radius} fill="none" stroke={pal.ringStroke} strokeWidth="1" opacity={isLight ? 0.6 : 0.35} />
           ))}
+
+          {/* Round 50: 4 small particles slowly orbiting the outer ring
+              (r=330). Each starts at a different angle (offset 0/0.25/0.5/0.75
+              of the cycle) so they're evenly spaced. 16s per revolution is
+              slow enough to feel ambient, not noisy. Skipped on light theme
+              so the white surface stays clean. */}
+          {!isLight && [0, 0.25, 0.5, 0.75].map((phase, i) => (
+            <g key={`orbit-${i}`}>
+              <circle
+                cx={cx + 330} cy={cy}
+                r={i === 0 ? 2.8 : 2.2}
+                fill="#22d3ee"
+                opacity={0.9}
+                filter="url(#topo-glow)"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from={`${phase * 360} ${cx} ${cy}`}
+                  to={`${phase * 360 + 360} ${cx} ${cy}`}
+                  dur="16s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            </g>
+          ))}
+
           {[0, 30, 60, 90, 120, 150].map(angle => (
             <line
               key={angle}
