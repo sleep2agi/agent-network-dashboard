@@ -92,7 +92,7 @@ export function HealthBanner() {
   return (
     <div
       role="status"
-      className={`anet-health-banner border-b ${styles} pl-14 pr-3 sm:px-6 py-1.5 text-[12px] flex items-center justify-between gap-3`}
+      className={`anet-health-banner sticky top-0 z-30 border-b ${styles} pl-14 pr-3 sm:px-6 py-1.5 text-[12px] flex items-center justify-between gap-3 backdrop-blur-sm`}
     >
       <div className="flex items-center gap-2 min-w-0">
         <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} aria-hidden />
