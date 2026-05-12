@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { DASHBOARD_VERSION } from '../lib/version';
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -139,6 +140,8 @@ export default function LoginPage() {
 
         <p className="text-center text-[11px] text-gray-700 mt-6">
           Sleep2AGI · Apache-2.0 · <a href="https://anet.sh" className="hover:text-gray-500 transition-colors">anet.sh</a>
+          <span className="mx-1 text-gray-800">·</span>
+          <span className="font-mono" title="@sleep2agi/agent-network-dashboard">v{DASHBOARD_VERSION}</span>
         </p>
       </div>
     </main>
