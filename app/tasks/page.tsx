@@ -111,6 +111,13 @@ function TasksContent() {
         </span>
       </div>
 
+      {/* Round 75: hide the status tab strip + From/To filter row when
+          there are no tasks at all. Each tab would show "0" and the
+          filter inputs would have nothing to act on — pure noise above
+          the empty-state CTA. When at least one task exists, the chrome
+          comes back even if the current filter happens to hide
+          everything (so users can clear filters). */}
+      {tasks.length > 0 && <>
       {/* Status Tabs — color-coded dots per status family so users can
           scan the row at a glance. Active tab gets full chip styling
           (bg + border + text color), inactive tabs only carry the dot
@@ -188,6 +195,7 @@ function TasksContent() {
           </button>
         )}
       </div>
+      </>}
 
       {/* Status distribution */}
       {tasks.length > 0 && !filterStatus && (() => {
