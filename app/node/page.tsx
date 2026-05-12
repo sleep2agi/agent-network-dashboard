@@ -316,13 +316,16 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
   );
 }
 
-const EVENT_COLORS: Record<string, { dot: string; line: string; icon: string }> = {
-  delivered: { dot: 'bg-blue-400', line: 'bg-blue-500/30', icon: '📬' },
-  acked: { dot: 'bg-yellow-400', line: 'bg-yellow-500/30', icon: '✅' },
-  running: { dot: 'bg-green-400', line: 'bg-green-500/30', icon: '⚡' },
-  replied: { dot: 'bg-purple-400', line: 'bg-purple-500/30', icon: '💬' },
-  failed: { dot: 'bg-red-400', line: 'bg-red-500/30', icon: '❌' },
-  created: { dot: 'bg-gray-400', line: 'bg-gray-500/30', icon: '📝' },
+/** Round 59: emoji icons replaced with stroke SVG paths to drop the
+ *  "AI generated" tell. Each path is sized to fit inside the 18px
+ *  colored event dot. */
+const EVENT_COLORS: Record<string, { dot: string; line: string; path: string }> = {
+  delivered: { dot: 'bg-blue-400',   line: 'bg-blue-500/30',   path: 'M12 5v14 M5 12l7 7 7-7' },                   // down arrow
+  acked:     { dot: 'bg-yellow-400', line: 'bg-yellow-500/30', path: 'M20 6 9 17l-5-5' },                          // check
+  running:   { dot: 'bg-green-400',  line: 'bg-green-500/30',  path: 'M13 2L4 14h6l-1 8 10-12h-6l1-8z' },         // bolt
+  replied:   { dot: 'bg-purple-400', line: 'bg-purple-500/30', path: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' }, // chat bubble
+  failed:    { dot: 'bg-red-400',    line: 'bg-red-500/30',    path: 'M18 6 6 18 M6 6l12 12' },                    // X
+  created:   { dot: 'bg-gray-400',   line: 'bg-gray-500/30',   path: 'M12 5v14 M5 12h14' },                       // plus
 };
 
 function EventsTimeline({ events, loading }: { events: Array<{ id: number; event_type: string; from_status: string; to_status: string; detail: string; created_at: string; task_id?: string }>; loading: boolean }) {
@@ -351,9 +354,12 @@ function EventsTimeline({ events, loading }: { events: Array<{ id: number; event
               const cfg = EVENT_COLORS[e.to_status] || EVENT_COLORS.created;
               return (
                 <div key={e.id} className="relative pb-4 last:pb-0">
-                  {/* Dot on line */}
-                  <div className={`absolute -left-6 top-0.5 w-[18px] h-[18px] rounded-full ${cfg.dot} flex items-center justify-center text-[9px] z-10 border-2 border-[#111128]`}>
-                    {cfg.icon.length <= 2 ? cfg.icon : ''}
+                  {/* Dot on line — round 59: emoji icons replaced with
+                      a 10px stroke SVG path matching event type. */}
+                  <div className={`absolute -left-6 top-0.5 w-[18px] h-[18px] rounded-full ${cfg.dot} flex items-center justify-center z-10 border-2 border-[#111128]`}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0a0a15" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d={cfg.path} />
+                    </svg>
                   </div>
                   {/* Content */}
                   <div className="ml-2">
