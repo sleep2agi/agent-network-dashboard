@@ -48,6 +48,21 @@ const STATUS_COLORS: Record<string, string> = {
   expired: 'bg-orange-500/10 text-orange-300 border-orange-500/20',
 };
 
+/** Small colored dot per status — visible on every tab (active + inactive)
+ *  so users can scan the row at a glance. Hex inlined to avoid Tailwind
+ *  purging dynamic `bg-${family}-400` class names. */
+const STATUS_DOTS: Record<string, string> = {
+  created:   '#9ca3af',
+  delivered: '#60a5fa',
+  acked:     '#22d3ee',
+  running:   '#4ade80',
+  replied:   '#a78bfa',
+  closed:    '#6b7280',
+  failed:    '#f87171',
+  cancelled: '#facc15',
+  expired:   '#fb923c',
+};
+
 function statusBadge(status: string) {
   const color = STATUS_COLORS[status] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
   return `text-xs px-2 py-0.5 rounded-md border ${color}`;
@@ -134,16 +149,26 @@ function TasksContent() {
         </span>
       </div>
 
-      {/* Status Tabs */}
+      {/* Status Tabs — color-coded dots per status family so users can
+          scan the row at a glance. Active tab gets full chip styling
+          (bg + border + text color), inactive tabs only carry the dot
+          + neutral label so the active state remains the strong cue. */}
       <div className="flex flex-wrap gap-1 mb-4 bg-[#111128] rounded-lg border border-[#2a2a4a] p-1">
         {['', ...STATUS_OPTIONS.filter(Boolean)].map(s => (
           <button key={s} onClick={() => setFilterStatus(s)}
-            className={`px-3 py-1.5 rounded-md text-xs transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1.5 ${
               filterStatus === s
                 ? `${STATUS_COLORS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
-                : 'text-gray-500 hover:text-gray-300'
+                : 'text-gray-500 hover:text-gray-300 hover:bg-[#1a1a2a]/40'
             }`}>
-            {s || 'All'}
+            {s && (
+              <span
+                aria-hidden
+                className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: STATUS_DOTS[s] || '#6b7280' }}
+              />
+            )}
+            <span>{s || 'All'}</span>
           </button>
         ))}
       </div>
