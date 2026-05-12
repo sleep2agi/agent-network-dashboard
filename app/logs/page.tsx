@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { timeAgo } from '../components/utils';
 import { useNetworkId } from '../lib/network-context';
 import { EmptyState } from '../components/EmptyState';
+import { AliasAvatar } from '../components/AliasAvatar';
 
 interface AuditLog {
   id: string;
@@ -24,6 +25,18 @@ const ACTION_COLORS: Record<string, string> = {
   login_failed: 'bg-red-500/10 text-red-300 border-red-500/20',
   create_network: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
   send_task: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+};
+
+/** 2px left-rail stripe color per audit action — reuses the r32 server-logs
+ *  pattern so failed logins / token rotations spike out of a wall of
+ *  registers and logins without users reading every chip. Inline hex
+ *  prevents Tailwind v4 from purging dynamic class names. */
+const ACTION_STRIPE: Record<string, string> = {
+  register: '#4ade80',
+  login: '#60a5fa',
+  login_failed: '#ef4444',
+  create_network: '#a78bfa',
+  send_task: '#22d3ee',
 };
 
 export default function LogsPage() {
@@ -125,13 +138,23 @@ export default function LogsPage() {
         <EmptyState variant="logs" />
       ) : (
         <div className="space-y-2">
-          {logs.map(log => (
-            <div key={log.id} className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-4 py-3 hover:border-[#3a3a5a] transition-colors">
+          {logs.map(log => {
+            const userName = log.username || log.user_id;
+            return (
+            <div key={log.id} className="relative bg-[#111128] border border-[#2a2a4a] rounded-lg pl-4 pr-4 py-3 hover:border-[#3a3a5a] transition-colors overflow-hidden">
+              {/* 2px left rail per action (round 33) — failed logins, token
+                  rotations spike out of a wall of register/login rows. */}
+              <span
+                aria-hidden
+                className="absolute left-0 top-0 bottom-0 w-0.5"
+                style={{ backgroundColor: ACTION_STRIPE[log.action] || 'transparent' }}
+              />
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className={`text-xs px-2 py-0.5 rounded-md border ${ACTION_COLORS[log.action] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
                   {log.action}
                 </span>
-                <span className="text-sm text-blue-400 font-medium">{log.username || log.user_id}</span>
+                {userName && <AliasAvatar alias={userName} size={16} />}
+                <span className="text-sm text-gray-200 font-medium">{userName}</span>
                 {log.target_type && (
                   <>
                     <span className="text-xs text-gray-600">&rarr;</span>
@@ -143,7 +166,8 @@ export default function LogsPage() {
               {log.detail && <div className="text-xs text-gray-500">{log.detail}</div>}
               {log.ip && log.ip !== 'unknown' && <div className="text-[10px] text-gray-700">IP: {log.ip}</div>}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
