@@ -42,7 +42,7 @@ export function StatsBar({ online, working, total, version, uptime }: StatsBarPr
         <StatCard
           value={total - online}
           label="Offline"
-          sub={total - online === 0 ? 'All systems go' : `${total - online} disconnected`}
+          sub={total === 0 ? '--' : total - online === 0 ? 'All systems go' : `${total - online} disconnected`}
           color="text-gray-400"
           accent="from-gray-500/10 to-gray-500/0"
           border="border-gray-500/15"
