@@ -4,6 +4,7 @@ import { use } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { timeAgo } from '../../components/utils';
+import { STATUS_CHIP_CLASS } from '../../lib/status';
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -55,18 +56,6 @@ function Timeline({ steps }: { steps: TimelineStep[] }) {
   );
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  created: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-  delivered: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-  acked: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
-  running: 'bg-green-500/10 text-green-300 border-green-500/20',
-  replied: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
-  closed: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-  failed: 'bg-red-500/10 text-red-300 border-red-500/20',
-  cancelled: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
-  expired: 'bg-orange-500/10 text-orange-300 border-orange-500/20',
-};
-
 export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data, isLoading } = useSWR(
@@ -105,7 +94,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const statusColor = STATUS_COLORS[task.status] || STATUS_COLORS.created;
+  const statusColor = STATUS_CHIP_CLASS[task.status] || STATUS_CHIP_CLASS.created;
   const steps: TimelineStep[] = [
     { label: 'Created', time: task.created_at, color: 'text-gray-400' },
     { label: 'Delivered', time: task.delivered_at, color: 'text-blue-400' },
