@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { timeAgo } from '../components/utils';
 import { useSessions, useHealth } from '../lib/hooks';
 import { TaskChatPanel } from '../components/TaskChatPanel';
-import { EmptyState } from '../components/EmptyState';
+import { EmptyState, NodesEmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
 import type { Session } from '../components/types';
 
@@ -165,11 +165,20 @@ export default function NodesPage() {
           {[1,2,3,4].map(i => <div key={i} className="h-16 bg-gray-800/20 rounded-lg" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState
-          variant="nodes"
-          title="No nodes match your filters"
-          sub="Try clearing search or status filters, or wait for an agent to register."
-        />
+        sessions.length === 0 ? (
+          /* Round 73: first-run case — no agents anywhere. Use the same
+             onboarding empty state as the Overview (NodesEmptyState
+             includes the `npx … init` quickstart command). Previously this
+             was the "No nodes match your filters" copy, which was wrong
+             for new users who have no filters applied. */
+          <NodesEmptyState />
+        ) : (
+          <EmptyState
+            variant="nodes"
+            title="No nodes match your filters"
+            sub="Try clearing search or status filters, or wait for an agent to register."
+          />
+        )
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(s => {

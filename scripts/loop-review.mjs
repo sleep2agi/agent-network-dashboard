@@ -32,12 +32,22 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-const matrix = [
-  { theme: 'cyber', viewport: { width: 1440, height: 900 }, tag: 'desktop' },
-  { theme: 'cyber', viewport: { width: 390,  height: 844 }, tag: 'mobile'  },
-  { theme: 'light', viewport: { width: 1440, height: 900 }, tag: 'desktop' },
-  { theme: 'light', viewport: { width: 390,  height: 844 }, tag: 'mobile'  },
+const viewports = [
+  { tag: 'desktop', width: 1440, height: 900 },
+  { tag: 'mobile',  width: 390,  height: 844 },
 ];
+const themes = ['cyber', 'light'];
+const pages = [
+  { name: 'overview', path: '/' },
+  { name: 'nodes',    path: '/nodes' },
+  { name: 'tasks',    path: '/tasks' },
+  { name: 'messages', path: '/messages' },
+];
+
+const matrix = [];
+for (const t of themes) for (const v of viewports) for (const p of pages) {
+  matrix.push({ theme: t, viewport: { width: v.width, height: v.height }, tag: v.tag, pageName: p.name, pagePath: p.path });
+}
 
 const browser = await chromium.launch({ headless: true });
 
@@ -62,13 +72,13 @@ for (const m of matrix) {
   }, m.theme);
 
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  await page.goto(`${BASE}${m.pagePath}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
   await page.waitForTimeout(1200);
 
   await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), m.theme);
   await page.waitForTimeout(300);
 
-  const file = path.join(OUT, `overview-${m.theme}-${m.tag}.png`);
+  const file = path.join(OUT, `${m.pageName}-${m.theme}-${m.tag}.png`);
   await page.screenshot({ path: file, fullPage: true });
 
   const checks = await page.evaluate(() => {
@@ -200,12 +210,11 @@ for (const m of matrix) {
 
 await browser.close();
 
-console.log('\n=== Loop self-review (harness r71) ===\n');
+console.log('\n=== Loop self-review (harness r73) ===\n');
 for (const r of report) {
-  console.log(`${r.theme}/${r.tag}  score=${r.score}/10`);
+  console.log(`${r.pageName.padEnd(8)} ${r.theme}/${r.tag.padEnd(7)} score=${r.score}/10`);
   console.log(`  cta_top=${r.checks.ctaTop !== null ? Math.round(r.checks.ctaTop) : '--'}  zero_cards=${r.checks.zeroCardCount}  max_gap=${r.checks.maxGap}px  fleet_empty=${r.checks.fleetEmpty}`);
   if (r.notes.length) console.log(`  notes: ${r.notes.join(' · ')}`);
-  console.log(`  ${path.relative(process.cwd(), r.file)}`);
 }
 const avg = report.reduce((s, r) => s + r.score, 0) / report.length;
-console.log(`\noverall avg = ${avg.toFixed(1)}/10`);
+console.log(`\noverall avg = ${avg.toFixed(1)}/10 across ${report.length} captures`);
