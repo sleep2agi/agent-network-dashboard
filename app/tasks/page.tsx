@@ -107,8 +107,15 @@ function TasksContent() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Tasks</h1>
-        <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30">
-          {count}
+        {/* Round 88: pagination-aware chip. When tasks.length < count
+            the API has more rows than the current limit=100 slice;
+            show `loaded / total` so users notice. Otherwise just the
+            single total — matches r87 /logs pattern. */}
+        <span
+          className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums"
+          title={tasks.length < count ? `Showing ${tasks.length} of ${count} tasks` : undefined}
+        >
+          {tasks.length < count ? `${tasks.length} / ${count}` : count}
         </span>
       </div>
 
