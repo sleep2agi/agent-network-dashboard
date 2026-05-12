@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { timeAgo } from '../../components/utils';
+import { EmptyState } from '../../components/EmptyState';
 
 interface Token {
   token_id: string;
@@ -100,7 +101,11 @@ export default function TokensPage() {
           {loading ? (
             <div className="animate-pulse space-y-2">{[1,2].map(i => <div key={i} className="h-12 bg-gray-800/20 rounded" />)}</div>
           ) : tokens.length === 0 ? (
-            <div className="text-xs text-gray-600 text-center py-4">No tokens. V3 auth required.</div>
+            <EmptyState
+              variant="tokens"
+              compact
+              sub="Tokens authenticate CLI tools and external integrations. Sign in with V3 auth, then create one above."
+            />
           ) : (
             <div className="space-y-2">
               {tokens.map(t => (

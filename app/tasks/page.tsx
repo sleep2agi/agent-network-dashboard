@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useNetworkId } from '../lib/network-context';
 import { TaskDrawer } from '../components/TaskDrawer';
+import { EmptyState } from '../components/EmptyState';
 
 interface Task {
   task_id: string;
@@ -201,15 +202,12 @@ function TasksContent() {
           ))}
         </div>
       ) : tasks.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-gray-600 text-4xl mb-4">--</div>
-          <h3 className="text-gray-400 text-lg font-medium mb-2">No tasks found</h3>
-          <p className="text-gray-600 text-sm">
-            {filterStatus || filterFrom || filterTo
-              ? 'Try adjusting your filters.'
-              : 'Tasks will appear here when agents send them via CommHub.'}
-          </p>
-        </div>
+        <EmptyState
+          variant="tasks"
+          sub={(filterStatus || filterFrom || filterTo)
+            ? 'No tasks match the current filters. Try clearing them.'
+            : 'Tasks will appear here when agents send them via CommHub.'}
+        />
       ) : (
         <div className="space-y-2">
           {/* Table header */}

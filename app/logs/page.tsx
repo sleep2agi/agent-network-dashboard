@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { timeAgo } from '../components/utils';
 import { useNetworkId } from '../lib/network-context';
+import { EmptyState } from '../components/EmptyState';
 
 interface AuditLog {
   id: string;
@@ -121,11 +122,7 @@ export default function LogsPage() {
           {[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-gray-800/20 rounded-lg" />)}
         </div>
       ) : logs.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-gray-600 text-4xl mb-4">--</div>
-          <h3 className="text-gray-400 text-lg font-medium mb-2">No audit logs</h3>
-          <p className="text-gray-600 text-sm">Events will appear here when users register, login, or perform actions.</p>
-        </div>
+        <EmptyState variant="logs" />
       ) : (
         <div className="space-y-2">
           {logs.map(log => (

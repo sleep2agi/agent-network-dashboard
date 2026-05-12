@@ -1,0 +1,189 @@
+'use client';
+
+import Link from 'next/link';
+
+export type EmptyVariant = 'nodes' | 'tasks' | 'messages' | 'logs' | 'tokens' | 'networks' | 'generic';
+
+interface EmptyStateProps {
+  /** Picks the icon glyph and default copy if title/sub omitted. */
+  variant?: EmptyVariant;
+  /** Optional override headline. */
+  title?: string;
+  /** Optional override sub-copy. */
+  sub?: string;
+  /** Optional CTA: text + href (internal) or onClick. */
+  cta?: { label: string; href?: string; onClick?: () => void };
+  /** Compact mode for in-card empty states (smaller padding). */
+  compact?: boolean;
+}
+
+const DEFAULTS: Record<EmptyVariant, { title: string; sub: string }> = {
+  nodes:    { title: 'No agents in this network',   sub: 'Agent sessions will appear here once they connect to the CommHub.' },
+  tasks:    { title: 'No tasks yet',                sub: 'Tasks will appear here when agents send them via CommHub.' },
+  messages: { title: 'No messages',                 sub: 'Messages between agents will appear here.' },
+  logs:     { title: 'No audit logs',               sub: 'Events will appear here when users register, login, or perform actions.' },
+  tokens:   { title: 'No API tokens',               sub: 'Create one to authenticate CLI tools and external integrations.' },
+  networks: { title: 'No networks found',           sub: 'Create one or sign in with V3 auth to see your networks.' },
+  generic:  { title: 'Nothing here yet',            sub: 'Data will appear here once available.' },
+};
+
+/**
+ * Minimal monochrome SVG glyphs per variant. No filled shapes, no gradients,
+ * no AI-decoration — just thin-stroke line art that fades into the page.
+ * 64×64 viewBox; rendered at 56×56 (compact 40×40).
+ */
+function Glyph({ variant, size }: { variant: EmptyVariant; size: number }) {
+  const s = { width: size, height: size };
+  const baseProps = {
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.25,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
+
+  switch (variant) {
+    case 'nodes':
+      // Mesh with dashed edges = "nodes will land here"
+      return (
+        <svg viewBox="0 0 64 64" {...s}>
+          <g {...baseProps}>
+            <circle cx="32" cy="14" r="4" />
+            <circle cx="14" cy="44" r="4" />
+            <circle cx="50" cy="44" r="4" />
+            <line x1="32" y1="18" x2="14" y2="40" strokeDasharray="3 3" opacity="0.6" />
+            <line x1="32" y1="18" x2="50" y2="40" strokeDasharray="3 3" opacity="0.6" />
+            <line x1="18" y1="44" x2="46" y2="44" strokeDasharray="3 3" opacity="0.6" />
+          </g>
+        </svg>
+      );
+    case 'tasks':
+      // Empty checkbox list
+      return (
+        <svg viewBox="0 0 64 64" {...s}>
+          <g {...baseProps}>
+            <rect x="14" y="14" width="36" height="6" rx="1.5" />
+            <rect x="14" y="26" width="36" height="6" rx="1.5" opacity="0.6" />
+            <rect x="14" y="38" width="36" height="6" rx="1.5" opacity="0.35" />
+          </g>
+        </svg>
+      );
+    case 'messages':
+      // Speech bubble outline
+      return (
+        <svg viewBox="0 0 64 64" {...s}>
+          <g {...baseProps}>
+            <path d="M14 18 h36 a3 3 0 0 1 3 3 v18 a3 3 0 0 1 -3 3 h-18 l-8 6 v-6 h-10 a3 3 0 0 1 -3 -3 v-18 a3 3 0 0 1 3 -3 z" />
+            <line x1="22" y1="28" x2="42" y2="28" opacity="0.5" />
+            <line x1="22" y1="34" x2="36" y2="34" opacity="0.5" />
+          </g>
+        </svg>
+      );
+    case 'logs':
+      // Document with lines
+      return (
+        <svg viewBox="0 0 64 64" {...s}>
+          <g {...baseProps}>
+            <path d="M18 12 h22 l8 8 v32 a2 2 0 0 1 -2 2 h-28 a2 2 0 0 1 -2 -2 v-38 a2 2 0 0 1 2 -2 z" />
+            <path d="M40 12 v8 h8" opacity="0.6" />
+            <line x1="24" y1="32" x2="40" y2="32" opacity="0.55" />
+            <line x1="24" y1="38" x2="40" y2="38" opacity="0.4" />
+            <line x1="24" y1="44" x2="34" y2="44" opacity="0.25" />
+          </g>
+        </svg>
+      );
+    case 'tokens':
+      // Key outline
+      return (
+        <svg viewBox="0 0 64 64" {...s}>
+          <g {...baseProps}>
+            <circle cx="22" cy="32" r="8" />
+            <line x1="30" y1="32" x2="54" y2="32" />
+            <line x1="44" y1="32" x2="44" y2="38" />
+            <line x1="50" y1="32" x2="50" y2="40" />
+          </g>
+        </svg>
+      );
+    case 'networks':
+      // Globe-ish concentric ovals
+      return (
+        <svg viewBox="0 0 64 64" {...s}>
+          <g {...baseProps}>
+            <circle cx="32" cy="32" r="18" />
+            <ellipse cx="32" cy="32" rx="18" ry="9" opacity="0.55" />
+            <line x1="14" y1="32" x2="50" y2="32" opacity="0.55" />
+            <line x1="32" y1="14" x2="32" y2="50" opacity="0.55" />
+          </g>
+        </svg>
+      );
+    case 'generic':
+    default:
+      // Soft sparkle outline
+      return (
+        <svg viewBox="0 0 64 64" {...s}>
+          <g {...baseProps}>
+            <circle cx="32" cy="32" r="14" strokeDasharray="3 3" opacity="0.6" />
+            <circle cx="32" cy="32" r="3" />
+          </g>
+        </svg>
+      );
+  }
+}
+
+export function EmptyState({ variant = 'generic', title, sub, cta, compact = false }: EmptyStateProps) {
+  const d = DEFAULTS[variant];
+  const headline = title ?? d.title;
+  const subcopy = sub ?? d.sub;
+  const iconSize = compact ? 40 : 56;
+
+  return (
+    <div className={`text-center ${compact ? 'py-8' : 'py-16'} px-4`} role="status">
+      <div className="anet-empty-glyph inline-flex items-center justify-center mb-4 text-gray-500" aria-hidden>
+        <Glyph variant={variant} size={iconSize} />
+      </div>
+      <h3 className={`font-medium text-gray-300 ${compact ? 'text-sm' : 'text-base'}`}>{headline}</h3>
+      {subcopy && (
+        <p className={`text-gray-500 ${compact ? 'text-xs mt-1.5' : 'text-sm mt-2'} max-w-md mx-auto leading-relaxed`}>
+          {subcopy}
+        </p>
+      )}
+      {cta && (
+        <div className="mt-4">
+          {cta.href ? (
+            <Link href={cta.href} className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300">
+              {cta.label}
+              <span aria-hidden>→</span>
+            </Link>
+          ) : (
+            <button onClick={cta.onClick} className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300">
+              {cta.label}
+              <span aria-hidden>→</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Overview-specific variant with a hint about cross-network global count.
+ * Kept here so /app/page.tsx can drop in without ceremony.
+ */
+export function NodesEmptyState({ hint }: { hint?: { global_count?: number; filtered_network?: string } }) {
+  if (hint?.global_count) {
+    return (
+      <EmptyState
+        variant="nodes"
+        title="No agents in this network"
+        sub={`Server has ${hint.global_count} nodes globally, but none are registered to the current network. Switch network or contact admin.`}
+      />
+    );
+  }
+  return (
+    <EmptyState
+      variant="nodes"
+      cta={{ label: 'Run anet quickstart', href: 'https://anet.sh' }}
+    />
+  );
+}

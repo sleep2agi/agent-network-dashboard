@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useMessages } from '../lib/hooks';
 import { timeAgo } from '../components/utils';
+import { EmptyState } from '../components/EmptyState';
 
 interface MessageItem {
   id: string;
@@ -186,11 +187,7 @@ export default function MessagesPage() {
           {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 rounded-2xl bg-gray-800/20" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-gray-600 text-4xl mb-4">--</div>
-          <h3 className="text-gray-400 text-lg font-medium mb-2">No messages</h3>
-          <p className="text-gray-600 text-sm">Messages between agents will appear here.</p>
-        </div>
+        <EmptyState variant="messages" />
       ) : viewMode === 'grouped' ? (
         <div className="space-y-4">
           {conversations.map((conv, ci) => (

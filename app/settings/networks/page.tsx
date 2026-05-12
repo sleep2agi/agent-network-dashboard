@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { timeAgo } from '../../components/utils';
+import { EmptyState } from '../../components/EmptyState';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
@@ -126,7 +127,11 @@ export default function NetworksPage() {
           {loading ? (
             <div className="animate-pulse space-y-2">{[1,2].map(i => <div key={i} className="h-14 bg-gray-800/20 rounded" />)}</div>
           ) : networks.length === 0 ? (
-            <div className="text-xs text-gray-600 text-center py-4">No networks found. Create one or sign in with V3 auth.</div>
+            <EmptyState
+              variant="networks"
+              compact
+              sub="Create your first network above, or sign in with V3 auth to see existing ones."
+            />
           ) : (
             <div className="space-y-3">
               {networks.map(n => (
