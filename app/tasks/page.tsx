@@ -233,12 +233,19 @@ function TasksContent() {
         const stats: Record<string, number> = {};
         tasks.forEach(t => { stats[t.status] = (stats[t.status] || 0) + 1; });
         const total = tasks.length || 1;
+        // Round 64: full status coverage — `acked` was missing, which in
+        // production is by far the most common state (e.g. 52/83 tasks).
+        // The proportional bar appeared half-empty without it. Now lists
+        // every task lifecycle state in chronological-ish order.
         const bars = [
-          { key: 'running', color: 'bg-green-500', text: 'text-green-400' },
-          { key: 'delivered', color: 'bg-blue-500', text: 'text-blue-400' },
-          { key: 'replied', color: 'bg-purple-500', text: 'text-purple-400' },
-          { key: 'failed', color: 'bg-red-500', text: 'text-red-400' },
-          { key: 'expired', color: 'bg-orange-500', text: 'text-orange-400' },
+          { key: 'created',   color: 'bg-gray-500' },
+          { key: 'delivered', color: 'bg-blue-500' },
+          { key: 'acked',     color: 'bg-cyan-500' },
+          { key: 'running',   color: 'bg-green-500' },
+          { key: 'replied',   color: 'bg-purple-500' },
+          { key: 'failed',    color: 'bg-red-500' },
+          { key: 'cancelled', color: 'bg-yellow-500' },
+          { key: 'expired',   color: 'bg-orange-500' },
         ].filter(b => stats[b.key]);
         if (!bars.length) return null;
         // Round 63: removed the per-status legend row beneath the bar —
