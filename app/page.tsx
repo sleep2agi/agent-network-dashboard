@@ -10,6 +10,7 @@ import { AgentCard } from './components/AgentCard';
 import { InboxPanel } from './components/InboxPanel';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { NodesEmptyState as EmptyState } from './components/EmptyState';
+import { AliasAvatar } from './components/AliasAvatar';
 import { UserBar } from './components/UserBar';
 import { CommandCenter, useCommandCenter } from './components/CommandCenter';
 import { DispatchPanel } from './components/DispatchPanel';
@@ -120,7 +121,7 @@ export default function Dashboard() {
       </div>
 
       {/* Dispatch + User Bar */}
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-3 mb-4">
         <button onClick={() => setShowDispatch(true)}
           className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-cyan-500/10 transition-all active:scale-95 shrink-0">
           ⚡ Dispatch
@@ -189,9 +190,9 @@ export default function Dashboard() {
       {/* Quick Actions — split into two distinct intents:
           (1) Top: live stat cards (carry data, drill-in on click)
           (2) Bottom: pure nav rail (no number, icon + label)
-          Previously these were mixed in one row of 6, mixing data cells
-          ("0/0", "--", "0") with placeholder arrows ("→ Messages").
-          Users couldn't tell which were stats vs which were navigation. */}
+          Round 24 — wrap both in a labelled block so the rhythm reads as
+          "here are the main jumps" instead of two disconnected strips. */}
+      <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 mb-2">Quick navigation</div>
       <section className="mb-3 grid grid-cols-3 gap-2 sm:gap-3">
         {(() => {
           // Build breakdown popover content per card. Pure data — pure CSS
@@ -314,9 +315,11 @@ export default function Dashboard() {
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                   t.status === 'replied' ? 'bg-purple-400' : t.status === 'running' ? 'bg-green-400' : t.status === 'failed' ? 'bg-red-400' : 'bg-blue-400'
                 }`} />
-                <span className="text-blue-400 shrink-0">{t.from_name || '?'}</span>
+                {t.from_name && <AliasAvatar alias={t.from_name} size={14} />}
+                <span className="text-gray-300 shrink-0 max-w-[20%] truncate">{t.from_name || '?'}</span>
                 <span className="text-gray-600">&rarr;</span>
-                <span className="text-cyan-400 shrink-0">{t.to_name || '?'}</span>
+                {t.to_name && <AliasAvatar alias={t.to_name} size={14} />}
+                <span className="text-gray-300 shrink-0 max-w-[20%] truncate">{t.to_name || '?'}</span>
                 <span className="text-gray-500 truncate flex-1">{t.content?.slice(0, 40) || '--'}</span>
                 <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] border ${
                   t.status === 'replied' ? 'text-purple-300 border-purple-500/20' : t.status === 'failed' ? 'text-red-300 border-red-500/20' : 'text-gray-500 border-gray-700/30'
