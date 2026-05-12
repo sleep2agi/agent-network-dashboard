@@ -83,7 +83,9 @@ for (const m of matrix) {
   await page.waitForTimeout(300);
 
   const file = path.join(OUT, `${m.pageName}-${m.theme}-${m.tag}.png`);
-  await page.screenshot({ path: file, fullPage: true });
+  // animations: 'disabled' so polling/spinner-induced render churn does
+  // not stall the screenshot when the dash is populated.
+  await page.screenshot({ path: file, fullPage: true, animations: 'disabled', timeout: 60000 });
 
   const checks = await page.evaluate(() => {
     const doc = document.documentElement;
