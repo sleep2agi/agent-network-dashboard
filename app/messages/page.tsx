@@ -206,16 +206,19 @@ export default function MessagesPage() {
             <div key={ci} className="bg-[#111128] border border-[#2a2a4a] rounded-xl overflow-hidden">
               <div className="px-4 py-2.5 border-b border-[#2a2a4a] flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-cyan-300 font-medium">{conv.participants[0]}</span>
+                  <AliasAvatar alias={conv.participants[0]} size={16} />
+                  <span className="text-sm text-gray-200 font-medium">{conv.participants[0]}</span>
                   <span className="text-gray-600 text-xs">↔</span>
-                  <span className="text-sm text-green-300 font-medium">{conv.participants[1]}</span>
+                  <AliasAvatar alias={conv.participants[1]} size={16} />
+                  <span className="text-sm text-gray-200 font-medium">{conv.participants[1]}</span>
                 </div>
                 <span className="text-[10px] text-gray-600">{conv.messages.length} messages</span>
               </div>
               <div className="px-4 py-2 space-y-2 max-h-64 overflow-y-auto">
                 {conv.messages.map(m => (
                   <div key={m.id} className="flex items-start gap-2 text-xs py-1">
-                    <span className={`shrink-0 font-medium ${m.from_alias === conv.participants[0] ? 'text-cyan-400' : 'text-green-400'}`}>{m.from_alias}</span>
+                    {m.from_alias && <AliasAvatar alias={m.from_alias} size={14} />}
+                    <span className="shrink-0 font-medium text-gray-200">{m.from_alias}</span>
                     <span className="text-gray-400 flex-1">{m.content?.slice(0, 120) || '--'}</span>
                     <span className="text-[9px] text-gray-600 shrink-0">{timeAgo(m.created_at || '')}</span>
                   </div>
