@@ -497,6 +497,75 @@ Natural ship-point. Round 8 = the publish itself:
 4. Tell 通信龙 to bump CLI preview's PINNED_DASHBOARD_VERSION
 5. Telegram Vincent: `npm i -g @sleep2agi/agent-network@preview`
 
-After ship, rounds 9+ accumulate toward `0.4.6-preview.0`. Backlog
-ideas: layout collision avoidance in TopoGraph, hover affordances on
-KPI cards, Cmd+K command palette, header health banner, mobile audit.
+After ship, rounds 9+ accumulate toward the **next** preview in the
+SAME `0.4.5-preview.N` series (Vincent's policy: don't burn base version
+numbers on preview-only work). Backlog ideas: layout collision
+avoidance in TopoGraph, hover affordances on KPI cards, Cmd+K command
+palette, header health banner, mobile audit.
+
+> **Version policy (round 8 + Vincent telegram)**: stable stays at
+> `0.4.2` until Vincent explicitly promotes a preview. All new previews
+> bump only the `-preview.N` suffix on the same `0.4.5` base. The
+> `latest` npm tag never moves without sign-off.
+
+---
+
+## Round 9 — Header health banner
+
+### What changed
+- New `app/components/HealthBanner.tsx`: thin sticky strip mounted in
+  `AppShell` between sidebar and page content, visible on every
+  non-login page.
+- Three states, priority-ranked:
+  - **red** — `CommHub unreachable — agents may be offline` + CTA
+    "Open Settings →"
+  - **amber** — `N task(s) failed recently` + CTA "Review failures →"
+    (links to `/tasks?status=failed`). Dot pulses with the same 1.6s
+    opacity drift as the sidebar online pulse.
+  - **green** — `All systems go`. Quiet. No CTA. Doesn't render until
+    at least one stats response confirms (avoids flashing green on
+    first paint before data arrives).
+- Pulls from `/api/hub/stats` + `/api/hub/health` via SWR (15s refresh,
+  5s dedupe). Both endpoints are already polled elsewhere — request
+  dedupes free, banner has zero net cost.
+- Dismissible per-session via `sessionStorage.anet-hb-dismissed = '1'`.
+  Re-shows on next session.
+- Light/mint themes get bumped color saturation via `.anet-health-banner`
+  override rules in globals.css so red/amber/green read crisply on
+  white surfaces.
+
+### Self-score: **8.7 / 10**
+
+| Dimension                | Score | Notes                                                                  |
+|--------------------------|------:|------------------------------------------------------------------------|
+| Information value        | 9     | Fleet health visible from every page without navigating to /nodes      |
+| Restraint                | 9     | 32px-tall strip; opacity-only pulse; no glow; auto-dismissible         |
+| Affordance (CTAs)        | 9     | Each non-green state has a clear "fix this" link                       |
+| Theme parity             | 9     | All 3 states verified in light + cyber                                 |
+| Failure-state robustness | 8     | "Red" fires only when both `/stats` AND `/health` fail; safer than either alone |
+| Mobile                   | 7     | Strip wraps at 390px viewport; could collapse "Review failures →" copy further |
+
+**Deductions**:
+- −0.6: on very narrow mobile (<340px) the CTA + dismiss can wrap or
+  overlap. Could collapse CTA to icon-only at that breakpoint.
+- −0.4: red state has a single message; doesn't distinguish "hub down"
+  vs "auth expired" vs "network error". Future round could add error
+  classification.
+- −0.3: dismiss is session-scoped. Some users may want
+  "dismiss for this session only" vs "dismiss forever". Defer.
+
+### Round 10 plan: **KPI card rich hover preview**
+
+Overview's stat strip (round 3) shows top-level numbers — `Nodes 4/5`,
+`Tasks 0`, `Failed 0` — but a power user wants to see the breakdown
+without clicking through. Add small CSS-only popovers that appear on
+hover:
+- Nodes hover → "3 working · 2 idle · 0 offline"
+- Tasks hover → "by status: 4 running, 2 replied, 1 failed, 0 expired"
+- Failed hover → "5 in last hour · last failure 12m ago"
+
+Pure CSS popover (no JS state), 200ms delay-show, fades out on
+unhover. Both themes. Doesn't affect mobile (touch shows full card
+already).
+
+Estimated work: 25 min. Fires next `*/5`.
