@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useSessions, useHealth, useStats } from '../lib/hooks';
 import { timeAgo } from '../components/utils';
 import { AliasAvatar } from '../components/AliasAvatar';
-import { STATUS_CHIP_CLASS } from '../lib/status';
+import { STATUS_CHIP_CLASS, SESSION_STATUS_CHIP_CLASS } from '../lib/status';
 
 export default function AdminPage() {
   const { sessions } = useSessions();
@@ -154,9 +154,10 @@ export default function AdminPage() {
                   <div className="text-xs text-gray-500 truncate">{s.agent || '--'} · {s.task || 'idle'}</div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded border ${
-                    s.status === 'working' ? 'bg-green-900/30 text-green-300 border-green-800/30' : 'bg-blue-900/30 text-blue-300 border-blue-800/30'
-                  }`}>{s.status}</span>
+                  {/* Round 91: 5-state palette via shared
+                      SESSION_STATUS_CHIP_CLASS (was working-vs-other, which
+                      rendered blocked/error identical to idle). */}
+                  <span className={`text-xs px-2 py-0.5 rounded border ${SESSION_STATUS_CHIP_CLASS[s.status] || SESSION_STATUS_CHIP_CLASS.idle}`}>{s.status}</span>
                   <span className="text-[10px] text-gray-600">{timeAgo(s.updated_at)}</span>
                 </div>
               </div>
