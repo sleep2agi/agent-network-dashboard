@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Session } from './types';
+import { AliasAvatar } from './AliasAvatar';
 
 interface DispatchPanelProps {
   sessions: Session[];
@@ -71,8 +72,8 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-      <div className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-[5%] bg-[#0a0a1a] border border-[#2a2a4a] rounded-2xl z-50 flex flex-col shadow-2xl shadow-black/70 overflow-hidden">
+      <div className="fixed inset-0 bg-black/50 z-40 anet-fade-in" onClick={onClose} />
+      <div className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-[5%] bg-[#0a0a1a] border border-[#2a2a4a] rounded-2xl z-50 flex flex-col shadow-2xl shadow-black/70 overflow-hidden anet-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2a4a] bg-[#0d0d1a]">
           <div>
@@ -108,7 +109,8 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-left transition-colors ${
                     selected.has(s.alias) ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20' : 'text-gray-400 hover:bg-[#1a1a2a]'
                   }`}>
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${s.status === 'working' ? 'bg-green-400' : s.status === 'idle' ? 'bg-cyan-400' : 'bg-gray-500'}`} />
+                  <AliasAvatar alias={s.alias} size={16} />
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.status === 'working' ? 'bg-green-400' : s.status === 'idle' ? 'bg-cyan-400' : 'bg-gray-500'}`} />
                   <span className="truncate flex-1">{s.alias}</span>
                   <span className="text-[9px] text-gray-600">{s.agent || '--'}</span>
                 </button>
@@ -159,10 +161,12 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {results.map(r => (
-                    <span key={r.alias} className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                    <span key={r.alias} className={`flex items-center gap-1.5 text-[10px] pl-1 pr-2 py-0.5 rounded-full border ${
                       r.ok ? 'text-green-300 border-green-500/20 bg-green-500/5' : 'text-red-300 border-red-500/20 bg-red-500/5'
                     }`}>
-                      {r.alias}: {r.ok ? '✓' : r.error || '✗'}
+                      <AliasAvatar alias={r.alias} size={14} />
+                      <span>{r.alias}</span>
+                      <span aria-hidden>{r.ok ? '✓' : r.error || '✗'}</span>
                     </span>
                   ))}
                 </div>
