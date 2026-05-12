@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 
 export type EmptyVariant = 'nodes' | 'tasks' | 'messages' | 'logs' | 'tokens' | 'networks' | 'generic';
@@ -202,9 +203,7 @@ export function NodesEmptyState({ hint }: { hint?: { global_count?: number; filt
         Run this in a fresh terminal to register an agent with this CommHub:
       </p>
       <div className="mt-4 inline-block">
-        <code className="anet-empty-cmd block bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-4 py-3 text-xs sm:text-sm text-cyan-300 font-mono select-all">
-          npx --yes @sleep2agi/agent-network init
-        </code>
+        <QuickstartCommand cmd="npx --yes @sleep2agi/agent-network init" />
       </div>
       <div className="mt-3">
         <a
@@ -217,6 +216,47 @@ export function NodesEmptyState({ hint }: { hint?: { global_count?: number; filt
           <span aria-hidden>→</span>
         </a>
       </div>
+    </div>
+  );
+}
+
+/** Code block + inline copy button used by the empty-Overview first-run
+ *  CTA. State lives here so the parent stays stateless. */
+function QuickstartCommand({ cmd }: { cmd: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(cmd);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {}
+  };
+  return (
+    <div className="anet-empty-cmd flex items-center gap-2 bg-[#0a0a15] border border-[#2a2a4a] rounded-lg pl-4 pr-1.5 py-1.5 text-xs sm:text-sm">
+      <code className="text-cyan-300 font-mono select-all">{cmd}</code>
+      <button
+        type="button"
+        onClick={onCopy}
+        aria-label={copied ? 'Copied' : 'Copy command'}
+        className="shrink-0 rounded-md px-2 py-1.5 text-[11px] text-gray-500 hover:text-gray-200 hover:bg-[#1a1a2a] transition-colors"
+      >
+        {copied ? (
+          <span className="flex items-center gap-1 text-green-400">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            Copied
+          </span>
+        ) : (
+          <span className="flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+            Copy
+          </span>
+        )}
+      </button>
     </div>
   );
 }
