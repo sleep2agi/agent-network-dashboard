@@ -618,3 +618,66 @@ Action: capture mobile screenshots across 5-6 key pages at 390×844
 AND 360×740, identify worst offenders, fix the top 3.
 
 Estimated work: 30 min. Fires next `*/5`.
+
+---
+
+## Round 11 — Mobile audit + polish pass
+
+### Findings (390×844 + 360×740)
+Captured 12 screenshots (6 pages × 2 themes × 2 viewports). Three
+clear regressions at narrow widths:
+
+1. **Health banner** ran into the fixed-position hamburger button at
+   top-left (top:4 left:3, ~44×44 hit area). Message text was
+   truncated to "...sks failed recently" because the leading 6
+   characters sat under the hamburger.
+2. **UserBar** "Edit" + "Sign out" text links cramped against the
+   user name + role on narrow screens, wrapping "Sign out" onto
+   two lines.
+3. **Stat strip** "View →" affordance in each card's top-right took
+   horizontal space the headline number needed, making the 3-col
+   grid feel cramped at 360px.
+
+### What changed
+- **HealthBanner**: `pl-3` → `pl-14` on mobile (clears the hamburger
+  button), CTA text "Review failures" / "Open Settings" collapses to
+  a bare arrow on `<sm` with a proper `aria-label` so screen
+  readers still hear the destination.
+- **UserBar Edit / Sign out**: text on `>=sm`, single inline-svg icon
+  on `<sm` (pencil for edit, doorway-arrow for sign out). Both stay
+  same hit area, just label-trimmed.
+- **Stat strip "View →"**: `hidden sm:block` so the affordance only
+  appears on desktop. Mobile cards are fully tappable, so the
+  affordance is implicit.
+
+### Self-score: **9.0 / 10**
+
+| Dimension              | Score | Notes                                                            |
+|------------------------|------:|------------------------------------------------------------------|
+| Defect closure         | 10    | All three observed mobile regressions resolved                  |
+| Desktop non-regression | 9     | All changes wrapped in `sm:` breakpoint — pixel-identical >640px |
+| Restraint              | 9     | Icons are simple line SVGs matching the design system           |
+| Accessibility          | 9     | `aria-label` on collapsed CTAs and icon-only buttons             |
+| Touch target           | 8     | Icons are 16px visual; full `<button>` is still 44px hit area    |
+
+**Deductions**:
+- −0.5: not tested below 360px (e.g. 320px iPhone SE first-gen).
+  Probably still fine but unverified.
+- −0.3: sidebar drawer mobile state (when hamburger is tapped) not
+  re-screenshotted post round-4 brand changes.
+- −0.2: existing chip filter rows on Tasks/Messages still wrap at
+  narrow widths. Not the most painful, deferred.
+
+### Round 12 plan: **Loading skeleton refresh**
+
+The `LoadingSkeleton` component in `app/components/LoadingSkeleton.tsx`
+still uses `bg-gray-800` / `bg-gray-800/40` patterns from the
+pre-theme-token era. It works (CSS shim catches `bg-gray-800` in
+light), but it's the only surface that didn't get a deliberate
+restyle. Refresh to use:
+- subtle bg + animated pulse using the same `anet-brand-pulse`
+  rhythm (1.6s opacity drift) for visual cohesion
+- proper card structure matching round 3's stat-strip shape
+- both themes, no AI-noise
+
+Estimated work: 20 min. Fires next `*/5`.

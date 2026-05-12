@@ -251,7 +251,7 @@ export default function Dashboard() {
             >
               <div className="flex items-baseline justify-between">
                 <div className={`text-xl font-semibold tabular-nums ${a.color.split(' ')[0]}`}>{a.value}</div>
-                <div className="text-[10px] text-gray-600 group-hover:text-gray-400 transition-colors">View →</div>
+                <div className="hidden sm:block text-[10px] text-gray-600 group-hover:text-gray-400 transition-colors">View →</div>
               </div>
               <div className="text-[11px] text-gray-400 mt-0.5">{a.label}</div>
               <div className="text-[10px] text-gray-600 mt-px">{a.sub}</div>
