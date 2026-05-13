@@ -156,6 +156,45 @@ for (const m of matrix) {
     // --- Carryover ---
     const docWidth = doc.scrollWidth;
     const horizontalOverflow = docWidth > viewportW + 2;
+
+    // --- Cut-off-element guard ---
+    // Round 96: scrollWidth check above is fooled when an overflowing
+    // parent has `overflow-x: hidden` (the page's own min-h-screen
+    // wrapper does this). Walk visible elements and flag any whose
+    // bounding rect ends past the viewport edge — that's a real cut-off
+    // even when the body's scroll-width matches. Skip elements with
+    // their own overflow scrolling (intentional inner scroll containers).
+    let cutoffCount = 0;
+    let cutoffSample = '';
+    // Cap the walk at 3000 elements (populated /server-logs has 500+ log
+    // rows × multiple spans each; without a cap the harness OOMs under
+    // chromium during the 32-capture sweep). Walk up ancestors to skip
+    // elements whose parent is an intentional horizontal-scroll
+    // container (overflow-x: auto / scroll) — those extending past the
+    // viewport edge is by design.
+    const hasScrollableAncestor = (el) => {
+      let cur = el;
+      while (cur && cur !== document.body) {
+        const cs = getComputedStyle(cur);
+        if (cs.overflowX === 'auto' || cs.overflowX === 'scroll') return true;
+        cur = cur.parentElement;
+      }
+      return false;
+    };
+    const allEls = document.querySelectorAll('body *');
+    const walk = Math.min(allEls.length, 3000);
+    for (let i = 0; i < walk; i++) {
+      const el = allEls[i];
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      if (r.right <= viewportW + 8) continue;
+      if (hasScrollableAncestor(el)) continue;
+      cutoffCount++;
+      if (!cutoffSample) {
+        const txt = (el.textContent || '').trim().slice(0, 30);
+        cutoffSample = `${el.tagName} right=${Math.round(r.right)} "${txt}"`;
+      }
+    }
     let glowyCount = 0;
     for (const el of document.querySelectorAll('body *')) {
       const cs = getComputedStyle(el);
@@ -173,6 +212,7 @@ for (const m of matrix) {
       maxGap,
       fleetEmpty, sayingAllSystemsGo, misleadingCopy,
       docWidth, horizontalOverflow,
+      cutoffCount, cutoffSample,
       glowyCount, sidebarVisible,
     };
   });
@@ -206,6 +246,10 @@ for (const m of matrix) {
   if (checks.misleadingCopy) {
     score -= 2;
     notes.push(`'All systems go' shown while fleet empty`);
+  }
+  if (checks.cutoffCount > 0) {
+    score -= 2;
+    notes.push(`${checks.cutoffCount} cut-off element(s); first: ${checks.cutoffSample}`);
   }
 
   report.push({ ...m, file, checks, score: Math.max(score, 0), notes });
