@@ -31,7 +31,14 @@ interface FlowLink {
 const cx = 500;
 const cy = 330;
 const onlineRadius = 220;
-const offlineRadius = 315;
+// Round 97 (issue #50): tiered online rings when N > 8 so labels stop
+// overlapping each other. Single ring at r=220 already gives ~22° per
+// node at N=14 in a 320° spread; labels are 124px wide so they collide.
+// Splitting into inner (first half) + outer (rest) doubles arc-room.
+const onlineTierThreshold = 8;
+const onlineInnerRadius = 175;
+const onlineOuterRadius = 260;
+const offlineRadius = 325;
 
 /** Polar coordinate for a node on a ring. `rotateBy` lets the caller offset
  *  the whole ring so two stacked rings don't align radially (round 25: the
@@ -248,17 +255,41 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
     const offline = sessions.filter(s => s.status === 'offline' && !sseCount(s));
     const positions: Record<string, Point> = {};
 
-    online.forEach((s, index) => {
-      positions[s.alias] = polarPoint(index, Math.max(online.length, 1), onlineRadius);
-    });
+    // Round 97 (issue #50): when there are more online agents than a single
+    // ring can comfortably show (each 124px label needs ≥130px of arc), split
+    // them into two concentric rings. Inner ring gets the first half so the
+    // graph "grows outward" as more agents come online. Outer ring is rotated
+    // by half the inner step so its nodes sit in the angular gaps.
+    const tier = online.length > onlineTierThreshold;
+    if (tier) {
+      const innerCount = Math.ceil(online.length / 2);
+      const outerCount = online.length - innerCount;
+      const innerNodes = online.slice(0, innerCount);
+      const outerNodes = online.slice(innerCount);
+      innerNodes.forEach((s, index) => {
+        positions[s.alias] = polarPoint(index, Math.max(innerCount, 1), onlineInnerRadius);
+      });
+      const innerSpread = innerCount <= 2 ? Math.PI : Math.PI * 1.78;
+      const innerStep = innerCount > 1 ? innerSpread / (innerCount - 1) : 0;
+      outerNodes.forEach((s, index) => {
+        positions[s.alias] = polarPoint(index, Math.max(outerCount, 1), onlineOuterRadius, innerStep / 2);
+      });
+    } else {
+      online.forEach((s, index) => {
+        positions[s.alias] = polarPoint(index, Math.max(online.length, 1), onlineRadius);
+      });
+    }
 
     // Offset the offline ring radially by half the online step so offline
     // bubbles sit in the angular gaps between online bubbles instead of
     // stacking directly behind them. Also push the outer ring further when
-    // there are many offline nodes so labels don't crowd the legend.
-    const spread = online.length <= 2 ? Math.PI : Math.PI * 1.78;
-    const onlineStep = online.length > 1 ? spread / (online.length - 1) : 0;
-    const offlineRotation = online.length > 0 ? onlineStep / 2 : 0;
+    // there are many offline nodes so labels don't crowd the legend. When
+    // tiered, the outer online ring is at r=260, so push offline further so
+    // they don't collide with the outer online labels.
+    const outerOnlineCount = tier ? online.length - Math.ceil(online.length / 2) : online.length;
+    const outerSpreadBase = outerOnlineCount <= 2 ? Math.PI : Math.PI * 1.78;
+    const outerStep = outerOnlineCount > 1 ? outerSpreadBase / (outerOnlineCount - 1) : 0;
+    const offlineRotation = outerOnlineCount > 0 ? outerStep / 2 : 0;
     const offlineR = offlineRadius + Math.max(0, offline.length - 4) * 6;
 
     offline.forEach((s, index) => {
