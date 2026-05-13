@@ -31,13 +31,18 @@ interface FlowLink {
 const cx = 500;
 const cy = 330;
 const onlineRadius = 220;
-// Round 97 (issue #50): tiered online rings when N > 8 so labels stop
-// overlapping each other. Single ring at r=220 already gives ~22° per
-// node at N=14 in a 320° spread; labels are 124px wide so they collide.
-// Splitting into inner (first half) + outer (rest) doubles arc-room.
+// Round 97 (issue #50): tier into two rings when N > 8; round 98
+// (issue #61): tier into three rings when N > 14. At N=22 (Vincent's
+// network) two rings still leave 11 nodes per ring → inner chord of
+// 88px can't fit a 100px label; three rings give ~⌈N/3⌉ per ring so
+// every tier has enough arc room.
 const onlineTierThreshold = 8;
+const onlineTripleThreshold = 14;
 const onlineInnerRadius = 175;
 const onlineOuterRadius = 260;
+const onlineTripleInnerR = 145;
+const onlineTripleMidR = 215;
+const onlineTripleOuterR = 285;
 const offlineRadius = 325;
 
 /** Polar coordinate for a node on a ring. `rotateBy` lets the caller offset
@@ -255,13 +260,33 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
     const offline = sessions.filter(s => s.status === 'offline' && !sseCount(s));
     const positions: Record<string, Point> = {};
 
-    // Round 97 (issue #50): when there are more online agents than a single
-    // ring can comfortably show (each 124px label needs ≥130px of arc), split
-    // them into two concentric rings. Inner ring gets the first half so the
-    // graph "grows outward" as more agents come online. Outer ring is rotated
-    // by half the inner step so its nodes sit in the angular gaps.
-    const tier = online.length > onlineTierThreshold;
-    if (tier) {
+    // Round 97 (issue #50) + 98 (issue #61): three layout modes by N.
+    //   N ≤ 8         → single ring (r=220)
+    //   8 < N ≤ 14    → two rings (inner r=175, outer r=260, half-step rot)
+    //   N > 14        → three rings (r=145/215/285, ⌈N/3⌉ per ring)
+    // Each ring's spread is 1.78π so its node count drives chord length:
+    // labels are 100px wide so each ring needs ≥110px chord per node.
+    const tripleTier = online.length > onlineTripleThreshold;
+    const dualTier = !tripleTier && online.length > onlineTierThreshold;
+    let outerOnlineCount = online.length;
+    if (tripleTier) {
+      const per = Math.ceil(online.length / 3);
+      const r1 = online.slice(0, per);
+      const r2 = online.slice(per, 2 * per);
+      const r3 = online.slice(2 * per);
+      r1.forEach((s, index) => {
+        positions[s.alias] = polarPoint(index, Math.max(r1.length, 1), onlineTripleInnerR);
+      });
+      const r1Spread = r1.length <= 2 ? Math.PI : Math.PI * 1.78;
+      const r1Step = r1.length > 1 ? r1Spread / (r1.length - 1) : 0;
+      r2.forEach((s, index) => {
+        positions[s.alias] = polarPoint(index, Math.max(r2.length, 1), onlineTripleMidR, r1Step / 2);
+      });
+      r3.forEach((s, index) => {
+        positions[s.alias] = polarPoint(index, Math.max(r3.length, 1), onlineTripleOuterR);
+      });
+      outerOnlineCount = r3.length;
+    } else if (dualTier) {
       const innerCount = Math.ceil(online.length / 2);
       const outerCount = online.length - innerCount;
       const innerNodes = online.slice(0, innerCount);
@@ -274,19 +299,17 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
       outerNodes.forEach((s, index) => {
         positions[s.alias] = polarPoint(index, Math.max(outerCount, 1), onlineOuterRadius, innerStep / 2);
       });
+      outerOnlineCount = outerCount;
     } else {
       online.forEach((s, index) => {
         positions[s.alias] = polarPoint(index, Math.max(online.length, 1), onlineRadius);
       });
     }
 
-    // Offset the offline ring radially by half the online step so offline
-    // bubbles sit in the angular gaps between online bubbles instead of
-    // stacking directly behind them. Also push the outer ring further when
-    // there are many offline nodes so labels don't crowd the legend. When
-    // tiered, the outer online ring is at r=260, so push offline further so
-    // they don't collide with the outer online labels.
-    const outerOnlineCount = tier ? online.length - Math.ceil(online.length / 2) : online.length;
+    // Offset the offline ring radially by half the outermost online step so
+    // offline bubbles sit in the angular gaps between online bubbles instead
+    // of stacking directly behind them. Also push the outer ring further when
+    // there are many offline nodes so labels don't crowd the legend.
     const outerSpreadBase = outerOnlineCount <= 2 ? Math.PI : Math.PI * 1.78;
     const outerStep = outerOnlineCount > 1 ? outerSpreadBase / (outerOnlineCount - 1) : 0;
     const offlineRotation = outerOnlineCount > 0 ? outerStep / 2 : 0;
@@ -584,10 +607,14 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                   </path>
                 )}
 
+                {/* Round 98 (issue #61): label rect 124px → 100px so a
+                    3-ring layout (inner r=145, 8 nodes) still has room for
+                    the label without overlapping a neighbour. Truncate
+                    tightened from 14 → 12 chars to match. */}
                 <g transform={`translate(${pos.x}, ${pos.y + radius + 22})`}>
-                  <rect x="-62" y="-14" width="124" height="42" rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
+                  <rect x="-50" y="-14" width="100" height="42" rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
                   <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize="12" fontFamily="monospace" fontWeight="700">
-                    {truncate(session.alias, 14)}
+                    {truncate(session.alias, 12)}
                   </text>
                   <text x="0" y="17" textAnchor="middle" fill={status.primary} fontSize="9" fontFamily="monospace">
                     {status.label}{isOnline && sseCountFor != null ? ` sse:${sseCountFor}` : ''}
