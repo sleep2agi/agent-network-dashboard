@@ -42,6 +42,10 @@ export default function Dashboard() {
   const [showDispatch, setShowDispatch] = useState(false);
   const [inbox, setInbox] = useState<InboxMessage[]>([]);
   const [agentFilter, setAgentFilter] = useState<'all' | 'working' | 'idle' | 'offline'>('all');
+  // #84: last node.renamed event — passed to TopoGraph so an open chat
+  // popover follows the rename instead of pointing at a dead alias. `ts`
+  // makes the effect re-fire even when the same from/to repeats.
+  const [renameSignal, setRenameSignal] = useState<{ from: string; to: string; ts: number } | null>(null);
   const { mutate } = useSWRConfig();
 
   // SSE: instant revalidation on CommHub events
@@ -51,6 +55,19 @@ export default function Dashboard() {
     url: '/api/hub/events',
     enabled: sseEnabled,
     onEvent: (event) => {
+      // #84 (RFC-010 §3.4): node.renamed — revalidate the session list so the
+      // new alias propagates instantly (TopoGraph + node grid re-render, the
+      // avatar hue recomputes as a pure fn of alias) instead of waiting for
+      // the next 5s poll. The renamed node's history keeps the old alias
+      // server-side, so the task list needs no revalidation here.
+      if (event.type === 'node.renamed') {
+        mutate('/api/hub/status');
+        const d = event.data as { old_alias?: string; new_alias?: string } | undefined;
+        if (d?.old_alias && d?.new_alias) {
+          setRenameSignal({ from: d.old_alias, to: d.new_alias, ts: Date.now() });
+        }
+        return;
+      }
       if (['new_task', 'new_message', 'new_reply', 'node_status_changed', 'broadcast'].includes(event.type)) {
         mutate('/api/hub/status');
         mutate((key: string) => typeof key === 'string' && key.startsWith('/api/hub/tasks'), undefined, { revalidate: true });
@@ -368,7 +385,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {showTopo && sessions.length > 0 && <TopoGraph sessions={sessions} sseSessions={sseSessions} />}
+      {showTopo && sessions.length > 0 && <TopoGraph sessions={sessions} sseSessions={sseSessions} renameSignal={renameSignal} />}
 
       {sessions.length === 0 && !sessError ? (
         <EmptyState
