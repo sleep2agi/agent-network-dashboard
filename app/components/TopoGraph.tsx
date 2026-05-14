@@ -223,6 +223,38 @@ function useBrand(): string | null {
   return brand;
 }
 
+/** Round 106 (issue #83): cluster agents by shared alias prefix so a team
+ *  reads as one unit in the topology. Adjacent (sorted) aliases that share
+ *  a ≥2-char prefix join the same group; the group key is the prefix common
+ *  to every member. Singletons map to their own alias (no hue shift). The
+ *  group key feeds aliasAvatarColors() so e.g. all 通信* nodes get one hue,
+ *  all 研究员* another — the "同色相 tint" clustering option from #83. */
+function commonPrefix(a: string, b: string): string {
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  return a.slice(0, i);
+}
+
+function computeGroupKeys(aliases: string[]): Record<string, string> {
+  const sorted = [...aliases].sort((a, b) => a.localeCompare(b));
+  const keys: Record<string, string> = {};
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i;
+    let prefix = sorted[i];
+    while (j + 1 < sorted.length) {
+      const lcp = commonPrefix(prefix, sorted[j + 1]);
+      if (lcp.length < 2) break;
+      prefix = lcp;
+      j++;
+    }
+    const key = j > i ? prefix : sorted[i];
+    for (let k = i; k <= j; k++) keys[sorted[k]] = key;
+    i = j + 1;
+  }
+  return keys;
+}
+
 function buildFlowLinks(messages: MessageFlow[], positions: Record<string, Point>) {
   const links = new Map<string, FlowLink>();
 
@@ -282,11 +314,18 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
     nodePositions,
     flowLinks,
     activeAliases,
+    groupKeys,
   } = useMemo(() => {
     const sseCount = (s: { alias: string; network_id?: string }) =>
       (s.network_id ? sseSessions[`${s.network_id}:${s.alias}`] : undefined) ?? sseSessions[s.alias];
-    const online = sessions.filter(s => s.status !== 'offline' || sseCount(s));
-    const offline = sessions.filter(s => s.status === 'offline' && !sseCount(s));
+    // Round 106 (issue #83): sort by alias so same-prefix agents
+    // (通信龙 / 通信牛 / 通信工程马 …, or 研究员1号 / 研究员2号 …) end up
+    // adjacent in the array — the tier layout below assigns angles by
+    // index, so contiguous-in-array becomes contiguous-in-ring, i.e.
+    // each team visually clusters. localeCompare keeps CJK ordering sane.
+    const byAlias = (a: Session, b: Session) => a.alias.localeCompare(b.alias);
+    const online = sessions.filter(s => s.status !== 'offline' || sseCount(s)).sort(byAlias);
+    const offline = sessions.filter(s => s.status === 'offline' && !sseCount(s)).sort(byAlias);
     const positions: Record<string, Point> = {};
 
     // Round 97 (issue #50) + 98 (issue #61): three layout modes by N.
@@ -355,12 +394,16 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
       active.add(link.to);
     });
 
+    // Round 106 (issue #83): group key per alias → shared hue per team.
+    const groupKeys = computeGroupKeys([...online, ...offline].map(s => s.alias));
+
     return {
       onlineNodes: online,
       offlineNodes: offline,
       nodePositions: positions,
       flowLinks: links,
       activeAliases: active,
+      groupKeys,
     };
   }, [messages, sessions, sseSessions]);
 
@@ -806,7 +849,11 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                       />
                     );
                   }
-                  const c = aliasAvatarColors(session.alias);
+                  // Round 106 (issue #83): hue keyed to the prefix group,
+                  // not the full alias — every 通信* node shares one color,
+                  // every 研究员* another, so teams cluster visually even
+                  // when the tier layout spreads them across rings.
+                  const c = aliasAvatarColors(groupKeys[session.alias] || session.alias);
                   const fs = isOnline ? 14 : 10;
                   return (
                     <>
