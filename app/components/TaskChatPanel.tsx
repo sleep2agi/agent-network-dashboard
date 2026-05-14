@@ -29,19 +29,19 @@ function StatusBar({ status }: { status: string }) {
       {STATUS_STEPS.map((s, i) => (
         <div key={s} className="flex items-center gap-1">
           <div className={`w-2 h-2 rounded-full transition-all duration-700 ${
-            isFailed ? (i === 0 ? 'bg-red-400' : 'bg-gray-700')
-            : i <= idx ? (STATUS_COLORS[s] || 'bg-gray-600') : 'bg-gray-700'
+            isFailed ? (i === 0 ? 'bg-red-400' : 'bg-[var(--border)]')
+            : i <= idx ? (STATUS_COLORS[s] || 'bg-gray-600') : 'bg-[var(--border)]'
           }`} />
           {i < STATUS_STEPS.length - 1 && (
             <div className={`w-4 h-px transition-colors duration-700 ${
-              isFailed ? 'bg-red-800' : i < idx ? 'bg-gray-500' : 'bg-gray-800'
+              isFailed ? 'bg-red-800' : i < idx ? 'bg-gray-500' : 'bg-[var(--border)]'
             }`} />
           )}
         </div>
       ))}
       <span className={`text-[10px] ml-1.5 font-medium ${
         isFailed ? 'text-red-400' : status === 'replied' ? 'text-purple-400'
-        : status === 'running' ? 'text-green-400' : 'text-gray-500'
+        : status === 'running' ? 'text-green-400' : 'text-[var(--fg-muted)]'
       }`}>{status}</span>
       {(status === 'running' || status === 'delivered') && (
         <span className="ml-1">
@@ -62,34 +62,34 @@ import remarkGfm from 'remark-gfm';
 import { useSSE } from '../lib/useSSE';
 
 function MarkdownContent({ text }: { text: string }) {
-  if (!text) return <span className="text-gray-600 italic">No content</span>;
+  if (!text) return <span className="text-[var(--fg-dim)] italic">No content</span>;
   return (
     <div className="break-words leading-relaxed">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          h1: ({ children }) => <h1 className="text-base font-semibold text-white mt-2 mb-1">{children}</h1>,
-          h2: ({ children }) => <h2 className="text-sm font-semibold text-white mt-2 mb-1">{children}</h2>,
+          h1: ({ children }) => <h1 className="text-base font-semibold text-[var(--fg)] mt-2 mb-1">{children}</h1>,
+          h2: ({ children }) => <h2 className="text-sm font-semibold text-[var(--fg)] mt-2 mb-1">{children}</h2>,
           h3: ({ children }) => <h3 className="text-sm font-semibold text-cyan-300 mt-1.5 mb-0.5">{children}</h3>,
           p: ({ children }) => <p className="my-1">{children}</p>,
-          strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
-          em: ({ children }) => <em className="italic text-gray-300">{children}</em>,
+          strong: ({ children }) => <strong className="text-[var(--fg)] font-semibold">{children}</strong>,
+          em: ({ children }) => <em className="italic text-[var(--fg-muted)]">{children}</em>,
           ul: ({ children }) => <ul className="list-disc pl-5 my-1 space-y-0.5">{children}</ul>,
           ol: ({ children }) => <ol className="list-decimal pl-5 my-1 space-y-0.5">{children}</ol>,
           li: ({ children }) => <li>{children}</li>,
           a: ({ href, children }) => <a href={href} target="_blank" rel="noreferrer" className="text-cyan-300 underline">{children}</a>,
-          blockquote: ({ children }) => <blockquote className="border-l-2 border-cyan-500/30 pl-3 my-1 text-gray-400 italic">{children}</blockquote>,
-          hr: () => <hr className="border-t border-[#1a1a2a] my-2" />,
+          blockquote: ({ children }) => <blockquote className="border-l-2 border-cyan-500/30 pl-3 my-1 text-[var(--fg-muted)] italic">{children}</blockquote>,
+          hr: () => <hr className="border-t border-[var(--border)] my-2" />,
           code: ({ className, children }) => {
             const inline = !className?.startsWith('language-');
             if (inline) {
-              return <code className="bg-[#0a0a15] rounded px-1.5 py-0.5 text-cyan-300 text-[11px] border border-[#1a1a2a]">{children}</code>;
+              return <code className="bg-[var(--code-bg)] rounded px-1.5 py-0.5 text-cyan-300 text-[11px] border border-[var(--border)]">{children}</code>;
             }
             const lang = className?.replace(/^language-/, '') || '';
             return (
-              <div className="my-2 rounded-lg overflow-hidden border border-[#1a1a2a]">
-                {lang && <div className="bg-[#0a0a15] px-3 py-1 text-[10px] text-gray-500 border-b border-[#1a1a2a]">{lang}</div>}
-                <pre className="bg-[#050510] px-3 py-2 text-[11px] text-green-300 overflow-x-auto"><code>{children}</code></pre>
+              <div className="my-2 rounded-lg overflow-hidden border border-[var(--border)]">
+                {lang && <div className="bg-[var(--code-bg)] px-3 py-1 text-[10px] text-[var(--fg-muted)] border-b border-[var(--border)]">{lang}</div>}
+                <pre className="bg-[var(--code-bg)] px-3 py-2 text-[11px] text-green-300 overflow-x-auto"><code>{children}</code></pre>
               </div>
             );
           },
@@ -98,11 +98,11 @@ function MarkdownContent({ text }: { text: string }) {
               <table className="w-full text-[12px] border-collapse">{children}</table>
             </div>
           ),
-          thead: ({ children }) => <thead className="bg-[#0a0a15]">{children}</thead>,
+          thead: ({ children }) => <thead className="bg-[var(--code-bg)]">{children}</thead>,
           tbody: ({ children }) => <tbody>{children}</tbody>,
-          tr: ({ children }) => <tr className="border-b border-[#1a1a2a]">{children}</tr>,
-          th: ({ children }) => <th className="text-left text-cyan-300 font-semibold px-2 py-1 border border-[#1a1a2a]">{children}</th>,
-          td: ({ children }) => <td className="px-2 py-1 border border-[#1a1a2a] align-top">{children}</td>,
+          tr: ({ children }) => <tr className="border-b border-[var(--border)]">{children}</tr>,
+          th: ({ children }) => <th className="text-left text-cyan-300 font-semibold px-2 py-1 border border-[var(--border)]">{children}</th>,
+          td: ({ children }) => <td className="px-2 py-1 border border-[var(--border)] align-top">{children}</td>,
         }}
       >
         {text}
@@ -348,8 +348,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
           {historyLoaded && messages.length === 0 && (
             <div className="text-center py-12">
               <div className="text-3xl mb-3">💬</div>
-              <div className="text-gray-500 text-sm">Start a conversation</div>
-              <div className="text-gray-600 text-xs mt-1">Send a task to {alias}</div>
+              <div className="text-[var(--fg-muted)] text-sm">Start a conversation</div>
+              <div className="text-[var(--fg-dim)] text-xs mt-1">Send a task to {alias}</div>
             </div>
           )}
 
@@ -368,16 +368,16 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                 <div className="max-w-[85%] bg-cyan-500/8 border border-cyan-500/15 rounded-2xl rounded-br-md px-4 py-2.5 shadow-sm">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-[10px] font-medium ${fromUser ? 'text-cyan-400' : 'text-purple-300'}`}>{senderLabel}</span>
-                    {!fromUser && <span className="text-[9px] text-gray-600">forwarded to {m.to_name}</span>}
+                    {!fromUser && <span className="text-[9px] text-[var(--fg-dim)]">forwarded to {m.to_name}</span>}
                   </div>
-                  <div className="text-[13px] text-gray-200">
+                  <div className="text-[13px] text-[var(--fg)]">
                     <MarkdownContent text={m.content} />
                   </div>
                   <div className="flex items-center justify-between mt-1.5 gap-3">
                     <StatusBar status={m.status} />
                     <div className="flex items-center gap-2 shrink-0">
                       {senderBadge}
-                      <span className="text-[9px] text-gray-600">{timeAgo(m.created_at)}</span>
+                      <span className="text-[9px] text-[var(--fg-dim)]">{timeAgo(m.created_at)}</span>
                     </div>
                   </div>
                 </div>
@@ -389,9 +389,9 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                   <div className="max-w-[85%] bg-green-500/8 border border-green-500/15 rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       {m.to_name && <AliasAvatar alias={m.to_name} size={14} />}
-                      <span className="text-[10px] text-gray-200 font-medium">{m.to_name}</span>
+                      <span className="text-[10px] text-[var(--fg)] font-medium">{m.to_name}</span>
                     </div>
-                    <div className="text-[13px] text-gray-200">
+                    <div className="text-[13px] text-[var(--fg)]">
                       <MarkdownContent text={m.result} />
                     </div>
                   </div>
@@ -401,7 +401,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
               {/* Typing indicator when running */}
               {m.status === 'running' && !m.result && (
                 <div className="flex justify-start">
-                  <div className="bg-[#111128] border border-[#2a2a4a] rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex gap-1">
                       <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0s' }} />
                       <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.15s' }} />
@@ -417,17 +417,17 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
         </div>
 
         {/* Input area */}
-        <div className="border-t border-[#2a2a4a] bg-[#0d0d1a] px-4 py-3">
+        <div className="border-t border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-3">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               {/* @ mention dropdown */}
               {showMentions && filteredMentions.length > 0 && (
-                <div className="absolute bottom-full left-0 right-0 mb-1 bg-[#111128] border border-[#2a2a4a] rounded-lg shadow-xl shadow-black/50 overflow-hidden z-10 max-h-48 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-1 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg shadow-xl shadow-black/50 overflow-hidden z-10 max-h-48 overflow-y-auto">
                   {filteredMentions.map(node => (
                     <button key={node} onClick={() => insertMention(node)}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-cyan-500/10 transition-colors">
                       <AliasAvatar alias={node} size={16} />
-                      <span className="text-gray-300">{node}</span>
+                      <span className="text-[var(--fg-muted)]">{node}</span>
                     </button>
                   ))}
                 </div>
@@ -439,11 +439,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                 onKeyDown={handleKeyDown}
                 placeholder={`Message ${alias}...`}
                 rows={1}
-                className="w-full bg-[#111128] border border-[#2a2a4a] rounded-xl px-4 py-2.5 pr-16 text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none resize-none transition-colors"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-2.5 pr-16 text-sm text-[var(--fg)] placeholder-[var(--fg-dim)] focus:border-cyan-500/40 focus:outline-none resize-none transition-colors"
               />
               <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
                 <select value={priority} onChange={e => setPriority(e.target.value)}
-                  className="bg-transparent text-[9px] text-gray-600 focus:outline-none cursor-pointer">
+                  className="bg-transparent text-[9px] text-[var(--fg-dim)] focus:outline-none cursor-pointer">
                   <option value="normal">N</option>
                   <option value="high">H</option>
                   <option value="low">L</option>
@@ -451,7 +451,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
               </div>
             </div>
             <button onClick={send} disabled={sending || !input.trim()}
-              className="p-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-xl transition-all shrink-0 active:scale-95">
+              className="p-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-[var(--border)] disabled:text-[var(--fg-dim)] text-[var(--fg)] rounded-xl transition-all shrink-0 active:scale-95">
               {sending ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
@@ -461,7 +461,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
               )}
             </button>
           </div>
-          <div className="flex justify-between text-[9px] text-gray-700 mt-1.5">
+          <div className="flex justify-between text-[9px] text-[var(--fg-dim)] mt-1.5">
             <span>{input.includes('@') ? `Sending to: ${targetAlias}` : `Type @ to mention another node`}</span>
             <span>Enter to send · Shift+Enter for newline</span>
           </div>
@@ -476,17 +476,17 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40 lg:hidden anet-fade-in" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-full w-full lg:w-[500px] bg-[#0a0a1a] border-l border-[#2a2a4a] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
+      <div className="fixed top-0 right-0 h-full w-full lg:w-[500px] bg-[var(--bg)] border-l border-[var(--border)] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a4a] bg-[#0d0d1a]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
           <div className="flex items-center gap-3">
             <AliasAvatar alias={alias} size={32} />
             <div>
-              <div className="text-sm font-semibold text-white">{alias}</div>
-              <div className="text-[10px] text-gray-500">{pollingIds.size > 0 ? 'Processing...' : 'Ready'}</div>
+              <div className="text-sm font-semibold text-[var(--fg)]">{alias}</div>
+              <div className="text-[10px] text-[var(--fg-muted)]">{pollingIds.size > 0 ? 'Processing...' : 'Ready'}</div>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white p-1.5 rounded-lg hover:bg-[#1a1a2a]">
+          <button onClick={onClose} className="text-[var(--fg-muted)] hover:text-[var(--fg)] p-1.5 rounded-lg hover:bg-[var(--bg-elevated)]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
