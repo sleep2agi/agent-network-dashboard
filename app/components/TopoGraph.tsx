@@ -639,13 +639,16 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                 {(() => {
                   const ar = isOnline ? 14 : 10;
                   if (isIntern) {
-                    // Round 101 (issue #79 follow-up): the 书小生 mascot is a
-                    // tall full-body figure — render it at ~2.3× the node
-                    // radius so it reads as a recognisable character rather
-                    // than a blurry dot. The transparent PNG overflows the
-                    // status ring vertically (the figure "stands in" the
-                    // node); the ring still carries the status color.
-                    const size = radius * 2.3;
+                    // Round 102 (issue #79 follow-up): the asset is now a
+                    // self-contained "avatar coin" — 书小生 figure keyed off
+                    // its white background and composited onto a cream
+                    // circular backplate. The cream coin gives the dark-
+                    // haired figure consistent contrast on BOTH the dark
+                    // cyber theme and light theme (Vincent: the old
+                    // transparent PNG "简直不行" on dark mode). Render at
+                    // the node diameter so the coin fills inside the
+                    // status ring.
+                    const size = radius * 2;
                     return (
                       <image
                         href="/intern_avatar.png"
