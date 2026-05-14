@@ -15,7 +15,7 @@ import { STATUS_DOT_HEX, STATUS_CHIP_CLASS } from './lib/status';
 import { UserBar } from './components/UserBar';
 import { CommandCenter, useCommandCenter } from './components/CommandCenter';
 import { DispatchPanel } from './components/DispatchPanel';
-import { useSessions, useHealth, useAnetConfig, useTasks, useStats, useLicense } from './lib/hooks';
+import { useSessions, useHealth, useAnetConfig, useTasks, useStats } from './lib/hooks';
 import { useSSE } from './lib/useSSE';
 import { InboxMessage } from './components/types';
 import { useSWRConfig } from 'swr';
@@ -36,7 +36,6 @@ export default function Dashboard() {
   const { config: anetConfig } = useAnetConfig();
   const { tasks } = useTasks({ limit: '500' });
   const { stats } = useStats();
-  const { license: licData } = useLicense();
   const [showTopo, setShowTopo] = useState(typeof window !== 'undefined' && window.innerWidth >= 1024);
   const [showConfig, setShowConfig] = useState(false);
   const cmd = useCommandCenter();
@@ -440,19 +439,16 @@ export default function Dashboard() {
 
       <InboxPanel messages={inbox} />
 
+      {/* Round 111 (issue #82): dropped the license badge — "trial (12d
+          left)" read like a paywall countdown on an open-source dashboard
+          and Vincent flagged it as misleading more than once. The SSE /
+          polling dot stays: it's a real connection-status indicator, not
+          a sales surface. */}
       <div className="mt-8 text-center text-xs text-gray-600 flex items-center justify-center gap-2 flex-wrap">
         {sseSupported && (
           <>
             <span className={`w-1.5 h-1.5 rounded-full ${sseConnected ? 'bg-green-400' : 'bg-gray-600'}`} />
             {sseConnected ? 'SSE live' : 'SWR polling'}
-          </>
-        )}
-        {licData?.license && (
-          <>
-            {sseSupported && <>&middot;</>}
-            <span className={licData.license.days_left <= 7 ? 'text-red-400' : licData.license.type === 'pro' ? 'text-green-400' : 'text-yellow-400'}>
-              {licData.license.type} ({licData.license.days_left}d left)
-            </span>
           </>
         )}
       </div>
