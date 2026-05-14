@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Session } from './types';
+import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
 
 interface MessageFlow {
   from_alias: string;
@@ -600,11 +601,43 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                   strokeDasharray={isOnline ? 'none' : '5 5'}
                   filter={isOnline && !isLight ? 'url(#topo-glow)' : undefined}
                 />
-                <circle cx={pos.x} cy={pos.y} r={isOnline ? 8 : 5} fill={status.primary} />
+                {/* Round 99 (issue #79): node "avatar" — hue-hashed
+                    initials circle inside the status ring. Replaces the
+                    bare colored dot so each agent is identifiable at a
+                    glance; same alias hashes to the same hue across
+                    Messages / Nodes / TopoGraph (AliasAvatar shares the
+                    palette). Status ring color stays as the outer
+                    indicator (working / idle / blocked / error / offline). */}
+                {(() => {
+                  const c = aliasAvatarColors(session.alias);
+                  const ar = isOnline ? 14 : 10;
+                  const fs = isOnline ? 14 : 10;
+                  return (
+                    <>
+                      <circle cx={pos.x} cy={pos.y} r={ar} fill={c.bg} stroke={c.ring} strokeWidth="1" />
+                      <text
+                        x={pos.x}
+                        y={pos.y}
+                        dy="0.34em"
+                        textAnchor="middle"
+                        fill={c.text}
+                        fontSize={fs}
+                        fontFamily="monospace"
+                        fontWeight="700"
+                      >
+                        {aliasInitial(session.alias)}
+                      </text>
+                    </>
+                  );
+                })()}
                 {session.status === 'working' && (
-                  <path d={`M${pos.x - 9},${pos.y + 11} h18`} stroke={pal.flowParticle} strokeWidth="3" strokeLinecap="round">
+                  // working pulse — small dot just inside the status ring,
+                  // above the avatar text. Was a 18px horizontal bar at
+                  // y+11 which now collides with the avatar; the dot reads
+                  // as the same "active" cue without occluding the initial.
+                  <circle cx={pos.x} cy={pos.y - (isOnline ? 18 : 13)} r="2.5" fill={pal.flowParticle}>
                     <animate attributeName="opacity" values="1;0.25;1" dur="1.1s" repeatCount="indefinite" />
-                  </path>
+                  </circle>
                 )}
 
                 {/* Round 98 (issue #61): label rect 124px → 100px so a
