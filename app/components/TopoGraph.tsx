@@ -827,16 +827,20 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                     still carries working/idle/etc. */}
                 {(() => {
                   const ar = isOnline ? 14 : 10;
-                  if (isIntern) {
-                    // Round 102 (issue #79 follow-up): the asset is now a
-                    // self-contained "avatar coin" — 书小生 figure keyed off
-                    // its white background and composited onto a cream
-                    // circular backplate. The cream coin gives the dark-
-                    // haired figure consistent contrast on BOTH the dark
-                    // cyber theme and light theme (Vincent: the old
-                    // transparent PNG "简直不行" on dark mode). Render at
-                    // the node diameter so the coin fills inside the
-                    // status ring.
+                  // Round 108 (issue #79 reopened): show the 书小生 avatar
+                  // coin for any agent whose alias marks it as an Intern /
+                  // 书生 runtime — not only under the global ?brand=intern
+                  // flag. Vincent 4565: a fleet of 书生N号 nodes should SHOW
+                  // 书生, not a generic "书" initial. ?brand=intern still
+                  // forces the coin on every node (full brand showcase).
+                  const isInternNode = isIntern || /书生|书小生|intern/i.test(session.alias);
+                  if (isInternNode) {
+                    // Round 102: self-contained "avatar coin" — 书小生 figure
+                    // keyed off its white background and composited onto a
+                    // cream circular backplate. The cream coin gives the
+                    // dark-haired figure consistent contrast on BOTH the
+                    // dark cyber theme and light theme. Render at the node
+                    // diameter so the coin fills inside the status ring.
                     const size = radius * 2;
                     return (
                       <image
