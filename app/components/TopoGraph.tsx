@@ -290,6 +290,22 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
   const brand = useBrand();
   const isIntern = brand === 'intern';
   const [messages, setMessages] = useState<MessageFlow[]>([]);
+  // Issue #87: ring | grid layout toggle. Ring is the tiered-radial default;
+  // grid arranges nodes in an N×M grid (better for 30+ nodes). Persisted to
+  // localStorage like the zoom/pan view state. Declared above nodePositions
+  // since that useMemo branches on it.
+  const [layout, setLayout] = useState<'ring' | 'grid'>('ring');
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('anet-topo-layout');
+      if (saved === 'grid' || saved === 'ring') setLayout(saved);
+    } catch {}
+  }, []);
+  const toggleLayout = () => setLayout(prev => {
+    const next = prev === 'ring' ? 'grid' : 'ring';
+    try { localStorage.setItem('anet-topo-layout', next); } catch {}
+    return next;
+  });
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -328,6 +344,42 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
     const online = sessions.filter(s => s.status !== 'offline' || sseCount(s)).sort(byAlias);
     const offline = sessions.filter(s => s.status === 'offline' && !sseCount(s)).sort(byAlias);
     const positions: Record<string, Point> = {};
+
+    if (layout === 'grid') {
+      // Issue #87: N×M grid layout. All nodes share one sorted array (online
+      // first, then offline) so same-prefix aliases land in adjacent cells
+      // (#83 prefix-grouping synergy). cols = ⌈√N⌉; the last partial row is
+      // centred. Grid spans an inset box so node labels don't clip the edge.
+      const all = [...online, ...offline];
+      const n = all.length;
+      const cols = Math.max(1, Math.ceil(Math.sqrt(n)));
+      const rows = Math.max(1, Math.ceil(n / cols));
+      const gx0 = 150, gx1 = 850, gy0 = 120, gy1 = 560;
+      const cellW = (gx1 - gx0) / cols;
+      const cellH = (gy1 - gy0) / rows;
+      all.forEach((s, i) => {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        const rowCount = row === rows - 1 ? n - row * cols : cols;
+        const rowInset = ((cols - rowCount) * cellW) / 2;
+        positions[s.alias] = {
+          x: gx0 + rowInset + (col + 0.5) * cellW,
+          y: gy0 + (row + 0.5) * cellH,
+        };
+      });
+      const links = buildFlowLinks(messages, positions);
+      const active = new Set<string>();
+      links.forEach(link => { active.add(link.from); active.add(link.to); });
+      const groupKeys = computeGroupKeys([...online, ...offline].map(s => s.alias));
+      return {
+        onlineNodes: online,
+        offlineNodes: offline,
+        nodePositions: positions,
+        flowLinks: links,
+        activeAliases: active,
+        groupKeys,
+      };
+    }
 
     // Round 97 (issue #50) + 98 (issue #61): three layout modes by N.
     //   N ≤ 8         → single ring (r=220)
@@ -406,7 +458,7 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
       activeAliases: active,
       groupKeys,
     };
-  }, [messages, sessions, sseSessions]);
+  }, [messages, sessions, sseSessions, layout]);
 
   const workingCount = onlineNodes.filter(s => s.status === 'working').length;
   // Round 109 (Vincent 4582 P0): hover-gated labels above this node count
@@ -555,7 +607,25 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
           <div className="text-xs uppercase text-gray-600 tracking-wider">Network Topology</div>
           <h2 className="text-lg text-white font-semibold">Command mesh</h2>
         </div>
-        <div className="flex flex-wrap gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {/* Issue #87: ring | grid layout toggle — segmented control,
+              persisted to localStorage anet-topo-layout. */}
+          <div className="inline-flex rounded-md border border-gray-500/25 overflow-hidden" role="group" aria-label="Topology layout">
+            <button
+              onClick={() => { if (layout !== 'ring') toggleLayout(); }}
+              aria-pressed={layout === 'ring'}
+              className={`px-2.5 py-1 transition-colors ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300' : 'text-gray-500 hover:text-gray-400'}`}
+            >
+              Ring
+            </button>
+            <button
+              onClick={() => { if (layout !== 'grid') toggleLayout(); }}
+              aria-pressed={layout === 'grid'}
+              className={`px-2.5 py-1 border-l border-gray-500/25 transition-colors ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300' : 'text-gray-500 hover:text-gray-400'}`}
+            >
+              Grid
+            </button>
+          </div>
           <span className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-300 border border-green-500/20">
             {workingCount} working
           </span>
@@ -624,6 +694,10 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
           {/* Round 103 (issue #81): everything inside this <g> zooms + pans
               together. transform order = translate then scale. */}
           <g transform={`translate(${view.x} ${view.y}) scale(${view.zoom})`}>
+          {/* Issue #87: radar/ring ambiance renders only in ring layout —
+              grid mode drops it so the concentric rings don't sit behind a
+              rectangular grid. */}
+          {layout === 'ring' && (<>
           <circle cx={cx} cy={cy} r="330" fill="url(#topo-radar)" />
 
           {/* Round 45: subtle star field — 24 deterministic dots scattered
@@ -705,12 +779,13 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
               opacity={isLight ? 0.35 : 0.18}
             />
           ))}
+          </>)}
 
           {/* hub links — round 46: idle spokes now have animated
               stroke-dashoffset so dashes flow outward from the hub
               ("command relay" feel). Active spokes carrying live message
               flow stay as solid bright strokes. */}
-          {onlineNodes.map((session, idx) => {
+          {layout === 'ring' && onlineNodes.map((session, idx) => {
             const pos = nodePositions[session.alias];
             if (!pos) return null;
             const path = curvePath({ x: cx, y: cy }, pos, 0);
@@ -775,7 +850,7 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
               visually; two outward pulses keep the "signal source" idea
               from r17. Light theme gets a paler core to avoid hot-spotting
               the bg. */}
-          <g>
+          {layout === 'ring' && (<g>
             {/* static grounding halo — sits underneath, low opacity */}
             <circle
               cx={cx} cy={cy} r="18"
@@ -795,7 +870,7 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
             {/* core — 20px diameter, larger inner highlight reads as a "lit lamp" */}
             <circle cx={cx} cy={cy} r="10" fill={isLight ? '#059669' : '#10b981'} />
             <circle cx={cx} cy={cy} r="5" fill="#d1fae5" opacity="0.9" />
-          </g>
+          </g>)}
 
           {/* agent nodes */}
           {[...onlineNodes, ...offlineNodes].map(session => {
