@@ -16,6 +16,9 @@ interface MessageFlow {
 interface TopoGraphProps {
   sessions: Session[];
   sseSessions: Record<string, number>;
+  // #84: a node.renamed event from the Overview's SSE listener. When the
+  // currently open chat popover targets `from`, it follows the rename to `to`.
+  renameSignal?: { from: string; to: string; ts: number } | null;
 }
 
 interface Point {
@@ -284,7 +287,7 @@ function buildFlowLinks(messages: MessageFlow[], positions: Record<string, Point
   return [...links.values()].slice(0, 18);
 }
 
-export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
+export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProps) {
   const theme = useTheme();
   const isLight = theme === 'light';
   const pal = isLight ? LIGHT_PALETTE : DARK_PALETTE;
@@ -486,6 +489,16 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
   // Issue #100: singleton chat popover. One alias at a time — clicking
   // another node swaps the target and the conversation switches in place.
   const [chatAlias, setChatAlias] = useState<string | null>(null);
+  // #84: when a node is renamed while its chat popover is open, follow the
+  // rename so the conversation keeps targeting a live alias.
+  useEffect(() => {
+    if (renameSignal && renameSignal.from === chatAlias) {
+      setChatAlias(renameSignal.to);
+    }
+    // chatAlias intentionally omitted — only react to a new rename signal,
+    // not to the user opening/closing the popover.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renameSignal]);
 
   useEffect(() => { viewRef.current = view; }, [view]);
 
