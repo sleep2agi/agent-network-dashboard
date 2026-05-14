@@ -639,12 +639,18 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                 {(() => {
                   const ar = isOnline ? 14 : 10;
                   if (isIntern) {
-                    const size = ar * 2;
+                    // Round 101 (issue #79 follow-up): the 书小生 mascot is a
+                    // tall full-body figure — render it at ~2.3× the node
+                    // radius so it reads as a recognisable character rather
+                    // than a blurry dot. The transparent PNG overflows the
+                    // status ring vertically (the figure "stands in" the
+                    // node); the ring still carries the status color.
+                    const size = radius * 2.3;
                     return (
                       <image
                         href="/intern_avatar.png"
-                        x={pos.x - ar}
-                        y={pos.y - ar}
+                        x={pos.x - size / 2}
+                        y={pos.y - size / 2}
                         width={size}
                         height={size}
                         preserveAspectRatio="xMidYMid meet"
