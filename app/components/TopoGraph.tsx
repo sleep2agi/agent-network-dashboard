@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Session } from './types';
 import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
 
@@ -366,6 +366,127 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
 
   const workingCount = onlineNodes.filter(s => s.status === 'working').length;
 
+  // --- Round 103 (issue #81): fullscreen + zoom + pan interaction layer ---
+  // DIY native (no d3 / svg-pan-zoom): wrap the topology content in a single
+  // <g transform> and drive it with wheel + pointer-drag. The panel <rect>
+  // backdrop stays fixed so panning never reveals empty canvas. View state
+  // {zoom,x,y} persists to localStorage (same sticky pattern as brand flag).
+  const VIEWBOX_W = 1000;
+  const VIEWBOX_H = 680;
+  const ZOOM_MIN = 0.5;
+  const ZOOM_MAX = 4;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [view, setView] = useState({ zoom: 1, x: 0, y: 0 });
+  const viewRef = useRef(view);
+  const dragRef = useRef({ active: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => { viewRef.current = view; }, [view]);
+
+  // restore persisted view once on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('anet-topo-view');
+      if (raw) {
+        const v = JSON.parse(raw);
+        if (typeof v?.zoom === 'number') {
+          setView({
+            zoom: Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v.zoom)),
+            x: typeof v.x === 'number' ? v.x : 0,
+            y: typeof v.y === 'number' ? v.y : 0,
+          });
+        }
+      }
+    } catch {}
+  }, []);
+
+  // persist view
+  useEffect(() => {
+    try { localStorage.setItem('anet-topo-view', JSON.stringify(view)); } catch {}
+  }, [view]);
+
+  // track fullscreen state (button label + Esc-exit sync)
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(document.fullscreenElement === containerRef.current);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  // wheel zoom — native non-passive listener so preventDefault() actually
+  // stops the page from scrolling. Uses functional setState so the listener
+  // never goes stale and can attach once.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      const mx = ((e.clientX - rect.left) / rect.width) * VIEWBOX_W;
+      const my = ((e.clientY - rect.top) / rect.height) * VIEWBOX_H;
+      setView(prev => {
+        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+        const nz = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, prev.zoom * factor));
+        const ratio = nz / prev.zoom;
+        // keep the point under the cursor stationary
+        return { zoom: nz, x: mx - (mx - prev.x) * ratio, y: my - (my - prev.y) * ratio };
+      });
+    };
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', onWheel);
+  }, []);
+
+  const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (e.button !== 0) return;
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    dragRef.current = {
+      active: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: viewRef.current.x,
+      baseY: viewRef.current.y,
+    };
+  };
+  const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const d = dragRef.current;
+    if (!d.active) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const dx = ((e.clientX - d.startX) / rect.width) * VIEWBOX_W;
+    const dy = ((e.clientY - d.startY) / rect.height) * VIEWBOX_H;
+    setView(prev => ({ ...prev, x: d.baseX + dx, y: d.baseY + dy }));
+  };
+  const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    dragRef.current.active = false;
+    (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
+  };
+
+  // zoom buttons — zoom around the canvas center
+  const zoomBy = (factor: number) => {
+    setView(prev => {
+      const nz = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, prev.zoom * factor));
+      const ratio = nz / prev.zoom;
+      const cx0 = VIEWBOX_W / 2;
+      const cy0 = VIEWBOX_H / 2;
+      return { zoom: nz, x: cx0 - (cx0 - prev.x) * ratio, y: cy0 - (cy0 - prev.y) * ratio };
+    });
+  };
+  const resetView = () => setView({ zoom: 1, x: 0, y: 0 });
+
+  const toggleFullscreen = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else {
+      const req =
+        el.requestFullscreen ||
+        (el as unknown as { webkitRequestFullscreen?: () => void }).webkitRequestFullscreen;
+      req?.call(el);
+    }
+  };
+
   return (
     <section className="w-full max-w-6xl mx-auto mb-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-3 px-1">
@@ -387,12 +508,23 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
       </div>
 
       <div
-        className={`relative overflow-hidden rounded-lg border shadow-2xl ${isLight ? 'shadow-zinc-900/5' : 'shadow-cyan-950/30'}`}
+        ref={containerRef}
+        className={`relative overflow-hidden rounded-lg border shadow-2xl ${isLight ? 'shadow-zinc-900/5' : 'shadow-cyan-950/30'} ${isFullscreen ? 'flex items-center justify-center' : ''}`}
         style={{ background: pal.containerBg, borderColor: pal.containerBorder }}
       >
         <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${pal.topRailGradient}`} />
 
-        <svg viewBox="0 0 1000 680" className="w-full h-auto block" preserveAspectRatio="xMidYMid meet">
+        <svg
+          ref={svgRef}
+          viewBox="0 0 1000 680"
+          className="w-full h-auto block"
+          preserveAspectRatio="xMidYMid meet"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+          style={{ cursor: 'grab', touchAction: 'none' }}
+        >
           <defs>
             <linearGradient id="topo-panel" x1="0" x2="1" y1="0" y2="1">
               <stop offset="0%"   stopColor={pal.panelStops[0]} />
@@ -425,7 +557,12 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
             </radialGradient>
           </defs>
 
+          {/* panel backdrop stays fixed — panning never reveals empty canvas */}
           <rect width="1000" height="680" fill="url(#topo-panel)" />
+
+          {/* Round 103 (issue #81): everything inside this <g> zooms + pans
+              together. transform order = translate then scale. */}
+          <g transform={`translate(${view.x} ${view.y}) scale(${view.zoom})`}>
           <circle cx={cx} cy={cy} r="330" fill="url(#topo-radar)" />
 
           {/* Round 45: subtle star field — 24 deterministic dots scattered
@@ -730,7 +867,60 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
             <text x="34" y="82" fill={pal.legendText} fontSize="11" fontFamily="monospace">offline / no SSE</text>
             <path d="M150,78 Q176,52 210,78" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" />
           </g>
+          </g>
         </svg>
+
+        {/* Round 103 (issue #81): zoom / pan / fullscreen controls — HTML
+            overlay so they stay fixed while the SVG content transforms. */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 text-xs select-none">
+          <div
+            className="flex items-center rounded-md border overflow-hidden"
+            style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
+          >
+            <button
+              onClick={() => zoomBy(1 / 1.25)}
+              className="px-2 py-1 hover:bg-white/5 transition-colors"
+              style={{ color: pal.legendText }}
+              aria-label="Zoom out"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M5 12h14" /></svg>
+            </button>
+            <button
+              onClick={resetView}
+              className="px-2 py-1 tabular-nums hover:bg-white/5 transition-colors border-x"
+              style={{ color: pal.legendText, borderColor: pal.containerBorder, minWidth: 46 }}
+              aria-label="Reset view"
+              title="Reset zoom + pan"
+            >
+              {Math.round(view.zoom * 100)}%
+            </button>
+            <button
+              onClick={() => zoomBy(1.25)}
+              className="px-2 py-1 hover:bg-white/5 transition-colors"
+              style={{ color: pal.legendText }}
+              aria-label="Zoom in"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+            </button>
+          </div>
+          <button
+            onClick={toggleFullscreen}
+            className="p-1.5 rounded-md border hover:bg-white/5 transition-colors"
+            style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          >
+            {isFullscreen ? (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M8 3v4a1 1 0 0 1-1 1H3M21 8h-4a1 1 0 0 1-1-1V3M3 16h4a1 1 0 0 1 1 1v4M16 21v-4a1 1 0 0 1 1-1h4" />
+              </svg>
+            ) : (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M3 8V5a2 2 0 0 1 2-2h3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M21 16v3a2 2 0 0 1-2 2h-3" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
     </section>
   );
