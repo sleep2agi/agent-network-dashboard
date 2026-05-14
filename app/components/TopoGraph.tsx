@@ -1046,14 +1046,17 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
             )}
           </button>
         </div>
-      </div>
 
-      {/* Issue #100: draggable singleton chat popover. position:fixed, so it
-          floats above the page and isn't clipped by the graph container's
-          overflow-hidden. */}
-      {chatAlias && (
-        <ChatPopover alias={chatAlias} onClose={() => setChatAlias(null)} />
-      )}
+        {/* Issue #100/#106: draggable, resizable singleton chat popover.
+            position:fixed so it floats above the page (overflow-hidden here
+            doesn't clip fixed children). Rendered *inside* the container so
+            that when the graph goes fullscreen (#81) the popover joins the
+            fullscreen subtree and stays visible — a sibling render would be
+            outside the fullscreened element and disappear. */}
+        {chatAlias && (
+          <ChatPopover alias={chatAlias} onClose={() => setChatAlias(null)} />
+        )}
+      </div>
     </section>
   );
 }

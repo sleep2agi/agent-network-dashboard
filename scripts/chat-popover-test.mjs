@@ -131,11 +131,100 @@ async function run(nodeCount, viewport, label) {
   return ok;
 }
 
+// #106 addendum: the popover must work while the topology is fullscreen.
+// It's rendered inside the fullscreen container, so it must end up as a
+// descendant of document.fullscreenElement and still open / drag / resize.
+async function runFullscreen() {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  await ctx.addCookies([{ name: 'anet_dashboard_session', value: `v3:${TOKEN}`, domain: '127.0.0.1', path: '/' }]);
+  await ctx.addInitScript(() => {
+    try {
+      localStorage.setItem('anet-theme', 'cyber');
+      localStorage.removeItem('anet-brand');
+      localStorage.removeItem('anet-topo-view');
+      sessionStorage.setItem('anet_v3_auth', '1');
+    } catch {}
+  });
+  await ctx.route('**/api/hub/status*', async (route) => {
+    const r = await route.fetch();
+    const b = await r.json();
+    const nid = (b.sessions || [])[0]?.network_id || 'default';
+    const fleet = Array.from({ length: 5 }, (_, i) => ({
+      alias: `节点${i + 1}号`, status: 'idle', network_id: nid,
+      created_at: '2026-05-14T00:00:00Z', updated_at: '2026-05-14T00:00:00Z', last_seen_at: '2026-05-14T00:00:00Z',
+    }));
+    await route.fulfill({ response: r, json: { ...b, sessions: fleet } });
+  });
+  await ctx.route('**/api/hub/tasks*', (route) => route.fulfill({ json: { tasks: [] } }));
+  const page = await ctx.newPage();
+  await page.goto('http://127.0.0.1:3000/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => {
+    const svg = document.querySelector('svg[viewBox="0 0 1000 680"]');
+    return !!svg && svg.querySelectorAll('circle[r="26"]').length > 0;
+  }, { timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(600);
+
+  const results = {};
+  // enter fullscreen on the topology container
+  await page.locator('button[aria-label="Enter fullscreen"]').click();
+  await page.waitForTimeout(500);
+  results.enteredFullscreen = await page.evaluate(() => !!document.fullscreenElement);
+
+  // open the popover by clicking a node
+  const ring = page.locator('svg[viewBox="0 0 1000 680"] circle[r="26"]').first();
+  const b = await ring.boundingBox();
+  if (b) await page.mouse.wheel(0, b.y - 200);
+  await page.waitForTimeout(150);
+  await ring.click({ force: true });
+  await page.waitForTimeout(400);
+  const popover = page.locator('[role="dialog"][aria-label^="Chat with"]');
+  results.opensInFullscreen = (await popover.count()) === 1;
+  // the popover must be inside the fullscreen element, else it's invisible
+  results.insideFullscreenLayer = await page.evaluate(() => {
+    const fs = document.fullscreenElement;
+    const pop = document.querySelector('[role="dialog"][aria-label^="Chat with"]');
+    return !!fs && !!pop && fs.contains(pop);
+  });
+
+  // drag + resize must still work in fullscreen
+  const box0 = await popover.boundingBox();
+  const hb = await popover.locator('div').first().boundingBox();
+  await page.mouse.move(hb.x + hb.width / 2, hb.y + 14);
+  await page.mouse.down();
+  await page.mouse.move(hb.x + hb.width / 2 - 120, hb.y + 14 - 60, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  const box1 = await popover.boundingBox();
+  results.draggableInFullscreen = !!(box0 && box1) && (Math.abs(box1.x - box0.x) > 40 || Math.abs(box1.y - box0.y) > 40);
+
+  const grip = await popover.locator('[aria-label="Resize chat"]').boundingBox();
+  await page.mouse.move(grip.x + 10, grip.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + 10 + 80, grip.y + 10 + 80, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  const box2 = await popover.boundingBox();
+  results.resizableInFullscreen = !!(box1 && box2) && (Math.abs(box2.width - box1.width) > 20 || Math.abs(box2.height - box1.height) > 20);
+
+  await page.screenshot({ path: '/tmp/anet-issue-100/popover-fullscreen.png' });
+
+  await popover.locator('button[aria-label="Close chat"]').click();
+  await page.waitForTimeout(250);
+  results.closesInFullscreen = (await popover.count()) === 0;
+
+  await ctx.close();
+  const ok = results.opensInFullscreen && results.insideFullscreenLayer &&
+    results.draggableInFullscreen && results.resizableInFullscreen && results.closesInFullscreen;
+  console.log(`${ok ? '✅' : '❌'} [fullscreen] 1440x900:`, JSON.stringify(results));
+  return ok;
+}
+
 const all = [];
 all.push(await run(1, { width: 1440, height: 900 }, 'desktop-1node'));
 all.push(await run(5, { width: 1440, height: 900 }, 'desktop-5node'));
 all.push(await run(50, { width: 1440, height: 900 }, 'desktop-50node'));
 all.push(await run(5, { width: 390, height: 844 }, 'mobile-5node'));
+all.push(await runFullscreen());
 
 await browser.close();
 const pass = all.every(Boolean);
