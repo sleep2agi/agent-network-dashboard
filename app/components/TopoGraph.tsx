@@ -408,6 +408,11 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
   }, [messages, sessions, sseSessions]);
 
   const workingCount = onlineNodes.filter(s => s.status === 'working').length;
+  // Round 109 (Vincent 4582 P0): hover-gated labels above this node count
+  // so dense fleets show clean avatars instead of a wall of overlapping
+  // label cards. 16 ≈ where the triple-tier rings start to crowd.
+  const denseLayout = onlineNodes.length + offlineNodes.length > 16;
+  const [hoveredAlias, setHoveredAlias] = useState<string | null>(null);
 
   // --- Round 103 (issue #81): fullscreen + zoom + pan interaction layer ---
   // DIY native (no d3 / svg-pan-zoom): wrap the topology content in a single
@@ -798,9 +803,21 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
             const status = nodeStatus(session, isOnline, isLight);
             const isActive = activeAliases.has(session.alias);
             const radius = isOnline ? 26 : 18;
+            // Round 109 (Vincent 4582 P0): at high node counts the 100px
+            // label cards overlap each other and cover neighbouring
+            // avatars. Above the density threshold, render a label only
+            // for the hovered node — or for every node once the user has
+            // zoomed in past 1.4× (they zoomed in to read). Below the
+            // threshold labels show always (low density has room).
+            const showLabel = !denseLayout || hoveredAlias === session.alias || view.zoom >= 1.4;
 
             return (
-              <g key={session.alias} className="transition-opacity">
+              <g
+                key={session.alias}
+                className="transition-opacity"
+                onPointerEnter={() => denseLayout && setHoveredAlias(session.alias)}
+                onPointerLeave={() => denseLayout && setHoveredAlias(prev => (prev === session.alias ? null : prev))}
+              >
                 {isActive && (
                   <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
                     <animate attributeName="r" values={`${radius + 8};${radius + 22};${radius + 8}`} dur="2.4s" repeatCount="indefinite" />
@@ -887,19 +904,22 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                   </circle>
                 )}
 
-                {/* Round 98 (issue #61): label rect 124px → 100px so a
-                    3-ring layout (inner r=145, 8 nodes) still has room for
-                    the label without overlapping a neighbour. Truncate
-                    tightened from 14 → 12 chars to match. */}
-                <g transform={`translate(${pos.x}, ${pos.y + radius + 22})`}>
-                  <rect x="-50" y="-14" width="100" height="42" rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
-                  <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize="12" fontFamily="monospace" fontWeight="700">
-                    {truncate(session.alias, 12)}
-                  </text>
-                  <text x="0" y="17" textAnchor="middle" fill={status.primary} fontSize="9" fontFamily="monospace">
-                    {status.label}{isOnline && sseCountFor != null ? ` sse:${sseCountFor}` : ''}
-                  </text>
-                </g>
+                {/* Round 98 (issue #61): label rect 124px → 100px.
+                    Round 109 (Vincent 4582 P0): only rendered when
+                    showLabel — below the density threshold always, above
+                    it only for the hovered node or when zoomed in — so a
+                    dense fleet shows clean, unobscured avatars. */}
+                {showLabel && (
+                  <g transform={`translate(${pos.x}, ${pos.y + radius + 22})`} style={{ pointerEvents: 'none' }}>
+                    <rect x="-50" y="-14" width="100" height="42" rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
+                    <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize="12" fontFamily="monospace" fontWeight="700">
+                      {truncate(session.alias, 12)}
+                    </text>
+                    <text x="0" y="17" textAnchor="middle" fill={status.primary} fontSize="9" fontFamily="monospace">
+                      {status.label}{isOnline && sseCountFor != null ? ` sse:${sseCountFor}` : ''}
+                    </text>
+                  </g>
+                )}
               </g>
             );
           })}
