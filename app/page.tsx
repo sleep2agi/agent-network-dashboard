@@ -372,7 +372,10 @@ export default function Dashboard() {
       {showTopo && sessions.length > 0 && <TopoGraph sessions={sessions} sseSessions={sseSessions} />}
 
       {sessions.length === 0 && !sessError ? (
-        <EmptyState hint={sessHint} />
+        <EmptyState
+          hint={sessHint}
+          taskHistoryCount={Object.values(taskStats).reduce((a, b) => a + b, 0)}
+        />
       ) : (() => {
         const counts = {
           all: sortedSessions.length,
