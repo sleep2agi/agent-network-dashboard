@@ -167,56 +167,98 @@ export function EmptyState({ variant = 'generic', title, sub, cta, compact = fal
   );
 }
 
+/** Round 105 (issue #90): centered card shell so the Overview empty state
+ *  reads as an intentional, layout-aligned card instead of bare text
+ *  floating in the content column. */
+function EmptyCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="max-w-2xl mx-auto rounded-xl border border-[#2a2a4a] bg-[#111128] shadow-lg shadow-black/20">
+      {children}
+    </div>
+  );
+}
+
 /**
- * Overview-specific variant with a hint about cross-network global count.
- * Kept here so /app/page.tsx can drop in without ceremony.
+ * Overview-specific variant. Three cases:
+ *   1. network-mismatch — agents exist globally, none in this network
+ *   2. agents-offline   — 0 registered now BUT task history exists, so this
+ *      is NOT a first run (round 105 / issue #90: showing "Spin up your
+ *      first agent" next to "acked: 499" was misleading)
+ *   3. true first-run   — 0 agents, 0 history → quickstart command
  */
-export function NodesEmptyState({ hint }: { hint?: { global_count?: number; filtered_network?: string } }) {
+export function NodesEmptyState({
+  hint,
+  taskHistoryCount = 0,
+}: {
+  hint?: { global_count?: number; filtered_network?: string };
+  taskHistoryCount?: number;
+}) {
   if (hint?.global_count) {
     return (
-      <EmptyState
-        variant="nodes"
-        title="No agents in this network"
-        sub={`Server has ${hint.global_count} nodes globally, but none are registered to the current network. Switch network or contact admin.`}
-      />
+      <EmptyCard>
+        <EmptyState
+          variant="nodes"
+          title="No agents in this network"
+          sub={`Server has ${hint.global_count} nodes globally, but none are registered to the current network. Switch network or contact admin.`}
+        />
+      </EmptyCard>
     );
   }
+
+  // Round 105 (issue #90): there's task history but no agents online right
+  // now — they finished or disconnected. Don't pitch a first-run setup;
+  // point at the history instead.
+  if (taskHistoryCount > 0) {
+    return (
+      <EmptyCard>
+        <EmptyState
+          variant="nodes"
+          title="No agents online"
+          sub={`Every agent in this network is currently offline. ${taskHistoryCount.toLocaleString()} task${taskHistoryCount === 1 ? '' : 's'} in history — they may have finished their work or disconnected.`}
+          cta={{ label: 'View task history', href: '/tasks' }}
+        />
+      </EmptyCard>
+    );
+  }
+
   // Round 52: true empty state (zero agents anywhere) — show the
   // quickstart command inline so users don't have to leave the dashboard
   // to figure out how to spin up their first agent.
   return (
-    <div className="text-center py-16 px-4" role="status">
-      <div className="anet-empty-glyph inline-flex items-center justify-center mb-4 text-gray-500" aria-hidden>
-        <svg viewBox="0 0 64 64" width={56} height={56}>
-          <g stroke="currentColor" strokeWidth="1.5" fill="none">
-            <rect x="10" y="20" width="44" height="28" rx="2" />
-            <rect x="20" y="32" width="6" height="8" opacity="0.5" />
-            <rect x="32" y="32" width="6" height="8" opacity="0.5" />
-            <rect x="44" y="32" width="4" height="8" opacity="0.5" />
-            <line x1="10" y1="26" x2="54" y2="26" opacity="0.4" />
-            <circle cx="14" cy="23" r="0.8" fill="currentColor" />
-          </g>
-        </svg>
+    <EmptyCard>
+      <div className="text-center py-16 px-4" role="status">
+        <div className="anet-empty-glyph inline-flex items-center justify-center mb-4 text-gray-500" aria-hidden>
+          <svg viewBox="0 0 64 64" width={56} height={56}>
+            <g stroke="currentColor" strokeWidth="1.5" fill="none">
+              <rect x="10" y="20" width="44" height="28" rx="2" />
+              <rect x="20" y="32" width="6" height="8" opacity="0.5" />
+              <rect x="32" y="32" width="6" height="8" opacity="0.5" />
+              <rect x="44" y="32" width="4" height="8" opacity="0.5" />
+              <line x1="10" y1="26" x2="54" y2="26" opacity="0.4" />
+              <circle cx="14" cy="23" r="0.8" fill="currentColor" />
+            </g>
+          </svg>
+        </div>
+        <h3 className="font-medium text-gray-300 text-base">Spin up your first agent</h3>
+        <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto leading-relaxed">
+          Run this in a fresh terminal to register an agent with this CommHub:
+        </p>
+        <div className="mt-4 inline-block">
+          <QuickstartCommand cmd="npx --yes @sleep2agi/agent-network init" />
+        </div>
+        <div className="mt-3">
+          <a
+            href="https://anet.sh"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-cyan-300"
+          >
+            Full quickstart guide
+            <span aria-hidden>→</span>
+          </a>
+        </div>
       </div>
-      <h3 className="font-medium text-gray-300 text-base">Spin up your first agent</h3>
-      <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto leading-relaxed">
-        Run this in a fresh terminal to register an agent with this CommHub:
-      </p>
-      <div className="mt-4 inline-block">
-        <QuickstartCommand cmd="npx --yes @sleep2agi/agent-network init" />
-      </div>
-      <div className="mt-3">
-        <a
-          href="https://anet.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-cyan-300"
-        >
-          Full quickstart guide
-          <span aria-hidden>→</span>
-        </a>
-      </div>
-    </div>
+    </EmptyCard>
   );
 }
 
