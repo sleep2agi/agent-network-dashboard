@@ -129,7 +129,7 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
 
   return (
     <div
-      className="fixed z-50 flex flex-col overflow-hidden rounded-xl border border-[#2a2a4a] bg-[#0a0a1a] shadow-2xl shadow-black/60 anet-fade-in"
+      className="fixed z-50 flex flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)] shadow-2xl shadow-black/60 anet-fade-in"
       style={{ left: pos.x, top: pos.y, width: size.w, height: size.h }}
       role="dialog"
       aria-label={`Chat with ${alias}`}
@@ -140,13 +140,13 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        className="flex items-center justify-between px-3 py-2.5 border-b border-[#2a2a4a] bg-[#0d0d1a] rounded-t-xl cursor-grab active:cursor-grabbing select-none touch-none"
+        className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--border)] bg-[var(--bg-secondary)] rounded-t-xl cursor-grab active:cursor-grabbing select-none touch-none"
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <AliasAvatar alias={alias} size={28} />
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-white truncate">{alias}</div>
-            <div className="text-[10px] text-gray-500">Drag to move · Esc to close</div>
+            <div className="text-sm font-semibold text-[var(--fg)] truncate">{alias}</div>
+            <div className="text-[10px] text-[var(--fg-muted)]">Drag to move · Esc to close</div>
           </div>
         </div>
         <button
@@ -155,7 +155,7 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
           // Chromium retargets the click to the header — the button never fires.
           onPointerDown={(e) => e.stopPropagation()}
           aria-label="Close chat"
-          className="text-gray-500 hover:text-white p-1.5 rounded-lg hover:bg-[#1a1a2a] shrink-0"
+          className="text-[var(--fg-muted)] hover:text-[var(--fg)] p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -178,7 +178,7 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
         className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize touch-none z-10"
         style={{ touchAction: 'none' }}
       >
-        <svg className="absolute bottom-0.5 right-0.5 w-3 h-3 text-gray-600" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
+        <svg className="absolute bottom-0.5 right-0.5 w-3 h-3 text-[var(--fg-dim)]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
           <path d="M11 5L5 11M11 9L9 11" />
         </svg>
       </div>
