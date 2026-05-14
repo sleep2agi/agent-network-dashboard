@@ -803,13 +803,15 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
             const status = nodeStatus(session, isOnline, isLight);
             const isActive = activeAliases.has(session.alias);
             const radius = isOnline ? 26 : 18;
-            // Round 109 (Vincent 4582 P0): at high node counts the 100px
-            // label cards overlap each other and cover neighbouring
-            // avatars. Above the density threshold, render a label only
-            // for the hovered node — or for every node once the user has
-            // zoomed in past 1.4× (they zoomed in to read). Below the
-            // threshold labels show always (low density has room).
-            const showLabel = !denseLayout || hoveredAlias === session.alias || view.zoom >= 1.4;
+            // Round 109/110 (Vincent 4582 + 4583 P0): at high node counts
+            // the 100px opaque label cards overlapped each other and
+            // covered neighbouring avatars. But hiding text entirely went
+            // too far ("还是得有文字"). So: below the density threshold the
+            // full name+status card shows always; above it each node shows
+            // a lightweight plain-text alias (no opaque card → can't
+            // occlude an avatar), and the full card appears only for the
+            // hovered node or once zoomed in past 1.4×.
+            const showFullLabel = !denseLayout || hoveredAlias === session.alias || view.zoom >= 1.4;
 
             return (
               <g
@@ -905,11 +907,11 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                 )}
 
                 {/* Round 98 (issue #61): label rect 124px → 100px.
-                    Round 109 (Vincent 4582 P0): only rendered when
-                    showLabel — below the density threshold always, above
-                    it only for the hovered node or when zoomed in — so a
-                    dense fleet shows clean, unobscured avatars. */}
-                {showLabel && (
+                    Round 109/110 (Vincent P0): full opaque card below the
+                    density threshold / on hover / when zoomed; otherwise a
+                    lightweight plain-text alias that keeps every node
+                    labelled without an opaque box covering its neighbours. */}
+                {showFullLabel ? (
                   <g transform={`translate(${pos.x}, ${pos.y + radius + 22})`} style={{ pointerEvents: 'none' }}>
                     <rect x="-50" y="-14" width="100" height="42" rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
                     <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize="12" fontFamily="monospace" fontWeight="700">
@@ -919,6 +921,22 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                       {status.label}{isOnline && sseCountFor != null ? ` sse:${sseCountFor}` : ''}
                     </text>
                   </g>
+                ) : (
+                  <text
+                    x={pos.x}
+                    y={pos.y + radius + 14}
+                    textAnchor="middle"
+                    fill={status.text}
+                    fontSize="10"
+                    fontFamily="monospace"
+                    fontWeight="700"
+                    opacity={0.9}
+                    style={{ pointerEvents: 'none', paintOrder: 'stroke' }}
+                    stroke={pal.containerBg}
+                    strokeWidth="3"
+                  >
+                    {truncate(session.alias, 10)}
+                  </text>
                 )}
               </g>
             );
