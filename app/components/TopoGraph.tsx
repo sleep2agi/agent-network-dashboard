@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Session } from './types';
 import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
+import { ChatPopover } from './ChatPopover';
 
 interface MessageFlow {
   from_alias: string;
@@ -429,6 +430,9 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
   const viewRef = useRef(view);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Issue #100: singleton chat popover. One alias at a time — clicking
+  // another node swaps the target and the conversation switches in place.
+  const [chatAlias, setChatAlias] = useState<string | null>(null);
 
   useEffect(() => { viewRef.current = view; }, [view]);
 
@@ -817,8 +821,17 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
               <g
                 key={session.alias}
                 className="transition-opacity"
+                style={{ cursor: 'pointer' }}
+                // Stop the pointerdown from reaching the SVG pan handler: the
+                // SVG calls setPointerCapture, and a captured pointer makes
+                // Chromium fire the follow-up `click` on the SVG instead of
+                // this node — so without this the node's onClick never runs.
+                // Side effect (intended): you pan from empty canvas, not by
+                // grabbing a node.
+                onPointerDown={(e) => e.stopPropagation()}
                 onPointerEnter={() => denseLayout && setHoveredAlias(session.alias)}
                 onPointerLeave={() => denseLayout && setHoveredAlias(prev => (prev === session.alias ? null : prev))}
+                onClick={() => setChatAlias(session.alias)}
               >
                 {isActive && (
                   <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
@@ -1034,6 +1047,13 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
           </button>
         </div>
       </div>
+
+      {/* Issue #100: draggable singleton chat popover. position:fixed, so it
+          floats above the page and isn't clipped by the graph container's
+          overflow-hidden. */}
+      {chatAlias && (
+        <ChatPopover alias={chatAlias} onClose={() => setChatAlias(null)} />
+      )}
     </section>
   );
 }
