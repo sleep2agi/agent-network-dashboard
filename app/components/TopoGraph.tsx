@@ -425,7 +425,13 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
       const mx = ((e.clientX - rect.left) / rect.width) * VIEWBOX_W;
       const my = ((e.clientY - rect.top) / rect.height) * VIEWBOX_H;
       setView(prev => {
-        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+        // Round 104 (issue #81 follow-up): Vincent 实测 zoom 太灵敏. The
+        // old factor was a fixed 1.15x per wheel *event* — fine for a
+        // mouse notch but a trackpad fires dozens of events per gesture
+        // so it compounded into huge jumps. Scale the factor by deltaY
+        // magnitude with a small coefficient, then clamp the per-event
+        // change so no single tick moves more than ~8%.
+        const factor = Math.min(1.08, Math.max(0.926, Math.exp(-e.deltaY * 0.0006)));
         const nz = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, prev.zoom * factor));
         const ratio = nz / prev.zoom;
         // keep the point under the cursor stationary
@@ -458,8 +464,11 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
     setView(prev => ({ ...prev, x: d.baseX + dx, y: d.baseY + dy }));
   };
   const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!dragRef.current.active) return;
     dragRef.current.active = false;
-    (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
+    try {
+      (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
+    } catch {}
   };
 
   // zoom buttons — zoom around the canvas center
@@ -871,31 +880,33 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
         </svg>
 
         {/* Round 103 (issue #81): zoom / pan / fullscreen controls — HTML
-            overlay so they stay fixed while the SVG content transforms. */}
+            overlay so they stay fixed while the SVG content transforms.
+            Round 104: Vincent 实测 — the reset action used to be hidden
+            behind the "%" label (looked like an indicator, not a button).
+            Split into a plain % readout + an explicit reset button with
+            its own icon + tooltip. */}
         <div className="absolute bottom-3 right-3 flex items-center gap-1.5 text-xs select-none">
           <div
             className="flex items-center rounded-md border overflow-hidden"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
           >
             <button
-              onClick={() => zoomBy(1 / 1.25)}
+              onClick={() => zoomBy(1 / 1.2)}
               className="px-2 py-1 hover:bg-white/5 transition-colors"
               style={{ color: pal.legendText }}
               aria-label="Zoom out"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M5 12h14" /></svg>
             </button>
-            <button
-              onClick={resetView}
-              className="px-2 py-1 tabular-nums hover:bg-white/5 transition-colors border-x"
+            <span
+              className="px-2 py-1 tabular-nums border-x text-center"
               style={{ color: pal.legendText, borderColor: pal.containerBorder, minWidth: 46 }}
-              aria-label="Reset view"
-              title="Reset zoom + pan"
+              title="Current zoom level"
             >
               {Math.round(view.zoom * 100)}%
-            </button>
+            </span>
             <button
-              onClick={() => zoomBy(1.25)}
+              onClick={() => zoomBy(1.2)}
               className="px-2 py-1 hover:bg-white/5 transition-colors"
               style={{ color: pal.legendText }}
               aria-label="Zoom in"
@@ -903,6 +914,18 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
             </button>
           </div>
+          <button
+            onClick={resetView}
+            className="p-1.5 rounded-md border hover:bg-white/5 transition-colors"
+            style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
+            aria-label="Reset view"
+            title="Reset zoom + pan (or double-click the canvas)"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+          </button>
           <button
             onClick={toggleFullscreen}
             className="p-1.5 rounded-md border hover:bg-white/5 transition-colors"
