@@ -336,6 +336,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     flowLinks,
     activeAliases,
     groupKeys,
+    groupBoxes,
   } = useMemo(() => {
     const sseCount = (s: { alias: string; network_id?: string }) =>
       (s.network_id ? sseSessions[`${s.network_id}:${s.alias}`] : undefined) ?? sseSessions[s.alias];
@@ -350,31 +351,91 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     const positions: Record<string, Point> = {};
 
     if (layout === 'grid') {
-      // Issue #87: N×M grid layout. All nodes share one sorted array (online
-      // first, then offline) so same-prefix aliases land in adjacent cells
-      // (#83 prefix-grouping synergy). cols = ⌈√N⌉; the last partial row is
-      // centred. Grid spans an inset box so node labels don't clip the edge.
+      // Issue #87 + #111: group-banded grid. Nodes are sorted by alias so
+      // same-prefix aliases are adjacent; each multi-member prefix group then
+      // gets its OWN row(s) starting at column 0, while singletons pack into
+      // shared rows. Group-banded placement keeps every group's bounding box
+      // (#111) a clean rectangle — no box ever overlaps another group's.
       const all = [...online, ...offline];
-      const n = all.length;
-      const cols = Math.max(1, Math.ceil(Math.sqrt(n)));
-      const rows = Math.max(1, Math.ceil(n / cols));
-      const gx0 = 150, gx1 = 850, gy0 = 120, gy1 = 560;
+      const groupKeys = computeGroupKeys(all.map(s => s.alias));
+      const cols = Math.max(1, Math.ceil(Math.sqrt(all.length)));
+      const gx0 = 150, gx1 = 850, gy0 = 110, gy1 = 565;
       const cellW = (gx1 - gx0) / cols;
-      const cellH = (gy1 - gy0) / rows;
-      all.forEach((s, i) => {
-        const row = Math.floor(i / cols);
-        const col = i % cols;
-        const rowCount = row === rows - 1 ? n - row * cols : cols;
-        const rowInset = ((cols - rowCount) * cellW) / 2;
-        positions[s.alias] = {
-          x: gx0 + rowInset + (col + 0.5) * cellW,
-          y: gy0 + (row + 0.5) * cellH,
-        };
-      });
+
+      // ordered runs of consecutive same-group-key nodes (≥2 = real group)
+      const runs: { key: string; members: Session[] }[] = [];
+      for (const s of all) {
+        const gk = groupKeys[s.alias];
+        const last = runs[runs.length - 1];
+        if (last && last.key === gk) last.members.push(s);
+        else runs.push({ key: gk, members: [s] });
+      }
+
+      // Pass 1 — assign each run to a band: a multi-member group owns its
+      // rows (left-aligned, so its bounding box is a tidy rect); contiguous
+      // singletons pack into shared rows (centred). Collect total row count.
+      type Band = { members: Session[]; startRow: number; centred: boolean; isGroup: boolean };
+      const bands: Band[] = [];
+      let row = 0;
+      let i = 0;
+      while (i < runs.length) {
+        if (runs[i].members.length >= 2) {
+          bands.push({ members: runs[i].members, startRow: row, centred: false, isGroup: true });
+          row += Math.ceil(runs[i].members.length / cols);
+          i++;
+        } else {
+          const singles: Session[] = [];
+          while (i < runs.length && runs[i].members.length < 2) {
+            singles.push(runs[i].members[0]);
+            i++;
+          }
+          bands.push({ members: singles, startRow: row, centred: true, isGroup: false });
+          row += Math.ceil(singles.length / cols);
+        }
+      }
+      const totalRows = Math.max(1, row);
+      // Adaptive row height so every band fits the canvas — many small groups
+      // would overflow a fixed height; zoom/pan still works past the floor.
+      const cellH = Math.min(100, (gy1 - gy0) / totalRows);
+
+      // Pass 2 — place each band's members.
+      for (const band of bands) {
+        band.members.forEach((s, idx) => {
+          const rowInBand = Math.floor(idx / cols);
+          const c = idx % cols;
+          const inRow = Math.min(cols, band.members.length - rowInBand * cols);
+          const inset = band.centred ? ((cols - inRow) * cellW) / 2 : 0;
+          positions[s.alias] = {
+            x: gx0 + inset + (c + 0.5) * cellW,
+            y: gy0 + (band.startRow + rowInBand + 0.5) * cellH,
+          };
+        });
+      }
+
       const links = buildFlowLinks(messages, positions);
       const active = new Set<string>();
       links.forEach(link => { active.add(link.from); active.add(link.to); });
-      const groupKeys = computeGroupKeys([...online, ...offline].map(s => s.alias));
+      // #111: one bounding box per multi-member group (Vincent 4722). Each
+      // group owns its rows, so the box is a clean rect with no overlap.
+      // Padding scales with the (adaptive) row height so stacked group boxes
+      // stay clear of each other even when many bands compress the grid.
+      const GROUP_TOP = Math.max(22, Math.min(44, cellH * 0.4)); // label band
+      const GROUP_PAD = Math.max(16, Math.min(32, cellH * 0.3)); // side/bottom
+      const groupBoxes = bands
+        .filter(b => b.isGroup)
+        .map(band => {
+          const pts = band.members.map(s => positions[s.alias]).filter(Boolean);
+          const xs = pts.map(p => p.x);
+          const ys = pts.map(p => p.y);
+          const minX = Math.min(...xs), minY = Math.min(...ys);
+          return {
+            key: band.members.length ? groupKeys[band.members[0].alias] : '',
+            x: minX - GROUP_PAD,
+            y: minY - GROUP_TOP,
+            w: Math.max(...xs) - minX + GROUP_PAD * 2,
+            h: Math.max(...ys) - minY + GROUP_TOP + GROUP_PAD,
+          };
+        });
       return {
         onlineNodes: online,
         offlineNodes: offline,
@@ -382,6 +443,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         flowLinks: links,
         activeAliases: active,
         groupKeys,
+        groupBoxes,
       };
     }
 
@@ -461,6 +523,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       flowLinks: links,
       activeAliases: active,
       groupKeys,
+      // #111: group boxes are a grid-layout feature only — radially scattered
+      // ring nodes can't be cleanly boxed. Ring keeps the #83 prefix hue.
+      groupBoxes: [] as { key: string; x: number; y: number; w: number; h: number }[],
     };
   }, [messages, sessions, sseSessions, layout]);
 
@@ -819,6 +884,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               />
             );
           })}
+
+          {/* #111: prefix-group boundary boxes (Vincent 4722). Grid layout
+              only — groupBoxes is empty in ring mode. Rendered behind the
+              flow links + nodes; pointer-events off so they never intercept
+              a node click. Restrained dashed container + group-name label. */}
+          {groupBoxes.map(box => (
+            <g key={`grp-${box.key}`} data-group={box.key} style={{ pointerEvents: 'none' }}>
+              <rect
+                x={box.x}
+                y={box.y}
+                width={box.w}
+                height={box.h}
+                rx="14"
+                fill={isLight ? '#0f172a' : '#a5b4fc'}
+                fillOpacity={isLight ? 0.025 : 0.045}
+                stroke={pal.ringStroke}
+                strokeWidth="1.5"
+                strokeDasharray="6 6"
+              />
+              <text
+                x={box.x + 12}
+                y={box.y + 21}
+                fill={pal.legendText}
+                fontSize="13"
+                fontFamily="monospace"
+                fontWeight="700"
+              >
+                {box.key}
+              </text>
+            </g>
+          ))}
 
           {/* directed message flows */}
           {flowLinks.map((link, index) => {
