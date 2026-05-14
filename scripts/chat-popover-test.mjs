@@ -81,6 +81,22 @@ async function run(nodeCount, viewport, label) {
   const box1 = await popover.boundingBox();
   results.draggable = !!(box1 && box0) && (Math.abs(box1.x - box0.x) > 40 || Math.abs(box1.y - box0.y) > 40);
 
+  // --- resize: drag the bottom-right handle, confirm w/h changed (#106) ---
+  const sizeBefore = await popover.boundingBox();
+  const handle = popover.locator('[aria-label="Resize chat"]');
+  const grip = await handle.boundingBox();
+  // First shrink (drag handle up-left), then the popover dimensions shrink.
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x - 60, grip.y - 80, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  const sizeAfter = await popover.boundingBox();
+  results.resizable = !!(sizeBefore && sizeAfter) &&
+    (Math.abs(sizeAfter.width - sizeBefore.width) > 20 || Math.abs(sizeAfter.height - sizeBefore.height) > 20);
+  // resize must not have spawned a second popover or closed it
+  results.resizeKeepsSingle = (await popover.count()) === 1;
+
   // --- singleton switch: park the popover at the bottom, then tap another
   //     node in the now-exposed upper area; still ONE popover, alias changed ---
   if (results.nodeCount > 1) {
@@ -108,7 +124,8 @@ async function run(nodeCount, viewport, label) {
   results.closes = (await popover.count()) === 0;
 
   await ctx.close();
-  const ok = results.opensOnClick && results.draggable && results.stillSingle &&
+  const ok = results.opensOnClick && results.draggable && results.resizable &&
+    results.resizeKeepsSingle && results.stillSingle &&
     (results.switchesAlias === true || results.switchesAlias === 'n/a') && results.closes;
   console.log(`${ok ? '✅' : '❌'} [${label}] ${nodeCount}n ${viewport.width}x${viewport.height}:`, JSON.stringify(results));
   return ok;
