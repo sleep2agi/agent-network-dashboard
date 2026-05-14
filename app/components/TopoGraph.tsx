@@ -197,6 +197,32 @@ function useTheme(): 'light' | 'dark' {
   return theme;
 }
 
+/** Round 100 (issue #79): brand showcase mode. Activate via `?brand=intern`
+ *  on any dashboard page — TopoGraph nodes show the 书小生 mascot instead
+ *  of alias initials. Stored in localStorage so the flag persists across
+ *  navigation. Clears with `?brand=none` or `?brand=` (empty). */
+function useBrand(): string | null {
+  const [brand, setBrand] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const param = url.searchParams.get('brand');
+      if (param !== null) {
+        if (param === '' || param === 'none') {
+          localStorage.removeItem('anet-brand');
+          setBrand(null);
+        } else {
+          localStorage.setItem('anet-brand', param);
+          setBrand(param);
+        }
+      } else {
+        setBrand(localStorage.getItem('anet-brand'));
+      }
+    } catch {}
+  }, []);
+  return brand;
+}
+
 function buildFlowLinks(messages: MessageFlow[], positions: Record<string, Point>) {
   const links = new Map<string, FlowLink>();
 
@@ -228,6 +254,8 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
   const theme = useTheme();
   const isLight = theme === 'light';
   const pal = isLight ? LIGHT_PALETTE : DARK_PALETTE;
+  const brand = useBrand();
+  const isIntern = brand === 'intern';
   const [messages, setMessages] = useState<MessageFlow[]>([]);
 
   useEffect(() => {
@@ -602,15 +630,28 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                   filter={isOnline && !isLight ? 'url(#topo-glow)' : undefined}
                 />
                 {/* Round 99 (issue #79): node "avatar" — hue-hashed
-                    initials circle inside the status ring. Replaces the
-                    bare colored dot so each agent is identifiable at a
-                    glance; same alias hashes to the same hue across
-                    Messages / Nodes / TopoGraph (AliasAvatar shares the
-                    palette). Status ring color stays as the outer
-                    indicator (working / idle / blocked / error / offline). */}
+                    initials circle inside the status ring. Round 100:
+                    when brand=intern, swap the initials for the 书小生
+                    mascot image (asset from 群星马 task 51dd0d1d). The
+                    image already has a transparent bg so it sits cleanly
+                    on the node's dark/light fill; the outer status ring
+                    still carries working/idle/etc. */}
                 {(() => {
-                  const c = aliasAvatarColors(session.alias);
                   const ar = isOnline ? 14 : 10;
+                  if (isIntern) {
+                    const size = ar * 2;
+                    return (
+                      <image
+                        href="/intern_avatar.png"
+                        x={pos.x - ar}
+                        y={pos.y - ar}
+                        width={size}
+                        height={size}
+                        preserveAspectRatio="xMidYMid meet"
+                      />
+                    );
+                  }
+                  const c = aliasAvatarColors(session.alias);
                   const fs = isOnline ? 14 : 10;
                   return (
                     <>
