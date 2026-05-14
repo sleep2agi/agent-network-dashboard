@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Session } from './types';
 import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
 import { ChatPopover } from './ChatPopover';
+import { vendorForModel, runtimeIdentity, identityLine } from '../lib/vendorIdentity';
 
 interface MessageFlow {
   from_alias: string;
@@ -908,6 +909,10 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                 onPointerLeave={() => denseLayout && setHoveredAlias(prev => (prev === session.alias ? null : prev))}
                 onClick={() => setChatAlias(session.alias)}
               >
+                {/* Issue #96: native hover tooltip — "Vendor · model · Runtime".
+                    Falls back to just the alias when the node reports no
+                    model/runtime. */}
+                <title>{identityLine(session.model, session.runtime) || session.alias}</title>
                 {isActive && (
                   <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
                     <animate attributeName="r" values={`${radius + 8};${radius + 22};${radius + 8}`} dur="2.4s" repeatCount="indefinite" />
@@ -925,33 +930,26 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                   strokeDasharray={isOnline ? 'none' : '5 5'}
                   filter={isOnline && !isLight ? 'url(#topo-glow)' : undefined}
                 />
-                {/* Round 99 (issue #79): node "avatar" — hue-hashed
-                    initials circle inside the status ring. Round 100:
-                    when brand=intern, swap the initials for the 书小生
-                    mascot image (asset from 群星马 task 51dd0d1d). The
-                    image already has a transparent bg so it sits cleanly
-                    on the node's dark/light fill; the outer status ring
-                    still carries working/idle/etc. */}
+                {/* Issue #96: node "avatar" is now driven by the model
+                    vendor. Decision order:
+                      1. ?brand=intern flag, or an intern-aliased node with
+                         no model field → 书生 coin (preserves #79).
+                      2. vendor has a packaged logo asset → that logo image
+                         (intern-s1-* models land here via vendorForModel).
+                      3. known vendor, logo asset not shipped yet → a
+                         vendor-tinted monogram (spec-mandated fallback).
+                      4. unknown vendor / null model → the prefix-group
+                         hue-hashed initial (#83/#99 behaviour, unchanged). */}
                 {(() => {
                   const ar = isOnline ? 14 : 10;
-                  // Round 108 (issue #79 reopened): show the 书小生 avatar
-                  // coin for any agent whose alias marks it as an Intern /
-                  // 书生 runtime — not only under the global ?brand=intern
-                  // flag. Vincent 4565: a fleet of 书生N号 nodes should SHOW
-                  // 书生, not a generic "书" initial. ?brand=intern still
-                  // forces the coin on every node (full brand showcase).
-                  const isInternNode = isIntern || /书生|书小生|intern/i.test(session.alias);
-                  if (isInternNode) {
-                    // Round 102: self-contained "avatar coin" — 书小生 figure
-                    // keyed off its white background and composited onto a
-                    // cream circular backplate. The cream coin gives the
-                    // dark-haired figure consistent contrast on BOTH the
-                    // dark cyber theme and light theme. Render at the node
-                    // diameter so the coin fills inside the status ring.
-                    const size = radius * 2;
+                  const size = radius * 2;
+                  const vendor = vendorForModel(session.model);
+                  const internByAlias = /书生|书小生|intern/i.test(session.alias);
+
+                  if (isIntern || internByAlias || vendor.logo) {
                     return (
                       <image
-                        href="/intern_avatar.png"
+                        href={vendor.logo ?? '/intern_avatar.png'}
                         x={pos.x - size / 2}
                         y={pos.y - size / 2}
                         width={size}
@@ -960,12 +958,25 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                       />
                     );
                   }
+                  if (vendor.id !== 'unknown') {
+                    // Known model house, logo asset not in public/vendors/
+                    // yet — vendor-tinted monogram stands in.
+                    return (
+                      <>
+                        <circle cx={pos.x} cy={pos.y} r={ar} fill={vendor.mono.bg} stroke={vendor.mono.ring} strokeWidth="1" />
+                        <text
+                          x={pos.x} y={pos.y} dy="0.34em" textAnchor="middle"
+                          fill={vendor.mono.text} fontSize={isOnline ? 14 : 10}
+                          fontFamily="monospace" fontWeight="700"
+                        >
+                          {vendor.initial}
+                        </text>
+                      </>
+                    );
+                  }
                   // Round 106 (issue #83): hue keyed to the prefix group,
-                  // not the full alias — every 通信* node shares one color,
-                  // every 研究员* another, so teams cluster visually even
-                  // when the tier layout spreads them across rings.
+                  // not the full alias — every 通信* node shares one color.
                   const c = aliasAvatarColors(groupKeys[session.alias] || session.alias);
-                  const fs = isOnline ? 14 : 10;
                   return (
                     <>
                       <circle cx={pos.x} cy={pos.y} r={ar} fill={c.bg} stroke={c.ring} strokeWidth="1" />
@@ -975,13 +986,33 @@ export function TopoGraph({ sessions, sseSessions }: TopoGraphProps) {
                         dy="0.34em"
                         textAnchor="middle"
                         fill={c.text}
-                        fontSize={fs}
+                        fontSize={isOnline ? 14 : 10}
                         fontFamily="monospace"
                         fontWeight="700"
                       >
                         {aliasInitial(session.alias)}
                       </text>
                     </>
+                  );
+                })()}
+                {/* Issue #96: runtime badge — small corner glyph marking the
+                    execution shell (CLI / SDK / HTTP API). Sits bottom-right
+                    of the avatar; colours kept off the working/idle/offline
+                    status hues. Absent when the node reports no runtime. */}
+                {(() => {
+                  const rt = runtimeIdentity(session.runtime);
+                  if (!rt) return null;
+                  const br = isOnline ? 7 : 5.5;
+                  const bx = pos.x + radius * 0.72;
+                  const by = pos.y + radius * 0.72;
+                  const icon = br * 2 * 0.62;
+                  return (
+                    <g style={{ pointerEvents: 'none' }}>
+                      <circle cx={bx} cy={by} r={br} fill={pal.containerBg} stroke={rt.color} strokeWidth="1.5" />
+                      <g transform={`translate(${bx - icon / 2} ${by - icon / 2}) scale(${icon / 24})`}>
+                        <path d={rt.iconPath} fill="none" stroke={rt.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                      </g>
+                    </g>
                   );
                 })()}
                 {session.status === 'working' && (
