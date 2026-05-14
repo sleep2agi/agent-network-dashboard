@@ -25,6 +25,8 @@ interface SidebarNetwork {
   network_id: string;
   network_name: string;
   role?: string;
+  /** Round 107: live agent count, derived from /api/status sessions. */
+  agentCount?: number;
 }
 
 const ROLE_ICON: Record<string, string> = { owner: '⭐', admin: '🔧', member: '👤', viewer: '👁' };
@@ -35,7 +37,26 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { networkId, setNetworkId } = useNetworkId();
   const { data: netData } = useSWR<{ networks: SidebarNetwork[] }>('/api/hub/networks', networkFetcher, { refreshInterval: 15000, dedupingInterval: 10000 });
-  const networks = netData?.networks || [];
+  // Round 107 (issue #92): /api/networks can be scope-limited (a hub owner's
+  // token may only list "default" even when agents live in other networks).
+  // The unfiltered /api/status response carries every visible session with
+  // its network_id, so derive networks from there and merge them in — the
+  // admin can then switch to any network that actually has agents.
+  const { data: statusData } = useSWR<StatusData>(
+    '/api/hub/status', statusFetcher, { refreshInterval: 15000, dedupingInterval: 10000 },
+  );
+  const apiNetworks = netData?.networks || [];
+  const networks: SidebarNetwork[] = (() => {
+    const agentCount = new Map<string, number>();
+    for (const s of statusData?.sessions || []) {
+      if (s.network_id) agentCount.set(s.network_id, (agentCount.get(s.network_id) || 0) + 1);
+    }
+    const known = new Set(apiNetworks.map(n => n.network_id));
+    const derived: SidebarNetwork[] = [...agentCount.keys()]
+      .filter(id => !known.has(id))
+      .map(id => ({ network_id: id, network_name: id }));
+    return [...apiNetworks, ...derived].map(n => ({ ...n, agentCount: agentCount.get(n.network_id) || 0 }));
+  })();
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -120,6 +141,7 @@ export function Sidebar() {
                 <button
                   key={n.network_id}
                   onClick={() => { setNetworkId(n.network_id); setMobileOpen(false); }}
+                  title={n.network_id}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xs transition-colors text-left ${
                     networkId === n.network_id
                       ? 'bg-cyan-500/10 text-cyan-300'
@@ -127,7 +149,14 @@ export function Sidebar() {
                   }`}
                 >
                   <span>{ROLE_ICON[n.role || 'member'] || '👤'}</span>
-                  <span className="truncate">{n.network_name}</span>
+                  <span className="truncate flex-1">{n.network_name}</span>
+                  {/* Round 107 (issue #92): show live agent count so an
+                      admin can spot which network actually has agents —
+                      the whole point of the bug was a network with 30
+                      agents being invisible. */}
+                  {n.agentCount ? (
+                    <span className="shrink-0 tabular-nums text-[10px] text-gray-600">{n.agentCount}</span>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -196,7 +225,7 @@ export function Sidebar() {
 }
 
 interface StatusData {
-  sessions?: Array<{ status?: string; alias?: string }>;
+  sessions?: Array<{ status?: string; alias?: string; network_id?: string }>;
 }
 
 const statusFetcher = (url: string) =>
