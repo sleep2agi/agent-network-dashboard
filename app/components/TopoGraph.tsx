@@ -88,6 +88,26 @@ function truncate(value: string, max: number) {
   return value.length > max ? `${value.slice(0, max - 1)}...` : value;
 }
 
+/** Round 36 / Loop: prefers-reduced-motion hook.
+ *
+ *  Round 29's a11y sweep zeroed CSS animations via media query, but SVG
+ *  SMIL `<animate>` / `<animateMotion>` elements aren't reachable from CSS
+ *  — they need JS to opt out. This hook reads the media query and listens
+ *  for changes so the topology's flow particles, pulses, click ripple
+ *  and hub breath honour the OS-level preference. */
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return reduced;
+}
+
 /** Round 35 / Loop: timezone-safe parse for hub timestamps.
  *
  *  The CommHub serialises last_seen / created_at as SQL-style without a zone:
@@ -372,6 +392,7 @@ function buildFlowLinks(messages: MessageFlow[], positions: Record<string, Point
 export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProps) {
   const theme = useTheme();
   const isLight = theme === 'light';
+  const reducedMotion = useReducedMotion();
   const pal = isLight ? LIGHT_PALETTE : DARK_PALETTE;
   const brand = useBrand();
   const isIntern = brand === 'intern';
@@ -1342,9 +1363,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   opacity={(isLight ? 0.4 : 0.75) * fresh}
                   className="transition-opacity duration-500"
                 />
-                <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'} opacity={fresh}>
-                  <animateMotion dur={`${duration}s`} repeatCount="indefinite" path={path} />
-                </circle>
+                {!reducedMotion && (
+                  <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'} opacity={fresh}>
+                    <animateMotion dur={`${duration}s`} repeatCount="indefinite" path={path} />
+                  </circle>
+                )}
               </g>
             );
           })}
@@ -1364,12 +1387,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               fill={isLight ? '#d1fae5' : '#10b981'}
               opacity={isLight ? 0.42 : 0.12}
             >
-              <animate
-                attributeName="opacity"
-                values={isLight ? '0.32;0.52;0.32' : '0.08;0.16;0.08'}
-                dur="4s"
-                repeatCount="indefinite"
-              />
+              {!reducedMotion && (
+                <animate
+                  attributeName="opacity"
+                  values={isLight ? '0.32;0.52;0.32' : '0.08;0.16;0.08'}
+                  dur="4s"
+                  repeatCount="indefinite"
+                />
+              )}
             </circle>
             {/* core — 20px diameter, larger inner highlight reads as a "lit lamp" */}
             <circle cx={cx} cy={cy} r="10" fill={isLight ? '#059669' : '#10b981'} />
@@ -1539,7 +1564,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     style={{ pointerEvents: 'none' }}
                   />
                 )}
-                {isActive && (
+                {isActive && !reducedMotion && (
                   <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
                     <animate attributeName="r" values={`${radius + 8};${radius + 22};${radius + 8}`} dur="2.4s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values={isLight ? '0.12;0.02;0.12' : '0.18;0.04;0.18'} dur="2.4s" repeatCount="indefinite" />
@@ -1664,8 +1689,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const sse = sseCountFor ?? 0;
                   const dur = sse >= 4 ? '0.7s' : sse >= 2 ? '0.9s' : '1.2s';
                   return (
-                    <circle cx={pos.x} cy={pos.y - (radius - 6)} r="2.5" fill={pal.flowParticle} data-pulse-dur={dur}>
-                      <animate attributeName="opacity" values="1;0.25;1" dur={dur} repeatCount="indefinite" />
+                    <circle cx={pos.x} cy={pos.y - (radius - 6)} r="2.5" fill={pal.flowParticle} data-pulse-dur={dur} opacity={reducedMotion ? 0.6 : undefined}>
+                      {!reducedMotion && (
+                        <animate attributeName="opacity" values="1;0.25;1" dur={dur} repeatCount="indefinite" />
+                      )}
                     </circle>
                   );
                 })()}
@@ -1742,7 +1769,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               ts so a re-click on any node (same or different) remounts the
               <circle> and the SMIL <animate> elements replay from t=0.
               strokeWidth=2 doesn't match the overlap-test selectors. */}
-          {clickRipple && (
+          {clickRipple && !reducedMotion && (
             <circle
               key={clickRipple.ts}
               cx={clickRipple.x}
