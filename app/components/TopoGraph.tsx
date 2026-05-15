@@ -4190,11 +4190,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           const rectH = (VIEWBOX_H / view.zoom) * sy;
           return (
             <div
-              className="absolute right-3 rounded-md border shadow-lg shadow-black/30 overflow-hidden anet-fade-in"
-              style={{ bottom: 56, background: pal.legendBox.fill, borderColor: pal.containerBorder, cursor: 'crosshair' }}
-              role="img"
-              aria-label="Topology minimap — click to recenter"
-              title="Minimap · click to recenter"
+              className="absolute right-3 rounded-md border shadow-lg shadow-black/30 overflow-hidden anet-fade-in anet-topo-chip-focus"
+              style={{ bottom: 56, background: pal.legendBox.fill, borderColor: pal.containerBorder, cursor: 'crosshair', color: pal.legendAccent }}
+              // R157: minimap a11y completion. Pre-R157 the element had
+              // role="img" + aria-label but no tabIndex / onKeyDown — it
+              // was clickable for mouse users (recenter to where you
+              // clicked) but tab-unreachable. role="img" was also wrong
+              // for an interactive surface; role="button" matches the
+              // canonical pattern R116 / R139 / R140 / R151 / R152 use.
+              // Keyboard activation can't compute a click position, so
+              // Enter / Space falls back to resetView() — same gesture
+              // as the dedicated reset button (R104). Click semantics
+              // unchanged; only added a clarifying tail to the aria-
+              // label + title. anet-topo-chip-focus picks up R155's
+              // cyan outline via color: pal.legendAccent inline so the
+              // currentColor inherits cleanly on the rounded card.
+              role="button"
+              tabIndex={0}
+              aria-label="Topology minimap — click to recenter, Enter to reset view"
+              title="Minimap · click to recenter · Enter to reset view"
               onClick={(e) => {
                 const r = e.currentTarget.getBoundingClientRect();
                 const fx = (e.clientX - r.left) / r.width;
@@ -4204,6 +4218,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   x: VIEWBOX_W / 2 - fx * VIEWBOX_W * prev.zoom,
                   y: VIEWBOX_H / 2 - fy * VIEWBOX_H * prev.zoom,
                 }));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  resetView();
+                }
               }}
               data-topo-minimap
             >
