@@ -1085,7 +1085,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               <g
                 key={session.alias}
                 data-node={session.alias}
-                className="group transition-opacity"
+                // Round 3 / Loop: `anet-fade-in` runs once when the <g>
+                // mounts — a new session entering the fleet (or the topology
+                // first rendering) eases in instead of popping. Re-renders of
+                // an existing node don't re-trigger (React preserves the <g>
+                // via the alias key), so status changes don't flicker. The
+                // global prefers-reduced-motion sweep already neutralises it.
+                className="group transition-opacity anet-fade-in"
                 style={{ cursor: 'pointer' }}
                 // Stop the pointerdown from reaching the SVG pan handler: the
                 // SVG calls setPointerCapture, and a captured pointer makes
