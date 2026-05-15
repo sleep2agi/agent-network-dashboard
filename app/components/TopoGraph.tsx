@@ -817,6 +817,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // they are in one glance, without the user scanning the canvas for
   // moving particles. Reset on mouse leave.
   const [hoveredActiveLinks, setHoveredActiveLinks] = useState(false);
+  // Round 80 / Loop: vendor-letter hover in the distribution chip. The
+  // chip already names vendor mix (`C:5 G:3 ?:1`); hover a letter and
+  // every node from OTHER vendors dims. Surfaces the breakdown spatially
+  // without inventing a new pin slot. Stores the vendor `initial`
+  // (single char or "?") that matches the tally key.
+  const [hoveredVendor, setHoveredVendor] = useState<string | null>(null);
   // Round 55 / Loop: hovering a legend status row dims nodes whose status
   // doesn't match. The legend was passive — "what does this colour mean".
   // Now it answers "show me all of these" the same way R8 group-focus
@@ -1388,10 +1394,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           {vendorDist.length > 1 && (
             <span
               className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
-              title="Fleet by model vendor"
+              title="Hover a letter to highlight that vendor"
             >
               {vendorDist.map(v => (
-                <span key={v.initial} className="inline-flex items-baseline gap-0.5">
+                <span
+                  key={v.initial}
+                  className="inline-flex items-baseline gap-0.5"
+                  data-vendor-letter={v.initial}
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={() => setHoveredVendor(v.initial)}
+                  onMouseLeave={() => setHoveredVendor(prev => prev === v.initial ? null : prev)}
+                >
                   <span style={{ color: v.color }}>{v.initial}</span>
                   <span className="text-gray-500">:{v.count}</span>
                 </span>
@@ -2127,19 +2140,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // Round 60 / Loop: activeStatus = hoveredStatus ?? pinnedStatus
                   // so the pressure-bar segment pins (R60) and the legend
                   // row hover (R55) feed the same branch.
+                  // Round 80 / Loop: vendor-letter hover composes ABOVE the
+                  // activeStatus branch so hovering the vendor chip's `C`
+                  // dims everything except C-vendor nodes. Same dim value
+                  // (0.28) as edge-endpoint and status filters — visually
+                  // consistent. Vendor lookup uses the same vendorForModel
+                  // helper the avatar render uses, keyed by initial so the
+                  // chip and the avatar always agree on grouping.
                   opacity: hoveredEdgeEndpoints && !hoveredEdgeEndpoints.has(session.alias) && chatAlias !== session.alias
                     ? 0.28
-                    : activeStatus && chatAlias !== session.alias && !(
-                        activeStatus === 'working' ? session.status === 'working'
-                        : activeStatus === 'idle'  ? (isOnline && session.status !== 'working')
-                        : /* offline */              !isOnline
-                      )
+                    : hoveredVendor && chatAlias !== session.alias && (() => {
+                        const v = vendorForModel(session.model);
+                        const initial = v.id === 'unknown' ? '?' : v.initial;
+                        return initial !== hoveredVendor;
+                      })()
                       ? 0.28
-                      : !inFocus
-                        ? 0.32
-                        : chatAlias === session.alias
-                          ? 1
-                          : isOnline ? 1 : 0.6,
+                      : activeStatus && chatAlias !== session.alias && !(
+                          activeStatus === 'working' ? session.status === 'working'
+                          : activeStatus === 'idle'  ? (isOnline && session.status !== 'working')
+                          : /* offline */              !isOnline
+                        )
+                        ? 0.28
+                        : !inFocus
+                          ? 0.32
+                          : chatAlias === session.alias
+                            ? 1
+                            : isOnline ? 1 : 0.6,
                   // Round 9 / Loop: stagger the anet-fade-in so the topology
                   // reveals as a wave on first paint instead of one big pop.
                   // Cap at 24 indices (≈600ms tail) so 50-node fleets still
