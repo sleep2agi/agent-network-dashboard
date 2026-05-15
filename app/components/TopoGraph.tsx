@@ -607,6 +607,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   }, [messages, sessions, sseSessions, layout, nodeScale]);
 
   const workingCount = onlineNodes.filter(s => s.status === 'working').length;
+  // Round 6 / Loop: vendor distribution for the header chip — at a glance
+  // "what's in the fleet" (A:5 M:2 O:8 书:12 …) without opening a node.
+  // Sorted by count desc; "unknown" vendors collapse into a "?" bucket.
+  const vendorDist = useMemo(() => {
+    const tally = new Map<string, { initial: string; count: number; color: string }>();
+    for (const s of [...onlineNodes, ...offlineNodes]) {
+      const v = vendorForModel(s.model);
+      const key = v.id === 'unknown' ? '?' : v.initial;
+      const cur = tally.get(key);
+      if (cur) cur.count++;
+      else tally.set(key, { initial: key, count: 1, color: v.mono.text });
+    }
+    return [...tally.values()].sort((a, b) => b.count - a.count);
+  }, [onlineNodes, offlineNodes]);
   // Round 109 (Vincent 4582 P0): hover-gated labels above this node count
   // so dense fleets show clean avatars instead of a wall of overlapping
   // label cards. 16 ≈ where the triple-tier rings start to crowd.
@@ -788,6 +802,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           <span className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
             {onlineNodes.length} online
           </span>
+          {vendorDist.length > 1 && (
+            <span
+              className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
+              title="Fleet by model vendor"
+            >
+              {vendorDist.map(v => (
+                <span key={v.initial} className="inline-flex items-baseline gap-0.5">
+                  <span style={{ color: v.color }}>{v.initial}</span>
+                  <span className="text-gray-500">:{v.count}</span>
+                </span>
+              ))}
+            </span>
+          )}
           <span className="px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20">
             {flowLinks.length} active links
           </span>
