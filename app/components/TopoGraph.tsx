@@ -2827,6 +2827,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     outside the halo radius+8 so it never overlaps a neighbour
                     (halos already pack flush in dense grids). */}
                 {chatAlias === session.alias && (
+                  /* R51 chat-target ring. R120 / Loop: gentle SMIL
+                     breath on the ring's opacity (±0.1 over 3s) when
+                     chat is open + !reducedMotion. Says "active session
+                     here" continuously without animation noise — the
+                     ring only appears for one node at a time (the
+                     chatAlias), so it never competes with R84 hub
+                     busyness or R112 working halo for attention. */
                   <circle
                     cx={pos.x}
                     cy={pos.y}
@@ -2838,7 +2845,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     filter={!isLight ? 'url(#topo-glow)' : undefined}
                     className="transition-opacity duration-200"
                     style={{ pointerEvents: 'none' }}
-                  />
+                    data-chat-target-ring
+                    data-chat-target-breath={!reducedMotion ? 'on' : 'off'}
+                  >
+                    {!reducedMotion && (
+                      <animate
+                        attributeName="opacity"
+                        values={isLight ? '0.72;0.95;0.72' : '0.82;1;0.82'}
+                        dur="3s"
+                        repeatCount="indefinite"
+                      />
+                    )}
+                  </circle>
                 )}
                 {isActive && !reducedMotion && (
                   <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
