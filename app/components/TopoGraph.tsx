@@ -2978,9 +2978,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 count (raw count vs. deduped pairs), so the placeholder
                 fires on flowLinks.length=0 specifically. */}
             {flowLinks.length === 0 ? (
-              <text x="115" y="60" textAnchor="middle" fill={pal.legendText} fontSize="10" fontFamily="monospace" fontStyle="italic" opacity={0.65} data-recent-signal-empty>
-                no flow yet
-              </text>
+              /* R45 placeholder. R110: add a sub-text hint so the
+                 empty state explains what it's empty OF — operators
+                 looking at "no flow yet" sometimes mistook it for
+                 a connection error. The sub-line reads as a quiet
+                 invitation, not an error. Two-line layout uses
+                 standard SVG <text>+<text> rather than tspan so the
+                 y-coordinates are explicit and the data-attr selector
+                 still finds the primary line. */
+              <>
+                <text x="115" y="54" textAnchor="middle" fill={pal.legendText} fontSize="10" fontFamily="monospace" fontStyle="italic" opacity={0.65} data-recent-signal-empty>
+                  no flow yet
+                </text>
+                <text x="115" y="68" textAnchor="middle" fill={pal.legendText} fontSize="8" fontFamily="monospace" opacity={0.45} data-recent-signal-empty-hint>
+                  send a message between agents
+                </text>
+              </>
             ) : (
               // Round 56 / Loop: each row is a navigator into the canvas.
               // Hover a row → set hoveredEdgeKey, which the existing R50
