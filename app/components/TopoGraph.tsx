@@ -1675,11 +1675,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               return acc === null || t > acc ? t : acc;
             }, null);
             const rel = recent !== null ? relativeAgo(new Date(recent).toISOString()) : null;
+            // R114: tooltip lists the actual flows. Closes the
+            // info-density sweep on the last chip-row hover surface
+            // (R97-R113 covered everything else). Format:
+            //   "alpha→beta (3), gamma→delta (1) — hover brightens all"
+            // Truncates at 6 flows with "+N more" so a busy fleet
+            // doesn't paint a tall tooltip; the recent-signal panel
+            // already shows the top 3 in detail.
+            const flowList = flowLinks
+              .slice(0, 6)
+              .map(l => `${l.from}→${l.to} (${l.count})`)
+              .join(', ');
+            const flowSuffix = flowLinks.length > 6 ? ` + ${flowLinks.length - 6} more` : '';
+            const tooltip = flowLinks.length === 0
+              ? undefined
+              : `${flowList}${flowSuffix} — hover brightens all`;
             return (
               <span
                 className="hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20"
                 data-active-links-chip
-                title={flowLinks.length > 0 ? 'Hover to brighten all active flows' : undefined}
+                data-active-links-flow-count={flowLinks.length}
+                title={tooltip}
                 style={{ cursor: flowLinks.length > 0 ? 'pointer' : undefined }}
                 onMouseEnter={() => { if (flowLinks.length > 0) setHoveredActiveLinks(true); }}
                 onMouseLeave={() => setHoveredActiveLinks(false)}
