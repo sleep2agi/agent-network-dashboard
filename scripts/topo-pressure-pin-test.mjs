@@ -74,17 +74,24 @@ await page.mouse.move(10, 10);
 await page.waitForTimeout(250);
 const afterMouseMove = await opacities();
 
-// Click again to release.
+// Click again to release. R79 added hover-affordances on the working
+// + online chips, so the click locator's mouse path can light a
+// transient hoveredStatus en route to the pressure segment. Mouse-move
+// to a neutral spot after the release click so we observe pin-only
+// state (same gotcha R61's test documented inline).
 await workingSeg.click({ force: true });
+await page.mouse.move(10, 10);
 await page.waitForTimeout(250);
 const afterRelease = await opacities();
 
 // Repeat for offline segment.
 const offlineSeg = page.locator('[data-pressure-seg="offline"]').first();
 await offlineSeg.click({ force: true });
+await page.mouse.move(10, 10);
 await page.waitForTimeout(250);
 const afterOfflinePin = await opacities();
 await offlineSeg.click({ force: true });
+await page.mouse.move(10, 10);
 await page.waitForTimeout(250);
 const afterOfflineRelease = await opacities();
 

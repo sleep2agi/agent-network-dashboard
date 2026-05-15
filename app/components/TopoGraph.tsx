@@ -1194,10 +1194,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               Grid
             </button>
           </div>
-          <span className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-300 border border-green-500/20">
+          {/* R79: working + online count chips become hover affordances —
+              extends R77's chip-hover pattern to status counts. Hover the
+              working chip → setHoveredStatus('working') so the R55 dim
+              mechanic kicks in (same as hovering the SVG legend "working"
+              row, just a different surface for the same gesture).
+              The online chip uses the same setHoveredStatus('idle') path
+              when there's idle but no working — falling back to working
+              if any working node exists; "online" without a single bucket
+              isn't part of the R55 type set, so this chip routes to the
+              dominant online sub-tier instead of inventing a new state.
+              Cursor only flips when there's anything to highlight. */}
+          <span
+            className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-300 border border-green-500/20"
+            data-working-chip
+            title={workingCount > 0 ? 'Hover to highlight working nodes' : undefined}
+            style={{ cursor: workingCount > 0 ? 'pointer' : undefined }}
+            onMouseEnter={() => { if (workingCount > 0) setHoveredStatus('working'); }}
+            onMouseLeave={() => setHoveredStatus(prev => prev === 'working' ? null : prev)}
+          >
             {workingCount} working
           </span>
-          <span className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+          <span
+            className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+            data-online-chip
+            title={onlineNodes.length > 0 ? 'Hover to highlight online nodes' : undefined}
+            style={{ cursor: onlineNodes.length > 0 ? 'pointer' : undefined }}
+            onMouseEnter={() => {
+              // If a working filter would isolate nothing, route to idle.
+              const idleCount = onlineNodes.length - workingCount;
+              if (workingCount > 0) setHoveredStatus('working');
+              else if (idleCount > 0) setHoveredStatus('idle');
+            }}
+            onMouseLeave={() => setHoveredStatus(prev => prev === 'working' || prev === 'idle' ? null : prev)}
+          >
             {onlineNodes.length} online
           </span>
           {/* Round 31 / Loop: fleet-health pressure bar. The "X working /
