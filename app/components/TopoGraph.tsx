@@ -2009,6 +2009,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 </feMerge>
               </filter>
             )}
+            {/* R142 / Loop: drop-shadow filter for group-box hover-lift.
+                Mirrors R135's panel hover-elevation idiom but applied
+                at the per-group canvas level. R68 already gives a
+                hovered/pinned group box a solid accent stroke; R142
+                adds a soft outward shadow on top so the box visually
+                "rises off the canvas" when selected — same visual
+                vocabulary as the panels + the Overview KPI cards
+                (R18). Theme-aware flood: darker shadow on cyber so
+                it reads above the dark canvas, lighter for light
+                theme. Bounding box of the group box is unchanged —
+                filters only affect paint area, not bbox geometry, so
+                the overlap-test invariant is preserved. */}
+            <filter id="topo-groupbox-lift" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow
+                dx="0" dy="3" stdDeviation="4"
+                floodColor={isLight ? '#0f172a' : '#000000'}
+                floodOpacity={isLight ? 0.18 : 0.55}
+              />
+            </filter>
             {/* Round 16 / Loop: 3-tier flow-link arrow markers.
                 The single marker had `markerUnits` defaulting to
                 `strokeWidth`, so heavy edges (stroke=7) rendered 35-user-
@@ -2341,9 +2360,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // matter — the className is only applied when working>0.
                   data-group-box-live={!isPinned && !isHovered && box.statuses.working > 0 ? 'true' : 'false'}
                   data-group-box-march-dur={marchDur}
+                  data-group-box-lifted={(isPinned || isHovered) ? 'true' : 'false'}
                   className={!isPinned && !isHovered && box.statuses.working > 0 ? 'anet-topo-groupbox-live' : undefined}
+                  // R142: drop-shadow filter when pinned or hovered. Box
+                  // visually "rises off the canvas" — same vocabulary
+                  // R18 KPI cards + R135 overlay panels use. Idle group
+                  // boxes carry no filter (purely flat dashed outline)
+                  // so the unstyled canvas stays uncluttered. Filter
+                  // affects paint area only, not the geometric bbox
+                  // the overlap-test reads, so zero-overlap invariant
+                  // is preserved.
+                  filter={(isPinned || isHovered) ? 'url(#topo-groupbox-lift)' : undefined}
                   style={{
-                    transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out',
+                    transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out, filter 200ms ease-out',
                     pointerEvents: 'none',
                     // CSS var consumed by `.anet-topo-groupbox-live`
                     // (line 877 of globals.css). React's CSSProperties
