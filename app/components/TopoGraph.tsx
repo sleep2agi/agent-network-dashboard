@@ -1558,6 +1558,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // mirror = inset boxShadow using the vendor's own
                 // colour, so each pinned letter sings in its own hue
                 // (Anthropic green / OpenAI cyan / 书 blue / ?).
+                // R101: tooltip lists the aliases that use this vendor —
+                // completes the info-density triple started by R97 pills,
+                // R98 node titles, R99 group-label titles. Anywhere the
+                // UI shows "A:3" should hover-explain which 3.
+                const aliases = [...onlineNodes, ...offlineNodes]
+                  .filter(s => {
+                    const vid = vendorForModel(s.model);
+                    return (vid.id === 'unknown' ? '?' : vid.initial) === v.initial;
+                  })
+                  .map(s => s.alias);
+                const preview = aliases.slice(0, 8).join(', ');
+                const suffix = aliases.length > 8 ? ` + ${aliases.length - 8} more` : '';
+                const tooltip = isPinned
+                  ? `${preview}${suffix} — click again or Esc to clear`
+                  : `${preview}${suffix} — click to pin`;
                 return (
                   <span
                     key={v.initial}
@@ -1567,9 +1582,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     className="inline-flex items-baseline gap-0.5 px-1 rounded"
                     data-vendor-letter={v.initial}
                     data-vendor-pinned={isPinned ? 'true' : 'false'}
-                    title={isPinned
-                      ? `Vendor "${v.initial}" pinned — click again or Esc to clear`
-                      : `Hover to highlight "${v.initial}"; click to pin`}
+                    data-vendor-aliases={aliases.join(',')}
+                    title={tooltip}
                     style={{
                       cursor: 'pointer',
                       boxShadow: isPinned
