@@ -626,6 +626,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // label cards. 16 ≈ where the triple-tier rings start to crowd.
   const denseLayout = onlineNodes.length + offlineNodes.length > 16;
   const [hoveredAlias, setHoveredAlias] = useState<string | null>(null);
+  // Round 8 / Loop: which group is currently focused. Nodes outside this
+  // group + other group boxes fade so the eye locks onto the team you're
+  // pointing at. Singletons use their own alias as the group key.
+  const hoveredGroup = hoveredAlias ? (groupKeys[hoveredAlias] ?? hoveredAlias) : null;
 
   // --- Round 103 (issue #81): fullscreen + zoom + pan interaction layer ---
   // DIY native (no d3 / svg-pan-zoom): wrap the topology content in a single
@@ -994,7 +998,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               flow links + nodes; pointer-events off so they never intercept
               a node click. Restrained dashed container + group-name label. */}
           {groupBoxes.map(box => (
-            <g key={`grp-${box.key}`} data-group={box.key} style={{ pointerEvents: 'none' }}>
+            <g
+              key={`grp-${box.key}`}
+              data-group={box.key}
+              className="transition-opacity"
+              // Round 8: dim group boxes outside the hover focus so the eye
+              // locks on the team being inspected.
+              style={{ pointerEvents: 'none', opacity: !hoveredGroup || box.key === hoveredGroup ? 1 : 0.28 }}
+            >
               <rect
                 x={box.x}
                 y={box.y}
@@ -1113,6 +1124,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // occlude an avatar), and the full card appears only for the
             // hovered node or once zoomed in past 1.4×.
             const showFullLabel = !denseLayout || hoveredAlias === session.alias || view.zoom >= 1.4;
+            // Round 8: when a node in another group is hovered, fade this
+            // one. Same-group nodes (incl. singletons matching the hovered
+            // alias) stay full. Pure visual focus, geometry unchanged.
+            const inFocus = !hoveredGroup || (groupKeys[session.alias] ?? session.alias) === hoveredGroup;
 
             return (
               <g
@@ -1125,7 +1140,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // via the alias key), so status changes don't flicker. The
                 // global prefers-reduced-motion sweep already neutralises it.
                 className="group transition-opacity anet-fade-in"
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', opacity: inFocus ? 1 : 0.32 }}
                 // Stop the pointerdown from reaching the SVG pan handler: the
                 // SVG calls setPointerCapture, and a captured pointer makes
                 // Chromium fire the follow-up `click` on the SVG instead of
@@ -1133,8 +1148,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // Side effect (intended): you pan from empty canvas, not by
                 // grabbing a node.
                 onPointerDown={(e) => e.stopPropagation()}
-                onPointerEnter={() => denseLayout && setHoveredAlias(session.alias)}
-                onPointerLeave={() => denseLayout && setHoveredAlias(prev => (prev === session.alias ? null : prev))}
+                // Track hover globally (not just under denseLayout) so the
+                // Round 8 group-focus fade works at any fleet size.
+                onPointerEnter={() => setHoveredAlias(session.alias)}
+                onPointerLeave={() => setHoveredAlias(prev => (prev === session.alias ? null : prev))}
                 onClick={() => setChatAlias(session.alias)}
               >
                 {/* Issue #96: native hover tooltip — "Vendor · model · Runtime".
