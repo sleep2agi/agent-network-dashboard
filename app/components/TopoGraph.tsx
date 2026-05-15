@@ -2979,12 +2979,46 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       <title>{isPinned
                         ? `${link.from} → ${link.to} (${link.count}) — click to release pin`
                         : `${link.from} → ${link.to} (${link.count}) — click to pin`}</title>
+                      {/* Round 164 / Loop: edge badge gains hover-lift
+                          to match the 5-surface hover-elevation
+                          family (R51 node / R135 panel / R142 group
+                          box / R143 recent row / R144 legend row).
+                          Pre-R164 the badge had R122 hover→edge-brighten
+                          propagation but the badge ITSELF stayed
+                          static, so the cursor-on-target feedback
+                          felt mismatched with every other interactive
+                          surface. Bumping r 9 → 10.5 on hover OR pin
+                          gives the same "lift" gesture in canvas
+                          space (the badge sits on a curved path, so
+                          translate-Y wouldn't track the line; radius
+                          growth is the SVG-native equivalent). Pin
+                          and hover share the lift so a pinned badge
+                          stays visually raised even after mouseleave —
+                          mirrors R143/R144 where row pin gets the
+                          same lift as row hover. Pinned still keeps
+                          its R121 stroke change (legendHeadline +
+                          width 2) so pin and hover stay
+                          discriminable on the same lifted state.
+                          strokeWidth stays at 1 / 2 — won't trip the
+                          R51 overlap-test sentinels (1.5 / 3 are
+                          reserved). transition keeps the lift smooth
+                          (180ms ease-out) and respects prefers-
+                          reduced-motion via the globals.css blanket
+                          override that neutralises transitions.
+
+                          Six surfaces now share the hover-elevation
+                          idiom: nodes (R51), panels (R135), group
+                          boxes (R142), recent rows (R143), legend
+                          rows (R144), edge badges (R164). */}
                       <circle
-                        cx={badgeX} cy={badgeY} r="9"
+                        cx={badgeX} cy={badgeY}
+                        r={isHoveredEdge || isPinned ? 10.5 : 9}
                         fill={pal.legendBox.fill}
                         stroke={isPinned ? pal.legendHeadline : isHot ? hotStroke : pal.flowEdge}
                         strokeWidth={isPinned ? 2 : isHot ? 2 : 1}
                         opacity={isLight ? 0.95 : 0.82}
+                        data-edge-badge-lifted={(isHoveredEdge || isPinned) ? 'true' : 'false'}
+                        style={{ transition: 'r 180ms ease-out' }}
                       />
                       <text
                         x={badgeX} y={badgeY + 3}
