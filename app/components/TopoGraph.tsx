@@ -4628,7 +4628,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-recent-row-pinned={isRowPinned ? 'true' : 'false'}
                     data-recent-row-hot={isHot ? 'true' : 'false'}
                     data-recent-row-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
-                    className="anet-topo-svg-focus"
+                    // Round 203 / Loop: per-row mount fade-in. R175 already
+                    // eased the whole panel in once, but new flows rising
+                    // INTO the top-3 list (or replacing an older row) snap-
+                    // popped in. React reconciliation via key={link.key}
+                    // preserves stable rows across re-renders, so anet-
+                    // fade-in only plays on mount — never replays when
+                    // counts update or rows reorder by recency. Stacks on
+                    // the panel's own R175 anet-fade-in: SVG opacity
+                    // composes multiplicatively, so during the first paint
+                    // the panel's 700ms delay holds rows hidden until the
+                    // panel reveals, then row opacity transitions inside
+                    // the visible panel. For mid-session arrivals (panel
+                    // already at opacity 1) the row's 150ms fade-in plays
+                    // standalone. Three layers of mount-once eases now
+                    // share rhythm: panel (R175) → rows (R203) → row
+                    // contents (existing R160 pip / R191 ts opacity
+                    // ramps animate independently after mount).
+                    className="anet-topo-svg-focus anet-fade-in"
                     role="button"
                     tabIndex={0}
                     aria-pressed={isRowPinned}
