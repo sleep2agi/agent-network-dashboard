@@ -105,6 +105,14 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // sticky, Esc clears (R62).
       { keys: ['hover seg'], label: 'Preview a status filter — hover a pressure-bar segment (R83)' },
       { keys: ['hover group'], label: 'Preview a team focus — hover a group label (R86)' },
+      // Round 91 / Loop: catch up on vendor pin (R88) and granular
+      // Cmd+K vendor-clear (R90). Vendor was the last filter
+      // dimension without a sticky pin; the click-to-pin gesture
+      // and palette clear command both deserve discovery entries.
+      // R89's third "filter:" pill is already covered by the
+      // generic "click pill" (R73) and "click ×" (R64) entries.
+      { keys: ['click vendor'], label: 'Pin a vendor filter — click A/O/书/? in the chip row (R88)' },
+      { keys: ['⌘', 'K'], label: 'Clear vendor pin only via palette → "Clear topology vendor filter" (R90)' },
     ],
   },
 ];
