@@ -415,6 +415,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     activeAliases,
     groupKeys,
     groupBoxes,
+    gridContentBottom,
   } = useMemo(() => {
     const sseCount = (s: { alias: string; network_id?: string }) =>
       (s.network_id ? sseSessions[`${s.network_id}:${s.alias}`] : undefined) ?? sseSessions[s.alias];
@@ -560,6 +561,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             h: Math.max(...ys) - minY + GROUP_TOP + GROUP_PAD,
           };
         });
+      // Round 28 / Loop: surface the grid's natural content bottom so the
+      // mount effect can auto-fit zoom when the layout would overflow the
+      // viewBox. = bottom of the last node row + its label drop + a small
+      // breathing buffer. Round 27's cellH bump makes this overflow more
+      // common (30-node fleets reach ~774 px, viewBox is 680).
+      const gridContentBottom = gy0 + totalRows * cellH + 8;
       return {
         onlineNodes: online,
         offlineNodes: offline,
@@ -568,6 +575,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         activeAliases: active,
         groupKeys,
         groupBoxes,
+        gridContentBottom,
       };
     }
 
@@ -650,6 +658,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // #111: group boxes are a grid-layout feature only — radially scattered
       // ring nodes can't be cleanly boxed. Ring keeps the #83 prefix hue.
       groupBoxes: [] as { key: string; count: number; x: number; y: number; w: number; h: number }[],
+      // ring fits within VIEWBOX_H by construction (offlineRadius=325 + centre at y=330)
+      gridContentBottom: 0,
     };
   }, [messages, sessions, sseSessions, layout, nodeScale]);
 
@@ -734,6 +744,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       }
     } catch {}
   }, []);
+
+  // Round 28 / Loop: first-paint auto-fit. Round 27's cellH bump means
+  // dense grids (≥6-7 rows) overflow the 680-px viewBox at the natural
+  // 100% zoom — a new user sees the topology with its bottom rows
+  // clipped and no hint that there's more below. Auto-fit on first
+  // paint (and only if the user has no persisted view) sets the
+  // initial zoom so all content fits. Subsequent zoom changes persist
+  // and override the auto-fit on reload; explicit reset (0 key) still
+  // goes back to 100% so the gesture's "reset to natural size" semantic
+  // is preserved.
+  //
+  // Capture pre-mount persistence in a useState initializer — the
+  // existing `persist` effect (declared below) runs on first render
+  // with the default {1,0,0} view and writes it to localStorage before
+  // the auto-fit effect (deps on async-arriving sessions) gets a turn.
+  // Reading localStorage from the effect would see that write and
+  // skip the fit. The useState snapshot fires once, before any effects.
+  const [hadPersistedViewOnMount] = useState<boolean>(
+    () => typeof window !== 'undefined' && !!localStorage.getItem('anet-topo-view'),
+  );
+  const autoFitDoneRef = useRef(false);
+  useEffect(() => {
+    if (autoFitDoneRef.current) return;
+    if (hadPersistedViewOnMount) {
+      autoFitDoneRef.current = true;
+      return;
+    }
+    if (layout !== 'grid' || sessions.length === 0 || !gridContentBottom) return;
+    if (gridContentBottom <= VIEWBOX_H) {
+      autoFitDoneRef.current = true; // no overflow → no fit needed
+      return;
+    }
+    const fitZoom = Math.max(ZOOM_MIN, Math.min(1, VIEWBOX_H / gridContentBottom));
+    setView({ zoom: fitZoom, x: 0, y: 0 });
+    autoFitDoneRef.current = true;
+  }, [layout, sessions.length, gridContentBottom, hadPersistedViewOnMount]);
 
   // persist view
   useEffect(() => {
