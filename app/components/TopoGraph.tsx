@@ -1445,8 +1445,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               >
                 {/* Issue #96: native hover tooltip — "Vendor · model · Runtime".
                     Falls back to just the alias when the node reports no
-                    model/runtime. */}
-                <title>{identityLine(session.model, session.runtime) || session.alias}</title>
+                    model/runtime.
+                    Round 33 / Loop: tack on a second line with the agent's
+                    working directory when reported — answers "what is
+                    this agent on?" without opening the chat popover.
+                    Empty pieces drop; SVG <title> honours newlines in
+                    native tooltips on every browser the dashboard targets. */}
+                <title>{[
+                  identityLine(session.model, session.runtime) || session.alias,
+                  session.project_dir ? `cwd: ${session.project_dir}` : null,
+                ].filter(Boolean).join('\n')}</title>
                 {/* Round 2 / Loop: hover ring — a thin outer stroke that fades
                     in when the cursor enters the node, signalling clickability
                     (real-user feedback for the chat-popover open). Pure CSS via
