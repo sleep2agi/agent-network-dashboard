@@ -44,6 +44,22 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       { keys: ['type'], label: 'Filter — searches commands, agents, tasks' },
     ],
   },
+  // Round 25 / Loop: TopoGraph keys + mouse gestures from rounds 21-23
+  // were only surfaced in button titles. Consolidating here gives the
+  // Help overlay (the canonical discovery surface) a single place to
+  // learn the canvas controls.
+  {
+    group: 'Topology canvas',
+    items: [
+      { keys: ['+'], label: 'Zoom in (also =)' },
+      { keys: ['−'], label: 'Zoom out' },
+      { keys: ['0'], label: 'Reset zoom + pan' },
+      { keys: ['⌘', 'wheel'], label: 'Zoom toward cursor (Ctrl on Windows/Linux)' },
+      { keys: ['drag'], label: 'Pan the canvas (cursor → grabbing)' },
+      { keys: ['dbl-click'], label: 'Reset zoom + pan' },
+      { keys: ['click'], label: 'Open chat popover on a node (Esc to close)' },
+    ],
+  },
 ];
 
 const GO_TARGETS: Record<string, string> = {
