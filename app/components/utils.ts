@@ -11,14 +11,15 @@ export function previewContent(raw: string | null | undefined): string {
     .trim() || '--';
 }
 
+// Round 44 / Loop: timeAgo now delegates to the shared lib/time helper.
+// The old in-line `replace + 'Z'` parse appended a Z to already-ISO
+// inputs (producing "…ZZ", browser-fragile) — strict-superset semantics
+// preserved for SQL-style inputs, fixed for ISO. Plus a 'just now' fallback
+// when clock skew puts the timestamp in the future. Five callers benefit:
+// /admin · /logs · /settings/networks · InboxPanel · /messages.
+import { relativeAgo } from '../lib/time';
 export function timeAgo(dateStr: string): string {
-  if (!dateStr) return '--';
-  const diff = Date.now() - new Date(dateStr.replace(' ', 'T') + 'Z').getTime();
-  const s = Math.floor(diff / 1000);
-  if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
+  return relativeAgo(dateStr) ?? '--';
 }
 
 export function statusColor(status: string, hasSse: boolean): string {
