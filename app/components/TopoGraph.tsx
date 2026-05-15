@@ -676,6 +676,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // Issue #100: singleton chat popover. One alias at a time — clicking
   // another node swaps the target and the conversation switches in place.
   const [chatAlias, setChatAlias] = useState<string | null>(null);
+  // Round 14 / Loop: one-shot click ripple — fades outward from the clicked
+  // node so the click registers physically before the popover snaps in.
+  // Pairs with the Round 11 chat-focus ring: ripple expands, ring locks on.
+  // Keyed by ts so re-clicking the same node remounts the <circle> and the
+  // SMIL <animate> replays. Cleared 600ms after click (longer than the
+  // 500ms animation so a final frame at opacity 0 is still in the tree).
+  const [clickRipple, setClickRipple] = useState<{
+    ts: number; x: number; y: number; r0: number; color: string;
+  } | null>(null);
   // #84: when a node is renamed while its chat popover is open, follow the
   // rename so the conversation keeps targeting a live alias.
   useEffect(() => {
@@ -1199,7 +1208,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // Round 8 group-focus fade works at any fleet size.
                 onPointerEnter={() => setHoveredAlias(session.alias)}
                 onPointerLeave={() => setHoveredAlias(prev => (prev === session.alias ? null : prev))}
-                onClick={() => setChatAlias(session.alias)}
+                onClick={() => {
+                  setChatAlias(session.alias);
+                  // Round 14 ripple — capture position, radius and status
+                  // colour at click time so the one-shot circle is self-
+                  // contained (no re-render-time recomputation needed).
+                  setClickRipple({
+                    ts: Date.now(),
+                    x: pos.x, y: pos.y, r0: radius,
+                    color: status.primary,
+                  });
+                  setTimeout(() => setClickRipple(prev =>
+                    prev && Date.now() - prev.ts >= 590 ? null : prev), 600);
+                }}
               >
                 {/* Issue #96: native hover tooltip — "Vendor · model · Runtime".
                     Falls back to just the alias when the node reports no
@@ -1404,6 +1425,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               </g>
             );
           })}
+
+          {/* Round 14 / Loop: click ripple — one-shot expanding ring from
+              the clicked node, ~500ms, status-coloured. Sits inside the
+              zoom/pan <g> so it scales / pans with the topology. Keyed by
+              ts so a re-click on any node (same or different) remounts the
+              <circle> and the SMIL <animate> elements replay from t=0.
+              strokeWidth=2 doesn't match the overlap-test selectors. */}
+          {clickRipple && (
+            <circle
+              key={clickRipple.ts}
+              cx={clickRipple.x}
+              cy={clickRipple.y}
+              r={clickRipple.r0 + 4}
+              fill="none"
+              stroke={clickRipple.color}
+              strokeWidth="2"
+              opacity="0"
+              style={{ pointerEvents: 'none' }}
+            >
+              <animate attributeName="r" values={`${clickRipple.r0 + 4};${clickRipple.r0 + 30}`} dur="0.5s" fill="freeze" />
+              <animate attributeName="opacity" values="0.7;0" dur="0.5s" fill="freeze" />
+            </circle>
+          )}
 
           </g>
 
