@@ -2978,15 +2978,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // right-edge slot, every char counts. "30s ago" → "30s".
                 const rawAt = link.last_at ? relativeAgo(link.last_at) : null;
                 const lastAt = rawAt ? rawAt.replace(/\s+ago$/, '') : null;
+                const isRowHovered = hoveredEdgeKey === link.key;
                 return (
                   <g
                     key={link.key}
                     data-recent-row={link.key}
+                    data-recent-row-hovered={isRowHovered ? 'true' : 'false'}
                     style={{ cursor: 'pointer' }}
                     onMouseEnter={() => setHoveredEdgeKey(link.key)}
                     onMouseLeave={() => setHoveredEdgeKey(prev => prev === link.key ? null : prev)}
                   >
-                    <rect x="6" y={38 + index * 16 - 10} width="218" height="14" fill="transparent" />
+                    {/* R104: subtle row-background tint on hover. R56
+                        already brightens the matching edge on the canvas,
+                        but the panel row itself stayed flat — felt more
+                        like text-with-handlers than a navigable list.
+                        Filling the rect at hover with `pal.legendAccent`
+                        at low alpha gives the row visual feedback at the
+                        source surface, mirroring the list-item idiom from
+                        the chip-row pills. */}
+                    <rect
+                      x="6" y={38 + index * 16 - 10}
+                      width="218" height="14" rx="3"
+                      fill={isRowHovered ? pal.legendAccent : 'transparent'}
+                      opacity={isRowHovered ? (isLight ? 0.10 : 0.14) : 1}
+                      style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
+                    />
                     <text
                       x="13" y={38 + index * 16}
                       fill={hoveredEdgeKey === link.key ? pal.legendHeadline : pal.legendText}
