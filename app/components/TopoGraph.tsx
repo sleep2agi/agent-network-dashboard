@@ -2071,21 +2071,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               if (flowLinks.length > 0) parts.push(`${flowLinks.length} active link${flowLinks.length === 1 ? '' : 's'}`);
               return parts.join(' · ') + '\nclick to fit view';
             })()}</title>
-            {/* grounding halo — now breathes in opacity, no expansion */}
-            <circle
-              cx={cx} cy={cy} r="18"
-              fill={isLight ? '#d1fae5' : '#10b981'}
-              opacity={isLight ? 0.42 : 0.12}
-            >
-              {!reducedMotion && (
-                <animate
-                  attributeName="opacity"
-                  values={isLight ? '0.32;0.52;0.32' : '0.08;0.16;0.08'}
-                  dur="4s"
-                  repeatCount="indefinite"
-                />
-              )}
-            </circle>
+            {/* grounding halo — breathes in opacity, no expansion.
+                R84: breath amplitude + tempo reflect workingCount. An
+                idle fleet keeps the original gentle 0.32→0.52 (light) /
+                0.08→0.16 (dark) cycle over 4s — "heart at rest". As
+                working sessions accumulate, the peak climbs and the
+                period shortens, capped at 2.4s so it never feels
+                manic. Quiet fleets see zero change; busy fleets feel
+                the canvas working. */}
+            {(() => {
+              // Bucket workingCount to keep the visual feedback discrete
+              // rather than continuous: 0 / 1-2 / 3-5 / 6+. Three buckets
+              // are enough — finer gradations are imperceptible.
+              const busy = workingCount === 0 ? 0
+                         : workingCount <= 2 ? 1
+                         : workingCount <= 5 ? 2
+                         : 3;
+              const peakLight   = [0.52, 0.58, 0.65, 0.72][busy];
+              const peakDark    = [0.16, 0.20, 0.26, 0.32][busy];
+              const troughLight = 0.32;
+              const troughDark  = 0.08;
+              const dur         = [4.0, 3.2, 2.7, 2.4][busy];
+              const valuesLight = `${troughLight};${peakLight};${troughLight}`;
+              const valuesDark  = `${troughDark};${peakDark};${troughDark}`;
+              return (
+                <circle
+                  cx={cx} cy={cy} r="18"
+                  fill={isLight ? '#d1fae5' : '#10b981'}
+                  opacity={isLight ? 0.42 : 0.12}
+                  data-hub-busyness={busy}
+                >
+                  {!reducedMotion && (
+                    <animate
+                      attributeName="opacity"
+                      values={isLight ? valuesLight : valuesDark}
+                      dur={`${dur}s`}
+                      repeatCount="indefinite"
+                    />
+                  )}
+                </circle>
+              );
+            })()}
             {/* core — 20px diameter, larger inner highlight reads as a "lit lamp" */}
             <circle cx={cx} cy={cy} r="10" fill={isLight ? '#059669' : '#10b981'} />
             <circle cx={cx} cy={cy} r="5" fill="#d1fae5" opacity="0.9" />
