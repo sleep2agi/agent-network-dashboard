@@ -4448,13 +4448,61 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  invitation, not an error. Two-line layout uses
                  standard SVG <text>+<text> rather than tspan so the
                  y-coordinates are explicit and the data-attr selector
-                 still finds the primary line. */
+                 still finds the primary line.
+
+                 Round 200 / Loop · milestone: empty-state lines now
+                 breathe in opacity. Pre-R200 the two texts sat at
+                 fixed 0.65 / 0.45 — visually identical to "frozen"
+                 or "broken". A slow 4.4s in-out breath (peak just
+                 above resting, trough just below) says "waiting,
+                 listening". Pacing matches R84 idle-hub breath at
+                 the slow end of its workingCount=0 cycle, so the
+                 two empty-state surfaces (hub centre + panel
+                 placeholder) share rhythm; when the first message
+                 arrives, both surfaces become non-empty in sync.
+                 Reduced-motion users see the resting opacity only
+                 (SMIL is gated to !reducedMotion, same idiom every
+                 other ambient animation uses). Negative `begin`
+                 phase-shifts the sub-line 1.5s behind the main
+                 line so the two read as a gentle inhale-exhale
+                 instead of a single double-loud pulse. */
               <>
-                <text x="115" y="54" textAnchor="middle" fill={pal.legendText} fontSize="10" fontFamily="monospace" fontStyle="italic" opacity={0.65} data-recent-signal-empty>
+                <text
+                  x="115" y="54" textAnchor="middle"
+                  fill={pal.legendText}
+                  fontSize="10" fontFamily="monospace" fontStyle="italic"
+                  opacity={0.65}
+                  data-recent-signal-empty
+                  data-recent-signal-empty-breathes={reducedMotion ? 'false' : 'true'}
+                >
                   no flow yet
+                  {!reducedMotion && (
+                    <animate
+                      attributeName="opacity"
+                      values="0.55;0.78;0.55"
+                      dur="4.4s"
+                      repeatCount="indefinite"
+                    />
+                  )}
                 </text>
-                <text x="115" y="68" textAnchor="middle" fill={pal.legendText} fontSize="8" fontFamily="monospace" opacity={0.45} data-recent-signal-empty-hint>
+                <text
+                  x="115" y="68" textAnchor="middle"
+                  fill={pal.legendText}
+                  fontSize="8" fontFamily="monospace"
+                  opacity={0.45}
+                  data-recent-signal-empty-hint
+                  data-recent-signal-empty-hint-breathes={reducedMotion ? 'false' : 'true'}
+                >
                   send a message between agents
+                  {!reducedMotion && (
+                    <animate
+                      attributeName="opacity"
+                      values="0.36;0.58;0.36"
+                      dur="4.4s"
+                      begin="-1.5s"
+                      repeatCount="indefinite"
+                    />
+                  )}
                 </text>
               </>
             ) : (
