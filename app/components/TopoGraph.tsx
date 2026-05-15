@@ -1284,39 +1284,69 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               status surfaces sing in unison. The online chip mirrors
               for idle pins (working ⊆ online; the routing in
               onMouseEnter already treats online as the idle fallback). */}
-          <span
-            className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-300 border border-green-500/20"
-            data-working-chip
-            data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
-            title={workingCount > 0 ? (pinnedStatus === 'working' ? 'Pinned — Esc to clear' : 'Hover to highlight working nodes') : undefined}
-            style={{
-              cursor: workingCount > 0 ? 'pointer' : undefined,
-              boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-            }}
-            onMouseEnter={() => { if (workingCount > 0) setHoveredStatus('working'); }}
-            onMouseLeave={() => setHoveredStatus(prev => prev === 'working' ? null : prev)}
-          >
-            {workingCount} working
-          </span>
-          <span
-            className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
-            data-online-chip
-            data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
-            title={onlineNodes.length > 0 ? (pinnedStatus === 'idle' ? 'Pinned — Esc to clear' : 'Hover to highlight online nodes') : undefined}
-            style={{
-              cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
-              boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-            }}
-            onMouseEnter={() => {
-              // If a working filter would isolate nothing, route to idle.
-              const idleCount = onlineNodes.length - workingCount;
-              if (workingCount > 0) setHoveredStatus('working');
-              else if (idleCount > 0) setHoveredStatus('idle');
-            }}
-            onMouseLeave={() => setHoveredStatus(prev => prev === 'working' || prev === 'idle' ? null : prev)}
-          >
-            {onlineNodes.length} online
-          </span>
+          {(() => {
+            // R113 / Loop: extend the R97-R102/R101 alias-list tooltip
+            // sweep to the remaining chip-row affordances. R79 made
+            // these chips hoverable; their generic "Hover to highlight"
+            // titles never said WHICH nodes match. Compute the alias
+            // lists once for both chips to share.
+            const workingAliases = onlineNodes.filter(s => s.status === 'working').map(s => s.alias);
+            const onlineAliases  = onlineNodes.map(s => s.alias);
+            const truncate = (list: string[]) => {
+              const head = list.slice(0, 8).join(', ');
+              const tail = list.length > 8 ? ` + ${list.length - 8} more` : '';
+              return head + tail;
+            };
+            const workingTitle = workingCount === 0
+              ? undefined
+              : pinnedStatus === 'working'
+                ? `${truncate(workingAliases)} — pinned, Esc to clear`
+                : `${truncate(workingAliases)} — hover highlights, click to pin`;
+            const onlineTitle = onlineNodes.length === 0
+              ? undefined
+              : pinnedStatus === 'idle'
+                ? `${truncate(onlineAliases)} — pinned, Esc to clear`
+                : `${truncate(onlineAliases)} — hover highlights online`;
+            return (
+              <>
+                <span
+                  className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-300 border border-green-500/20"
+                  data-working-chip
+                  data-working-chip-aliases={workingAliases.join(',')}
+                  data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
+                  title={workingTitle}
+                  style={{
+                    cursor: workingCount > 0 ? 'pointer' : undefined,
+                    boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
+                  }}
+                  onMouseEnter={() => { if (workingCount > 0) setHoveredStatus('working'); }}
+                  onMouseLeave={() => setHoveredStatus(prev => prev === 'working' ? null : prev)}
+                >
+                  {workingCount} working
+                </span>
+                <span
+                  className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+                  data-online-chip
+                  data-online-chip-aliases={onlineAliases.join(',')}
+                  data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
+                  title={onlineTitle}
+                  style={{
+                    cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
+                    boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
+                  }}
+                  onMouseEnter={() => {
+                    // If a working filter would isolate nothing, route to idle.
+                    const idleCount = onlineNodes.length - workingCount;
+                    if (workingCount > 0) setHoveredStatus('working');
+                    else if (idleCount > 0) setHoveredStatus('idle');
+                  }}
+                  onMouseLeave={() => setHoveredStatus(prev => prev === 'working' || prev === 'idle' ? null : prev)}
+                >
+                  {onlineNodes.length} online
+                </span>
+              </>
+            );
+          })()}
           {/* Round 31 / Loop: fleet-health pressure bar. The "X working /
               Y online" chips already carry the raw counts; the bar lets
               the eye get the working/idle/offline RATIO in one glance
