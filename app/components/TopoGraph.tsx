@@ -865,6 +865,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     window.addEventListener('anet:topo-pin', onPin);
     return () => window.removeEventListener('anet:topo-pin', onPin);
   }, []);
+  // R74 listener for layout + view palette commands lives below
+  // fitView's declaration — see further down in the file.
   const hoveredEdgeEndpoints = useMemo<Set<string> | null>(() => {
     if (!hoveredEdgeKey) return null;
     const link = flowLinks.find(l => l.key === hoveredEdgeKey);
@@ -1075,6 +1077,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       : Math.max(ZOOM_MIN, Math.min(1, VIEWBOX_H / gridContentBottom));
     setView({ zoom, x: 0, y: 0 });
   }, [gridContentBottom]);
+
+  // R74: listen for layout + view palette commands. Sister to R69's
+  // pin listener — palette dispatches a CustomEvent, the reducer here
+  // calls toggleLayout / fitView. Sits below fitView's declaration so
+  // the deps list resolves cleanly.
+  useEffect(() => {
+    const onLayout = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.kind === 'toggle') toggleLayout();
+    };
+    const onView = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.kind === 'fit') fitView();
+    };
+    window.addEventListener('anet:topo-layout', onLayout);
+    window.addEventListener('anet:topo-view', onView);
+    return () => {
+      window.removeEventListener('anet:topo-layout', onLayout);
+      window.removeEventListener('anet:topo-view', onView);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitView]);
 
   // Round 22 / Loop: keyboard zoom — +/= zoom in, - zoom out, 0 reset.
   // Round 29 / Loop: +f to fit content.

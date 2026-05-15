@@ -192,6 +192,24 @@ const COMMANDS: Command[] = [
       } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'clear' } }));
     } },
+
+  // ── Round 74 / Loop: layout + view shortcuts via the palette ──
+  // Sister to R69 pin actions. Layout toggle and fit-to-canvas already
+  // have keyboard shortcuts (l / f, per R29 R32) but users who forget
+  // the keys can search "layout" / "fit" in the palette instead.
+  // Layout: write localStorage in lockstep then broadcast — the storage
+  // write matters for SSR (init reader uses it) and the event keeps the
+  // mounted canvas in sync without a reload.
+  { id: 'act-topo-toggle-layout', title: 'Toggle topology layout', hint: 'ring ↔ grid (or press `l`)', group: 'Actions',
+    icon: <NavIcon d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />,
+    perform: () => {
+      window.dispatchEvent(new CustomEvent('anet:topo-layout', { detail: { kind: 'toggle' } }));
+    } },
+  { id: 'act-topo-fit', title: 'Fit topology to canvas', hint: 'auto-zoom to content (or press `f`)', group: 'Actions',
+    icon: <NavIcon d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4" />,
+    perform: () => {
+      window.dispatchEvent(new CustomEvent('anet:topo-view', { detail: { kind: 'fit' } }));
+    } },
 ];
 
 export function CommandPalette() {
