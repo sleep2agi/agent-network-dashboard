@@ -1446,15 +1446,35 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 {/* Issue #96: native hover tooltip — "Vendor · model · Runtime".
                     Falls back to just the alias when the node reports no
                     model/runtime.
-                    Round 33 / Loop: tack on a second line with the agent's
-                    working directory when reported — answers "what is
-                    this agent on?" without opening the chat popover.
-                    Empty pieces drop; SVG <title> honours newlines in
-                    native tooltips on every browser the dashboard targets. */}
-                <title>{[
-                  identityLine(session.model, session.runtime) || session.alias,
-                  session.project_dir ? `cwd: ${session.project_dir}` : null,
-                ].filter(Boolean).join('\n')}</title>
+                    Round 33 / Loop: cwd line answers "what is this agent on?".
+                    Round 34 / Loop: for offline nodes, append "last seen: 6m ago"
+                    so the operator knows whether to wait or chase. Online nodes
+                    skip the line (Round 27's 1 h ghost age-out means anything
+                    still online has heartbeated recently — the line would just
+                    be noise). Accepts both ISO ("…T06:00:28Z") and SQL-style
+                    ("… 06:00:28" assumed UTC) formats. */}
+                {(() => {
+                  const formatLastSeen = (dateStr: string): string | null => {
+                    if (!dateStr) return null;
+                    const iso = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T') + 'Z';
+                    const t = Date.parse(iso);
+                    if (!Number.isFinite(t)) return null;
+                    const s = Math.floor((Date.now() - t) / 1000);
+                    if (s < 0) return 'just now';
+                    if (s < 60) return `${s}s ago`;
+                    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+                    if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+                    return `${Math.floor(s / 86400)}d ago`;
+                  };
+                  const lastSeen = !isOnline && session.last_seen_at ? formatLastSeen(session.last_seen_at) : null;
+                  return (
+                    <title>{[
+                      identityLine(session.model, session.runtime) || session.alias,
+                      session.project_dir ? `cwd: ${session.project_dir}` : null,
+                      lastSeen ? `last seen: ${lastSeen}` : null,
+                    ].filter(Boolean).join('\n')}</title>
+                  );
+                })()}
                 {/* Round 2 / Loop: hover ring — a thin outer stroke that fades
                     in when the cursor enters the node, signalling clickability
                     (real-user feedback for the chat-popover open). Pure CSS via
