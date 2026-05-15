@@ -3625,6 +3625,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     style={{ pointerEvents: 'none', transition: 'opacity 180ms ease-out' }}
                   />
                 )}
+                {/* Round 167 / Loop: extend the node status-ring
+                    transition to include stroke-width — symmetric
+                    with R165 (pressure-bar width) and R166 (edge
+                    stroke-width). Pre-R167 only fill+stroke colors
+                    transitioned smoothly; stroke-width snapped from
+                    3 (online) to 1.5 (offline) when a session
+                    transitioned. With stroke-width in the transition
+                    list the ring smoothly contracts as a node goes
+                    offline (or expands when it comes back).
+                    strokeDasharray stays binary (none ↔ '5 5')
+                    because dash values don't interpolate cleanly
+                    between continuous and discrete forms.
+                    Inline style replaces the Tailwind transition-
+                    [fill,stroke] className for stable arbitrary
+                    property compilation. Respects prefers-reduced-
+                    motion via R29 globals.css blanket override.
+                    data-node-status-ring exposes this circle for
+                    test probing — the overlap-test guard on
+                    stroke-width="3"/"1.5" still works against the
+                    DOM attribute value (React-rendered, not
+                    interpolated). */}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
@@ -3634,7 +3655,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth={isOnline ? 3 : 1.5}
                   strokeDasharray={isOnline ? 'none' : '5 5'}
                   filter={isOnline && !isLight ? 'url(#topo-glow)' : undefined}
-                  className="transition-[fill,stroke] duration-300 ease-out"
+                  data-node-status-ring={status.label}
+                  style={{
+                    transition: 'fill 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out',
+                  }}
                 />
                 {/* Issue #96: node "avatar" is now driven by the model
                     vendor. Decision order:
