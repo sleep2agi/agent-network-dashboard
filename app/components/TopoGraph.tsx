@@ -2719,7 +2719,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 )}
                 {/* Round 4 / Loop: transition-[fill,stroke,opacity] smooths
                     status colour changes so idle↔working↔offline doesn't snap
-                    — task replies / node-rename / SSE updates ease in. */}
+                    — task replies / node-rename / SSE updates ease in.
+                    Round 112 / Loop: working nodes get a subtle halo breath
+                    (±0.12 opacity at 3s cycle) so the eye can find "what's
+                    busy" at a glance without scanning chips. Idle + offline
+                    halos stay flat — they don't need to demand attention.
+                    R84 hub-center breath stays the loudest "fleet busyness"
+                    signal; this one is quieter, per-node. SMIL `<animate>`
+                    inside the circle, gated by reducedMotion. */}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
@@ -2727,7 +2734,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fill={status.halo}
                   opacity={isOnline ? (isLight ? 0.85 : 0.65) : (isLight ? 0.4 : 0.25)}
                   className="transition-[fill,opacity] duration-300 ease-out"
-                />
+                  data-node-halo-breath={!reducedMotion && session.status === 'working' ? 'on' : 'off'}
+                >
+                  {!reducedMotion && session.status === 'working' && (
+                    <animate
+                      attributeName="opacity"
+                      values={isLight ? '0.73;0.92;0.73' : '0.53;0.78;0.53'}
+                      dur="3s"
+                      repeatCount="indefinite"
+                    />
+                  )}
+                </circle>
                 {/* Round 111 / Loop: edge-endpoint emphasis ring. R49
                     already keeps endpoint nodes at opacity 1 while
                     others dim when an edge is hovered, but the
