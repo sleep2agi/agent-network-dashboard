@@ -4413,6 +4413,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       </text>
                     </g>
                   ) : (
+                    // Round 212 / Loop: dense plain-text alias gets fill
+                    // transition on status flip — extension of R211. Pre-
+                    // R212 the dense fallback (denseLayout > 16 nodes,
+                    // where label cards collapse to plain text + R110
+                    // stroke halo) snap-cut its fill on tier change while
+                    // the status ring smoothly transitioned (R167) — the
+                    // card-mode equivalent that R211 just fixed at the
+                    // ≤16-node grain. Inline transition list combines
+                    // R26 transform 200ms (group-hover lift) + R212 fill
+                    // 300ms (status flip ease) — Tailwind transition-
+                    // transform on className would be displaced by inline
+                    // transition, so the transform property is explicit
+                    // in the inline list too. The group-hover:-translate-
+                    // y-[1.5px] className still fires the transform via
+                    // CSS pseudo-class; only the transition-property
+                    // moves to inline. Big fleets benefit most — this is
+                    // the path users see when their dashboard is busiest.
                     <text
                       x={pos.x}
                       y={pos.y + radius + denseDrop}
@@ -4422,8 +4439,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontFamily="monospace"
                       fontWeight="700"
                       opacity={0.9}
-                      className="transition-transform duration-200 group-hover:-translate-y-[1.5px]"
-                      style={{ pointerEvents: 'none', paintOrder: 'stroke' }}
+                      className="group-hover:-translate-y-[1.5px]"
+                      data-node-dense-alias-text={session.alias}
+                      style={{
+                        pointerEvents: 'none',
+                        paintOrder: 'stroke',
+                        transition: 'transform 200ms ease-out, fill 300ms ease-out',
+                      }}
                       stroke={pal.containerBg}
                       strokeWidth="3"
                     >
