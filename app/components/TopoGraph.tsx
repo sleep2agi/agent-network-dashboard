@@ -444,11 +444,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       if (saved === 'grid' || saved === 'ring') setLayout(saved);
     } catch {}
   }, []);
-  const toggleLayout = () => setLayout(prev => {
-    const next = prev === 'ring' ? 'grid' : 'ring';
-    try { localStorage.setItem('anet-topo-layout', next); } catch {}
-    return next;
-  });
+  // Round 170 / Loop: layout toggle (Ring ↔ Grid) used to teleport
+  // every node from its old position to its new one in one paint
+  // frame — the most jarring single user action left on the
+  // canvas. Solution: dim the viewport <g> to ~45% opacity for
+  // the duration of the swap so the eye reads it as a soft
+  // crossfade-blink rather than a hard teleport. layoutSwitching
+  // is a one-shot flag; the inline style on the viewport <g>
+  // reads it and lerps opacity 1 → 0.45 → 1 across the swap.
+  // Auto-clears after 400ms (covers fade-down 250ms + buffer for
+  // React to commit the new layout's positions). Same pattern as
+  // R168's smoothView arming but on a different visual axis
+  // (opacity, not transform).
+  const [layoutSwitching, setLayoutSwitching] = useState(false);
+  const toggleLayout = () => {
+    setLayoutSwitching(true);
+    setTimeout(() => setLayoutSwitching(false), 400);
+    setLayout(prev => {
+      const next = prev === 'ring' ? 'grid' : 'ring';
+      try { localStorage.setItem('anet-topo-layout', next); } catch {}
+      return next;
+    });
+  };
   // Issue #113: node size scale (Vincent 4727 — nodes too big / crowded at
   // ~22 nodes). S/M/L → 0.7/0.84/1.0; default M (one notch down from the old
   // fixed size). Persisted like the layout toggle.
@@ -2259,7 +2276,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             transform={`translate(${view.x} ${view.y}) scale(${view.zoom})`}
             data-topo-viewport
             data-topo-viewport-smooth={smoothView ? 'true' : 'false'}
-            style={smoothView ? { transition: 'transform 300ms ease-out' } : undefined}
+            data-topo-viewport-layout-switching={layoutSwitching ? 'true' : 'false'}
+            style={{
+              // R170 / Loop: opacity always carries a transition so the
+              // layout-switch crossfade fires cleanly. R168 smoothView
+              // transition on transform is added only when armed (pan
+              // and wheel zoom MUST stay snappy). The two arming flags
+              // compose without conflict — different visual axes.
+              transition: smoothView
+                ? 'opacity 250ms ease-out, transform 300ms ease-out'
+                : 'opacity 250ms ease-out',
+              opacity: layoutSwitching ? 0.45 : 1,
+            }}
           >
           {/* Issue #87: radar/ring ambiance renders only in ring layout —
               grid mode drops it so the concentric rings don't sit behind a
