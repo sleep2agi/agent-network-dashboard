@@ -769,10 +769,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // label cards. 16 ≈ where the triple-tier rings start to crowd.
   const denseLayout = onlineNodes.length + offlineNodes.length > 16;
   const [hoveredAlias, setHoveredAlias] = useState<string | null>(null);
+  // Round 86 / Loop: pointer-over-label preview. R63 wired the group
+  // label to click-pin but hover gave no preview — the same hover/click
+  // gap R83 closed for pressure-bar segments. This state lets the
+  // label trigger the same dim mechanism a node hover already drives,
+  // independently of whether the cursor happens to be over a member
+  // node. ORs into hoveredGroup below so the existing derivation logic
+  // (which composes with hoveredAlias, activeGroup, R85 marching ants)
+  // keeps working unchanged.
+  const [hoveredGroupLabel, setHoveredGroupLabel] = useState<string | null>(null);
   // Round 8 / Loop: which group is currently focused. Nodes outside this
   // group + other group boxes fade so the eye locks onto the team you're
   // pointing at. Singletons use their own alias as the group key.
-  const hoveredGroup = hoveredAlias ? (groupKeys[hoveredAlias] ?? hoveredAlias) : null;
+  const hoveredGroup = hoveredGroupLabel
+    ?? (hoveredAlias ? (groupKeys[hoveredAlias] ?? hoveredAlias) : null);
   // Round 63 / Loop: sticky group focus. R8 dims non-group nodes while
   // a member is hovered, but releasing the hover lets the focus fade.
   // Clicking the group label pins the group key here; activeGroup =
@@ -1796,6 +1806,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   style={{ pointerEvents: 'all', cursor: 'pointer' }}
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={() => setPinnedGroup(prev => prev === box.key ? null : box.key)}
+                  // R86: hover the label → transient group focus. Releases
+                  // on leave; activeGroup = hoveredGroup ?? pinnedGroup
+                  // formula already handles transient-over-pin so a
+                  // user can spot-compare teams without losing their
+                  // pinned one. Closes the same R83-style hover/click
+                  // gap (segments) — now group labels carry it too.
+                  onPointerEnter={() => setHoveredGroupLabel(box.key)}
+                  onPointerLeave={() => setHoveredGroupLabel(prev => prev === box.key ? null : prev)}
                 >
                   <rect
                     x={box.x + 6}
