@@ -3613,8 +3613,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 fontSize="11"
                 fontFamily="monospace"
                 fontWeight="700"
-                style={{ pointerEvents: 'none' }}
                 data-topo-hub-working-count={workingCount}
+                data-topo-hub-working-count-hovered={hoveredHub ? 'true' : 'false'}
+                // Round 209 / Loop: hub workingCount digit scales 1.0 →
+                // 1.08 on hub-hover, matching R177's r 14→17 ring grow.
+                // Pre-R209 hovering the hub grew the ring while the
+                // focal-point digit at the centre stayed planted — the
+                // gesture lifted only half the structure. R209 ties the
+                // digit's scale into the same hoveredHub state R177
+                // already drives, so ring + digit rise as one unit.
+                // transform-box: fill-box + transform-origin: center
+                // anchors the scale to the digit's own bbox (same
+                // idiom R184 reset-spin + R186 chrome-pop use for
+                // SVG icon transforms). 200ms matches R167 node-ring
+                // stroke-width interpolation pace. Reduced-motion users
+                // skip the scale via the !reducedMotion gate (R29 a11y).
+                style={{
+                  pointerEvents: 'none',
+                  transform: !reducedMotion && hoveredHub ? 'scale(1.08)' : 'scale(1)',
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  transition: 'transform 200ms ease-out',
+                }}
               >
                 {workingCount}
               </text>
