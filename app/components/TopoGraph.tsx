@@ -1428,11 +1428,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // Pairs with the Round 8 group-focus fade on nodes: hover a
             // node to find "who is this agent talking to" at a glance.
             // No hover → multiplier is 1.0 (current behaviour preserved).
-            const edgeOpacityMul = !hoveredAlias
-              ? 1
-              : (link.from === hoveredAlias || link.to === hoveredAlias)
-                ? 1.7   // boost the touching edge
-                : 0.35; // dim the rest
+            // Round 50 / Loop: edge-on-self priority. When the user hovers
+            // a flow edge directly (R48 widened the hitbox so this is now
+            // a precise gesture), THAT edge gets the strongest boost (2.0)
+            // and every other edge dims to 0.35. Node-hover (R40) keeps
+            // its own ladder. Edge-hover and node-hover are mutually
+            // exclusive in practice — the cursor is over one or the
+            // other — but the order below makes edge-hover win if both
+            // ever read truthy at the same React tick.
+            const isHoveredEdge = hoveredEdgeKey === link.key;
+            const edgeOpacityMul = isHoveredEdge
+              ? 2.0
+              : hoveredEdgeKey
+                ? 0.35
+                : !hoveredAlias
+                  ? 1
+                  : (link.from === hoveredAlias || link.to === hoveredAlias)
+                    ? 1.7
+                    : 0.35;
+            // Round 50: the hovered edge also visibly thickens so the eye
+            // tracks it even at low message counts (width was 3 → 4.5 on
+            // hover). 1.4× is enough to read as "lifted" without
+            // breaching the 16-px hitbox bound.
+            const renderWidth = isHoveredEdge ? Math.min(width * 1.4, 10) : width;
             return (
               <g key={link.key}>
                 {/* Round 48 / Loop: invisible hover hitbox — visible flow
@@ -1459,7 +1477,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   d={path}
                   fill="none"
                   stroke={pal.flowEdge}
-                  strokeWidth={width}
+                  strokeWidth={renderWidth}
                   opacity={Math.min(1, (isLight ? 0.22 : 0.28) * fresh * edgeOpacityMul)}
                   filter={isLight ? undefined : 'url(#topo-glow)'}
                   markerEnd={`url(#${arrowId})`}
