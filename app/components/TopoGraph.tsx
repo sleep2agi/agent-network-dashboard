@@ -1563,6 +1563,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               a node click. Restrained dashed container + group-name label. */}
           {groupBoxes.map(box => {
             const isHovered = activeGroup === box.key;
+            // R68: distinguish "locked by click" from "currently hovered".
+            // R63 made pinned and hovered identical (both hit isHovered
+            // via activeGroup). A user with one team pinned should see at
+            // a glance which is the locked one even while their cursor
+            // sweeps elsewhere. isPinned reads pinnedGroup directly
+            // (NOT activeGroup) so the visual is specific to the sticky
+            // state — transient hover keeps the R63 isHovered styling.
+            const isPinned = pinnedGroup === box.key;
             // Round 18 / Loop: group-box hover linkage. The Round 8 fade
             // already dropped OUT-of-focus groups to 0.28, but the IN-focus
             // group sat at its baseline appearance — no positive emphasis.
@@ -1590,10 +1598,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   height={box.h}
                   rx="14"
                   fill={isLight ? '#0f172a' : '#a5b4fc'}
-                  fillOpacity={isHovered ? (isLight ? 0.05 : 0.09) : (isLight ? 0.025 : 0.045)}
-                  stroke={isHovered ? pal.legendAccent : pal.ringStroke}
-                  strokeWidth={isHovered ? 2 : 1.5}
-                  strokeDasharray={isHovered ? 'none' : '6 6'}
+                  // R68: 3-tier opacity + stroke ladder.
+                  //   pinned   → fill 0.08 / 0.13, stroke 3 px (locked)
+                  //   hovered  → fill 0.05 / 0.09, stroke 2 px (inspecting)
+                  //   idle     → fill 0.025 / 0.045, stroke 1.5 px dashed
+                  fillOpacity={isPinned ? (isLight ? 0.08 : 0.13)
+                              : isHovered ? (isLight ? 0.05 : 0.09)
+                              : (isLight ? 0.025 : 0.045)}
+                  stroke={(isPinned || isHovered) ? pal.legendAccent : pal.ringStroke}
+                  strokeWidth={isPinned ? 3 : isHovered ? 2 : 1.5}
+                  strokeDasharray={(isPinned || isHovered) ? 'none' : '6 6'}
+                  data-group-box-pinned={isPinned ? 'true' : 'false'}
                   style={{ transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out', pointerEvents: 'none' }}
                 />
                 {/* R63: wrap label in a clickable <g> with an invisible
