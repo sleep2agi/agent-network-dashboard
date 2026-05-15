@@ -123,6 +123,12 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // sweep) and R117 (granular Cmd+K clear-edge command).
       { keys: ['click row'], label: 'Pin a flow filter — click a recent-signal row to lock the edge (R116)' },
       { keys: ['⌘', 'K'], label: 'Clear edge pin only via palette → "Clear topology edge pin" (R117)' },
+      // Round 123 / Loop: catch up on R121 — the edge midpoint count
+      // badge (R100) became a click-to-pin affordance, giving the
+      // canvas side a peer to R116's row-pin. R122 made hovering the
+      // badge mirror line hover; doesn't need its own entry — it's
+      // the natural hover partner of this click gesture.
+      { keys: ['click badge'], label: 'Pin a flow filter from the canvas — click an edge midpoint count badge (R121)' },
     ],
   },
 ];
