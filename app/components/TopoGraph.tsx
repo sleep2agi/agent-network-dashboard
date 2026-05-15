@@ -2056,7 +2056,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     y={box.y + 2}
                     width={Math.min(box.w - 12, 240)}
                     height={20}
-                    fill="transparent"
+                    rx="4"
+                    /* R107 / Loop: list-item tint extends to the SVG
+                       group labels — same idiom R104 added to recent-
+                       signal rows and R105 to the legend rows. The
+                       tint colour is pal.legendAccent (cyan) since
+                       groups don't carry an inherent swatch the way
+                       legend rows do; this matches R68's group-box
+                       isPinned/isHovered accent stroke for consistency.
+                       hover < pinned opacity so locked vs preview is
+                       discriminable at a glance. */
+                    fill={pinnedGroup === box.key || hoveredGroupLabel === box.key ? pal.legendAccent : 'transparent'}
+                    opacity={pinnedGroup === box.key ? (isLight ? 0.16 : 0.20)
+                            : hoveredGroupLabel === box.key ? (isLight ? 0.09 : 0.13)
+                            : 1}
+                    data-group-label-tinted={pinnedGroup === box.key ? 'pinned' : hoveredGroupLabel === box.key ? 'hover' : 'none'}
+                    style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
                   />
                 <text
                   x={box.x + 12}
