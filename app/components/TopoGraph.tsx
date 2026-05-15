@@ -1335,6 +1335,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // browser the dashboard targets.
             const lastAt = relativeAgo(link.last_at);
             const tooltip = `${link.from} → ${link.to}\n${link.count} message${link.count === 1 ? '' : 's'}${lastAt ? ` · last ${lastAt}` : ''}`;
+            // Round 40 / Loop: edges follow node hover — when an alias is
+            // hovered, every edge touching it brightens, the rest fade.
+            // Pairs with the Round 8 group-focus fade on nodes: hover a
+            // node to find "who is this agent talking to" at a glance.
+            // No hover → multiplier is 1.0 (current behaviour preserved).
+            const edgeOpacityMul = !hoveredAlias
+              ? 1
+              : (link.from === hoveredAlias || link.to === hoveredAlias)
+                ? 1.7   // boost the touching edge
+                : 0.35; // dim the rest
             return (
               <g key={link.key}>
                 <path
@@ -1342,10 +1352,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fill="none"
                   stroke={pal.flowEdge}
                   strokeWidth={width}
-                  opacity={(isLight ? 0.22 : 0.28) * fresh}
+                  opacity={Math.min(1, (isLight ? 0.22 : 0.28) * fresh * edgeOpacityMul)}
                   filter={isLight ? undefined : 'url(#topo-glow)'}
                   markerEnd={`url(#${arrowId})`}
-                  className="transition-opacity duration-500"
+                  className="transition-opacity duration-300"
                   style={{ pointerEvents: 'stroke' }}
                 >
                   <title>{tooltip}</title>
@@ -1357,11 +1367,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   stroke={pal.flowPath}
                   strokeWidth="1"
                   strokeDasharray="2 12"
-                  opacity={(isLight ? 0.4 : 0.75) * fresh}
-                  className="transition-opacity duration-500"
+                  opacity={Math.min(1, (isLight ? 0.4 : 0.75) * fresh * edgeOpacityMul)}
+                  className="transition-opacity duration-300"
                 />
                 {!reducedMotion && (
-                  <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'} opacity={fresh}>
+                  <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'} opacity={Math.min(1, fresh * edgeOpacityMul)}>
                     <animateMotion dur={`${duration}s`} repeatCount="indefinite" path={path} />
                   </circle>
                 )}
