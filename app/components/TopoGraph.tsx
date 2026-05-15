@@ -1133,7 +1133,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     <animate attributeName="opacity" values={isLight ? '0.12;0.02;0.12' : '0.18;0.04;0.18'} dur="2.4s" repeatCount="indefinite" />
                   </circle>
                 )}
-                <circle cx={pos.x} cy={pos.y} r={radius + 8} fill={status.halo} opacity={isOnline ? (isLight ? 0.85 : 0.65) : (isLight ? 0.4 : 0.25)} />
+                {/* Round 4 / Loop: transition-[fill,stroke,opacity] smooths
+                    status colour changes so idle↔working↔offline doesn't snap
+                    — task replies / node-rename / SSE updates ease in. */}
+                <circle
+                  cx={pos.x}
+                  cy={pos.y}
+                  r={radius + 8}
+                  fill={status.halo}
+                  opacity={isOnline ? (isLight ? 0.85 : 0.65) : (isLight ? 0.4 : 0.25)}
+                  className="transition-[fill,opacity] duration-300 ease-out"
+                />
                 <circle
                   cx={pos.x}
                   cy={pos.y}
@@ -1143,6 +1153,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth={isOnline ? 3 : 1.5}
                   strokeDasharray={isOnline ? 'none' : '5 5'}
                   filter={isOnline && !isLight ? 'url(#topo-glow)' : undefined}
+                  className="transition-[fill,stroke] duration-300 ease-out"
                 />
                 {/* Issue #96: node "avatar" is now driven by the model
                     vendor. Decision order:
