@@ -1363,7 +1363,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             return (
               <>
                 <span
-                  className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-300 border border-green-500/20"
+                  className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-300 border border-green-500/20 anet-topo-chip-focus"
                   data-working-chip
                   data-working-chip-aliases={workingAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
@@ -1401,7 +1401,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   {workingCount} working
                 </span>
                 <span
-                  className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+                  className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 anet-topo-chip-focus"
                   data-online-chip
                   data-online-chip-aliases={onlineAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
@@ -1485,6 +1485,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   role="button"
                   tabIndex={0}
                   aria-pressed={isPinned}
+                  className="anet-topo-chip-focus"
                   title={`${n} ${label}\n${previewList}${suffix}\n${titleAction}`}
                   style={{
                     width: `${(n / total) * 100}%`,
@@ -1586,7 +1587,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="status"
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedStatus(null)}
               style={{
@@ -1624,7 +1625,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="group"
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedGroup(null)}
               style={{
@@ -1674,7 +1675,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="vendor"
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear vendor filter'}
               onClick={() => setPinnedVendor(null)}
               style={{
@@ -1722,7 +1723,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-filter-match-count={link.count}
               data-filter-match-aliases={`${link.from},${link.to}`}
               data-active-filter-edge-hot={isHot ? 'true' : 'false'}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
               title={`${link.from} → ${link.to} (${link.count} msg${link.count === 1 ? '' : 's'}${isHot ? ', hot lane · ≥ 10' : ''}) — click to clear`}
               onClick={() => setPinnedEdgeKey(null)}
               style={{
@@ -1836,7 +1837,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 data-pin-intersection-count={matchAliases.length}
                 data-pin-intersection-empty={isEmpty ? 'true' : 'false'}
                 data-pin-intersection-aliases={matchAliases.join(',')}
-                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
                 title={tooltip}
                 style={{
                   background: isEmpty
@@ -1889,7 +1890,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     role="button"
                     tabIndex={0}
                     aria-pressed={isPinned}
-                    className="inline-flex items-baseline gap-0.5 px-1 rounded"
+                    className="inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus"
                     data-vendor-letter={v.initial}
                     data-vendor-pinned={isPinned ? 'true' : 'false'}
                     data-vendor-aliases={aliases.join(',')}
@@ -1959,7 +1960,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               : `${flowList}${flowSuffix} — hover brightens all · click to open /messages`;
             return (
               <span
-                className="hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                className="hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 anet-topo-chip-focus"
                 data-active-links-chip
                 data-active-links-flow-count={flowLinks.length}
                 data-active-links-clickable={isInteractive ? 'true' : 'false'}
