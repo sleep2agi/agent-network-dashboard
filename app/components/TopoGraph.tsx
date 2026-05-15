@@ -1224,13 +1224,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               grid mode drops it so the concentric rings don't sit behind a
               rectangular grid. */}
           {layout === 'ring' && (<>
-          <circle cx={cx} cy={cy} r="330" fill="url(#topo-radar)" />
+          {/* R52: radar bg is pure decoration — drop its pointer events so
+              the hub <g> under it (and any future inner-disk affordances)
+              can receive clicks. Previously the r=330 disc intercepted
+              the hub click outright. */}
+          <circle cx={cx} cy={cy} r="330" fill="url(#topo-radar)" style={{ pointerEvents: 'none' }} />
 
           {/* Round 45: subtle star field — 24 deterministic dots scattered
               across the canvas give the radar bg some depth. Skipped on
               light theme so the white surface stays clean. */}
           {!isLight && (
-            <g opacity="0.5">
+            <g opacity="0.5" style={{ pointerEvents: 'none' }}>
               {Array.from({ length: 28 }).map((_, i) => {
                 // Deterministic pseudo-random scatter so positions are
                 // stable between renders (no JS hydration mismatch).
@@ -1252,6 +1256,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             style={{
               transformOrigin: `${cx}px ${cy}px`,
               transformBox: 'view-box',
+              pointerEvents: 'none',
             }}
             className="anet-topo-sweep"
             opacity={isLight ? 0.7 : 1}
@@ -1511,21 +1516,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               breath on the static halo (4s, ±15% from base), so the hub
               stays alive without throwing kinetic energy outward. The
               dual-circle "lit lamp" core is unchanged. */}
-          {layout === 'ring' && (<g data-topo-hub>
+          {layout === 'ring' && (<g
+            data-topo-hub
+            style={{ cursor: 'pointer' }}
+            // Stop pointerdown from reaching the SVG pan handler — same
+            // reason as the node <g>: a captured pointer makes Chromium
+            // fire the follow-up click on the SVG, not this group.
+            onPointerDown={(e) => e.stopPropagation()}
+            // Round 52 / Loop: hub is the visual anchor but had no click
+            // action — users discovered fit-to-content only via the `f`
+            // key or the chrome button. Wire the hub to fitView() so the
+            // most prominent element in the canvas is also the "re-
+            // center" affordance. A click-ripple keyed by ts confirms
+            // the gesture; the hub <title> now ends with a hint.
+            onClick={() => {
+              fitView();
+              setClickRipple({ ts: Date.now(), x: cx, y: cy, r0: 18, color: isLight ? '#059669' : '#10b981' });
+              setTimeout(() => setClickRipple(prev => prev && prev.x === cx && prev.y === cy ? null : prev), 600);
+            }}
+          >
             {/* Round 43 / Loop: hub `<title>` summary — hovering the
                 central glow now answers "what is this?" with a one-line
                 fleet snapshot. Duplicates the header chips by design;
                 hovering the most visually prominent element is the
                 most natural impulse, so satisfy it where the cursor
                 already is. Falls clean: omits sub-clauses when their
-                counts are zero. */}
+                counts are zero. R52 appends a "click to fit view" hint.
+                */}
             <title>{(() => {
               const total = sessions.length;
               const parts = [`Network hub`, `${total} session${total === 1 ? '' : 's'}`];
               if (onlineNodes.length > 0) parts.push(`${onlineNodes.length} online`);
               if (workingCount > 0) parts.push(`${workingCount} working`);
               if (flowLinks.length > 0) parts.push(`${flowLinks.length} active link${flowLinks.length === 1 ? '' : 's'}`);
-              return parts.join(' · ');
+              return parts.join(' · ') + '\nclick to fit view';
             })()}</title>
             {/* grounding halo — now breathes in opacity, no expansion */}
             <circle

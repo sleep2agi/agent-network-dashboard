@@ -74,10 +74,15 @@ const grid = await probe({
 });
 
 await browser.close();
+// R52 appended "\nclick to fit view" as a second line to the hub
+// <title> so the click-to-fit affordance is discoverable on hover.
+// Compare on the first line only; assert the hint is present too.
+const firstLine = (s) => (s || '').split('\n')[0];
 const results = {
   ringHubPresent:        ringFull.hubPresent === true,
-  ringFullSummary:       ringFull.titleText === 'Network hub · 4 sessions · 3 online · 1 working · 1 active link',
-  ringOfflineSummary:    ringOfflineOnly.hubPresent === true && ringOfflineOnly.titleText === 'Network hub · 2 sessions',
+  ringFullSummary:       firstLine(ringFull.titleText) === 'Network hub · 4 sessions · 3 online · 1 working · 1 active link',
+  ringOfflineSummary:    ringOfflineOnly.hubPresent === true && firstLine(ringOfflineOnly.titleText) === 'Network hub · 2 sessions',
+  ringHintsAtFit:        /click to fit view/i.test(ringFull.titleText || ''),
   gridHasNoHub:          grid.hubPresent === false,
 };
 const ok = Object.values(results).every(Boolean);
