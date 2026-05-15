@@ -1748,27 +1748,54 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               tiers currently in use draw — empty tiers stay quiet. pointer-
               events:none so they never intercept hub or node clicks. The
               0.7 stroke + dashed pattern reads as guide, not feature. */}
-          {(
-            onlineNodes.length > onlineTripleThreshold
+          {(() => {
+            const tierRadii = onlineNodes.length > onlineTripleThreshold
               ? [onlineTripleInnerR, onlineTripleMidR, onlineTripleOuterR]
               : onlineNodes.length > onlineTierThreshold
                 ? [onlineInnerRadius, onlineOuterRadius]
                 : onlineNodes.length > 0
                   ? [onlineRadius]
-                  : []
-          ).map(r => (
-            <circle
-              key={`tier-${r}`}
-              cx={cx} cy={cy} r={r}
-              fill="none"
-              stroke={pal.ringStroke}
-              strokeWidth="0.7"
-              strokeDasharray="2 8"
-              opacity={isLight ? 0.32 : 0.42}
-              style={{ pointerEvents: 'none' }}
-              data-tier-ring={r}
-            />
-          ))}
+                  : [];
+            // Round 92 / Loop: tier-ring occupancy. R54 drew the guide
+            // rings at fixed opacity regardless of how many nodes lived
+            // on each tier. With pinned filters dimming most nodes to
+            // 0.28, the ring at a deserted tier looked identical to a
+            // crowded one — wasting a free piece of canvas. Count
+            // online nodes whose hub-distance falls within ±15 px of
+            // each ring (15 px = half the inter-tier gap, so each
+            // node is assigned to exactly one ring). Empty tier → skip
+            // entirely. Crowded tier → stronger opacity, says "look
+            // here". Buckets so the ladder feels intentional, not
+            // jittery as one node migrates between tiers.
+            const occupancyOf = (r: number) => onlineNodes.reduce((acc, s) => {
+              const p = nodePositions[s.alias];
+              if (!p) return acc;
+              const d = Math.hypot(p.x - cx, p.y - cy);
+              return Math.abs(d - r) < 15 ? acc + 1 : acc;
+            }, 0);
+            return tierRadii.map(r => {
+              const n = occupancyOf(r);
+              if (n === 0) return null;
+              const bucket = n <= 2 ? 0 : n <= 6 ? 1 : 2;
+              const opLight = [0.24, 0.36, 0.50][bucket];
+              const opDark  = [0.32, 0.46, 0.62][bucket];
+              return (
+                <circle
+                  key={`tier-${r}`}
+                  cx={cx} cy={cy} r={r}
+                  fill="none"
+                  stroke={pal.ringStroke}
+                  strokeWidth="0.7"
+                  strokeDasharray="2 8"
+                  opacity={isLight ? opLight : opDark}
+                  style={{ pointerEvents: 'none' }}
+                  data-tier-ring={r}
+                  data-tier-occupancy={n}
+                  data-tier-bucket={bucket}
+                />
+              );
+            });
+          })()}
 
           {/* Round 50: 4 small particles slowly orbiting the outer ring
               (r=330). Each starts at a different angle (offset 0/0.25/0.5/0.75
