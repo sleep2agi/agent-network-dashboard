@@ -3268,7 +3268,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               if (flowLinks.length > 0) parts.push(`${flowLinks.length} active link${flowLinks.length === 1 ? '' : 's'}`);
               return parts.join(' · ') + ' — Enter to fit view';
             })()}
-            className="anet-topo-svg-focus"
+            // Round 176 / Loop: hub joins the first-paint fade-in
+            // family as the 6th surface. The hub is the visual anchor
+            // — every other ring-layout reveal layer (R174 tier rings,
+            // R9 nodes, R172 edges) emanates outward FROM it — yet
+            // pre-R176 the hub itself popped in instantly while the
+            // wave it should be leading staggered around it. Adding
+            // .anet-fade-in at delay 0 (no animation-delay needed)
+            // places the hub as the canvas-center anchor that the
+            // tier wave grows from. Composes cleanly with the existing
+            // anet-topo-svg-focus class (R159 keyboard focus ring).
+            className="anet-topo-svg-focus anet-fade-in"
+            data-topo-hub-fade-delay={0}
             style={{ cursor: 'pointer' }}
             // Stop pointerdown from reaching the SVG pan handler — same
             // reason as the node <g>: a captured pointer makes Chromium
