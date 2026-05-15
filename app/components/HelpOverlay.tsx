@@ -67,6 +67,11 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       { keys: ['click hub'], label: 'Fit topology to canvas (R52)' },
       { keys: ['hover legend'], label: 'Highlight nodes of a status (R55)' },
       { keys: ['hover signal'], label: 'Highlight one flow edge (R56)' },
+      // Round 62 / Loop: R60 + R61 added click-to-pin on the pressure
+      // chip and legend rows; R62 added Esc to release the pin. Pin
+      // gives users a sticky filter (vs R55 transient hover).
+      { keys: ['click chip'], label: 'Pin a status filter (R60/R61)' },
+      { keys: ['Esc'], label: 'Clear pinned filter (R62) — or close chat' },
     ],
   },
 ];

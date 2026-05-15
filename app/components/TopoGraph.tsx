@@ -1028,13 +1028,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // (Audit Log) requires a preceding `g` within 1500ms; a bare `l`
       // outside that window is free for topology use.
       else if (e.key === 'l' || e.key === 'L') { toggleLayout(); e.preventDefault(); }
+      // Round 62 / Loop: Esc clears the R60/R61 pinned status filter so
+      // users have a universal-cancel keyboard out. Esc on an open chat
+      // is owned by ChatPopover (which only mounts when chatAlias is
+      // set), so this handler is effectively scoped to "no chat open".
+      // We additionally guard on chatAlias to be explicit — if the chat
+      // closed mid-cycle, the pin can still be cleared on the next Esc.
+      else if (e.key === 'Escape' && !chatAlias && pinnedStatus) {
+        setPinnedStatus(null);
+        e.preventDefault();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // zoomBy / resetView are stable wrt setView callback; fitView changes
-    // with gridContentBottom so deps list catches it.
+    // with gridContentBottom so deps list catches it. R62 adds chatAlias
+    // and pinnedStatus so the Escape branch reads fresh state (re-binding
+    // the listener on these state changes is sub-ms — cheaper than refs).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fitView]);
+  }, [fitView, chatAlias, pinnedStatus]);
 
   const toggleFullscreen = () => {
     const el = containerRef.current;
