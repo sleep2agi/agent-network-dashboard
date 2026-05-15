@@ -240,22 +240,59 @@ function commonPrefix(a: string, b: string): string {
   return a.slice(0, i);
 }
 
-function computeGroupKeys(aliases: string[]): Record<string, string> {
-  const sorted = [...aliases].sort((a, b) => a.localeCompare(b));
-  const keys: Record<string, string> = {};
-  let i = 0;
-  while (i < sorted.length) {
-    let j = i;
-    let prefix = sorted[i];
-    while (j + 1 < sorted.length) {
-      const lcp = commonPrefix(prefix, sorted[j + 1]);
-      if (lcp.length < 2) break;
-      prefix = lcp;
-      j++;
+/** #83 + #111: group nodes that share a ≥2-char alias prefix OR a project_dir
+ *  ("either criterion → same group", Vincent 4724). Union-find over the
+ *  sessions; the component label prefers the shared project_dir's basename,
+ *  else the common alias prefix. Returns alias → groupKey. */
+function computeGroups(sessions: { alias: string; project_dir?: string | null }[]): Record<string, string> {
+  const n = sessions.length;
+  const parent = sessions.map((_, i) => i);
+  const find = (i: number): number => {
+    while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; }
+    return i;
+  };
+  const union = (a: number, b: number) => {
+    const ra = find(a), rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  };
+
+  // union by shared project_dir
+  const byDir: Record<string, number[]> = {};
+  sessions.forEach((s, i) => {
+    const d = s.project_dir?.trim();
+    if (d) (byDir[d] ||= []).push(i);
+  });
+  for (const idxs of Object.values(byDir)) {
+    for (let k = 1; k < idxs.length; k++) union(idxs[0], idxs[k]);
+  }
+
+  // union by shared ≥2-char alias prefix — sort, link adjacent pairs
+  const order = sessions.map((_, i) => i).sort((a, b) => sessions[a].alias.localeCompare(sessions[b].alias));
+  for (let k = 0; k + 1 < order.length; k++) {
+    if (commonPrefix(sessions[order[k]].alias, sessions[order[k + 1]].alias).length >= 2) {
+      union(order[k], order[k + 1]);
     }
-    const key = j > i ? prefix : sorted[i];
-    for (let k = i; k <= j; k++) keys[sorted[k]] = key;
-    i = j + 1;
+  }
+
+  // label each connected component
+  const comps: Record<number, number[]> = {};
+  for (let i = 0; i < n; i++) (comps[find(i)] ||= []).push(i);
+  const keys: Record<string, string> = {};
+  for (const members of Object.values(comps)) {
+    let label: string;
+    if (members.length === 1) {
+      label = sessions[members[0]].alias;
+    } else {
+      const dirs = new Set(members.map(i => sessions[i].project_dir?.trim()).filter(Boolean) as string[]);
+      if (dirs.size === 1) {
+        const d = [...dirs][0];
+        label = d.split('/').filter(Boolean).pop() || d;
+      } else {
+        label = members.map(i => sessions[i].alias).reduce((a, b) => commonPrefix(a, b));
+        if (label.length < 2) label = sessions[members[0]].alias;
+      }
+    }
+    for (const i of members) keys[sessions[i].alias] = label;
   }
   return keys;
 }
@@ -310,6 +347,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     try { localStorage.setItem('anet-topo-layout', next); } catch {}
     return next;
   });
+  // Issue #113: node size scale (Vincent 4727 — nodes too big / crowded at
+  // ~22 nodes). S/M/L → 0.7/0.84/1.0; default M (one notch down from the old
+  // fixed size). Persisted like the layout toggle.
+  const [nodeScale, setNodeScale] = useState(0.84);
+  useEffect(() => {
+    try {
+      const saved = parseFloat(localStorage.getItem('anet-topo-nodescale') || '');
+      if (saved === 0.7 || saved === 0.84 || saved === 1) setNodeScale(saved);
+    } catch {}
+  }, []);
+  const pickNodeScale = (v: number) => {
+    setNodeScale(v);
+    try { localStorage.setItem('anet-topo-nodescale', String(v)); } catch {}
+  };
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -346,8 +397,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     // index, so contiguous-in-array becomes contiguous-in-ring, i.e.
     // each team visually clusters. localeCompare keeps CJK ordering sane.
     const byAlias = (a: Session, b: Session) => a.alias.localeCompare(b.alias);
+    // #112 umbrella: ghost age-out — an offline node not seen for over a day
+    // is almost certainly a deleted node the server `/api/status` still
+    // returns (#74 root cause is server-side; this is the dashboard-side
+    // fallback so stale ghosts stop cluttering the topology). A missing
+    // last_seen_at is kept (conservative — could be a legitimately new node).
+    const GHOST_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const isGhost = (s: Session) => {
+      if (s.status !== 'offline' || sseCount(s) || !s.last_seen_at) return false;
+      const t = Date.parse(s.last_seen_at);
+      return !Number.isNaN(t) && now - t > GHOST_MS;
+    };
     const online = sessions.filter(s => s.status !== 'offline' || sseCount(s)).sort(byAlias);
-    const offline = sessions.filter(s => s.status === 'offline' && !sseCount(s)).sort(byAlias);
+    const offline = sessions.filter(s => s.status === 'offline' && !sseCount(s) && !isGhost(s)).sort(byAlias);
     const positions: Record<string, Point> = {};
 
     if (layout === 'grid') {
@@ -357,9 +420,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // shared rows. Group-banded placement keeps every group's bounding box
       // (#111) a clean rectangle — no box ever overlaps another group's.
       const all = [...online, ...offline];
-      const groupKeys = computeGroupKeys(all.map(s => s.alias));
+      const groupKeys = computeGroups(all);
       const cols = Math.max(1, Math.ceil(Math.sqrt(all.length)));
-      const gx0 = 150, gx1 = 850, gy0 = 110, gy1 = 565;
+      // #112: gy0 starts below the recent-signal / legend overlay panels so
+      // grid row 0 is never occluded by them (Vincent 4727).
+      const gx0 = 150, gx1 = 850, gy0 = 184, gy1 = 588;
       const cellW = (gx1 - gx0) / cols;
 
       // ordered runs of consecutive same-group-key nodes (≥2 = real group)
@@ -514,7 +579,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     });
 
     // Round 106 (issue #83): group key per alias → shared hue per team.
-    const groupKeys = computeGroupKeys([...online, ...offline].map(s => s.alias));
+    const groupKeys = computeGroups([...online, ...offline]);
 
     return {
       onlineNodes: online,
@@ -991,7 +1056,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const isOnline = session.status !== 'offline' || !!sseCountFor;
             const status = nodeStatus(session, isOnline, isLight);
             const isActive = activeAliases.has(session.alias);
-            const radius = isOnline ? 26 : 18;
+            // #113: node size scales with the S/M/L control; halos, labels,
+            // badge and avatar all derive from `radius` so they follow.
+            const radius = Math.round((isOnline ? 26 : 18) * nodeScale);
             // Round 109/110 (Vincent 4582 + 4583 P0): at high node counts
             // the 100px opaque label cards overlapped each other and
             // covered neighbouring avatars. But hiding text entirely went
@@ -1005,6 +1072,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             return (
               <g
                 key={session.alias}
+                data-node={session.alias}
                 className="transition-opacity"
                 style={{ cursor: 'pointer' }}
                 // Stop the pointerdown from reaching the SVG pan handler: the
@@ -1050,7 +1118,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       4. unknown vendor / null model → the prefix-group
                          hue-hashed initial (#83/#99 behaviour, unchanged). */}
                 {(() => {
-                  const ar = isOnline ? 14 : 10;
+                  const ar = Math.round((isOnline ? 14 : 10) * nodeScale);
                   const size = radius * 2;
                   const vendor = vendorForModel(session.model);
                   const internByAlias = /书生|书小生|intern/i.test(session.alias);
@@ -1075,7 +1143,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         <circle cx={pos.x} cy={pos.y} r={ar} fill={vendor.mono.bg} stroke={vendor.mono.ring} strokeWidth="1" />
                         <text
                           x={pos.x} y={pos.y} dy="0.34em" textAnchor="middle"
-                          fill={vendor.mono.text} fontSize={isOnline ? 14 : 10}
+                          fill={vendor.mono.text} fontSize={ar}
                           fontFamily="monospace" fontWeight="700"
                         >
                           {vendor.initial}
@@ -1095,7 +1163,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         dy="0.34em"
                         textAnchor="middle"
                         fill={c.text}
-                        fontSize={isOnline ? 14 : 10}
+                        fontSize={ar}
                         fontFamily="monospace"
                         fontWeight="700"
                       >
@@ -1129,7 +1197,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // above the avatar text. Was a 18px horizontal bar at
                   // y+11 which now collides with the avatar; the dot reads
                   // as the same "active" cue without occluding the initial.
-                  <circle cx={pos.x} cy={pos.y - (isOnline ? 18 : 13)} r="2.5" fill={pal.flowParticle}>
+                  <circle cx={pos.x} cy={pos.y - (radius - 6)} r="2.5" fill={pal.flowParticle}>
                     <animate attributeName="opacity" values="1;0.25;1" dur="1.1s" repeatCount="indefinite" />
                   </circle>
                 )}
@@ -1170,9 +1238,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             );
           })}
 
+          </g>
+
+          {/* #112: overlay panels (recent-signal + legend) render OUTSIDE the
+              zoom/pan <g> — they stay fixed in the viewBox corners while the
+              topology pans/zooms (previously they drifted with the content).
+              Grid layout insets its rows below them (gy0) so nodes are never
+              occluded. */}
           {/* latest flow labels */}
           <g transform="translate(28, 34)">
-            <rect x="0" y="0" width="285" height={60 + Math.min(flowLinks.length, 4) * 20} rx="8" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 1 : 0.94} />
+            <rect x="0" y="0" width="285" height={60 + Math.min(flowLinks.length, 4) * 20} rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
             <text x="16" y="26" fill={pal.legendHeadline} fontSize="13" fontFamily="monospace" fontWeight="700">recent signal</text>
             <text x="178" y="26" fill={pal.legendAccent} fontSize="11" fontFamily="monospace">{messages.length} messages</text>
             {flowLinks.slice(0, 4).map((link, index) => (
@@ -1184,7 +1259,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
           {/* legend */}
           <g transform="translate(720, 34)">
-            <rect x="0" y="0" width="250" height="112" rx="8" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 1 : 0.94} />
+            <rect x="0" y="0" width="250" height="112" rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
             <circle cx="18" cy="26" r="6" fill={isLight ? '#059669' : '#22c55e'} />
             <text x="34" y="30" fill={pal.legendText} fontSize="11" fontFamily="monospace">working node</text>
             <circle cx="18" cy="52" r="6" fill={isLight ? '#0d9488' : '#2dd4bf'} />
@@ -1192,7 +1267,6 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             <circle cx="18" cy="78" r="6" fill={isLight ? '#94a3b8' : '#6b7280'} />
             <text x="34" y="82" fill={pal.legendText} fontSize="11" fontFamily="monospace">offline / no SSE</text>
             <path d="M150,78 Q176,52 210,78" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" />
-          </g>
           </g>
         </svg>
 
@@ -1203,6 +1277,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             Split into a plain % readout + an explicit reset button with
             its own icon + tooltip. */}
         <div className="absolute bottom-3 right-3 flex items-center gap-1.5 text-xs select-none">
+          {/* #113: node size — S / M / L segmented control (Vincent 4727). */}
+          <div
+            className="flex items-center rounded-md border overflow-hidden"
+            style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
+            role="group"
+            aria-label="Node size"
+          >
+            {([['S', 0.7], ['M', 0.84], ['L', 1]] as const).map(([lbl, v], idx) => (
+              <button
+                key={lbl}
+                onClick={() => pickNodeScale(v)}
+                aria-pressed={nodeScale === v}
+                title={`Node size: ${lbl === 'S' ? 'small' : lbl === 'M' ? 'medium' : 'large'}`}
+                className={`px-2 py-1 transition-colors ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300' : 'hover:bg-white/5'}`}
+                style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
           <div
             className="flex items-center rounded-md border overflow-hidden"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}

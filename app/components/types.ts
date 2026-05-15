@@ -12,6 +12,9 @@ export interface Session {
   last_seen_at?: string;
   config_path?: string;
   network_id?: string;
+  // #111: working directory — nodes sharing a project_dir are one group
+  // (a more precise "same project" signal than the alias prefix).
+  project_dir?: string | null;
   // #96: model vendor + execution runtime. Added to /api/status sessions in
   // commhub-server 0.8.1-preview.0; null on older nodes / older hubs.
   model?: string | null;

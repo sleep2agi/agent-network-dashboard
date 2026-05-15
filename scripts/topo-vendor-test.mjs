@@ -23,6 +23,7 @@ async function run(theme) {
   await ctx.addInitScript((th) => {
     try {
       localStorage.setItem('anet-theme', th);
+localStorage.setItem('anet-topo-nodescale', '1');
       localStorage.removeItem('anet-brand');
       localStorage.removeItem('anet-topo-view');
       localStorage.setItem('anet-topo-layout', 'grid');

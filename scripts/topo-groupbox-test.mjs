@@ -22,6 +22,7 @@ async function load(theme, layout) {
   await ctx.addInitScript(({ th, lay }) => {
     try {
       localStorage.setItem('anet-theme', th);
+localStorage.setItem('anet-topo-nodescale', '1');
       localStorage.removeItem('anet-brand');
       localStorage.removeItem('anet-topo-view');
       localStorage.setItem('anet-topo-layout', lay);

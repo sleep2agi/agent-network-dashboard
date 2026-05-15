@@ -17,6 +17,7 @@ async function run(nodeCount, viewport, label) {
   await ctx.addInitScript(() => {
     try {
       localStorage.setItem('anet-theme', 'cyber');
+localStorage.setItem('anet-topo-nodescale', '1');
       localStorage.removeItem('anet-brand');
       localStorage.removeItem('anet-topo-view');
       sessionStorage.setItem('anet_v3_auth', '1');
@@ -140,6 +141,7 @@ async function runFullscreen() {
   await ctx.addInitScript(() => {
     try {
       localStorage.setItem('anet-theme', 'cyber');
+      localStorage.setItem('anet-topo-nodescale', '1');
       localStorage.removeItem('anet-brand');
       localStorage.removeItem('anet-topo-view');
       sessionStorage.setItem('anet_v3_auth', '1');
