@@ -765,6 +765,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // visible without reading the tooltip. The set is the link's two aliases
   // (null when no edge hovered); node opacity composes this after inFocus.
   const [hoveredEdgeKey, setHoveredEdgeKey] = useState<string | null>(null);
+  // Round 55 / Loop: hovering a legend status row dims nodes whose status
+  // doesn't match. The legend was passive — "what does this colour mean".
+  // Now it answers "show me all of these" the same way R8 group-focus
+  // answers "show me this team". Three values match the legend rows.
+  const [hoveredStatus, setHoveredStatus] = useState<'working' | 'idle' | 'offline' | null>(null);
   const hoveredEdgeEndpoints = useMemo<Set<string> | null>(() => {
     if (!hoveredEdgeKey) return null;
     const link = flowLinks.find(l => l.key === hoveredEdgeKey);
@@ -1675,13 +1680,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // stronger "not relevant" signal), endpoints keep their
                   // base opacity. chatAlias still wins to keep the focus
                   // ring legible if the user clicked through.
+                  // Round 55 / Loop: legend-status hover composes on the
+                  // SAME level as edge-hover-endpoint. Non-matching nodes
+                  // dim to 0.28; matching nodes stay at their base.
+                  // hoveredStatus matches: working = status==='working',
+                  // idle = online but not working, offline = !isOnline.
                   opacity: hoveredEdgeEndpoints && !hoveredEdgeEndpoints.has(session.alias) && chatAlias !== session.alias
                     ? 0.28
-                    : !inFocus
-                      ? 0.32
-                      : chatAlias === session.alias
-                        ? 1
-                        : isOnline ? 1 : 0.6,
+                    : hoveredStatus && chatAlias !== session.alias && !(
+                        hoveredStatus === 'working' ? session.status === 'working'
+                        : hoveredStatus === 'idle'  ? (isOnline && session.status !== 'working')
+                        : /* offline */               !isOnline
+                      )
+                      ? 0.28
+                      : !inFocus
+                        ? 0.32
+                        : chatAlias === session.alias
+                          ? 1
+                          : isOnline ? 1 : 0.6,
                   // Round 9 / Loop: stagger the anet-fade-in so the topology
                   // reveals as a wave on first paint instead of one big pop.
                   // Cap at 24 indices (≈600ms tail) so 50-node fleets still
@@ -2049,16 +2065,44 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             )}
           </g>
 
-          {/* legend */}
+          {/* legend — Round 55 / Loop: each status row is now a hover
+              target. Pointer enter sets `hoveredStatus`; pointer leave
+              clears it. Node opacity formula composes the match below.
+              The row text brightens to legendHeadline while hovered as
+              a small affordance hint. Geometry unchanged — the new
+              <g> wrappers only carry pointer handlers. */}
           <g transform="translate(760, 16)">
             <rect x="0" y="0" width="224" height="96" rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
-            <circle cx="16" cy="24" r="5.5" fill={isLight ? '#059669' : '#22c55e'} />
-            <text x="30" y="28" fill={pal.legendText} fontSize="11" fontFamily="monospace">working node</text>
-            <circle cx="16" cy="48" r="5.5" fill={isLight ? '#0d9488' : '#2dd4bf'} />
-            <text x="30" y="52" fill={pal.legendText} fontSize="11" fontFamily="monospace">online idle</text>
-            <circle cx="16" cy="72" r="5.5" fill={isLight ? '#94a3b8' : '#6b7280'} />
-            <text x="30" y="76" fill={pal.legendText} fontSize="11" fontFamily="monospace">offline / no SSE</text>
-            <path d="M140,72 Q164,48 196,72" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" />
+            {([
+              { key: 'working' as const, y0: 24, y1: 28, fill: isLight ? '#059669' : '#22c55e', label: 'working node' },
+              { key: 'idle'    as const, y0: 48, y1: 52, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle' },
+              { key: 'offline' as const, y0: 72, y1: 76, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline / no SSE' },
+            ]).map(row => (
+              <g
+                key={row.key}
+                data-legend-status={row.key}
+                style={{ cursor: 'pointer' }}
+                onMouseEnter={() => setHoveredStatus(row.key)}
+                onMouseLeave={() => setHoveredStatus(prev => prev === row.key ? null : prev)}
+              >
+                {/* invisible hitbox covers the row so cursor doesn't need
+                    to be exactly on the 5-px swatch */}
+                <rect x="6" y={row.y0 - 12} width="170" height="22" fill="transparent" />
+                <circle cx="16" cy={row.y0} r="5.5" fill={row.fill} />
+                <text
+                  x="30" y={row.y1}
+                  fill={hoveredStatus === row.key ? pal.legendHeadline : pal.legendText}
+                  fontSize="11"
+                  fontFamily="monospace"
+                  style={{ transition: 'fill 150ms ease-out' }}
+                >{row.label}</text>
+              </g>
+            ))}
+            {/* Flow-arrow swatch sits at y=72 — same row as the offline
+                hitbox. Drop its pointerEvents so the offline legend row
+                stays hoverable (R55). It's decoration, no need to
+                receive events. */}
+            <path d="M140,72 Q164,48 196,72" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" style={{ pointerEvents: 'none' }} />
           </g>
         </svg>
 
