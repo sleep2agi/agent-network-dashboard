@@ -1416,7 +1416,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               breath on the static halo (4s, ±15% from base), so the hub
               stays alive without throwing kinetic energy outward. The
               dual-circle "lit lamp" core is unchanged. */}
-          {layout === 'ring' && (<g>
+          {layout === 'ring' && (<g data-topo-hub>
+            {/* Round 43 / Loop: hub `<title>` summary — hovering the
+                central glow now answers "what is this?" with a one-line
+                fleet snapshot. Duplicates the header chips by design;
+                hovering the most visually prominent element is the
+                most natural impulse, so satisfy it where the cursor
+                already is. Falls clean: omits sub-clauses when their
+                counts are zero. */}
+            <title>{(() => {
+              const total = sessions.length;
+              const parts = [`Network hub`, `${total} session${total === 1 ? '' : 's'}`];
+              if (onlineNodes.length > 0) parts.push(`${onlineNodes.length} online`);
+              if (workingCount > 0) parts.push(`${workingCount} working`);
+              if (flowLinks.length > 0) parts.push(`${flowLinks.length} active link${flowLinks.length === 1 ? '' : 's'}`);
+              return parts.join(' · ');
+            })()}</title>
             {/* grounding halo — now breathes in opacity, no expansion */}
             <circle
               cx={cx} cy={cy} r="18"
