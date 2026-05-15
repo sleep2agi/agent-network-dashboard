@@ -1180,16 +1180,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       return { zoom: nz, x: cx0 - (cx0 - prev.x) * ratio, y: cy0 - (cy0 - prev.y) * ratio };
     });
   };
-  const resetView = () => setView({ zoom: 1, x: 0, y: 0 });
+  // Round 168 / Loop: smoothView is a one-shot flag that arms a
+  // CSS transition on the viewport <g> transform attribute. Set
+  // true when resetView/fitView fires; the inline style on the
+  // viewport <g> reads this flag and conditionally applies
+  // `transition: transform 300ms ease-out`. Auto-clears after
+  // 350ms (just past the transition end) via setTimeout so
+  // subsequent pan/wheel zoom stays snappy with no lag. Keeping
+  // it as state (vs ref) so the React rerender re-applies the
+  // style attribute synchronously when the transform also
+  // changes — both attribute mutation and transition class
+  // arrive in the same paint frame, which is what triggers the
+  // browser to animate between the old and new transform values.
+  const [smoothView, setSmoothView] = useState(false);
+  const armSmoothView = () => {
+    setSmoothView(true);
+    setTimeout(() => setSmoothView(false), 350);
+  };
+  const resetView = () => {
+    armSmoothView();
+    setView({ zoom: 1, x: 0, y: 0 });
+  };
 
   // Round 29 / Loop: `f` = fit-to-content. Shared by the Round 28
   // first-paint auto-fit effect and the keyboard handler so the math is
   // in one place. When content already fits at natural zoom, this is
   // effectively a "recenter" — `f` always lands on a known good view.
+  // R168: arm smoothView so the transition glides instead of snapping
+  // when the operator invokes fit-to-content via the hub click (R52),
+  // chrome button, `f` key, or palette command.
   const fitView = useCallback(() => {
     const zoom = !gridContentBottom || gridContentBottom <= VIEWBOX_H
       ? 1
       : Math.max(ZOOM_MIN, Math.min(1, VIEWBOX_H / gridContentBottom));
+    setSmoothView(true);
+    setTimeout(() => setSmoothView(false), 350);
     setView({ zoom, x: 0, y: 0 });
   }, [gridContentBottom]);
 
@@ -2208,8 +2233,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           <rect width="1000" height="680" fill="url(#topo-panel)" />
 
           {/* Round 103 (issue #81): everything inside this <g> zooms + pans
-              together. transform order = translate then scale. */}
-          <g transform={`translate(${view.x} ${view.y}) scale(${view.zoom})`}>
+              together. transform order = translate then scale.
+              Round 168 / Loop: smoothView arms a one-shot transition on
+              the transform attribute, active only when resetView/fitView
+              fires. Pan (R103 pointer drag) and wheel zoom never set the
+              flag, so they stay snappy with no lag. Pressing `0`, `f`,
+              clicking the hub (R52), or chrome reset/fit buttons triggers
+              a 300ms ease-out glide instead of a jolt. Respects prefers-
+              reduced-motion via the R29 globals.css blanket override that
+              neutralises transition-duration universally. */}
+          <g
+            transform={`translate(${view.x} ${view.y}) scale(${view.zoom})`}
+            data-topo-viewport
+            data-topo-viewport-smooth={smoothView ? 'true' : 'false'}
+            style={smoothView ? { transition: 'transform 300ms ease-out' } : undefined}
+          >
           {/* Issue #87: radar/ring ambiance renders only in ring layout —
               grid mode drops it so the concentric rings don't sit behind a
               rectangular grid. */}
