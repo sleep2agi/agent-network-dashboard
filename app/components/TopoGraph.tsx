@@ -1112,28 +1112,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             );
           })}
 
-          {/* center hub — round 39: enlarged from r=6 (12px) to r=10 (20px)
-              core so the "control plane" reads as the network's anchor,
-              not a stray particle. Static halo ring at r=18 grounds it
-              visually; two outward pulses keep the "signal source" idea
-              from r17. Light theme gets a paler core to avoid hot-spotting
-              the bg. */}
+          {/* center hub — round 39 sized + round 13 restraint.
+              The hub is the control-plane anchor. r39 gave it two outward
+              pulses (r 10→38, 2.4s, double-phase) which read as "loudest
+              node in the room" — wrong semantics: anchors don't emit,
+              they hold. r13 swaps the kinetic pulse for a slow opacity
+              breath on the static halo (4s, ±15% from base), so the hub
+              stays alive without throwing kinetic energy outward. The
+              dual-circle "lit lamp" core is unchanged. */}
           {layout === 'ring' && (<g>
-            {/* static grounding halo — sits underneath, low opacity */}
+            {/* grounding halo — now breathes in opacity, no expansion */}
             <circle
               cx={cx} cy={cy} r="18"
               fill={isLight ? '#d1fae5' : '#10b981'}
-              opacity={isLight ? 0.35 : 0.10}
-            />
-            {/* outer pulse 1 */}
-            <circle cx={cx} cy={cy} r="10" fill="none" stroke="#10b981" strokeWidth="1.5">
-              <animate attributeName="r" values="10;38;10" dur="2.4s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.55;0;0.55" dur="2.4s" repeatCount="indefinite" />
-            </circle>
-            {/* outer pulse 2 (delayed 1.2s) */}
-            <circle cx={cx} cy={cy} r="10" fill="none" stroke="#10b981" strokeWidth="1.5" opacity="0">
-              <animate attributeName="r" values="10;38;10" dur="2.4s" begin="1.2s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.45;0;0.45" dur="2.4s" begin="1.2s" repeatCount="indefinite" />
+              opacity={isLight ? 0.42 : 0.12}
+            >
+              <animate
+                attributeName="opacity"
+                values={isLight ? '0.32;0.52;0.32' : '0.08;0.16;0.08'}
+                dur="4s"
+                repeatCount="indefinite"
+              />
             </circle>
             {/* core — 20px diameter, larger inner highlight reads as a "lit lamp" */}
             <circle cx={cx} cy={cy} r="10" fill={isLight ? '#059669' : '#10b981'} />
