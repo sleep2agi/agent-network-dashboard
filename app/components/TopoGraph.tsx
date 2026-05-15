@@ -3193,14 +3193,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       // which felt like two surfaces rather than one.
                       onMouseEnter={() => setHoveredEdgeKey(link.key)}
                       onMouseLeave={() => setHoveredEdgeKey(prev => prev === link.key ? null : prev)}
+                      // Round 185 / Loop: edge badge click fires the same
+                      // one-shot expanding-ring ripple R14 uses for node
+                      // click and R52 uses for hub click — anchored at
+                      // the badge midpoint with the edge's own flowEdge
+                      // colour. Closes the click-feel idiom across all
+                      // three pinnable canvas surfaces (hub / node /
+                      // edge badge). Reused setClickRipple state machine
+                      // so only one ripple at a time; ts coordinate
+                      // guard in the setTimeout cleanup prevents an
+                      // older ripple from clobbering a newer one if
+                      // the user clicks two badges in quick succession.
                       onClick={(e) => {
                         e.stopPropagation();
                         setPinnedEdgeKey(prev => prev === link.key ? null : link.key);
+                        const ts = Date.now();
+                        setClickRipple({ ts, x: badgeX, y: badgeY, r0: 10.5, color: pal.flowEdge });
+                        setTimeout(() => setClickRipple(prev => prev && prev.ts === ts ? null : prev), 600);
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           setPinnedEdgeKey(prev => prev === link.key ? null : link.key);
+                          const ts = Date.now();
+                          setClickRipple({ ts, x: badgeX, y: badgeY, r0: 10.5, color: pal.flowEdge });
+                          setTimeout(() => setClickRipple(prev => prev && prev.ts === ts ? null : prev), 600);
                         }
                       }}
                     >
