@@ -2106,20 +2106,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               scan without being noisy. Inline transform-origin on the
               <g> wrapper ensures Chrome / Firefox rotate around (cx,cy)
               instead of the SVG viewBox corner. */}
-          <g
-            style={{
-              transformOrigin: `${cx}px ${cy}px`,
-              transformBox: 'view-box',
-              pointerEvents: 'none',
-            }}
-            className="anet-topo-sweep"
-            opacity={isLight ? 0.7 : 1}
-          >
-            <path
-              d={`M ${cx} ${cy} L ${cx + 330} ${cy} A 330 330 0 0 0 ${cx + 330 * Math.cos(-Math.PI / 4.5)} ${cy + 330 * Math.sin(-Math.PI / 4.5)} Z`}
-              fill="url(#topo-sweep)"
-            />
-          </g>
+          {(() => {
+            // R146: radar sweep rotation buckets on workingCount, joining
+            // R84 hub breath / R131 outer orbit / R132 group march /
+            // R145 idle spokes as the 5th and final layer in the busyness-
+            // driven motion family. 8 / 6 / 4 / 3 seconds — same 0 / 1-2 /
+            // 3-5 / 6+ thresholds R84 uses. "Busier fleet = more frequent
+            // scans" feels semantically right for a radar idiom. R45
+            // baseline 6s sits at bucket 1 so the calm/busy spread bracks
+            // around the historical default.
+            const busy = workingCount === 0 ? 0
+                       : workingCount <= 2 ? 1
+                       : workingCount <= 5 ? 2
+                       : 3;
+            const sweepDur = [8, 6, 4, 3][busy];
+            return (
+              <g
+                style={{
+                  transformOrigin: `${cx}px ${cy}px`,
+                  transformBox: 'view-box',
+                  pointerEvents: 'none',
+                  // CSS var consumed by `.anet-topo-sweep` (line 848 of
+                  // globals.css). React's CSSProperties type doesn't model
+                  // custom properties → cast through Record<string, string>.
+                  ...({ ['--sweep-dur']: `${sweepDur}s` } as Record<string, string>),
+                } as React.CSSProperties}
+                className="anet-topo-sweep"
+                opacity={isLight ? 0.7 : 1}
+                data-topo-sweep-bucket={busy}
+                data-topo-sweep-dur={sweepDur}
+              >
+                <path
+                  d={`M ${cx} ${cy} L ${cx + 330} ${cy} A 330 330 0 0 0 ${cx + 330 * Math.cos(-Math.PI / 4.5)} ${cy + 330 * Math.sin(-Math.PI / 4.5)} Z`}
+                  fill="url(#topo-sweep)"
+                />
+              </g>
+            );
+          })()}
 
           {/* radar rings — pure decoration at fixed radii, independent of
               node positions so the radar aesthetic is preserved across tier
