@@ -5080,13 +5080,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-topo-minimap
             >
               <svg width={MW} height={MH} viewBox={`0 0 ${MW} ${MH}`} style={{ display: 'block' }}>
+                {/* Round 198 / Loop: minimap dots gain smooth status
+                    transitions. Pre-R198 a session flipping working→idle
+                    or going offline made the minimap dot snap in a single
+                    frame (opacity 0.9→0.5, r 1.7→1.2, fill swap). The
+                    canvas itself eases all of these via R167 status-ring
+                    transitions, R10 freshness, R3 fade-in — but the
+                    minimap mirror was still snap-cut. Adding opacity /
+                    fill / r to the CSS transition list lets a status
+                    change ripple smoothly through both views at the
+                    same rhythm. 200ms matches the R167 nodeStrokeWidth
+                    interpolation on the main canvas so the two surfaces
+                    visually flip in sync. r-as-property is well supported
+                    Chrome ≥ 95 / Safari ≥ 16 / FF ≥ 70 (same support
+                    matrix R197 just leveraged on the legend swatch).
+                    data-topo-minimap-dot exposes each dot for the test;
+                    data-topo-minimap-dot-online encodes the binary status
+                    used by the visible attributes. */}
                 {[...onlineNodes, ...offlineNodes].map(s => {
                   const p = nodePositions[s.alias];
                   if (!p) return null;
                   const sseN = (s.network_id ? sseSessions[`${s.network_id}:${s.alias}`] : undefined) ?? sseSessions[s.alias];
                   const isOn = s.status !== 'offline' || !!sseN;
                   const st = nodeStatus(s, isOn, isLight);
-                  return <circle key={s.alias} cx={p.x * sx} cy={p.y * sy} r={isOn ? 1.7 : 1.2} fill={st.primary} opacity={isOn ? 0.9 : 0.5} />;
+                  return (
+                    <circle
+                      key={s.alias}
+                      cx={p.x * sx} cy={p.y * sy}
+                      r={isOn ? 1.7 : 1.2}
+                      fill={st.primary}
+                      opacity={isOn ? 0.9 : 0.5}
+                      data-topo-minimap-dot={s.alias}
+                      data-topo-minimap-dot-online={isOn ? 'true' : 'false'}
+                      style={{
+                        transition: 'opacity 200ms ease-out, fill 200ms ease-out, r 200ms ease-out',
+                      } as React.CSSProperties}
+                    />
+                  );
                 })}
                 {/* viewport rectangle */}
                 <rect
