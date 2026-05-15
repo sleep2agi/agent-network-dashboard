@@ -121,8 +121,8 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
   return (
     <span
       className={stale
-        ? "px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono"
-        : "px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"}
+        ? "hidden sm:inline px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono"
+        : "hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"}
       title={stale ? `Last sync ${sec}s ago — SWR refresh may be lagging` : `Live data · refreshes every 5s · last sync ${sec}s ago`}
       data-freshness-chip
     >
@@ -1056,9 +1056,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               if (n === 0) return null;
               return <span key={key} style={{ width: `${(n / total) * 100}%`, background: color, height: '100%' }} />;
             };
+            // Round 47 / Loop: hidden on mobile — at <640px the chip row
+            // wraps to multiple lines and crowds the topology header;
+            // pressure ratio is best read with the working+online raw
+            // counts (kept visible) anyway.
             return (
               <span
-                className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
+                className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
                 title={`${w} working · ${i} idle · ${o} offline`}
                 data-fleet-pressure
               >
@@ -1073,7 +1077,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           })()}
           {vendorDist.length > 1 && (
             <span
-              className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
+              className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
               title="Fleet by model vendor"
             >
               {vendorDist.map(v => (
@@ -1099,7 +1103,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             }, null);
             const rel = recent !== null ? relativeAgo(new Date(recent).toISOString()) : null;
             return (
-              <span className="px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20">
+              <span className="hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20">
                 {flowLinks.length} active link{flowLinks.length === 1 ? '' : 's'}
                 {rel ? <span className="text-gray-500"> · last {rel}</span> : null}
               </span>
