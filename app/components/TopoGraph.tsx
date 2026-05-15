@@ -2699,18 +2699,35 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        : workingCount <= 5 ? 2
                        : 3;
             const dur = [16, 14, 12, 10][busy];
+            // Round 216 / Loop: orbit particle opacity scales with busy
+            // bucket alongside R131's speed scaling. Pre-R216 the
+            // particles sat at flat opacity 0.9 regardless of fleet
+            // workload — speed conveyed busyness but brightness was
+            // mute. R216 layers brightness on top of speed so idle
+            // fleets read calm (dim particles) and busy fleets read
+            // bright (loud particles). Same R84 hub-breath /
+            // R131 orbit-speed bucket thresholds (0 / 1-2 / 3-5 / 6+)
+            // so the three motion layers (hub breath / orbit / group
+            // march) plus the new brightness channel all derive from
+            // one busyness metric. transition: opacity 300ms ease-out
+            // matches R167 status-flip + R213 hub crossfade timing —
+            // when first working node appears, hub focal point AND
+            // outer ring particles brighten on the same 300ms beat.
+            const orbitOpacity = [0.5, 0.7, 0.85, 1.0][busy];
             return [0, 0.25, 0.5, 0.75].map((phase, i) => (
               <g
                 key={`orbit-${i}`}
                 data-topo-orbit-bucket={busy}
                 data-topo-orbit-dur={dur}
+                data-topo-orbit-opacity={orbitOpacity}
               >
                 <circle
                   cx={cx + 330} cy={cy}
                   r={i === 0 ? 2.8 : 2.2}
                   fill="#22d3ee"
-                  opacity={0.9}
+                  opacity={orbitOpacity}
                   filter="url(#topo-glow)"
+                  style={{ transition: 'opacity 300ms ease-out' }}
                 >
                   <animateTransform
                     attributeName="transform"
