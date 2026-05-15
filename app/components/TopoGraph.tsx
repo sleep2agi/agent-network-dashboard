@@ -1257,6 +1257,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               matches without scanning the canvas. Counts come from the
               already-computed workingCount + onlineNodes + offlineNodes
               for status, and groupKeys for group. */}
+          {/* R73: entire pill body is a click-to-clear target — matches
+              the Notion / Linear tag UX (the whole chip releases). The
+              ×  keeps its dedicated <button> + aria-label for screen
+              readers; the outer span just adds an extra mouse-friendly
+              hit area with a title hint. ×'s onClick stopPropagation
+              so the redundant outer onClick doesn't double-fire (no
+              functional difference since both clear, but cleaner
+              event flow). */}
           {pinnedStatus && (() => {
             const matchCount = pinnedStatus === 'working' ? workingCount
                             : pinnedStatus === 'idle'    ? (onlineNodes.length - workingCount)
@@ -1266,6 +1274,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="status"
               data-filter-match-count={matchCount}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+              title="Click to clear filter"
+              onClick={() => setPinnedStatus(null)}
               style={{
                 background: pinnedStatus === 'working' ? (isLight ? '#05966914' : '#22c55e1f')
                           : pinnedStatus === 'idle'    ? (isLight ? '#0d948814' : '#2dd4bf1f')
@@ -1274,13 +1284,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           : pinnedStatus === 'idle'    ? (isLight ? '#0f766e' : '#5eead4')
                           : (isLight ? '#475569' : '#9ca3af'),
                 borderColor: 'currentColor',
+                cursor: 'pointer',
               }}
             >
               <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedStatus}<span className="opacity-70"> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear ${pinnedStatus} filter`}
-                onClick={() => setPinnedStatus(null)}
+                onClick={(e) => { e.stopPropagation(); setPinnedStatus(null); }}
                 className="ml-0.5 leading-none hover:opacity-70"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
@@ -1294,17 +1305,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="group"
               data-filter-match-count={matchCount}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+              title="Click to clear filter"
+              onClick={() => setPinnedGroup(null)}
               style={{
                 background: isLight ? '#67e8f914' : '#67e8f91f',
                 color: pal.legendAccent,
                 borderColor: 'currentColor',
+                cursor: 'pointer',
               }}
             >
               <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedGroup}<span className="opacity-70"> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
-                onClick={() => setPinnedGroup(null)}
+                onClick={(e) => { e.stopPropagation(); setPinnedGroup(null); }}
                 className="ml-0.5 leading-none hover:opacity-70"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
