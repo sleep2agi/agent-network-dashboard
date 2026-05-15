@@ -1908,6 +1908,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     <animate attributeName="opacity" values="0;0.55;0" dur={`${duration}s`} begin={`-${(duration * 0.92).toFixed(2)}s`} repeatCount="indefinite" />
                   </circle>
                 )}
+                {/* Round 76 / Loop: source dispatch pulse — mirror to the
+                    R75 arrival ping. begin = 0s (start of cycle) so the
+                    ring expands as the particle LEAVES the source. Only
+                    fires for high-traffic edges (link.count >= 3) — on
+                    quiet conversations the canvas should stay calm; on
+                    busy senders the pulse plus arrival ping bookend
+                    every message in flight, making the topology feel
+                    alive. Same fresh/reducedMotion gates as R75. Slightly
+                    smaller radius (0→12→18 vs R75's 0→14→22) so the
+                    source reads as "smaller event than arrival" — the
+                    destination is the meaningful endpoint. */}
+                {!reducedMotion && fresh > 0.5 && link.count >= 3 && (
+                  <circle
+                    cx={from.x}
+                    cy={from.y}
+                    r="0"
+                    fill="none"
+                    stroke={pal.flowEdge}
+                    strokeWidth="1.5"
+                    opacity="0"
+                    style={{ pointerEvents: 'none' }}
+                    data-dispatch-pulse={link.key}
+                  >
+                    <animate attributeName="r" values="0;12;18" dur={`${duration}s`} begin="0s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0;0.45;0" dur={`${duration}s`} begin="0s" repeatCount="indefinite" />
+                  </circle>
+                )}
               </g>
             );
           })}
