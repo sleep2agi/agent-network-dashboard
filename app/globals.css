@@ -851,13 +851,21 @@ body {
 
 /* Round 46 — animated dashed spokes flowing from hub outward. Each spoke
    gets a small animationDelay (set inline) so the dashes don't all flow
-   in sync — reads as "command relay" pulse rather than a metronome. */
+   in sync — reads as "command relay" pulse rather than a metronome.
+   R145: split shorthand into longhand so per-render inline style can
+   override animation-duration via the --spoke-dur custom property —
+   same idiom R132 uses for --march-dur on group boxes. Default 2.4s
+   when --spoke-dur isn't set, so any future caller that forgets the
+   var keeps R46's original cadence. */
 @keyframes anet-topo-spoke-flow-kf {
   from { stroke-dashoffset: 0;   }
   to   { stroke-dashoffset: -40; }
 }
 .anet-topo-spoke-flow {
-  animation: anet-topo-spoke-flow-kf 2.4s linear infinite;
+  animation-name: anet-topo-spoke-flow-kf;
+  animation-duration: var(--spoke-dur, 2.4s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
 /* Round 85 — group-box "marching ants" perimeter drift.
