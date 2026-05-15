@@ -424,12 +424,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     // index, so contiguous-in-array becomes contiguous-in-ring, i.e.
     // each team visually clusters. localeCompare keeps CJK ordering sane.
     const byAlias = (a: Session, b: Session) => a.alias.localeCompare(b.alias);
-    // #112 umbrella: ghost age-out — an offline node not seen for over a day
-    // is almost certainly a deleted node the server `/api/status` still
+    // #112 umbrella: ghost age-out — an offline node not seen recently is
+    // almost certainly a deleted node the server `/api/status` still
     // returns (#74 root cause is server-side; this is the dashboard-side
     // fallback so stale ghosts stop cluttering the topology). A missing
     // last_seen_at is kept (conservative — could be a legitimately new node).
-    const GHOST_MS = 24 * 60 * 60 * 1000;
+    // Round 27 / P0: the 24h threshold was too lenient — Vincent's preview.29
+    // screenshot showed B站马 nodes deleted ~4 h earlier still visible. A
+    // healthy agent heartbeats every few seconds; if it's been silent for
+    // an hour it's effectively gone. 1 h gives a fresh disconnect time to
+    // come back while removing dead nodes well within an operator session.
+    const GHOST_MS = 60 * 60 * 1000;
     const now = Date.now();
     const isGhost = (s: Session) => {
       if (s.status !== 'offline' || sseCount(s) || !s.last_seen_at) return false;
@@ -497,11 +502,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // padding always fit and stacked group boxes never touch; past the
       // floor the grid overflows and zoom/pan handles it.
       const GROUP_TOP = nodeR + 20;
-      // Row-height floor = the tightest of: a node + its label below it
-      // (2·nodeR + ~22), and the label band + min box padding (GROUP_TOP + 12).
-      // Below this, rows would overlap; past it the grid overflows and
-      // zoom/pan covers the rest.
-      const cellH = Math.max(2 * nodeR + 22, GROUP_TOP + 12, Math.min(100, (gy1 - gy0) / totalRows));
+      // Round 27 / P0 (Vincent screenshot preview.29): dense plain-text
+      // node labels (`pos.y + radius + denseDrop`, with a 3 px containerBg
+      // stroke halo for readability) at the BOTTOM row of band N would
+      // paint OVER the start of band N+1's group label, creating the
+      // "blueleap → eleap", "agent-network-dashboard → t-network / board"
+      // visual chopping. Geometry of the collision:
+      //   dense label visual bottom  = node_N.y + radius + denseDrop + halo
+      //   group label glyph top      = boxY + 4   (text y=boxY+14, ~10px ascent)
+      //                              = node_N+1.y - GROUP_TOP + 4
+      // node_N+1.y - node_N.y = cellH for consecutive rows, so no-collide:
+      //   cellH ≥ radius + denseDrop + halo + GROUP_TOP - 4 + buffer
+      // With halo=3 buffer=4: cellH ≥ nodeR + denseDrop + GROUP_TOP + 3.
+      const denseDrop = nodeScale < 0.8 ? 12 : 14;
+      const cellH = Math.max(
+        2 * nodeR + 22,                         // node + dense label within band
+        GROUP_TOP + 12,                         // group-label band + box padding
+        nodeR + denseDrop + GROUP_TOP + 3,      // round-27 dense↔group label clearance
+        Math.min(100, (gy1 - gy0) / totalRows),
+      );
 
       // Pass 2 — place each band's members.
       for (const band of bands) {
@@ -1529,8 +1548,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const fullMax = isSmall ? 11 : 12;
                   const denseFs = isSmall ? 9 : 10;
                   const denseDrop = isSmall ? 12 : 14;
+                  // Round 26 / Loop: micro-lift the label group on hover —
+                  // 1.5 px upward, 200 ms ease. Pairs with the Round 18
+                  // group-box hover-accent treatment to give the same
+                  // "this is the focused element" feedback at the per-
+                  // node level. CSS transform stacks onto the SVG
+                  // positioning transform attribute (SVG 2 cascade);
+                  // bbox is unchanged at rest, so the overlap-test gate
+                  // continues to see the geometric layout it expects.
                   return showFullLabel ? (
-                    <g transform={`translate(${pos.x}, ${pos.y + radius + dropY})`} style={{ pointerEvents: 'none' }}>
+                    <g transform={`translate(${pos.x}, ${pos.y + radius + dropY})`} style={{ pointerEvents: 'none' }}
+                       className="transition-transform duration-200 group-hover:-translate-y-[1.5px]">
                       <rect x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
                       <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize={aliasFs} fontFamily="monospace" fontWeight="700">
                         {truncate(session.alias, fullMax)}
@@ -1549,6 +1577,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontFamily="monospace"
                       fontWeight="700"
                       opacity={0.9}
+                      className="transition-transform duration-200 group-hover:-translate-y-[1.5px]"
                       style={{ pointerEvents: 'none', paintOrder: 'stroke' }}
                       stroke={pal.containerBg}
                       strokeWidth="3"

@@ -3,7 +3,10 @@
  *   - node ↔ node       — status rings don't intersect
  *   - node ↔ panel      — no node circle intersects an overlay panel rect
  *   - node ↔ group-label — no group-box label text covers a node
- *   - group-box ↔ box   — no two group boxes overlap */
+ *   - group-box ↔ box   — no two group boxes overlap
+ *   - label ↔ label     — no two text labels overlap (Round 27 — caught
+ *                         the dense-node-label vs group-label collision
+ *                         Vincent reported in preview.29) */
 import { chromium } from 'playwright';
 import { readFileSync, mkdirSync } from 'node:fs';
 
@@ -80,11 +83,24 @@ async function check(layout) {
         label: { x: bb.x, y: bb.y, w: bb.width, h: bb.height },
       };
     });
-    return { nodes, panels, groups };
+    // Round 27 / P0: every visible label bbox (node alias text + group
+    // headings) so we can assert label↔label clearance. Skip elements
+    // with empty bboxes (e.g., text inside an unrendered <g>).
+    const allLabels = [];
+    for (const t of svg.querySelectorAll('g[data-node] text, g[data-group] text')) {
+      const bb = t.getBBox();
+      if (bb.width === 0 || bb.height === 0) continue;
+      allLabels.push({
+        kind: t.closest('g[data-group]') ? 'group' : 'node',
+        owner: (t.closest('g[data-group]')?.getAttribute('data-group')) || (t.closest('g[data-node]')?.getAttribute('data-node')) || '?',
+        x: bb.x, y: bb.y, w: bb.width, h: bb.height,
+      });
+    }
+    return { nodes, panels, groups, allLabels };
   });
 
   const TOL = 2; // px slack — touching edges is fine, real overlap is not
-  let nodeNode = 0, nodePanel = 0, nodeLabel = 0, boxBox = 0;
+  let nodeNode = 0, nodePanel = 0, nodeLabel = 0, boxBox = 0, labelLabel = 0;
 
   // node ↔ node
   for (let i = 0; i < data.nodes.length; i++) {
@@ -119,12 +135,23 @@ async function check(layout) {
           overlaps1D(a.y, a.y + a.h, b.y, b.y + b.h, TOL)) boxBox++;
     }
   }
+  // label ↔ label  (Round 27)
+  // Same-node node-labels (e.g. alias + sub-status in the full card) are
+  // intentionally close and adjacent — skip pairs that share an owner.
+  for (let i = 0; i < data.allLabels.length; i++) {
+    for (let j = i + 1; j < data.allLabels.length; j++) {
+      const a = data.allLabels[i], b = data.allLabels[j];
+      if (a.owner === b.owner) continue;
+      if (overlaps1D(a.x, a.x + a.w, b.x, b.x + b.w, TOL) &&
+          overlaps1D(a.y, a.y + a.h, b.y, b.y + b.h, TOL)) labelLabel++;
+    }
+  }
 
   await page.screenshot({ path: `/tmp/anet-issue-112/overlap-${layout}.png` });
   await ctx.close();
-  const ok = nodeNode === 0 && nodePanel === 0 && nodeLabel === 0 && boxBox === 0;
+  const ok = nodeNode === 0 && nodePanel === 0 && nodeLabel === 0 && boxBox === 0 && labelLabel === 0;
   console.log(`${ok ? '✅' : '❌'} [${layout}] nodes=${data.nodes.length} groups=${data.groups.length} — ` +
-    `node↔node:${nodeNode} node↔panel:${nodePanel} node↔label:${nodeLabel} box↔box:${boxBox}`);
+    `node↔node:${nodeNode} node↔panel:${nodePanel} node↔label:${nodeLabel} box↔box:${boxBox} label↔label:${labelLabel}`);
   return ok;
 }
 
