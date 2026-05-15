@@ -5404,12 +5404,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       transition: 'opacity 150ms ease-out',
                     }}
                   />
+                  {/* Round 219 / Loop: legend row text gains the same
+                      letter-spacing pin signature R218 added to group
+                      labels — 0px → 0.5px when isPinned. Pre-R219 the
+                      legend row's hover and pin states shared fill
+                      colour (R55/R61 both brighten to legendHeadline)
+                      so the text was typographically identical at the
+                      letter-form level for transient hover vs sticky
+                      pin. R181 pin ring + R197 swatch grow + R143 row
+                      lift differentiated the row chrome; R219 adds the
+                      text-level signature so the LABEL itself reads
+                      "locked in" at type. Mirror of R218's group label
+                      treatment — chrome-level + type-level pin
+                      vocabulary now unified across both interactive
+                      label surfaces (group + legend). transition adds
+                      `letter-spacing 150ms` alongside R55 fill 150ms;
+                      same ease pace, same beat. */}
                   <text
                     x="30" y={row.y1}
                     fill={hoveredStatus === row.key || isPinned ? pal.legendHeadline : pal.legendText}
                     fontSize="11"
                     fontFamily="monospace"
-                    style={{ transition: 'fill 150ms ease-out' }}
+                    data-legend-row-label={row.key}
+                    data-legend-row-label-pinned={isPinned ? 'true' : 'false'}
+                    style={{
+                      transition: 'fill 150ms ease-out, letter-spacing 150ms ease-out',
+                      letterSpacing: isPinned ? '0.5px' : '0px',
+                    }}
                   >{row.label}</text>
                   {/* R95: live count anchored to the right edge of the
                       panel (x=215, after the flow-arrow swatch). Same
