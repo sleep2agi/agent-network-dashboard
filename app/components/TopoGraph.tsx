@@ -757,6 +757,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     return () => svg.removeEventListener('wheel', onWheel);
   }, []);
 
+  // Round 21 / Loop: pan-aware cursor. Static `grab` gave no tactile cue
+  // that the canvas was actually being dragged — "grabbing" while
+  // dragRef.current.active = true tells the hand it's moving the
+  // viewport. Mirroring dragRef.active into state is the only way to
+  // re-render the SVG style; the ref itself doesn't trigger renders.
+  const [isPanning, setIsPanning] = useState(false);
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.button !== 0) return;
     (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
@@ -767,6 +773,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       baseX: viewRef.current.x,
       baseY: viewRef.current.y,
     };
+    setIsPanning(true);
   };
   const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const d = dragRef.current;
@@ -781,6 +788,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!dragRef.current.active) return;
     dragRef.current.active = false;
+    setIsPanning(false);
     try {
       (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
     } catch {}
@@ -878,7 +886,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
-          style={{ cursor: 'grab', touchAction: 'none' }}
+          style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
         >
           <defs>
             <linearGradient id="topo-panel" x1="0" x2="1" y1="0" y2="1">
