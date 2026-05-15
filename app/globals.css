@@ -856,6 +856,21 @@ body {
   animation-iteration-count: infinite;
 }
 
+/* R155 — focus-visible outline for TopoGraph chip-row interactives.
+   Cyber theme's dark canvas often swallows the browser default focus
+   ring; R154 fixed it for chrome buttons via Tailwind's focus-visible:
+   ring (box-shadow). Chip-row chips reuse `box-shadow` for the R88 /
+   R139 / R140 pin-mirror inset — so a focus box-shadow would conflict
+   with the pinned-state shadow. `outline` is a separate CSS property
+   and doesn't fight box-shadow, so we use it here. `currentColor`
+   inherits the chip's own accent (green for working, cyan for online,
+   per-vendor for letters, etc.). Only fires on :focus-visible
+   (keyboard) — mouse focus stays unstyled. */
+.anet-topo-chip-focus:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
 /* Round 46 — animated dashed spokes flowing from hub outward. Each spoke
    gets a small animationDelay (set inline) so the dashes don't all flow
    in sync — reads as "command relay" pulse rather than a metronome.
