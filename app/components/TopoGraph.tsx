@@ -3817,6 +3817,46 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             {(() => {
               const hotFlowCount = flowLinks.filter(l => l.count >= 10).length;
               const hotStroke = isLight ? '#d97706' : '#fbbf24';
+              // R162 / Loop: freshness tint on the panel-header
+              // count tspan. R161 just colored the chip-row's "N
+              // active links · last 5s" bullet by recency; the
+              // recent-signal panel header is the panel-side
+              // mirror of the same metric (flowLinks.length). Both
+              // scopes now speak the same freshness vocabulary,
+              // so a glance at either tells the operator whether
+              // the network is firing right now. Four nested
+              // scopes share one ladder:
+              //   canvas edge fade  (R10)
+              //   row pip           (R160)
+              //   chip bullet       (R161)
+              //   panel header      (R162, this round)
+              // Same alpha ramp:
+              //   ageSec ≤ 30   → 1.0 (fully fresh)
+              //   30-300s       → smooth decay 1.0 → 0.25
+              //   > 300s        → 0.25 stale floor
+              // Hot tail (amber " · N hot" R129) is independent
+              // of recency and keeps its own color — recency
+              // tints the head; volume colors the tail.
+              const recentMs = flowLinks.reduce<number | null>((acc, l) => {
+                if (!l.last_at) return acc;
+                const t = Date.parse(l.last_at);
+                if (Number.isNaN(t)) return acc;
+                return acc === null || t > acc ? t : acc;
+              }, null);
+              const ageSec = recentMs !== null
+                ? Math.max(0, (Date.now() - recentMs) / 1000)
+                : 999;
+              const alpha = ageSec <= 30
+                ? 1
+                : ageSec <= 300
+                  ? 1 - ((ageSec - 30) / 270) * 0.75
+                  : 0.25;
+              // Dark cyan-400 / light teal-600 with alpha — same
+              // palette as R161's chip bullet so the two scopes
+              // visually align even side-by-side.
+              const freshFill = isLight
+                ? `rgba(13, 148, 136, ${alpha.toFixed(2)})`
+                : `rgba(34, 211, 238, ${alpha.toFixed(2)})`;
               return (
                 <text
                   x="217" y="21"
@@ -3824,7 +3864,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fontSize="10"
                   fontFamily="monospace"
                 >
-                  <tspan fill={pal.legendAccent} data-recent-panel-count>{flowLinks.length} flows</tspan>
+                  <tspan
+                    fill={freshFill}
+                    data-recent-panel-count
+                    data-recent-panel-count-freshness-alpha={alpha.toFixed(2)}
+                    style={{ transition: 'fill 200ms ease-out' }}
+                  >{flowLinks.length} flows</tspan>
                   {hotFlowCount > 0 && (
                     <tspan
                       fill={hotStroke}
