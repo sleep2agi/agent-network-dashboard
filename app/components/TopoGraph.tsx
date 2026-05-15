@@ -4152,7 +4152,51 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   return showFullLabel ? (
                     <g transform={`translate(${pos.x}, ${pos.y + radius + dropY})`} style={{ pointerEvents: 'none' }}
                        className="transition-transform duration-200 group-hover:-translate-y-[1.5px]">
-                      <rect x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
+                      {/* Round 194 / Loop: label card picks up a subtle
+                          drop-shadow that intensifies when the node is
+                          hovered — pairs the existing R26 1.5px lift
+                          with physical weight. Pre-R194 the card lifted
+                          1.5 px on hover but had no shadow follow, so
+                          the gesture read as "card translated" rather
+                          than "card rose off the canvas". Adding a
+                          baseline shadow at rest (1px/2px blur) plus a
+                          deeper hover state (3-4px/8-12px blur) makes
+                          the elevation feel earned.
+                          Same R57/R135 hover-elevation idiom that
+                          panels already use, now extended to per-node
+                          label cards. data-node-label-card-elevation
+                          ('idle'/'hover') exposes the state for tests.
+                          Filter is theme-aware (light: slate alpha;
+                          dark: black alpha) so the shadow stays visible
+                          against both surfaces. transition: filter
+                          220ms ease-out matches R135's panel-elevation
+                          duration so a hovered node + a hovered panel
+                          fade at the same rhythm. Reduced-motion users
+                          collapse to the rest-state shadow only — no
+                          hover differentiation. Per-node filter is
+                          gated to showFullLabel which itself is gated
+                          to non-dense fleets (≤16 nodes) or hovered/
+                          zoomed-in branches, so the cost stays bounded
+                          (~20-30 cards max). */}
+                      <rect
+                        x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="6"
+                        fill={pal.labelBox.fill} stroke={pal.labelBox.stroke}
+                        opacity={isLight ? 1 : 0.94}
+                        data-node-label-card={session.alias}
+                        data-node-label-card-elevation={
+                          !reducedMotion && hoveredAlias === session.alias ? 'hover' : 'idle'
+                        }
+                        style={{
+                          filter: !reducedMotion && hoveredAlias === session.alias
+                            ? (isLight
+                                ? 'drop-shadow(0 3px 8px rgba(15,23,42,0.20))'
+                                : 'drop-shadow(0 4px 12px rgba(0,0,0,0.60))')
+                            : (isLight
+                                ? 'drop-shadow(0 1px 2px rgba(15,23,42,0.08))'
+                                : 'drop-shadow(0 1px 2px rgba(0,0,0,0.30))'),
+                          transition: 'filter 220ms ease-out',
+                        }}
+                      />
                       <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize={aliasFs} fontFamily="monospace" fontWeight="700">
                         {truncate(session.alias, fullMax)}
                       </text>
