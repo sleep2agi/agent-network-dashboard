@@ -2486,6 +2486,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // gap (segments) — now group labels carry it too.
                   onPointerEnter={() => setHoveredGroupLabel(box.key)}
                   onPointerLeave={() => setHoveredGroupLabel(prev => prev === box.key ? null : prev)}
+                  // R152: a11y completeness — R63 added role + tabIndex +
+                  // aria-pressed but never wired onKeyDown, so the focused
+                  // group label was tab-reachable but Enter/Space was a
+                  // no-op. Closes the last keyboard gap among the
+                  // role="button" surfaces. Other group-pin trigger paths
+                  // (R69 palette, R74 cmdk, R86 hover, dispatchEvent) are
+                  // unchanged. Matches the onKeyDown idiom from R116 /
+                  // R139 / R140 / R151 (Enter & Space → same setter as
+                  // onClick, preventDefault on Space to stop SVG scroll).
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setPinnedGroup(prev => prev === box.key ? null : box.key);
+                    }
+                  }}
                 >
                   {/* R99: SVG <title> tooltip listing group members +
                       status breakdown. Same info-density spirit as
