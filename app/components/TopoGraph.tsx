@@ -88,36 +88,52 @@ function truncate(value: string, max: number) {
   return value.length > max ? `${value.slice(0, max - 1)}...` : value;
 }
 
+/** Round 12 / Loop: status trio audit.
+ *
+ *  Each (status × theme) cell returns a {primary, halo, text} trio. The trio
+ *  invariant — keep it when adding states or tweaking shades:
+ *
+ *    light:  primary = <hue>-600   halo = <hue>-100 *   text = <hue>-800/900
+ *    dark:   primary = <hue>-400/500 halo = <hue>-900  text = <hue>-100
+ *
+ *    * offline.halo light deviates intentionally to slate-200 (#e2e8f0):
+ *      slate-100 (#f1f5f9) is too close to the panel bg (#f8fafc) and the
+ *      halo would vanish. The other three rows keep the 100-shade.
+ *
+ *  Audit caught one cross-family drift before this round: online-other halo
+ *  light was #dbeafe (blue-100) while its primary (#0284c7 sky-600) and text
+ *  (#0c4a6e sky-900) were sky-family — now sky-100 (#e0f2fe). Tiny visual
+ *  difference; large hygiene win — every trio is now mono-hue. */
 function nodeStatus(session: Session, isOnline: boolean, isLight: boolean) {
   if (!isOnline) {
     return {
       label: 'offline',
-      primary: isLight ? '#94a3b8' : '#6b7280',
-      halo:    isLight ? '#e2e8f0' : '#111827',
-      text:    isLight ? '#475569' : '#9ca3af',
+      primary: isLight ? '#94a3b8' : '#6b7280', // slate-400 / gray-500
+      halo:    isLight ? '#e2e8f0' : '#111827', // slate-200* / gray-900
+      text:    isLight ? '#475569' : '#9ca3af', // slate-600 / gray-400
     };
   }
   if (session.status === 'working') {
     return {
       label: 'working',
-      primary: isLight ? '#059669' : '#22c55e',
-      halo:    isLight ? '#d1fae5' : '#14532d',
-      text:    isLight ? '#065f46' : '#dcfce7',
+      primary: isLight ? '#059669' : '#22c55e', // emerald-600 / green-500
+      halo:    isLight ? '#d1fae5' : '#14532d', // emerald-100 / green-900
+      text:    isLight ? '#065f46' : '#dcfce7', // emerald-800 / green-100
     };
   }
   if (session.status === 'idle') {
     return {
       label: 'idle',
-      primary: isLight ? '#0d9488' : '#2dd4bf',
-      halo:    isLight ? '#ccfbf1' : '#134e4a',
-      text:    isLight ? '#115e59' : '#ccfbf1',
+      primary: isLight ? '#0d9488' : '#2dd4bf', // teal-600 / teal-400
+      halo:    isLight ? '#ccfbf1' : '#134e4a', // teal-100 / teal-900
+      text:    isLight ? '#115e59' : '#ccfbf1', // teal-800 / teal-100
     };
   }
   return {
     label: session.status || 'online',
-    primary: isLight ? '#0284c7' : '#38bdf8',
-    halo:    isLight ? '#dbeafe' : '#0c4a6e',
-    text:    isLight ? '#0c4a6e' : '#e0f2fe',
+    primary: isLight ? '#0284c7' : '#38bdf8', // sky-600 / sky-400
+    halo:    isLight ? '#e0f2fe' : '#0c4a6e', // sky-100 / sky-900  (was blue-100 — drift fixed Round 12)
+    text:    isLight ? '#0c4a6e' : '#e0f2fe', // sky-900 / sky-100
   };
 }
 
