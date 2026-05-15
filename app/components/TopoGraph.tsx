@@ -1865,18 +1865,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               .map(l => `${l.from}→${l.to} (${l.count})`)
               .join(', ');
             const flowSuffix = flowLinks.length > 6 ? ` + ${flowLinks.length - 6} more` : '';
-            const tooltip = flowLinks.length === 0
+            // R136: the chip already had cursor:pointer when flowLinks
+            // > 0 (line 1877) — but no onClick was wired. The cursor
+            // lied; users got the affordance signal with no follow-
+            // through. Wire it to /messages, mirroring R133's footer-
+            // nav idiom. Hover (R77) keeps its semantic "preview all
+            // flows on canvas"; click is the action "open the full
+            // list". Two distinct gestures, both meaningful. The
+            // tooltip grows a "click to open" tail when interactive.
+            // Drop the chip out of click territory entirely when
+            // flowLinks is empty — no flows = no list to open.
+            const isInteractive = flowLinks.length > 0;
+            const tooltip = !isInteractive
               ? undefined
-              : `${flowList}${flowSuffix} — hover brightens all`;
+              : `${flowList}${flowSuffix} — hover brightens all · click to open /messages`;
             return (
               <span
                 className="hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20"
                 data-active-links-chip
                 data-active-links-flow-count={flowLinks.length}
+                data-active-links-clickable={isInteractive ? 'true' : 'false'}
                 title={tooltip}
-                style={{ cursor: flowLinks.length > 0 ? 'pointer' : undefined }}
-                onMouseEnter={() => { if (flowLinks.length > 0) setHoveredActiveLinks(true); }}
+                role={isInteractive ? 'link' : undefined}
+                tabIndex={isInteractive ? 0 : undefined}
+                style={{ cursor: isInteractive ? 'pointer' : undefined }}
+                onMouseEnter={() => { if (isInteractive) setHoveredActiveLinks(true); }}
                 onMouseLeave={() => setHoveredActiveLinks(false)}
+                onClick={() => { if (isInteractive) router.push('/messages'); }}
+                onKeyDown={(e) => {
+                  if (!isInteractive) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push('/messages');
+                  }
+                }}
               >
                 {flowLinks.length} active link{flowLinks.length === 1 ? '' : 's'}
                 {rel ? <span className="text-gray-500"> · last {rel}</span> : null}
