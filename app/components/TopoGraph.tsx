@@ -1220,7 +1220,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 className="group transition-opacity anet-fade-in"
                 style={{
                   cursor: 'pointer',
-                  opacity: inFocus ? 1 : 0.32,
+                  // Round 17 / Loop: offline nodes drop to 0.6 at rest so
+                  // online nodes pop without losing the offline-as-ghost
+                  // information. The dashed stroke + smaller radius already
+                  // say "offline"; dimming the whole group strengthens the
+                  // online-vs-offline hierarchy at first glance. Exempt the
+                  // chat-focused node — if the user explicitly opened a
+                  // popover targeting an offline alias, that node stays
+                  // full-brightness so the focus ring + popover read as one
+                  // selected thing rather than a dimmed selection. Group-
+                  // hover fade (Round 8) still wins when inFocus is false.
+                  opacity: !inFocus
+                    ? 0.32
+                    : chatAlias === session.alias
+                      ? 1
+                      : isOnline ? 1 : 0.6,
                   // Round 9 / Loop: stagger the anet-fade-in so the topology
                   // reveals as a wave on first paint instead of one big pop.
                   // Cap at 24 indices (≈600ms tail) so 50-node fleets still
