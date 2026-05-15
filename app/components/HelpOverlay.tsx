@@ -82,6 +82,10 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // clear topology filters from anywhere. Surface them so keyboard
       // power users find the shortcut without spelunking the palette.
       { keys: ['⌘', 'K'], label: 'Pin / clear filters via palette → "Pin topology filter…" (R69)' },
+      // Round 74 / Loop: palette also exposes layout + view actions —
+      // a search-friendly alternative to the `l` (R32) and `f` (R29)
+      // keyboard shortcuts for users who can't remember them.
+      { keys: ['⌘', 'K'], label: 'Toggle layout / Fit canvas via palette (R74)' },
     ],
   },
 ];
