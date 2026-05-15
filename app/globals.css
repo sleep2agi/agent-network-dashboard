@@ -860,6 +860,23 @@ body {
   animation: anet-topo-spoke-flow-kf 2.4s linear infinite;
 }
 
+/* Round 85 — group-box "marching ants" perimeter drift.
+   Applied to a grid-layout group box whose `statuses.working > 0`
+   AND that is neither hovered nor pinned (those treatments already
+   carry their own visual emphasis via solid stroke). Slow 12s
+   linear cycle reads as ambient motion, not animation — the eye
+   parses "this group has live work" without registering the box
+   as moving. R86 stride matches the box's `strokeDasharray="6 6"`
+   so a single full cycle returns to a frame-identical state.
+   prefers-reduced-motion handled by the blanket override below. */
+@keyframes anet-topo-groupbox-march-kf {
+  from { stroke-dashoffset: 0;   }
+  to   { stroke-dashoffset: -12; }
+}
+.anet-topo-groupbox-live {
+  animation: anet-topo-groupbox-march-kf 12s linear infinite;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
@@ -894,7 +911,8 @@ body {
   .anet-fade-in,
   .anet-current-step-pulse,
   .anet-topo-sweep,
-  .anet-topo-spoke-flow {
+  .anet-topo-spoke-flow,
+  .anet-topo-groupbox-live {
     animation: none !important;
   }
   /* Tasks row grid 0fr↔1fr keep working (it's the toggle mechanism),
