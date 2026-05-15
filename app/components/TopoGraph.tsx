@@ -1064,6 +1064,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
+          // Round 41 / Loop: the reset-button title (R22) and the Help
+          // overlay (R25) both advertise "double-click the canvas to
+          // reset", but the handler was never actually wired. The text
+          // was lying. Wire it here, guarded so dbl-clicking a node
+          // (which would also trigger the SVG-level handler via event
+          // bubbling) doesn't unexpectedly reset the view on the user.
+          onDoubleClick={(e) => {
+            const t = e.target as Element | null;
+            if (t?.closest('g[data-node]')) return;
+            resetView();
+          }}
           style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
         >
           <defs>
