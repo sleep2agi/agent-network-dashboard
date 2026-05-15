@@ -72,6 +72,12 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // gives users a sticky filter (vs R55 transient hover).
       { keys: ['click chip'], label: 'Pin a status filter (R60/R61)' },
       { keys: ['Esc'], label: 'Clear pinned filter (R62) — or close chat' },
+      // Round 65 / Loop: R63 added group-pin via group label click; R64
+      // added active-filter pills in the chip row with per-pill ×
+      // clear. Both compose with the R62 Esc keystroke (single press
+      // clears everything pinned).
+      { keys: ['click group'], label: 'Pin a team focus (R63)' },
+      { keys: ['click ×'], label: 'Clear one filter (R64) — Esc clears all' },
     ],
   },
 ];
