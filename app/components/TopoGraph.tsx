@@ -1394,34 +1394,54 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     Round 109/110 (Vincent P0): full opaque card below the
                     density threshold / on hover / when zoomed; otherwise a
                     lightweight plain-text alias that keeps every node
-                    labelled without an opaque box covering its neighbours. */}
-                {showFullLabel ? (
-                  <g transform={`translate(${pos.x}, ${pos.y + radius + 22})`} style={{ pointerEvents: 'none' }}>
-                    <rect x="-50" y="-14" width="100" height="42" rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
-                    <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize="12" fontFamily="monospace" fontWeight="700">
-                      {truncate(session.alias, 12)}
+                    labelled without an opaque box covering its neighbours.
+                    Round 15 / Loop: when nodeScale=S the node shrinks 30%
+                    but the label card was staying full-size, so the label
+                    visually outweighed the small node. Tighten the card
+                    frame, alias / sub fontSize, drop-offset and truncate
+                    length specifically for S; M and L keep their existing
+                    sizes (M ≈ L for labels by design — the S user is the
+                    one who explicitly asked for a denser view). */}
+                {(() => {
+                  const isSmall = nodeScale < 0.8;
+                  const cardW = isSmall ? 88 : 100;
+                  const cardH = isSmall ? 36 : 42;
+                  const cardTopY = isSmall ? -12 : -14;
+                  const aliasFs = isSmall ? 11 : 12;
+                  const subFs = isSmall ? 8 : 9;
+                  const subY = isSmall ? 15 : 17;
+                  const dropY = isSmall ? 18 : 22;
+                  const fullMax = isSmall ? 11 : 12;
+                  const denseFs = isSmall ? 9 : 10;
+                  const denseDrop = isSmall ? 12 : 14;
+                  return showFullLabel ? (
+                    <g transform={`translate(${pos.x}, ${pos.y + radius + dropY})`} style={{ pointerEvents: 'none' }}>
+                      <rect x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="6" fill={pal.labelBox.fill} stroke={pal.labelBox.stroke} opacity={isLight ? 1 : 0.94} />
+                      <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize={aliasFs} fontFamily="monospace" fontWeight="700">
+                        {truncate(session.alias, fullMax)}
+                      </text>
+                      <text x="0" y={subY} textAnchor="middle" fill={status.primary} fontSize={subFs} fontFamily="monospace">
+                        {status.label}{isOnline && sseCountFor != null ? ` sse:${sseCountFor}` : ''}
+                      </text>
+                    </g>
+                  ) : (
+                    <text
+                      x={pos.x}
+                      y={pos.y + radius + denseDrop}
+                      textAnchor="middle"
+                      fill={status.text}
+                      fontSize={denseFs}
+                      fontFamily="monospace"
+                      fontWeight="700"
+                      opacity={0.9}
+                      style={{ pointerEvents: 'none', paintOrder: 'stroke' }}
+                      stroke={pal.containerBg}
+                      strokeWidth="3"
+                    >
+                      {truncate(session.alias, isSmall ? 9 : 10)}
                     </text>
-                    <text x="0" y="17" textAnchor="middle" fill={status.primary} fontSize="9" fontFamily="monospace">
-                      {status.label}{isOnline && sseCountFor != null ? ` sse:${sseCountFor}` : ''}
-                    </text>
-                  </g>
-                ) : (
-                  <text
-                    x={pos.x}
-                    y={pos.y + radius + 14}
-                    textAnchor="middle"
-                    fill={status.text}
-                    fontSize="10"
-                    fontFamily="monospace"
-                    fontWeight="700"
-                    opacity={0.9}
-                    style={{ pointerEvents: 'none', paintOrder: 'stroke' }}
-                    stroke={pal.containerBg}
-                    strokeWidth="3"
-                  >
-                    {truncate(session.alias, 10)}
-                  </text>
-                )}
+                  );
+                })()}
               </g>
             );
           })}
