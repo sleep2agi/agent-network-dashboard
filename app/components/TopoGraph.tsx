@@ -3652,10 +3652,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-recent-row-hovered={isRowHovered ? 'true' : 'false'}
                     data-recent-row-pinned={isRowPinned ? 'true' : 'false'}
                     data-recent-row-hot={isHot ? 'true' : 'false'}
+                    data-recent-row-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
                     role="button"
                     tabIndex={0}
                     aria-pressed={isRowPinned}
-                    style={{ cursor: 'pointer' }}
+                    // R143 / Loop: extend the R135/R142 "interactive surface
+                    // elevates" idiom down one layer to the recent-signal
+                    // panel rows. R104 already tints the row background on
+                    // hover; R143 adds a 1-px translate so the row text
+                    // visually lifts off the panel — same vocabulary R51
+                    // uses for nodes, R135 uses for panels, R142 uses for
+                    // group boxes. Pinned rows lift too (sticky state
+                    // should look like locked-in selection). Reduced-motion
+                    // safe via prefers-reduced-motion blanket override
+                    // applied to transition-duration in globals.css.
+                    style={{
+                      cursor: 'pointer',
+                      transform: (isRowHovered || isRowPinned) ? 'translateY(-1px)' : undefined,
+                      transition: 'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
                     onPointerDown={(e) => e.stopPropagation()}
                     onMouseEnter={() => setHoveredEdgeKey(link.key)}
                     onMouseLeave={() => setHoveredEdgeKey(prev => prev === link.key ? null : prev)}
