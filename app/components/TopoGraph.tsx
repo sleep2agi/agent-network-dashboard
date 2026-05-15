@@ -1662,6 +1662,80 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             </span>
             );
           })()}
+          {/* Round 124 / Loop: pin-intersection summary chip. The four
+              filter pills (R64 status, R63 group, R89 vendor, R119
+              edge) each report their own dim's match count in
+              isolation — that answers "what does THIS filter catch"
+              but not "what survives ALL pins". Since the node-opacity
+              chain AND-composes the four pin dimensions, two active
+              pins routinely produce an intersection smaller than
+              either individual count. With three or four pins active
+              the gap widens further. This chip appears ONLY when
+              ≥ 2 pin dims are active (a single pin's pill already
+              tells the whole story) and shows the count of nodes
+              that satisfy every active pin simultaneously. Color is
+              deliberately neutral (gray) since the chip represents
+              the AND of mixed-color filters — borrowing any one of
+              the pill hues would mis-signal which dim dominates.
+              Tooltip lists the surviving aliases with the same
+              8-truncate + "+N more" pattern as the individual pill
+              tooltips (R97). No click handler — it's a pure readout;
+              Esc / per-pill × are still the cancel paths. */}
+          {(() => {
+            const pinDimCount =
+              (pinnedStatus  ? 1 : 0) +
+              (pinnedGroup   ? 1 : 0) +
+              (pinnedVendor  ? 1 : 0) +
+              (pinnedEdgeKey ? 1 : 0);
+            if (pinDimCount < 2) return null;
+            const edgeLink = pinnedEdgeKey
+              ? flowLinks.find(l => l.key === pinnedEdgeKey)
+              : null;
+            const edgeEndpoints: Set<string> | null = edgeLink
+              ? new Set([edgeLink.from, edgeLink.to])
+              : null;
+            const allSessions = [...onlineNodes, ...offlineNodes];
+            const survivors = allSessions.filter(s => {
+              const isOnline = s.status !== 'offline';
+              if (pinnedStatus === 'working' && s.status !== 'working') return false;
+              if (pinnedStatus === 'idle'    && !(isOnline && s.status !== 'working')) return false;
+              if (pinnedStatus === 'offline' && isOnline) return false;
+              if (pinnedGroup) {
+                const gk = groupKeys[s.alias] ?? s.alias;
+                if (gk !== pinnedGroup) return false;
+              }
+              if (pinnedVendor) {
+                const v = vendorForModel(s.model);
+                const initial = v.id === 'unknown' ? '?' : v.initial;
+                if (initial !== pinnedVendor) return false;
+              }
+              if (edgeEndpoints && !edgeEndpoints.has(s.alias)) return false;
+              return true;
+            });
+            const matchAliases = survivors.map(s => s.alias);
+            const matchPreview = matchAliases.slice(0, 8).join(', ');
+            const matchSuffix  = matchAliases.length > 8 ? ` + ${matchAliases.length - 8} more` : '';
+            const tooltip = matchAliases.length > 0
+              ? `${matchPreview}${matchSuffix} — nodes passing all ${pinDimCount} pinned filters`
+              : `No nodes pass all ${pinDimCount} pinned filters (Esc to clear)`;
+            return (
+              <span
+                data-pin-intersection
+                data-pin-dim-count={pinDimCount}
+                data-pin-intersection-count={matchAliases.length}
+                data-pin-intersection-aliases={matchAliases.join(',')}
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+                title={tooltip}
+                style={{
+                  background: isLight ? '#94a3b814' : '#94a3b81f',
+                  color:      isLight ? '#475569'   : '#9ca3af',
+                  borderColor: 'currentColor',
+                }}
+              >
+                <span><span className="hidden sm:inline" data-pin-intersection-prefix>match: </span>{pinDimCount} pins<span className="opacity-70"> · {matchAliases.length}</span></span>
+              </span>
+            );
+          })()}
           {vendorDist.length > 1 && (
             <span
               className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
