@@ -925,13 +925,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         // status + group because pinnedVendor didn't exist yet; R88
         // shipped the third pin and R90 closes the palette gap so
         // "Clear topology filters" really means all of them.
+        // R117: extend again to pinnedEdgeKey — R116 added the 4th
+        // pin dim and this command must clear it too or the edge stays
+        // bright in the canvas while every other pill clears.
         setPinnedStatus(null);
         setPinnedGroup(null);
         setPinnedVendor(null);
+        setPinnedEdgeKey(null);
       } else if (detail.kind === 'clear-vendor') {
         // R90: granular vendor-only clear so power users can release
         // just the vendor without disturbing status/group pins.
         setPinnedVendor(null);
+      } else if (detail.kind === 'clear-edge') {
+        // R117: granular edge-only clear, mirror of R90 clear-vendor.
+        setPinnedEdgeKey(null);
       } else if (detail.kind === 'status') {
         const v = detail.value;
         if (v === 'working' || v === 'idle' || v === 'offline') setPinnedStatus(v);
