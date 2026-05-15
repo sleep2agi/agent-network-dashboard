@@ -138,6 +138,15 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // visuals / motion / readouts with no new gestures, so this is
       // the only new entry since R123.
       { keys: ['click footer'], label: 'See all flows — click "+ N more flows" in the recent-signal panel (R133)' },
+      // Round 137 / Loop: catch up on R136 — the "N active links"
+      // chip in the chip row gained a real onClick → /messages
+      // navigation (it already had cursor:pointer since R77 but the
+      // handler was missing, the cursor was lying). Pairs with R133
+      // footer-nav at a different surface: R133 lives on the canvas-
+      // side panel and only shows when flowLinks > 3; R136 lives at
+      // the chip row and triggers whenever flowLinks > 0 — a broader
+      // entry point for the same "show me the full list" jump.
+      { keys: ['click chip'], label: 'See all flows — click the "N active links" chip in the chip row (R136)' },
     ],
   },
 ];
