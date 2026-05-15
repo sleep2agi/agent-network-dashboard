@@ -3085,6 +3085,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 key={session.alias}
                 data-node={session.alias}
                 data-tier-idx={layout === 'ring' ? tierIdx : -1}
+                // R151 / Loop: node a11y compliance — match the pattern
+                // R116 / R139 / R140 / R148 / R149 applied to other
+                // interactive surfaces. Node <g> has been clickable for
+                // chat since R45 but tab-unreachable + screen-reader-
+                // unannounced. role="button" + tabIndex=0 + aria-label
+                // expose it; aria-pressed reflects chat-target state so
+                // SR users know which node currently has the popover
+                // open. onKeyDown for Enter / Space fires the same
+                // setChatAlias path as onClick. preventDefault on
+                // Space stops the SVG canvas from scrolling.
+                role="button"
+                tabIndex={0}
+                aria-pressed={chatAlias === session.alias}
+                aria-label={`Chat with ${session.alias} (${session.status})`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setChatAlias(session.alias);
+                    setClickRipple({
+                      ts: Date.now(),
+                      x: pos.x, y: pos.y, r0: radius,
+                      color: status.primary,
+                    });
+                    setTimeout(() => setClickRipple(prev =>
+                      prev && Date.now() - prev.ts >= 590 ? null : prev), 600);
+                  }
+                }}
                 // Round 3 / Loop: `anet-fade-in` runs once when the <g>
                 // mounts — a new session entering the fleet (or the topology
                 // first rendering) eases in instead of popping. Re-renders of
