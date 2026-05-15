@@ -1996,6 +1996,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   onPointerEnter={() => setHoveredGroupLabel(box.key)}
                   onPointerLeave={() => setHoveredGroupLabel(prev => prev === box.key ? null : prev)}
                 >
+                  {/* R99: SVG <title> tooltip listing group members +
+                      status breakdown. Same info-density spirit as
+                      R97 pill tooltips + R98 node tooltips — anywhere
+                      a UI element says "alpha · 3" should hover-
+                      explain WHICH 3. Truncates at 8 aliases with a
+                      "+N more" suffix so a 20-member band doesn't
+                      paint a 22-line tooltip. */}
+                  {(() => {
+                    const members = Object.entries(groupKeys)
+                      .filter(([, key]) => key === box.key)
+                      .map(([alias]) => alias);
+                    const memberPreview = members.slice(0, 8).join(', ');
+                    const suffix = members.length > 8 ? ` + ${members.length - 8} more` : '';
+                    const statusSummary = [
+                      box.statuses.working > 0 ? `${box.statuses.working} working` : null,
+                      box.statuses.idle    > 0 ? `${box.statuses.idle} idle`       : null,
+                      box.statuses.offline > 0 ? `${box.statuses.offline} offline` : null,
+                    ].filter(Boolean).join(' · ');
+                    return (
+                      <title>{[
+                        `${box.key} (${members.length} member${members.length === 1 ? '' : 's'})`,
+                        statusSummary || null,
+                        `${memberPreview}${suffix}`,
+                        pinnedGroup === box.key ? 'click to release pin' : 'click to pin this group',
+                      ].filter(Boolean).join('\n')}</title>
+                    );
+                  })()}
                   <rect
                     x={box.x + 6}
                     y={box.y + 2}
