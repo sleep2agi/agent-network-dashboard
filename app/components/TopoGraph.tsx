@@ -32,6 +32,9 @@ interface FlowLink {
   to: string;
   count: number;
   content: string;
+  /** ISO timestamp of the most recent message on this edge — drives
+   *  the Round 10 freshness fade so dormant links recede visually. */
+  last_at: string;
 }
 
 const cx = 500;
@@ -312,12 +315,20 @@ function buildFlowLinks(messages: MessageFlow[], positions: Record<string, Point
     const key = `${message.from_alias}->${message.to_alias}`;
     const current = links.get(key);
 
+    // Keep the most-recent timestamp per pair so the render can fade
+    // dormant edges (Round 10 freshness fade).
+    const incoming = message.created_at || '';
+    const last_at = !current
+      ? incoming
+      : (incoming > current.last_at ? incoming : current.last_at);
+
     links.set(key, {
       key,
       from: message.from_alias,
       to: message.to_alias,
       count: (current?.count || 0) + 1,
       content: current?.content || message.content,
+      last_at,
     });
   });
 
@@ -1047,6 +1058,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const path = curvePath(from, to, lift);
             const width = Math.min(2 + link.count, 7);
             const duration = Math.max(0.9, 2.6 / Math.sqrt(link.count));
+            // Round 10 / Loop: freshness fade. An edge that fired ≤30s ago
+            // stays at full intensity; over 5 minutes it decays to ~35%.
+            // Surfaces "what's happening now" vs background chatter without
+            // hiding old flow entirely (some context still useful). `now`
+            // captured at useMemo-recompute time (every 5s message refresh)
+            // — accuracy is within the poll interval, plenty.
+            const ageMs = link.last_at ? Math.max(0, Date.now() - Date.parse(link.last_at)) : 0;
+            const fresh = Math.max(0.35, 1 - ageMs / (5 * 60 * 1000));
 
             return (
               <g key={link.key}>
@@ -1055,9 +1074,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fill="none"
                   stroke={pal.flowEdge}
                   strokeWidth={width}
-                  opacity={isLight ? 0.22 : 0.28}
+                  opacity={(isLight ? 0.22 : 0.28) * fresh}
                   filter={isLight ? undefined : 'url(#topo-glow)'}
                   markerEnd="url(#topo-arrow)"
+                  className="transition-opacity duration-500"
                 />
                 <path
                   id={`flow-path-${index}`}
@@ -1066,9 +1086,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   stroke={pal.flowPath}
                   strokeWidth="1"
                   strokeDasharray="2 12"
-                  opacity={isLight ? 0.4 : 0.75}
+                  opacity={(isLight ? 0.4 : 0.75) * fresh}
+                  className="transition-opacity duration-500"
                 />
-                <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'}>
+                <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'} opacity={fresh}>
                   <animateMotion dur={`${duration}s`} repeatCount="indefinite" path={path} />
                 </circle>
               </g>
