@@ -159,6 +159,39 @@ const COMMANDS: Command[] = [
       // Dispatch synthetic `?` keydown so HelpOverlay's global listener opens
       window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
     } },
+
+  // ── Round 69 / Loop: topology filter actions ────────────────
+  // Write the pin directly into sessionStorage (the same key R66
+  // hydrates from) and broadcast a `storage`-like custom event
+  // so TopoGraph picks it up without a reload. Keyboard-accessible
+  // filter trigger from anywhere on the dashboard.
+  { id: 'act-pin-working', title: 'Pin topology filter: working', hint: 'highlight working nodes only', group: 'Actions',
+    icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
+    perform: () => {
+      try { sessionStorage.setItem('anet-topo-pinned-status', 'working'); } catch {}
+      window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'status', value: 'working' } }));
+    } },
+  { id: 'act-pin-idle', title: 'Pin topology filter: idle', hint: 'highlight idle (online) nodes only', group: 'Actions',
+    icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
+    perform: () => {
+      try { sessionStorage.setItem('anet-topo-pinned-status', 'idle'); } catch {}
+      window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'status', value: 'idle' } }));
+    } },
+  { id: 'act-pin-offline', title: 'Pin topology filter: offline', hint: 'highlight offline / no-SSE nodes', group: 'Actions',
+    icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
+    perform: () => {
+      try { sessionStorage.setItem('anet-topo-pinned-status', 'offline'); } catch {}
+      window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'status', value: 'offline' } }));
+    } },
+  { id: 'act-clear-topo-pins', title: 'Clear topology filters', hint: 'release pinned status + group', group: 'Actions',
+    icon: <NavIcon d="M6 18L18 6M6 6l12 12" />,
+    perform: () => {
+      try {
+        sessionStorage.removeItem('anet-topo-pinned-status');
+        sessionStorage.removeItem('anet-topo-pinned-group');
+      } catch {}
+      window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'clear' } }));
+    } },
 ];
 
 export function CommandPalette() {

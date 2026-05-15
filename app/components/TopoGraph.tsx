@@ -843,6 +843,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       else sessionStorage.removeItem('anet-topo-pinned-status');
     } catch {}
   }, [pinnedStatus]);
+  // R69: listen for Cmd+K palette pin actions. The palette can't reach
+  // this component's state directly so it dispatches a CustomEvent;
+  // we react by setting pinnedStatus / pinnedGroup. The palette also
+  // writes to sessionStorage in lockstep, so the R66 init readers
+  // would pick it up on reload — the event handler is what keeps the
+  // currently-mounted canvas in sync without one.
+  useEffect(() => {
+    const onPin = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.kind === 'clear') {
+        setPinnedStatus(null);
+        setPinnedGroup(null);
+      } else if (detail.kind === 'status') {
+        const v = detail.value;
+        if (v === 'working' || v === 'idle' || v === 'offline') setPinnedStatus(v);
+      } else if (detail.kind === 'group' && typeof detail.value === 'string') {
+        setPinnedGroup(detail.value);
+      }
+    };
+    window.addEventListener('anet:topo-pin', onPin);
+    return () => window.removeEventListener('anet:topo-pin', onPin);
+  }, []);
   const hoveredEdgeEndpoints = useMemo<Set<string> | null>(() => {
     if (!hoveredEdgeKey) return null;
     const link = flowLinks.find(l => l.key === hoveredEdgeKey);
