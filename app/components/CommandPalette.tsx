@@ -183,14 +183,30 @@ const COMMANDS: Command[] = [
       try { sessionStorage.setItem('anet-topo-pinned-status', 'offline'); } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'status', value: 'offline' } }));
     } },
-  { id: 'act-clear-topo-pins', title: 'Clear topology filters', hint: 'release pinned status + group', group: 'Actions',
+  { id: 'act-clear-topo-pins', title: 'Clear topology filters', hint: 'release pinned status + group + vendor', group: 'Actions',
     icon: <NavIcon d="M6 18L18 6M6 6l12 12" />,
     perform: () => {
       try {
         sessionStorage.removeItem('anet-topo-pinned-status');
         sessionStorage.removeItem('anet-topo-pinned-group');
+        // Round 90 / Loop: R88 added pinnedVendor as the third filter
+        // dimension. The clear-all command must clear it too or it
+        // silently retains the vendor pin, which a user would read
+        // as a stuck filter.
+        sessionStorage.removeItem('anet-topo-pinned-vendor');
       } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'clear' } }));
+    } },
+  // Round 90 / Loop: granular vendor-only clear. R88 added per-letter
+  // toggle and Esc-clears-all; this fills the keyboard-only middle
+  // ground (release the vendor pin without disturbing status/group).
+  // Listed only when the user types "vendor" — fuzzy match still
+  // surfaces it under broader queries like "clear".
+  { id: 'act-clear-topo-vendor', title: 'Clear topology vendor filter', hint: 'release pinned vendor only', group: 'Actions',
+    icon: <NavIcon d="M6 18L18 6M6 6l12 12" />,
+    perform: () => {
+      try { sessionStorage.removeItem('anet-topo-pinned-vendor'); } catch {}
+      window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'clear-vendor' } }));
     } },
 
   // ── Round 74 / Loop: layout + view shortcuts via the palette ──
