@@ -4748,17 +4748,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   }}
                 >
                   <title>{`${label} — open /messages for the full list`}</title>
+                  {/* Round 195 / Loop: footer hint adopts the cyan
+                      vocabulary on hover, joining the interactive-on-
+                      hover-is-cyan family (R178 fullscreen / R163
+                      layout / R179 nodeSize / R193 active-links chip).
+                      Pre-R195 the footer brightened on hover via
+                      opacity + underline but kept its gray fill —
+                      'becomes brighter gray' rather than 'becomes the
+                      go-act color'. legendAccent is the same cyan-400
+                      (dark) / teal-600 (light) every other interactive
+                      hover speaks. transition list extends `fill 200ms
+                      ease-out` so the colour swap eases instead of
+                      snapping. data-recent-panel-more-hovered exposes
+                      the gate for tests. */}
                   <text
                     x="115" y="82"
                     textAnchor="middle"
-                    fill={pal.legendText}
+                    fill={hoveredRecentMore ? pal.legendAccent : pal.legendText}
                     fontSize="8"
                     fontFamily="monospace"
                     fontStyle="italic"
                     opacity={hoveredRecentMore ? 0.85 : 0.55}
                     textDecoration={hoveredRecentMore ? 'underline' : 'none'}
                     data-recent-panel-more={moreCount}
-                    style={{ transition: 'opacity 150ms ease-out' }}
+                    data-recent-panel-more-hovered={hoveredRecentMore ? 'true' : 'false'}
+                    style={{ transition: 'opacity 150ms ease-out, fill 200ms ease-out' }}
                   >
                     {label}
                   </text>
