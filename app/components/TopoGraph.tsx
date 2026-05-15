@@ -1289,13 +1289,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {/* Issue #87: ring | grid layout toggle — segmented control,
-              persisted to localStorage anet-topo-layout. */}
+              persisted to localStorage anet-topo-layout.
+              Round 163 / Loop: bring the layout toggle into the R154
+              chrome-button focus convention. Pre-R163 the buttons had
+              aria-pressed + transition-colors but no focus-visible ring
+              (browser default — invisible against dark canvas) and the
+              inactive variant only nudged text from gray-500 → gray-400
+              on hover with no bg tint, so the hover-to-click affordance
+              was barely perceptible.
+
+              R163 closes both gaps to match R154:
+                focus-visible:ring-2 focus-visible:ring-cyan-400/60
+                  → keyboard users see exactly which segment is focused
+                hover:bg-cyan-500/5 (inactive)
+                  → mouse hover shows a faint cyan ghost of the active
+                    state, signalling 'click to switch'
+                hover:bg-cyan-500/20 (active)
+                  → active button responds too, says 'still clickable'
+              data-topo-chrome-layout for testability symmetric with the
+              R154 chrome buttons (data-topo-chrome-zoom-in / -reset /
+              -fullscreen etc). */}
           <div className="inline-flex rounded-md border border-gray-500/25 overflow-hidden" role="group" aria-label="Topology layout">
             <button
               onClick={() => { if (layout !== 'ring') toggleLayout(); }}
               aria-pressed={layout === 'ring'}
               title="Ring layout (l to toggle)"
-              className={`px-2.5 py-1 transition-colors ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300' : 'text-gray-500 hover:text-gray-400'}`}
+              data-topo-chrome-layout="ring"
+              data-topo-chrome-layout-active={layout === 'ring' ? 'true' : 'false'}
+              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5'}`}
             >
               Ring
             </button>
@@ -1303,7 +1324,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               onClick={() => { if (layout !== 'grid') toggleLayout(); }}
               aria-pressed={layout === 'grid'}
               title="Grid layout (l to toggle)"
-              className={`px-2.5 py-1 border-l border-gray-500/25 transition-colors ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300' : 'text-gray-500 hover:text-gray-400'}`}
+              data-topo-chrome-layout="grid"
+              data-topo-chrome-layout-active={layout === 'grid' ? 'true' : 'false'}
+              className={`px-2.5 py-1 border-l border-gray-500/25 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5'}`}
             >
               Grid
             </button>
