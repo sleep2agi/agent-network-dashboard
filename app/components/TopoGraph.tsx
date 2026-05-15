@@ -1328,6 +1328,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           : link.count <= 4 ? 'topo-arrow'
                           : 'topo-arrow-l';
 
+            // Round 39 / Loop: edge hover tooltip — surface the same
+            // last_at + count info the freshness fade and arrow tier
+            // already encode visually, in plain text. The stroke is the
+            // hover target; SVG `<title>` honours newlines on every
+            // browser the dashboard targets.
+            const lastAt = relativeAgo(link.last_at);
+            const tooltip = `${link.from} → ${link.to}\n${link.count} message${link.count === 1 ? '' : 's'}${lastAt ? ` · last ${lastAt}` : ''}`;
             return (
               <g key={link.key}>
                 <path
@@ -1339,7 +1346,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   filter={isLight ? undefined : 'url(#topo-glow)'}
                   markerEnd={`url(#${arrowId})`}
                   className="transition-opacity duration-500"
-                />
+                  style={{ pointerEvents: 'stroke' }}
+                >
+                  <title>{tooltip}</title>
+                </path>
                 <path
                   id={`flow-path-${index}`}
                   d={path}
