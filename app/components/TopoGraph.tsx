@@ -4675,10 +4675,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   <circle cx="16" cy={row.y0} r="5.5" fill={row.fill} />
                   {/* R61 pinned-state ring — concentric stroke at r=8 in
                       the row colour, draws OUTSIDE the swatch so it
-                      doesn't fight the fill colour the user is matching. */}
-                  {isPinned && (
-                    <circle cx="16" cy={row.y0} r="8" fill="none" stroke={row.fill} strokeWidth="1.5" />
-                  )}
+                      doesn't fight the fill colour the user is matching.
+                      Round 181 / Loop: the ring used to mount/unmount
+                      with the conditional render, snapping on every
+                      pin/unpin. Now always mounted with opacity gated
+                      by isPinned + a 150ms transition so the ring
+                      eases in on pin and out on unpin — same gesture
+                      vocabulary the R165/R180 smooth-pin-mirror family
+                      uses for the chip-row pin chips. strokeWidth=1.5
+                      is the R51 overlap-test sentinel but the test
+                      selector is gated to g[data-node] ancestors,
+                      so this legend-internal circle is invisible to
+                      that probe. pointerEvents:none so the ring can't
+                      intercept the row click that produced it. */}
+                  <circle
+                    cx="16" cy={row.y0} r="8"
+                    fill="none"
+                    stroke={row.fill}
+                    strokeWidth="1.5"
+                    opacity={isPinned ? 1 : 0}
+                    data-legend-pin-ring={row.key}
+                    data-legend-pin-ring-pinned={isPinned ? 'true' : 'false'}
+                    style={{
+                      pointerEvents: 'none',
+                      transition: 'opacity 150ms ease-out',
+                    }}
+                  />
                   <text
                     x="30" y={row.y1}
                     fill={hoveredStatus === row.key || isPinned ? pal.legendHeadline : pal.legendText}
