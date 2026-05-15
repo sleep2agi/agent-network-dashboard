@@ -965,6 +965,35 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           <span className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
             {onlineNodes.length} online
           </span>
+          {/* Round 31 / Loop: fleet-health pressure bar. The "X working /
+              Y online" chips already carry the raw counts; the bar lets
+              the eye get the working/idle/offline RATIO in one glance
+              without mental math. Stacked 3-segment chip, ~64 px wide. */}
+          {(() => {
+            const w = workingCount;
+            const i = onlineNodes.length - workingCount; // idle = online - working
+            const o = offlineNodes.length;
+            const total = w + i + o;
+            if (total === 0) return null;
+            const seg = (n: number, color: string, key: string) => {
+              if (n === 0) return null;
+              return <span key={key} style={{ width: `${(n / total) * 100}%`, background: color, height: '100%' }} />;
+            };
+            return (
+              <span
+                className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
+                title={`${w} working · ${i} idle · ${o} offline`}
+                data-fleet-pressure
+              >
+                <span className="text-[10px] tracking-wide">pressure</span>
+                <span className="inline-flex h-1.5 w-16 rounded-full overflow-hidden" style={{ background: 'rgb(75 85 99 / 0.25)' }}>
+                  {seg(w, isLight ? '#059669' : '#22c55e', 'w')}
+                  {seg(i, isLight ? '#0d9488' : '#2dd4bf', 'i')}
+                  {seg(o, isLight ? '#94a3b8' : '#6b7280', 'o')}
+                </span>
+              </span>
+            );
+          })()}
           {vendorDist.length > 1 && (
             <span
               className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
