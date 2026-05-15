@@ -2041,8 +2041,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               corner triangles, so the panels never overlap a node, in ring
               OR grid layout (Vincent 4727 zero-overlap criterion). */}
           {/* latest flow labels */}
+          {/* Round 57 / Loop: drop-shadow on the panel rects gives them
+              card-like elevation, especially on light theme where the
+              near-white fill on a near-white canvas read as pasted-on.
+              data-topo-panel-elevation tag so the test can verify both
+              panels carry the filter. The filter is on the rect, not
+              the parent <g>, so it doesn't shadow the rows + text inside
+              — only the panel chrome lifts. */}
           <g transform="translate(16, 16)">
-            <rect x="0" y="0" width="230" height="84" rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
+            <rect
+              x="0" y="0" width="230" height="84" rx="10"
+              fill={pal.legendBox.fill}
+              stroke={pal.legendBox.stroke}
+              opacity={isLight ? 0.97 : 0.92}
+              style={{ filter: isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))' : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))' }}
+              data-topo-panel-elevation="recent"
+            />
             <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700">recent signal</text>
             <text x="150" y="21" fill={pal.legendAccent} fontSize="10" fontFamily="monospace">{messages.length} msgs</text>
             {/* Round 45 / Loop: empty state. The panel used to render
@@ -2095,7 +2109,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               a small affordance hint. Geometry unchanged — the new
               <g> wrappers only carry pointer handlers. */}
           <g transform="translate(760, 16)">
-            <rect x="0" y="0" width="224" height="96" rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
+            {/* R57: matching drop-shadow elevation to the legend panel. */}
+            <rect
+              x="0" y="0" width="224" height="96" rx="10"
+              fill={pal.legendBox.fill}
+              stroke={pal.legendBox.stroke}
+              opacity={isLight ? 0.97 : 0.92}
+              style={{ filter: isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))' : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))' }}
+              data-topo-panel-elevation="legend"
+            />
             {([
               { key: 'working' as const, y0: 24, y1: 28, fill: isLight ? '#059669' : '#22c55e', label: 'working node' },
               { key: 'idle'    as const, y0: 48, y1: 52, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle' },
