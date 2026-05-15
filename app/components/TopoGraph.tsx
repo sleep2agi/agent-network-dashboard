@@ -3017,6 +3017,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-group-label-tinted={pinnedGroup === box.key ? 'pinned' : hoveredGroupLabel === box.key ? 'hover' : 'none'}
                     style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
                   />
+                {/* Round 218 / Loop: group label gains a letter-spacing
+                    transition on pin — the text subtly spaces out
+                    (0px → 0.5px) when the group is locked, giving the
+                    pinned state its own typographic signature distinct
+                    from R63's transient hover fill brighten. Hover and
+                    pin share the same fill colour (legendHeadline), so
+                    pre-R218 the only thing distinguishing them was
+                    R142 drop-shadow + R68 rect stroke. R218 adds a
+                    type-level signal: pinned text spreads slightly,
+                    feels "locked in" / "open and held". Letter-
+                    spacing is one of the few SVG text properties that
+                    interpolates smoothly across the major browsers.
+                    Hover stays at default tracking — the spread is
+                    pin-exclusive so users can read pinned vs
+                    hovered at the text alone. transition 200ms
+                    matches R142 fill timing so all the group-label
+                    state-flip channels (fill colour, rect stroke,
+                    rect drop-shadow, label tracking) ease as one. */}
                 <text
                   x={box.x + 12}
                   y={box.y + 14}
@@ -3024,8 +3042,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fontSize="13"
                   fontFamily="monospace"
                   fontWeight="700"
-                  style={{ transition: 'fill 200ms ease-out' }}
+                  style={{
+                    transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out',
+                    letterSpacing: isPinned ? '0.5px' : '0px',
+                  }}
                   data-group-label={box.key}
+                  data-group-label-pinned={isPinned ? 'true' : 'false'}
                 >
                   {box.key}
                   {/* Round 19 / Loop: member-count chip. Inline tspan stays
