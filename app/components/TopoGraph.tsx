@@ -2090,27 +2090,51 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               (r=330). Each starts at a different angle (offset 0/0.25/0.5/0.75
               of the cycle) so they're evenly spaced. 16s per revolution is
               slow enough to feel ambient, not noisy. Skipped on light theme
-              so the white surface stays clean. */}
-          {!isLight && [0, 0.25, 0.5, 0.75].map((phase, i) => (
-            <g key={`orbit-${i}`}>
-              <circle
-                cx={cx + 330} cy={cy}
-                r={i === 0 ? 2.8 : 2.2}
-                fill="#22d3ee"
-                opacity={0.9}
-                filter="url(#topo-glow)"
+              so the white surface stays clean.
+
+              R131 / Loop: orbit period now buckets on workingCount,
+              mirroring R84's hub-busyness breath cadence. An idle
+              fleet keeps the original 16s "calm sweep"; as work
+              accumulates the orbit subtly accelerates (capped at
+              10s so it never feels frantic). Two-layer motion
+              coordination now: R84 breathes the hub, R131 spins
+              the outer ring — both reading the same underlying
+              "is the network busy" signal, both visible
+              simultaneously without competing. Same bucket
+              thresholds (0 / 1-2 / 3-5 / 6+) the R84 block uses
+              at line ~2702 so the two cadences stay in sync if
+              a future refactor shifts buckets. */}
+          {!isLight && (() => {
+            const busy = workingCount === 0 ? 0
+                       : workingCount <= 2 ? 1
+                       : workingCount <= 5 ? 2
+                       : 3;
+            const dur = [16, 14, 12, 10][busy];
+            return [0, 0.25, 0.5, 0.75].map((phase, i) => (
+              <g
+                key={`orbit-${i}`}
+                data-topo-orbit-bucket={busy}
+                data-topo-orbit-dur={dur}
               >
-                <animateTransform
-                  attributeName="transform"
-                  type="rotate"
-                  from={`${phase * 360} ${cx} ${cy}`}
-                  to={`${phase * 360 + 360} ${cx} ${cy}`}
-                  dur="16s"
-                  repeatCount="indefinite"
-                />
-              </circle>
-            </g>
-          ))}
+                <circle
+                  cx={cx + 330} cy={cy}
+                  r={i === 0 ? 2.8 : 2.2}
+                  fill="#22d3ee"
+                  opacity={0.9}
+                  filter="url(#topo-glow)"
+                >
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from={`${phase * 360} ${cx} ${cy}`}
+                    to={`${phase * 360 + 360} ${cx} ${cy}`}
+                    dur={`${dur}s`}
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              </g>
+            ));
+          })()}
 
           {[0, 30, 60, 90, 120, 150].map(angle => (
             <line
