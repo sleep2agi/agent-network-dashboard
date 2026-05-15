@@ -821,6 +821,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // visible without reading the tooltip. The set is the link's two aliases
   // (null when no edge hovered); node opacity composes this after inFocus.
   const [hoveredEdgeKey, setHoveredEdgeKey] = useState<string | null>(null);
+  // Round 116 / Loop: sticky variant of hoveredEdgeKey. R56 made the
+  // recent-signal rows brighten the matching edge on hover, but the
+  // filter released on mouseleave — no way to lock a flow for a
+  // closer look. Click-to-pin closes that gap, matching the
+  // established hover→pin idiom (R60 status, R61 legend, R63 group,
+  // R88 vendor). activeEdgeKey = hoveredEdgeKey ?? pinnedEdgeKey
+  // below so hover still wins for spot-comparison while a pin is set.
+  const [pinnedEdgeKey, setPinnedEdgeKey] = useState<string | null>(null);
+  const activeEdgeKey = hoveredEdgeKey ?? pinnedEdgeKey;
   // Round 77 / Loop: hovering the "N active links" header chip globally
   // brightens every flow edge (1.5× opacity). Transient affordance — the
   // chip already says HOW MANY active flows exist; this answers WHERE
@@ -946,10 +955,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // R74 listener for layout + view palette commands lives below
   // fitView's declaration — see further down in the file.
   const hoveredEdgeEndpoints = useMemo<Set<string> | null>(() => {
-    if (!hoveredEdgeKey) return null;
-    const link = flowLinks.find(l => l.key === hoveredEdgeKey);
+    // R116: compose hover ?? pin so pinning a row via click keeps the
+    // endpoint ring + edge ladder lit after mouseleave.
+    if (!activeEdgeKey) return null;
+    const link = flowLinks.find(l => l.key === activeEdgeKey);
     return link ? new Set([link.from, link.to]) : null;
-  }, [hoveredEdgeKey, flowLinks]);
+  }, [activeEdgeKey, flowLinks]);
 
   // --- Round 103 (issue #81): fullscreen + zoom + pan interaction layer ---
   // DIY native (no d3 / svg-pan-zoom): wrap the topology content in a single
@@ -1210,13 +1221,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // R63: extends to pinnedGroup too. Clears WHATEVER pin is active
       // (one Esc collapses all topology pins) so the keyboard escape
       // route stays a single key, not "Esc maybe Esc again".
-      else if (e.key === 'Escape' && !chatAlias && (pinnedStatus || pinnedGroup || pinnedVendor)) {
-        // R88: extend the universal-cancel to pinnedVendor too. One Esc
-        // collapses every topology pin (matches R62/R63's "single key,
-        // not Esc-maybe-Esc-again" promise).
-        if (pinnedStatus) setPinnedStatus(null);
-        if (pinnedGroup)  setPinnedGroup(null);
-        if (pinnedVendor) setPinnedVendor(null);
+      else if (e.key === 'Escape' && !chatAlias && (pinnedStatus || pinnedGroup || pinnedVendor || pinnedEdgeKey)) {
+        // R88/R116: extend the universal-cancel to vendor + edge too.
+        // One Esc collapses every topology pin (matches R62/R63's
+        // "single key, not Esc-maybe-Esc-again" promise).
+        if (pinnedStatus)  setPinnedStatus(null);
+        if (pinnedGroup)   setPinnedGroup(null);
+        if (pinnedVendor)  setPinnedVendor(null);
+        if (pinnedEdgeKey) setPinnedEdgeKey(null);
         e.preventDefault();
       }
     };
@@ -1227,7 +1239,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     // and pinnedStatus so the Escape branch reads fresh state (re-binding
     // the listener on these state changes is sub-ms — cheaper than refs).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fitView, chatAlias, pinnedStatus, pinnedGroup, pinnedVendor]);
+  }, [fitView, chatAlias, pinnedStatus, pinnedGroup, pinnedVendor, pinnedEdgeKey]);
 
   const toggleFullscreen = () => {
     const el = containerRef.current;
@@ -2235,7 +2247,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // background to the focus. Singletons fall through unchanged
             // (their group key is the alias itself, so bothInHoveredGroup
             // is impossible for a non-self-edge).
-            const isHoveredEdge = hoveredEdgeKey === link.key;
+            // R116: composes hover ?? pin — a pinned edge stays "hot" after the cursor leaves.
+            const isHoveredEdge = activeEdgeKey === link.key;
             const fromGroup = groupKeys[link.from] ?? link.from;
             const toGroup = groupKeys[link.to] ?? link.to;
             const bothInHoveredGroup = !!activeGroup && fromGroup === activeGroup && toGroup === activeGroup;
@@ -2248,7 +2261,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // the edge-hover (2.0×) or node-hover (1.7×) priorities.
             const edgeOpacityMul = isHoveredEdge
               ? 2.0
-              : hoveredEdgeKey
+              : activeEdgeKey
                 ? 0.35
                 : !hoveredAlias && !activeGroup
                   ? (hoveredActiveLinks ? 1.5 : 1)
@@ -3128,14 +3141,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 const rawAt = link.last_at ? relativeAgo(link.last_at) : null;
                 const lastAt = rawAt ? rawAt.replace(/\s+ago$/, '') : null;
                 const isRowHovered = hoveredEdgeKey === link.key;
+                const isRowPinned  = pinnedEdgeKey === link.key;
+                const isRowActive  = isRowHovered || isRowPinned;
                 return (
                   <g
                     key={link.key}
                     data-recent-row={link.key}
                     data-recent-row-hovered={isRowHovered ? 'true' : 'false'}
+                    data-recent-row-pinned={isRowPinned ? 'true' : 'false'}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isRowPinned}
                     style={{ cursor: 'pointer' }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onMouseEnter={() => setHoveredEdgeKey(link.key)}
                     onMouseLeave={() => setHoveredEdgeKey(prev => prev === link.key ? null : prev)}
+                    // R116: click toggles pin. activeEdgeKey =
+                    // hoveredEdgeKey ?? pinnedEdgeKey so the matching
+                    // edge stays "hot" after mouseleave; click again
+                    // (or Esc) releases.
+                    onClick={() => setPinnedEdgeKey(prev => prev === link.key ? null : link.key)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setPinnedEdgeKey(prev => prev === link.key ? null : link.key);
+                      }
+                    }}
                   >
                     {/* R104: subtle row-background tint on hover. R56
                         already brightens the matching edge on the canvas,
@@ -3144,17 +3175,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         Filling the rect at hover with `pal.legendAccent`
                         at low alpha gives the row visual feedback at the
                         source surface, mirroring the list-item idiom from
-                        the chip-row pills. */}
+                        the chip-row pills. R116: pinned rows tint
+                        stronger than hovered ones so locked vs preview
+                        is discriminable. */}
                     <rect
                       x="6" y={38 + index * 16 - 10}
                       width="218" height="14" rx="3"
-                      fill={isRowHovered ? pal.legendAccent : 'transparent'}
-                      opacity={isRowHovered ? (isLight ? 0.10 : 0.14) : 1}
+                      fill={isRowActive ? pal.legendAccent : 'transparent'}
+                      opacity={isRowPinned ? (isLight ? 0.18 : 0.22)
+                              : isRowHovered ? (isLight ? 0.10 : 0.14)
+                              : 1}
                       style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
                     />
                     <text
                       x="13" y={38 + index * 16}
-                      fill={hoveredEdgeKey === link.key ? pal.legendHeadline : pal.legendText}
+                      fill={isRowActive ? pal.legendHeadline : pal.legendText}
                       fontSize="9"
                       fontFamily="monospace"
                       style={{ transition: 'fill 150ms ease-out' }}
