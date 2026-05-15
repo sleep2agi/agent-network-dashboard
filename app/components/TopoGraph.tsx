@@ -1085,7 +1085,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               <g
                 key={session.alias}
                 data-node={session.alias}
-                className="transition-opacity"
+                className="group transition-opacity"
                 style={{ cursor: 'pointer' }}
                 // Stop the pointerdown from reaching the SVG pan handler: the
                 // SVG calls setPointerCapture, and a captured pointer makes
@@ -1102,6 +1102,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     Falls back to just the alias when the node reports no
                     model/runtime. */}
                 <title>{identityLine(session.model, session.runtime) || session.alias}</title>
+                {/* Round 2 / Loop: hover ring — a thin outer stroke that fades
+                    in when the cursor enters the node, signalling clickability
+                    (real-user feedback for the chat-popover open). Pure CSS via
+                    Tailwind group-hover, so it costs nothing per frame and
+                    respects prefers-reduced-motion via the global media query. */}
+                <circle
+                  cx={pos.x}
+                  cy={pos.y}
+                  r={radius + 12}
+                  fill="none"
+                  stroke={status.primary}
+                  // strokeWidth must NOT be 1.5 (offline status ring) or 3
+                  // (online status ring) — the overlap test selects by those
+                  // exact widths and would mis-count this invisible hover
+                  // ring as a node footprint.
+                  strokeWidth="2"
+                  className="opacity-0 group-hover:opacity-70 transition-opacity duration-150"
+                  style={{ pointerEvents: 'none' }}
+                />
                 {isActive && (
                   <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
                     <animate attributeName="r" values={`${radius + 8};${radius + 22};${radius + 8}`} dur="2.4s" repeatCount="indefinite" />
