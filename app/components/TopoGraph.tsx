@@ -5,6 +5,7 @@ import { Session } from './types';
 import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
 import { ChatPopover } from './ChatPopover';
 import { vendorForModel, runtimeIdentity, identityLine } from '../lib/vendorIdentity';
+import { parseHubTime, relativeAgo } from '../lib/time';
 
 interface MessageFlow {
   from_alias: string;
@@ -108,23 +109,9 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
-/** Round 35 / Loop: timezone-safe parse for hub timestamps.
- *
- *  The CommHub serialises last_seen / created_at as SQL-style without a zone:
- *  "2026-05-15 06:00:28". `Date.parse` on a bare SQL string interprets it as
- *  *local* time — fine on UTC servers, BUT a UTC+8 browser then sees every
- *  timestamp as 8 h older than reality and the Round 27 ghost age-out (1 h)
- *  fires on freshly-deleted nodes. ISO strings ("…T06:00:28Z") parse
- *  correctly already.
- *
- *  Normalise: if the string has no T separator, add the T and a trailing Z so
- *  it's parsed as UTC. Returns ms since epoch or null on a parse failure. */
-function parseHubTime(dateStr: string | null | undefined): number | null {
-  if (!dateStr) return null;
-  const iso = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T') + 'Z';
-  const t = Date.parse(iso);
-  return Number.isFinite(t) ? t : null;
-}
+// Round 38 / Loop: parseHubTime + relativeAgo factored to app/lib/time.ts
+// — the Round 35 fix lives there now alongside the Round 37 mirror so
+// any future TZ-safe parse update happens in one place.
 
 /** Round 12 / Loop: status trio audit.
  *
@@ -1500,21 +1487,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     be noise). Accepts both ISO ("…T06:00:28Z") and SQL-style
                     ("… 06:00:28" assumed UTC) formats. */}
                 {(() => {
-                  // Round 35 / Loop: parseHubTime is shared with isGhost so
-                  // both the visibility filter and the tooltip line interpret
-                  // bare SQL timestamps as UTC (was the cause of phantom
-                  // ghosting on non-UTC browsers).
-                  const formatLastSeen = (dateStr: string): string | null => {
-                    const t = parseHubTime(dateStr);
-                    if (t === null) return null;
-                    const s = Math.floor((Date.now() - t) / 1000);
-                    if (s < 0) return 'just now';
-                    if (s < 60) return `${s}s ago`;
-                    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-                    if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-                    return `${Math.floor(s / 86400)}d ago`;
-                  };
-                  const lastSeen = !isOnline && session.last_seen_at ? formatLastSeen(session.last_seen_at) : null;
+                  // Round 35 / Loop: TZ-safe parsing via the shared lib helper
+                  // — same parseHubTime is used by isGhost above (Round 38
+                  // factored it to app/lib/time.ts so both paths interpret SQL
+                  // bare timestamps as UTC on every browser).
+                  const lastSeen = !isOnline && session.last_seen_at ? relativeAgo(session.last_seen_at) : null;
                   return (
                     <title>{[
                       identityLine(session.model, session.runtime) || session.alias,

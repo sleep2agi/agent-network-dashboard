@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AliasAvatar } from './AliasAvatar';
 import { TaskChatPanel } from './TaskChatPanel';
 import { useSessions } from '../lib/hooks';
+import { relativeAgo } from '../lib/time';
 
 interface ChatPopoverProps {
   /** Node alias to chat with. Changing it switches the conversation. */
@@ -42,23 +43,11 @@ const MOBILE_BP = 640;
  *  ChatPopover header. The SVG <title> tooltip (Rounds 33-34) only shows
  *  on hover-over-node, which is lost once the popover is open and
  *  potentially dragged away. Lifting cwd and last-seen into the popover
- *  header keeps the context where the user actually needs it. */
-function parseHubTime(dateStr: string | null | undefined): number | null {
-  if (!dateStr) return null;
-  const iso = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T') + 'Z';
-  const t = Date.parse(iso);
-  return Number.isFinite(t) ? t : null;
-}
-function relativeAgo(dateStr: string | null | undefined): string | null {
-  const t = parseHubTime(dateStr);
-  if (t === null) return null;
-  const s = Math.floor((Date.now() - t) / 1000);
-  if (s < 0) return 'just now';
-  if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
-}
+ *  header keeps the context where the user actually needs it.
+ *
+ *  Round 38: relativeAgo factored to app/lib/time.ts so this file shares
+ *  the same TZ-safe parser as TopoGraph (was a duplicated mirror until
+ *  this round). */
 
 export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
   // Position + size are resolved on mount (SSR-safe defaults here).
