@@ -5055,10 +5055,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 data-topo-chrome-zoom-out-icon
               ><path d="M5 12h14" /></svg>
             </button>
+            {/* Round 192 / Loop: zoom-level readout span participates in the
+                R186 click-feel pop alongside the +/− icons. Pre-R192 a click
+                on + or − triggered:
+                  · icon pop          (R186, ~220ms scale 1→1.06→1)
+                  · canvas crossfade  (R169, ~280ms opacity blend)
+                  · readout text snap (instant — 100% → 120%)
+                The readout was the only surface that didn't acknowledge the
+                gesture. Reusing the existing .anet-chrome-pop CSS keyframe
+                (no new keyframes) lets the "%" number gently bounce in
+                sync with the icon — same 0.22s ease-out, transform-origin
+                center. transform-box: fill-box on the keyframe is
+                SVG-specific and harmlessly ignored on this HTML span. The
+                base layout classes (px / border / tabular-nums / minWidth)
+                stay intact; only when chromePopping is 'zoom-in' or
+                'zoom-out' do we splice in the animation class. Same
+                React-clears-after-240ms cleanup R186 already runs, so the
+                class can replay on a repeat click. */}
             <span
-              className="px-2 py-1 tabular-nums border-x text-center"
+              className={`px-2 py-1 tabular-nums border-x text-center${
+                chromePopping === 'zoom-in' || chromePopping === 'zoom-out'
+                  ? ' anet-chrome-pop' : ''
+              }`}
               data-topo-chrome-zoom-level
-              style={{ color: pal.legendText, borderColor: pal.containerBorder, minWidth: 46 }}
+              data-topo-chrome-zoom-level-popping={
+                chromePopping === 'zoom-in' || chromePopping === 'zoom-out'
+                  ? 'true' : 'false'
+              }
+              style={{
+                color: pal.legendText,
+                borderColor: pal.containerBorder,
+                minWidth: 46,
+                display: 'inline-block',
+              }}
               title="Current zoom level"
             >
               {Math.round(view.zoom * 100)}%
