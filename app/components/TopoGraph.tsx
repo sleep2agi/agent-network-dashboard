@@ -4301,7 +4301,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     </g>
                   );
                 })()}
-                {session.status === 'working' && (() => {
+                {(() => {
                   // Round 24 / Loop: pulse rate ↔ traffic. The dot's dur
                   // was a flat 1.1s — every working node looked equally
                   // busy. Mapping it to sse:N lets the eye land on what's
@@ -4310,14 +4310,46 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // typical 1-2-SSE Claude/Codex sessions stay in the
                   // "active" tier and only multi-pane orchestrators pop
                   // into the "busy" tier. Geometry unchanged (r=2.5).
+                  //
+                  // Round 214 / Loop: pulse dot always-mounts; visibility
+                  // crossfades via parent <g> opacity instead of React
+                  // conditional mount/unmount. Pre-R214 a node going
+                  // working ↔ idle snapped the pulse dot in/out in one
+                  // frame at the node's top. R214 extends the always-
+                  // mount-opacity-gate pattern (R181/R182/R183/R213 hub
+                  // family) down to per-node grain so the working-state
+                  // appearance/disappearance now eases over 300ms,
+                  // matching R167 ring fill / R211 text fill / R213 hub
+                  // crossfade — every status-flip beat across the
+                  // entire node ensemble runs on the same 300ms metre.
+                  //
+                  // SMIL <animate> on the inner <circle>'s opacity keeps
+                  // running regardless of parent visibility (SMIL is
+                  // unaffected by CSS opacity composition). When the
+                  // parent <g> opacity is 0, the inner pulse is
+                  // invisible; when it's 1 the pulse is fully visible.
+                  // Opacities compose multiplicatively, so no SMIL/CSS
+                  // fight — SMIL animates child opacity 1→0.25→1, CSS
+                  // crossfades parent opacity 1↔0 on status flip.
                   const sse = sseCountFor ?? 0;
                   const dur = sse >= 4 ? '0.7s' : sse >= 2 ? '0.9s' : '1.2s';
+                  const visible = session.status === 'working';
                   return (
-                    <circle cx={pos.x} cy={pos.y - (radius - 6)} r="2.5" fill={pal.flowParticle} data-pulse-dur={dur} opacity={reducedMotion ? 0.6 : undefined}>
-                      {!reducedMotion && (
-                        <animate attributeName="opacity" values="1;0.25;1" dur={dur} repeatCount="indefinite" />
-                      )}
-                    </circle>
+                    <g
+                      data-pulse-wrapper={session.alias}
+                      data-pulse-visible={visible ? 'true' : 'false'}
+                      style={{
+                        opacity: visible ? 1 : 0,
+                        transition: 'opacity 300ms ease-out',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <circle cx={pos.x} cy={pos.y - (radius - 6)} r="2.5" fill={pal.flowParticle} data-pulse-dur={dur} opacity={reducedMotion ? 0.6 : undefined}>
+                        {!reducedMotion && (
+                          <animate attributeName="opacity" values="1;0.25;1" dur={dur} repeatCount="indefinite" />
+                        )}
+                      </circle>
+                    </g>
                   );
                 })()}
 
