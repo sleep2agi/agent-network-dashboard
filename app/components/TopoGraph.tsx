@@ -534,6 +534,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           const minX = Math.min(...xs), minY = Math.min(...ys);
           return {
             key: band.members.length ? groupKeys[band.members[0].alias] : '',
+            count: band.members.length,
             x: minX - GROUP_PAD,
             y: minY - GROUP_TOP,
             w: Math.max(...xs) - minX + GROUP_PAD * 2,
@@ -629,7 +630,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       groupKeys,
       // #111: group boxes are a grid-layout feature only — radially scattered
       // ring nodes can't be cleanly boxed. Ring keeps the #83 prefix hue.
-      groupBoxes: [] as { key: string; x: number; y: number; w: number; h: number }[],
+      groupBoxes: [] as { key: string; count: number; x: number; y: number; w: number; h: number }[],
     };
   }, [messages, sessions, sseSessions, layout, nodeScale]);
 
@@ -1100,6 +1101,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   style={{ transition: 'fill 200ms ease-out' }}
                 >
                   {box.key}
+                  {/* Round 19 / Loop: member-count chip. Inline tspan stays
+                      in the single <text> bbox the overlap test reads, so
+                      the node↔label guard still catches if the chip ever
+                      pushes the label far enough right to clip a node.
+                      Smaller + lighter weight reads as metadata, not name. */}
+                  <tspan dx="6" fill={pal.legendText} fontSize="11" fontWeight="400">· {box.count}</tspan>
                 </text>
               </g>
             );
