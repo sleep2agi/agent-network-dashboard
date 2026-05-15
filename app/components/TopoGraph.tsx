@@ -3310,8 +3310,46 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 "X flows" mirrors flowLinks.length one-for-one. When
                 flows < msgs the chip-row's "N active links · last 2s"
                 already tells the operator about traffic volume — no
-                duplicate metric needed here. */}
-            <text x="150" y="21" fill={pal.legendAccent} fontSize="10" fontFamily="monospace" data-recent-panel-count>{flowLinks.length} flows</text>
+                duplicate metric needed here.
+                R129 / Loop: header gains an amber " · N hot" tail
+                when ≥ 1 flowLink has count ≥ 10. The third surface
+                of the hot-lane convention (R126 canvas badge / R127
+                row count) lives at the panel header so a user
+                scanning vertically — header → rows — gets a top-
+                level summary before reading each row's amber digit.
+                Restructured into a single <text> with <tspan>
+                fragments so the amber portion can carry its own
+                fill + weight without a sibling <text>. Switched
+                anchor x=150 left-justified → x=217 right-justified
+                so the count column unifies visually with the legend
+                panel's right-justified header (line 3511 — also
+                fontSize 10 monospace, also x≈215 textAnchor end).
+                data-recent-panel-count stays on the flow tspan so
+                the R96 / R128 tests still resolve. data-recent-
+                panel-hot-count exposes the hot bucket count. */}
+            {(() => {
+              const hotFlowCount = flowLinks.filter(l => l.count >= 10).length;
+              const hotStroke = isLight ? '#d97706' : '#fbbf24';
+              return (
+                <text
+                  x="217" y="21"
+                  textAnchor="end"
+                  fontSize="10"
+                  fontFamily="monospace"
+                >
+                  <tspan fill={pal.legendAccent} data-recent-panel-count>{flowLinks.length} flows</tspan>
+                  {hotFlowCount > 0 && (
+                    <tspan
+                      fill={hotStroke}
+                      fontWeight="700"
+                      data-recent-panel-hot-count={hotFlowCount}
+                    >
+                      {' · '}{hotFlowCount} hot
+                    </tspan>
+                  )}
+                </text>
+              );
+            })()}
             {/* Round 45 / Loop: empty state. The panel used to render
                 "recent signal" + "0 msgs" with three blank slots below
                 when no flow yet — read as "broken" rather than "quiet".
