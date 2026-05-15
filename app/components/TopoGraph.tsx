@@ -2811,6 +2811,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 >
                   <title>{tooltip}</title>
                 </path>
+                {/* Round 166 / Loop: stroke-width transition pairs
+                    with R164 edge badge r-lift. Pre-R166 the
+                    visible flow path's hover thickening (R50:
+                    renderWidth = isHoveredEdge ? width * 1.4 :
+                    width) snapped instantly even though opacity
+                    transitioned smoothly. Edge hover now lifts
+                    the line AND the badge in coordinated 300ms
+                    ease-out motion. Drop the Tailwind transition
+                    class for inline style so both opacity and
+                    stroke-width pick up the same timing without
+                    arbitrary-property class compilation risk.
+                    data-edge-visible exposes the path for test
+                    probes (the R48 hitbox sibling already has
+                    data-edge-hitbox). Respects prefers-reduced-
+                    motion via the R29 globals.css blanket
+                    override that neutralises transition-duration
+                    universally. */}
                 <path
                   d={path}
                   fill="none"
@@ -2819,8 +2836,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   opacity={Math.min(1, (isLight ? 0.22 : 0.28) * fresh * edgeOpacityMul)}
                   filter={isLight ? undefined : 'url(#topo-glow)'}
                   markerEnd={`url(#${arrowId})`}
-                  className="transition-opacity duration-300"
-                  style={{ pointerEvents: 'none' }}
+                  data-edge-visible={link.key}
+                  style={{
+                    pointerEvents: 'none',
+                    transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out',
+                  }}
                 />
                 <path
                   id={`flow-path-${index}`}
