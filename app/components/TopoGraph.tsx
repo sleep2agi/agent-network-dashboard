@@ -2116,8 +2116,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               ? undefined
               : `${flowList}${flowSuffix} — hover brightens all · click to open /messages`;
             return (
+              // Round 193 / Loop: the chip itself adopts a subtle cyan
+              // tint on its own hover, mirroring the cyan flowEdge
+              // highlight it fires on the canvas. Pre-R193 the gesture
+              // was visually asymmetric:
+              //   hover this chip → canvas edges brighten (cyan)
+              //   chip itself     → stays gray (silent)
+              // The *cause element* (chip) gave no response while the
+              // *effect element* (canvas edges) painted loud. Same
+              // pin-mirror logic R165 / R180 use on the four other
+              // chip-row surfaces — the chip and the canvas edge it
+              // pins should speak the same color vocabulary. Tailwind
+              // :hover variant cyan-500/10 bg + cyan-500/30 border +
+              // cyan-200 text matches the same palette R178/R163 use
+              // for the active chrome buttons. transition-colors
+              // duration-200 blends the swap smoothly. Hover variant
+              // only attaches when isInteractive — a chip showing
+              // "0 active links" has no list to open and should
+              // stay gray. data-active-links-clickable already
+              // exposes that gate to tests.
               <span
-                className="hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 anet-topo-chip-focus"
+                className={`hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                  isInteractive
+                    ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30'
+                    : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                }`}
                 data-active-links-chip
                 data-active-links-flow-count={flowLinks.length}
                 data-active-links-clickable={isInteractive ? 'true' : 'false'}
