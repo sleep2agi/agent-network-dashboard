@@ -147,6 +147,16 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // the chip row and triggers whenever flowLinks > 0 — a broader
       // entry point for the same "show me the full list" jump.
       { keys: ['click chip'], label: 'See all flows — click the "N active links" chip in the chip row (R136)' },
+      // Round 141 / Loop: catch up on R139 + R140 — the chip-row
+      // "N working" and "N online" chips finally honour the cursor:
+      // pointer they've carried since R79. Working pins
+      // pinnedStatus='working' (composes with R60 pressure-bar + R61
+      // legend rows — three surfaces, one pin); online navigates to
+      // /nodes (pinning 'idle' would misrepresent the chip, which
+      // semantically means working+idle). Two entries this round
+      // because two new gestures landed since R137's catch-up.
+      { keys: ['click chip'], label: 'Pin "working" status — click "N working" in the chip row (R139)' },
+      { keys: ['click chip'], label: 'Open the agent list — click "N online" in the chip row (R140)' },
     ],
   },
 ];
