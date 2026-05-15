@@ -868,13 +868,21 @@ body {
    parses "this group has live work" without registering the box
    as moving. R86 stride matches the box's `strokeDasharray="6 6"`
    so a single full cycle returns to a frame-identical state.
-   prefers-reduced-motion handled by the blanket override below. */
+   prefers-reduced-motion handled by the blanket override below.
+   R132: split shorthand into longhand so per-group inline style can
+   override animation-duration via the --march-dur custom property
+   without re-declaring keyframe + timing + iteration count. Default
+   stays at 12s when --march-dur isn't set, so existing single-group
+   call sites keep their cadence. */
 @keyframes anet-topo-groupbox-march-kf {
   from { stroke-dashoffset: 0;   }
   to   { stroke-dashoffset: -12; }
 }
 .anet-topo-groupbox-live {
-  animation: anet-topo-groupbox-march-kf 12s linear infinite;
+  animation-name: anet-topo-groupbox-march-kf;
+  animation-duration: var(--march-dur, 12s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
 /* ─────────────────────────────────────────────────────────────────────

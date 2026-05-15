@@ -2196,6 +2196,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // solid stroke (not dashed), thicker, accent-coloured; brighter
             // text and slightly stronger fill. Label and box read as one
             // selected unit. Geometry unchanged → overlap test untouched.
+            // R132: per-group marching-ants duration computed once,
+            // reused on the data attribute + the inline custom property.
+            const w = box.statuses.working;
+            const marchDur = w >= 6 ? 8 : w >= 4 ? 10 : w >= 2 ? 12 : 14;
             return (
               <g
                 key={`grp-${box.key}`}
@@ -2233,9 +2237,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // already shout for attention via solid stroke). 12s
                   // cycle reads as ambient — the eye parses "live work
                   // here" without registering the box as animating.
+                  // R132: per-group ant rate buckets on box.statuses.working
+                  // — the same coupling-to-busyness idiom R84 uses for the
+                  // hub and R131 uses for the outer-ring orbit, applied at
+                  // the GROUP scale. A team with one working member ambles;
+                  // a team with five working members visibly accelerates.
+                  // Bucket boundaries (1 / 2-3 / 4-5 / 6+) chosen to land
+                  // on the same 14/12/10/8 cadence ladder so the three
+                  // motion layers (hub / ring / group) keep a coherent
+                  // tempo grammar. Default 12s when working=0 doesn't
+                  // matter — the className is only applied when working>0.
                   data-group-box-live={!isPinned && !isHovered && box.statuses.working > 0 ? 'true' : 'false'}
+                  data-group-box-march-dur={marchDur}
                   className={!isPinned && !isHovered && box.statuses.working > 0 ? 'anet-topo-groupbox-live' : undefined}
-                  style={{ transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out', pointerEvents: 'none' }}
+                  style={{
+                    transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out',
+                    pointerEvents: 'none',
+                    // CSS var consumed by `.anet-topo-groupbox-live`
+                    // (line 877 of globals.css). React's CSSProperties
+                    // type doesn't model custom properties, so cast
+                    // through Record<string, string>.
+                    ...({['--march-dur']: `${marchDur}s`} as Record<string, string>),
+                  }}
                 />
                 {/* R63: wrap label in a clickable <g> with an invisible
                     rect hitbox. The text alone wasn't getting hit-tested
