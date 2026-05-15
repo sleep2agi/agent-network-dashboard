@@ -871,6 +871,20 @@ body {
   outline-offset: 1px;
 }
 
+/* R156 — focus-visible outline for SVG-side TopoGraph interactives.
+   Same idiom as R155's chip-row class but for SVG <g> elements
+   (recent-signal rows, legend rows, group labels, edge badges,
+   node bodies, "+N more" footer). Each <g> already has role=
+   "button"/"link" + tabIndex=0 + onKeyDown (R116/R121/R133/R143/
+   R144/R151/R152). Browser default focus outline on SVG is hard
+   to spot against the canvas; explicit cyan-300 ring matches the
+   dashboard's legendAccent. 2-px outline-offset gives breathing
+   room around the painted bounding box. */
+.anet-topo-svg-focus:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 2px;
+}
+
 /* Round 46 — animated dashed spokes flowing from hub outward. Each spoke
    gets a small animationDelay (set inline) so the dashes don't all flow
    in sync — reads as "command relay" pulse rather than a metronome.

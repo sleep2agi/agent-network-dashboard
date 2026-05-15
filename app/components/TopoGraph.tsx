@@ -2476,6 +2476,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   tabIndex={0}
                   aria-pressed={pinnedGroup === box.key}
                   data-group-label-hit={box.key}
+                  className="anet-topo-svg-focus"
                   style={{ pointerEvents: 'all', cursor: 'pointer' }}
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={() => setPinnedGroup(prev => prev === box.key ? null : box.key)}
@@ -2857,6 +2858,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       role="button"
                       tabIndex={0}
                       aria-pressed={isPinned}
+                      className="anet-topo-svg-focus"
                       style={{ pointerEvents: 'all', cursor: 'pointer' }}
                       opacity={badgeOpacity}
                       onPointerDown={(e) => e.stopPropagation()}
@@ -3134,7 +3136,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // an existing node don't re-trigger (React preserves the <g>
                 // via the alias key), so status changes don't flicker. The
                 // global prefers-reduced-motion sweep already neutralises it.
-                className="group transition-opacity anet-fade-in"
+                className="group transition-opacity anet-fade-in anet-topo-svg-focus"
                 style={{
                   cursor: 'pointer',
                   // Round 17 / Loop: offline nodes drop to 0.6 at rest so
@@ -3806,6 +3808,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-recent-row-pinned={isRowPinned ? 'true' : 'false'}
                     data-recent-row-hot={isHot ? 'true' : 'false'}
                     data-recent-row-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
+                    className="anet-topo-svg-focus"
                     role="button"
                     tabIndex={0}
                     aria-pressed={isRowPinned}
@@ -3952,6 +3955,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-recent-panel-more-nav
                   role="link"
                   tabIndex={0}
+                  className="anet-topo-svg-focus"
                   style={{ cursor: 'pointer', pointerEvents: 'all' }}
                   onPointerDown={(e) => e.stopPropagation()}
                   onMouseEnter={() => setHoveredRecentMore(true)}
@@ -4052,6 +4056,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   key={row.key}
                   data-legend-status={row.key}
                   data-legend-row-lifted={isLifted ? 'true' : 'false'}
+                  className="anet-topo-svg-focus"
                   role="button"
                   tabIndex={0}
                   aria-pressed={isPinned}
