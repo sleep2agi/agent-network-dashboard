@@ -4408,6 +4408,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 const isRowHovered = hoveredEdgeKey === link.key;
                 const isRowPinned  = pinnedEdgeKey === link.key;
                 const isRowActive  = isRowHovered || isRowPinned;
+                // Round 191 / Loop: timestamp text on row's right edge
+                // picks up the R160 row-pip freshness ramp at a
+                // different alpha range — gives the timestamp the same
+                // visual recency encoding the pip has on the LEFT
+                // edge, so both ends of the row mirror each other.
+                //   ≤30s   → opacity 0.85 (fresh, high contrast)
+                //   30-300s → 0.85 → 0.30 (smooth decay)
+                //   >300s  → 0.30 (stale floor)
+                // Pre-R191 the timestamp was static 0.55 — the same
+                // visual weight whether the message just fired or
+                // happened 5 minutes ago. Fill stays legendText gray
+                // (not cyan) because the left pip already carries the
+                // cyan; the right timestamp encodes recency through
+                // contrast against the dark canvas, not hue.
+                const tsAlpha = !link.last_at ? 0.55 : (() => {
+                  const ageSec = Math.max(0, (Date.now() - Date.parse(link.last_at)) / 1000);
+                  return ageSec <= 30   ? 0.85
+                       : ageSec <= 300  ? 0.85 - ((ageSec - 30) / 270) * 0.55
+                                        : 0.30;
+                })();
                 // R127: panel-side mirror of R126's canvas hot-badge.
                 // The recent-signal row text packs `alias→alias / N /
                 // preview` into one line, with N rendered identically
@@ -4603,9 +4623,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         fill={pal.legendText}
                         fontSize="8"
                         fontFamily="monospace"
-                        opacity={0.55}
+                        opacity={tsAlpha}
                         data-recent-row-ts={link.key}
-                        style={{ pointerEvents: 'none' }}
+                        data-recent-row-ts-alpha={tsAlpha.toFixed(2)}
+                        style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out' }}
                       >
                         {lastAt}
                       </text>
