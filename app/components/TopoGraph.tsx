@@ -4203,9 +4203,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const bx = pos.x + radius * 0.72;
                   const by = pos.y + radius * 0.72;
                   const icon = br * 2 * 0.62;
+                  // Round 208 / Loop: runtime badge joins the micro-lift
+                  // radius-axis family. R177 grew the hub ring on hover
+                  // (r 14→17); R197 grew the legend swatch (r 5.5→7);
+                  // R208 closes the trio at per-node grain — the runtime
+                  // badge (CLI/SDK/HTTP indicator at avatar bottom-right)
+                  // pops r 7→8 (online) / 5.5→6.5 (offline) when the
+                  // parent node is hovered, with stroke 1.5→2 for
+                  // matching emphasis. R26 already lifts the label 1.5px
+                  // and R194 elevates its drop-shadow; R208 gives the
+                  // runtime indicator its own hover acknowledgement so
+                  // every per-node surface participates in the gesture.
+                  // CSS r-as-property + stroke-width are transitionable
+                  // (same support matrix R197/R198/R199 leveraged:
+                  // Chrome ≥95 / Safari ≥16 / FF ≥70). data-runtime-
+                  // badge-active exposes the gate for tests.
+                  const isNodeActive = !reducedMotion && hoveredAlias === session.alias;
                   return (
                     <g style={{ pointerEvents: 'none' }}>
-                      <circle cx={bx} cy={by} r={br} fill={pal.containerBg} stroke={rt.color} strokeWidth="1.5" />
+                      <circle
+                        cx={bx} cy={by} r={br}
+                        fill={pal.containerBg}
+                        stroke={rt.color}
+                        strokeWidth="1.5"
+                        data-runtime-badge={session.alias}
+                        data-runtime-badge-active={isNodeActive ? 'true' : 'false'}
+                        style={{
+                          r: isNodeActive ? `${br + 1}px` : `${br}px`,
+                          strokeWidth: isNodeActive ? '2px' : '1.5px',
+                          transition: 'r 150ms ease-out, stroke-width 150ms ease-out',
+                        } as React.CSSProperties}
+                      />
                       <g transform={`translate(${bx - icon / 2} ${by - icon / 2}) scale(${icon / 24})`}>
                         <path d={rt.iconPath} fill="none" stroke={rt.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
                       </g>
