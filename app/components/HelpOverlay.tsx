@@ -55,6 +55,7 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       { keys: ['−'], label: 'Zoom out' },
       { keys: ['0'], label: 'Reset zoom + pan' },
       { keys: ['f'], label: 'Fit topology to canvas' },
+      { keys: ['l'], label: 'Toggle layout (ring ↔ grid)' },
       { keys: ['⌘', 'wheel'], label: 'Zoom toward cursor (Ctrl on Windows/Linux)' },
       { keys: ['drag'], label: 'Pan the canvas (cursor → grabbing)' },
       { keys: ['dbl-click'], label: 'Reset zoom + pan' },
