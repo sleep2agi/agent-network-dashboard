@@ -1418,12 +1418,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const matchCount = pinnedStatus === 'working' ? workingCount
                             : pinnedStatus === 'idle'    ? (onlineNodes.length - workingCount)
                             : offlineNodes.length;
+            // Round 97 / Loop: the pill says HOW MANY but not WHICH.
+            // Hovering it now shows the matched alias list in the
+            // tooltip — answers "exactly who is this filtering to"
+            // without forcing the user to scan the dim mask on the
+            // canvas. Truncates at 8 names so a 50-node working
+            // bucket doesn't produce a 12-line tooltip; the count
+            // chip already answers "how many overall".
+            const matchAliases = pinnedStatus === 'working'
+              ? onlineNodes.filter(s => s.status === 'working').map(s => s.alias)
+              : pinnedStatus === 'idle'
+              ? onlineNodes.filter(s => s.status !== 'working').map(s => s.alias)
+              : offlineNodes.map(s => s.alias);
+            const matchPreview = matchAliases.slice(0, 8).join(', ');
+            const matchSuffix = matchAliases.length > 8 ? ` + ${matchAliases.length - 8} more` : '';
             return (
             <span
               data-active-filter="status"
               data-filter-match-count={matchCount}
+              data-filter-match-aliases={matchAliases.join(',')}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
-              title="Click to clear filter"
+              title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedStatus(null)}
               style={{
                 background: pinnedStatus === 'working' ? (isLight ? '#05966914' : '#22c55e1f')
@@ -1449,12 +1464,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           })()}
           {pinnedGroup && (() => {
             const matchCount = Object.values(groupKeys).filter(k => k === pinnedGroup).length;
+            // R97: list group members in the tooltip.
+            const matchAliases = Object.entries(groupKeys)
+              .filter(([, key]) => key === pinnedGroup)
+              .map(([alias]) => alias);
+            const matchPreview = matchAliases.slice(0, 8).join(', ');
+            const matchSuffix = matchAliases.length > 8 ? ` + ${matchAliases.length - 8} more` : '';
             return (
             <span
               data-active-filter="group"
               data-filter-match-count={matchCount}
+              data-filter-match-aliases={matchAliases.join(',')}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
-              title="Click to clear filter"
+              title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedGroup(null)}
               style={{
                 background: isLight ? '#67e8f914' : '#67e8f91f',
@@ -1486,12 +1508,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const matchEntry = vendorDist.find(v => v.initial === pinnedVendor);
             const matchCount = matchEntry?.count ?? 0;
             const vendorColor = matchEntry?.color ?? pal.legendText;
+            // R97: list vendor users in the tooltip. The vendorIdentity
+            // resolver maps model strings to a vendor initial — match
+            // any session whose initial equals the pinned letter (with
+            // unknowns folded to '?').
+            const matchAliases = [...onlineNodes, ...offlineNodes]
+              .filter(s => {
+                const v = vendorForModel(s.model);
+                return (v.id === 'unknown' ? '?' : v.initial) === pinnedVendor;
+              })
+              .map(s => s.alias);
+            const matchPreview = matchAliases.slice(0, 8).join(', ');
+            const matchSuffix = matchAliases.length > 8 ? ` + ${matchAliases.length - 8} more` : '';
             return (
             <span
               data-active-filter="vendor"
               data-filter-match-count={matchCount}
+              data-filter-match-aliases={matchAliases.join(',')}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
-              title="Click to clear vendor filter"
+              title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear vendor filter'}
               onClick={() => setPinnedVendor(null)}
               style={{
                 background: `${vendorColor}1f`,
