@@ -2568,10 +2568,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      pointerdown so the SVG pan capture doesn't
                      redirect the click. */
                   const isPinned = pinnedEdgeKey === link.key;
+                  // R126: hot-edge accent. The edge stroke width (line
+                  // 2344) already scales with count but clamps at 7 —
+                  // so count=5 and count=50 look identical at the line,
+                  // and the only signal differentiating them is the
+                  // integer in the badge. Bucket count into a "hot"
+                  // band (≥ 10) and flip the badge stroke to a warmer
+                  // tone + thicker ring so busy lanes telegraph at a
+                  // glance without reading the digit. Reuses the amber
+                  // family from R125 (chip empty-state) — semantic is
+                  // "draw the eye here"; R125 amber is in the chip row
+                  // above the SVG, R126 amber is on the canvas, so the
+                  // surfaces never compete in the same eye-sweep. Pin
+                  // still wins (uses legendHeadline) so a pinned hot
+                  // edge reads as "locked + busy" via the badge text
+                  // and edge brightness, not via a third stroke colour.
+                  const isHot = link.count >= 10;
+                  const hotStroke = isLight ? '#d97706' : '#fbbf24';
                   return (
                     <g
                       data-edge-count-badge={link.key}
                       data-edge-count-badge-pinned={isPinned ? 'true' : 'false'}
+                      data-edge-count-badge-hot={isHot ? 'true' : 'false'}
                       role="button"
                       tabIndex={0}
                       aria-pressed={isPinned}
@@ -2603,8 +2621,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       <circle
                         cx={badgeX} cy={badgeY} r="9"
                         fill={pal.legendBox.fill}
-                        stroke={isPinned ? pal.legendHeadline : pal.flowEdge}
-                        strokeWidth={isPinned ? 2 : 1}
+                        stroke={isPinned ? pal.legendHeadline : isHot ? hotStroke : pal.flowEdge}
+                        strokeWidth={isPinned ? 2 : isHot ? 2 : 1}
                         opacity={isLight ? 0.95 : 0.82}
                       />
                       <text
