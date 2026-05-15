@@ -91,6 +91,12 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // both are real user gestures that weren't in the help overlay.
       { keys: ['click pill'], label: 'Clear filter — click anywhere on the pill body (R73)' },
       { keys: ['hover chip'], label: 'Brighten all active flows — hover "N active links" (R77)' },
+      // Round 81 / Loop: catch up on the two newest chip-row affordances
+      // — R79 working/online chips and R80 vendor-letter chips. All
+      // four chip hovers feed the same dim mechanic the R55 legend
+      // rows use.
+      { keys: ['hover N working'], label: 'Highlight working nodes — chip-row sibling of legend (R79)' },
+      { keys: ['hover vendor'], label: 'Highlight one vendor — hover A/O/书/? in the chip row (R80)' },
     ],
   },
 ];
