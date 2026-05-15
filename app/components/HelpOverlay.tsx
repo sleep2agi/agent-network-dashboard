@@ -58,8 +58,15 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       { keys: ['l'], label: 'Toggle layout (ring ↔ grid)' },
       { keys: ['⌘', 'wheel'], label: 'Zoom toward cursor (Ctrl on Windows/Linux)' },
       { keys: ['drag'], label: 'Pan the canvas (cursor → grabbing)' },
-      { keys: ['dbl-click'], label: 'Reset zoom + pan' },
+      { keys: ['dbl-click'], label: 'Reset zoom + pan (empty canvas only)' },
       { keys: ['click'], label: 'Open chat popover on a node (Esc to close)' },
+      // Round 59 / Loop: discoverability for the interactions added in
+      // R52 (hub click), R55 (legend status hover), R56 (recent-signal
+      // row hover). All three live inside the topology canvas, so this
+      // is the right group for the new entries.
+      { keys: ['click hub'], label: 'Fit topology to canvas (R52)' },
+      { keys: ['hover legend'], label: 'Highlight nodes of a status (R55)' },
+      { keys: ['hover signal'], label: 'Highlight one flow edge (R56)' },
     ],
   },
 ];
