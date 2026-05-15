@@ -1707,6 +1707,62 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           </g>
         </svg>
 
+        {/* Round 30 / Loop: minimap. Big fleets in fullscreen mode at high
+            zoom let users lose their position — the minimap shows the
+            whole topology miniaturised plus a viewport rectangle so the
+            user always knows where they are. Click anywhere to recenter
+            the canvas there. Only mounted when the view is non-default
+            (zoomed or panned) since at 1× centered the minimap and the
+            canvas show the same thing. HTML overlay so it stays fixed
+            while the SVG transforms. */}
+        {(() => {
+          const isDefaultView = Math.abs(view.zoom - 1) < 0.01 && Math.abs(view.x) < 1 && Math.abs(view.y) < 1;
+          if (isDefaultView || (onlineNodes.length + offlineNodes.length) === 0) return null;
+          const MW = 120, MH = 82;
+          const sx = MW / VIEWBOX_W, sy = MH / VIEWBOX_H;
+          const rectX = (-view.x / view.zoom) * sx;
+          const rectY = (-view.y / view.zoom) * sy;
+          const rectW = (VIEWBOX_W / view.zoom) * sx;
+          const rectH = (VIEWBOX_H / view.zoom) * sy;
+          return (
+            <div
+              className="absolute right-3 rounded-md border shadow-lg shadow-black/30 overflow-hidden anet-fade-in"
+              style={{ bottom: 56, background: pal.legendBox.fill, borderColor: pal.containerBorder, cursor: 'crosshair' }}
+              role="img"
+              aria-label="Topology minimap — click to recenter"
+              title="Minimap · click to recenter"
+              onClick={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                const fx = (e.clientX - r.left) / r.width;
+                const fy = (e.clientY - r.top) / r.height;
+                setView(prev => ({
+                  ...prev,
+                  x: VIEWBOX_W / 2 - fx * VIEWBOX_W * prev.zoom,
+                  y: VIEWBOX_H / 2 - fy * VIEWBOX_H * prev.zoom,
+                }));
+              }}
+              data-topo-minimap
+            >
+              <svg width={MW} height={MH} viewBox={`0 0 ${MW} ${MH}`} style={{ display: 'block' }}>
+                {[...onlineNodes, ...offlineNodes].map(s => {
+                  const p = nodePositions[s.alias];
+                  if (!p) return null;
+                  const sseN = (s.network_id ? sseSessions[`${s.network_id}:${s.alias}`] : undefined) ?? sseSessions[s.alias];
+                  const isOn = s.status !== 'offline' || !!sseN;
+                  const st = nodeStatus(s, isOn, isLight);
+                  return <circle key={s.alias} cx={p.x * sx} cy={p.y * sy} r={isOn ? 1.7 : 1.2} fill={st.primary} opacity={isOn ? 0.9 : 0.5} />;
+                })}
+                {/* viewport rectangle */}
+                <rect
+                  x={Math.max(0, rectX)} y={Math.max(0, rectY)}
+                  width={Math.max(0, Math.min(MW - Math.max(0, rectX), rectW))}
+                  height={Math.max(0, Math.min(MH - Math.max(0, rectY), rectH))}
+                  fill="none" stroke={pal.legendAccent} strokeWidth="1" opacity="0.9"
+                />
+              </svg>
+            </div>
+          );
+        })()}
         {/* Round 103 (issue #81): zoom / pan / fullscreen controls — HTML
             overlay so they stay fixed while the SVG content transforms.
             Round 104: Vincent 实测 — the reset action used to be hidden
