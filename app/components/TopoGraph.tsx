@@ -2481,6 +2481,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       style={{ pointerEvents: 'all', cursor: 'pointer' }}
                       opacity={badgeOpacity}
                       onPointerDown={(e) => e.stopPropagation()}
+                      // R122: badge hover propagates to hoveredEdgeKey so
+                      // moving the cursor onto the badge lights the
+                      // same endpoint rings + edge brighten as hovering
+                      // the line. R121 only wired click; the badge sat
+                      // visually separate from the line on hover,
+                      // which felt like two surfaces rather than one.
+                      onMouseEnter={() => setHoveredEdgeKey(link.key)}
+                      onMouseLeave={() => setHoveredEdgeKey(prev => prev === link.key ? null : prev)}
                       onClick={(e) => {
                         e.stopPropagation();
                         setPinnedEdgeKey(prev => prev === link.key ? null : link.key);
