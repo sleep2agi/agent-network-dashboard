@@ -72,7 +72,13 @@ const readChip = () => p1.evaluate(() => {
     tabindex:    chip?.getAttribute('tabindex'),
     pinMirror:   chip?.getAttribute('data-pin-mirror'),
     ariaPressed: chip?.getAttribute('aria-pressed'),
-    boxShadow:   chip?.getAttribute('style')?.includes('box-shadow'),
+    // R180 fix: probe the box-shadow PROPERTY value, not a
+    // substring match on the style attribute. Pre-R180 the
+    // inline style only contained 'box-shadow' when pinned;
+    // R180 added 'transition: box-shadow 150ms ease-out' that
+    // also matches the substring even when unpinned. Read the
+    // actual property to keep the assertion precise.
+    boxShadow:   !!(chip && chip.style && chip.style.boxShadow),
     cursor:      chip?.getAttribute('style')?.includes('cursor: pointer'),
   };
 });
