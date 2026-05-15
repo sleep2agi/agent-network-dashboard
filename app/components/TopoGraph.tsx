@@ -912,6 +912,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       else if (e.key === '-' || e.key === '_') { zoomBy(1 / 1.2); e.preventDefault(); }
       else if (e.key === '0') { resetView(); e.preventDefault(); }
       else if (e.key === 'f' || e.key === 'F') { fitView(); e.preventDefault(); }
+      // Round 32 / Loop: `l` toggles ring|grid. The vim-style `g l` route
+      // (Audit Log) requires a preceding `g` within 1500ms; a bare `l`
+      // outside that window is free for topology use.
+      else if (e.key === 'l' || e.key === 'L') { toggleLayout(); e.preventDefault(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -947,6 +951,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             <button
               onClick={() => { if (layout !== 'ring') toggleLayout(); }}
               aria-pressed={layout === 'ring'}
+              title="Ring layout (l to toggle)"
               className={`px-2.5 py-1 transition-colors ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300' : 'text-gray-500 hover:text-gray-400'}`}
             >
               Ring
@@ -954,6 +959,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             <button
               onClick={() => { if (layout !== 'grid') toggleLayout(); }}
               aria-pressed={layout === 'grid'}
+              title="Grid layout (l to toggle)"
               className={`px-2.5 py-1 border-l border-gray-500/25 transition-colors ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300' : 'text-gray-500 hover:text-gray-400'}`}
             >
               Grid
