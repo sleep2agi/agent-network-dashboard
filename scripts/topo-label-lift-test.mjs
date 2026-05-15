@@ -103,7 +103,11 @@ const denseClassPresent = await (async () => {
 
 await browser.close();
 
-const lifted = (m) => m.beforeY != null && m.afterY != null && m.beforeY - m.afterY >= 1 && m.beforeY - m.afterY <= 2.5;
+// R26 contributes label-only -1.5px lift; R51 (preview.58) adds -2px on the
+// parent <g data-node> on hover, so the label's total measured movement
+// when the node is hovered is ~3.5px. Widen the upper bound to 4 so the
+// two lifts compose without flagging this as a regression.
+const lifted = (m) => m.beforeY != null && m.afterY != null && m.beforeY - m.afterY >= 1 && m.beforeY - m.afterY <= 4;
 
 const results = {
   sparseLabelLifts: lifted(sparse),

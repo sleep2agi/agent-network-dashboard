@@ -1617,6 +1617,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // mount (same alias key) don't replay, so status changes
                   // never trigger the stagger again.
                   animationDelay: `${Math.min(nodeIdx, 24) * 25}ms`,
+                  // Round 51 / Loop: hover micro-lift. The label already
+                  // lifts on group-hover (R26). The node body — circle,
+                  // avatar, status ring — stays planted, so the gesture
+                  // reads "label moves, body doesn't". Now the whole <g>
+                  // translates -2px when hovered: avatar + ring + label
+                  // move as one unit. 2 px is well inside the inter-row
+                  // gap (cellH headroom ≥22), and CSS transform on SVG
+                  // <g> never affects the overlap-test geometry (the
+                  // test never simulates hover). useReducedMotion drops
+                  // the lift to 0 for prefers-reduced-motion users.
+                  transform: !reducedMotion && hoveredAlias === session.alias ? 'translateY(-2px)' : undefined,
+                  transition: 'transform 180ms cubic-bezier(0.4,0,0.2,1)',
                 }}
                 // Stop the pointerdown from reaching the SVG pan handler: the
                 // SVG calls setPointerCapture, and a captured pointer makes
