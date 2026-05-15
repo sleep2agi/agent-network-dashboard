@@ -4329,11 +4329,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-recent-panel-count-freshness-alpha={alpha.toFixed(2)}
                     style={{ transition: 'fill 200ms ease-out' }}
                   >{flowLinks.length} flows</tspan>
+                  {/* Round 190 / Loop: R129 hot-tail gets anet-fade-in
+                      for entrance. Pre-R190 the tspan snapped into
+                      the header the moment hotFlowCount crossed 0,
+                      and snapped out the moment it dropped back to 0.
+                      Same trade-off R67 accepts for filter pills:
+                      fade-IN smooth, accept exit snap. The CSS
+                      animation plays once when the tspan mounts
+                      (count goes 0 → 1+); subsequent re-renders
+                      (count growing from 1 → 2 → 3 hot flows)
+                      preserve the element via React reconciliation
+                      so the fade-in doesn't replay. Layout-shift
+                      cost is paid once on entrance — the parent
+                      <text textAnchor="end"> recomputes its
+                      anchor as the tspan appears, then stays
+                      stable as the digit grows. Exit-snap is rare
+                      in steady operation: a hot flow cooling back
+                      below 10 messages doesn't happen often. */}
                   {hotFlowCount > 0 && (
                     <tspan
                       fill={hotStroke}
                       fontWeight="700"
                       data-recent-panel-hot-count={hotFlowCount}
+                      className="anet-fade-in"
                     >
                       {' · '}{hotFlowCount} hot
                     </tspan>
