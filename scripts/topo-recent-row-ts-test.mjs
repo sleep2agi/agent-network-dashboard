@@ -84,7 +84,10 @@ const results = {
   // ts <text> must be non-interactive so it doesn't intercept the row hover.
   ts_nonInteractive:   rows.every(r => r.tsPointerEvents === 'none'),
   // Row content shows from/to/count/content via the existing layout.
-  row0_hasArrow:       rows[0]?.rowText.includes('->'),
+  // R138: arrow notation unified to unicode `→` (was ASCII `->`),
+  // matching filter pills / tooltips / edge-badge titles. Assertion
+  // flipped to the new typography contract.
+  row0_hasArrow:       rows[0]?.rowText.includes('→'),
 };
 const ok = Object.values(results).every(Boolean);
 console.log(`${ok ? '✅' : '❌'} recent-row ts:`, JSON.stringify(results),

@@ -3617,7 +3617,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontFamily="monospace"
                       style={{ transition: 'fill 150ms ease-out' }}
                     >
-                      {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} {'/ '}
+                      {/* R138 / Loop: typography unification with the rest
+                         of the topology UI. Filter pills (R119) render
+                         "{from}→{to}", node tooltips (R98) use →, the
+                         active-links chip tooltip (R114) and edge-badge
+                         titles all use unicode →. The recent-signal row
+                         was the lone holdout still rendering "from -> to"
+                         in ASCII. The data delimiter likewise: filter
+                         pills use " · " ("status · 3"); the row was using
+                         " / ". Both swaps make the row read like every
+                         other surface — one less micro-style to remember. */}
+                      {truncate(link.from, 6)} {'→'} {truncate(link.to, 6)} {' · '}
                       {isHot ? (
                         <tspan fill={hotStroke} fontWeight="700" data-recent-row-count-hot>
                           {link.count}
@@ -3625,7 +3635,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       ) : (
                         <tspan data-recent-row-count>{link.count}</tspan>
                       )}
-                      {' / '}{truncate(link.content, 8)}
+                      {' · '}{truncate(link.content, 8)}
                     </text>
                     {lastAt ? (
                       <text
