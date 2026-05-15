@@ -2498,11 +2498,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // factored it to app/lib/time.ts so both paths interpret SQL
                   // bare timestamps as UTC on every browser).
                   const lastSeen = !isOnline && session.last_seen_at ? relativeAgo(session.last_seen_at) : null;
+                  // Round 98 / Loop: enrich the node tooltip with status,
+                  // group membership, and inbound/outbound flow counts —
+                  // same info-density spirit as R97 active-filter pill
+                  // tooltips. Hovering any node now answers "what is this
+                  // and how does it sit in the topology" without forcing
+                  // a click into the chat popover. Group line only shows
+                  // when the alias is part of a multi-member band (R106
+                  // prefix grouping); singletons skip it. Flow line only
+                  // when at least one direction has count > 0.
+                  const groupKey = groupKeys[session.alias];
+                  const groupMembers = groupKey
+                    ? Object.values(groupKeys).filter(k => k === groupKey).length
+                    : 1;
+                  const groupLine = groupMembers > 1 ? `group: ${groupKey} · ${groupMembers}` : null;
+                  let flowIn = 0, flowOut = 0;
+                  for (const fl of flowLinks) {
+                    if (fl.from === session.alias) flowOut += fl.count;
+                    if (fl.to === session.alias)   flowIn  += fl.count;
+                  }
+                  const flowLine = (flowIn + flowOut) > 0 ? `flows: ${flowIn} in / ${flowOut} out` : null;
                   return (
                     <title>{[
-                      identityLine(session.model, session.runtime) || session.alias,
+                      `${session.alias} · ${session.status}`,
+                      identityLine(session.model, session.runtime),
+                      groupLine,
                       session.project_dir ? `cwd: ${session.project_dir}` : null,
                       lastSeen ? `last seen: ${lastSeen}` : null,
+                      flowLine,
                     ].filter(Boolean).join('\n')}</title>
                   );
                 })()}
