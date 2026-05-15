@@ -1841,11 +1841,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             <rect x="0" y="0" width="230" height="84" rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
             <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700">recent signal</text>
             <text x="150" y="21" fill={pal.legendAccent} fontSize="10" fontFamily="monospace">{messages.length} msgs</text>
-            {flowLinks.slice(0, 3).map((link, index) => (
-              <text key={link.key} x="13" y={38 + index * 16} fill={pal.legendText} fontSize="9" fontFamily="monospace">
-                {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} / {link.count} / {truncate(link.content, 12)}
+            {/* Round 45 / Loop: empty state. The panel used to render
+                "recent signal" + "0 msgs" with three blank slots below
+                when no flow yet — read as "broken" rather than "quiet".
+                A muted centred placeholder makes the empty state
+                deliberate. Messages count CAN diverge from flowLinks
+                count (raw count vs. deduped pairs), so the placeholder
+                fires on flowLinks.length=0 specifically. */}
+            {flowLinks.length === 0 ? (
+              <text x="115" y="60" textAnchor="middle" fill={pal.legendText} fontSize="10" fontFamily="monospace" fontStyle="italic" opacity={0.65} data-recent-signal-empty>
+                no flow yet
               </text>
-            ))}
+            ) : (
+              flowLinks.slice(0, 3).map((link, index) => (
+                <text key={link.key} x="13" y={38 + index * 16} fill={pal.legendText} fontSize="9" fontFamily="monospace">
+                  {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} / {link.count} / {truncate(link.content, 12)}
+                </text>
+              ))
+            )}
           </g>
 
           {/* legend */}
