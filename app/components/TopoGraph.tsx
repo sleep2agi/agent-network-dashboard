@@ -1936,11 +1936,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // one. Same-group nodes (incl. singletons matching the hovered
             // alias) stay full. Pure visual focus, geometry unchanged.
             const inFocus = !activeGroup || (groupKeys[session.alias] ?? session.alias) === activeGroup;
+            // R72: in ring layout, classify the node into a tier by its
+            // distance from hub centre so the first-paint stagger can
+            // emanate inner → outer instead of running clockwise. Grid
+            // layout doesn't have a radial structure; it keeps R9's pure
+            // nodeIdx stagger. Thresholds bracket the actual tier radii
+            // (single 220, dual 175/260, triple 145/215/285, offline 325+).
+            let tierIdx = 0;
+            if (layout === 'ring') {
+              const p = nodePositions[session.alias];
+              if (p) {
+                const d = Math.hypot(p.x - cx, p.y - cy);
+                tierIdx = d < 195 ? 0 : d < 270 ? 1 : d < 310 ? 2 : 3;
+              }
+            }
 
             return (
               <g
                 key={session.alias}
                 data-node={session.alias}
+                data-tier-idx={layout === 'ring' ? tierIdx : -1}
                 // Round 3 / Loop: `anet-fade-in` runs once when the <g>
                 // mounts — a new session entering the fleet (or the topology
                 // first rendering) eases in instead of popping. Re-renders of
@@ -1994,7 +2009,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // applies during the keyframe — re-renders without a new
                   // mount (same alias key) don't replay, so status changes
                   // never trigger the stagger again.
-                  animationDelay: `${Math.min(nodeIdx, 24) * 25}ms`,
+                  // Round 72 / Loop: in ring layout, stagger by tier radius
+                  // so the topology emanates from the hub outward — inner
+                  // tier at 0ms, middle at ~180ms, outer at ~360ms, offline
+                  // at ~540ms. A small within-tier offset (nodeIdx % 6 * 25)
+                  // adds variety so each ring rotates in instead of all-at-
+                  // once popping. Grid keeps R9's pure nodeIdx stagger.
+                  animationDelay: layout === 'ring'
+                    ? `${tierIdx * 180 + (nodeIdx % 6) * 25}ms`
+                    : `${Math.min(nodeIdx, 24) * 25}ms`,
                   // Round 51 / Loop: hover micro-lift. The label already
                   // lifts on group-hover (R26). The node body — circle,
                   // avatar, status ring — stays planted, so the gesture
