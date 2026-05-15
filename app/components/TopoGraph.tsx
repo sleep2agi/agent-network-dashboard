@@ -2202,27 +2202,50 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               { key: 'working' as const, y0: 24, y1: 28, fill: isLight ? '#059669' : '#22c55e', label: 'working node' },
               { key: 'idle'    as const, y0: 48, y1: 52, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle' },
               { key: 'offline' as const, y0: 72, y1: 76, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline / no SSE' },
-            ]).map(row => (
-              <g
-                key={row.key}
-                data-legend-status={row.key}
-                style={{ cursor: 'pointer' }}
-                onMouseEnter={() => setHoveredStatus(row.key)}
-                onMouseLeave={() => setHoveredStatus(prev => prev === row.key ? null : prev)}
-              >
-                {/* invisible hitbox covers the row so cursor doesn't need
-                    to be exactly on the 5-px swatch */}
-                <rect x="6" y={row.y0 - 12} width="170" height="22" fill="transparent" />
-                <circle cx="16" cy={row.y0} r="5.5" fill={row.fill} />
-                <text
-                  x="30" y={row.y1}
-                  fill={hoveredStatus === row.key ? pal.legendHeadline : pal.legendText}
-                  fontSize="11"
-                  fontFamily="monospace"
-                  style={{ transition: 'fill 150ms ease-out' }}
-                >{row.label}</text>
-              </g>
-            ))}
+            ]).map(row => {
+              // Round 61 / Loop: legend rows pin too — symmetric with the
+              // R60 pressure-bar segments. R55 hover stays transient; the
+              // new onClick toggles pinnedStatus so users can lock a
+              // filter without holding the cursor still. Pinned row gets
+              // an inset ring on the swatch (same vocab as R60).
+              const isPinned = pinnedStatus === row.key;
+              return (
+                <g
+                  key={row.key}
+                  data-legend-status={row.key}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isPinned}
+                  style={{ cursor: 'pointer' }}
+                  // R61: stopPropagation on pointerdown so the SVG-level
+                  // pan handler (R103) doesn't setPointerCapture and
+                  // redirect the follow-up click away from this <g>.
+                  // Same trick the node <g> uses (and R52 hub).
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onMouseEnter={() => setHoveredStatus(row.key)}
+                  onMouseLeave={() => setHoveredStatus(prev => prev === row.key ? null : prev)}
+                  onClick={() => setPinnedStatus(prev => prev === row.key ? null : row.key)}
+                >
+                  {/* invisible hitbox covers the row so cursor doesn't need
+                      to be exactly on the 5-px swatch */}
+                  <rect x="6" y={row.y0 - 12} width="170" height="22" fill="transparent" />
+                  <circle cx="16" cy={row.y0} r="5.5" fill={row.fill} />
+                  {/* R61 pinned-state ring — concentric stroke at r=8 in
+                      the row colour, draws OUTSIDE the swatch so it
+                      doesn't fight the fill colour the user is matching. */}
+                  {isPinned && (
+                    <circle cx="16" cy={row.y0} r="8" fill="none" stroke={row.fill} strokeWidth="1.5" />
+                  )}
+                  <text
+                    x="30" y={row.y1}
+                    fill={hoveredStatus === row.key || isPinned ? pal.legendHeadline : pal.legendText}
+                    fontSize="11"
+                    fontFamily="monospace"
+                    style={{ transition: 'fill 150ms ease-out' }}
+                  >{row.label}</text>
+                </g>
+              );
+            })}
             {/* Flow-arrow swatch sits at y=72 — same row as the offline
                 hitbox. Drop its pointerEvents so the offline legend row
                 stays hoverable (R55). It's decoration, no need to
