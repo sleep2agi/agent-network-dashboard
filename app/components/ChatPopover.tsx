@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AliasAvatar } from './AliasAvatar';
 import { TaskChatPanel } from './TaskChatPanel';
+import { useSessions } from '../lib/hooks';
 
 interface ChatPopoverProps {
   /** Node alias to chat with. Changing it switches the conversation. */
@@ -37,6 +38,28 @@ const MOBILE_BP = 640;
  * history are already solved there; this component only adds the floating
  * shell + drag/resize behaviour.
  */
+/** Round 37 / Loop: surface node metadata (cwd + last-seen) inside the
+ *  ChatPopover header. The SVG <title> tooltip (Rounds 33-34) only shows
+ *  on hover-over-node, which is lost once the popover is open and
+ *  potentially dragged away. Lifting cwd and last-seen into the popover
+ *  header keeps the context where the user actually needs it. */
+function parseHubTime(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  const iso = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T') + 'Z';
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? t : null;
+}
+function relativeAgo(dateStr: string | null | undefined): string | null {
+  const t = parseHubTime(dateStr);
+  if (t === null) return null;
+  const s = Math.floor((Date.now() - t) / 1000);
+  if (s < 0) return 'just now';
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
+
 export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
   // Position + size are resolved on mount (SSR-safe defaults here).
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -47,6 +70,13 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
   const resizeRef = useRef<{ active: boolean; startX: number; startY: number; baseW: number; baseH: number }>({
     active: false, startX: 0, startY: 0, baseW: 0, baseH: 0,
   });
+
+  // Round 37 / Loop: pull the target session out of the SWR cache that
+  // TopoGraph already populates — same URL, so no extra network fetch.
+  const { sessions } = useSessions();
+  const session = useMemo(() => sessions.find(s => s.alias === alias), [sessions, alias]);
+  const isOnline = !!session && session.status !== 'offline';
+  const lastSeenLine = !isOnline ? relativeAgo(session?.last_seen_at) : null;
 
   const clamp = useCallback((x: number, y: number, w: number, h: number) => {
     const maxX = Math.max(MARGIN, window.innerWidth - w - MARGIN);
@@ -146,7 +176,24 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
           <AliasAvatar alias={alias} size={28} />
           <div className="min-w-0">
             <div className="text-sm font-semibold text-[var(--fg)] truncate">{alias}</div>
-            <div className="text-[10px] text-[var(--fg-muted)]">Drag to move · Esc to close</div>
+            {/* Round 37: cwd / last-seen lines surface the same metadata
+                the SVG <title> tooltip carries (rounds 33-34), but inside
+                the popover where it stays accessible after dragging the
+                window away from the node. Fall back to the drag-hint
+                when no metadata is reported. */}
+            {session?.project_dir ? (
+              <div className="text-[10px] text-[var(--fg-muted)] truncate font-mono" title={session.project_dir} data-popover-cwd>
+                cwd: {session.project_dir}
+              </div>
+            ) : null}
+            {lastSeenLine ? (
+              <div className="text-[10px] text-[var(--fg-muted)] truncate" data-popover-lastseen>
+                last seen: {lastSeenLine}
+              </div>
+            ) : null}
+            {!session?.project_dir && !lastSeenLine ? (
+              <div className="text-[10px] text-[var(--fg-muted)]">Drag to move · Esc to close</div>
+            ) : null}
           </div>
         </div>
         <button
