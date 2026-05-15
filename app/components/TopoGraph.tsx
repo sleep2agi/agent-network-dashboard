@@ -1682,6 +1682,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   key={key}
                   data-pressure-seg={key}
                   data-pressure-seg-aliases={matchAliases.join(',')}
+                  data-pressure-seg-hovered={hoveredStatus === key ? 'true' : 'false'}
                   role="button"
                   tabIndex={0}
                   aria-pressed={isPinned}
@@ -1699,13 +1700,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // neutralises transition-duration universally.
                   // boxShadow gets its own transition so pin
                   // state-changes also fade smoothly, not snap.
+                  //
+                  // Round 210 / Loop: segment deepens its OWN colour on
+                  // hover via filter: brightness(1.2). Closes the
+                  // chip-row "hover deepens own identity" family at the
+                  // pressure-bar scope — R83 already setHoveredStatus
+                  // to drive canvas dim, but the segment itself stayed
+                  // at flat `background: color`. R210 makes the cause
+                  // element (segment) light up with the same gesture
+                  // it fires on the canvas (effect element). Family
+                  // surfaces (6 with R210):
+                  //   R193 active-links chip   · gray  → cyan
+                  //   R195 recent-panel footer · gray  → cyan
+                  //   R201 working / online    · own /10 → /15  (×2)
+                  //   R202 vendor letter       · per-vendor color-mix
+                  //   R210 pressure-bar seg    · brightness(1.2)  ← NEW
+                  // brightness(1.2) lightens the segment's own hue by
+                  // 20% — keeps the tier identity (green stays green,
+                  // teal stays teal, gray stays gray) while signalling
+                  // "this is hovered". transition adds filter 150ms
+                  // ease-out alongside the existing width / box-shadow.
                   style={{
                     width: `${(n / total) * 100}%`,
                     background: color,
                     height: '100%',
                     cursor: 'pointer',
                     boxShadow: isPinned ? `inset 0 0 0 1px ${color}, inset 0 0 0 2px rgba(255,255,255,0.6)` : undefined,
-                    transition: 'width 220ms ease-out, box-shadow 150ms ease-out',
+                    filter: hoveredStatus === key ? 'brightness(1.2)' : undefined,
+                    transition: 'width 220ms ease-out, box-shadow 150ms ease-out, filter 150ms ease-out',
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
