@@ -210,7 +210,7 @@ const COMMANDS: Command[] = [
       try { sessionStorage.setItem('anet-topo-pinned-vendor', '书'); } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'vendor', value: '书' } }));
     } },
-  { id: 'act-clear-topo-pins', title: 'Clear topology filters', hint: 'release pinned status + group + vendor', group: 'Actions',
+  { id: 'act-clear-topo-pins', title: 'Clear topology filters', hint: 'release pinned status + group + vendor + edge', group: 'Actions',
     icon: <NavIcon d="M6 18L18 6M6 6l12 12" />,
     perform: () => {
       try {
@@ -220,9 +220,22 @@ const COMMANDS: Command[] = [
         // dimension. The clear-all command must clear it too or it
         // silently retains the vendor pin, which a user would read
         // as a stuck filter.
+        // Round 117 / Loop: R116 added pinnedEdgeKey as the fourth pin
+        // dim — no sessionStorage (per-tab transient), but the
+        // dispatched `clear` event still needs to flip it. The
+        // TopoGraph listener handles that.
         sessionStorage.removeItem('anet-topo-pinned-vendor');
       } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'clear' } }));
+    } },
+  // Round 117 / Loop: granular edge-only clear, mirror of R90
+  // clear-vendor. Releases the pinnedEdgeKey without disturbing
+  // status/group/vendor pins. pinnedEdgeKey lives only in React
+  // state (no sessionStorage), so the perform is just a dispatch.
+  { id: 'act-clear-topo-edge', title: 'Clear topology edge pin', hint: 'release pinned recent-signal row only', group: 'Actions',
+    icon: <NavIcon d="M6 18L18 6M6 6l12 12" />,
+    perform: () => {
+      window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'clear-edge' } }));
     } },
   // Round 90 / Loop: granular vendor-only clear. R88 added per-letter
   // toggle and Esc-clears-all; this fills the keyboard-only middle
