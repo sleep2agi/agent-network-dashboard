@@ -3201,12 +3201,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     ? Object.values(groupKeys).filter(k => k === groupKey).length
                     : 1;
                   const groupLine = groupMembers > 1 ? `group: ${groupKey} · ${groupMembers}` : null;
+                  // R147 / Loop: node tooltip extends R98's flow summary
+                  // with the actual sender / receiver aliases. R98 told you
+                  // "12 in / 5 out" but not WHO. The R97 idiom — anywhere
+                  // the UI shows "N" should hover-explain WHICH N — applied
+                  // to filter pills, group labels, vendor letters, pressure
+                  // segments, recent-row text, active-links chip; the node
+                  // title was the last surface still showing only the
+                  // aggregate. Direction-tagged: senders are who's
+                  // messaging THIS node (inbound), receivers are who this
+                  // node is messaging (outbound). 6-truncate + "+N more"
+                  // matches the pattern other tooltips use so a 30-flow
+                  // node doesn't paint a 30-line tooltip.
                   let flowIn = 0, flowOut = 0;
+                  const sendersMap = new Map<string, number>();   // alias → count, inbound
+                  const receiversMap = new Map<string, number>(); // alias → count, outbound
                   for (const fl of flowLinks) {
-                    if (fl.from === session.alias) flowOut += fl.count;
-                    if (fl.to === session.alias)   flowIn  += fl.count;
+                    if (fl.from === session.alias) {
+                      flowOut += fl.count;
+                      receiversMap.set(fl.to, (receiversMap.get(fl.to) ?? 0) + fl.count);
+                    }
+                    if (fl.to === session.alias) {
+                      flowIn += fl.count;
+                      sendersMap.set(fl.from, (sendersMap.get(fl.from) ?? 0) + fl.count);
+                    }
                   }
+                  const fmtPeers = (m: Map<string, number>) => {
+                    const pairs = [...m.entries()].sort((a, b) => b[1] - a[1]);
+                    const preview = pairs.slice(0, 6).map(([a, n]) => `${a} (${n})`).join(', ');
+                    const suffix = pairs.length > 6 ? ` + ${pairs.length - 6} more` : '';
+                    return preview + suffix;
+                  };
                   const flowLine = (flowIn + flowOut) > 0 ? `flows: ${flowIn} in / ${flowOut} out` : null;
+                  const sendersLine   = sendersMap.size   > 0 ? `← from: ${fmtPeers(sendersMap)}`    : null;
+                  const receiversLine = receiversMap.size > 0 ? `→ to:   ${fmtPeers(receiversMap)}`  : null;
                   return (
                     <title>{[
                       `${session.alias} · ${session.status}`,
@@ -3215,6 +3243,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       session.project_dir ? `cwd: ${session.project_dir}` : null,
                       lastSeen ? `last seen: ${lastSeen}` : null,
                       flowLine,
+                      sendersLine,
+                      receiversLine,
                     ].filter(Boolean).join('\n')}</title>
                   );
                 })()}
