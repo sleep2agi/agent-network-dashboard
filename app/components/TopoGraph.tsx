@@ -4044,6 +4044,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             transform="translate(16, 16)"
             data-topo-panel="recent"
             data-topo-panel-hovered={hoveredPanel === 'recent' ? 'true' : 'false'}
+            // Round 175 / Loop: corner panels fade-in after the
+            // R9/R72/R172/R173/R174 canvas content reveal. Pre-R175
+            // recent-signal + legend panels appeared instantly in
+            // the corners while nodes/edges/group boxes staggered
+            // in around them — felt like 'panels are already
+            // there, content shows up'. Delaying the panels to
+            // ~700ms (after the first node wave finishes ~540ms
+            // and edges begin filling in ~280ms) makes them drop
+            // into place AFTER the canvas has revealed.
+            // recent-signal panel at 700ms; legend at 800ms below
+            // for a soft left-then-right cascade. .anet-fade-in
+            // is the same R3 mount-once animation the other 4
+            // wave layers use — fifth surface in the family.
+            className="anet-fade-in"
+            data-topo-panel-fade-delay={700}
+            style={{ animationDelay: '700ms' }}
             onMouseEnter={() => setHoveredPanel('recent')}
             onMouseLeave={() => setHoveredPanel(prev => prev === 'recent' ? null : prev)}
           >
@@ -4475,6 +4491,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             transform="translate(760, 16)"
             data-topo-panel="legend"
             data-topo-panel-hovered={hoveredPanel === 'legend' ? 'true' : 'false'}
+            // R175 / Loop: legend panel offset 100ms behind the
+            // recent-signal panel so the two corner panels cascade
+            // left-then-right rather than appearing in lockstep.
+            // Same .anet-fade-in mechanism the four wave layers use.
+            className="anet-fade-in"
+            data-topo-panel-fade-delay={800}
+            style={{ animationDelay: '800ms' }}
             onMouseEnter={() => setHoveredPanel('legend')}
             onMouseLeave={() => setHoveredPanel(prev => prev === 'legend' ? null : prev)}
           >
