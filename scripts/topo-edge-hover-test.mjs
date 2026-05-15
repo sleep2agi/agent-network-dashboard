@@ -45,13 +45,21 @@ await page.waitForTimeout(600);
 
 const edgeOpacities = () => page.evaluate(() => {
   const svg = document.querySelector('svg[viewBox="0 0 1000 680"]');
-  // Each flow-link <g> has two paths; the FIRST one is the base path
-  // (carries the <title> with route) — read its opacity.
+  // R48 reordered the children of each flow-link <g>:
+  //   path[data-edge-hitbox]   <-- transparent hover surface, carries <title>
+  //   path[marker-end]         <-- the visible base edge with opacity
+  //   path[id^=flow-path-]     <-- the dashed runway
+  // Read the route from the hitbox's <title>, but the opacity from the
+  // visible base path. Picking by marker-end keeps the selector resilient
+  // to future siblings.
   return [...svg.querySelectorAll(':scope > g > g')]
     .map(g => {
-      const base = g.querySelector('path');
-      const title = base?.querySelector('title');
-      if (!title) return null;
+      const hitbox = g.querySelector('path[data-edge-hitbox]');
+      const title = hitbox?.querySelector('title');
+      const base = [...g.querySelectorAll(':scope > path')].find(
+        p => !p.hasAttribute('data-edge-hitbox') && p.hasAttribute('marker-end')
+      );
+      if (!title || !base) return null;
       return { route: title.textContent.split('\n')[0], opacity: +base.getAttribute('opacity') };
     })
     .filter(Boolean);

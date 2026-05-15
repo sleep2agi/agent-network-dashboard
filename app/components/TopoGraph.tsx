@@ -1423,6 +1423,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 : 0.35; // dim the rest
             return (
               <g key={link.key}>
+                {/* Round 48 / Loop: invisible hover hitbox — visible flow
+                    path is 3-7 px wide and damn hard to hover precisely.
+                    Stack a transparent 16-px-wide stroke behind it so the
+                    cursor only needs to be ~8 px from the line for the
+                    tooltip to fire. Native <title> moves here; the
+                    visible path no longer needs it. pointer-events on
+                    the visible path drop to "none" since the hitbox
+                    owns the hover surface. */}
+                <path
+                  d={path}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={Math.max(width + 10, 16)}
+                  style={{ pointerEvents: 'stroke' }}
+                  data-edge-hitbox
+                >
+                  <title>{tooltip}</title>
+                </path>
                 <path
                   d={path}
                   fill="none"
@@ -1432,10 +1450,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   filter={isLight ? undefined : 'url(#topo-glow)'}
                   markerEnd={`url(#${arrowId})`}
                   className="transition-opacity duration-300"
-                  style={{ pointerEvents: 'stroke' }}
-                >
-                  <title>{tooltip}</title>
-                </path>
+                  style={{ pointerEvents: 'none' }}
+                />
                 <path
                   id={`flow-path-${index}`}
                   d={path}
