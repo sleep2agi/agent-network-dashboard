@@ -118,6 +118,11 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // R69's pin-status entry; closes the symmetric gap so the
       // palette can both pin AND clear every filter dimension.
       { keys: ['⌘', 'K'], label: 'Pin vendor: Anthropic/OpenAI/书生 via palette → "Pin topology filter…" (R108)' },
+      // Round 118 / Loop: catch up on R116 (recent-signal row click
+      // pins the edge — the 4th pin dim, completing the hover→pin
+      // sweep) and R117 (granular Cmd+K clear-edge command).
+      { keys: ['click row'], label: 'Pin a flow filter — click a recent-signal row to lock the edge (R116)' },
+      { keys: ['⌘', 'K'], label: 'Clear edge pin only via palette → "Clear topology edge pin" (R117)' },
     ],
   },
 ];
