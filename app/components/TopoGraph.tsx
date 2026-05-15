@@ -2264,27 +2264,57 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           {/* hub links — round 46: idle spokes now have animated
               stroke-dashoffset so dashes flow outward from the hub
               ("command relay" feel). Active spokes carrying live message
-              flow stay as solid bright strokes. */}
-          {layout === 'ring' && onlineNodes.map((session, idx) => {
-            const pos = nodePositions[session.alias];
-            if (!pos) return null;
-            const path = curvePath({ x: cx, y: cy }, pos, 0);
-            const isActiveSpoke = activeAliases.has(session.alias);
+              flow stay as solid bright strokes.
+              R145 / Loop: idle-spoke animation cadence buckets on
+              workingCount, mirroring R84 hub-breath / R131 outer-
+              ring orbit / R132 groupbox-march coordination. Same
+              0 / 1-2 / 3-5 / 6+ thresholds. Idle ↔ idle network
+              has a slow "command relay" feel; as work accumulates
+              the dashes accelerate outward, completing the 4th
+              motion layer in the busyness-driven family:
+                R84  hub breath          (centre)
+                R131 outer ring orbit    (periphery)
+                R132 groupbox march      (per-team, grid layout)
+                R145 idle-spoke flow     (ring layout, hub→nodes)
+              4 surfaces, 1 signal. Same cadence ladder 2.8/2.4/2.0/
+              1.6s — 1.75× range from calm to busy, capped so the
+              network never feels frantic. */}
+          {layout === 'ring' && (() => {
+            const busy = workingCount === 0 ? 0
+                       : workingCount <= 2 ? 1
+                       : workingCount <= 5 ? 2
+                       : 3;
+            const spokeDur = [2.8, 2.4, 2.0, 1.6][busy];
+            return onlineNodes.map((session, idx) => {
+              const pos = nodePositions[session.alias];
+              if (!pos) return null;
+              const path = curvePath({ x: cx, y: cy }, pos, 0);
+              const isActiveSpoke = activeAliases.has(session.alias);
 
-            return (
-              <path
-                key={`hub-${session.alias}`}
-                d={path}
-                fill="none"
-                stroke={isActiveSpoke ? pal.spokeStroke.active : pal.spokeStroke.idle}
-                strokeWidth={isActiveSpoke ? 2 : 1}
-                strokeDasharray={isActiveSpoke ? 'none' : '6 14'}
-                opacity={isActiveSpoke ? 0.7 : 0.45}
-                className={isActiveSpoke ? undefined : 'anet-topo-spoke-flow'}
-                style={isActiveSpoke ? undefined : { animationDelay: `${-(idx * 0.25)}s` }}
-              />
-            );
-          })}
+              return (
+                <path
+                  key={`hub-${session.alias}`}
+                  d={path}
+                  fill="none"
+                  stroke={isActiveSpoke ? pal.spokeStroke.active : pal.spokeStroke.idle}
+                  strokeWidth={isActiveSpoke ? 2 : 1}
+                  strokeDasharray={isActiveSpoke ? 'none' : '6 14'}
+                  opacity={isActiveSpoke ? 0.7 : 0.45}
+                  className={isActiveSpoke ? undefined : 'anet-topo-spoke-flow'}
+                  data-topo-spoke-bucket={isActiveSpoke ? undefined : busy}
+                  data-topo-spoke-dur={isActiveSpoke ? undefined : spokeDur}
+                  style={isActiveSpoke ? undefined : ({
+                    animationDelay: `${-(idx * 0.25)}s`,
+                    // CSS var consumed by `.anet-topo-spoke-flow`
+                    // (line 859 of globals.css). React's CSSProperties
+                    // type doesn't model custom properties → cast
+                    // through Record<string, string>.
+                    ...({ ['--spoke-dur']: `${spokeDur}s` } as Record<string, string>),
+                  } as React.CSSProperties)}
+                />
+              );
+            });
+          })()}
 
           {/* #111: prefix-group boundary boxes (Vincent 4722). Grid layout
               only — groupBoxes is empty in ring mode. Rendered behind the
