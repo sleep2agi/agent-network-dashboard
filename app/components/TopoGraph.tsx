@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Session } from './types';
 import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
 import { ChatPopover } from './ChatPopover';
@@ -882,7 +882,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   };
   const resetView = () => setView({ zoom: 1, x: 0, y: 0 });
 
+  // Round 29 / Loop: `f` = fit-to-content. Shared by the Round 28
+  // first-paint auto-fit effect and the keyboard handler so the math is
+  // in one place. When content already fits at natural zoom, this is
+  // effectively a "recenter" — `f` always lands on a known good view.
+  const fitView = useCallback(() => {
+    const zoom = !gridContentBottom || gridContentBottom <= VIEWBOX_H
+      ? 1
+      : Math.max(ZOOM_MIN, Math.min(1, VIEWBOX_H / gridContentBottom));
+    setView({ zoom, x: 0, y: 0 });
+  }, [gridContentBottom]);
+
   // Round 22 / Loop: keyboard zoom — +/= zoom in, - zoom out, 0 reset.
+  // Round 29 / Loop: +f to fit content.
   // Listen on window so the user doesn't need to focus the SVG first,
   // but only act when no text input has focus (otherwise typing "-" in
   // a chat would zoom the topology — surprising and bad). Modifier keys
@@ -899,12 +911,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       if (e.key === '+' || e.key === '=') { zoomBy(1.2); e.preventDefault(); }
       else if (e.key === '-' || e.key === '_') { zoomBy(1 / 1.2); e.preventDefault(); }
       else if (e.key === '0') { resetView(); e.preventDefault(); }
+      else if (e.key === 'f' || e.key === 'F') { fitView(); e.preventDefault(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // zoomBy / resetView are stable wrt setView callback; safe to omit deps
+    // zoomBy / resetView are stable wrt setView callback; fitView changes
+    // with gridContentBottom so deps list catches it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fitView]);
 
   const toggleFullscreen = () => {
     const el = containerRef.current;
