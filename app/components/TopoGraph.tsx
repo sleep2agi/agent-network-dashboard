@@ -3769,6 +3769,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       }
                     }}
                   >
+                    {/* R148 / Loop: row tooltip with full message context.
+                        The row text truncates aliases to 6 chars (R127)
+                        and content to 8 chars — useful for scan-density
+                        but obscures the underlying message. A native SVG
+                        <title> reveals the full alias / content /
+                        timestamp on hover. Pinned vs unpinned switches
+                        the click hint so the user knows the next
+                        gesture's effect. R98 enriched the node tooltip
+                        the same way for the source/destination scope;
+                        R148 brings the per-row equivalent to the panel
+                        side. */}
+                    <title>{[
+                      `${link.from} → ${link.to} · ${link.count} msg${link.count === 1 ? '' : 's'}${isHot ? ' (hot lane · ≥ 10)' : ''}`,
+                      link.last_at ? `last: ${new Date(link.last_at).toLocaleString()}` : null,
+                      link.content ? `"${link.content}"` : null,
+                      isRowPinned ? 'click to release pin (Esc to clear)' : 'click to pin · hover to preview',
+                    ].filter(Boolean).join('\n')}</title>
                     {/* R104: subtle row-background tint on hover. R56
                         already brightens the matching edge on the canvas,
                         but the panel row itself stayed flat — felt more
