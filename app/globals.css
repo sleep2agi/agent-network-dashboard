@@ -845,6 +845,24 @@ body {
   transform-box: fill-box;
 }
 
+/* Round 186 — chrome zoom-in / zoom-out buttons get a brief icon pop
+   on click. Same click-feel idiom R184 added for the reset button —
+   the canvas already smoothes via R168/R169 smoothView, but the
+   chrome BUTTON itself needs its own confirmation. A quick scale
+   up-then-back (1 → 1.18 → 1 over 220ms) reads as "tapped". Same
+   transform-box: fill-box anchoring as R184 keeps the icon
+   centered in place. */
+@keyframes anet-chrome-pop {
+  0%   { transform: scale(1);    }
+  50%  { transform: scale(1.18); }
+  100% { transform: scale(1);    }
+}
+.anet-chrome-pop {
+  animation: anet-chrome-pop 0.22s ease-out;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
 /* Round 36 — current-step ring pulse on TaskDrawer timeline. Halo gently
    breathes around the active step's dot so users can spot "task is here". */
 @keyframes anet-current-step-pulse-kf {
