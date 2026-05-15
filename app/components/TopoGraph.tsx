@@ -2216,7 +2216,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // stay gray. data-active-links-clickable already
               // exposes that gate to tests.
               <span
-                className={`hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                // Round 206 / Loop: extend the R204/R205 empty-recede
+                // family to the active-links chip. Pre-R206 "0 active
+                // links" rendered at the same bg-gray-500/10 + full
+                // opacity as "12 active links" — same eye-no-signal
+                // problem the legend count (R204) and working/online
+                // chips (R205) just solved at their own grain levels.
+                // Inline opacity 0.5 when !isInteractive (flowLinks=0)
+                // joins R136's already-removed cursor + R114's tooltip-
+                // text gate to give the empty state visual + interactive
+                // + affordance signals in lockstep.
+                // Tailwind transition-colors duration-200 on className
+                // would be overridden by the inline transition list, so
+                // we replicate color/bg/border transitions inline
+                // alongside the new opacity 200ms — same splice idiom
+                // R201 used on the working/online chips.
+                className={`hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus ${
                   isInteractive
                     ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30'
                     : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
@@ -2224,10 +2239,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 data-active-links-chip
                 data-active-links-flow-count={flowLinks.length}
                 data-active-links-clickable={isInteractive ? 'true' : 'false'}
+                data-active-links-empty={isInteractive ? 'false' : 'true'}
                 title={tooltip}
                 role={isInteractive ? 'link' : undefined}
                 tabIndex={isInteractive ? 0 : undefined}
-                style={{ cursor: isInteractive ? 'pointer' : undefined }}
+                style={{
+                  cursor: isInteractive ? 'pointer' : undefined,
+                  opacity: isInteractive ? 1 : 0.5,
+                  transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out',
+                }}
                 onMouseEnter={() => { if (isInteractive) setHoveredActiveLinks(true); }}
                 onMouseLeave={() => setHoveredActiveLinks(false)}
                 onClick={() => { if (isInteractive) router.push('/messages'); }}
