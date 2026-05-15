@@ -1104,7 +1104,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           </g>)}
 
           {/* agent nodes */}
-          {[...onlineNodes, ...offlineNodes].map(session => {
+          {[...onlineNodes, ...offlineNodes].map((session, nodeIdx) => {
             const pos = nodePositions[session.alias];
             if (!pos) return null;
 
@@ -1140,7 +1140,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // via the alias key), so status changes don't flicker. The
                 // global prefers-reduced-motion sweep already neutralises it.
                 className="group transition-opacity anet-fade-in"
-                style={{ cursor: 'pointer', opacity: inFocus ? 1 : 0.32 }}
+                style={{
+                  cursor: 'pointer',
+                  opacity: inFocus ? 1 : 0.32,
+                  // Round 9 / Loop: stagger the anet-fade-in so the topology
+                  // reveals as a wave on first paint instead of one big pop.
+                  // Cap at 24 indices (≈600ms tail) so 50-node fleets still
+                  // finish revealing within a beat. CSS animation-delay only
+                  // applies during the keyframe — re-renders without a new
+                  // mount (same alias key) don't replay, so status changes
+                  // never trigger the stagger again.
+                  animationDelay: `${Math.min(nodeIdx, 24) * 25}ms`,
+                }}
                 // Stop the pointerdown from reaching the SVG pan handler: the
                 // SVG calls setPointerCapture, and a captured pointer makes
                 // Chromium fire the follow-up `click` on the SVG instead of
