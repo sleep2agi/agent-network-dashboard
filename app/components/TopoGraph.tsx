@@ -806,6 +806,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   };
   const resetView = () => setView({ zoom: 1, x: 0, y: 0 });
 
+  // Round 22 / Loop: keyboard zoom — +/= zoom in, - zoom out, 0 reset.
+  // Listen on window so the user doesn't need to focus the SVG first,
+  // but only act when no text input has focus (otherwise typing "-" in
+  // a chat would zoom the topology — surprising and bad). Modifier keys
+  // pass through so Cmd/Ctrl combos still hit their owners. The button
+  // titles below document these shortcuts so users discover them.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const ae = document.activeElement as HTMLElement | null;
+      if (ae) {
+        const tag = ae.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || ae.isContentEditable) return;
+      }
+      if (e.key === '+' || e.key === '=') { zoomBy(1.2); e.preventDefault(); }
+      else if (e.key === '-' || e.key === '_') { zoomBy(1 / 1.2); e.preventDefault(); }
+      else if (e.key === '0') { resetView(); e.preventDefault(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // zoomBy / resetView are stable wrt setView callback; safe to omit deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toggleFullscreen = () => {
     const el = containerRef.current;
     if (!el) return;
@@ -1611,6 +1635,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               className="px-2 py-1 hover:bg-white/5 transition-colors"
               style={{ color: pal.legendText }}
               aria-label="Zoom out"
+              title="Zoom out (−)"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M5 12h14" /></svg>
             </button>
@@ -1626,6 +1651,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               className="px-2 py-1 hover:bg-white/5 transition-colors"
               style={{ color: pal.legendText }}
               aria-label="Zoom in"
+              title="Zoom in (+)"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
             </button>
@@ -1635,7 +1661,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             className="p-1.5 rounded-md border hover:bg-white/5 transition-colors"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
             aria-label="Reset view"
-            title="Reset zoom + pan (or double-click the canvas)"
+            title="Reset zoom + pan (0, or double-click the canvas)"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8" />
