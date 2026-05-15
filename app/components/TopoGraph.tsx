@@ -2782,26 +2782,54 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // non-endpoint node dims. Released → all restore. Wrapping
               // <g> + a transparent 218×14 hitbox so the cursor doesn't
               // have to land precisely on the truncated text.
-              flowLinks.slice(0, 3).map((link, index) => (
-                <g
-                  key={link.key}
-                  data-recent-row={link.key}
-                  style={{ cursor: 'pointer' }}
-                  onMouseEnter={() => setHoveredEdgeKey(link.key)}
-                  onMouseLeave={() => setHoveredEdgeKey(prev => prev === link.key ? null : prev)}
-                >
-                  <rect x="6" y={38 + index * 16 - 10} width="218" height="14" fill="transparent" />
-                  <text
-                    x="13" y={38 + index * 16}
-                    fill={hoveredEdgeKey === link.key ? pal.legendHeadline : pal.legendText}
-                    fontSize="9"
-                    fontFamily="monospace"
-                    style={{ transition: 'fill 150ms ease-out' }}
+              flowLinks.slice(0, 3).map((link, index) => {
+                // Round 94 / Loop: per-row relative timestamp. The chip
+                // row shows "last 2s" for the most recent flow overall,
+                // but a user scanning the recent-signal panel had no way
+                // to tell whether row 2 was 5s old or 5m old without
+                // hovering nodes. Compact `2s` / `1m` glyph at the
+                // right edge — same relativeAgo helper R42 uses for
+                // the chip — pulls double duty as a recency anchor and
+                // a sortedness hint (top row is freshest by construction).
+                // Strip the " ago" suffix — at fontSize=8 in a 32-px
+                // right-edge slot, every char counts. "30s ago" → "30s".
+                const rawAt = link.last_at ? relativeAgo(link.last_at) : null;
+                const lastAt = rawAt ? rawAt.replace(/\s+ago$/, '') : null;
+                return (
+                  <g
+                    key={link.key}
+                    data-recent-row={link.key}
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={() => setHoveredEdgeKey(link.key)}
+                    onMouseLeave={() => setHoveredEdgeKey(prev => prev === link.key ? null : prev)}
                   >
-                    {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} / {link.count} / {truncate(link.content, 12)}
-                  </text>
-                </g>
-              ))
+                    <rect x="6" y={38 + index * 16 - 10} width="218" height="14" fill="transparent" />
+                    <text
+                      x="13" y={38 + index * 16}
+                      fill={hoveredEdgeKey === link.key ? pal.legendHeadline : pal.legendText}
+                      fontSize="9"
+                      fontFamily="monospace"
+                      style={{ transition: 'fill 150ms ease-out' }}
+                    >
+                      {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} / {link.count} / {truncate(link.content, 8)}
+                    </text>
+                    {lastAt ? (
+                      <text
+                        x="217" y={38 + index * 16}
+                        textAnchor="end"
+                        fill={pal.legendText}
+                        fontSize="8"
+                        fontFamily="monospace"
+                        opacity={0.55}
+                        data-recent-row-ts={link.key}
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        {lastAt}
+                      </text>
+                    ) : null}
+                  </g>
+                );
+              })
             )}
           </g>
 
