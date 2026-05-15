@@ -3316,7 +3316,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     the t=0.5 point is (A + 2C + B) / 4, which
                     simplifies to (midAB) + 0.5 × (control - midAB)
                     = midAB + perpendicular × lift/2. */}
-                {link.count >= 3 && (() => {
+                {(() => {
+                  // Round 215 / Loop: badge always-mounts; visibility
+                  // crossfades via the wrapper <g>'s opacity instead of
+                  // React conditional mount/unmount on link.count >= 3.
+                  // Pre-R215 a flow's first 2 → 3 message crossing made
+                  // the badge appear in one frame, and a hot flow
+                  // tapering 3 → 2 vanished in one frame. R215 extends
+                  // the always-mount-opacity-gate idiom (R181 / R182 /
+                  // R183 ring family + R213 hub digit/highlight + R214
+                  // pulse dot) to the canvas-edge surface. Inner R164
+                  // r-lift / R188 stroke transitions continue to ease
+                  // their respective state flips independently. pointer
+                  // events gated to 'none' when invisible so a sub-
+                  // threshold badge can't intercept the hitbox click.
+                  const visible = link.count >= 3;
                   const midX = (from.x + to.x) / 2;
                   const midY = (from.y + to.y) / 2;
                   const dx = to.x - from.x;
@@ -3324,7 +3338,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const len = Math.hypot(dx, dy) || 1;
                   const badgeX = midX + (-dy / len) * lift * 0.5;
                   const badgeY = midY + ( dx / len) * lift * 0.5;
-                  const badgeOpacity = Math.min(1, fresh * edgeOpacityMul);
+                  const badgeOpacity = visible ? Math.min(1, fresh * edgeOpacityMul) : 0;
                   /* R121: the badge becomes a canvas-side click-to-pin
                      affordance. R100 introduced it as a passive count
                      display; R116 added pinnedEdgeKey. Joining them
@@ -3361,11 +3375,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-edge-count-badge={link.key}
                       data-edge-count-badge-pinned={isPinned ? 'true' : 'false'}
                       data-edge-count-badge-hot={isHot ? 'true' : 'false'}
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={isPinned}
+                      data-edge-count-badge-visible={visible ? 'true' : 'false'}
+                      role={visible ? 'button' : undefined}
+                      tabIndex={visible ? 0 : -1}
+                      aria-pressed={visible ? isPinned : undefined}
+                      aria-hidden={visible ? undefined : true}
                       className="anet-topo-svg-focus"
-                      style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                      style={{
+                        pointerEvents: visible ? 'all' : 'none',
+                        cursor: visible ? 'pointer' : undefined,
+                        transition: 'opacity 300ms ease-out',
+                      }}
                       opacity={badgeOpacity}
                       onPointerDown={(e) => e.stopPropagation()}
                       // R122: badge hover propagates to hoveredEdgeKey so
