@@ -3751,38 +3751,62 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     clear of the overlap-test selectors (1.5 / 3). Sits just
                     outside the halo radius+8 so it never overlaps a neighbour
                     (halos already pack flush in dense grids). */}
-                {chatAlias === session.alias && (
-                  /* R51 chat-target ring. R120 / Loop: gentle SMIL
-                     breath on the ring's opacity (±0.1 over 3s) when
-                     chat is open + !reducedMotion. Says "active session
-                     here" continuously without animation noise — the
-                     ring only appears for one node at a time (the
-                     chatAlias), so it never competes with R84 hub
-                     busyness or R112 working halo for attention. */
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y}
-                    r={radius + 14}
-                    fill="none"
-                    stroke={status.primary}
-                    strokeWidth="2.5"
-                    opacity={isLight ? 0.85 : 0.95}
-                    filter={!isLight ? 'url(#topo-glow)' : undefined}
-                    className="transition-opacity duration-200"
-                    style={{ pointerEvents: 'none' }}
-                    data-chat-target-ring
-                    data-chat-target-breath={!reducedMotion ? 'on' : 'off'}
-                  >
-                    {!reducedMotion && (
-                      <animate
-                        attributeName="opacity"
-                        values={isLight ? '0.72;0.95;0.72' : '0.82;1;0.82'}
-                        dur="3s"
-                        repeatCount="indefinite"
-                      />
-                    )}
-                  </circle>
-                )}
+                {/* R51 chat-target ring. R120 / Loop: gentle SMIL
+                   breath on the ring's opacity (±0.1 over 3s) when
+                   chat is open + !reducedMotion. Says "active session
+                   here" continuously without animation noise — the
+                   ring only appears for one node at a time (the
+                   chatAlias), so it never competes with R84 hub
+                   busyness or R112 working halo for attention.
+
+                   Round 183 / Loop: 7th surface in the smooth-pin-
+                   mirror family. Pre-R183 the ring was conditionally
+                   mounted on `chatAlias === session.alias`; the
+                   className `transition-opacity duration-200` never
+                   fired because the element didn't exist before
+                   mount. Always-mounted now with opacity gated by
+                   isChat — the CSS transition fires cleanly on
+                   chat-close (smooth fade-out). The `<animate>`
+                   SMIL stays gated by `!reducedMotion && isChat`
+                   so it only runs for the active chat target; when
+                   chat is closed, SMIL unmounts and opacity reverts
+                   to attribute (0) → CSS transitions down smoothly.
+                   On chat-OPEN the SMIL takes over per spec, so the
+                   fade-in is snappier than the fade-out — acceptable
+                   because the user explicitly clicked the node.
+
+                   strokeWidth=2.5 is not a R51 sentinel value
+                   (sentinels are 1.5/3 inside g[data-node]), so the
+                   ring is invisible to the overlap-test selector
+                   even when always-mounted. */}
+                {(() => {
+                  const isChat = chatAlias === session.alias;
+                  return (
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y}
+                      r={radius + 14}
+                      fill="none"
+                      stroke={status.primary}
+                      strokeWidth="2.5"
+                      opacity={isChat ? (isLight ? 0.85 : 0.95) : 0}
+                      filter={!isLight && isChat ? 'url(#topo-glow)' : undefined}
+                      style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out' }}
+                      data-chat-target-ring
+                      data-chat-target-active={isChat ? 'true' : 'false'}
+                      data-chat-target-breath={!reducedMotion && isChat ? 'on' : 'off'}
+                    >
+                      {!reducedMotion && isChat && (
+                        <animate
+                          attributeName="opacity"
+                          values={isLight ? '0.72;0.95;0.72' : '0.82;1;0.82'}
+                          dur="3s"
+                          repeatCount="indefinite"
+                        />
+                      )}
+                    </circle>
+                  );
+                })()}
                 {isActive && !reducedMotion && (
                   <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
                     <animate attributeName="r" values={`${radius + 8};${radius + 22};${radius + 8}`} dur="2.4s" repeatCount="indefinite" />
