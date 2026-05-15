@@ -1026,10 +1026,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const to = nodePositions[link.to];
             if (!from || !to) return null;
 
-            const lift = index % 2 === 0 ? 36 : -36;
+            // Round 7 / Loop: lift now scales with distance so short links
+            // aren't over-bent (long links keep the ~36px hump), and the
+            // particle period shortens with link.count so busier edges
+            // visibly pulse faster — instant info density on top of the
+            // existing stroke-width-by-count chip.
+            const dist = Math.hypot(to.x - from.x, to.y - from.y);
+            const lift = (index % 2 === 0 ? 1 : -1) * Math.min(36, dist * 0.18);
             const path = curvePath(from, to, lift);
             const width = Math.min(2 + link.count, 7);
-            const duration = 2.2 + (index % 5) * 0.32;
+            const duration = Math.max(0.9, 2.6 / Math.sqrt(link.count));
 
             return (
               <g key={link.key}>
