@@ -4549,13 +4549,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          " / ". Both swaps make the row read like every
                          other surface — one less micro-style to remember. */}
                       {truncate(link.from, 6)} {'→'} {truncate(link.to, 6)} {' · '}
-                      {isHot ? (
-                        <tspan fill={hotStroke} fontWeight="700" data-recent-row-count-hot>
-                          {link.count}
-                        </tspan>
-                      ) : (
-                        <tspan data-recent-row-count>{link.count}</tspan>
-                      )}
+                      {/* Round 189 / Loop: count tspan unified — pre-R189
+                          two different tspans (data-recent-row-count vs
+                          data-recent-row-count-hot) mounted/unmounted
+                          on the R127 hot threshold (count >= 10),
+                          making fill (legendText ↔ amber) + fontWeight
+                          (regular ↔ 700) snap one-frame. Now one tspan
+                          always-mounted; isHot drives fill/fontWeight
+                          conditionally. style.transition='fill 300ms
+                          ease-out' makes the hot crossing ease through
+                          the colour shift — same vocabulary R188 just
+                          added to the edge midpoint badge stroke (the
+                          panel-side mirror of that surface). fontWeight
+                          stays binary (no clean weight interpolation
+                          across browsers). data-recent-row-count
+                          continues to expose the tspan to existing
+                          tests; data-recent-row-count-hot becomes
+                          an attribute on the same element when active
+                          so legacy probes still resolve. */}
+                      <tspan
+                        fill={isHot ? hotStroke : undefined}
+                        fontWeight={isHot ? '700' : undefined}
+                        data-recent-row-count
+                        {...(isHot ? { 'data-recent-row-count-hot': 'true' } : {})}
+                        style={{ transition: 'fill 300ms ease-out' }}
+                      >
+                        {link.count}
+                      </tspan>
                       {' · '}{truncate(link.content, 8)}
                     </text>
                     {lastAt ? (
