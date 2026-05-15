@@ -1176,6 +1176,57 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               </span>
             );
           })()}
+          {/* Round 64 / Loop: active-filter pills. When pinnedStatus or
+              pinnedGroup is set, show a small "filter: <key> ×" pill so
+              the user can see the pin from the chip row even if they
+              scrolled the canvas off-screen. × button clears the
+              specific pin (Esc still clears all — both paths are
+              valid). pinnedStatus and pinnedGroup pin independently so
+              both pills may render simultaneously. */}
+          {pinnedStatus && (
+            <span
+              data-active-filter="status"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border"
+              style={{
+                background: pinnedStatus === 'working' ? (isLight ? '#05966914' : '#22c55e1f')
+                          : pinnedStatus === 'idle'    ? (isLight ? '#0d948814' : '#2dd4bf1f')
+                          : (isLight ? '#94a3b814' : '#6b72801f'),
+                color:      pinnedStatus === 'working' ? (isLight ? '#047857' : '#86efac')
+                          : pinnedStatus === 'idle'    ? (isLight ? '#0f766e' : '#5eead4')
+                          : (isLight ? '#475569' : '#9ca3af'),
+                borderColor: 'currentColor',
+              }}
+            >
+              <span>filter: {pinnedStatus}</span>
+              <button
+                type="button"
+                aria-label={`Clear ${pinnedStatus} filter`}
+                onClick={() => setPinnedStatus(null)}
+                className="ml-0.5 leading-none hover:opacity-70"
+                style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
+              >×</button>
+            </span>
+          )}
+          {pinnedGroup && (
+            <span
+              data-active-filter="group"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border"
+              style={{
+                background: isLight ? '#67e8f914' : '#67e8f91f',
+                color: pal.legendAccent,
+                borderColor: 'currentColor',
+              }}
+            >
+              <span>filter: {pinnedGroup}</span>
+              <button
+                type="button"
+                aria-label={`Clear group filter ${pinnedGroup}`}
+                onClick={() => setPinnedGroup(null)}
+                className="ml-0.5 leading-none hover:opacity-70"
+                style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
+              >×</button>
+            </span>
+          )}
           {vendorDist.length > 1 && (
             <span
               className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
