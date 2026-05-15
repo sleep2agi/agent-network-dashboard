@@ -3626,8 +3626,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
                 workingCount=0 falls through to the existing
                 decorative highlight so the hub never looks empty. */}
-            {workingCount > 0 ? (
-              <text
+            {/* Round 213 / Loop: hub centre crossfades the workingCount
+                digit and the R130 decorative highlight when count
+                crosses zero, instead of mount/unmount snap. Pre-R213 a
+                fleet going from idle (workingCount=0, highlight circle)
+                to first-working-node (workingCount=1, digit "1") swapped
+                the elements in a single frame — visible flash at the
+                hub's focal point. R213 uses the always-mount + opacity-
+                gate pattern (R181/R182/R183 family) so both render
+                concurrently and crossfade via opacity transitions.
+                Geometry already overlaps (both centred on cx,cy with
+                r=5 / digit-bbox ~7×11), so the dual-render adds zero
+                layout cost. Reduced-motion users see a 0ms duration
+                via the R29 globals.css blanket override. */}
+            {/* digit (visible when workingCount > 0) */}
+            <text
                 x={cx} y={cy}
                 textAnchor="middle"
                 dy="0.36em"
@@ -3635,8 +3648,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 fontSize="11"
                 fontFamily="monospace"
                 fontWeight="700"
+                opacity={workingCount > 0 ? 1 : 0}
                 data-topo-hub-working-count={workingCount}
                 data-topo-hub-working-count-hovered={hoveredHub ? 'true' : 'false'}
+                data-topo-hub-working-count-visible={workingCount > 0 ? 'true' : 'false'}
                 // Round 209 / Loop: hub workingCount digit scales 1.0 →
                 // 1.08 on hub-hover, matching R177's r 14→17 ring grow.
                 // Pre-R209 hovering the hub grew the ring while the
@@ -3655,19 +3670,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   transform: !reducedMotion && hoveredHub ? 'scale(1.08)' : 'scale(1)',
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
-                  transition: 'transform 200ms ease-out',
+                  transition: 'transform 200ms ease-out, opacity 300ms ease-out',
                 }}
               >
                 {workingCount}
               </text>
-            ) : (
-              <circle
-                cx={cx} cy={cy} r="5"
-                fill="#d1fae5"
-                opacity="0.9"
-                data-topo-hub-highlight
-              />
-            )}
+            {/* decorative highlight (visible when workingCount === 0) */}
+            <circle
+              cx={cx} cy={cy} r="5"
+              fill="#d1fae5"
+              opacity={workingCount > 0 ? 0 : 0.9}
+              data-topo-hub-highlight
+              data-topo-hub-highlight-visible={workingCount > 0 ? 'false' : 'true'}
+              style={{
+                pointerEvents: 'none',
+                transition: 'opacity 300ms ease-out',
+              }}
+            />
             {/* R115 / Loop: hover hint ring. Stroke-only circle at r=14
                 that fades in when the hub is hovered — the same idea
                 R44 used for node avatars (group-hover stroke). r=14
