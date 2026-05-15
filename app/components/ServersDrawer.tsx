@@ -1,18 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 
 /** Issue #119 — server-side panel listing the hub's hosts + CPU/RAM bars.
  *
- * Round 5 ships the UI with mock data; the real data path lands when:
- *   1. agent-node attaches a `host` payload to `report_status` (SDK马)
- *   2. CommHub exposes `GET /api/servers` aggregating it (通信牛)
- *   3. dashboard swaps the mock for a SWR fetch — the contract below
- *      matches the issue spec, so step 3 is a one-line change.
+ * Steps 1+2 (SDK马 host telemetry + CommHub aggregation) shipped with
+ * commhub-server v0.8.1-preview.2. Step 3 (this file, Round 20 of the
+ * dashboard /loop) swaps the original mock seed for a SWR fetch of
+ * `/api/hub/servers` (which proxies to the hub's `/api/servers`).
  *
  * Collapsed by default to a thin vertical icon strip so it never competes
  * with the topology graph for horizontal real-estate. State persists to
  * localStorage just like the other dashboard drawers.
+ *
+ * Backward-compat: if the upstream hub predates v0.8.1-preview.2 the
+ * proxy returns `{ servers: [], unavailable: true }`. The drawer
+ * surfaces a friendly "not yet available" hint instead of an empty list,
+ * so old hubs don't read as "something broke".
  */
 
 interface ServerCard {
@@ -27,23 +32,20 @@ interface ServerCard {
   note?: string;
 }
 
-// Mock seed — kept close to the #119 ASCII mock so Vincent / the team can
-// eyeball the layout against the spec. Swap to a SWR fetch when the endpoint
-// is live; the shape is identical, so the only code change is the source.
-const MOCK_SERVERS: ServerCard[] = [
-  {
-    hostname: 'iZrj93pr', ip: '127.0.0.1', cpu_load_1min: 3.05, cpu_cores: 8,
-    mem_used_gb: 10.4, mem_total_gb: 61.4, agent_count: 30, status: 'online', note: '本机',
-  },
-  {
-    hostname: 'iZ0jlc8', cpu_load_1min: 0.5, cpu_cores: 4,
-    mem_used_gb: 1.2, mem_total_gb: 8, agent_count: 1, status: 'online',
-  },
-  {
-    hostname: 'elaine-Sys', cpu_load_1min: null, cpu_cores: 0,
-    mem_used_gb: null, mem_total_gb: null, agent_count: 2, status: 'offline',
-  },
-];
+interface ServersResponse {
+  servers: ServerCard[];
+  unavailable?: boolean;
+}
+
+const fetcher = async (url: string): Promise<ServersResponse> => {
+  const res = await fetch(url);
+  if (res.status === 401) {
+    if (typeof window !== 'undefined') window.location.assign('/login');
+    throw new Error('unauthorized');
+  }
+  if (!res.ok) throw new Error(`hub ${res.status}`);
+  return res.json();
+};
 
 // Bar tint by usage — green ≤60%, amber 60–85%, red >85%. Keeps the eye
 // going to whichever box is actually about to tip over.
@@ -85,8 +87,19 @@ export function ServersDrawer() {
     return next;
   });
 
-  const servers = MOCK_SERVERS; // TODO(#119 step 3): useSWR('/api/hub/servers')
+  // Round 20 / #119 step 3 final delivery — real SWR fetch. 5s refresh
+  // matches the other live drawers (HealthBanner, Sidebar) so an operator
+  // sees host telemetry update in roughly the same beat as session state.
+  // Only poll while expanded — collapsed icon strip doesn't need fresh data.
+  const { data, error } = useSWR<ServersResponse>(
+    open ? '/api/hub/servers' : null,
+    fetcher,
+    { refreshInterval: 5000, dedupingInterval: 3000 },
+  );
+  const servers = data?.servers ?? [];
+  const unavailable = data?.unavailable === true;
   const onlineCount = servers.filter(s => s.status === 'online').length;
+  const loading = open && !data && !error;
 
   return (
     <aside
@@ -122,7 +135,29 @@ export function ServersDrawer() {
       </button>
 
       {open && (
-        <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-2">
+        <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-2" data-servers-body>
+          {loading && (
+            <div className="text-[10px] text-[var(--fg-muted)] font-mono text-center py-4">
+              loading servers…
+            </div>
+          )}
+          {error && !data && (
+            <div className="rounded-md border px-2.5 py-2 text-[10px] font-mono"
+              style={{ background: 'rgb(239 68 68 / 0.06)', borderColor: 'rgb(239 68 68 / 0.25)', color: '#ef4444' }}>
+              hub unreachable · retrying every 5s
+            </div>
+          )}
+          {unavailable && (
+            <div className="text-[10px] text-[var(--fg-muted)] font-mono text-center py-3 leading-relaxed">
+              host telemetry not available<br/>
+              <span className="text-[var(--fg-dim)]">upgrade commhub-server ≥ 0.8.1-preview.2</span>
+            </div>
+          )}
+          {!loading && !error && !unavailable && servers.length === 0 && (
+            <div className="text-[10px] text-[var(--fg-muted)] font-mono text-center py-4">
+              no servers reporting yet
+            </div>
+          )}
           {servers.map(s => {
             const offline = s.status === 'offline';
             const cpuPct = s.cpu_load_1min != null && s.cpu_cores > 0 ? (s.cpu_load_1min / s.cpu_cores) * 100 : null;
@@ -159,9 +194,11 @@ export function ServersDrawer() {
               </div>
             );
           })}
-          <div className="pt-1 text-[9px] text-[var(--fg-dim)] font-mono text-center">
-            mock data · live when <span className="text-[var(--fg-muted)]">/api/servers</span> ships
-          </div>
+          {servers.length > 0 && (
+            <div className="pt-1 text-[9px] text-[var(--fg-dim)] font-mono text-center">
+              live · refreshing every 5s
+            </div>
+          )}
         </div>
       )}
     </aside>
