@@ -3278,6 +3278,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           idiom: nodes (R51), panels (R135), group
                           boxes (R142), recent rows (R143), legend
                           rows (R144), edge badges (R164). */}
+                      {/* Round 188 / Loop: extend the badge transition to
+                          include stroke + stroke-width. R164 added the
+                          r 9↔10.5 lift; R188 closes the smoothness gap
+                          on the R121 pin-stroke flip (cyan flowEdge ↔
+                          legendHeadline) and R126 hot-lane flip (cyan
+                          ↔ amber). Both used to snap when crossing the
+                          state boundary (pin click, or count crossing
+                          10). Now they ease 300ms through the colour
+                          and width change — same idiom R167 uses for
+                          the node status ring. The badge strokeWidth
+                          values are 1/2 (not R51 sentinels 1.5/3) so
+                          the always-rendered badge stays invisible to
+                          the overlap-test guard rails. */}
                       <circle
                         cx={badgeX} cy={badgeY}
                         r={isHoveredEdge || isPinned ? 10.5 : 9}
@@ -3286,7 +3299,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         strokeWidth={isPinned ? 2 : isHot ? 2 : 1}
                         opacity={isLight ? 0.95 : 0.82}
                         data-edge-badge-lifted={(isHoveredEdge || isPinned) ? 'true' : 'false'}
-                        style={{ transition: 'r 180ms ease-out' }}
+                        style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out' }}
                       />
                       <text
                         x={badgeX} y={badgeY + 3}
