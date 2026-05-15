@@ -2057,10 +2057,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 no flow yet
               </text>
             ) : (
+              // Round 56 / Loop: each row is a navigator into the canvas.
+              // Hover a row → set hoveredEdgeKey, which the existing R50
+              // edge-focus + R49 endpoint-highlight ladders consume. The
+              // matching flow edge brightens to 2× + thickens, its two
+              // endpoint nodes stay full opacity, and every other edge +
+              // non-endpoint node dims. Released → all restore. Wrapping
+              // <g> + a transparent 218×14 hitbox so the cursor doesn't
+              // have to land precisely on the truncated text.
               flowLinks.slice(0, 3).map((link, index) => (
-                <text key={link.key} x="13" y={38 + index * 16} fill={pal.legendText} fontSize="9" fontFamily="monospace">
-                  {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} / {link.count} / {truncate(link.content, 12)}
-                </text>
+                <g
+                  key={link.key}
+                  data-recent-row={link.key}
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={() => setHoveredEdgeKey(link.key)}
+                  onMouseLeave={() => setHoveredEdgeKey(prev => prev === link.key ? null : prev)}
+                >
+                  <rect x="6" y={38 + index * 16 - 10} width="218" height="14" fill="transparent" />
+                  <text
+                    x="13" y={38 + index * 16}
+                    fill={hoveredEdgeKey === link.key ? pal.legendHeadline : pal.legendText}
+                    fontSize="9"
+                    fontFamily="monospace"
+                    style={{ transition: 'fill 150ms ease-out' }}
+                  >
+                    {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} / {link.count} / {truncate(link.content, 12)}
+                  </text>
+                </g>
               ))
             )}
           </g>
