@@ -1209,6 +1209,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   className="opacity-0 group-hover:opacity-70 transition-opacity duration-150"
                   style={{ pointerEvents: 'none' }}
                 />
+                {/* Round 11 / Loop: chat-focus ring — when the ChatPopover is
+                    open targeting this node, anchor a persistent ring around
+                    it so the floating popover visibly links back to its source
+                    node. Static (not pulsing) so it reads as "selected state"
+                    rather than "this node is active". strokeWidth=2.5 stays
+                    clear of the overlap-test selectors (1.5 / 3). Sits just
+                    outside the halo radius+8 so it never overlaps a neighbour
+                    (halos already pack flush in dense grids). */}
+                {chatAlias === session.alias && (
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={radius + 14}
+                    fill="none"
+                    stroke={status.primary}
+                    strokeWidth="2.5"
+                    opacity={isLight ? 0.85 : 0.95}
+                    filter={!isLight ? 'url(#topo-glow)' : undefined}
+                    className="transition-opacity duration-200"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                )}
                 {isActive && (
                   <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
                     <animate attributeName="r" values={`${radius + 8};${radius + 22};${radius + 8}`} dur="2.4s" repeatCount="indefinite" />
