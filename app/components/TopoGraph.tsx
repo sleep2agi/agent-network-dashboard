@@ -735,6 +735,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     const svg = svgRef.current;
     if (!svg) return;
     const onWheel = (e: WheelEvent) => {
+      // Round 23 / Loop: only zoom on Ctrl/Meta+wheel when inline; plain
+      // wheel over the canvas keeps scrolling the page (the topo sits at
+      // the top of /; trapping page scroll mid-page is the classic
+      // "scroll-jail" anti-pattern). In fullscreen the canvas owns the
+      // viewport so any wheel zooms — no page scroll to preserve. Pinch-
+      // zoom on a trackpad surfaces as ctrlKey=true natively, which is
+      // also what we want (zoom the canvas, not the browser).
+      if (!isFullscreen && !e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
       const rect = svg.getBoundingClientRect();
       const mx = ((e.clientX - rect.left) / rect.width) * VIEWBOX_W;
@@ -755,7 +763,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     };
     svg.addEventListener('wheel', onWheel, { passive: false });
     return () => svg.removeEventListener('wheel', onWheel);
-  }, []);
+    // Re-attach when the fullscreen flag toggles so the handler's
+    // closure picks up the new value (capture-by-closure means we'd
+    // otherwise read the stale boolean forever).
+  }, [isFullscreen]);
 
   // Round 21 / Loop: pan-aware cursor. Static `grab` gave no tactile cue
   // that the canvas was actually being dragged — "grabbing" while
