@@ -1467,9 +1467,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   role={workingCount > 0 ? 'button' : undefined}
                   tabIndex={workingCount > 0 ? 0 : undefined}
                   aria-pressed={workingCount > 0 ? (pinnedStatus === 'working') : undefined}
+                  // Round 180 / Loop: pin-mirror inset rings now ease in/out
+                  // instead of snapping. R165 added this transition to the
+                  // pressure-bar segments; R180 closes the smooth-pin-mirror
+                  // family across the three remaining chip-row pin chips
+                  // (working / online / vendor letter). The visual is small
+                  // — a 1-2 px inset double ring — but the eye catches the
+                  // pop on every pin/unpin without the ease.
                   style={{
                     cursor: workingCount > 0 ? 'pointer' : undefined,
                     boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
+                    transition: 'box-shadow 150ms ease-out',
                   }}
                   onMouseEnter={() => { if (workingCount > 0) setHoveredStatus('working'); }}
                   onMouseLeave={() => setHoveredStatus(prev => prev === 'working' ? null : prev)}
@@ -1504,9 +1512,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   title={onlineTitle}
                   role={onlineNodes.length > 0 ? 'link' : undefined}
                   tabIndex={onlineNodes.length > 0 ? 0 : undefined}
+                  // R180: smooth-pin-mirror family — see working chip above.
                   style={{
                     cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
                     boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
+                    transition: 'box-shadow 150ms ease-out',
                   }}
                   onMouseEnter={() => {
                     // If a working filter would isolate nothing, route to idle.
@@ -2003,11 +2013,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-vendor-pinned={isPinned ? 'true' : 'false'}
                     data-vendor-aliases={aliases.join(',')}
                     title={tooltip}
+                    // R180: smooth-pin-mirror family — see working chip above.
                     style={{
                       cursor: 'pointer',
                       boxShadow: isPinned
                         ? `inset 0 0 0 1px ${v.color}, inset 0 0 0 2px rgba(255,255,255,0.45)`
                         : undefined,
+                      transition: 'box-shadow 150ms ease-out',
                     }}
                     onMouseEnter={() => setHoveredVendor(v.initial)}
                     onMouseLeave={() => setHoveredVendor(prev => prev === v.initial ? null : prev)}
