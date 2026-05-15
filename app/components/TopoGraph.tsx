@@ -1037,6 +1037,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   const viewRef = useRef(view);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Round 184 / Loop: chrome reset button gets a one-shot icon spin
+  // on click. resetSpinning is armed for 450ms (matches the CSS
+  // animation duration in globals.css `.anet-reset-spin`); the SVG
+  // icon picks up the class while armed. Same arming pattern as
+  // R168/R169/R170/R171 smoothView flags but driving a CSS animation
+  // instead of a CSS transition. prefers-reduced-motion blanket
+  // override in R29 globals.css neutralises animation-duration
+  // universally so the spin completes in 1ms when reduced motion is
+  // requested.
+  const [resetSpinning, setResetSpinning] = useState(false);
+  const armResetSpin = () => {
+    setResetSpinning(true);
+    setTimeout(() => setResetSpinning(false), 460);
+  };
   // Issue #100: singleton chat popover. One alias at a time — clicking
   // another node swaps the target and the conversation switches in place.
   const [chatAlias, setChatAlias] = useState<string | null>(null);
@@ -4939,14 +4953,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             </button>
           </div>
           <button
-            onClick={resetView}
+            onClick={() => { armResetSpin(); resetView(); }}
             data-topo-chrome-reset
+            data-topo-chrome-reset-spinning={resetSpinning ? 'true' : 'false'}
             className="p-1.5 rounded-md border hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
             aria-label="Reset view"
             title="Reset zoom + pan (0, or double-click the canvas)"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            {/* R184: the refresh-arrow icon does one counter-clockwise
+                rotation on click. CSS animation runs once; React removes
+                the className after 460ms (just past the 450ms duration)
+                so a subsequent click can replay. */}
+            <svg
+              width="13" height="13" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round"
+              aria-hidden
+              className={resetSpinning ? 'anet-reset-spin' : undefined}
+              data-topo-chrome-reset-icon
+            >
               <path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8" />
               <path d="M3 3v5h5" />
             </svg>

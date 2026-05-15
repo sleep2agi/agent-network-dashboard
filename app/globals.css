@@ -828,6 +828,23 @@ body {
 }
 .anet-fade-in { animation: anet-fade-in 0.15s ease-out; }
 
+/* Round 184 — chrome reset button click-spin. The reset button's
+   onClick triggers R168 smoothView crossfade on the canvas, but the
+   BUTTON itself had no visual feedback that the click registered. A
+   single 360° rotation on the refresh-arrow icon (450ms ease-out) is
+   a quick "yes, I heard you" confirmation. Counter-clockwise (-360°)
+   reads as "rewind" / "undo" — natural for a reset gesture. Mirror
+   to R52's hub click ripple at the chrome scope. */
+@keyframes anet-reset-spin {
+  from { transform: rotate(0deg);     }
+  to   { transform: rotate(-360deg); }
+}
+.anet-reset-spin {
+  animation: anet-reset-spin 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
 /* Round 36 — current-step ring pulse on TaskDrawer timeline. Halo gently
    breathes around the active step's dot so users can spot "task is here". */
 @keyframes anet-current-step-pulse-kf {
