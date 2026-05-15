@@ -899,9 +899,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 </feMerge>
               </filter>
             )}
-            <marker id="topo-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill={pal.arrowFill} />
-            </marker>
+            {/* Round 16 / Loop: 3-tier flow-link arrow markers.
+                The single marker had `markerUnits` defaulting to
+                `strokeWidth`, so heavy edges (stroke=7) rendered 35-user-
+                unit arrowheads — visually dominant, the head outweighed
+                the line. Switching to `userSpaceOnUse` decouples arrow
+                size from stroke; binning by count gives a clearer
+                hierarchy than continuous linear scaling:
+                  s (count 1-2) →  12 user units
+                  m (count 3-4) →  16 user units  (alias for `topo-arrow`)
+                  l (count 5+)  →  22 user units
+                `topo-arrow` stays bound to the medium tier so the legend
+                swatch (line ~1500) renders without change. */}
+            {[
+              { id: 'topo-arrow-s', size: 12 },
+              { id: 'topo-arrow',   size: 16 },
+              { id: 'topo-arrow-l', size: 22 },
+            ].map(m => (
+              <marker
+                key={m.id}
+                id={m.id}
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth={m.size}
+                markerHeight={m.size}
+                markerUnits="userSpaceOnUse"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill={pal.arrowFill} />
+              </marker>
+            ))}
             {/* Round 45: radial radar sweep gradient — bright at center
                 (where it meets the hub) fading to leading edge. */}
             <radialGradient id="topo-sweep" cx="0%" cy="50%" r="100%">
@@ -1091,6 +1119,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // — accuracy is within the poll interval, plenty.
             const ageMs = link.last_at ? Math.max(0, Date.now() - Date.parse(link.last_at)) : 0;
             const fresh = Math.max(0.35, 1 - ageMs / (5 * 60 * 1000));
+            // Round 16 arrow-tier binning — keep `topo-arrow` as the
+            // medium tier id so the legend swatch picks it up unchanged.
+            const arrowId = link.count <= 2 ? 'topo-arrow-s'
+                          : link.count <= 4 ? 'topo-arrow'
+                          : 'topo-arrow-l';
 
             return (
               <g key={link.key}>
@@ -1101,7 +1134,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth={width}
                   opacity={(isLight ? 0.22 : 0.28) * fresh}
                   filter={isLight ? undefined : 'url(#topo-glow)'}
-                  markerEnd="url(#topo-arrow)"
+                  markerEnd={`url(#${arrowId})`}
                   className="transition-opacity duration-500"
                 />
                 <path
