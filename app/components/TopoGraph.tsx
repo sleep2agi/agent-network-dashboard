@@ -1995,11 +1995,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       >
         <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${pal.topRailGradient}`} />
 
+        {/* Round 158 / Loop: give the canvas SVG itself an accessible
+            name + role description. R151-R157 added a11y to every
+            interactive surface inside the canvas (nodes, group labels,
+            badges, rows, minimap, chrome buttons) — but the canvas
+            container itself was a nameless 1000×680 box. A screen
+            reader that hit the SVG before tab-diving into its
+            children heard nothing identifying it as "the topology".
+            aria-roledescription gives it a meaningful announcement;
+            aria-label provides a live snapshot of the network
+            (online / working / active links / offline) plus the two
+            canvas-scope gestures (Tab + double-click). Default SVG
+            role is graphics-document so children remain navigable —
+            we deliberately don't override role with "img" which
+            would flatten the SVG to a single opaque image. */}
         <svg
           ref={svgRef}
           viewBox="0 0 1000 680"
           className="w-full h-auto block"
           preserveAspectRatio="xMidYMid meet"
+          aria-roledescription="agent network topology"
+          aria-label={(() => {
+            const online = onlineNodes.length;
+            const working = workingCount;
+            const offline = offlineNodes.length;
+            const flows = flowLinks.length;
+            const parts: string[] = [];
+            parts.push(`${online} agent${online === 1 ? '' : 's'} online`);
+            if (working > 0) parts.push(`${working} working`);
+            if (offline > 0) parts.push(`${offline} offline`);
+            parts.push(`${flows} active link${flows === 1 ? '' : 's'}`);
+            return `Agent network topology — ${parts.join(' · ')}. Tab to navigate nodes, double-click canvas to reset view.`;
+          })()}
+          data-topo-canvas-aria
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
