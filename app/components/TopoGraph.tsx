@@ -476,7 +476,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       if (saved === 0.7 || saved === 0.84 || saved === 1) setNodeScale(saved);
     } catch {}
   }, []);
+  // Round 171 / Loop: nodeSize change picks up the R170 crossfade
+  // pattern. Clicking S/M/L in the chrome re-derives every node's
+  // radius + label sizing + (in grid layout) cell spacing — a
+  // wholesale visual shift. Pre-R171 the resize snapped in one
+  // paint frame; with this flag the viewport <g> opacity dims to
+  // 0.45 for ~400ms, masking the redraw as a soft blink (same
+  // vocabulary R170 uses for layout toggle). Bails early when
+  // the picked scale matches the current one — clicking the
+  // already-active button shouldn't fire a fade. Composes with
+  // R170 layoutSwitching via `||` in the opacity expression; both
+  // flags drive the same opacity transition but expose distinct
+  // data-* attributes so tests can disambiguate which gesture
+  // armed the crossfade.
+  const [nodeSizeSwitching, setNodeSizeSwitching] = useState(false);
   const pickNodeScale = (v: number) => {
+    if (v === nodeScale) return;
+    setNodeSizeSwitching(true);
+    setTimeout(() => setNodeSizeSwitching(false), 400);
     setNodeScale(v);
     try { localStorage.setItem('anet-topo-nodescale', String(v)); } catch {}
   };
@@ -2277,16 +2294,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             data-topo-viewport
             data-topo-viewport-smooth={smoothView ? 'true' : 'false'}
             data-topo-viewport-layout-switching={layoutSwitching ? 'true' : 'false'}
+            data-topo-viewport-nodesize-switching={nodeSizeSwitching ? 'true' : 'false'}
             style={{
               // R170 / Loop: opacity always carries a transition so the
               // layout-switch crossfade fires cleanly. R168 smoothView
               // transition on transform is added only when armed (pan
               // and wheel zoom MUST stay snappy). The two arming flags
               // compose without conflict — different visual axes.
+              // R171: nodeSizeSwitching shares the same opacity-dim
+              // pathway as layoutSwitching — clicking S/M/L in the
+              // chrome triggers the same soft-blink masking. ORing
+              // both flags keeps the opacity expression simple while
+              // the two distinct data-* attributes let tests
+              // disambiguate which gesture armed the crossfade.
               transition: smoothView
                 ? 'opacity 250ms ease-out, transform 300ms ease-out'
                 : 'opacity 250ms ease-out',
-              opacity: layoutSwitching ? 0.45 : 1,
+              opacity: (layoutSwitching || nodeSizeSwitching) ? 0.45 : 1,
             }}
           >
           {/* Issue #87: radar/ring ambiance renders only in ring layout —
