@@ -1180,6 +1180,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       return { zoom: nz, x: cx0 - (cx0 - prev.x) * ratio, y: cy0 - (cy0 - prev.y) * ratio };
     });
   };
+  // Round 169 / Loop: discrete-zoom wrapper that arms the R168
+  // smoothView flag before invoking zoomBy. Keyboard + / − and
+  // the chrome zoom buttons fire once per gesture, so each
+  // 1.2× step deserves the same 300ms glide R168 gives
+  // reset/fit. Wheel zoom keeps calling zoomBy() directly —
+  // every tick should respond live without lag. The arming
+  // path is identical to resetView/fitView so all four
+  // discrete-zoom surfaces share one timing constant.
+  const zoomByDiscrete = (factor: number) => {
+    setSmoothView(true);
+    setTimeout(() => setSmoothView(false), 350);
+    zoomBy(factor);
+  };
   // Round 168 / Loop: smoothView is a one-shot flag that arms a
   // CSS transition on the viewport <g> transform attribute. Set
   // true when resetView/fitView fires; the inline style on the
@@ -1255,8 +1268,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         const tag = ae.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || ae.isContentEditable) return;
       }
-      if (e.key === '+' || e.key === '=') { zoomBy(1.2); e.preventDefault(); }
-      else if (e.key === '-' || e.key === '_') { zoomBy(1 / 1.2); e.preventDefault(); }
+      if (e.key === '+' || e.key === '=') { zoomByDiscrete(1.2); e.preventDefault(); }
+      else if (e.key === '-' || e.key === '_') { zoomByDiscrete(1 / 1.2); e.preventDefault(); }
       else if (e.key === '0') { resetView(); e.preventDefault(); }
       else if (e.key === 'f' || e.key === 'F') { fitView(); e.preventDefault(); }
       // Round 32 / Loop: `l` toggles ring|grid. The vim-style `g l` route
@@ -4631,7 +4644,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
           >
             <button
-              onClick={() => zoomBy(1 / 1.2)}
+              onClick={() => zoomByDiscrete(1 / 1.2)}
               data-topo-chrome-zoom-out
               className="px-2 py-1 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
@@ -4649,7 +4662,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               {Math.round(view.zoom * 100)}%
             </span>
             <button
-              onClick={() => zoomBy(1.2)}
+              onClick={() => zoomByDiscrete(1.2)}
               data-topo-chrome-zoom-in
               className="px-2 py-1 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
