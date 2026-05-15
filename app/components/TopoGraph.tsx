@@ -1425,7 +1425,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               title="Ring layout (l to toggle)"
               data-topo-chrome-layout="ring"
               data-topo-chrome-layout-active={layout === 'ring' ? 'true' : 'false'}
-              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5'}`}
+              // Round 196 / Loop: add active: (pressed) state for tactile
+              // click feedback — bridges mouse-down → R186/R184/R192 pop-on-
+              // release. Selected variant deepens to cyan-500/25 (one tier
+              // above its hover:cyan-500/20); unselected variant deepens
+              // to cyan-500/15 (one tier above its hover:cyan-500/5).
+              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'}`}
             >
               Ring
             </button>
@@ -1435,7 +1440,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               title="Grid layout (l to toggle)"
               data-topo-chrome-layout="grid"
               data-topo-chrome-layout-active={layout === 'grid' ? 'true' : 'false'}
-              className={`px-2.5 py-1 border-l border-gray-500/25 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5'}`}
+              // Round 196 / Loop: R163 layout-toggle Grid variant picks up
+              // press-state — same tier pattern as Ring above.
+              className={`px-2.5 py-1 border-l border-gray-500/25 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'}`}
             >
               Grid
             </button>
@@ -5105,7 +5112,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // so the active chip stays responsive to mouse. R179
                 // closes the trio so all three chrome active-cyan
                 // surfaces ship the same gesture.
-                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20' : 'hover:bg-white/5'}`}
+                // Round 196 / Loop: nodeSize buttons pick up press-state
+                // (active:) — selected variant deepens to cyan-500/25,
+                // unselected to white/10. Same tier pattern as R196 layout
+                // toggle + zoom/reset/fullscreen below.
+                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-white/5 active:bg-white/10'}`}
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
                 {lbl}
@@ -5120,7 +5131,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               onClick={() => { popChrome('zoom-out'); zoomByDiscrete(1 / 1.2); }}
               data-topo-chrome-zoom-out
               data-topo-chrome-zoom-out-popping={chromePopping === 'zoom-out' ? 'true' : 'false'}
-              className="px-2 py-1 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
+              // R196: press-state deepens bg one tier above hover (white/5
+              // → white/10) so mouse-down has a tactile dim before the
+              // R186 icon pop fires on release.
+              className="px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom out"
               title="Zoom out (−)"
@@ -5177,7 +5191,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               onClick={() => { popChrome('zoom-in'); zoomByDiscrete(1.2); }}
               data-topo-chrome-zoom-in
               data-topo-chrome-zoom-in-popping={chromePopping === 'zoom-in' ? 'true' : 'false'}
-              className="px-2 py-1 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
+              // R196: press-state (mirror of zoom-out above).
+              className="px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom in"
               title="Zoom in (+)"
@@ -5197,7 +5212,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             onClick={() => { armResetSpin(); resetView(); }}
             data-topo-chrome-reset
             data-topo-chrome-reset-spinning={resetSpinning ? 'true' : 'false'}
-            className="p-1.5 rounded-md border hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
+            // R196: press-state deepens before R184 reset-spin fires on
+            // release — mouse-down dim then 450ms spin = full handshake.
+            className="p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
             aria-label="Reset view"
             title="Reset zoom + pan (0, or double-click the canvas)"
@@ -5234,10 +5251,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             onClick={toggleFullscreen}
             data-topo-chrome-fullscreen
             data-topo-chrome-fullscreen-active={isFullscreen ? 'true' : 'false'}
+            // R196: fullscreen also picks up press-state — active variant
+            // deepens cyan-500/20 → cyan-500/25 on press; non-active
+            // deepens white/5 → white/10.
             className={`p-1.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
-                ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20'
-                : 'hover:bg-white/5'
+                ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25'
+                : 'hover:bg-white/5 active:bg-white/10'
             }`}
             style={{
               borderColor: pal.containerBorder,
