@@ -422,10 +422,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       const all = [...online, ...offline];
       const groupKeys = computeGroups(all);
       const cols = Math.max(1, Math.ceil(Math.sqrt(all.length)));
-      // #112: gy0 starts below the recent-signal / legend overlay panels so
-      // grid row 0 is never occluded by them (Vincent 4727).
-      const gx0 = 150, gx1 = 850, gy0 = 184, gy1 = 588;
+      // #112: gy0 starts below the (now compact) recent-signal / legend
+      // overlay panels — their max bottom edge is y≈112 — so grid row 0 is
+      // never occluded; gy1 extends near the canvas bottom for breathing room.
+      const gx0 = 150, gx1 = 850, gy0 = 126, gy1 = 652;
       const cellW = (gx1 - gx0) / cols;
+      // largest node radius at the current size scale — drives the group
+      // label band + the row-height floor so nothing ever overlaps.
+      const nodeR = Math.round(26 * nodeScale);
 
       // ordered runs of consecutive same-group-key nodes (≥2 = real group)
       const runs: { key: string; members: Session[] }[] = [];
@@ -459,9 +463,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         }
       }
       const totalRows = Math.max(1, row);
-      // Adaptive row height so every band fits the canvas — many small groups
-      // would overflow a fixed height; zoom/pan still works past the floor.
-      const cellH = Math.min(100, (gy1 - gy0) / totalRows);
+      // #112: the group label sits in a band ABOVE the topmost node, so the
+      // band must clear the node radius — GROUP_TOP is node-relative, never
+      // cellH-derived (cellH-derived was the label↔node overlap bug Vincent
+      // hit). cellH then floors at GROUP_TOP + 30 so the label band + bottom
+      // padding always fit and stacked group boxes never touch; past the
+      // floor the grid overflows and zoom/pan handles it.
+      const GROUP_TOP = nodeR + 20;
+      // Row-height floor = the tightest of: a node + its label below it
+      // (2·nodeR + ~22), and the label band + min box padding (GROUP_TOP + 12).
+      // Below this, rows would overlap; past it the grid overflows and
+      // zoom/pan covers the rest.
+      const cellH = Math.max(2 * nodeR + 22, GROUP_TOP + 12, Math.min(100, (gy1 - gy0) / totalRows));
 
       // Pass 2 — place each band's members.
       for (const band of bands) {
@@ -481,11 +494,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       const active = new Set<string>();
       links.forEach(link => { active.add(link.from); active.add(link.to); });
       // #111: one bounding box per multi-member group (Vincent 4722). Each
-      // group owns its rows, so the box is a clean rect with no overlap.
-      // Padding scales with the (adaptive) row height so stacked group boxes
-      // stay clear of each other even when many bands compress the grid.
-      const GROUP_TOP = Math.max(22, Math.min(44, cellH * 0.4)); // label band
-      const GROUP_PAD = Math.max(16, Math.min(32, cellH * 0.3)); // side/bottom
+      // group owns its rows; GROUP_PAD fills the row space left below the
+      // nodes after the label band, so stacked group boxes always have a
+      // gap between them (GROUP_TOP is defined above, with cellH).
+      const GROUP_PAD = Math.max(8, Math.min(26, cellH - GROUP_TOP - 8)); // side/bottom
       const groupBoxes = bands
         .filter(b => b.isGroup)
         .map(band => {
@@ -592,7 +604,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // ring nodes can't be cleanly boxed. Ring keeps the #83 prefix hue.
       groupBoxes: [] as { key: string; x: number; y: number; w: number; h: number }[],
     };
-  }, [messages, sessions, sseSessions, layout]);
+  }, [messages, sessions, sseSessions, layout, nodeScale]);
 
   const workingCount = onlineNodes.filter(s => s.status === 'working').length;
   // Round 109 (Vincent 4582 P0): hover-gated labels above this node count
@@ -970,7 +982,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               />
               <text
                 x={box.x + 12}
-                y={box.y + 21}
+                y={box.y + 14}
                 fill={pal.legendText}
                 fontSize="13"
                 fontFamily="monospace"
@@ -1241,32 +1253,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           </g>
 
           {/* #112: overlay panels (recent-signal + legend) render OUTSIDE the
-              zoom/pan <g> — they stay fixed in the viewBox corners while the
-              topology pans/zooms (previously they drifted with the content).
-              Grid layout insets its rows below them (gy0) so nodes are never
-              occluded. */}
+              zoom/pan <g> so they stay fixed while the topology pans/zooms.
+              They're sized + tucked into the top corners so every corner of
+              each panel is >325px from the canvas centre — i.e. fully outside
+              the outermost (offline) ring. No node on any ring can reach the
+              corner triangles, so the panels never overlap a node, in ring
+              OR grid layout (Vincent 4727 zero-overlap criterion). */}
           {/* latest flow labels */}
-          <g transform="translate(28, 34)">
-            <rect x="0" y="0" width="285" height={60 + Math.min(flowLinks.length, 4) * 20} rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
-            <text x="16" y="26" fill={pal.legendHeadline} fontSize="13" fontFamily="monospace" fontWeight="700">recent signal</text>
-            <text x="178" y="26" fill={pal.legendAccent} fontSize="11" fontFamily="monospace">{messages.length} messages</text>
-            {flowLinks.slice(0, 4).map((link, index) => (
-              <text key={link.key} x="16" y={54 + index * 20} fill={pal.legendText} fontSize="10" fontFamily="monospace">
-                {truncate(link.from, 8)} {'->'} {truncate(link.to, 8)} / {link.count} / {truncate(link.content, 18)}
+          <g transform="translate(16, 16)">
+            <rect x="0" y="0" width="230" height="84" rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700">recent signal</text>
+            <text x="150" y="21" fill={pal.legendAccent} fontSize="10" fontFamily="monospace">{messages.length} msgs</text>
+            {flowLinks.slice(0, 3).map((link, index) => (
+              <text key={link.key} x="13" y={38 + index * 16} fill={pal.legendText} fontSize="9" fontFamily="monospace">
+                {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} / {link.count} / {truncate(link.content, 12)}
               </text>
             ))}
           </g>
 
           {/* legend */}
-          <g transform="translate(720, 34)">
-            <rect x="0" y="0" width="250" height="112" rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
-            <circle cx="18" cy="26" r="6" fill={isLight ? '#059669' : '#22c55e'} />
-            <text x="34" y="30" fill={pal.legendText} fontSize="11" fontFamily="monospace">working node</text>
-            <circle cx="18" cy="52" r="6" fill={isLight ? '#0d9488' : '#2dd4bf'} />
-            <text x="34" y="56" fill={pal.legendText} fontSize="11" fontFamily="monospace">online idle</text>
-            <circle cx="18" cy="78" r="6" fill={isLight ? '#94a3b8' : '#6b7280'} />
-            <text x="34" y="82" fill={pal.legendText} fontSize="11" fontFamily="monospace">offline / no SSE</text>
-            <path d="M150,78 Q176,52 210,78" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" />
+          <g transform="translate(760, 16)">
+            <rect x="0" y="0" width="224" height="96" rx="10" fill={pal.legendBox.fill} stroke={pal.legendBox.stroke} opacity={isLight ? 0.97 : 0.92} />
+            <circle cx="16" cy="24" r="5.5" fill={isLight ? '#059669' : '#22c55e'} />
+            <text x="30" y="28" fill={pal.legendText} fontSize="11" fontFamily="monospace">working node</text>
+            <circle cx="16" cy="48" r="5.5" fill={isLight ? '#0d9488' : '#2dd4bf'} />
+            <text x="30" y="52" fill={pal.legendText} fontSize="11" fontFamily="monospace">online idle</text>
+            <circle cx="16" cy="72" r="5.5" fill={isLight ? '#94a3b8' : '#6b7280'} />
+            <text x="30" y="76" fill={pal.legendText} fontSize="11" fontFamily="monospace">offline / no SSE</text>
+            <path d="M140,72 Q164,48 196,72" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" />
           </g>
         </svg>
 

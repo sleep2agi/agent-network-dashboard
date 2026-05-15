@@ -68,7 +68,7 @@ const results = {};
   results.panelOcclusion = await page.evaluate(() => {
     const svg = document.querySelector('svg[viewBox="0 0 1000 680"]');
     // overlay panels: <g transform="translate(28, 34)"> and translate(720, 34)
-    const panels = [...svg.querySelectorAll(':scope > g[transform^="translate(28, 34)"], :scope > g[transform^="translate(720, 34)"]')]
+    const panels = [...svg.querySelectorAll(':scope > g[transform^="translate(16, 16)"], :scope > g[transform^="translate(760, 16)"]')]
       .map(g => {
         const m = g.getAttribute('transform').match(/translate\(([\d.]+),\s*([\d.]+)\)/);
         const rect = g.querySelector('rect');
@@ -92,7 +92,7 @@ const results = {};
   // panels exist and are OUTSIDE the zoom/pan transform group (direct svg children)
   results.panelsOutsideTransform = await page.evaluate(() => {
     const svg = document.querySelector('svg[viewBox="0 0 1000 680"]');
-    const panels = [...svg.querySelectorAll(':scope > g[transform^="translate(28, 34)"], :scope > g[transform^="translate(720, 34)"]')];
+    const panels = [...svg.querySelectorAll(':scope > g[transform^="translate(16, 16)"], :scope > g[transform^="translate(760, 16)"]')];
     return panels.length === 2; // :scope > = direct children, not inside the view <g>
   });
   await page.screenshot({ path: '/tmp/anet-issue-112/grid-occlusion.png' });
