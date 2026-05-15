@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Session } from './types';
 import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
 import { ChatPopover } from './ChatPopover';
@@ -425,6 +426,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   const pal = isLight ? LIGHT_PALETTE : DARK_PALETTE;
   const brand = useBrand();
   const isIntern = brand === 'intern';
+  // R133: Next.js client-router for the recent-signal panel "+N more"
+  // navigation. TopoGraph hasn't needed routing before — every other
+  // affordance composes back into the canvas's own state — but the
+  // truncated-flow footer is the one place where the user logically
+  // wants to leave: "show me the rest of the flows" → /messages.
+  const router = useRouter();
   const [messages, setMessages] = useState<MessageFlow[]>([]);
   // Issue #87: ring | grid layout toggle. Ring is the tiered-radial default;
   // grid arranges nodes in an N×M grid (better for 30+ nodes). Persisted to
@@ -842,6 +849,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // rather than confirmed. This state drives a subtle hint ring on
   // hover so users see the affordance before committing the click.
   const [hoveredHub, setHoveredHub] = useState(false);
+  // R133: hover state for the recent-signal panel's "+N more flows"
+  // navigation footer. Drives the on-hover opacity boost + underline
+  // that signals interactivity, mirroring the hoveredHub idiom above.
+  const [hoveredRecentMore, setHoveredRecentMore] = useState(false);
   // Round 80 / Loop: vendor-letter hover in the distribution chip. The
   // chip already names vendor mix (`C:5 G:3 ?:1`); hover a letter and
   // every node from OTHER vendors dims. Surfaces the breakdown spatially
@@ -3594,20 +3605,56 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 + opacity 0.55 reads as muted metadata, not an
                 actionable row — matches the R110 empty-state hint
                 idiom. */}
-            {flowLinks.length > 3 && (
-              <text
-                x="115" y="82"
-                textAnchor="middle"
-                fill={pal.legendText}
-                fontSize="8"
-                fontFamily="monospace"
-                fontStyle="italic"
-                opacity={0.55}
-                data-recent-panel-more={flowLinks.length - 3}
-              >
-                + {flowLinks.length - 3} more flow{flowLinks.length - 3 === 1 ? '' : 's'}
-              </text>
-            )}
+            {flowLinks.length > 3 && (() => {
+              const moreCount = flowLinks.length - 3;
+              const label = `+ ${moreCount} more flow${moreCount === 1 ? '' : 's'}`;
+              // R133: the truncation hint becomes a clickable nav to
+              // /messages. R128 introduced the footer as pure metadata
+              // ("you're seeing top-3"); R133 closes the gap by giving
+              // users a way to ACT on that info — see the full list.
+              // Wrap in <g> with onClick so SVG hit-testing fires the
+              // route push. cursor:pointer + the underline-on-hover
+              // visual cue tells users this is interactive. The hover
+              // state is React-controlled (no CSS :hover on SVG <g>
+              // descendant text would feel reliable across Chrome's
+              // SVG quirks). pointerEvents:all so the text receives
+              // the click; onPointerDown stop-propagation so the
+              // R103 zoom/pan capture doesn't intercept first.
+              return (
+                <g
+                  data-recent-panel-more-nav
+                  role="link"
+                  tabIndex={0}
+                  style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onMouseEnter={() => setHoveredRecentMore(true)}
+                  onMouseLeave={() => setHoveredRecentMore(false)}
+                  onClick={() => router.push('/messages')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      router.push('/messages');
+                    }
+                  }}
+                >
+                  <title>{`${label} — open /messages for the full list`}</title>
+                  <text
+                    x="115" y="82"
+                    textAnchor="middle"
+                    fill={pal.legendText}
+                    fontSize="8"
+                    fontFamily="monospace"
+                    fontStyle="italic"
+                    opacity={hoveredRecentMore ? 0.85 : 0.55}
+                    textDecoration={hoveredRecentMore ? 'underline' : 'none'}
+                    data-recent-panel-more={moreCount}
+                    style={{ transition: 'opacity 150ms ease-out' }}
+                  >
+                    {label}
+                  </text>
+                </g>
+              );
+            })()}
           </g>
 
           {/* legend — Round 55 / Loop: each status row is now a hover
