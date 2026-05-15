@@ -157,6 +157,17 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // because two new gestures landed since R137's catch-up.
       { keys: ['click chip'], label: 'Pin "working" status — click "N working" in the chip row (R139)' },
       { keys: ['click chip'], label: 'Open the agent list — click "N online" in the chip row (R140)' },
+      // Round 153 / Loop: catch up on R151 — node <g> gained role=button
+      // + tabIndex=0 + aria-pressed + onKeyDown so keyboard-only users
+      // can Tab to a node and press Enter / Space to open the chat
+      // popover (same path as mouse click). Was the FIRST true keyboard
+      // gesture added since R141 (R142-R150 were visual / motion / hover
+      // refinements; R151 + R152 added/closed keyboard handlers — R152
+      // wired Enter on the group label which is just the keyboard parallel
+      // of the existing R63 click-group entry, so it doesn't earn a new
+      // line). The chat-open path didn't exist as a keyboard gesture
+      // before R151, so this is the discoverability entry for it.
+      { keys: ['Tab', 'Enter'], label: 'Open chat on a focused node (also Space) — keyboard parallel of click-to-chat (R151)' },
     ],
   },
 ];
