@@ -1773,6 +1773,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               const d = Math.hypot(p.x - cx, p.y - cy);
               return Math.abs(d - r) < 15 ? acc + 1 : acc;
             }, 0);
+            // Round 93 / Loop: when any pin is active, tint the tier
+            // rings to the legend accent so the spatial guide visually
+            // shares the canvas's "filtered mode" colour. The chip
+            // row already says WHICH filter is on (pills + letter
+            // mirror); rings answering "we're filtered" reinforces
+            // the state when the eye is on the canvas, not the chip
+            // row. Composes cleanly with R92 occupancy — same opacity
+            // bucket logic; just the stroke colour swaps.
+            const anyPin = !!(pinnedStatus || pinnedGroup || pinnedVendor);
+            const tierStroke = anyPin ? pal.legendAccent : pal.ringStroke;
             return tierRadii.map(r => {
               const n = occupancyOf(r);
               if (n === 0) return null;
@@ -1784,14 +1794,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   key={`tier-${r}`}
                   cx={cx} cy={cy} r={r}
                   fill="none"
-                  stroke={pal.ringStroke}
+                  stroke={tierStroke}
                   strokeWidth="0.7"
                   strokeDasharray="2 8"
                   opacity={isLight ? opLight : opDark}
-                  style={{ pointerEvents: 'none' }}
+                  style={{ pointerEvents: 'none', transition: 'stroke 200ms ease-out' }}
                   data-tier-ring={r}
                   data-tier-occupancy={n}
                   data-tier-bucket={bucket}
+                  data-tier-tinted={anyPin ? 'true' : 'false'}
                 />
               );
             });
