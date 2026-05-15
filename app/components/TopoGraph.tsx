@@ -3361,12 +3361,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 const isRowHovered = hoveredEdgeKey === link.key;
                 const isRowPinned  = pinnedEdgeKey === link.key;
                 const isRowActive  = isRowHovered || isRowPinned;
+                // R127: panel-side mirror of R126's canvas hot-badge.
+                // The recent-signal row text packs `alias→alias / N /
+                // preview` into one line, with N rendered identically
+                // regardless of magnitude. Now that the canvas badge
+                // tells the user "≥ 10 msgs = hot lane" via amber
+                // stroke, the panel row needs the same affordance so
+                // the user reading the list at a glance can spot hot
+                // lanes without crossing to the canvas. Renders the
+                // count digit in amber + 700-weight when isHot; the
+                // surrounding alias text + separators stay in the
+                // existing legendText/legendHeadline palette. Reuses
+                // R126's hotStroke colour for visual consistency.
+                const isHot = link.count >= 10;
+                const hotStroke = isLight ? '#d97706' : '#fbbf24';
                 return (
                   <g
                     key={link.key}
                     data-recent-row={link.key}
                     data-recent-row-hovered={isRowHovered ? 'true' : 'false'}
                     data-recent-row-pinned={isRowPinned ? 'true' : 'false'}
+                    data-recent-row-hot={isHot ? 'true' : 'false'}
                     role="button"
                     tabIndex={0}
                     aria-pressed={isRowPinned}
@@ -3412,7 +3427,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontFamily="monospace"
                       style={{ transition: 'fill 150ms ease-out' }}
                     >
-                      {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} / {link.count} / {truncate(link.content, 8)}
+                      {truncate(link.from, 6)} {'->'} {truncate(link.to, 6)} {'/ '}
+                      {isHot ? (
+                        <tspan fill={hotStroke} fontWeight="700" data-recent-row-count-hot>
+                          {link.count}
+                        </tspan>
+                      ) : (
+                        <tspan data-recent-row-count>{link.count}</tspan>
+                      )}
+                      {' / '}{truncate(link.content, 8)}
                     </text>
                     {lastAt ? (
                       <text
