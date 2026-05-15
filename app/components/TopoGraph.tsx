@@ -1625,6 +1625,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             </span>
             );
           })()}
+          {/* R119: edge pin filter pill — completes the R64 / R89 pill
+              pattern across all four pin dimensions. R116 added
+              pinnedEdgeKey but the chip row never grew the matching
+              pill, leaving the locked flow visible only on the canvas +
+              recent-signal row tint. This pill shows "filter:
+              alpha→beta · 3" so the locked flow appears in the same
+              row as the other three pin types. Body-click + × button
+              clear, same pattern as R64. */}
+          {pinnedEdgeKey && (() => {
+            const link = flowLinks.find(l => l.key === pinnedEdgeKey);
+            if (!link) return null;
+            return (
+            <span
+              data-active-filter="edge"
+              data-filter-match-count={link.count}
+              data-filter-match-aliases={`${link.from},${link.to}`}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+              title={`${link.from} → ${link.to} (${link.count} msg${link.count === 1 ? '' : 's'}) — click to clear`}
+              onClick={() => setPinnedEdgeKey(null)}
+              style={{
+                background: isLight ? `${pal.flowEdge}14` : `${pal.flowEdge}1f`,
+                color: pal.flowEdge,
+                borderColor: 'currentColor',
+                cursor: 'pointer',
+              }}
+            >
+              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{link.from}→{link.to}<span className="opacity-70"> · {link.count}</span></span>
+              <button
+                type="button"
+                aria-label={`Clear edge filter ${link.from} → ${link.to}`}
+                onClick={(e) => { e.stopPropagation(); setPinnedEdgeKey(null); }}
+                className="ml-0.5 leading-none hover:opacity-70"
+                style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
+              >×</button>
+            </span>
+            );
+          })()}
           {vendorDist.length > 1 && (
             <span
               className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
