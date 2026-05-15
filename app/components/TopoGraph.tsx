@@ -3934,6 +3934,55 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                               : 1}
                       style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
                     />
+                    {/* Round 160 / Loop: recency pip. Canvas flow edges
+                        fade by freshness (R10: full intensity ≤30s →
+                        ~35% over 5min). The recent-signal panel rows
+                        duplicate that data (alias→alias · N · 5s)
+                        but encode freshness purely in text — no
+                        at-a-glance visual cue for "which row is
+                        actively firing right now". A 1.6-px cyan dot
+                        at x=10 (in the 7-px margin between rect-
+                        start x=6 and text-start x=13) brightens
+                        fresh rows and dims stale ones — same
+                        vocabulary the canvas uses, brought to the
+                        panel side.
+
+                        Three encodings now coexist on each row,
+                        none competing:
+                          rect fill   = hover/pin state (R104/R116)
+                          count tspan = magnitude (R127 amber when ≥10)
+                          pip         = recency (this round)
+
+                        Geometry: cy = row_y - 3 (mid-row vertical
+                        centre, where text baseline at y=row_y sits
+                        slightly below). r=1.6 fits cleanly in the
+                        7-px left margin. pointerEvents:none so the
+                        row's button-role hit area is unchanged.
+                        No overlap-test impact (entirely within the
+                        existing rect bbox). */}
+                    {(() => {
+                      if (!link.last_at) return null;
+                      const ageSec = Math.max(0, (Date.now() - Date.parse(link.last_at)) / 1000);
+                      // 0-30s: fully fresh (1.0). 30-300s: smooth
+                      // decay 1→0.25. >300s: stale floor (0.25).
+                      const alpha = ageSec <= 30
+                        ? 1
+                        : ageSec <= 300
+                          ? 1 - ((ageSec - 30) / 270) * 0.75
+                          : 0.25;
+                      return (
+                        <circle
+                          cx={10}
+                          cy={38 + index * 16 - 3}
+                          r={1.6}
+                          fill={pal.legendAccent}
+                          opacity={alpha}
+                          data-recent-row-freshness={link.key}
+                          data-recent-row-freshness-alpha={alpha.toFixed(2)}
+                          style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out' }}
+                        />
+                      );
+                    })()}
                     <text
                       x="13" y={38 + index * 16}
                       fill={isRowActive ? pal.legendHeadline : pal.legendText}
