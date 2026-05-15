@@ -4007,6 +4007,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   onMouseLeave={() => setHoveredStatus(prev => prev === row.key ? null : prev)}
                   onClick={() => setPinnedStatus(prev => prev === row.key ? null : row.key)}
                 >
+                  {/* R149 / Loop: legend row gains a <title> tooltip
+                      symmetric with R148's recent-signal row tooltip.
+                      Same R97 idiom — anywhere the UI shows "N" should
+                      hover-explain WHICH N — applied to the legend
+                      panel which had been showing only the bucket
+                      count without alias context. Header line names
+                      the status bucket; body lists the matched aliases
+                      with 8-truncate + "+N more"; footer hint flips
+                      with pin state. Hot-lane convention doesn't apply
+                      here (status buckets aren't traffic counts), so
+                      no isHot suffix. */}
+                  <title>{(() => {
+                    const aliases = row.key === 'working'
+                      ? onlineNodes.filter(s => s.status === 'working').map(s => s.alias)
+                      : row.key === 'idle'
+                      ? onlineNodes.filter(s => s.status !== 'working').map(s => s.alias)
+                      : offlineNodes.map(s => s.alias);
+                    const preview = aliases.slice(0, 8).join(', ');
+                    const suffix = aliases.length > 8 ? ` + ${aliases.length - 8} more` : '';
+                    return [
+                      `${row.label} · ${row.count}`,
+                      aliases.length > 0 ? `${preview}${suffix}` : null,
+                      isPinned ? 'click to release pin (Esc to clear)' : 'click to pin · hover to preview',
+                    ].filter(Boolean).join('\n');
+                  })()}</title>
                   {/* R55 hitbox covers the row so cursor doesn't need to
                       be exactly on the 5-px swatch. R105 / Loop: the
                       hitbox now also carries a subtle hover/pin tint —
