@@ -779,8 +779,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // hoveredGroup ?? pinnedGroup so hover transiently overrides the
   // pin (handy for spot-comparing teams). Same compose pattern as
   // R60/R61 pinnedStatus.
-  const [pinnedGroup, setPinnedGroup] = useState<string | null>(null);
+  const [pinnedGroup, setPinnedGroup] = useState<string | null>(() => {
+    // R66: same per-tab persistence treatment as pinnedStatus above.
+    // The group key is opaque text (could be any prefix), so the init
+    // reader can't validate it against a known enum — it just reads
+    // whatever's stored. A useEffect below clears it if the value no
+    // longer matches any current group (sessions changed since save).
+    if (typeof window === 'undefined') return null;
+    try { return sessionStorage.getItem('anet-topo-pinned-group'); } catch { return null; }
+  });
   const activeGroup = hoveredGroup ?? pinnedGroup;
+  // R66: sync pinnedGroup into sessionStorage when it changes; clear
+  // it if it no longer matches any current group (the session set
+  // can change between loads). The pinnedStatus sync sits next to
+  // its declaration further down.
+  useEffect(() => {
+    try {
+      if (pinnedGroup) sessionStorage.setItem('anet-topo-pinned-group', pinnedGroup);
+      else sessionStorage.removeItem('anet-topo-pinned-group');
+    } catch {}
+  }, [pinnedGroup]);
+  useEffect(() => {
+    if (!pinnedGroup) return;
+    const known = new Set(Object.values(groupKeys));
+    if (!known.has(pinnedGroup)) setPinnedGroup(null);
+  }, [pinnedGroup, groupKeys]);
   // Round 49 / Loop: reverse-direction of R40's edge-on-node-hover linkage.
   // R48 widened the flow hitbox to 16 px, so edges are precise enough to
   // serve as a state trigger. When the user hovers a flow edge, light up its
@@ -800,8 +823,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // opacity formula reads `activeStatus = hoveredStatus ?? pinnedStatus`
   // so hover transiently overrides a pin (handy for spot-comparison)
   // without nuking it.
-  const [pinnedStatus, setPinnedStatus] = useState<'working' | 'idle' | 'offline' | null>(null);
+  // Round 66 / Loop: pin survives a page reload via sessionStorage —
+  // per-tab not per-browser (a new tab starts clean, intentionally).
+  // The init reader validates against the known status set so a stale
+  // / corrupt value can't paint the canvas with an impossible filter.
+  const [pinnedStatus, setPinnedStatus] = useState<'working' | 'idle' | 'offline' | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const v = sessionStorage.getItem('anet-topo-pinned-status');
+      return (v === 'working' || v === 'idle' || v === 'offline') ? v : null;
+    } catch { return null; }
+  });
   const activeStatus = hoveredStatus ?? pinnedStatus;
+  // R66: sync pinnedStatus into sessionStorage when it changes. Paired
+  // with the matching effect for pinnedGroup higher up.
+  useEffect(() => {
+    try {
+      if (pinnedStatus) sessionStorage.setItem('anet-topo-pinned-status', pinnedStatus);
+      else sessionStorage.removeItem('anet-topo-pinned-status');
+    } catch {}
+  }, [pinnedStatus]);
   const hoveredEdgeEndpoints = useMemo<Set<string> | null>(() => {
     if (!hoveredEdgeKey) return null;
     const link = flowLinks.find(l => l.key === hoveredEdgeKey);
