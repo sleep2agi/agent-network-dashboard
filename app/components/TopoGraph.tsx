@@ -5121,15 +5121,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       saves crossing the canvas to the chip row for
                       the number. text-anchor=end aligns the column
                       visually like a table. pointerEvents:none so the
-                      count doesn't intercept the row hover hitbox. */}
+                      count doesn't intercept the row hover hitbox.
+
+                      Round 204 / Loop: count text recedes when the
+                      tier is empty. Pre-R204 the "0" sat at the same
+                      opacity 0.65 as "12" — visually identical, so
+                      the eye got zero signal that a status tier was
+                      empty unless the operator read the digit. R204
+                      drops empty rows to 0.30 (dark) / 0.28 (light)
+                      so empty tiers fade into the panel chrome while
+                      populated tiers stay visually prominent. R204 a
+                      crossing zero / coming back from zero eases via
+                      the existing 150ms opacity transition. data-
+                      legend-count-empty exposes the binary signal
+                      for tests. */}
                   <text
                     x="215" y={row.y1}
                     textAnchor="end"
                     fill={pal.legendText}
                     fontSize="11"
                     fontFamily="monospace"
-                    opacity={hoveredStatus === row.key || isPinned ? 0.95 : 0.65}
+                    opacity={row.count === 0
+                      ? (isLight ? 0.28 : 0.30)
+                      : (hoveredStatus === row.key || isPinned ? 0.95 : 0.65)}
                     data-legend-count={row.key}
+                    data-legend-count-empty={row.count === 0 ? 'true' : 'false'}
                     style={{ pointerEvents: 'none', transition: 'opacity 150ms ease-out' }}
                   >{row.count}</text>
                 </g>
