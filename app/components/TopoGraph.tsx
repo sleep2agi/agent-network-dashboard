@@ -1521,6 +1521,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-working-chip-aliases={workingAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
                   data-working-chip-clickable={workingCount > 0 ? 'true' : 'false'}
+                  data-working-chip-empty={workingCount === 0 ? 'true' : 'false'}
                   title={workingTitle}
                   role={workingCount > 0 ? 'button' : undefined}
                   tabIndex={workingCount > 0 ? 0 : undefined}
@@ -1538,10 +1539,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // be overridden by this inline declaration, so we splice
                   // the colour properties directly into the existing
                   // R180 box-shadow transition.
+                  // Round 205 / Loop: chip recedes to opacity 0.5 when its
+                  // tier is empty (workingCount=0). Pre-R205 "0 working"
+                  // displayed at full bg-green-500/10 chrome — visually
+                  // indistinguishable from "12 working". Eye got zero
+                  // empty-tier signal. R205 mirrors R204's legend count
+                  // recede-on-empty pattern at the chip-row scope. Inline
+                  // transition list extends `opacity 200ms ease-out` so
+                  // the crossing-zero ease matches R201's bg/border
+                  // timing. Empty-state combines with R139's clickable=
+                  // false + tooltip-undefined: visual + interactive +
+                  // affordance all say "this tier has nothing to act on".
                   style={{
                     cursor: workingCount > 0 ? 'pointer' : undefined,
+                    opacity: workingCount === 0 ? 0.5 : 1,
                     boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out',
+                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out',
                   }}
                   onMouseEnter={() => { if (workingCount > 0) setHoveredStatus('working'); }}
                   onMouseLeave={() => setHoveredStatus(prev => prev === 'working' ? null : prev)}
@@ -1585,16 +1598,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-online-chip-aliases={onlineAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
                   data-online-chip-clickable={onlineNodes.length > 0 ? 'true' : 'false'}
+                  data-online-chip-empty={onlineNodes.length === 0 ? 'true' : 'false'}
                   title={onlineTitle}
                   role={onlineNodes.length > 0 ? 'link' : undefined}
                   tabIndex={onlineNodes.length > 0 ? 0 : undefined}
                   // R180: smooth-pin-mirror family — see working chip above.
                   // R201: inline transition list also covers bg + border so
                   // the new R201 hover tint eases (mirror of working chip).
+                  // R205: empty-tier recede — opacity 0.5 when onlineNodes
+                  // is empty (mirror of working chip above).
                   style={{
                     cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
+                    opacity: onlineNodes.length === 0 ? 0.5 : 1,
                     boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out',
+                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out',
                   }}
                   onMouseEnter={() => {
                     // If a working filter would isolate nothing, route to idle.
