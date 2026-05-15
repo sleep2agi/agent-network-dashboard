@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { HealthBanner } from './HealthBanner';
 import { CommandPalette } from './CommandPalette';
 import { HelpOverlay } from './HelpOverlay';
+import { ServersDrawer } from './ServersDrawer';
 
 const NO_SHELL_PATHS = ['/login'];
 
@@ -24,6 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
       <CommandPalette />
       <HelpOverlay />
+      <ServersDrawer />
     </div>
   );
 }
