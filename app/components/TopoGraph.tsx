@@ -1051,6 +1051,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     setResetSpinning(true);
     setTimeout(() => setResetSpinning(false), 460);
   };
+  // Round 186 / Loop: chrome zoom-in / zoom-out buttons get a brief
+  // icon pop on click — same click-feel idiom R184 added for the
+  // reset spin, but a scale pulse rather than a rotation since +/−
+  // icons rotating wouldn't read semantically. Tracks which button
+  // is currently popping so only that icon picks up the class.
+  // Arms for 240ms (CSS animation 220ms + 20ms buffer) so a quick
+  // re-click can replay cleanly.
+  const [chromePopping, setChromePopping] = useState<'zoom-in' | 'zoom-out' | null>(null);
+  const popChrome = (which: 'zoom-in' | 'zoom-out') => {
+    setChromePopping(which);
+    setTimeout(() => setChromePopping(prev => prev === which ? null : prev), 240);
+  };
   // Issue #100: singleton chat popover. One alias at a time — clicking
   // another node swaps the target and the conversation switches in place.
   const [chatAlias, setChatAlias] = useState<string | null>(null);
@@ -4941,14 +4953,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
           >
             <button
-              onClick={() => zoomByDiscrete(1 / 1.2)}
+              onClick={() => { popChrome('zoom-out'); zoomByDiscrete(1 / 1.2); }}
               data-topo-chrome-zoom-out
+              data-topo-chrome-zoom-out-popping={chromePopping === 'zoom-out' ? 'true' : 'false'}
               className="px-2 py-1 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom out"
               title="Zoom out (−)"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M5 12h14" /></svg>
+              {/* R186: icon pop on click. CSS animation runs once;
+                  React removes the class after 240ms so a quick
+                  re-click can replay. */}
+              <svg
+                width="12" height="12" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                aria-hidden
+                className={chromePopping === 'zoom-out' ? 'anet-chrome-pop' : undefined}
+                data-topo-chrome-zoom-out-icon
+              ><path d="M5 12h14" /></svg>
             </button>
             <span
               className="px-2 py-1 tabular-nums border-x text-center"
@@ -4959,14 +4981,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               {Math.round(view.zoom * 100)}%
             </span>
             <button
-              onClick={() => zoomByDiscrete(1.2)}
+              onClick={() => { popChrome('zoom-in'); zoomByDiscrete(1.2); }}
               data-topo-chrome-zoom-in
+              data-topo-chrome-zoom-in-popping={chromePopping === 'zoom-in' ? 'true' : 'false'}
               className="px-2 py-1 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom in"
               title="Zoom in (+)"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+              {/* R186: icon pop on click. Same one-shot CSS animation
+                  as zoom-out; React removes the class after 240ms. */}
+              <svg
+                width="12" height="12" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                aria-hidden
+                className={chromePopping === 'zoom-in' ? 'anet-chrome-pop' : undefined}
+                data-topo-chrome-zoom-in-icon
+              ><path d="M12 5v14M5 12h14" /></svg>
             </button>
           </div>
           <button
