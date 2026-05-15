@@ -4382,10 +4382,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           transition: 'filter 220ms ease-out',
                         }}
                       />
-                      <text x="0" y="1" textAnchor="middle" fill={status.text} fontSize={aliasFs} fontFamily="monospace" fontWeight="700">
+                      {/* Round 211 / Loop: alias + sub text fill eases on
+                          status flip, matching R167 status-ring fill 300ms.
+                          Pre-R211 a node going working → idle → offline made
+                          the ring smoothly recolor (R167) while the label
+                          card's text snap-cut to the new tier hue in a
+                          single frame — the node "transitioned its ring,
+                          flipped its text". 300ms inline transition syncs
+                          all four label-card fills (alias, sub, ring fill,
+                          ring stroke) to the same beat so the node reads
+                          as one coordinated status change.
+                          data-node-alias-text exposes the gate for tests. */}
+                      <text
+                        x="0" y="1" textAnchor="middle"
+                        fill={status.text}
+                        fontSize={aliasFs} fontFamily="monospace" fontWeight="700"
+                        data-node-alias-text={session.alias}
+                        style={{ transition: 'fill 300ms ease-out' }}
+                      >
                         {truncate(session.alias, fullMax)}
                       </text>
-                      <text x="0" y={subY} textAnchor="middle" fill={status.primary} fontSize={subFs} fontFamily="monospace">
+                      <text
+                        x="0" y={subY} textAnchor="middle"
+                        fill={status.primary}
+                        fontSize={subFs} fontFamily="monospace"
+                        data-node-sub-text={session.alias}
+                        style={{ transition: 'fill 300ms ease-out' }}
+                      >
                         {status.label}{isOnline && sseCountFor != null ? ` sse:${sseCountFor}` : ''}
                       </text>
                     </g>
