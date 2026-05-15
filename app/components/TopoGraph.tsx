@@ -853,6 +853,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // navigation footer. Drives the on-hover opacity boost + underline
   // that signals interactivity, mirroring the hoveredHub idiom above.
   const [hoveredRecentMore, setHoveredRecentMore] = useState(false);
+  // R135: panel-wide hover-elevation. The recent-signal + legend
+  // panels both already host clickable rows (R56/R116 recent rows,
+  // R55/R61 legend rows) and a clickable footer (R133), so the
+  // chrome itself is interactive territory. Drop-shadow boost on
+  // mouseenter says "this whole panel is alive" — matches the R18
+  // KPI-card-hover idiom from the Overview page. Single state for
+  // both panels since they don't overlap; null when neither hovered.
+  const [hoveredPanel, setHoveredPanel] = useState<'recent' | 'legend' | null>(null);
   // Round 80 / Loop: vendor-letter hover in the distribution chip. The
   // chip already names vendor mix (`C:5 G:3 ?:1`); hover a letter and
   // every node from OTHER vendors dims. Surfaces the breakdown spatially
@@ -3392,13 +3400,35 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               panels carry the filter. The filter is on the rect, not
               the parent <g>, so it doesn't shadow the rows + text inside
               — only the panel chrome lifts. */}
-          <g transform="translate(16, 16)">
+          <g
+            transform="translate(16, 16)"
+            data-topo-panel="recent"
+            data-topo-panel-hovered={hoveredPanel === 'recent' ? 'true' : 'false'}
+            onMouseEnter={() => setHoveredPanel('recent')}
+            onMouseLeave={() => setHoveredPanel(prev => prev === 'recent' ? null : prev)}
+          >
             <rect
               x="0" y="0" width="230" height="84" rx="10"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
               opacity={isLight ? 0.97 : 0.92}
-              style={{ filter: isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))' : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))' }}
+              style={{
+                /* R135: drop-shadow intensifies on panel hover. Base
+                   shadow (2px / 6px blur) signals card elevation
+                   (R57); hovered (4px / 12px blur) tells the user
+                   the whole chrome is interactive territory — rows
+                   pin (R116), footer navigates (R133), legend rows
+                   pin status (R61). Reuses R18's KPI-card hover-
+                   elevation idiom for visual consistency. Theme-
+                   aware shadow colour stays the same; just the
+                   spread + blur grow. */
+                filter: hoveredPanel === 'recent'
+                  ? (isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.14))'
+                             : 'drop-shadow(0 4px 12px rgba(0,0,0,0.65))')
+                  : (isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))'
+                             : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))'),
+                transition: 'filter 200ms ease-out',
+              }}
               data-topo-panel-elevation="recent"
             />
             <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700">recent signal</text>
@@ -3663,17 +3693,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               The row text brightens to legendHeadline while hovered as
               a small affordance hint. Geometry unchanged — the new
               <g> wrappers only carry pointer handlers. */}
-          <g transform="translate(760, 16)">
+          <g
+            transform="translate(760, 16)"
+            data-topo-panel="legend"
+            data-topo-panel-hovered={hoveredPanel === 'legend' ? 'true' : 'false'}
+            onMouseEnter={() => setHoveredPanel('legend')}
+            onMouseLeave={() => setHoveredPanel(prev => prev === 'legend' ? null : prev)}
+          >
             {/* R57: matching drop-shadow elevation to the legend panel.
                 R106: panel height grew 96 → 104 to seat the new header
                 line + 4 px row-shift below it (so the new header text
-                doesn't overlap the row-1 hitbox region). */}
+                doesn't overlap the row-1 hitbox region).
+                R135: hover-elevation mirrors the recent-signal panel
+                rect at line ~3299. Both panels grow their shadow on
+                hover to telegraph "the chrome is interactive" since
+                their rows pin / nav. */}
             <rect
               x="0" y="0" width="224" height="104" rx="10"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
               opacity={isLight ? 0.97 : 0.92}
-              style={{ filter: isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))' : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))' }}
+              style={{
+                filter: hoveredPanel === 'legend'
+                  ? (isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.14))'
+                             : 'drop-shadow(0 4px 12px rgba(0,0,0,0.65))')
+                  : (isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))'
+                             : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))'),
+                transition: 'filter 200ms ease-out',
+              }}
               data-topo-panel-elevation="legend"
             />
             {/* R106 / Loop: panel header — symmetric with the recent-
