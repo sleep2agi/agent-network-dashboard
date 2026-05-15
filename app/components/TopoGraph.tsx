@@ -2893,7 +2893,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // breaching the 16-px hitbox bound.
             const renderWidth = isHoveredEdge ? Math.min(width * 1.4, 10) : width;
             return (
-              <g key={link.key}>
+              <g
+                key={link.key}
+                // Round 172 / Loop: edges fade-in alongside the R9
+                // staggered node reveal so the canvas first-paint
+                // reads as one coordinated wave instead of "edges
+                // pop, nodes ease in". The .anet-fade-in CSS
+                // animation (0.15s ease-out, runs once on mount,
+                // R3 origin) plays only on first render — React
+                // preserves the <g> via the link.key on subsequent
+                // re-renders so the animation doesn't replay when
+                // flowLinks recomputes (every 5s SSE poll).
+                // Animation-delay offsets each edge by 280ms +
+                // 35ms × index so edges start fading in AFTER
+                // most nodes have appeared (node R9 stagger caps
+                // at ~600ms; ring layout R72 emanates 0→540ms).
+                // Cap at 20 indices so a busy fleet with 50
+                // flowLinks still finishes within ~1s. Respects
+                // prefers-reduced-motion via R29 globals.css
+                // blanket that neutralises animation-duration.
+                className="anet-fade-in"
+                style={{
+                  animationDelay: `${280 + Math.min(index, 20) * 35}ms`,
+                }}
+                data-edge-group={link.key}
+              >
                 {/* Round 48 / Loop: invisible hover hitbox — visible flow
                     path is 3-7 px wide and damn hard to hover precisely.
                     Stack a transparent 16-px-wide stroke behind it so the
