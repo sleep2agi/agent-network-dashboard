@@ -1252,9 +1252,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               estate (R47 already hides pressure / vendor / freshness),
               so dropping the redundant label keeps the working/idle/
               alpha keys readable without overflow. */}
-          {pinnedStatus && (
+          {/* R71: each pill picks up a "· N" match count tail. Tells the
+              user at a glance how many sessions the active filter
+              matches without scanning the canvas. Counts come from the
+              already-computed workingCount + onlineNodes + offlineNodes
+              for status, and groupKeys for group. */}
+          {pinnedStatus && (() => {
+            const matchCount = pinnedStatus === 'working' ? workingCount
+                            : pinnedStatus === 'idle'    ? (onlineNodes.length - workingCount)
+                            : offlineNodes.length;
+            return (
             <span
               data-active-filter="status"
+              data-filter-match-count={matchCount}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
               style={{
                 background: pinnedStatus === 'working' ? (isLight ? '#05966914' : '#22c55e1f')
@@ -1266,7 +1276,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 borderColor: 'currentColor',
               }}
             >
-              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedStatus}</span>
+              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedStatus}<span className="opacity-70"> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear ${pinnedStatus} filter`}
@@ -1275,10 +1285,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
-          )}
-          {pinnedGroup && (
+            );
+          })()}
+          {pinnedGroup && (() => {
+            const matchCount = Object.values(groupKeys).filter(k => k === pinnedGroup).length;
+            return (
             <span
               data-active-filter="group"
+              data-filter-match-count={matchCount}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
               style={{
                 background: isLight ? '#67e8f914' : '#67e8f91f',
@@ -1286,7 +1300,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 borderColor: 'currentColor',
               }}
             >
-              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedGroup}</span>
+              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedGroup}<span className="opacity-70"> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
@@ -1295,7 +1309,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
-          )}
+            );
+          })()}
           {vendorDist.length > 1 && (
             <span
               className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
