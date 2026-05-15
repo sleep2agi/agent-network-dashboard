@@ -1042,9 +1042,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               ))}
             </span>
           )}
-          <span className="px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20">
-            {flowLinks.length} active links
-          </span>
+          {/* Round 42 / Loop: extend active-links chip with the timestamp
+              of the most-recent flow event. Tells the operator at a glance
+              whether the topology is currently humming (last 30s) or has
+              been quiet for a while — the visual flow particles and
+              edge brightness only show that there IS traffic, not when
+              the last one was. Reuses Round 38's relativeAgo. */}
+          {(() => {
+            const recent = flowLinks.reduce<number | null>((acc, l) => {
+              if (!l.last_at) return acc;
+              const t = parseHubTime(l.last_at);
+              if (t === null) return acc;
+              return acc === null || t > acc ? t : acc;
+            }, null);
+            const rel = recent !== null ? relativeAgo(new Date(recent).toISOString()) : null;
+            return (
+              <span className="px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20">
+                {flowLinks.length} active link{flowLinks.length === 1 ? '' : 's'}
+                {rel ? <span className="text-gray-500"> · last {rel}</span> : null}
+              </span>
+            );
+          })()}
         </div>
       </div>
 
