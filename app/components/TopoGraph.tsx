@@ -2089,15 +2089,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     className="inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus"
                     data-vendor-letter={v.initial}
                     data-vendor-pinned={isPinned ? 'true' : 'false'}
+                    data-vendor-hovered={hoveredVendor === v.initial ? 'true' : 'false'}
                     data-vendor-aliases={aliases.join(',')}
                     title={tooltip}
                     // R180: smooth-pin-mirror family — see working chip above.
+                    // Round 202 / Loop: vendor letter chip joins the "hover
+                    // deepens own identity hue" family R193/R195/R201 built
+                    // up across the rest of the chip row. Pre-R202 hovering
+                    // a vendor letter (A/C/G/K/书/?) fired R88 canvas dim
+                    // via setHoveredVendor, but the chip itself stayed at
+                    // bg=transparent — cause silent, effect loud. R202
+                    // tints the chip with its OWN vendor colour at 12%
+                    // alpha via color-mix() so each vendor's chip lights
+                    // up in its own hue (Anthropic green / OpenAI cyan /
+                    // 书 blue / ?). No layout shift: only background-color
+                    // changes, no border/padding swap. transition list
+                    // extends the existing R180 box-shadow 150ms with
+                    // background-color 200ms ease-out (same splice idiom
+                    // R201 used on the working/online chips). color-mix()
+                    // is supported Chrome ≥ 111 / Safari ≥ 16.2 / FF ≥ 113;
+                    // for older browsers the chip falls back to its idle
+                    // transparent bg (graceful degradation — the canvas-
+                    // dim effect still fires regardless).
                     style={{
                       cursor: 'pointer',
+                      backgroundColor: (hoveredVendor === v.initial && !isPinned)
+                        ? `color-mix(in srgb, ${v.color} 12%, transparent)`
+                        : 'transparent',
                       boxShadow: isPinned
                         ? `inset 0 0 0 1px ${v.color}, inset 0 0 0 2px rgba(255,255,255,0.45)`
                         : undefined,
-                      transition: 'box-shadow 150ms ease-out',
+                      transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out',
                     }}
                     onMouseEnter={() => setHoveredVendor(v.initial)}
                     onMouseLeave={() => setHoveredVendor(prev => prev === v.initial ? null : prev)}
