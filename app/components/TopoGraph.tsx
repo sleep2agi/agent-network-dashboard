@@ -785,6 +785,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // Now it answers "show me all of these" the same way R8 group-focus
   // answers "show me this team". Three values match the legend rows.
   const [hoveredStatus, setHoveredStatus] = useState<'working' | 'idle' | 'offline' | null>(null);
+  // Round 60 / Loop: sticky variant of `hoveredStatus`. R55 only filters
+  // while the user is actively hovering the legend; for sweeping a fleet
+  // you want to LOCK the filter. Each segment of the R31 pressure bar
+  // toggles a pin — click again on the same segment to release. The node
+  // opacity formula reads `activeStatus = hoveredStatus ?? pinnedStatus`
+  // so hover transiently overrides a pin (handy for spot-comparison)
+  // without nuking it.
+  const [pinnedStatus, setPinnedStatus] = useState<'working' | 'idle' | 'offline' | null>(null);
+  const activeStatus = hoveredStatus ?? pinnedStatus;
   const hoveredEdgeEndpoints = useMemo<Set<string> | null>(() => {
     if (!hoveredEdgeKey) return null;
     const link = flowLinks.find(l => l.key === hoveredEdgeKey);
@@ -1084,9 +1093,45 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const o = offlineNodes.length;
             const total = w + i + o;
             if (total === 0) return null;
-            const seg = (n: number, color: string, key: string) => {
+            // Round 60 / Loop: each segment toggles a sticky filter via
+            // `pinnedStatus`. Click the working segment → all non-working
+            // nodes dim; click again → release. Segments share width with
+            // their proportion of `total`, so a 1-node working share is
+            // ~3 px wide on a 64-px bar. We pad the click target with a
+            // negative-margin overlay wrapper to give thin slices a
+            // 14-px minimum hit area without disturbing the rendered
+            // chip width. cursor:pointer + a one-line title hint at the
+            // affordance.
+            const seg = (n: number, color: string, key: 'working' | 'idle' | 'offline', label: string) => {
               if (n === 0) return null;
-              return <span key={key} style={{ width: `${(n / total) * 100}%`, background: color, height: '100%' }} />;
+              const isPinned = pinnedStatus === key;
+              return (
+                <span
+                  key={key}
+                  data-pressure-seg={key}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isPinned}
+                  title={`${n} ${label} — click to ${isPinned ? 'release filter' : 'highlight'}`}
+                  style={{
+                    width: `${(n / total) * 100}%`,
+                    background: color,
+                    height: '100%',
+                    cursor: 'pointer',
+                    boxShadow: isPinned ? `inset 0 0 0 1px ${color}, inset 0 0 0 2px rgba(255,255,255,0.6)` : undefined,
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPinnedStatus(prev => prev === key ? null : key);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setPinnedStatus(prev => prev === key ? null : key);
+                    }
+                  }}
+                />
+              );
             };
             // Round 47 / Loop: hidden on mobile — at <640px the chip row
             // wraps to multiple lines and crowds the topology header;
@@ -1100,9 +1145,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               >
                 <span className="text-[10px] tracking-wide">pressure</span>
                 <span className="inline-flex h-1.5 w-16 rounded-full overflow-hidden" style={{ background: 'rgb(75 85 99 / 0.25)' }}>
-                  {seg(w, isLight ? '#059669' : '#22c55e', 'w')}
-                  {seg(i, isLight ? '#0d9488' : '#2dd4bf', 'i')}
-                  {seg(o, isLight ? '#94a3b8' : '#6b7280', 'o')}
+                  {seg(w, isLight ? '#059669' : '#22c55e', 'working', 'working')}
+                  {seg(i, isLight ? '#0d9488' : '#2dd4bf', 'idle',    'idle')}
+                  {seg(o, isLight ? '#94a3b8' : '#6b7280', 'offline', 'offline')}
                 </span>
               </span>
             );
@@ -1715,14 +1760,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // Round 55 / Loop: legend-status hover composes on the
                   // SAME level as edge-hover-endpoint. Non-matching nodes
                   // dim to 0.28; matching nodes stay at their base.
-                  // hoveredStatus matches: working = status==='working',
+                  // activeStatus matches: working = status==='working',
                   // idle = online but not working, offline = !isOnline.
+                  // Round 60 / Loop: activeStatus = hoveredStatus ?? pinnedStatus
+                  // so the pressure-bar segment pins (R60) and the legend
+                  // row hover (R55) feed the same branch.
                   opacity: hoveredEdgeEndpoints && !hoveredEdgeEndpoints.has(session.alias) && chatAlias !== session.alias
                     ? 0.28
-                    : hoveredStatus && chatAlias !== session.alias && !(
-                        hoveredStatus === 'working' ? session.status === 'working'
-                        : hoveredStatus === 'idle'  ? (isOnline && session.status !== 'working')
-                        : /* offline */               !isOnline
+                    : activeStatus && chatAlias !== session.alias && !(
+                        activeStatus === 'working' ? session.status === 'working'
+                        : activeStatus === 'idle'  ? (isOnline && session.status !== 'working')
+                        : /* offline */              !isOnline
                       )
                       ? 0.28
                       : !inFocus
