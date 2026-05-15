@@ -1441,7 +1441,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // exclusive in practice — the cursor is over one or the
             // other — but the order below makes edge-hover win if both
             // ever read truthy at the same React tick.
+            // Round 53 / Loop: in-group edges follow team focus. R40
+            // brightened only edges touching the exact hovered alias —
+            // but with R8/R18 prefix-clustering, a user hovering one
+            // member is asking about the team. So when BOTH endpoints of
+            // an edge share the hoveredGroup (and neither is the exact
+            // hovered alias — that gets the stronger 1.7×), the edge
+            // boosts to 1.3×. Edges leaving the team (one endpoint in,
+            // one out) still dim to 0.35× per R40 since they read as
+            // background to the focus. Singletons fall through unchanged
+            // (their group key is the alias itself, so bothInHoveredGroup
+            // is impossible for a non-self-edge).
             const isHoveredEdge = hoveredEdgeKey === link.key;
+            const fromGroup = groupKeys[link.from] ?? link.from;
+            const toGroup = groupKeys[link.to] ?? link.to;
+            const bothInHoveredGroup = !!hoveredGroup && fromGroup === hoveredGroup && toGroup === hoveredGroup;
             const edgeOpacityMul = isHoveredEdge
               ? 2.0
               : hoveredEdgeKey
@@ -1450,7 +1464,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   ? 1
                   : (link.from === hoveredAlias || link.to === hoveredAlias)
                     ? 1.7
-                    : 0.35;
+                    : bothInHoveredGroup
+                      ? 1.3
+                      : 0.35;
             // Round 50: the hovered edge also visibly thickens so the eye
             // tracks it even at low message counts (width was 3 → 4.5 on
             // hover). 1.4× is enough to read as "lifted" without
