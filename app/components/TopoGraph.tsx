@@ -2849,11 +2849,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               style={{ filter: isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))' : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))' }}
               data-topo-panel-elevation="legend"
             />
-            {([
-              { key: 'working' as const, y0: 24, y1: 28, fill: isLight ? '#059669' : '#22c55e', label: 'working node' },
-              { key: 'idle'    as const, y0: 48, y1: 52, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle' },
-              { key: 'offline' as const, y0: 72, y1: 76, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline / no SSE' },
-            ]).map(row => {
+            {(() => {
+              const idleCount = onlineNodes.length - workingCount;
+              const rows = [
+                { key: 'working' as const, y0: 24, y1: 28, fill: isLight ? '#059669' : '#22c55e', label: 'working node', count: workingCount },
+                { key: 'idle'    as const, y0: 48, y1: 52, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle',  count: idleCount },
+                { key: 'offline' as const, y0: 72, y1: 76, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline / no SSE', count: offlineNodes.length },
+              ];
+              return rows;
+            })().map(row => {
               // Round 61 / Loop: legend rows pin too — symmetric with the
               // R60 pressure-bar segments. R55 hover stays transient; the
               // new onClick toggles pinnedStatus so users can lock a
@@ -2894,6 +2898,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     fontFamily="monospace"
                     style={{ transition: 'fill 150ms ease-out' }}
                   >{row.label}</text>
+                  {/* R95: live count anchored to the right edge of the
+                      panel (x=215, after the flow-arrow swatch). Same
+                      counts the chip-row shows ("3 working" etc.) but
+                      here next to the swatch the user is matching —
+                      saves crossing the canvas to the chip row for
+                      the number. text-anchor=end aligns the column
+                      visually like a table. pointerEvents:none so the
+                      count doesn't intercept the row hover hitbox. */}
+                  <text
+                    x="215" y={row.y1}
+                    textAnchor="end"
+                    fill={pal.legendText}
+                    fontSize="11"
+                    fontFamily="monospace"
+                    opacity={hoveredStatus === row.key || isPinned ? 0.95 : 0.65}
+                    data-legend-count={row.key}
+                    style={{ pointerEvents: 'none', transition: 'opacity 150ms ease-out' }}
+                  >{row.count}</text>
                 </g>
               );
             })}
