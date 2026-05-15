@@ -840,13 +840,20 @@ body {
 
 /* Round 45 — TopoGraph rotating radar sweep wedge. 6s slow rotation
    gives the topology canvas a real "radar scan" feel without distracting
-   from the agent nodes. */
+   from the agent nodes.
+   R146: split shorthand into longhand so per-render inline style can
+   override animation-duration via --sweep-dur, joining the R145
+   --spoke-dur / R132 --march-dur pattern. Default 6s preserves R45's
+   original cadence for any caller that forgets the var. */
 @keyframes anet-topo-sweep-kf {
   0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 .anet-topo-sweep {
-  animation: anet-topo-sweep-kf 6s linear infinite;
+  animation-name: anet-topo-sweep-kf;
+  animation-duration: var(--sweep-dur, 6s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
 /* Round 46 — animated dashed spokes flowing from hub outward. Each spoke
