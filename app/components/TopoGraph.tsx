@@ -1769,6 +1769,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth={isPinned ? 3 : isHovered ? 2 : 1.5}
                   strokeDasharray={(isPinned || isHovered) ? 'none' : '6 6'}
                   data-group-box-pinned={isPinned ? 'true' : 'false'}
+                  // R85: ambient "marching ants" drift on the perimeter
+                  // when this group has at least one working member, and
+                  // neither pin nor hover is active (those treatments
+                  // already shout for attention via solid stroke). 12s
+                  // cycle reads as ambient — the eye parses "live work
+                  // here" without registering the box as animating.
+                  data-group-box-live={!isPinned && !isHovered && box.statuses.working > 0 ? 'true' : 'false'}
+                  className={!isPinned && !isHovered && box.statuses.working > 0 ? 'anet-topo-groupbox-live' : undefined}
                   style={{ transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out', pointerEvents: 'none' }}
                 />
                 {/* R63: wrap label in a clickable <g> with an invisible
