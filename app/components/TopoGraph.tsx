@@ -2434,12 +2434,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // bucket logic; just the stroke colour swaps.
             const anyPin = !!(pinnedStatus || pinnedGroup || pinnedVendor);
             const tierStroke = anyPin ? pal.legendAccent : pal.ringStroke;
-            return tierRadii.map(r => {
+            return tierRadii.map((r, tierIdx) => {
               const n = occupancyOf(r);
               if (n === 0) return null;
               const bucket = n <= 2 ? 0 : n <= 6 ? 1 : 2;
               const opLight = [0.24, 0.36, 0.50][bucket];
               const opDark  = [0.32, 0.46, 0.62][bucket];
+              // Round 174 / Loop: tier guide rings fade-in alongside
+              // the R9/R72/R172/R173 first-paint wave. Ring layout's
+              // structural scaffolding (R54 dashed concentric guides)
+              // was the last instant-pop element after R173 closed
+              // group boxes in grid. Same vocabulary — .anet-fade-in
+              // mount-once CSS animation + per-ring stagger 60ms ×
+              // tierIdx (cap 8). Tier rings are at most 3 (single /
+              // dual / triple), so the visible range is 0-120ms.
+              // Inner ring leads outward — emanates from the hub.
+              // transition list grows `opacity 250ms ease-out` so the
+              // post-animation snap from animation's end state (1) to
+              // the bucket opacity (0.24-0.62) eases instead of cuts.
+              // Same pattern node fade-in uses (R9 + transition-opacity
+              // from R3 className). data-tier-fade-delay exposes the
+              // computed delay for test probing.
+              const fadeDelay = Math.min(tierIdx, 8) * 60;
               return (
                 <circle
                   key={`tier-${r}`}
@@ -2449,11 +2465,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth="0.7"
                   strokeDasharray="2 8"
                   opacity={isLight ? opLight : opDark}
-                  style={{ pointerEvents: 'none', transition: 'stroke 200ms ease-out' }}
+                  className="anet-fade-in"
+                  style={{
+                    pointerEvents: 'none',
+                    transition: 'stroke 200ms ease-out, opacity 250ms ease-out',
+                    animationDelay: `${fadeDelay}ms`,
+                  }}
                   data-tier-ring={r}
                   data-tier-occupancy={n}
                   data-tier-bucket={bucket}
                   data-tier-tinted={anyPin ? 'true' : 'false'}
+                  data-tier-fade-delay={fadeDelay}
                 />
               );
             });
