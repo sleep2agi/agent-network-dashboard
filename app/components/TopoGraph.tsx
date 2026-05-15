@@ -758,6 +758,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // group + other group boxes fade so the eye locks onto the team you're
   // pointing at. Singletons use their own alias as the group key.
   const hoveredGroup = hoveredAlias ? (groupKeys[hoveredAlias] ?? hoveredAlias) : null;
+  // Round 49 / Loop: reverse-direction of R40's edge-on-node-hover linkage.
+  // R48 widened the flow hitbox to 16 px, so edges are precise enough to
+  // serve as a state trigger. When the user hovers a flow edge, light up its
+  // two endpoint nodes and dim the rest — "who is this edge between" becomes
+  // visible without reading the tooltip. The set is the link's two aliases
+  // (null when no edge hovered); node opacity composes this after inFocus.
+  const [hoveredEdgeKey, setHoveredEdgeKey] = useState<string | null>(null);
+  const hoveredEdgeEndpoints = useMemo<Set<string> | null>(() => {
+    if (!hoveredEdgeKey) return null;
+    const link = flowLinks.find(l => l.key === hoveredEdgeKey);
+    return link ? new Set([link.from, link.to]) : null;
+  }, [hoveredEdgeKey, flowLinks]);
 
   // --- Round 103 (issue #81): fullscreen + zoom + pan interaction layer ---
   // DIY native (no d3 / svg-pan-zoom): wrap the topology content in a single
@@ -1438,6 +1450,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth={Math.max(width + 10, 16)}
                   style={{ pointerEvents: 'stroke' }}
                   data-edge-hitbox
+                  onMouseEnter={() => setHoveredEdgeKey(link.key)}
+                  onMouseLeave={() => setHoveredEdgeKey(prev => prev === link.key ? null : prev)}
                 >
                   <title>{tooltip}</title>
                 </path>
@@ -1564,11 +1578,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // full-brightness so the focus ring + popover read as one
                   // selected thing rather than a dimmed selection. Group-
                   // hover fade (Round 8) still wins when inFocus is false.
-                  opacity: !inFocus
-                    ? 0.32
-                    : chatAlias === session.alias
-                      ? 1
-                      : isOnline ? 1 : 0.6,
+                  // Round 49 / Loop: edge-hover endpoint highlight composes
+                  // OVER the inFocus/online formula — a non-endpoint node
+                  // dims to 0.28 (just below the inFocus 0.32 to read as a
+                  // stronger "not relevant" signal), endpoints keep their
+                  // base opacity. chatAlias still wins to keep the focus
+                  // ring legible if the user clicked through.
+                  opacity: hoveredEdgeEndpoints && !hoveredEdgeEndpoints.has(session.alias) && chatAlias !== session.alias
+                    ? 0.28
+                    : !inFocus
+                      ? 0.32
+                      : chatAlias === session.alias
+                        ? 1
+                        : isOnline ? 1 : 0.6,
                   // Round 9 / Loop: stagger the anet-fade-in so the topology
                   // reveals as a wave on first paint instead of one big pop.
                   // Cap at 24 indices (≈600ms tail) so 50-node fleets still
