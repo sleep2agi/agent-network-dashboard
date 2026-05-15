@@ -2258,6 +2258,50 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     <animate attributeName="opacity" values="0;0.45;0" dur={`${duration}s`} begin="0s" repeatCount="indefinite" />
                   </circle>
                 )}
+                {/* Round 100 / Loop: midpoint count badge for high-
+                    traffic edges. Width already gauges intensity but
+                    "5 vs 12" is hard to read off stroke alone. Render
+                    a compact pill at the bezier midpoint (t=0.5 →
+                    midpoint + perpendicular × lift/2) showing the
+                    integer count. Threshold link.count >= 3 keeps
+                    the canvas quiet for sparse traffic. Bezier
+                    midpoint math: for a quadratic curve M A Q C B,
+                    the t=0.5 point is (A + 2C + B) / 4, which
+                    simplifies to (midAB) + 0.5 × (control - midAB)
+                    = midAB + perpendicular × lift/2. */}
+                {link.count >= 3 && (() => {
+                  const midX = (from.x + to.x) / 2;
+                  const midY = (from.y + to.y) / 2;
+                  const dx = to.x - from.x;
+                  const dy = to.y - from.y;
+                  const len = Math.hypot(dx, dy) || 1;
+                  const badgeX = midX + (-dy / len) * lift * 0.5;
+                  const badgeY = midY + ( dx / len) * lift * 0.5;
+                  const badgeOpacity = Math.min(1, fresh * edgeOpacityMul);
+                  return (
+                    <g
+                      data-edge-count-badge={link.key}
+                      style={{ pointerEvents: 'none' }}
+                      opacity={badgeOpacity}
+                    >
+                      <circle
+                        cx={badgeX} cy={badgeY} r="9"
+                        fill={pal.legendBox.fill}
+                        stroke={pal.flowEdge}
+                        strokeWidth="1"
+                        opacity={isLight ? 0.95 : 0.82}
+                      />
+                      <text
+                        x={badgeX} y={badgeY + 3}
+                        textAnchor="middle"
+                        fill={pal.legendHeadline}
+                        fontSize="10"
+                        fontFamily="monospace"
+                        fontWeight="700"
+                      >{link.count}</text>
+                    </g>
+                  );
+                })()}
               </g>
             );
           })}
