@@ -3875,14 +3875,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // filter without holding the cursor still. Pinned row gets
               // an inset ring on the swatch (same vocab as R60).
               const isPinned = pinnedStatus === row.key;
+              const isRowHovered = hoveredStatus === row.key;
+              const isLifted = isRowHovered || isPinned;
               return (
                 <g
                   key={row.key}
                   data-legend-status={row.key}
+                  data-legend-row-lifted={isLifted ? 'true' : 'false'}
                   role="button"
                   tabIndex={0}
                   aria-pressed={isPinned}
-                  style={{ cursor: 'pointer' }}
+                  // R144: mirror of R143 — extend the row-lift idiom to the
+                  // legend panel rows for symmetry with the recent-signal
+                  // panel rows. Same translate-1px transform, same 150ms
+                  // cubic-bezier timing. R55 hovers the row (transient),
+                  // R61 pins it (sticky); both states earn the lift.
+                  // Composes with R105 row-bg-tint and R135 panel hover-
+                  // shadow → three layers of feedback at three nested
+                  // scopes (panel chrome → row text lift → bg tint).
+                  style={{
+                    cursor: 'pointer',
+                    transform: isLifted ? 'translateY(-1px)' : undefined,
+                    transition: 'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
                   // R61: stopPropagation on pointerdown so the SVG-level
                   // pan handler (R103) doesn't setPointerCapture and
                   // redirect the follow-up click away from this <g>.
