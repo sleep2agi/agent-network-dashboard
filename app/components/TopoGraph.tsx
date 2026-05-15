@@ -4859,12 +4859,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               <path d="M3 3v5h5" />
             </svg>
           </button>
+          {/* Round 178 / Loop: fullscreen chrome button picks up the
+              active-state visual indicator R163 introduced for the
+              Ring/Grid layout toggle. Pre-R178 the button changed
+              icon when isFullscreen flipped but its background +
+              foreground stayed unchanged — operators in fullscreen
+              didn't get a strong 'you're in fullscreen' cue. Adding
+              the bg-cyan-500/15 + text-cyan-300 active variant
+              mirrors R163's pattern; hover variants tier 1
+              brighter (cyan-500/20) when active so the chip
+              continues to respond to mouse. Inline style now omits
+              background + color when active so the Tailwind cyan
+              classes win specificity. */}
           <button
             onClick={toggleFullscreen}
             data-topo-chrome-fullscreen
             data-topo-chrome-fullscreen-active={isFullscreen ? 'true' : 'false'}
-            className="p-1.5 rounded-md border hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
-            style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
+            className={`p-1.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
+              isFullscreen
+                ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20'
+                : 'hover:bg-white/5'
+            }`}
+            style={{
+              borderColor: pal.containerBorder,
+              ...(isFullscreen
+                ? {}
+                : { background: pal.legendBox.fill, color: pal.legendText }),
+            }}
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
