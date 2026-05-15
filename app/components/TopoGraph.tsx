@@ -2946,6 +2946,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           {layout === 'ring' && (<g
             data-topo-hub
             data-topo-hub-hovered={hoveredHub ? 'true' : 'false'}
+            // Round 159 / Loop: the hub is the most visually
+            // prominent interactive element on the canvas (R39
+            // enlarged it, R52 made it click to fitView, R115
+            // added a hover ring, R43 gave it a tooltip) — but
+            // R151-R157's a11y sweep skipped it. role/tabIndex/
+            // aria-label/onKeyDown bring it to parity with node <g>
+            // (R151), group label hit (R152), and minimap (R157).
+            // anet-topo-svg-focus picks up R156's explicit cyan
+            // focus ring (default browser SVG focus rect is hard
+            // to see against the dark canvas).
+            role="button"
+            tabIndex={0}
+            aria-label={(() => {
+              const parts = ['Network hub'];
+              if (onlineNodes.length > 0) parts.push(`${onlineNodes.length} online`);
+              if (workingCount > 0) parts.push(`${workingCount} working`);
+              if (flowLinks.length > 0) parts.push(`${flowLinks.length} active link${flowLinks.length === 1 ? '' : 's'}`);
+              return parts.join(' · ') + ' — Enter to fit view';
+            })()}
+            className="anet-topo-svg-focus"
             style={{ cursor: 'pointer' }}
             // Stop pointerdown from reaching the SVG pan handler — same
             // reason as the node <g>: a captured pointer makes Chromium
@@ -2963,6 +2983,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               fitView();
               setClickRipple({ ts: Date.now(), x: cx, y: cy, r0: 18, color: isLight ? '#059669' : '#10b981' });
               setTimeout(() => setClickRipple(prev => prev && prev.x === cx && prev.y === cy ? null : prev), 600);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fitView();
+                setClickRipple({ ts: Date.now(), x: cx, y: cy, r0: 18, color: isLight ? '#059669' : '#10b981' });
+                setTimeout(() => setClickRipple(prev => prev && prev.x === cx && prev.y === cy ? null : prev), 600);
+              }
             }}
           >
             {/* Round 43 / Loop: hub `<title>` summary — hovering the
