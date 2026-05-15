@@ -1267,9 +1267,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             />
           </g>
 
-          {/* radar rings */}
+          {/* radar rings — pure decoration at fixed radii, independent of
+              node positions so the radar aesthetic is preserved across tier
+              changes. */}
           {[90, 170, 250, 330].map(radius => (
             <circle key={radius} cx={cx} cy={cy} r={radius} fill="none" stroke={pal.ringStroke} strokeWidth="1" opacity={isLight ? 0.6 : 0.35} />
+          ))}
+
+          {/* Round 54 / Loop: tier-radius guide rings. The radar rings above
+              are decorative and don't match the actual tier radii nodes sit
+              on (single 220 / dual 175,260 / triple 145,215,285). Drawing
+              a faint dashed ring at each ACTIVE tier radius lets the eye
+              anchor "this is the inner / outer ring" without inferring from
+              node spacing. Picked based on online node count so only the
+              tiers currently in use draw — empty tiers stay quiet. pointer-
+              events:none so they never intercept hub or node clicks. The
+              0.7 stroke + dashed pattern reads as guide, not feature. */}
+          {(
+            onlineNodes.length > onlineTripleThreshold
+              ? [onlineTripleInnerR, onlineTripleMidR, onlineTripleOuterR]
+              : onlineNodes.length > onlineTierThreshold
+                ? [onlineInnerRadius, onlineOuterRadius]
+                : onlineNodes.length > 0
+                  ? [onlineRadius]
+                  : []
+          ).map(r => (
+            <circle
+              key={`tier-${r}`}
+              cx={cx} cy={cy} r={r}
+              fill="none"
+              stroke={pal.ringStroke}
+              strokeWidth="0.7"
+              strokeDasharray="2 8"
+              opacity={isLight ? 0.32 : 0.42}
+              style={{ pointerEvents: 'none' }}
+              data-tier-ring={r}
+            />
           ))}
 
           {/* Round 50: 4 small particles slowly orbiting the outer ring
