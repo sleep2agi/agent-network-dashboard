@@ -1706,13 +1706,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           {pinnedEdgeKey && (() => {
             const link = flowLinks.find(l => l.key === pinnedEdgeKey);
             if (!link) return null;
+            // R150 / Loop: extend the hot-lane amber convention from the
+            // canvas badge (R126) / recent-row count (R127) / panel
+            // header (R129) to the R119 edge filter pill — when the
+            // pinned edge has count ≥ 10 the count tspan flips to
+            // amber + 700 weight, and the tooltip grows a "(hot lane
+            // · ≥ 10)" marker. Closes the 4th hot-lane surface,
+            // completing R150's milestone: every place that surfaces
+            // an edge count now uses the same amber-when-hot vocab.
+            const isHot = link.count >= 10;
+            const hotStroke = isLight ? '#d97706' : '#fbbf24';
             return (
             <span
               data-active-filter="edge"
               data-filter-match-count={link.count}
               data-filter-match-aliases={`${link.from},${link.to}`}
+              data-active-filter-edge-hot={isHot ? 'true' : 'false'}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
-              title={`${link.from} → ${link.to} (${link.count} msg${link.count === 1 ? '' : 's'}) — click to clear`}
+              title={`${link.from} → ${link.to} (${link.count} msg${link.count === 1 ? '' : 's'}${isHot ? ', hot lane · ≥ 10' : ''}) — click to clear`}
               onClick={() => setPinnedEdgeKey(null)}
               style={{
                 background: isLight ? `${pal.flowEdge}14` : `${pal.flowEdge}1f`,
@@ -1721,7 +1732,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{link.from}→{link.to}<span className="opacity-70"> · {link.count}</span></span>
+              <span>
+                <span className="hidden sm:inline" data-filter-prefix>filter: </span>
+                {link.from}→{link.to}
+                {isHot ? (
+                  <span
+                    className="opacity-90"
+                    style={{ color: hotStroke, fontWeight: 700 }}
+                    data-active-filter-edge-count-hot
+                  >
+                    {' · '}{link.count}
+                  </span>
+                ) : (
+                  <span className="opacity-70" data-active-filter-edge-count>
+                    {' · '}{link.count}
+                  </span>
+                )}
+              </span>
               <button
                 type="button"
                 aria-label={`Clear edge filter ${link.from} → ${link.to}`}
