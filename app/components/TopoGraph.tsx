@@ -3080,9 +3080,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   onMouseLeave={() => setHoveredStatus(prev => prev === row.key ? null : prev)}
                   onClick={() => setPinnedStatus(prev => prev === row.key ? null : row.key)}
                 >
-                  {/* invisible hitbox covers the row so cursor doesn't need
-                      to be exactly on the 5-px swatch */}
-                  <rect x="6" y={row.y0 - 12} width="170" height="22" fill="transparent" />
+                  {/* R55 hitbox covers the row so cursor doesn't need to
+                      be exactly on the 5-px swatch. R105 / Loop: the
+                      hitbox now also carries a subtle hover/pin tint —
+                      mirroring R104's recent-signal row treatment so
+                      both side panels share the list-item idiom. The
+                      tint borrows the ROW'S OWN swatch colour rather
+                      than legendAccent, so the user's eye associates
+                      the tinted row with its colour swatch instead of
+                      a generic accent. Pin is a stronger tint than
+                      hover; idle stays fully transparent. */}
+                  <rect
+                    x="6" y={row.y0 - 12}
+                    width="170" height="22" rx="3"
+                    fill={hoveredStatus === row.key || isPinned ? row.fill : 'transparent'}
+                    opacity={isPinned ? (isLight ? 0.14 : 0.18)
+                            : hoveredStatus === row.key ? (isLight ? 0.08 : 0.12)
+                            : 1}
+                    data-legend-row-tinted={isPinned ? 'pinned' : hoveredStatus === row.key ? 'hover' : 'none'}
+                    style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
+                  />
                   <circle cx="16" cy={row.y0} r="5.5" fill={row.fill} />
                   {/* R61 pinned-state ring — concentric stroke at r=8 in
                       the row colour, draws OUTSIDE the swatch so it
