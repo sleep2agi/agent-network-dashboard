@@ -1211,11 +1211,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               isn't part of the R55 type set, so this chip routes to the
               dominant online sub-tier instead of inventing a new state.
               Cursor only flips when there's anything to highlight. */}
+          {/* R82: pin-mirror. R60 pressure-bar segments visualise the
+              pinned status via an inset boxShadow; R61 legend rows via a
+              concentric r=8 ring; the chip-row chips next to them did
+              not — so a user who pinned via Cmd+K (R69) or the legend
+              had no chip-row signal that "working" was the current
+              filter. Mirror the pressure-bar treatment here so all
+              status surfaces sing in unison. The online chip mirrors
+              for idle pins (working ⊆ online; the routing in
+              onMouseEnter already treats online as the idle fallback). */}
           <span
             className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-300 border border-green-500/20"
             data-working-chip
-            title={workingCount > 0 ? 'Hover to highlight working nodes' : undefined}
-            style={{ cursor: workingCount > 0 ? 'pointer' : undefined }}
+            data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
+            title={workingCount > 0 ? (pinnedStatus === 'working' ? 'Pinned — Esc to clear' : 'Hover to highlight working nodes') : undefined}
+            style={{
+              cursor: workingCount > 0 ? 'pointer' : undefined,
+              boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
+            }}
             onMouseEnter={() => { if (workingCount > 0) setHoveredStatus('working'); }}
             onMouseLeave={() => setHoveredStatus(prev => prev === 'working' ? null : prev)}
           >
@@ -1224,8 +1237,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           <span
             className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
             data-online-chip
-            title={onlineNodes.length > 0 ? 'Hover to highlight online nodes' : undefined}
-            style={{ cursor: onlineNodes.length > 0 ? 'pointer' : undefined }}
+            data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
+            title={onlineNodes.length > 0 ? (pinnedStatus === 'idle' ? 'Pinned — Esc to clear' : 'Hover to highlight online nodes') : undefined}
+            style={{
+              cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
+              boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
+            }}
             onMouseEnter={() => {
               // If a working filter would isolate nothing, route to idle.
               const idleCount = onlineNodes.length - workingCount;
