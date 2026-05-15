@@ -1510,12 +1510,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   aria-pressed={isPinned}
                   className="anet-topo-chip-focus"
                   title={`${n} ${label}\n${previewList}${suffix}\n${titleAction}`}
+                  // Round 165 / Loop: smooth width transitions on the
+                  // pressure-bar segments. Pre-R165 the widths snapped
+                  // instantly when fleet composition shifted (a node
+                  // going idle → working would visibly jump the green
+                  // segment by a few px). 220ms ease-out makes the bar
+                  // visually breathe with state — segment shifts now
+                  // glide into place instead of cutting. Pure CSS
+                  // transition on width; respects prefers-reduced-
+                  // motion via globals.css blanket override that
+                  // neutralises transition-duration universally.
+                  // boxShadow gets its own transition so pin
+                  // state-changes also fade smoothly, not snap.
                   style={{
                     width: `${(n / total) * 100}%`,
                     background: color,
                     height: '100%',
                     cursor: 'pointer',
                     boxShadow: isPinned ? `inset 0 0 0 1px ${color}, inset 0 0 0 2px rgba(255,255,255,0.6)` : undefined,
+                    transition: 'width 220ms ease-out, box-shadow 150ms ease-out',
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
