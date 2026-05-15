@@ -129,6 +129,15 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // badge mirror line hover; doesn't need its own entry — it's
       // the natural hover partner of this click gesture.
       { keys: ['click badge'], label: 'Pin a flow filter from the canvas — click an edge midpoint count badge (R121)' },
+      // Round 134 / Loop: catch up on R133 — the recent-signal panel's
+      // "+ N more flows" truncation footer (R128) became a clickable
+      // nav to /messages. First TopoGraph affordance that reaches OUT
+      // of the canvas; every prior gesture composes back into local
+      // state. Help overlay should surface the cross-page jump so
+      // operators know the path exists. R124-R132 were all passive
+      // visuals / motion / readouts with no new gestures, so this is
+      // the only new entry since R123.
+      { keys: ['click footer'], label: 'See all flows — click "+ N more flows" in the recent-signal panel (R133)' },
     ],
   },
 ];
