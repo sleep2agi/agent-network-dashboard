@@ -4227,8 +4227,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             behind the "%" label (looked like an indicator, not a button).
             Split into a plain % readout + an explicit reset button with
             its own icon + tooltip. */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 text-xs select-none">
-          {/* #113: node size — S / M / L segmented control (Vincent 4727). */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 text-xs select-none" data-topo-chrome>
+          {/* #113: node size — S / M / L segmented control (Vincent 4727).
+              R154: stable data-* hooks for tests + focus-visible ring so
+              keyboard navigation lands somewhere visible against the
+              dark canvas (browser default outline often vanishes on
+              cyber theme). */}
           <div
             className="flex items-center rounded-md border overflow-hidden"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
@@ -4240,8 +4244,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 key={lbl}
                 onClick={() => pickNodeScale(v)}
                 aria-pressed={nodeScale === v}
+                data-topo-chrome-nodesize={lbl}
+                data-topo-chrome-nodesize-active={nodeScale === v ? 'true' : 'false'}
                 title={`Node size: ${lbl === 'S' ? 'small' : lbl === 'M' ? 'medium' : 'large'}`}
-                className={`px-2 py-1 transition-colors ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300' : 'hover:bg-white/5'}`}
+                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300' : 'hover:bg-white/5'}`}
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
                 {lbl}
@@ -4254,7 +4260,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           >
             <button
               onClick={() => zoomBy(1 / 1.2)}
-              className="px-2 py-1 hover:bg-white/5 transition-colors"
+              data-topo-chrome-zoom-out
+              className="px-2 py-1 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom out"
               title="Zoom out (−)"
@@ -4263,6 +4270,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             </button>
             <span
               className="px-2 py-1 tabular-nums border-x text-center"
+              data-topo-chrome-zoom-level
               style={{ color: pal.legendText, borderColor: pal.containerBorder, minWidth: 46 }}
               title="Current zoom level"
             >
@@ -4270,7 +4278,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             </span>
             <button
               onClick={() => zoomBy(1.2)}
-              className="px-2 py-1 hover:bg-white/5 transition-colors"
+              data-topo-chrome-zoom-in
+              className="px-2 py-1 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom in"
               title="Zoom in (+)"
@@ -4280,7 +4289,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           </div>
           <button
             onClick={resetView}
-            className="p-1.5 rounded-md border hover:bg-white/5 transition-colors"
+            data-topo-chrome-reset
+            className="p-1.5 rounded-md border hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
             aria-label="Reset view"
             title="Reset zoom + pan (0, or double-click the canvas)"
@@ -4292,7 +4302,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           </button>
           <button
             onClick={toggleFullscreen}
-            className="p-1.5 rounded-md border hover:bg-white/5 transition-colors"
+            data-topo-chrome-fullscreen
+            data-topo-chrome-fullscreen-active={isFullscreen ? 'true' : 'false'}
+            className="p-1.5 rounded-md border hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
