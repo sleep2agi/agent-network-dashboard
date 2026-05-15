@@ -5118,12 +5118,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     />
                   );
                 })}
-                {/* viewport rectangle */}
+                {/* viewport rectangle.
+                    Round 199 / Loop: rect dimensions transition smoothly
+                    during R169 smoothView arming (discrete zoom button
+                    clicks + keyboard +/− + reset/fit). Pre-R199 the main
+                    canvas crossfaded over R168's 280ms opacity blend
+                    while the minimap viewport rect snap-cut to its new
+                    x/y/w/h in one frame — exactly the same rhythm
+                    mismatch R198 just closed for the minimap dots, now
+                    fixed for the rectangle that frames them.
+
+                    Gated to smoothView=true so continuous wheel-zoom /
+                    drag-pan stay snappy (a CSS transition during drag
+                    would cause the rect to chase the cursor with a
+                    280ms lag). Discrete zooms arm smoothView for 350ms,
+                    long enough to cover the 280ms x/y/w/h transition.
+
+                    Setting x/y/width/height as CSS PROPERTIES (style.x
+                    etc.) — same approach R197 used for legend swatch
+                    r. Modern Chrome/Safari/FF interpolate these.
+
+                    data-topo-minimap-viewport / -smooth expose state for
+                    tests. */}
                 <rect
                   x={Math.max(0, rectX)} y={Math.max(0, rectY)}
                   width={Math.max(0, Math.min(MW - Math.max(0, rectX), rectW))}
                   height={Math.max(0, Math.min(MH - Math.max(0, rectY), rectH))}
                   fill="none" stroke={pal.legendAccent} strokeWidth="1" opacity="0.9"
+                  data-topo-minimap-viewport
+                  data-topo-minimap-viewport-smooth={smoothView ? 'true' : 'false'}
+                  style={{
+                    transition: smoothView
+                      ? 'x 280ms ease-out, y 280ms ease-out, width 280ms ease-out, height 280ms ease-out'
+                      : 'none',
+                  } as React.CSSProperties}
                 />
               </svg>
             </div>
