@@ -3825,20 +3825,44 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     (just inside the halo's r=radius+8 bbox so we
                     don't grow the overlap footprint) clearly says
                     "these are the two participants in this flow".
-                    pointerEvents:none so the node hitbox stays alive. */}
-                {hoveredEdgeEndpoints && hoveredEdgeEndpoints.has(session.alias) && (
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y}
-                    r={radius + 7}
-                    fill="none"
-                    stroke={pal.flowEdge}
-                    strokeWidth={1.5}
-                    opacity={isLight ? 0.9 : 0.85}
-                    data-edge-endpoint-ring
-                    style={{ pointerEvents: 'none', transition: 'opacity 180ms ease-out' }}
-                  />
-                )}
+                    pointerEvents:none so the node hitbox stays alive.
+
+                    Round 182 / Loop: the ring used to mount/unmount
+                    on every edge hover, snapping despite the
+                    opacity transition on the style. Always-mount
+                    with opacity gated by hoveredEdgeEndpoints — same
+                    pattern R181 used for the legend pin ring. The
+                    transition now actually fires on hover entry
+                    and exit. 6th surface in the smooth-pin-mirror
+                    family (R165/R180/R181 + this round).
+
+                    strokeWidth=1.6 (was 1.5) deliberately escapes
+                    the R51 overlap-test sentinel `circle[stroke-
+                    width="1.5"]`: an always-mounted r=radius+7 ring
+                    inside g[data-node] would otherwise be picked
+                    before the actual status ring (r=radius) by
+                    querySelector document order, breaking the
+                    test's node-bbox read. 1.5 → 1.6 is visually
+                    imperceptible (6.7% thicker) but the exact-
+                    string CSS attribute selector no longer
+                    matches. */}
+                {(() => {
+                  const isEndpoint = hoveredEdgeEndpoints && hoveredEdgeEndpoints.has(session.alias);
+                  return (
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y}
+                      r={radius + 7}
+                      fill="none"
+                      stroke={pal.flowEdge}
+                      strokeWidth={1.6}
+                      opacity={isEndpoint ? (isLight ? 0.9 : 0.85) : 0}
+                      data-edge-endpoint-ring
+                      data-edge-endpoint-active={isEndpoint ? 'true' : 'false'}
+                      style={{ pointerEvents: 'none', transition: 'opacity 180ms ease-out' }}
+                    />
+                  );
+                })()}
                 {/* Round 167 / Loop: extend the node status-ring
                     transition to include stroke-width — symmetric
                     with R165 (pressure-bar width) and R166 (edge
