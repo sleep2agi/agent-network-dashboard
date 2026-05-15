@@ -2229,8 +2229,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   className="transition-opacity duration-300"
                 />
                 {!reducedMotion && (
+                  /* Round 103 / Loop: phase-stagger the particles so
+                     concurrent edges don't pulse in lockstep. SMIL
+                     `begin` accepts negative offsets to shift the cycle
+                     backwards in time, which means the particle starts
+                     mid-flight on first paint — no visible "all
+                     particles spawn from source simultaneously" tell.
+                     `(index * 0.37) % duration` gives a deterministic,
+                     well-distributed offset (the golden-ratio-ish 0.37
+                     fraction prevents lining up when N is a small
+                     multiple). Edge order is stable (sorted by recent
+                     activity), so the offsets feel calm rather than
+                     reshuffling each refresh. */
                   <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'} opacity={Math.min(1, fresh * edgeOpacityMul)}>
-                    <animateMotion dur={`${duration}s`} repeatCount="indefinite" path={path} />
+                    <animateMotion
+                      dur={`${duration}s`}
+                      begin={`-${((index * 0.37) % duration).toFixed(3)}s`}
+                      repeatCount="indefinite"
+                      path={path}
+                    />
                   </circle>
                 )}
                 {/* Round 75 / Loop: arrival ping at the destination. The
