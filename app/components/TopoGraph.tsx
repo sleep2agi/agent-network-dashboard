@@ -811,6 +811,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // visible without reading the tooltip. The set is the link's two aliases
   // (null when no edge hovered); node opacity composes this after inFocus.
   const [hoveredEdgeKey, setHoveredEdgeKey] = useState<string | null>(null);
+  // Round 77 / Loop: hovering the "N active links" header chip globally
+  // brightens every flow edge (1.5× opacity). Transient affordance — the
+  // chip already says HOW MANY active flows exist; this answers WHERE
+  // they are in one glance, without the user scanning the canvas for
+  // moving particles. Reset on mouse leave.
+  const [hoveredActiveLinks, setHoveredActiveLinks] = useState(false);
   // Round 55 / Loop: hovering a legend status row dims nodes whose status
   // doesn't match. The legend was passive — "what does this colour mean".
   // Now it answers "show me all of these" the same way R8 group-focus
@@ -1377,7 +1383,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             }, null);
             const rel = recent !== null ? relativeAgo(new Date(recent).toISOString()) : null;
             return (
-              <span className="hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20">
+              <span
+                className="hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                data-active-links-chip
+                title={flowLinks.length > 0 ? 'Hover to brighten all active flows' : undefined}
+                style={{ cursor: flowLinks.length > 0 ? 'pointer' : undefined }}
+                onMouseEnter={() => { if (flowLinks.length > 0) setHoveredActiveLinks(true); }}
+                onMouseLeave={() => setHoveredActiveLinks(false)}
+              >
                 {flowLinks.length} active link{flowLinks.length === 1 ? '' : 's'}
                 {rel ? <span className="text-gray-500"> · last {rel}</span> : null}
               </span>
@@ -1818,12 +1831,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // R63: also gate "no filter" on activeGroup so pinnedGroup
             // alone activates the in-group 1.3× boost + non-group dim.
             // When neither a node nor a group is in focus, mul is 1.
+            // R77: when the user hovers the "N active links" chip, the
+            // baseline 1× becomes 1.5× — every flow brightens at once.
+            // Sits inside the no-other-hover branch so it doesn't fight
+            // the edge-hover (2.0×) or node-hover (1.7×) priorities.
             const edgeOpacityMul = isHoveredEdge
               ? 2.0
               : hoveredEdgeKey
                 ? 0.35
                 : !hoveredAlias && !activeGroup
-                  ? 1
+                  ? (hoveredActiveLinks ? 1.5 : 1)
                   : (link.from === hoveredAlias || link.to === hoveredAlias)
                     ? 1.7
                     : bothInHoveredGroup
