@@ -1300,6 +1300,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       setPinnedStatus(prev => prev === key ? null : key);
                     }
                   }}
+                  // R83: hover preview — segments now match the R55 legend,
+                  // R79 working/online chips, and R80 vendor letters in
+                  // offering a hover-transient highlight before the click
+                  // commits to a pin. Users get to feel what the filter
+                  // does before they lock it in. Same activeStatus =
+                  // hoveredStatus ?? pinnedStatus formula; releasing the
+                  // pointer falls back to the pin if one is set, or to
+                  // baseline. Thin (3-px) segments still hit-test fine
+                  // because the chip itself is a flex row — span doesn't
+                  // need any extra hit padding for hover.
+                  onMouseEnter={() => setHoveredStatus(key)}
+                  onMouseLeave={() => setHoveredStatus(prev => prev === key ? null : prev)}
                 />
               );
             };
