@@ -3001,15 +3001,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       the R27 label↔label and R19 node↔label guards intact.
                       Each tier is colour-coded against the legend swatches
                       and only renders when count > 0, so a healthy all-
-                      working group reads simply " · 2w". */}
+                      working group reads simply " · 2w".
+
+                      Round 207 / Loop: each tspan eases in on mount
+                      via anet-fade-in. Pre-R207 when a group's first
+                      working node went idle (or first idle node went
+                      working), the new tier's tspan snap-popped into
+                      the label. Same snap-on-mount issue R203 fixed
+                      for recent-signal rows, applied at the group-
+                      label scope. Each tier is keyed on its boolean
+                      mount, so the animation fires once when the
+                      tspan first appears (count crosses 0 → 1+),
+                      not on every count update (e.g., 1 → 2 working
+                      preserves the tspan via React reconciliation).
+                      Exit remains snap — matches R190's "fade-IN
+                      smooth, accept exit snap" trade-off used for
+                      the R129 hot-tail. */}
                   {box.statuses.working > 0 && (
-                    <tspan dx="8" fill={isLight ? '#059669' : '#22c55e'} fontSize="11" fontWeight="600">{box.statuses.working}w</tspan>
+                    <tspan dx="8" fill={isLight ? '#059669' : '#22c55e'} fontSize="11" fontWeight="600" className="anet-fade-in" data-group-pip="working">{box.statuses.working}w</tspan>
                   )}
                   {box.statuses.idle > 0 && (
-                    <tspan dx="4" fill={isLight ? '#0d9488' : '#2dd4bf'} fontSize="11" fontWeight="600">{box.statuses.idle}i</tspan>
+                    <tspan dx="4" fill={isLight ? '#0d9488' : '#2dd4bf'} fontSize="11" fontWeight="600" className="anet-fade-in" data-group-pip="idle">{box.statuses.idle}i</tspan>
                   )}
                   {box.statuses.offline > 0 && (
-                    <tspan dx="4" fill={isLight ? '#94a3b8' : '#6b7280'} fontSize="11" fontWeight="600">{box.statuses.offline}o</tspan>
+                    <tspan dx="4" fill={isLight ? '#94a3b8' : '#6b7280'} fontSize="11" fontWeight="600" className="anet-fade-in" data-group-pip="offline">{box.statuses.offline}o</tspan>
                   )}
                 </text>
                 </g>
