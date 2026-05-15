@@ -1487,15 +1487,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     </g>
                   );
                 })()}
-                {session.status === 'working' && (
-                  // working pulse — small dot just inside the status ring,
-                  // above the avatar text. Was a 18px horizontal bar at
-                  // y+11 which now collides with the avatar; the dot reads
-                  // as the same "active" cue without occluding the initial.
-                  <circle cx={pos.x} cy={pos.y - (radius - 6)} r="2.5" fill={pal.flowParticle}>
-                    <animate attributeName="opacity" values="1;0.25;1" dur="1.1s" repeatCount="indefinite" />
-                  </circle>
-                )}
+                {session.status === 'working' && (() => {
+                  // Round 24 / Loop: pulse rate ↔ traffic. The dot's dur
+                  // was a flat 1.1s — every working node looked equally
+                  // busy. Mapping it to sse:N lets the eye land on what's
+                  // actually hot. 3 discrete tiers read cleaner than
+                  // continuous easing at a glance; thresholds picked so
+                  // typical 1-2-SSE Claude/Codex sessions stay in the
+                  // "active" tier and only multi-pane orchestrators pop
+                  // into the "busy" tier. Geometry unchanged (r=2.5).
+                  const sse = sseCountFor ?? 0;
+                  const dur = sse >= 4 ? '0.7s' : sse >= 2 ? '0.9s' : '1.2s';
+                  return (
+                    <circle cx={pos.x} cy={pos.y - (radius - 6)} r="2.5" fill={pal.flowParticle} data-pulse-dur={dur}>
+                      <animate attributeName="opacity" values="1;0.25;1" dur={dur} repeatCount="indefinite" />
+                    </circle>
+                  );
+                })()}
 
                 {/* Round 98 (issue #61): label rect 124px → 100px.
                     Round 109/110 (Vincent P0): full opaque card below the
