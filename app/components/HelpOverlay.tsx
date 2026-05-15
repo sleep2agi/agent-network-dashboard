@@ -97,6 +97,14 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // rows use.
       { keys: ['hover N working'], label: 'Highlight working nodes — chip-row sibling of legend (R79)' },
       { keys: ['hover vendor'], label: 'Highlight one vendor — hover A/O/书/? in the chip row (R80)' },
+      // Round 87 / Loop: catch up on the two newest hover-preview
+      // gestures that close click-only gaps from earlier rounds.
+      // R83 added preview-before-pin on the pressure-bar segments;
+      // R86 did the same for group labels. Both compose with their
+      // existing click-pin (R60 / R63) — hover transient, click
+      // sticky, Esc clears (R62).
+      { keys: ['hover seg'], label: 'Preview a status filter — hover a pressure-bar segment (R83)' },
+      { keys: ['hover group'], label: 'Preview a team focus — hover a group label (R86)' },
     ],
   },
 ];
