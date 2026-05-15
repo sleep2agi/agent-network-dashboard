@@ -86,6 +86,11 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // a search-friendly alternative to the `l` (R32) and `f` (R29)
       // keyboard shortcuts for users who can't remember them.
       { keys: ['⌘', 'K'], label: 'Toggle layout / Fit canvas via palette (R74)' },
+      // Round 78 / Loop: surface R73 (whole pill body is a click target)
+      // and R77 (active-links chip hover → boost all flow edges) —
+      // both are real user gestures that weren't in the help overlay.
+      { keys: ['click pill'], label: 'Clear filter — click anywhere on the pill body (R73)' },
+      { keys: ['hover chip'], label: 'Brighten all active flows — hover "N active links" (R77)' },
     ],
   },
 ];
