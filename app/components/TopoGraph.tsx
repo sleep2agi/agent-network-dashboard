@@ -1346,11 +1346,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               : pinnedStatus === 'working'
                 ? `${truncate(workingAliases)} — pinned, Esc to clear`
                 : `${truncate(workingAliases)} — hover highlights, click to pin`;
+            // R140: online chip title gains a "click to open /nodes" tail
+            // when interactive. R79 made the cursor pointer-shaped but
+            // wired nothing; R136 + R139 closed the same lie on two
+            // sibling chips by wiring real actions. The online chip
+            // can't pin a single status (online = working + idle,
+            // not a single pinnedStatus value), so a pin idiom would
+            // be semantically wrong. /nodes is the natural full-list
+            // destination — same "click chip for the full list" idiom
+            // the active-links chip uses (R136 → /messages).
             const onlineTitle = onlineNodes.length === 0
               ? undefined
               : pinnedStatus === 'idle'
                 ? `${truncate(onlineAliases)} — pinned, Esc to clear`
-                : `${truncate(onlineAliases)} — hover highlights online`;
+                : `${truncate(onlineAliases)} — hover highlights · click to open /nodes`;
             return (
               <>
                 <span
@@ -1396,7 +1405,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-online-chip
                   data-online-chip-aliases={onlineAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
+                  data-online-chip-clickable={onlineNodes.length > 0 ? 'true' : 'false'}
                   title={onlineTitle}
+                  role={onlineNodes.length > 0 ? 'link' : undefined}
+                  tabIndex={onlineNodes.length > 0 ? 0 : undefined}
                   style={{
                     cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
                     boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
@@ -1408,6 +1420,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     else if (idleCount > 0) setHoveredStatus('idle');
                   }}
                   onMouseLeave={() => setHoveredStatus(prev => prev === 'working' || prev === 'idle' ? null : prev)}
+                  // R140: click → /nodes. Mirrors R136 active-links→/messages
+                  // idiom. The chip's hover semantics (R79 highlight all
+                  // online) keep their meaning — hover for canvas preview,
+                  // click for the full list. Pinning idle here would
+                  // semantically misrepresent the chip (which means
+                  // working+idle), so we navigate instead of pin.
+                  onClick={() => {
+                    if (onlineNodes.length > 0) router.push('/nodes');
+                  }}
+                  onKeyDown={(e) => {
+                    if (onlineNodes.length === 0) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      router.push('/nodes');
+                    }
+                  }}
                 >
                   {onlineNodes.length} online
                 </span>
