@@ -1882,6 +1882,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     <animateMotion dur={`${duration}s`} repeatCount="indefinite" path={path} />
                   </circle>
                 )}
+                {/* Round 75 / Loop: arrival ping at the destination. The
+                    particle currently fades into the arrow marker
+                    silently — adding a small radiating ring synchronised
+                    to the particle's period turns message delivery into
+                    a visible event. begin = -dur*0.92 offsets the
+                    animation so the ring expands NEAR the end of each
+                    cycle (≈when the particle arrives). Gated by
+                    reducedMotion and on fresh > 0.5 — stale edges that
+                    haven't fired in minutes don't need the eye-grab.
+                    data-arrival-ping for testability. */}
+                {!reducedMotion && fresh > 0.5 && (
+                  <circle
+                    cx={to.x}
+                    cy={to.y}
+                    r="0"
+                    fill="none"
+                    stroke={pal.flowEdge}
+                    strokeWidth="1.5"
+                    opacity="0"
+                    style={{ pointerEvents: 'none' }}
+                    data-arrival-ping={link.key}
+                  >
+                    <animate attributeName="r" values="0;14;22" dur={`${duration}s`} begin={`-${(duration * 0.92).toFixed(2)}s`} repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0;0.55;0" dur={`${duration}s`} begin={`-${(duration * 0.92).toFixed(2)}s`} repeatCount="indefinite" />
+                  </circle>
+                )}
               </g>
             );
           })}
