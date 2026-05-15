@@ -3417,14 +3417,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 contained within the existing hub footprint (no bbox
                 growth, overlap test unchanged). pointerEvents:none so
                 the hint can't intercept the click that produced it. */}
+            {/* Round 177 / Loop: hub hover ring picks up the same
+                "lift on hover" gesture R164 added to the edge midpoint
+                badge (r=9→10.5). Pre-R177 the ring faded opacity 0→0.7
+                on hover but stayed static at r=14. Adding r=14→17 on
+                hover gives the gesture extra weight — the hub responds
+                more confidently. Stays within the r=18 halo bbox (no
+                geometry growth), so the R51 overlap-test guard rails
+                still hold. strokeWidth=1.5 is the offline-node
+                sentinel but the overlap-test selector is gated to
+                `g[data-node]` ancestors — this hub-internal circle
+                is invisible to that probe. transition list grows `r`
+                alongside opacity so both ease in concert; the lift
+                feels like one continuous gesture. Seventh surface in
+                the hover-elevation family (R51 nodes, R135 panels,
+                R142 group boxes, R143/R144 rows, R164 edge badges,
+                R177 hub ring). prefers-reduced-motion respected via
+                R29 globals.css blanket. */}
             <circle
-              cx={cx} cy={cy} r="14"
+              cx={cx} cy={cy}
+              r={hoveredHub ? 17 : 14}
               fill="none"
               stroke={isLight ? '#059669' : '#10b981'}
               strokeWidth="1.5"
               opacity={hoveredHub ? (isLight ? 0.85 : 0.7) : 0}
               data-topo-hub-hover-ring
-              style={{ pointerEvents: 'none', transition: 'opacity 180ms ease-out' }}
+              data-topo-hub-hover-ring-radius={hoveredHub ? 17 : 14}
+              style={{
+                pointerEvents: 'none',
+                transition: 'opacity 180ms ease-out, r 180ms ease-out',
+              }}
             />
           </g>)}
 
