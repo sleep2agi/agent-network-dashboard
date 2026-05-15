@@ -623,9 +623,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           const xs = pts.map(p => p.x);
           const ys = pts.map(p => p.y);
           const minX = Math.min(...xs), minY = Math.min(...ys);
+          // Round 58 / Loop: per-group status mix for the label pip strip.
+          // Working = status==='working'. Idle = online but not working.
+          // Offline = !isOnline (either status==='offline' AND no SSE, or
+          // ghost-purged elsewhere — but ghosts never reach groupBoxes
+          // since they're filtered out upstream). Counts feed the label
+          // tspans directly so the strip stays inside the label's bbox,
+          // preserving the node↔label overlap-test guarantee from R19.
+          let w = 0, i = 0, o = 0;
+          for (const s of band.members) {
+            const isOn = s.status !== 'offline' || !!sseCount(s);
+            if (s.status === 'working') w++;
+            else if (isOn) i++;
+            else o++;
+          }
           return {
             key: band.members.length ? groupKeys[band.members[0].alias] : '',
             count: band.members.length,
+            statuses: { working: w, idle: i, offline: o },
             x: minX - GROUP_PAD,
             y: minY - GROUP_TOP,
             w: Math.max(...xs) - minX + GROUP_PAD * 2,
@@ -728,7 +743,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       groupKeys,
       // #111: group boxes are a grid-layout feature only — radially scattered
       // ring nodes can't be cleanly boxed. Ring keeps the #83 prefix hue.
-      groupBoxes: [] as { key: string; count: number; x: number; y: number; w: number; h: number }[],
+      groupBoxes: [] as { key: string; count: number; statuses: { working: number; idle: number; offline: number }; x: number; y: number; w: number; h: number }[],
       // ring fits within VIEWBOX_H by construction (offlineRadius=325 + centre at y=330)
       gridContentBottom: 0,
     };
@@ -1416,6 +1431,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fontFamily="monospace"
                   fontWeight="700"
                   style={{ transition: 'fill 200ms ease-out' }}
+                  data-group-label={box.key}
                 >
                   {box.key}
                   {/* Round 19 / Loop: member-count chip. Inline tspan stays
@@ -1424,6 +1440,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       pushes the label far enough right to clip a node.
                       Smaller + lighter weight reads as metadata, not name. */}
                   <tspan dx="6" fill={pal.legendText} fontSize="11" fontWeight="400">· {box.count}</tspan>
+                  {/* Round 58 / Loop: status mix pip strip. Compact text-
+                      based chips (e.g. "2w 1i") so the strip stays inside
+                      the same <text> bbox the overlap-test reads — keeps
+                      the R27 label↔label and R19 node↔label guards intact.
+                      Each tier is colour-coded against the legend swatches
+                      and only renders when count > 0, so a healthy all-
+                      working group reads simply " · 2w". */}
+                  {box.statuses.working > 0 && (
+                    <tspan dx="8" fill={isLight ? '#059669' : '#22c55e'} fontSize="11" fontWeight="600">{box.statuses.working}w</tspan>
+                  )}
+                  {box.statuses.idle > 0 && (
+                    <tspan dx="4" fill={isLight ? '#0d9488' : '#2dd4bf'} fontSize="11" fontWeight="600">{box.statuses.idle}i</tspan>
+                  )}
+                  {box.statuses.offline > 0 && (
+                    <tspan dx="4" fill={isLight ? '#94a3b8' : '#6b7280'} fontSize="11" fontWeight="600">{box.statuses.offline}o</tspan>
+                  )}
                 </text>
               </g>
             );

@@ -53,8 +53,13 @@ const labels = await page.$$eval('svg[viewBox="0 0 1000 680"] g[data-group]', el
 await browser.close();
 const a = labels.find(l => l.key === 'A站');
 const b = labels.find(l => l.key === 'B站');
+// R58 appended status-mix pips inside the same <text>, and SVG textContent
+// concatenates tspans without preserving the visual `dx` gaps — so what
+// renders as "A站 · 4  4w" surfaces as the string "A站· 44w". The R19
+// count chip is still the second tspan; verify by matching "Group·" then
+// the count, allowing any trailing pip text.
 const results = {
-  bothGroupsHaveChip: a?.full === 'A站· 4' && b?.full === 'B站· 2',
+  bothGroupsHaveChip: /^A站·\s*4/.test(a?.full || '') && /^B站·\s*2/.test(b?.full || ''),
   chipSmallerFont: a?.chipFontSize === 11,
   chipLighterWeight: a?.chipFontWeight === '400',
 };

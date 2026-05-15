@@ -86,9 +86,11 @@ const results = {};
     return allGood;
   });
 
-  // label text present for each group
+  // label text present for each group. R19 appended " · N" and R58 appended
+  // status-mix pips ("2w 1i") to the same <text> element, so the textContent
+  // is now "A站· 4 2w 1i" rather than bare "A站". Match by prefix.
   const labels = await page.$$eval(`${svg} g[data-group] text`, els => els.map(e => (e.textContent || '').trim()));
-  results.gridLabels = ['A站', '书生', '通信'].every(g => labels.includes(g));
+  results.gridLabels = ['A站', '书生', '通信'].every(g => labels.some(l => l.startsWith(g)));
 
   await page.screenshot({ path: '/tmp/anet-issue-111/groupbox-grid-cyber.png' });
   await ctx.close();
