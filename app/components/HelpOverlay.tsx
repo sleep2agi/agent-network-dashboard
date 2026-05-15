@@ -113,6 +113,11 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // generic "click pill" (R73) and "click ×" (R64) entries.
       { keys: ['click vendor'], label: 'Pin a vendor filter — click A/O/书/? in the chip row (R88)' },
       { keys: ['⌘', 'K'], label: 'Clear vendor pin only via palette → "Clear topology vendor filter" (R90)' },
+      // Round 109 / Loop: catch up on R108 — palette gained
+      // pin-vendor commands for the three major vendors. Mirror of
+      // R69's pin-status entry; closes the symmetric gap so the
+      // palette can both pin AND clear every filter dimension.
+      { keys: ['⌘', 'K'], label: 'Pin vendor: Anthropic/OpenAI/书生 via palette → "Pin topology filter…" (R108)' },
     ],
   },
 ];
