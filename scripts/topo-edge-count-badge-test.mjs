@@ -76,7 +76,9 @@ const results = {
   alphaBeta_badge:         byKey['alpha->beta']?.count === '5',
   betaAlpha_badge:         byKey['beta->alpha']?.count === '3',
   gammaDelta_noBadge:     !byKey['gamma->delta'],
-  badges_nonInteractive:   badges.every(b => b.pe === 'none'),
+  // R121 promoted the badge from passive display to a click-to-pin
+  // affordance — assertion flipped from non-interactive to interactive.
+  badges_interactive:      badges.every(b => b.pe === 'all'),
 };
 const ok = Object.values(results).every(Boolean);
 console.log(`${ok ? '✅' : '❌'} edge-count badge:`, JSON.stringify(results),

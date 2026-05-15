@@ -2457,17 +2457,49 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const badgeX = midX + (-dy / len) * lift * 0.5;
                   const badgeY = midY + ( dx / len) * lift * 0.5;
                   const badgeOpacity = Math.min(1, fresh * edgeOpacityMul);
+                  /* R121: the badge becomes a canvas-side click-to-pin
+                     affordance. R100 introduced it as a passive count
+                     display; R116 added pinnedEdgeKey. Joining them
+                     lets users pin a flow directly from the canvas
+                     without crossing to the recent-signal panel.
+                     pointerEvents move from 'none' to 'all' on the
+                     wrapper <g>; the underlying R48 edge hitbox is
+                     wider (16 px) than the 18-px badge diameter so
+                     clicks landing on either still route correctly
+                     — the badge consumes its small footprint, the
+                     hitbox owns the rest. stopPropagation on
+                     pointerdown so the SVG pan capture doesn't
+                     redirect the click. */
+                  const isPinned = pinnedEdgeKey === link.key;
                   return (
                     <g
                       data-edge-count-badge={link.key}
-                      style={{ pointerEvents: 'none' }}
+                      data-edge-count-badge-pinned={isPinned ? 'true' : 'false'}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isPinned}
+                      style={{ pointerEvents: 'all', cursor: 'pointer' }}
                       opacity={badgeOpacity}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPinnedEdgeKey(prev => prev === link.key ? null : link.key);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setPinnedEdgeKey(prev => prev === link.key ? null : link.key);
+                        }
+                      }}
                     >
+                      <title>{isPinned
+                        ? `${link.from} → ${link.to} (${link.count}) — click to release pin`
+                        : `${link.from} → ${link.to} (${link.count}) — click to pin`}</title>
                       <circle
                         cx={badgeX} cy={badgeY} r="9"
                         fill={pal.legendBox.fill}
-                        stroke={pal.flowEdge}
-                        strokeWidth="1"
+                        stroke={isPinned ? pal.legendHeadline : pal.flowEdge}
+                        strokeWidth={isPinned ? 2 : 1}
                         opacity={isLight ? 0.95 : 0.82}
                       />
                       <text
@@ -2477,6 +2509,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         fontSize="10"
                         fontFamily="monospace"
                         fontWeight="700"
+                        style={{ pointerEvents: 'none' }}
                       >{link.count}</text>
                     </g>
                   );
