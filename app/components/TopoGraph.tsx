@@ -3455,6 +3455,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 );
               })
             )}
+            {/* Round 128 / Loop: overflow hint. The recent-signal panel
+                renders the top 3 flowLinks via .slice(0, 3) — but a
+                fleet with 5 or 10 active flows silently truncates the
+                rest. The R96 "X flows" header tells the total but
+                doesn't say "you're seeing top-3". This hint fires
+                only when flowLinks.length > 3 so quiet fleets stay
+                clean. Footer y=82 sits in the 10-px gap between
+                row 3 (baseline 70) and the panel bottom (84), so
+                overlap-test geometry is unchanged. fontStyle=italic
+                + opacity 0.55 reads as muted metadata, not an
+                actionable row — matches the R110 empty-state hint
+                idiom. */}
+            {flowLinks.length > 3 && (
+              <text
+                x="115" y="82"
+                textAnchor="middle"
+                fill={pal.legendText}
+                fontSize="8"
+                fontFamily="monospace"
+                fontStyle="italic"
+                opacity={0.55}
+                data-recent-panel-more={flowLinks.length - 3}
+              >
+                + {flowLinks.length - 3} more flow{flowLinks.length - 3 === 1 ? '' : 's'}
+              </text>
+            )}
           </g>
 
           {/* legend — Round 55 / Loop: each status row is now a hover
