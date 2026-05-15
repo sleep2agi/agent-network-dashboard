@@ -1502,7 +1502,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             return (
               <>
                 <span
-                  className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-300 border border-green-500/20 anet-topo-chip-focus"
+                  // Round 201 / Loop: the working chip joins the
+                  // "chip's hover state deepens its OWN identity colour"
+                  // family that R193 opened (active-links chip) and R195
+                  // extended (recent-panel footer). Pre-R201 hovering the
+                  // working chip fired R55 canvas dim + chip-row highlight
+                  // but the chip itself stayed at bg-green-500/10 — cause
+                  // silent, effect loud. R201 deepens its OWN green hue
+                  // (10→15 bg, 20→30 border) only when clickable.
+                  // transition-colors duration-200 blends the swap to
+                  // match R193's timing on the active-links chip.
+                  className={`px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                    workingCount > 0
+                      ? 'bg-green-500/10 text-green-300 border-green-500/20 hover:bg-green-500/15 hover:border-green-500/30'
+                      : 'bg-green-500/10 text-green-300 border-green-500/20'
+                  }`}
                   data-working-chip
                   data-working-chip-aliases={workingAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
@@ -1518,10 +1532,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // (working / online / vendor letter). The visual is small
                   // — a 1-2 px inset double ring — but the eye catches the
                   // pop on every pin/unpin without the ease.
+                  // Round 201 / Loop: inline transition list now also covers
+                  // background-color + border-color so the R201 hover tint
+                  // eases. Tailwind transition-colors on the className would
+                  // be overridden by this inline declaration, so we splice
+                  // the colour properties directly into the existing
+                  // R180 box-shadow transition.
                   style={{
                     cursor: workingCount > 0 ? 'pointer' : undefined,
                     boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-                    transition: 'box-shadow 150ms ease-out',
+                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out',
                   }}
                   onMouseEnter={() => { if (workingCount > 0) setHoveredStatus('working'); }}
                   onMouseLeave={() => setHoveredStatus(prev => prev === 'working' ? null : prev)}
@@ -1548,7 +1568,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   {workingCount} working
                 </span>
                 <span
-                  className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 anet-topo-chip-focus"
+                  // Round 201 / Loop: online chip — mirror of the working
+                  // chip treatment above. cyan hue 10→15 bg + 20→30 border
+                  // on hover, only when there's at least one online node
+                  // to highlight. Three sibling chips in the chip row now
+                  // all speak the same gesture vocabulary:
+                  //   working chip   · green 10→15 (R201)
+                  //   online chip    · cyan  10→15 (R201)
+                  //   active-links   · gray  → cyan (R193)
+                  className={`px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                    onlineNodes.length > 0
+                      ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:bg-cyan-500/15 hover:border-cyan-500/30'
+                      : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
+                  }`}
                   data-online-chip
                   data-online-chip-aliases={onlineAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
@@ -1557,10 +1589,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   role={onlineNodes.length > 0 ? 'link' : undefined}
                   tabIndex={onlineNodes.length > 0 ? 0 : undefined}
                   // R180: smooth-pin-mirror family — see working chip above.
+                  // R201: inline transition list also covers bg + border so
+                  // the new R201 hover tint eases (mirror of working chip).
                   style={{
                     cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
                     boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-                    transition: 'box-shadow 150ms ease-out',
+                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out',
                   }}
                   onMouseEnter={() => {
                     // If a working filter would isolate nothing, route to idle.
