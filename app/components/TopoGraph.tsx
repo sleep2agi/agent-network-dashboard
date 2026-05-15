@@ -833,6 +833,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // without inventing a new pin slot. Stores the vendor `initial`
   // (single char or "?") that matches the tally key.
   const [hoveredVendor, setHoveredVendor] = useState<string | null>(null);
+  // Round 88 / Loop: vendor filter pin. R80 added hover-to-dim on the
+  // vendor letters but the filter released as soon as the cursor left
+  // — vendor was the only filter dimension without a sticky variant
+  // (R60 status, R63 group, R69 Cmd+K all support pin). This state
+  // closes the gap. Same pattern as pinnedStatus / pinnedGroup:
+  // per-tab sessionStorage persistence, Esc clears, activeVendor =
+  // hoveredVendor ?? pinnedVendor so hover still wins for spot-
+  // comparison while a pin is active.
+  const [pinnedVendor, setPinnedVendor] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try { return sessionStorage.getItem('anet-topo-pinned-vendor'); } catch { return null; }
+  });
+  const activeVendor = hoveredVendor ?? pinnedVendor;
+  useEffect(() => {
+    try {
+      if (pinnedVendor) sessionStorage.setItem('anet-topo-pinned-vendor', pinnedVendor);
+      else sessionStorage.removeItem('anet-topo-pinned-vendor');
+    } catch {}
+  }, [pinnedVendor]);
   // Round 55 / Loop: hovering a legend status row dims nodes whose status
   // doesn't match. The legend was passive — "what does this colour mean".
   // Now it answers "show me all of these" the same way R8 group-focus
@@ -1154,9 +1173,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // R63: extends to pinnedGroup too. Clears WHATEVER pin is active
       // (one Esc collapses all topology pins) so the keyboard escape
       // route stays a single key, not "Esc maybe Esc again".
-      else if (e.key === 'Escape' && !chatAlias && (pinnedStatus || pinnedGroup)) {
+      else if (e.key === 'Escape' && !chatAlias && (pinnedStatus || pinnedGroup || pinnedVendor)) {
+        // R88: extend the universal-cancel to pinnedVendor too. One Esc
+        // collapses every topology pin (matches R62/R63's "single key,
+        // not Esc-maybe-Esc-again" promise).
         if (pinnedStatus) setPinnedStatus(null);
-        if (pinnedGroup) setPinnedGroup(null);
+        if (pinnedGroup)  setPinnedGroup(null);
+        if (pinnedVendor) setPinnedVendor(null);
         e.preventDefault();
       }
     };
@@ -1167,7 +1190,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     // and pinnedStatus so the Escape branch reads fresh state (re-binding
     // the listener on these state changes is sub-ms — cheaper than refs).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fitView, chatAlias, pinnedStatus, pinnedGroup]);
+  }, [fitView, chatAlias, pinnedStatus, pinnedGroup, pinnedVendor]);
 
   const toggleFullscreen = () => {
     const el = containerRef.current;
@@ -1433,21 +1456,48 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           {vendorDist.length > 1 && (
             <span
               className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
-              title="Hover a letter to highlight that vendor"
+              title="Hover to highlight; click to pin"
             >
-              {vendorDist.map(v => (
-                <span
-                  key={v.initial}
-                  className="inline-flex items-baseline gap-0.5"
-                  data-vendor-letter={v.initial}
-                  style={{ cursor: 'pointer' }}
-                  onMouseEnter={() => setHoveredVendor(v.initial)}
-                  onMouseLeave={() => setHoveredVendor(prev => prev === v.initial ? null : prev)}
-                >
-                  <span style={{ color: v.color }}>{v.initial}</span>
-                  <span className="text-gray-500">:{v.count}</span>
-                </span>
-              ))}
+              {vendorDist.map(v => {
+                const isPinned = pinnedVendor === v.initial;
+                // R88: click toggles a sticky filter the same way R60
+                // pressure-bar segments toggle pinnedStatus. Visual
+                // mirror = inset boxShadow using the vendor's own
+                // colour, so each pinned letter sings in its own hue
+                // (Anthropic green / OpenAI cyan / 书 blue / ?).
+                return (
+                  <span
+                    key={v.initial}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isPinned}
+                    className="inline-flex items-baseline gap-0.5 px-1 rounded"
+                    data-vendor-letter={v.initial}
+                    data-vendor-pinned={isPinned ? 'true' : 'false'}
+                    title={isPinned
+                      ? `Vendor "${v.initial}" pinned — click again or Esc to clear`
+                      : `Hover to highlight "${v.initial}"; click to pin`}
+                    style={{
+                      cursor: 'pointer',
+                      boxShadow: isPinned
+                        ? `inset 0 0 0 1px ${v.color}, inset 0 0 0 2px rgba(255,255,255,0.45)`
+                        : undefined,
+                    }}
+                    onMouseEnter={() => setHoveredVendor(v.initial)}
+                    onMouseLeave={() => setHoveredVendor(prev => prev === v.initial ? null : prev)}
+                    onClick={() => setPinnedVendor(prev => prev === v.initial ? null : v.initial)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setPinnedVendor(prev => prev === v.initial ? null : v.initial);
+                      }
+                    }}
+                  >
+                    <span style={{ color: v.color }}>{v.initial}</span>
+                    <span className="text-gray-500">:{v.count}</span>
+                  </span>
+                );
+              })}
             </span>
           )}
           {/* Round 42 / Loop: extend active-links chip with the timestamp
@@ -2230,10 +2280,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // chip and the avatar always agree on grouping.
                   opacity: hoveredEdgeEndpoints && !hoveredEdgeEndpoints.has(session.alias) && chatAlias !== session.alias
                     ? 0.28
-                    : hoveredVendor && chatAlias !== session.alias && (() => {
+                    : activeVendor && chatAlias !== session.alias && (() => {
                         const v = vendorForModel(session.model);
                         const initial = v.id === 'unknown' ? '?' : v.initial;
-                        return initial !== hoveredVendor;
+                        return initial !== activeVendor;
                       })()
                       ? 0.28
                       : activeStatus && chatAlias !== session.alias && !(
