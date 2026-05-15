@@ -2761,7 +2761,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-topo-panel-elevation="recent"
             />
             <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700">recent signal</text>
-            <text x="150" y="21" fill={pal.legendAccent} fontSize="10" fontFamily="monospace">{messages.length} msgs</text>
+            {/* R96: header count now matches what the rows show. Pre-R96
+                this read "X msgs" off the raw messages array, but the
+                rows below render DEDUPED flowLinks — so a fleet with 10
+                messages aggregating to 3 pairs read "10 msgs" above
+                only 3 rows. Misreads as "where are the other 7?".
+                "X flows" mirrors flowLinks.length one-for-one. When
+                flows < msgs the chip-row's "N active links · last 2s"
+                already tells the operator about traffic volume — no
+                duplicate metric needed here. */}
+            <text x="150" y="21" fill={pal.legendAccent} fontSize="10" fontFamily="monospace" data-recent-panel-count>{flowLinks.length} flows</text>
             {/* Round 45 / Loop: empty state. The panel used to render
                 "recent signal" + "0 msgs" with three blank slots below
                 when no flow yet — read as "broken" rather than "quiet".
