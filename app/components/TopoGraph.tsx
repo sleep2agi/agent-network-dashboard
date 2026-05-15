@@ -1329,14 +1329,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const seg = (n: number, color: string, key: 'working' | 'idle' | 'offline', label: string) => {
               if (n === 0) return null;
               const isPinned = pinnedStatus === key;
+              // R102: list the aliases that match this segment's bucket
+              // so the title answers WHICH n, not just HOW MANY. Closes
+              // the last "info-density gap" in the chip-row surfaces
+              // (R97 pills / R99 group labels / R101 vendor letters all
+              // already enumerate). Truncates at 8 with "+N more".
+              const matchAliases = key === 'working'
+                ? onlineNodes.filter(s => s.status === 'working').map(s => s.alias)
+                : key === 'idle'
+                ? onlineNodes.filter(s => s.status !== 'working').map(s => s.alias)
+                : offlineNodes.map(s => s.alias);
+              const previewList = matchAliases.slice(0, 8).join(', ');
+              const suffix = matchAliases.length > 8 ? ` + ${matchAliases.length - 8} more` : '';
+              const titleAction = isPinned ? 'click to release filter' : 'click to highlight';
               return (
                 <span
                   key={key}
                   data-pressure-seg={key}
+                  data-pressure-seg-aliases={matchAliases.join(',')}
                   role="button"
                   tabIndex={0}
                   aria-pressed={isPinned}
-                  title={`${n} ${label} — click to ${isPinned ? 'release filter' : 'highlight'}`}
+                  title={`${n} ${label}\n${previewList}${suffix}\n${titleAction}`}
                   style={{
                     width: `${(n / total) * 100}%`,
                     background: color,
