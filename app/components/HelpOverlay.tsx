@@ -78,6 +78,10 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // clears everything pinned).
       { keys: ['click group'], label: 'Pin a team focus (R63)' },
       { keys: ['click ×'], label: 'Clear one filter (R64) — Esc clears all' },
+      // Round 70 / Loop: R69 added 4 Cmd+K palette actions that pin/
+      // clear topology filters from anywhere. Surface them so keyboard
+      // power users find the shortcut without spelunking the palette.
+      { keys: ['⌘', 'K'], label: 'Pin / clear filters via palette → "Pin topology filter…" (R69)' },
     ],
   },
 ];
