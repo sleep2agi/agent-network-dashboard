@@ -852,6 +852,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       else sessionStorage.removeItem('anet-topo-pinned-vendor');
     } catch {}
   }, [pinnedVendor]);
+  // R89: stale-purge. If the fleet's vendor distribution changes such
+  // that a previously-pinned vendor is gone (last node of that
+  // vendor disconnected), clear the pin so the chip row doesn't
+  // show "filter: A · 0" forever. Matches the same defensive purge
+  // pattern pinnedGroup uses higher up — sessionStorage survives
+  // reloads, but a stored value that no longer matches reality
+  // would paint with an impossible filter.
+  useEffect(() => {
+    if (pinnedVendor && !vendorDist.some(v => v.initial === pinnedVendor)) {
+      setPinnedVendor(null);
+    }
+  }, [pinnedVendor, vendorDist]);
   // Round 55 / Loop: hovering a legend status row dims nodes whose status
   // doesn't match. The legend was passive — "what does this colour mean".
   // Now it answers "show me all of these" the same way R8 group-focus
@@ -1447,6 +1459,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
                 onClick={(e) => { e.stopPropagation(); setPinnedGroup(null); }}
+                className="ml-0.5 leading-none hover:opacity-70"
+                style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
+              >×</button>
+            </span>
+            );
+          })()}
+          {/* R89: vendor pin gets its own filter pill, matching the R64
+              status + group pattern. R88 added the pin but only the
+              letter itself carried the state; the chip-row had no
+              "filter: A · 2 ×" affordance the other two pins have. The
+              pill colour borrows the vendor's own swatch so each pin
+              still reads in its native hue (A green, O cyan, 书 blue,
+              ? slate). Same body-click-clears + × button pattern as
+              R64. */}
+          {pinnedVendor && (() => {
+            const matchEntry = vendorDist.find(v => v.initial === pinnedVendor);
+            const matchCount = matchEntry?.count ?? 0;
+            const vendorColor = matchEntry?.color ?? pal.legendText;
+            return (
+            <span
+              data-active-filter="vendor"
+              data-filter-match-count={matchCount}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
+              title="Click to clear vendor filter"
+              onClick={() => setPinnedVendor(null)}
+              style={{
+                background: `${vendorColor}1f`,
+                color: vendorColor,
+                borderColor: 'currentColor',
+                cursor: 'pointer',
+              }}
+            >
+              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedVendor}<span className="opacity-70"> · {matchCount}</span></span>
+              <button
+                type="button"
+                aria-label={`Clear vendor filter ${pinnedVendor}`}
+                onClick={(e) => { e.stopPropagation(); setPinnedVendor(null); }}
                 className="ml-0.5 leading-none hover:opacity-70"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
