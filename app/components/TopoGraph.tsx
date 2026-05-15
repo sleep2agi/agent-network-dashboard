@@ -3039,21 +3039,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               a small affordance hint. Geometry unchanged — the new
               <g> wrappers only carry pointer handlers. */}
           <g transform="translate(760, 16)">
-            {/* R57: matching drop-shadow elevation to the legend panel. */}
+            {/* R57: matching drop-shadow elevation to the legend panel.
+                R106: panel height grew 96 → 104 to seat the new header
+                line + 4 px row-shift below it (so the new header text
+                doesn't overlap the row-1 hitbox region). */}
             <rect
-              x="0" y="0" width="224" height="96" rx="10"
+              x="0" y="0" width="224" height="104" rx="10"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
               opacity={isLight ? 0.97 : 0.92}
               style={{ filter: isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))' : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))' }}
               data-topo-panel-elevation="legend"
             />
+            {/* R106 / Loop: panel header — symmetric with the recent-
+                signal panel's "recent signal · N flows" (R96). Same
+                font + position vocabulary so the two side panels feel
+                paired. Title text at x=13 y=21; total fleet count
+                right-aligned at x=215 y=21 in the accent colour. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700">legend</text>
+            <text x="215" y="21" textAnchor="end" fill={pal.legendAccent} fontSize="10" fontFamily="monospace" data-legend-panel-count>{sessions.length} node{sessions.length === 1 ? '' : 's'}</text>
             {(() => {
               const idleCount = onlineNodes.length - workingCount;
+              // R106: rows shift +8 px (was y0=24, 48, 72 → 32, 56, 80)
+              // to clear the new header row. R57 panel rect grew 96 →
+              // 104 to seat them.
               const rows = [
-                { key: 'working' as const, y0: 24, y1: 28, fill: isLight ? '#059669' : '#22c55e', label: 'working node', count: workingCount },
-                { key: 'idle'    as const, y0: 48, y1: 52, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle',  count: idleCount },
-                { key: 'offline' as const, y0: 72, y1: 76, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline / no SSE', count: offlineNodes.length },
+                { key: 'working' as const, y0: 32, y1: 36, fill: isLight ? '#059669' : '#22c55e', label: 'working node', count: workingCount },
+                { key: 'idle'    as const, y0: 56, y1: 60, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle',  count: idleCount },
+                { key: 'offline' as const, y0: 80, y1: 84, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline / no SSE', count: offlineNodes.length },
               ];
               return rows;
             })().map(row => {
@@ -3135,11 +3148,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 </g>
               );
             })}
-            {/* Flow-arrow swatch sits at y=72 — same row as the offline
-                hitbox. Drop its pointerEvents so the offline legend row
-                stays hoverable (R55). It's decoration, no need to
-                receive events. */}
-            <path d="M140,72 Q164,48 196,72" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" style={{ pointerEvents: 'none' }} />
+            {/* Flow-arrow swatch tracks the offline row — R106 shifted
+                rows down by 8 px to make space for the panel header so
+                this moves from y=72 to y=80. Drop its pointerEvents so
+                the offline legend row stays hoverable (R55). It's
+                decoration, no need to receive events. */}
+            <path d="M140,80 Q164,56 196,80" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" style={{ pointerEvents: 'none' }} />
           </g>
         </svg>
 
