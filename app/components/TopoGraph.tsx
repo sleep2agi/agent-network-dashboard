@@ -2582,7 +2582,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               only — groupBoxes is empty in ring mode. Rendered behind the
               flow links + nodes; pointer-events off so they never intercept
               a node click. Restrained dashed container + group-name label. */}
-          {groupBoxes.map(box => {
+          {groupBoxes.map((box, boxIdx) => {
             const isHovered = activeGroup === box.key;
             // R68: distinguish "locked by click" from "currently hovered".
             // R63 made pinned and hovered identical (both hit isHovered
@@ -2607,14 +2607,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               <g
                 key={`grp-${box.key}`}
                 data-group={box.key}
-                className="transition-opacity"
+                // Round 173 / Loop: group boxes pick up the first-paint
+                // fade-in wave alongside R9 staggered nodes (0-540ms)
+                // and R172 staggered edges (280-980ms). Pre-R173 the
+                // structural box frames appeared instantly while the
+                // nodes inside eased in — the reveal felt like
+                // 'frame slams down, nodes drift in'. The .anet-fade-in
+                // CSS animation (R3 origin, 0.15s ease-out, mount-once)
+                // plays alongside the node R9 stagger; each box offset
+                // by boxIdx × 60ms (cap at 8 indices so a fleet with
+                // many groups still finishes within ~500ms) so boxes
+                // appear like a soft sweep across the grid rather than
+                // a single pop. animation-fill-mode default 'none' →
+                // post-animation control reverts to the inline opacity
+                // style below (1 / 0.28 based on filter pin state).
+                // data-group-fade-delay exposes the computed delay for
+                // test probes.
+                className="transition-opacity anet-fade-in"
+                data-group-fade-delay={Math.min(boxIdx, 8) * 60}
                 // R63: drop the blanket pointerEvents:'none' that
                 // previously sat here. Chrome's SVG impl doesn't let a
                 // child override a parent's `none` even though the spec
                 // says it should — moving the property onto just the
                 // rect (where it's needed so nodes underneath stay
                 // clickable) lets the label text receive its own click.
-                style={{ opacity: !activeGroup || isHovered ? 1 : 0.28 }}
+                style={{
+                  opacity: !activeGroup || isHovered ? 1 : 0.28,
+                  animationDelay: `${Math.min(boxIdx, 8) * 60}ms`,
+                }}
               >
                 <rect
                   x={box.x}
