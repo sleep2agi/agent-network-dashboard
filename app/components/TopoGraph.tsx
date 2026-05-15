@@ -827,6 +827,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // they are in one glance, without the user scanning the canvas for
   // moving particles. Reset on mouse leave.
   const [hoveredActiveLinks, setHoveredActiveLinks] = useState(false);
+  // Round 115 / Loop: hub-center hover state. R52 made the hub
+  // clickable (fit view) + cursor:pointer, but there was no
+  // hover-time visual feedback — the click target felt guessed at
+  // rather than confirmed. This state drives a subtle hint ring on
+  // hover so users see the affordance before committing the click.
+  const [hoveredHub, setHoveredHub] = useState(false);
   // Round 80 / Loop: vendor-letter hover in the distribution chip. The
   // chip already names vendor mix (`C:5 G:3 ?:1`); hover a letter and
   // every node from OTHER vendors dims. Surfaces the breakdown spatially
@@ -2432,11 +2438,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               dual-circle "lit lamp" core is unchanged. */}
           {layout === 'ring' && (<g
             data-topo-hub
+            data-topo-hub-hovered={hoveredHub ? 'true' : 'false'}
             style={{ cursor: 'pointer' }}
             // Stop pointerdown from reaching the SVG pan handler — same
             // reason as the node <g>: a captured pointer makes Chromium
             // fire the follow-up click on the SVG, not this group.
             onPointerDown={(e) => e.stopPropagation()}
+            onMouseEnter={() => setHoveredHub(true)}
+            onMouseLeave={() => setHoveredHub(false)}
             // Round 52 / Loop: hub is the visual anchor but had no click
             // action — users discovered fit-to-content only via the `f`
             // key or the chrome button. Wire the hub to fitView() so the
@@ -2509,6 +2518,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             {/* core — 20px diameter, larger inner highlight reads as a "lit lamp" */}
             <circle cx={cx} cy={cy} r="10" fill={isLight ? '#059669' : '#10b981'} />
             <circle cx={cx} cy={cy} r="5" fill="#d1fae5" opacity="0.9" />
+            {/* R115 / Loop: hover hint ring. Stroke-only circle at r=14
+                that fades in when the hub is hovered — the same idea
+                R44 used for node avatars (group-hover stroke). r=14
+                sits comfortably outside the r=10 core and INSIDE the
+                r=18 grounding halo, so the hover indicator is fully
+                contained within the existing hub footprint (no bbox
+                growth, overlap test unchanged). pointerEvents:none so
+                the hint can't intercept the click that produced it. */}
+            <circle
+              cx={cx} cy={cy} r="14"
+              fill="none"
+              stroke={isLight ? '#059669' : '#10b981'}
+              strokeWidth="1.5"
+              opacity={hoveredHub ? (isLight ? 0.85 : 0.7) : 0}
+              data-topo-hub-hover-ring
+              style={{ pointerEvents: 'none', transition: 'opacity 180ms ease-out' }}
+            />
           </g>)}
 
           {/* agent nodes */}
