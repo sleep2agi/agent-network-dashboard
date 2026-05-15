@@ -119,13 +119,24 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
   // SWR's default refreshInterval here is 5s, so anything past ~10s is
   // either a poll miss or a network hiccup.
   const stale = sec > 10;
+  // Round 187 / Loop: chip transitions between fresh (gray) and stale
+  // (amber) colour palettes smoothly. Pre-R187 the className swap
+  // snapped every time the stale boundary was crossed — could happen
+  // multiple times per minute on a flaky network. Adding
+  // transition-colors makes the stale-onset (gray → amber) and
+  // recovery (amber → gray) ease through the bg / text / border
+  // palette together. 300ms matches R161/R162 active-links chip
+  // freshness fade timing for visual consistency in the chip row.
+  const baseClass = "hidden sm:inline px-2.5 py-1 rounded-md font-mono border transition-colors duration-300";
+  const colorClass = stale
+    ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
+    : "bg-gray-500/10 text-gray-400 border-gray-500/20";
   return (
     <span
-      className={stale
-        ? "hidden sm:inline px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono"
-        : "hidden sm:inline px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"}
+      className={`${baseClass} ${colorClass}`}
       title={stale ? `Last sync ${sec}s ago — SWR refresh may be lagging` : `Live data · refreshes every 5s · last sync ${sec}s ago`}
       data-freshness-chip
+      data-freshness-chip-stale={stale ? 'true' : 'false'}
     >
       live · {sec}s
     </span>
