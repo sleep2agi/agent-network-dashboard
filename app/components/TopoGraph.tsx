@@ -2728,6 +2728,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   opacity={isOnline ? (isLight ? 0.85 : 0.65) : (isLight ? 0.4 : 0.25)}
                   className="transition-[fill,opacity] duration-300 ease-out"
                 />
+                {/* Round 111 / Loop: edge-endpoint emphasis ring. R49
+                    already keeps endpoint nodes at opacity 1 while
+                    others dim when an edge is hovered, but the
+                    endpoints had no POSITIVE indicator — they just
+                    "stayed bright". An accent stroke at r=radius+7
+                    (just inside the halo's r=radius+8 bbox so we
+                    don't grow the overlap footprint) clearly says
+                    "these are the two participants in this flow".
+                    pointerEvents:none so the node hitbox stays alive. */}
+                {hoveredEdgeEndpoints && hoveredEdgeEndpoints.has(session.alias) && (
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={radius + 7}
+                    fill="none"
+                    stroke={pal.flowEdge}
+                    strokeWidth={1.5}
+                    opacity={isLight ? 0.9 : 0.85}
+                    data-edge-endpoint-ring
+                    style={{ pointerEvents: 'none', transition: 'opacity 180ms ease-out' }}
+                  />
+                )}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
