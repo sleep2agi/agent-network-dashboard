@@ -1980,7 +1980,51 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 }}
               >
                 {flowLinks.length} active link{flowLinks.length === 1 ? '' : 's'}
-                {rel ? <span className="text-gray-500"> · last {rel}</span> : null}
+                {rel ? (() => {
+                  // Round 161 / Loop: extend R160's recency-pip
+                  // vocabulary up one scope — from per-flow row to
+                  // fleet-aggregate chip. The chip already shows
+                  // recency in text ("last 5s ago"); the " · "
+                  // separator bullet was dead gray. Color the
+                  // bullet by freshness using the same alpha
+                  // ramp R160 uses on recent-signal rows:
+                  //   ageSec ≤ 30   → 1.0 (fully fresh)
+                  //   30-300s       → smooth decay 1.0 → 0.25
+                  //   > 300s        → 0.25 (stale floor)
+                  // Cyan bullet pulse when fresh + gray text tail
+                  // = "is the network firing right now" readable
+                  // at a glance, without parsing the timestamp
+                  // numerals. Same vocabulary the canvas uses
+                  // (R10 edge fade) and the recent-signal panel
+                  // uses (R160 row pip) — three nested scopes
+                  // now share one freshness ladder.
+                  const ageSec = recent !== null
+                    ? Math.max(0, (Date.now() - recent) / 1000)
+                    : 999;
+                  const alpha = ageSec <= 30
+                    ? 1
+                    : ageSec <= 300
+                      ? 1 - ((ageSec - 30) / 270) * 0.75
+                      : 0.25;
+                  // Cyan dark / teal light to match palette legendAccent.
+                  const dotColor = isLight
+                    ? `rgba(13, 148, 136, ${alpha.toFixed(2)})`
+                    : `rgba(34, 211, 238, ${alpha.toFixed(2)})`;
+                  return (
+                    <span className="text-gray-500">
+                      <span
+                        data-active-links-freshness-dot
+                        data-active-links-freshness-alpha={alpha.toFixed(2)}
+                        style={{
+                          color: dotColor,
+                          fontWeight: alpha > 0.7 ? 700 : 400,
+                          transition: 'color 200ms ease-out',
+                        }}
+                      >{' · '}</span>
+                      last {rel}
+                    </span>
+                  );
+                })() : null}
               </span>
             );
           })()}
