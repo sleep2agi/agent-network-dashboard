@@ -773,6 +773,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // group + other group boxes fade so the eye locks onto the team you're
   // pointing at. Singletons use their own alias as the group key.
   const hoveredGroup = hoveredAlias ? (groupKeys[hoveredAlias] ?? hoveredAlias) : null;
+  // Round 63 / Loop: sticky group focus. R8 dims non-group nodes while
+  // a member is hovered, but releasing the hover lets the focus fade.
+  // Clicking the group label pins the group key here; activeGroup =
+  // hoveredGroup ?? pinnedGroup so hover transiently overrides the
+  // pin (handy for spot-comparing teams). Same compose pattern as
+  // R60/R61 pinnedStatus.
+  const [pinnedGroup, setPinnedGroup] = useState<string | null>(null);
+  const activeGroup = hoveredGroup ?? pinnedGroup;
   // Round 49 / Loop: reverse-direction of R40's edge-on-node-hover linkage.
   // R48 widened the flow hitbox to 16 px, so edges are precise enough to
   // serve as a state trigger. When the user hovers a flow edge, light up its
@@ -1034,8 +1042,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // set), so this handler is effectively scoped to "no chat open".
       // We additionally guard on chatAlias to be explicit — if the chat
       // closed mid-cycle, the pin can still be cleared on the next Esc.
-      else if (e.key === 'Escape' && !chatAlias && pinnedStatus) {
-        setPinnedStatus(null);
+      // R63: extends to pinnedGroup too. Clears WHATEVER pin is active
+      // (one Esc collapses all topology pins) so the keyboard escape
+      // route stays a single key, not "Esc maybe Esc again".
+      else if (e.key === 'Escape' && !chatAlias && (pinnedStatus || pinnedGroup)) {
+        if (pinnedStatus) setPinnedStatus(null);
+        if (pinnedGroup) setPinnedGroup(null);
         e.preventDefault();
       }
     };
@@ -1046,7 +1058,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     // and pinnedStatus so the Escape branch reads fresh state (re-binding
     // the listener on these state changes is sub-ms — cheaper than refs).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fitView, chatAlias, pinnedStatus]);
+  }, [fitView, chatAlias, pinnedStatus, pinnedGroup]);
 
   const toggleFullscreen = () => {
     const el = containerRef.current;
@@ -1452,7 +1464,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               flow links + nodes; pointer-events off so they never intercept
               a node click. Restrained dashed container + group-name label. */}
           {groupBoxes.map(box => {
-            const isHovered = hoveredGroup === box.key;
+            const isHovered = activeGroup === box.key;
             // Round 18 / Loop: group-box hover linkage. The Round 8 fade
             // already dropped OUT-of-focus groups to 0.28, but the IN-focus
             // group sat at its baseline appearance — no positive emphasis.
@@ -1465,7 +1477,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 key={`grp-${box.key}`}
                 data-group={box.key}
                 className="transition-opacity"
-                style={{ pointerEvents: 'none', opacity: !hoveredGroup || isHovered ? 1 : 0.28 }}
+                // R63: drop the blanket pointerEvents:'none' that
+                // previously sat here. Chrome's SVG impl doesn't let a
+                // child override a parent's `none` even though the spec
+                // says it should — moving the property onto just the
+                // rect (where it's needed so nodes underneath stay
+                // clickable) lets the label text receive its own click.
+                style={{ opacity: !activeGroup || isHovered ? 1 : 0.28 }}
               >
                 <rect
                   x={box.x}
@@ -1478,8 +1496,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   stroke={isHovered ? pal.legendAccent : pal.ringStroke}
                   strokeWidth={isHovered ? 2 : 1.5}
                   strokeDasharray={isHovered ? 'none' : '6 6'}
-                  style={{ transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out' }}
+                  style={{ transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out', pointerEvents: 'none' }}
                 />
+                {/* R63: wrap label in a clickable <g> with an invisible
+                    rect hitbox. The text alone wasn't getting hit-tested
+                    reliably — the SVG-wide topo-panel <rect> intercepts
+                    at the label's screen position when the label sits at
+                    a high viewBox-y (it lands below where the compositor
+                    expects the text to paint on top, same gotcha as the
+                    recent-signal panel rows in R56). Hitbox rect + the
+                    parent <g> taking the click + onPointerDown stop-
+                    propagation match the R55/R56/R61 pattern. */}
+                <g
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={pinnedGroup === box.key}
+                  data-group-label-hit={box.key}
+                  style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => setPinnedGroup(prev => prev === box.key ? null : box.key)}
+                >
+                  <rect
+                    x={box.x + 6}
+                    y={box.y + 2}
+                    width={Math.min(box.w - 12, 240)}
+                    height={20}
+                    fill="transparent"
+                  />
                 <text
                   x={box.x + 12}
                   y={box.y + 14}
@@ -1514,6 +1557,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     <tspan dx="4" fill={isLight ? '#94a3b8' : '#6b7280'} fontSize="11" fontWeight="600">{box.statuses.offline}o</tspan>
                   )}
                 </text>
+                </g>
               </g>
             );
           })}
@@ -1582,12 +1626,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const isHoveredEdge = hoveredEdgeKey === link.key;
             const fromGroup = groupKeys[link.from] ?? link.from;
             const toGroup = groupKeys[link.to] ?? link.to;
-            const bothInHoveredGroup = !!hoveredGroup && fromGroup === hoveredGroup && toGroup === hoveredGroup;
+            const bothInHoveredGroup = !!activeGroup && fromGroup === activeGroup && toGroup === activeGroup;
+            // R63: also gate "no filter" on activeGroup so pinnedGroup
+            // alone activates the in-group 1.3× boost + non-group dim.
+            // When neither a node nor a group is in focus, mul is 1.
             const edgeOpacityMul = isHoveredEdge
               ? 2.0
               : hoveredEdgeKey
                 ? 0.35
-                : !hoveredAlias
+                : !hoveredAlias && !activeGroup
                   ? 1
                   : (link.from === hoveredAlias || link.to === hoveredAlias)
                     ? 1.7
@@ -1738,7 +1785,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // Round 8: when a node in another group is hovered, fade this
             // one. Same-group nodes (incl. singletons matching the hovered
             // alias) stay full. Pure visual focus, geometry unchanged.
-            const inFocus = !hoveredGroup || (groupKeys[session.alias] ?? session.alias) === hoveredGroup;
+            const inFocus = !activeGroup || (groupKeys[session.alias] ?? session.alias) === activeGroup;
 
             return (
               <g
