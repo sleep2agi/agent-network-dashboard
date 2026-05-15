@@ -89,6 +89,48 @@ function truncate(value: string, max: number) {
   return value.length > max ? `${value.slice(0, max - 1)}...` : value;
 }
 
+/** Round 46 / Loop: SWR-freshness chip.
+ *
+ *  TopoGraph's data refreshes every 5 s via SWR but the user has no
+ *  visible signal that the canvas they're looking at is current. The
+ *  flow particles and chips (R42 active-links, R43 hub) tell you when
+ *  the FLEET last did something, not when the DATA last syncing. This
+ *  chip ticks `live · Ns` against a 1-second interval so the operator
+ *  can trust freshness without doing internal math.
+ *
+ *  Owns its own setInterval so the parent topology doesn't re-render
+ *  every second (only this small chip does). lastSyncRef is updated
+ *  whenever the `sessions` prop reference changes — that's the SWR
+ *  refresh signal. */
+function FreshnessChip({ sessions }: { sessions: unknown }) {
+  const lastSyncRef = useRef<number>(Date.now());
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    // sessions reference changed → SWR just delivered a new payload.
+    lastSyncRef.current = Date.now();
+  }, [sessions]);
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const sec = Math.max(0, Math.floor((now - lastSyncRef.current) / 1000));
+  // Tint the chip warmer when the data goes stale (>10s since last sync).
+  // SWR's default refreshInterval here is 5s, so anything past ~10s is
+  // either a poll miss or a network hiccup.
+  const stale = sec > 10;
+  return (
+    <span
+      className={stale
+        ? "px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono"
+        : "px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"}
+      title={stale ? `Last sync ${sec}s ago — SWR refresh may be lagging` : `Live data · refreshes every 5s · last sync ${sec}s ago`}
+      data-freshness-chip
+    >
+      live · {sec}s
+    </span>
+  );
+}
+
 /** Round 36 / Loop: prefers-reduced-motion hook.
  *
  *  Round 29's a11y sweep zeroed CSS animations via media query, but SVG
@@ -1063,6 +1105,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               </span>
             );
           })()}
+          <FreshnessChip sessions={sessions} />
         </div>
       </div>
 
