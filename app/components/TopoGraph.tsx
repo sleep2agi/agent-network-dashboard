@@ -1358,13 +1358,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-working-chip
                   data-working-chip-aliases={workingAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
+                  data-working-chip-clickable={workingCount > 0 ? 'true' : 'false'}
                   title={workingTitle}
+                  role={workingCount > 0 ? 'button' : undefined}
+                  tabIndex={workingCount > 0 ? 0 : undefined}
+                  aria-pressed={workingCount > 0 ? (pinnedStatus === 'working') : undefined}
                   style={{
                     cursor: workingCount > 0 ? 'pointer' : undefined,
                     boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
                   }}
                   onMouseEnter={() => { if (workingCount > 0) setHoveredStatus('working'); }}
                   onMouseLeave={() => setHoveredStatus(prev => prev === 'working' ? null : prev)}
+                  // R139: the title hover-text has been promising "click to
+                  // pin" since R79 but no onClick was ever wired. The cursor:
+                  // pointer at line 1363 set up the same lie R136 fixed on
+                  // the active-links chip. Wire it now: click toggles the
+                  // status pin to 'working', composing with R60 (pressure-
+                  // bar segments) and R61 (legend rows) — three different
+                  // surfaces that all toggle the same pinnedStatus. boxShadow
+                  // pin-mirror at line 1364 already reflects the state; aria-
+                  // pressed now exposes it for screen readers too.
+                  onClick={() => {
+                    if (workingCount > 0) setPinnedStatus(prev => prev === 'working' ? null : 'working');
+                  }}
+                  onKeyDown={(e) => {
+                    if (workingCount === 0) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setPinnedStatus(prev => prev === 'working' ? null : 'working');
+                    }
+                  }}
                 >
                   {workingCount} working
                 </span>
