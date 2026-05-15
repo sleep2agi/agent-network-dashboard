@@ -4934,7 +4934,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-legend-row-tinted={isPinned ? 'pinned' : hoveredStatus === row.key ? 'hover' : 'none'}
                     style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
                   />
-                  <circle cx="16" cy={row.y0} r="5.5" fill={row.fill} />
+                  {/* Round 197 / Loop: swatch dot scales r 5.5 → 7 when its
+                      row is hovered or pinned. Pre-R197 the swatch was a
+                      flat constant size — the row got R55/R61 fill brighten,
+                      R105 bg tint, R144 1px row lift, R181 pin ring, but
+                      the swatch dot at the row's *visual identity anchor*
+                      stayed still. Adding the size response gives the
+                      swatch its own click/hover feel and visually rhymes
+                      with R177 hub hover-lift (hub ring r 14→17). Stays
+                      well inside the r=8 R181 pin ring (7 + 0 stroke vs
+                      8 - 0.75 inner ≈ 7.25) so the two layers don't fight.
+                      CSS r-as-property is interpolatable by Chrome/Safari/
+                      FF post-2020. Geometry-unchanged at rest, so the
+                      overlap test sees the same baseline. */}
+                  <circle
+                    cx="16" cy={row.y0}
+                    r="5.5"
+                    fill={row.fill}
+                    data-legend-swatch={row.key}
+                    data-legend-swatch-state={isPinned ? 'pinned' : isRowHovered ? 'hover' : 'idle'}
+                    style={{
+                      r: isRowHovered || isPinned ? '7px' : '5.5px',
+                      transition: 'r 150ms ease-out',
+                    } as React.CSSProperties}
+                  />
                   {/* R61 pinned-state ring — concentric stroke at r=8 in
                       the row colour, draws OUTSIDE the swatch so it
                       doesn't fight the fill colour the user is matching.
