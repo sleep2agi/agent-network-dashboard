@@ -88,6 +88,24 @@ function truncate(value: string, max: number) {
   return value.length > max ? `${value.slice(0, max - 1)}...` : value;
 }
 
+/** Round 35 / Loop: timezone-safe parse for hub timestamps.
+ *
+ *  The CommHub serialises last_seen / created_at as SQL-style without a zone:
+ *  "2026-05-15 06:00:28". `Date.parse` on a bare SQL string interprets it as
+ *  *local* time — fine on UTC servers, BUT a UTC+8 browser then sees every
+ *  timestamp as 8 h older than reality and the Round 27 ghost age-out (1 h)
+ *  fires on freshly-deleted nodes. ISO strings ("…T06:00:28Z") parse
+ *  correctly already.
+ *
+ *  Normalise: if the string has no T separator, add the T and a trailing Z so
+ *  it's parsed as UTC. Returns ms since epoch or null on a parse failure. */
+function parseHubTime(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  const iso = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T') + 'Z';
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? t : null;
+}
+
 /** Round 12 / Loop: status trio audit.
  *
  *  Each (status × theme) cell returns a {primary, halo, text} trio. The trio
@@ -439,8 +457,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     const now = Date.now();
     const isGhost = (s: Session) => {
       if (s.status !== 'offline' || sseCount(s) || !s.last_seen_at) return false;
-      const t = Date.parse(s.last_seen_at);
-      return !Number.isNaN(t) && now - t > GHOST_MS;
+      // Round 35 / Loop: parseHubTime normalises SQL-style timestamps to UTC
+      // before parsing so non-UTC browsers don't see a phantom 8-hour skew
+      // and ghost freshly-disconnected nodes.
+      const t = parseHubTime(s.last_seen_at);
+      return t !== null && now - t > GHOST_MS;
     };
     const online = sessions.filter(s => s.status !== 'offline' || sseCount(s)).sort(byAlias);
     const offline = sessions.filter(s => s.status === 'offline' && !sseCount(s) && !isGhost(s)).sort(byAlias);
@@ -1454,11 +1475,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     be noise). Accepts both ISO ("…T06:00:28Z") and SQL-style
                     ("… 06:00:28" assumed UTC) formats. */}
                 {(() => {
+                  // Round 35 / Loop: parseHubTime is shared with isGhost so
+                  // both the visibility filter and the tooltip line interpret
+                  // bare SQL timestamps as UTC (was the cause of phantom
+                  // ghosting on non-UTC browsers).
                   const formatLastSeen = (dateStr: string): string | null => {
-                    if (!dateStr) return null;
-                    const iso = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T') + 'Z';
-                    const t = Date.parse(iso);
-                    if (!Number.isFinite(t)) return null;
+                    const t = parseHubTime(dateStr);
+                    if (t === null) return null;
                     const s = Math.floor((Date.now() - t) / 1000);
                     if (s < 0) return 'just now';
                     if (s < 60) return `${s}s ago`;
