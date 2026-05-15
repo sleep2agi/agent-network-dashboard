@@ -1224,10 +1224,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               specific pin (Esc still clears all — both paths are
               valid). pinnedStatus and pinnedGroup pin independently so
               both pills may render simultaneously. */}
+          {/* R67: pills enter via anet-fade-in so they appear softly
+              instead of popping. The "filter: " prefix collapses below
+              sm — at narrow viewports the chip row is precious real
+              estate (R47 already hides pressure / vendor / freshness),
+              so dropping the redundant label keeps the working/idle/
+              alpha keys readable without overflow. */}
           {pinnedStatus && (
             <span
               data-active-filter="status"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
               style={{
                 background: pinnedStatus === 'working' ? (isLight ? '#05966914' : '#22c55e1f')
                           : pinnedStatus === 'idle'    ? (isLight ? '#0d948814' : '#2dd4bf1f')
@@ -1238,7 +1244,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 borderColor: 'currentColor',
               }}
             >
-              <span>filter: {pinnedStatus}</span>
+              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedStatus}</span>
               <button
                 type="button"
                 aria-label={`Clear ${pinnedStatus} filter`}
@@ -1251,14 +1257,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           {pinnedGroup && (
             <span
               data-active-filter="group"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
               style={{
                 background: isLight ? '#67e8f914' : '#67e8f91f',
                 color: pal.legendAccent,
                 borderColor: 'currentColor',
               }}
             >
-              <span>filter: {pinnedGroup}</span>
+              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedGroup}</span>
               <button
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
