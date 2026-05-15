@@ -4451,9 +4451,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           to non-dense fleets (≤16 nodes) or hovered/
                           zoomed-in branches, so the cost stays bounded
                           (~20-30 cards max). */}
+                      {/* Round 217 / Loop: label card stroke tints to
+                          legendAccent (cyan) on parent-node hover,
+                          adding a 3rd hover-feedback channel alongside
+                          R26 1.5px lift + R194 drop-shadow elevation.
+                          The card now responds at three layers when its
+                          parent node is hovered: lift (motion) → shadow
+                          (depth) → stroke (color tint). All three are
+                          gated by the same hoveredAlias === session
+                          .alias state so they ease in unison. transition
+                          list extends `stroke 220ms ease-out` alongside
+                          R194's existing filter 220ms — single pair of
+                          eyes on the card reads "this is the focused
+                          element" via three independent channels. Pin
+                          + chat states don't compete: pinning a node
+                          opens chat (R136) but doesn't drive hovered
+                          Alias, so this stroke tint is exclusively a
+                          pointer-on-target signal. */}
                       <rect
                         x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="6"
-                        fill={pal.labelBox.fill} stroke={pal.labelBox.stroke}
+                        fill={pal.labelBox.fill}
+                        stroke={!reducedMotion && hoveredAlias === session.alias
+                          ? pal.legendAccent
+                          : pal.labelBox.stroke}
                         opacity={isLight ? 1 : 0.94}
                         data-node-label-card={session.alias}
                         data-node-label-card-elevation={
@@ -4467,7 +4487,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                             : (isLight
                                 ? 'drop-shadow(0 1px 2px rgba(15,23,42,0.08))'
                                 : 'drop-shadow(0 1px 2px rgba(0,0,0,0.30))'),
-                          transition: 'filter 220ms ease-out',
+                          transition: 'filter 220ms ease-out, stroke 220ms ease-out',
                         }}
                       />
                       {/* Round 211 / Loop: alias + sub text fill eases on
