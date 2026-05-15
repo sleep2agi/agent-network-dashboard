@@ -1715,24 +1715,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const matchAliases = survivors.map(s => s.alias);
             const matchPreview = matchAliases.slice(0, 8).join(', ');
             const matchSuffix  = matchAliases.length > 8 ? ` + ${matchAliases.length - 8} more` : '';
-            const tooltip = matchAliases.length > 0
+            const isEmpty = matchAliases.length === 0;
+            const tooltip = !isEmpty
               ? `${matchPreview}${matchSuffix} — nodes passing all ${pinDimCount} pinned filters`
-              : `No nodes pass all ${pinDimCount} pinned filters (Esc to clear)`;
+              : `No nodes pass all ${pinDimCount} pinned filters — release one to widen (Esc clears all)`;
+            // R125: when the intersection drops to zero, the chip flips
+            // from neutral gray to a warning amber. Zero-overlap is the
+            // exact case users get confused — canvas dims to 0.28
+            // everywhere, no positive signal explains why. The "· 0"
+            // tail in neutral gray reads as just another number,
+            // indistinguishable from "· 12". Amber + a ⚠ glyph lifts
+            // it to "your filters cancel out" at a glance. Color
+            // choice: amber (#d97706 light, #fbbf24 dark) — same hue
+            // family as warning chips elsewhere in the dashboard,
+            // distinct from any pill color (status green/teal/slate,
+            // group cyan, vendor varies, edge cyan, neutral gray for
+            // non-empty intersection) so the empty state stands out.
+            const emptyColor = isLight ? '#d97706' : '#fbbf24';
             return (
               <span
                 data-pin-intersection
                 data-pin-dim-count={pinDimCount}
                 data-pin-intersection-count={matchAliases.length}
+                data-pin-intersection-empty={isEmpty ? 'true' : 'false'}
                 data-pin-intersection-aliases={matchAliases.join(',')}
                 className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in"
                 title={tooltip}
                 style={{
-                  background: isLight ? '#94a3b814' : '#94a3b81f',
-                  color:      isLight ? '#475569'   : '#9ca3af',
+                  background: isEmpty
+                    ? (isLight ? '#d97706' + '14' : '#fbbf24' + '1f')
+                    : (isLight ? '#94a3b814' : '#94a3b81f'),
+                  color: isEmpty
+                    ? emptyColor
+                    : (isLight ? '#475569' : '#9ca3af'),
                   borderColor: 'currentColor',
                 }}
               >
-                <span><span className="hidden sm:inline" data-pin-intersection-prefix>match: </span>{pinDimCount} pins<span className="opacity-70"> · {matchAliases.length}</span></span>
+                <span>
+                  <span className="hidden sm:inline" data-pin-intersection-prefix>match: </span>
+                  {pinDimCount} pins<span className="opacity-70"> · {matchAliases.length}</span>
+                  {isEmpty && <span className="ml-1" aria-hidden>⚠</span>}
+                </span>
               </span>
             );
           })()}
