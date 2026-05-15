@@ -922,6 +922,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         if (v === 'working' || v === 'idle' || v === 'offline') setPinnedStatus(v);
       } else if (detail.kind === 'group' && typeof detail.value === 'string') {
         setPinnedGroup(detail.value);
+      } else if (detail.kind === 'vendor' && typeof detail.value === 'string') {
+        // R108: palette pin-vendor support. R69 added pin-status, R88
+        // added clickable vendor letters in the chip row, R90 added
+        // granular clear-vendor — but the palette never gained a
+        // PIN-vendor command. This branch listens for it; the matching
+        // commands live in CommandPalette R108. The stale-purge
+        // useEffect higher up already drops a pin whose vendor isn't
+        // in the current distribution, so commands for an absent
+        // vendor are harmless.
+        setPinnedVendor(detail.value);
       }
     };
     window.addEventListener('anet:topo-pin', onPin);

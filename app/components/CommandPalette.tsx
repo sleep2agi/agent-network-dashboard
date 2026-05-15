@@ -183,6 +183,33 @@ const COMMANDS: Command[] = [
       try { sessionStorage.setItem('anet-topo-pinned-status', 'offline'); } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'status', value: 'offline' } }));
     } },
+  // Round 108 / Loop: pin-vendor palette actions. R88 made vendor
+  // letters clickable in the chip row, R89 added the filter pill,
+  // R90 added clear-vendor here — but PIN-vendor was missing. Three
+  // static commands for the major vendors (Anthropic / OpenAI /
+  // 书生) cover the common case; users with unusual vendors still
+  // have the chip-row click + cmdk clear path. TopoGraph's R108
+  // listener handles kind='vendor' to set the pin. The R88 stale-
+  // purge useEffect cleans up if the targeted vendor isn't actually
+  // in the fleet, so these commands are safe to invoke any time.
+  { id: 'act-pin-vendor-A', title: 'Pin topology filter: Anthropic', hint: 'highlight A vendor only', group: 'Actions',
+    icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
+    perform: () => {
+      try { sessionStorage.setItem('anet-topo-pinned-vendor', 'A'); } catch {}
+      window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'vendor', value: 'A' } }));
+    } },
+  { id: 'act-pin-vendor-O', title: 'Pin topology filter: OpenAI', hint: 'highlight O vendor only', group: 'Actions',
+    icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
+    perform: () => {
+      try { sessionStorage.setItem('anet-topo-pinned-vendor', 'O'); } catch {}
+      window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'vendor', value: 'O' } }));
+    } },
+  { id: 'act-pin-vendor-S', title: 'Pin topology filter: 书生', hint: 'highlight 书 vendor only', group: 'Actions',
+    icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
+    perform: () => {
+      try { sessionStorage.setItem('anet-topo-pinned-vendor', '书'); } catch {}
+      window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'vendor', value: '书' } }));
+    } },
   { id: 'act-clear-topo-pins', title: 'Clear topology filters', hint: 'release pinned status + group + vendor', group: 'Actions',
     icon: <NavIcon d="M6 18L18 6M6 6l12 12" />,
     perform: () => {
