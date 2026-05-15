@@ -1061,39 +1061,49 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               only — groupBoxes is empty in ring mode. Rendered behind the
               flow links + nodes; pointer-events off so they never intercept
               a node click. Restrained dashed container + group-name label. */}
-          {groupBoxes.map(box => (
-            <g
-              key={`grp-${box.key}`}
-              data-group={box.key}
-              className="transition-opacity"
-              // Round 8: dim group boxes outside the hover focus so the eye
-              // locks on the team being inspected.
-              style={{ pointerEvents: 'none', opacity: !hoveredGroup || box.key === hoveredGroup ? 1 : 0.28 }}
-            >
-              <rect
-                x={box.x}
-                y={box.y}
-                width={box.w}
-                height={box.h}
-                rx="14"
-                fill={isLight ? '#0f172a' : '#a5b4fc'}
-                fillOpacity={isLight ? 0.025 : 0.045}
-                stroke={pal.ringStroke}
-                strokeWidth="1.5"
-                strokeDasharray="6 6"
-              />
-              <text
-                x={box.x + 12}
-                y={box.y + 14}
-                fill={pal.legendText}
-                fontSize="13"
-                fontFamily="monospace"
-                fontWeight="700"
+          {groupBoxes.map(box => {
+            const isHovered = hoveredGroup === box.key;
+            // Round 18 / Loop: group-box hover linkage. The Round 8 fade
+            // already dropped OUT-of-focus groups to 0.28, but the IN-focus
+            // group sat at its baseline appearance — no positive emphasis.
+            // Hovering now upgrades the box to an "accent" treatment:
+            // solid stroke (not dashed), thicker, accent-coloured; brighter
+            // text and slightly stronger fill. Label and box read as one
+            // selected unit. Geometry unchanged → overlap test untouched.
+            return (
+              <g
+                key={`grp-${box.key}`}
+                data-group={box.key}
+                className="transition-opacity"
+                style={{ pointerEvents: 'none', opacity: !hoveredGroup || isHovered ? 1 : 0.28 }}
               >
-                {box.key}
-              </text>
-            </g>
-          ))}
+                <rect
+                  x={box.x}
+                  y={box.y}
+                  width={box.w}
+                  height={box.h}
+                  rx="14"
+                  fill={isLight ? '#0f172a' : '#a5b4fc'}
+                  fillOpacity={isHovered ? (isLight ? 0.05 : 0.09) : (isLight ? 0.025 : 0.045)}
+                  stroke={isHovered ? pal.legendAccent : pal.ringStroke}
+                  strokeWidth={isHovered ? 2 : 1.5}
+                  strokeDasharray={isHovered ? 'none' : '6 6'}
+                  style={{ transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out' }}
+                />
+                <text
+                  x={box.x + 12}
+                  y={box.y + 14}
+                  fill={isHovered ? pal.legendHeadline : pal.legendText}
+                  fontSize="13"
+                  fontFamily="monospace"
+                  fontWeight="700"
+                  style={{ transition: 'fill 200ms ease-out' }}
+                >
+                  {box.key}
+                </text>
+              </g>
+            );
+          })}
 
           {/* directed message flows */}
           {flowLinks.map((link, index) => {
