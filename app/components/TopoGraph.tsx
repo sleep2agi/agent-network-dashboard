@@ -2730,7 +2730,49 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             })()}
             {/* core — 20px diameter, larger inner highlight reads as a "lit lamp" */}
             <circle cx={cx} cy={cy} r="10" fill={isLight ? '#059669' : '#10b981'} />
-            <circle cx={cx} cy={cy} r="5" fill="#d1fae5" opacity="0.9" />
+            {/* R130 / Loop: when workingCount > 0, the decorative inner
+                highlight gets replaced with the workingCount digit. The
+                R84 busyness breath already encodes the same metric
+                through motion — adding the digit gives it a second
+                visual channel right at the canvas's focal point. A
+                user glancing at the hub now sees both "the network is
+                pulsing" (motion) AND "3 agents are working" (digit)
+                without having to scan the chip row or panels.
+
+                Geometry: text at (cx, cy) with fontSize 11 monospace
+                + fontWeight 700 sits inside the r=10 core (a 2-digit
+                12 reads ~12 px wide × 11 px tall, well inside the
+                20-px diameter core). Centered vertically via dy=
+                "0.36em" — the standard SVG trick for text-vertical-
+                center without measuring fontMetrics.
+
+                pointerEvents:none so the digit can't intercept the
+                hub click (R52 fit-to-view still fires).
+
+                workingCount=0 falls through to the existing
+                decorative highlight so the hub never looks empty. */}
+            {workingCount > 0 ? (
+              <text
+                x={cx} y={cy}
+                textAnchor="middle"
+                dy="0.36em"
+                fill={isLight ? '#d1fae5' : '#ecfdf5'}
+                fontSize="11"
+                fontFamily="monospace"
+                fontWeight="700"
+                style={{ pointerEvents: 'none' }}
+                data-topo-hub-working-count={workingCount}
+              >
+                {workingCount}
+              </text>
+            ) : (
+              <circle
+                cx={cx} cy={cy} r="5"
+                fill="#d1fae5"
+                opacity="0.9"
+                data-topo-hub-highlight
+              />
+            )}
             {/* R115 / Loop: hover hint ring. Stroke-only circle at r=14
                 that fades in when the hub is hovered — the same idea
                 R44 used for node avatars (group-hover stroke). r=14
