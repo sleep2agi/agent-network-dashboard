@@ -4806,7 +4806,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 data-topo-chrome-nodesize={lbl}
                 data-topo-chrome-nodesize-active={nodeScale === v ? 'true' : 'false'}
                 title={`Node size: ${lbl === 'S' ? 'small' : lbl === 'M' ? 'medium' : 'large'}`}
-                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300' : 'hover:bg-white/5'}`}
+                // Round 179 / Loop: nodeSize S/M/L active-button hover
+                // variant closes the inconsistency with R163 layout
+                // toggle and R178 fullscreen. Pre-R179 the active
+                // (selected) S/M/L button had bg-cyan-500/15 + text-
+                // cyan-300 but NO hover response — the chip looked
+                // 'locked', not 'still interactive'. R163 and R178
+                // both add hover:bg-cyan-500/20 on the active variant
+                // so the active chip stays responsive to mouse. R179
+                // closes the trio so all three chrome active-cyan
+                // surfaces ship the same gesture.
+                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20' : 'hover:bg-white/5'}`}
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
                 {lbl}
