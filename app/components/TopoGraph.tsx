@@ -7381,12 +7381,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              and R287 to the minimap viewport stroke
                              (1 → 1.5). data-recent-row-freshness-radius
                              attr exposes the value for tests. */
-                          r={1.8}
+                          /* Round 383 / Loop: recency pip base radius
+                             1.8 → 2.0. Continues the R359 lift
+                             trajectory — pip area grows ~23 % (π·2²/
+                             π·1.8² ≈ 1.23) for a clearer at-a-glance
+                             freshness anchor in each row. Bbox 4.0×4.0
+                             still inside the 7-px R160 left margin
+                             (3-px remaining clearance vs 3.4 at r=1.8
+                             — geometry-safe margin holds). Sibling
+                             visual-weight bump family (9th anchor now):
+                               R287 minimap viewport stroke 1 → 1.5
+                               R295 legend swatch base radius 5.5 → 6
+                               R359 recent-row pip base radius 1.6 → 1.8
+                               R360 hub digit fontSize 11 → 12
+                               R361 edge-badge digit fontSize 10 → 11
+                               R365 hub-highlight base radius 5 → 5.5
+                               R367 edge-badge rest stroke 1 → 1.25
+                               R374 pressure-bar height 1.5 → 2
+                               R383 recent-row pip radius 1.8 → 2.0  (this round)
+                             data-recent-row-freshness-radius attr
+                             bumps to '2.0' for tests. */
+                          r={2.0}
                           fill={pal.legendAccent}
                           opacity={alpha}
                           data-recent-row-freshness={link.key}
                           data-recent-row-freshness-alpha={alpha.toFixed(2)}
-                          data-recent-row-freshness-radius="1.8"
+                          data-recent-row-freshness-radius="2.0"
                           style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out' }}
                         />
                       );
