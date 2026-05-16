@@ -3854,6 +3854,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           values are 1/2 (not R51 sentinels 1.5/3) so
                           the always-rendered badge stays invisible to
                           the overlap-test guard rails. */}
+                      {/* Round 251 / Loop: edge badge circle transition
+                          list grows fill + opacity at 200ms so theme
+                          toggle no longer snaps the badge background
+                          while the rest of the circle eases.
+                          Pre-R251:
+                            r 180ms (R164 hover lift)
+                            stroke 300ms (R188 hot/pinned colour flip)
+                            stroke-width 300ms (R188 hot/pinned width flip)
+                          fill (pal.legendBox.fill: cyber #020617 ↔ light
+                          #ffffff) and opacity (cyber 0.82 ↔ light 0.95)
+                          were theme-driven but missed from the list —
+                          the badge chrome snapped on theme switch while
+                          the per-edge ring + visible flow path (R245)
+                          and per-node surfaces (R246) all eased.
+                          R251 closes the per-edge surface theme-toggle
+                          smoothness — every theme-driven property on
+                          every edge element now eases under cyber↔light. */}
                       <circle
                         cx={badgeX} cy={badgeY}
                         r={isHoveredEdge || isPinned ? 10.5 : 9}
@@ -3862,7 +3879,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         strokeWidth={isPinned ? 2 : isHot ? 2 : 1}
                         opacity={isLight ? 0.95 : 0.82}
                         data-edge-badge-lifted={(isHoveredEdge || isPinned) ? 'true' : 'false'}
-                        style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out' }}
+                        style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out' }}
                       />
                       {/* Round 224 / Loop: edge badge text gains the 4th
                           pin-signature typography. Pre-R224 the digit
