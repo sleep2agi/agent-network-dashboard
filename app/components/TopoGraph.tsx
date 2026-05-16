@@ -194,7 +194,27 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
   // tier (R312-R314 family); the amber bg/text/border still does
   // the warning-state work, the weight just keeps the chip in the
   // same data-typography ladder as its siblings.
-  const baseClass = "hidden sm:inline px-2.5 py-1 rounded-md font-mono font-medium border transition-colors duration-300";
+  // Round 377 / Loop: FreshnessChip baseClass picks up `tabular-nums`.
+  // The chip-row's last untouched chip joins the R224-R357 broader
+  // tabular-nums sweep:
+  //   R224 edge badge digit
+  //   R225 hub digit / panel header counts / recent row count
+  //   R232 chip row counts (working / online / active-links)
+  //   R321 recent row timestamp
+  //   R322 recent panel hot count
+  //   R323 filter pin pill counts
+  //   R333 vendor count suffix
+  //   R357 active-links freshness suffix wrapper
+  //   R377 FreshnessChip body  (this round)
+  // `font-mono` already gives equal-width glyphs but `tabular-nums`
+  // is the explicit-invariant the rest of the chip row carries.
+  // FreshnessChip body reads `lag · {sec}s` — the {sec} digit grows
+  // every second; tabular-nums explicitly locks digit width so the
+  // chip stays planted as the seconds counter ticks past 9 → 10 →
+  // 99 → 100. R187 transition-colors duration-300 + R275 stale-only
+  // render gate + R315 font-medium R313 family alignment all
+  // preserved.
+  const baseClass = "hidden sm:inline px-2.5 py-1 rounded-md font-mono font-medium tabular-nums border transition-colors duration-300";
   const colorClass = stale
     ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
     : "bg-gray-500/10 text-gray-400 border-gray-500/20";
