@@ -5371,10 +5371,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          : workingCount <= 2 ? 1
                          : workingCount <= 5 ? 2
                          : 3;
+              // Round 404 / Loop: hub-halo cyber trough opacity 0.08 →
+              // 0.10. Pre-R404 the breath's low-point sat at α=0.08
+              // cyber (per R84 family tuning) — the halo nearly faded
+              // out at trough on the dark canvas. The breath's
+              // visibility floor felt like "almost gone" rather than
+              // "alive at rest". R404 lifts cyber trough to 0.10 so
+              // the resting visibility reads more confidently as a
+              // present-but-quiet anchor while the per-bucket peak
+              // amplitudes [0.16/0.20/0.26/0.32] stay exactly tuned.
+              // Result: breath envelope rises from 0.08→peak to
+              // 0.10→peak — same dramatic motion, slightly elevated
+              // baseline. Light theme trough stays at 0.32 (already
+              // at the strong end on the bright canvas backdrop).
+              // Stale-state legibility lift family (4 anchors now):
+              //   R317 subordinate-text gray-500 → gray-400
+              //   R358 freshness floor 0.25 → 0.30
+              //   R372 minimap offline-dot opacity 0.5 → 0.6
+              //   R404 hub-halo cyber trough 0.08 → 0.10  (this round)
+              // R84 per-bucket peak/dur + R245 ease-in-out spline
+              // keySplines all preserved. Test fixture probes the
+              // SMIL <animate> values via data-topo-hub-halo-trough
+              // attr.
               const peakLight   = [0.52, 0.58, 0.65, 0.72][busy];
               const peakDark    = [0.16, 0.20, 0.26, 0.32][busy];
               const troughLight = 0.32;
-              const troughDark  = 0.08;
+              const troughDark  = 0.10;
               const dur         = [4.0, 3.2, 2.7, 2.4][busy];
               const valuesLight = `${troughLight};${peakLight};${troughLight}`;
               const valuesDark  = `${troughDark};${peakDark};${troughDark}`;
@@ -5384,6 +5406,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fill={isLight ? '#d1fae5' : '#10b981'}
                   opacity={isLight ? 0.42 : 0.12}
                   data-hub-busyness={busy}
+                  data-topo-hub-halo-trough={isLight ? troughLight : troughDark}
+                  data-topo-hub-halo-peak={isLight ? peakLight : peakDark}
                   /* Round 253 / Loop: hub grounding halo fill transition
                      for theme toggle. Pre-R253 the base fill (cyber
                      #10b981 ↔ light #d1fae5) snapped while R244's SMIL
