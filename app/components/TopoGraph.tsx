@@ -1457,7 +1457,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               chrome strip (fleet vs view groups). data-topo-chrome-
               layout-trailer marks the boundary surface for the gap
               probe. */}
-          <div className="mr-1 inline-flex rounded-md border border-gray-500/25 overflow-hidden" role="group" aria-label="Topology layout" data-topo-chrome-layout-trailer>
+          {/* Round 268 / Loop: Layout toggle border unified with the
+              chrome strip's theme-aware borderColor. Pre-R268 the
+              wrapper + Grid button's internal divider used hardcoded
+              `border-gray-500/25` (pale gray, fixed in both themes)
+              while the bottom-right chrome strip (nodeSize, zoom)
+              used pal.containerBorder (cyber #2a2a4a dark indigo ↔
+              light #e3e6eb pale gray). Visible mismatch in cyber
+              theme: Layout toggle border read as pale gray while
+              chrome strip borders read as darker indigo — two
+              different border colors on visually-analogous
+              segmented controls. R268 replaces the hardcoded class
+              with inline pal.containerBorder + a border-color
+              transition, so the Layout toggle (a) matches the chrome
+              strip border color and (b) joins the canvas-wide
+              theme-ease vocabulary (eases on cyber↔light toggle
+              instead of snapping). Same change applied to the Grid
+              button's border-l on line ~1493. */}
+          <div
+            className="mr-1 inline-flex rounded-md border overflow-hidden"
+            style={{ borderColor: pal.containerBorder, transition: 'border-color 200ms ease-out' }}
+            role="group"
+            aria-label="Topology layout"
+            data-topo-chrome-layout-trailer
+          >
             <button
               onClick={() => { popChrome('layout-ring'); if (layout !== 'ring') toggleLayout(); }}
               aria-pressed={layout === 'ring'}
@@ -1490,7 +1513,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // Round 196 / Loop: R163 layout-toggle Grid variant picks up
               // press-state — same tier pattern as Ring above.
               // Round 249 / Loop: chrome-pop on click — same as Ring.
-              className={`px-2.5 py-1 border-l border-gray-500/25 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 border-l transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              /* Round 268 / Loop: Grid button's left border (the
+                 internal divider between Ring and Grid) picks up
+                 pal.containerBorder, matching the wrapper change at
+                 line ~1460 and the chrome strip's segmented borders
+                 (nodeSize, zoom). transition-colors className covers
+                 the border-color eased on theme toggle. */
+              style={{ borderColor: pal.containerBorder }}
             >
               Grid
             </button>
