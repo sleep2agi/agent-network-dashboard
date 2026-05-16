@@ -63,6 +63,11 @@ async function run(scenario) {
       tailText:       tail?.textContent || null,
       tailCount:      tail?.getAttribute('data-recent-panel-hot-count'),
       tailClassName:  tail?.getAttribute('class') || '',
+      // R223 added: visibility attribute for always-mount-with-opacity-
+      // gate. "no tail" is either tailPresent=false (legacy conditional
+      // mount, no longer current) OR tailVisible='false' (R223 always-
+      // mount with opacity 0).
+      tailVisible:    tail?.getAttribute('data-recent-panel-hot-visible'),
     };
   });
   await page.close();
@@ -106,7 +111,10 @@ const c = await run((now) => {
 await browser.close();
 
 const results = {
-  a_no_tail:               a.tailPresent === false,
+  // R223 update: hot-tail is always-mounted now with opacity-gate;
+  // "no tail" means either not in DOM (legacy) OR present-but-hidden
+  // (always-mount visible='false'). Accept both forms.
+  a_no_tail:               a.tailPresent === false || a.tailVisible === 'false',
   b_tail_present:          b.tailPresent === true,
   b_tail_text:             /·\s*1\s*hot/.test(b.tailText || ''),
   b_tail_count_1:          b.tailCount === '1',
