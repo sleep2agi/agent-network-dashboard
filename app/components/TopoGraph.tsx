@@ -5021,15 +5021,45 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                             R371       edge badge cyber 0.82 → 0.85 (this round)
                           R164 r=9/10.5 hover-lift + R188/R251 transition
                           list + R367 strokeWidth=1.25 cold rest preserved. */}
+                      {/* Round 394 / Loop: edge-badge gains a hover
+                          strokeWidth tier (1.5) between cold rest
+                          (R367 1.25) and pin/hot (2). Pre-R394 the
+                          badge lifted only its radius on hover (R164
+                          9 → 10.5); the stroke stayed at cold rest
+                          1.25 unless pin/hot kicked in, so a plain
+                          hover felt half-lifted — geometry expanded
+                          while the contour stayed thin. R394 adds
+                          strokeWidth=1.5 on isHoveredEdge so hover
+                          now lifts both r AND stroke in concert —
+                          same pattern R385 used for the hub hover-
+                          ring (1.5 → 1.75) where the ring's three
+                          hover axes (r grow / opacity fade-in /
+                          stroke thicken) all rise together.
+                          Three-tier stroke hierarchy now:
+                            cold rest          1.25  (R367)
+                            hovered            1.5   (R394 — this round)
+                            pinned / hot       2.0   (R188)
+                          R51 sentinel concern: strokeWidth=1.5 is
+                          one of the two sentinels reserved for node
+                          detection, but the R51 selector is gated
+                          to `g[data-node]` ancestors so this edge-
+                          internal circle is invisible to the probe
+                          (same lesson R177 hub hover-ring + R367
+                          cold rest documented). 300ms strokeWidth
+                          transition already in the style list eases
+                          the new tier naturally. data-edge-badge-
+                          stroke-width-hover attr exposes the hover
+                          value for tests. */}
                       <circle
                         cx={badgeX} cy={badgeY}
                         r={isHoveredEdge || isPinned ? 10.5 : 9}
                         fill={pal.legendBox.fill}
                         stroke={isPinned ? pal.legendHeadline : isHot ? hotStroke : pal.flowEdge}
-                        strokeWidth={isPinned ? 2 : isHot ? 2 : 1.25}
+                        strokeWidth={isPinned ? 2 : isHot ? 2 : isHoveredEdge ? 1.5 : 1.25}
                         opacity={isLight ? 0.95 : 0.85}
                         data-edge-badge-lifted={(isHoveredEdge || isPinned) ? 'true' : 'false'}
                         data-edge-badge-stroke-width-rest="1.25"
+                        data-edge-badge-stroke-width-hover="1.5"
                         data-edge-badge-opacity={isLight ? 0.95 : 0.85}
                         style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out' }}
                       />
