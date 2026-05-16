@@ -2145,8 +2145,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     role="button"
                     tabIndex={0}
                     aria-pressed={isPinned}
-                    className="inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus"
+                    /* Round 234 / Loop: vendor letter chip picks up
+                       tabular-nums to lock the ':N' suffix's digit
+                       width. Each vendor chip renders 'A:3', 'C:2',
+                       etc. inline at gap-0.5 — when one vendor's
+                       count rolls 9→10 the chip widens by the digit
+                       glyph delta and pushes downstream chips right,
+                       making the row visibly jitter. 8th surface
+                       in the info-density tabular-nums sweep,
+                       completing the HTML chip-side coverage after
+                       R232 working/online/active-links chips. The
+                       digit lives in the inner <span> at line 2194,
+                       but font-variant-numeric inherits, so applying
+                       it at the outer chip span reaches every
+                       descendant glyph for free. */
+                    className="tabular-nums inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus"
                     data-vendor-letter={v.initial}
+                    data-vendor-letter-count={v.count}
                     data-vendor-pinned={isPinned ? 'true' : 'false'}
                     data-vendor-hovered={hoveredVendor === v.initial ? 'true' : 'false'}
                     data-vendor-aliases={aliases.join(',')}
