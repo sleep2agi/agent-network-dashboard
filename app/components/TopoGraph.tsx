@@ -1862,7 +1862,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  weight; cyan-400/60 + ring-inset retained. The
                  R163/R196 hover/active deeps + R249 chrome-pop
                  click feedback continue unchanged. */
-              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              // R351: hover:tracking-wide extends the R344/R345/R347
+              // hover-letter-spacing family to a 4th surface (chrome-
+              // strip Ring/Grid pair). transition-colors className
+              // dropped in favour of an inline transition spec that
+              // bundles bg/color (150ms ease) + letter-spacing
+              // (200ms ease-out) — Tailwind's transition-colors
+              // doesn't list letter-spacing, so without this the
+              // hover:tracking-wide would snap. Sibling change on
+              // the Grid button below.
+              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              style={{ transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out' }}
             >
               Ring
             </button>
@@ -1879,14 +1889,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // Round 306 / Loop: focus-visible:ring-2 → ring-1 sibling
               // change to Ring above — unifies focus-ring width across
               // all chrome buttons.
-              className={`px-2.5 py-1 border-l transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              // R351 sibling — Grid button picks up hover:tracking-wide
+              // + inline transition spec. Same vocabulary as Ring.
+              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
               /* Round 268 / Loop: Grid button's left border (the
                  internal divider between Ring and Grid) picks up
                  pal.containerBorder, matching the wrapper change at
                  line ~1460 and the chrome strip's segmented borders
-                 (nodeSize, zoom). transition-colors className covers
-                 the border-color eased on theme toggle. */
-              style={{ borderColor: pal.containerBorder }}
+                 (nodeSize, zoom). The R268 transition-colors className
+                 used to carry the border-color ease; R351 unfolds the
+                 transition list into the inline spec below so the
+                 letter-spacing tween rides alongside without snapping
+                 the border-color flip — border-color 200ms ease-out
+                 keeps R268's theme-toggle smoothness intact. */
+              style={{ borderColor: pal.containerBorder, transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out' }}
             >
               Grid
             </button>
