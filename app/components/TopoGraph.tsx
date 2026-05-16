@@ -5020,11 +5020,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 textAnchor="middle"
                 dy="0.36em"
                 fill={isLight ? '#d1fae5' : '#ecfdf5'}
-                fontSize="11"
+                /* Round 360 / Loop: hub working-count digit fontSize 11
+                   → 12. The hub is the canvas's focal point — its digit
+                   is the most-read scalar on the whole topology. R130
+                   sized it at 11 (well inside the r=10 / 20-px core);
+                   R360 nudges it to 12 (~13 px wide × 12 px tall, still
+                   well inside the 20-px diameter) for ~9 % more presence.
+                   Sibling visual-weight bump family:
+                     R287 minimap viewport stroke 1 → 1.5
+                     R295 legend swatch base radius 5.5 → 6
+                     R359 recent-row pip radius 1.6 → 1.8
+                     R360 hub digit fontSize 11 → 12  (this round)
+                   The R209 scale-1.08-on-hub-hover, R225 tabular-nums,
+                   R253 fill transition, R213 always-mount opacity gate
+                   all preserved. data-topo-hub-working-count-font-size
+                   attr exposes the value for tests. */
+                fontSize="12"
                 fontFamily="monospace"
                 fontWeight="700"
                 opacity={workingCount > 0 ? 1 : 0}
                 data-topo-hub-working-count={workingCount}
+                data-topo-hub-working-count-font-size="12"
                 data-topo-hub-working-count-hovered={hoveredHub ? 'true' : 'false'}
                 data-topo-hub-working-count-visible={workingCount > 0 ? 'true' : 'false'}
                 // Round 209 / Loop: hub workingCount digit scales 1.0 →
