@@ -4921,13 +4921,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   d={path}
                   fill="none"
                   stroke={pal.flowPath}
-                  strokeWidth="1"
+                  /* Round 437 / Loop: flow-rail strokeWidth hover lift —
+                     1 → 1.5 on (isHoveredEdge || isEndpointHoveredEdge).
+                     Pre-R437 the dashed rail sat at sw=1 always while the
+                     visible flow path above it lifted (R50 ×1.4 on
+                     isHoveredEdge / R436 ×1.15 on isEndpointHoveredEdge).
+                     The two edge paint layers were mismatched on hover:
+                     top layer thickened, underline stayed thin — so the
+                     hover gesture lifted only half the edge surface.
+                     R437 lifts the underline too so the whole edge
+                     reads as "raised" on hover, not just its bright
+                     top stripe. Same +0.5 absolute delta R435 used at
+                     hub-spoke scope (1→1.25 there, slightly bigger
+                     here because the rail's base 1 is at the kerning
+                     floor and needs more lift to register).
+                     Transition list extends to include stroke-width
+                     300ms so the new lift eases under the same R166
+                     cadence as the visible path's stroke-width. */
+                  strokeWidth={(isHoveredEdge || isEndpointHoveredEdge) ? 1.5 : 1}
                   strokeDasharray="2 12"
                   strokeLinecap="round"
                   opacity={Math.min(1, (isLight ? 0.4 : 0.75) * fresh * edgeOpacityMul)}
                   data-edge-flow-rail={link.key}
                   data-edge-flow-rail-linecap="round"
-                  style={{ transition: 'opacity 300ms ease-out, stroke 300ms ease-out' }}
+                  data-edge-flow-rail-stroke-width={(isHoveredEdge || isEndpointHoveredEdge) ? 1.5 : 1}
+                  data-edge-flow-rail-lifted={(isHoveredEdge || isEndpointHoveredEdge) ? 'true' : 'false'}
+                  style={{ transition: 'opacity 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out' }}
                 />
                 {!reducedMotion && (
                   /* Round 103 / Loop: phase-stagger the particles so
