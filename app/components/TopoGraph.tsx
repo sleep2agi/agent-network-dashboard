@@ -2422,7 +2422,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               >
                 <span>
                   <span className="hidden sm:inline" data-pin-intersection-prefix>match: </span>
-                  {pinDimCount} pins<span className="opacity-70"> · {matchAliases.length}</span>
+                  {/* Round 324 / Loop: pin-intersection chip carries TWO
+                      numeric counts in one breath — pinDimCount ("how
+                      many filter pins are active") and matchAliases.
+                      length ("how many aliases land in the intersection
+                      after pins compose"). Both jitter on digit-width
+                      crossings (1→10 etc) without tabular-nums even
+                      under font-mono. Pre-R324 a fleet busying up so
+                      one dimension flips from 0→non-zero (chip mounts
+                      via R237 always-mount opacity gate) AND the match
+                      count digit ticks 9→10 simultaneously visibly
+                      jolted the trailing `× pins` / ` × ` segments.
+                      Two dedicated tabular-nums spans (one per count)
+                      lock both digit slots so the chip's text geometry
+                      stays planted through both crossings. 10th
+                      surface in the info-density tabular-nums sweep
+                      after R323 filter pin pill counts (R64/R89/R119/
+                      R150 pin-pill family parity now complete with
+                      this composed-pin sibling). data-pin-intersection-
+                      count-* attrs expose both spans for tests. */}
+                  <span className="tabular-nums" data-pin-intersection-count-dims>{pinDimCount}</span> pins<span className="opacity-70 tabular-nums" data-pin-intersection-count-matches> · {matchAliases.length}</span>
                   {/* Round 237 / Loop: ⚠ warning glyph picks up the
                       always-mount-opacity-gate idiom. Pre-R237 the
                       glyph was conditionally rendered on isEmpty,
