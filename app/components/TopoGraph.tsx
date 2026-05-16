@@ -3763,12 +3763,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // SVG icon transforms). 200ms matches R167 node-ring
                 // stroke-width interpolation pace. Reduced-motion users
                 // skip the scale via the !reducedMotion gate (R29 a11y).
+                // Round 225 / Loop: tabular-nums on hub digit — info-
+                // density sibling to R224's edge badge tabular-nums.
+                // Same physics: when workingCount crosses the 9 → 10
+                // boundary the textAnchor='middle' centering jitters
+                // ~3-4px because monospace fonts still have width
+                // variance at the digit-vs-control boundary. Tabular
+                // locks digit width so the focal point stays planted
+                // through every count change. Pure visual tightening;
+                // no test trap (computed font-variant-numeric resolves
+                // to the keyword 'tabular-nums' verbatim).
                 style={{
                   pointerEvents: 'none',
                   transform: !reducedMotion && hoveredHub ? 'scale(1.08)' : 'scale(1)',
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
                   transition: 'transform 200ms ease-out, opacity 300ms ease-out',
+                  fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 {workingCount}
@@ -4789,11 +4800,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fontSize="10"
                   fontFamily="monospace"
                 >
+                  {/* Round 225 / Loop: tabular-nums on the panel-header
+                      flow-count tspan. The "{N} flows" string lives in
+                      a right-justified text anchor (x=217 textAnchor=
+                      'end') so the BASELINE of the numeral is the same
+                      regardless of digit-count — but the SPACING between
+                      the digit and ' flows' label is monospace-jittery
+                      in the 1-digit → 2-digit boundary, and the ' · N
+                      hot' R190 tail that hangs off the end shifts by
+                      whatever the digit width delta is. Tabular-nums
+                      locks both, so the header reads stable through
+                      9 flows → 10 flows growth. Sibling treatment to
+                      R224 edge badge / R225 hub digit. */}
                   <tspan
                     fill={freshFill}
                     data-recent-panel-count
                     data-recent-panel-count-freshness-alpha={alpha.toFixed(2)}
-                    style={{ transition: 'fill 200ms ease-out' }}
+                    style={{
+                      transition: 'fill 200ms ease-out',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
                   >{flowLinks.length} flows</tspan>
                   {/* Round 190 / Loop: R129 hot-tail gets anet-fade-in
                       for entrance. Pre-R190 the tspan snapped into
@@ -5182,12 +5208,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           tests; data-recent-row-count-hot becomes
                           an attribute on the same element when active
                           so legacy probes still resolve. */}
+                      {/* Round 225 / Loop: tabular-nums on the per-row
+                          count digit. The row text reads "alpha → beta ·
+                          {count} · content"; when {count} grows from a
+                          single digit to two (9 → 10) the subsequent
+                          " · {content}" preview slides ~3-4px right in
+                          monospace because '1' and '0' have different
+                          natural widths against the surrounding control
+                          glyphs even in mono fonts. Tabular-nums locks
+                          the count column so the content preview
+                          column stays planted as activity scales up.
+                          Sibling treatment to R224 edge badge / R225
+                          hub digit / R225 panel-header flow-count. */}
                       <tspan
                         fill={isHot ? hotStroke : undefined}
                         fontWeight={isHot ? '700' : undefined}
                         data-recent-row-count
                         {...(isHot ? { 'data-recent-row-count-hot': 'true' } : {})}
-                        style={{ transition: 'fill 300ms ease-out' }}
+                        style={{
+                          transition: 'fill 300ms ease-out',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
                       >
                         {link.count}
                       </tspan>
