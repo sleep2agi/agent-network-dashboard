@@ -6636,13 +6636,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       <text x="10" y="32" fontSize="10" fontFamily="monospace" fill={pal.legendHeadline}>
                         {session.model || 'model · pending'}
                       </text>
-                      <text x="10" y="48" fontSize="9" fontFamily="monospace" fill={pal.legendText}>
+                      {/* Round 388 / Loop: hover-detail body lines (the
+                          three fontSize=9 lines: runtime, host, task)
+                          gain fontWeight=500. Small-text fw lift family
+                          (6th anchor) — fontSize 9-10 px text reads
+                          consistently bolder at fw=500 than at the
+                          default 400 weight at small sizes, especially
+                          on the cyber-theme backdrop where stroke-
+                          rendering is the limiting factor.
+                          Sibling lifts in this family:
+                            R363 recent-row alias text         400 → 500
+                            R364 legend-row label              400 → 500
+                            R366 group-label count tspan       400 → 500
+                            R368 +N more flows footer          400 → 500
+                            R373 pressure-bar kicker (font-medium)
+                            R388 hover-detail body lines       400 → 500 (this round)
+                          Tier structure preserved:
+                            y=16 vendor (fw=700, headline)
+                            y=32 model  (fontSize=10, subhead by size)
+                            y=48 runtime / y=64 host / y=80 task (body, now fw=500)
+                          The y=80 task line keeps opacity=0.7 so its
+                          caption-tier identity stays distinct from the
+                          y=48 / y=64 body lines despite shared fw.
+                          data-topo-hover-detail-body-fw attr exposes
+                          the resolved value for tests. */}
+                      <text x="10" y="48" fontSize="9" fontFamily="monospace" fontWeight="500" fill={pal.legendText} data-topo-hover-detail-body-fw="500">
                         {rt ? rt.label : 'runtime · pending'}
                       </text>
-                      <text x="10" y="64" fontSize="9" fontFamily="monospace" fill={pal.legendText}>
+                      <text x="10" y="64" fontSize="9" fontFamily="monospace" fontWeight="500" fill={pal.legendText} data-topo-hover-detail-body-fw="500">
                         host · {session.server || 'unknown'}
                       </text>
-                      <text x="10" y="80" fontSize="9" fontFamily="monospace" fill={pal.legendText} opacity="0.7">
+                      <text x="10" y="80" fontSize="9" fontFamily="monospace" fontWeight="500" fill={pal.legendText} opacity="0.7" data-topo-hover-detail-body-fw="500">
                         {session.task ? truncate(session.task, 28) : 'no recent task'}
                       </text>
                     </g>
