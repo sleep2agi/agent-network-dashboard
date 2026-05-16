@@ -2157,7 +2157,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       at the chip-count scope. Sibling edits on the
                       online + active-links chip digits below. data-
                       working-chip-digit attr exposes the digit span. */}
-                  <span className="font-semibold" data-working-chip-digit>{workingCount}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-working-chip-unit> working</span>
+                  <span className="font-semibold transition-[font-weight] duration-200 group-hover:font-bold" data-working-chip-digit>{workingCount}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-working-chip-unit> working</span>
                 </span>
                 <span
                   // Round 201 / Loop: online chip — mirror of the working
@@ -2225,7 +2225,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 >
                   {/* R337 sibling — online chip unit demotion. */}
                   {/* R362 sibling — online-chip digit gains font-semibold. */}
-                  <span className="font-semibold" data-online-chip-digit>{onlineNodes.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-online-chip-unit> online</span>
+                  <span className="font-semibold transition-[font-weight] duration-200 group-hover:font-bold" data-online-chip-digit>{onlineNodes.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-online-chip-unit> online</span>
                 </span>
               </>
             );
@@ -3252,7 +3252,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     chip-internal-hierarchy arc. data-active-links-
                     chip-unit exposes the unit span for tests. */}
                 {/* R362 sibling — active-links chip digit gains font-semibold. */}
-                <span className="font-semibold" data-active-links-chip-digit>{flowLinks.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
+                <span className="font-semibold transition-[font-weight] duration-200 group-hover:font-bold" data-active-links-chip-digit>{flowLinks.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
                 {rel ? (() => {
                   // Round 161 / Loop: extend R160's recency-pip
                   // vocabulary up one scope — from per-flow row to
