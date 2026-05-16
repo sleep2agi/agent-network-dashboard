@@ -5121,12 +5121,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 {workingCount}
               </text>
             {/* decorative highlight (visible when workingCount === 0) */}
+            {/* Round 365 / Loop: hub-center 'lit-lamp' decorative highlight
+                circle r 5 → 5.5. Sibling visual-weight bump family —
+                each round lifts one canvas anchor's geometric presence
+                without disturbing its bbox envelope:
+                  R287 minimap viewport stroke 1 → 1.5
+                  R295 legend swatch base radius 5.5 → 6
+                  R359 recent-row pip base radius 1.6 → 1.8
+                  R360 hub digit fontSize 11 → 12
+                  R361 edge-badge digit fontSize 10 → 11
+                  R365 hub-highlight base radius 5 → 5.5  (this round)
+                The highlight only renders when workingCount === 0
+                (decorative 'lamp lit but idle' state per R130 + R213
+                always-mount opacity-gate). At idle, the 0.5-px radius
+                bump (21 % area, π*5.5² / π*5² = 1.21) lifts the lamp's
+                presence — still well inside the r=10 hub-core (R130).
+                opacity=0 when working preserved so the hub-digit's R130
+                takeover stays seamless. R213 always-mount opacity-gate
+                + 300ms opacity transition + pointerEvents:none all
+                preserved. data-topo-hub-highlight-radius attr exposes
+                the value for tests. */}
             <circle
-              cx={cx} cy={cy} r="5"
+              cx={cx} cy={cy} r="5.5"
               fill="#d1fae5"
               opacity={workingCount > 0 ? 0 : 0.9}
               data-topo-hub-highlight
               data-topo-hub-highlight-visible={workingCount > 0 ? 'false' : 'true'}
+              data-topo-hub-highlight-radius="5.5"
               style={{
                 pointerEvents: 'none',
                 transition: 'opacity 300ms ease-out',
