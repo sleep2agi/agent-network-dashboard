@@ -2897,12 +2897,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         the default transition-property set). 200ms
                         matches the R202 chip bg-tint timing so the
                         glyph lift and chip background ease in concert. */}
+                    {/* Round 369 / Loop: vendor letter glyph picks up
+                        fontWeight 600 (font-semibold). The glyph is the
+                        vendor identifier — the DATA the operator scans
+                        in this chip (A / O / 书 / C / G / ?). R333 set
+                        the count suffix `:N` to text-gray-400 + tabular-
+                        nums and (via parent inheritance) fw 500. Pre-
+                        R369 the LETTER also inherited fw 500 from the
+                        chip's font-medium — letter and count read at
+                        the same weight, contradicting the data-vs-label
+                        hierarchy the rest of the chip-row already speaks.
+                        R369 lifts the letter to fw 600 so the chip now
+                        reads as the same two-tier pattern R362 closed
+                        on the working / online / active-links chips:
+                          chip      digit/letter  fw 600  (data)
+                          chip      unit/count    fw 500  (label)
+                        Sibling treatment to R362 — extends the R333-R341
+                        chip-internal-hierarchy arc to the vendor-letter
+                        chip surface (9th surface family). R354 transform-
+                        scale-on-hover + R88 canvas-dim-others + R202
+                        chip bg color-mix all preserved on the same span.
+                        data-vendor-letter-glyph-font-weight attr exposes
+                        the value for tests. */}
                     <span
                       data-vendor-letter-glyph={v.initial}
                       data-vendor-letter-glyph-hover={hoveredVendor === v.initial ? 'true' : 'false'}
+                      data-vendor-letter-glyph-font-weight="600"
                       style={{
                         color: v.color,
                         display: 'inline-block',
+                        fontWeight: 600,
                         transform: hoveredVendor === v.initial ? 'scale(1.1)' : 'scale(1)',
                         transformOrigin: 'center',
                         transition: 'transform 200ms ease-out',
