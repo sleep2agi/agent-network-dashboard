@@ -2092,7 +2092,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 data-pin-intersection-count={matchAliases.length}
                 data-pin-intersection-empty={isEmpty ? 'true' : 'false'}
                 data-pin-intersection-aliases={matchAliases.join(',')}
-                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
+                /* Round 235 / Loop: pin-intersection chip joins the
+                   info-density tabular-nums sweep. The chip has TWO
+                   digits visible at once — '{pinDimCount} pins ·
+                   {matchAliases.length}' — and the matchAliases count
+                   in particular rolls frequently as filters tighten /
+                   widen against the live fleet. font-mono already
+                   makes the digits uniform-ish, but tabular-nums
+                   further locks digit width within the mono cell so
+                   the gap between 'pins' and '·' stays stable, and
+                   the chip's overall width doesn't bump when either
+                   number changes. 9th surface in the sweep — the
+                   third and last HTML chip surface, completing
+                   coverage across chip-row + vendor-row + pin-
+                   intersection. */
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono tabular-nums text-xs border anet-fade-in anet-topo-chip-focus"
                 title={tooltip}
                 style={{
                   background: isEmpty
