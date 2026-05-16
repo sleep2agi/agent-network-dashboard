@@ -7051,12 +7051,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       >
                         {truncate(session.alias, fullMax)}
                       </text>
+                      {/* Round 428 / Loop: node sub-text (status label
+                          line beneath the alias) adopts hover letter-
+                          spacing tween 0 → 0.2px on hoveredAlias.
+                          Sibling treatment to R427 alias-text hover
+                          tween (0 → 0.3) — the alias is the primary
+                          identity (top-tier kerning 0.3), the sub-text
+                          is the secondary status line (one tier lower
+                          at 0.2). Now both lines of the label card
+                          telegraph hover typographically as one unit,
+                          matching the R26 card lift + R242 stroke
+                          tint + R975 filter cues. Subtler delta on
+                          the sub-text (0.2 vs alias 0.3) preserves
+                          the alias > status visual hierarchy at the
+                          hover scope. R211 fill 300ms transition
+                          preserved (additive letter-spacing branch
+                          + appended 'letter-spacing 200ms ease-out'). */}
                       <text
                         x="0" y={subY} textAnchor="middle"
                         fill={status.primary}
                         fontSize={subFs} fontFamily="monospace"
                         data-node-sub-text={session.alias}
-                        style={{ transition: 'fill 300ms ease-out' }}
+                        data-node-sub-text-hovered={hoveredAlias === session.alias ? 'true' : 'false'}
+                        style={{
+                          transition: 'fill 300ms ease-out, letter-spacing 200ms ease-out',
+                          letterSpacing: hoveredAlias === session.alias ? '0.2px' : '0px',
+                        }}
                       >
                         {status.label}{isOnline && sseCountFor != null ? ` sse:${sseCountFor}` : ''}
                       </text>
