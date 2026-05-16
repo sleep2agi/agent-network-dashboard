@@ -6080,10 +6080,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   recency tag) STAYS at 8 — it's an at-a-glance
                   recency tag tightly co-located with row text, not
                   read-to-act instruction. */}
+              {/* Round 304 / Loop: secondary instructional hint
+                  'send a message between agents' gets letterSpacing
+                  '0.15'. Extends the R301/R302 editorial-spacing
+                  family one layer down. The hint is the quietest
+                  authored text in the recent-signal panel (fontSize
+                  9 italic-less opacity 0.45, sits below the R302
+                  main empty-state hint at fontSize 10 italic
+                  opacity 0.65). 0.15px is below R302's 0.2px to
+                  match the visual hierarchy: smaller + quieter
+                  text gets less letter-spacing.
+                  5-axis editorial-letterspacing hierarchy now:
+                    R285 kicker:        1.2px (eyebrow loud)
+                    R289 watermark:     0.5px (wordmark brand)
+                    R301 panel titles:  0.3px (section headers)
+                    R302 empty main:    0.2px (empty-state hint)
+                    R304 empty hint:    0.15px (instructional sub)
+                  Each step ~0.1-0.5x scale-down matches the
+                  font-size + opacity descent. */}
               <text
                 x="115" y="70" textAnchor="middle"
                 fill={pal.legendText}
                 fontSize="9" fontFamily="monospace"
+                letterSpacing="0.15"
                 opacity={0.45}
                 data-recent-signal-empty-hint
                 data-recent-signal-empty-hint-breathes={reducedMotion ? 'false' : 'true'}
