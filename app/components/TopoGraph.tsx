@@ -4198,6 +4198,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     R84 hub-center breath stays the loudest "fleet busyness"
                     signal; this one is quieter, per-node. SMIL `<animate>`
                     inside the circle, gated by reducedMotion. */}
+                {/* Round 226 / Loop: working-halo breath gets per-node
+                    phase stagger. Pre-R226 every working node's halo
+                    pulsed in lockstep — all 0.73→0.92→0.73 starting at
+                    the same instant — which on a fleet of 4+ working
+                    agents reads as one mechanical metronome rather
+                    than an organic group of breathing entities.
+
+                    SMIL `<animate>` accepts negative `begin` to offset
+                    the cycle backwards in time (the animation starts
+                    mid-cycle on first paint). Using
+                    `(nodeIdx * 0.37) % 3` gives a deterministic,
+                    well-distributed offset across the 3s period —
+                    the same golden-ratio-ish 0.37 fraction R103 uses
+                    for particle phase stagger on edges. 0.37 doesn't
+                    line up for any small N (4 nodes → offsets 0,
+                    0.37, 0.74, 1.11 — evenly spread, never
+                    coincident).
+
+                    Side benefit: when a new agent joins a busy fleet
+                    its halo phase is determined by its position in
+                    the order array, not "when it joined" — so a
+                    re-render doesn't reshuffle breath phases. Order
+                    is stable (R-onlineNodes sort), so the canvas
+                    feels calm rather than jittery on each refresh.
+
+                    Reduced-motion users skip the animate entirely
+                    (gate unchanged). Halo opacity transition on the
+                    parent stays for status flips. data-node-halo-
+                    breath-offset surfaces the chosen offset for
+                    test introspection. */}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
@@ -4206,12 +4236,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   opacity={isOnline ? (isLight ? 0.85 : 0.65) : (isLight ? 0.4 : 0.25)}
                   className="transition-[fill,opacity] duration-300 ease-out"
                   data-node-halo-breath={!reducedMotion && session.status === 'working' ? 'on' : 'off'}
+                  data-node-halo-breath-offset={
+                    !reducedMotion && session.status === 'working'
+                      ? ((nodeIdx * 0.37) % 3).toFixed(3)
+                      : undefined
+                  }
                 >
                   {!reducedMotion && session.status === 'working' && (
                     <animate
                       attributeName="opacity"
                       values={isLight ? '0.73;0.92;0.73' : '0.53;0.78;0.53'}
                       dur="3s"
+                      begin={`-${((nodeIdx * 0.37) % 3).toFixed(3)}s`}
                       repeatCount="indefinite"
                     />
                   )}
