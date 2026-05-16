@@ -6959,13 +6959,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           + R211 alias/sub text-fill ease all
                           preserved. data-node-label-card-rx attr
                           exposes the value for tests. */}
+                      {/* Round 429 / Loop: node label-card body opacity
+                          0.94 → 1.0 on hover (cyber theme). Sibling
+                          treatment to R348 panel rect opacity lift —
+                          0.92 → 0.97 cyber / 0.97 → 1.0 light at the
+                          panel scope. Pre-R429 the cyber theme card
+                          sat at 0.94 always; on hover R217 tinted the
+                          stroke + R142 grew the drop-shadow + R26
+                          lifted the group + R427/R428 spaced the text
+                          but the rect itself never solidified —
+                          the card glowed brighter through the
+                          shadow but the body alpha gap (6 pct) stayed
+                          fixed. R429 lifts the body to full alpha on
+                          hover so the card reads as a confidently
+                          present surface under the cursor (matching
+                          the panel-pair pattern). Light theme stays
+                          at 1.0 in both states (already maxed). R246
+                          transition list already covers opacity 220ms
+                          so the lift eases for free. R217 stroke tint
+                          + R142 drop-shadow + R211 fill ease all
+                          preserved (additive opacity branch only). */}
                       <rect
                         x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="8"
                         fill={pal.labelBox.fill}
                         stroke={!reducedMotion && hoveredAlias === session.alias
                           ? pal.legendAccent
                           : pal.labelBox.stroke}
-                        opacity={isLight ? 1 : 0.94}
+                        opacity={
+                          !reducedMotion && hoveredAlias === session.alias
+                            ? 1
+                            : (isLight ? 1 : 0.94)
+                        }
                         data-node-label-card={session.alias}
                         data-node-label-card-rx="8"
                         data-node-label-card-elevation={
