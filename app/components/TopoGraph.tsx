@@ -6596,11 +6596,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const detailY = pos.y - detailH / 2;
                   return (
                     <g transform={`translate(${detailX}, ${detailY})`} data-topo-hover-detail={session.alias} style={{ pointerEvents: 'none' }}>
+                      {/* Round 387 / Loop: hover-detail panel cyber backdrop
+                          opacity 0.94 → 0.97. The hover-detail card is
+                          ALWAYS rendered in active-hover context (it IS
+                          the hover product), so it should carry the
+                          same backdrop weight as the R348 recent-signal /
+                          legend panel HOVER state (which lifts 0.92 →
+                          0.97 cyber). Pre-R387 the card sat at 0.94
+                          cyber, leaving a 0.03 alpha gap against the
+                          R348 panel-hover state — small but visible
+                          when the hover-detail floats next to a hovered
+                          recent-signal panel. R387 unifies them at 0.97
+                          so all active-hover panels paint with the same
+                          confident backdrop opacity in cyber. Light
+                          stays at 0.98 (already at the strong end —
+                          R348 light also stays at 0.97/0.98 max).
+                          Theme-consistency / canvas-presence polish
+                          family (5th anchor):
+                            R370 hub hover-ring opacity      0.7  → 0.8   cyber
+                            R371 edge-badge rest opacity     0.82 → 0.85  cyber
+                            R372 minimap offline-dot opacity 0.5  → 0.6
+                            R386 hub-highlight idle opacity  0.9  → 0.95
+                            R387 hover-detail panel opacity  0.94 → 0.97  cyber  (this round)
+                          data-topo-hover-detail-opacity attr exposes
+                          the resolved value for tests. R348 drop-shadow
+                          + rx=8 + stroke=pal.legendAccent + fill=pal.
+                          labelBox.fill all preserved. */}
                       <rect
                         x="0" y="0" width={detailW} height={detailH} rx="8"
                         fill={pal.labelBox.fill}
                         stroke={pal.legendAccent}
-                        opacity={isLight ? 0.98 : 0.94}
+                        opacity={isLight ? 0.98 : 0.97}
+                        data-topo-hover-detail-opacity={isLight ? 0.98 : 0.97}
                         style={{ filter: isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.16))' : 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' }}
                       />
                       <text x="10" y="16" fontSize="9" fontFamily="monospace" fill={pal.legendAccent} fontWeight="700">
