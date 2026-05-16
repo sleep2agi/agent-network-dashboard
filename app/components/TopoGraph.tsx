@@ -8370,7 +8370,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                its inactive state benefits from the same "hover previews
                active state" idiom R163 designed. Sibling treatment to
                the nodeSize buttons at line ~6711. */
-            className={`p-1.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
+            // R353: `group` lets the inner svg respond via group-hover —
+            // sibling to R352 zoom buttons. Closes the chrome-strip per-
+            // icon hover-affordance arc (zoom-out / zoom-in / reset /
+            // fullscreen now all carry an icon-level hover gesture in
+            // addition to the bg hover).
+            className={`group p-1.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
                 ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25'
                 : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'
@@ -8389,12 +8394,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 at the reset icon above. data-topo-chrome-fullscreen-
                 icon attribute exposes BOTH variants (entered / exited)
                 for the round's stroke-width regression probe. */}
+            {/* Round 353 / Loop: fullscreen icon (both enter + exit
+                variants) picks up the R352 family group-hover:scale-110.
+                Pre-R353 hovering the button only changed the bg; the
+                icon stayed still. R353 lifts the icon 10 % on hover —
+                same gesture vocabulary as the zoom buttons. transform-
+                gpu hint promotes the svg to its own compositor layer
+                for crisper edges during the scale tween. Closes the
+                chrome-strip per-icon hover-affordance arc. */}
             {isFullscreen ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden data-topo-chrome-fullscreen-icon="exit">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-transform duration-200 ease-out group-hover:scale-110 transform-gpu" data-topo-chrome-fullscreen-icon="exit">
                 <path d="M8 3v4a1 1 0 0 1-1 1H3M21 8h-4a1 1 0 0 1-1-1V3M3 16h4a1 1 0 0 1 1 1v4M16 21v-4a1 1 0 0 1 1-1h4" />
               </svg>
             ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden data-topo-chrome-fullscreen-icon="enter">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-transform duration-200 ease-out group-hover:scale-110 transform-gpu" data-topo-chrome-fullscreen-icon="enter">
                 <path d="M3 8V5a2 2 0 0 1 2-2h3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M21 16v3a2 2 0 0 1-2 2h-3" />
               </svg>
             )}
