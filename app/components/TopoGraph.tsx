@@ -1467,11 +1467,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             text-emerald-600 in light keeps the moon brand-aligned
             with the canvas accent palette. */}
         <div className="flex items-center gap-3">
+          {/* Round 297 / Loop: brand-logo color picks up the 200ms ease-
+              out transition. Pre-R297 the moon glyph had theme-
+              conditional color (cyber #67e8f9 cyan ↔ light #0d9488
+              teal) but no transition declaration — flipping themes
+              made the brand mark snap to its new color in one frame,
+              jarring against the surrounding R245/R246/R247/R253/R254
+              family that smooths every neighbouring fill / stroke /
+              filter at the same 200ms cadence. Adding the transition
+              brings the brand mark into the coordinated theme-toggle
+              choreography: title block + canvas + chrome all ease as
+              one unit. CSS color transition is well supported on the
+              `color` property (which currentColor inside the masked
+              <rect> inherits), so no SMIL trick needed. */}
           <svg
             width="36" height="36" viewBox="0 0 32 32" aria-hidden
-            className="shrink-0 text-cyan-300 dark:text-cyan-300"
+            className="shrink-0"
             data-topo-brand-logo
-            style={{ color: isLight ? '#0d9488' : '#67e8f9' }}
+            style={{
+              color: isLight ? '#0d9488' : '#67e8f9',
+              transition: 'color 200ms ease-out',
+            }}
           >
             <mask id="s2a-titleblock-moon-mask">
               <rect width="32" height="32" fill="black" />
