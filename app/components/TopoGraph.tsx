@@ -5693,7 +5693,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    attr exposes the value for tests. */
                 fontSize="12"
                 fontFamily="monospace"
-                fontWeight="700"
+                /* R425 — hub digit fontWeight 700 → 800 on hoveredHub.
+                   Closes the "data tightens under attention" pattern
+                   across three focal scopes: chip-digit (R416, chip
+                   scope) → panel-digit (R424, panel-header scope) →
+                   hub-digit (R425, hub focal scope). The hub digit is
+                   the most-read scalar on the topology; adding a weight
+                   axis on hover stacks with the R209 scale-1.08 + R177
+                   ring grow + R370 halo opacity + R386 highlight
+                   opacity hub-hover gestures, giving the focal point
+                   a typographic axis alongside its scale/structure cues.
+                   R360 fontSize=12 + R225 tabular-nums + R209 scale +
+                   R253 fill transition all preserved. Transition list
+                   extends to include font-weight 200ms ease-out. */
+                fontWeight={hoveredHub ? '800' : '700'}
                 opacity={workingCount > 0 ? 1 : 0}
                 data-topo-hub-working-count={workingCount}
                 data-topo-hub-working-count-font-size="12"
@@ -5730,7 +5743,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   transform: !reducedMotion && hoveredHub ? 'scale(1.08)' : 'scale(1)',
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
-                  transition: 'transform 200ms ease-out, opacity 300ms ease-out, fill 200ms ease-out',
+                  /* R425: font-weight 200ms appended so the hover fw
+                     bump 700 → 800 eases under the same cadence as
+                     R209 scale + R253 fill + R213 opacity. */
+                  transition: 'transform 200ms ease-out, opacity 300ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out',
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
