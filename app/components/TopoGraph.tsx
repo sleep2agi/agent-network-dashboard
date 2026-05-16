@@ -1598,7 +1598,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           <h2 className="text-lg text-white font-semibold leading-tight tracking-tight" data-topo-section-title>Command mesh</h2>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        {/* Round 328 / Loop: chip-row strip wrapper gap 2 → 2.5
+            (8px → 10px between chips). Pre-R328 the inter-chip gap
+            sat at 8px while each chip's own horizontal padding was
+            `px-2.5` (10px) — the chip's internal space was wider
+            than the gap between chips, so adjacent chips read as
+            "touching" rather than "neighboring". Bumping the gap
+            to 10px makes inter-chip = chip-padding, visually
+            balancing the rhythm. Sibling treatment to R298 title-
+            block `gap-2.5` (brand-logo ↔ kicker/title) and R326
+            chrome strip `gap-2` extension family. Layout strip:
+              R298 title-block gap-2.5  (top of canvas)
+              R328 chip-row    gap-2.5  (below title) ← NEW
+              R326 chrome      gap-2    (bottom of canvas)
+            Risk-bounded: chip-row uses `flex-wrap`; if it wraps to
+            a new line on narrow viewports the row-gap also bumps to
+            10px, which only helps mobile rhythm. Topo-overlap-test
+            is HTML-overlay-only at this scope; SVG viewBox layout
+            untouched. */}
+        <div className="flex flex-wrap items-center gap-2.5 text-xs">
           {/* Issue #87: ring | grid layout toggle — segmented control,
               persisted to localStorage anet-topo-layout.
               Round 163 / Loop: bring the layout toggle into the R154
