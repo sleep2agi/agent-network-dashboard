@@ -7516,7 +7516,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             minimap container (line ~6444, `absolute right-3` →
             `right-4`) keeps the bottom-right corner HTML overlays
             aligned at the same canvas-edge inset. */}
-        <div className="absolute bottom-4 right-4 flex items-center gap-1.5 text-xs select-none" data-topo-chrome>
+        {/* Round 326 / Loop: chrome strip outer wrapper gap 1.5 → 2
+            (6px → 8px between control groups). Pre-R326 the four
+            chrome groups (nodeSize segmented S/M/L, zoom +/100%/−,
+            reset, fullscreen) sat 6px apart — close enough that on a
+            busy canvas with bright cyan accents they read as one
+            uniform strip rather than four distinct affordances. Bump
+            to 8px gives each group its own visual breath without
+            disturbing the bottom-4 right-4 corner-inset alignment.
+            Sibling treatment to R298/R299 title-block gap polish on
+            the top side of the canvas — both ends of the canvas
+            chrome now breathe at the same 8px rhythm. Geometry-safe
+            for the overlap-test (chrome is HTML overlay on top of
+            the SVG, not part of the viewBox 1000x680 surface; ring
+            r=325 / grid gx0 layout untouched). */}
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 text-xs select-none" data-topo-chrome>
           {/* #113: node size — S / M / L segmented control (Vincent 4727).
               R154: stable data-* hooks for tests + focus-visible ring so
               keyboard navigation lands somewhere visible against the
