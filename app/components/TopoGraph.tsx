@@ -5420,12 +5420,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 R142 group boxes, R143/R144 rows, R164 edge badges,
                 R177 hub ring). prefers-reduced-motion respected via
                 R29 globals.css blanket. */}
+            {/* Round 385 / Loop: hub hover-ring strokeWidth 1.5 → 1.75.
+                Sibling visual-weight bump (11th anchor) to R367 edge-
+                badge rest stroke 1 → 1.25. The ring is only visible
+                during hub hover (opacity=0 rest, R177 + R370 control
+                the hover-state alpha) so the change manifests purely
+                as a thicker hover-state ring on the canvas focal
+                point. R177 r 14 → 17 grow + R370 opacity 0 → 0.8
+                already lift the hover cue; R385 adds stroke weight
+                as the third lift axis. Stays clear of R51 overlap-
+                test sentinel value 3 (1.75 is non-sentinel); the
+                R51 selector is gated to g[data-node] ancestors so
+                this hub-internal circle is invisible to the probe
+                regardless. R253 stroke transition + pointerEvents:
+                none preserved. data-topo-hub-hover-ring-stroke-width
+                attr exposes the value for tests. */}
             <circle
               cx={cx} cy={cy}
               r={hoveredHub ? 17 : 14}
               fill="none"
               stroke={isLight ? '#059669' : '#10b981'}
-              strokeWidth="1.5"
+              strokeWidth="1.75"
               /* Round 370 / Loop: hub hover-ring cyber opacity 0.7 →
                  0.8. R177 designed the hub hover-ring at opacity-0 →
                  0.85 (light) / 0 → 0.7 (cyber). The 15 % gap between
@@ -5443,6 +5458,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               opacity={hoveredHub ? (isLight ? 0.85 : 0.8) : 0}
               data-topo-hub-hover-ring
               data-topo-hub-hover-ring-radius={hoveredHub ? 17 : 14}
+              data-topo-hub-hover-ring-stroke-width="1.75"
               data-topo-hub-hover-ring-opacity={hoveredHub ? (isLight ? 0.85 : 0.8) : 0}
               /* Round 253 / Loop: hub hover ring also gets stroke
                  transition for theme toggle (cyber #10b981 ↔ light
