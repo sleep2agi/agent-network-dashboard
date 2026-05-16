@@ -7450,8 +7450,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 'zoom-out' do we splice in the animation class. Same
                 React-clears-after-240ms cleanup R186 already runs, so the
                 class can replay on a repeat click. */}
+            {/* Round 312 / Loop: chrome strip zoom readout '{N}%'
+                picks up `font-medium` (500). Extends the R309-R311
+                'data digit weighs more than label' rule to the
+                chrome strip's one data display — the zoom
+                percentage. Every other chrome strip text is a
+                control (S/M/L buttons, zoom +/-, reset, fullscreen,
+                Ring/Grid labels); the percent readout is the only
+                live DATA. font-medium (not 600 like the SVG panel
+                counts) is a tier below because the readout sits in
+                HTML chrome context (lighter visual baseline) where
+                500 reads as 'noticeably data-prominent' without
+                competing with the SVG panel counts. tabular-nums
+                + minWidth 46 stay (R225 family), the existing R264
+                color/border transitions stay, the R186 chrome-pop
+                class still toggles on zoom-click. */}
             <span
-              className={`px-2 py-1 tabular-nums border-x text-center${
+              className={`px-2 py-1 tabular-nums font-medium border-x text-center${
                 chromePopping === 'zoom-in' || chromePopping === 'zoom-out'
                   ? ' anet-chrome-pop' : ''
               }`}
