@@ -5954,10 +5954,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       the existing 150ms opacity transition. data-
                       legend-count-empty exposes the binary signal
                       for tests. */}
+                  {/* Round 239 / Loop: legend count text gains a tier-
+                      coloured fill on hover/pin, completing the hover-
+                      deepen-own-hue idiom at this surface. Pre-R239 the
+                      count digit's opacity bumped 0.65→0.95 on hover
+                      (R204 thinning) but its fill stayed at the neutral
+                      pal.legendText gray — same digit, brighter gray,
+                      no tier identity. R239 flips fill to row.fill
+                      (green/teal/slate per tier) when the row is
+                      hovered OR pinned, so the count lights up in its
+                      OWN colour, matching the swatch directly above it.
+                      The whole row now reads as one tier-coloured unit
+                      under cursor (swatch + label + count); R55/R197
+                      already do this for swatch + label, R239 closes
+                      the trio at the count. Opacity transition stays at
+                      150ms; fill joins the same transition list at 150ms
+                      so the colour shift eases alongside the opacity
+                      ramp. data-legend-count-fill exposes the active
+                      fill state for tests; empty tiers (row.count===0)
+                      stay at pal.legendText regardless — empty doesn't
+                      get to claim tier identity. 8th surface in the
+                      hover-deepen-own-hue family. */}
                   <text
                     x="215" y={row.y1}
                     textAnchor="end"
-                    fill={pal.legendText}
+                    fill={row.count > 0 && (hoveredStatus === row.key || isPinned) ? row.fill : pal.legendText}
                     fontSize="11"
                     fontFamily="monospace"
                     opacity={row.count === 0
@@ -5965,7 +5986,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       : (hoveredStatus === row.key || isPinned ? 0.95 : 0.65)}
                     data-legend-count={row.key}
                     data-legend-count-empty={row.count === 0 ? 'true' : 'false'}
-                    style={{ pointerEvents: 'none', transition: 'opacity 150ms ease-out' }}
+                    data-legend-count-fill={row.count > 0 && (hoveredStatus === row.key || isPinned) ? 'tier' : 'neutral'}
+                    style={{ pointerEvents: 'none', transition: 'opacity 150ms ease-out, fill 150ms ease-out' }}
                   >{row.count}</text>
                 </g>
               );
