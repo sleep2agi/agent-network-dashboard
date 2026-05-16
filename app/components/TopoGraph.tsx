@@ -6490,9 +6490,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           column stays planted as activity scales up.
                           Sibling treatment to R224 edge badge / R225
                           hub digit / R225 panel-header flow-count. */}
+                      {/* Round 320 / Loop: cold-state per-row count gains
+                          explicit fontWeight="600" instead of inheriting
+                          the parent <text>'s default (400). Brings the
+                          recent-signal row count into the 5-tier SVG
+                          data-weight family established by R309 (legend
+                          per-row count) / R310 (legend panel-header
+                          count) / R311 (recent-signal panel-header flow
+                          count). Pre-R320 the per-row count `· 12` for
+                          a cold row painted at fw=400, identical weight
+                          to the surrounding aliases — the count digit
+                          should read as data and stand out from the
+                          alias text. Hot crossing stays at fw=700 (R127),
+                          so cold→hot delta becomes 600→700 (still
+                          distinct, plus the fill flip from legendText
+                          → amber carries the dramatic part of the cue).
+                          Sibling treatment in the data-weight tier. */}
                       <tspan
                         fill={isHot ? hotStroke : undefined}
-                        fontWeight={isHot ? '700' : undefined}
+                        fontWeight={isHot ? '700' : '600'}
                         data-recent-row-count
                         {...(isHot ? { 'data-recent-row-count-hot': 'true' } : {})}
                         style={{
