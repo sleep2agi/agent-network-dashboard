@@ -7431,12 +7431,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           hover scope. R211 fill 300ms transition
                           preserved (additive letter-spacing branch
                           + appended 'letter-spacing 200ms ease-out'). */}
+                      {/* Round 448 / Loop: node sub-text fontWeight
+                          400 → 500 (font-medium). Sibling to R363
+                          (recent-row text fw 400→500) + R364 (legend-
+                          row label fw 400→500) — same "small mono
+                          text at fontSize=9-11 needs 500-tier weight
+                          for legibility" pattern, now applied to the
+                          per-node sub-text line. At fontSize=8-9
+                          monospace against the label-card chrome
+                          (pal.labelBox.fill cyber #020617 / light
+                          #ffffff), the default fw=400 sits at the
+                          legibility floor; fw=500 (font-medium) lifts
+                          it into a clearly readable band without
+                          changing geometry. R211 fill 300ms +
+                          R428 letter-spacing 0→0.2 hover + R427
+                          alias-text + R429 body opacity all preserved.
+                          Pure typography lift; no layout shift; the
+                          alias-text fw=700 (R427) still wins so the
+                          alias > status hierarchy holds at the type
+                          level. data-node-sub-text-font-weight attr
+                          exposes the value for tests. */}
                       <text
                         x="0" y={subY} textAnchor="middle"
                         fill={status.primary}
                         fontSize={subFs} fontFamily="monospace"
+                        fontWeight="500"
                         data-node-sub-text={session.alias}
                         data-node-sub-text-hovered={hoveredAlias === session.alias ? 'true' : 'false'}
+                        data-node-sub-text-font-weight="500"
                         style={{
                           transition: 'fill 300ms ease-out, letter-spacing 200ms ease-out',
                           letterSpacing: hoveredAlias === session.alias ? '0.2px' : '0px',
