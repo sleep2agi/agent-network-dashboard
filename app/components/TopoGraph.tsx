@@ -8521,12 +8521,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     <circle
                       key={s.alias}
                       cx={p.x * sx} cy={p.y * sy}
-                      r={isOn ? 1.7 : 1.2}
+                      /* Round 384 / Loop: minimap online dot radius 1.7
+                         → 1.9. Sibling visual-weight bump (10th anchor)
+                         to R383 recent-row pip 1.8 → 2.0. R198 designed
+                         the dots at 1.7 (online) / 1.2 (offline) — at
+                         the minimap's 120 × 82 scale these read clearly
+                         but the online ↔ offline contrast was modest
+                         (1.7/1.2 = 1.42×). R384 bumps online to 1.9 so
+                         the tier delta widens to 1.58× (1.9/1.2). Pair
+                         completes minimap-dot legibility polish:
+                           R358 (era R372) offline opacity 0.5 → 0.6
+                           R384            online radius 1.7 → 1.9 (this round)
+                         R198 transition list (opacity + fill + r 200ms)
+                         preserved so status flips still ease smoothly.
+                         data-topo-minimap-dot-radius attr exposes the
+                         resolved value for tests. */
+                      r={isOn ? 1.9 : 1.2}
                       fill={st.primary}
                       opacity={isOn ? 0.9 : 0.6}
                       data-topo-minimap-dot={s.alias}
                       data-topo-minimap-dot-online={isOn ? 'true' : 'false'}
                       data-topo-minimap-dot-opacity={isOn ? 0.9 : 0.6}
+                      data-topo-minimap-dot-radius={isOn ? 1.9 : 1.2}
                       style={{
                         transition: 'opacity 200ms ease-out, fill 200ms ease-out, r 200ms ease-out',
                       } as React.CSSProperties}
