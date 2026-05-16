@@ -3177,6 +3177,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const path = curvePath(from, to, lift);
             const width = Math.min(2 + link.count, 7);
             const duration = Math.max(0.9, 2.6 / Math.sqrt(link.count));
+            // Round 231 / Loop: per-edge phase stagger lifted into a
+            // named constant so the R75 arrival ping + R76 dispatch
+            // pulse SMIL animates can RE-COUPLE to the R103 particle's
+            // cycle. Pre-R103 (when particle started at phase 0) the
+            // ping fired at "near end of cycle" (-0.92*dur) and dispatch
+            // at "cycle start" (0) — both phase-coincident with particle
+            // arrival/departure respectively. R103's golden-ratio
+            // stagger broke that coupling — particle now started at
+            // phase (index*0.37)%dur while ping+pulse stayed at fixed
+            // offsets, so the rings fired at random moments relative
+            // to particle position. R231 expresses dispatch_begin and
+            // arrival_begin in terms of THIS stagger so they fire
+            // exactly when the particle is at source / near destination
+            // respectively — restoring R75/R76's original semantic
+            // and unifying the three SMIL elements into one
+            // synchronised per-edge animation set.
+            const stagger = (index * 0.37) % duration;
             // Round 10 / Loop: freshness fade. An edge that fired ≤30s ago
             // stays at full intensity; over 5 minutes it decays to ~35%.
             // Surfaces "what's happening now" vs background chatter without
@@ -3353,7 +3370,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'} opacity={Math.min(1, fresh * edgeOpacityMul)}>
                     <animateMotion
                       dur={`${duration}s`}
-                      begin={`-${((index * 0.37) % duration).toFixed(3)}s`}
+                      begin={`-${stagger.toFixed(3)}s`}
                       repeatCount="indefinite"
                       path={path}
                     />
@@ -3402,7 +3419,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       attributeName="r"
                       values="0;14;22"
                       dur={`${duration}s`}
-                      begin={`-${(duration * 0.92).toFixed(2)}s`}
+                      begin={`-${((stagger + duration * 0.92) % duration).toFixed(3)}s`}
                       repeatCount="indefinite"
                       calcMode="spline"
                       keyTimes="0;0.5;1"
@@ -3412,7 +3429,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       attributeName="opacity"
                       values="0;0.55;0"
                       dur={`${duration}s`}
-                      begin={`-${(duration * 0.92).toFixed(2)}s`}
+                      begin={`-${((stagger + duration * 0.92) % duration).toFixed(3)}s`}
                       repeatCount="indefinite"
                       calcMode="spline"
                       keyTimes="0;0.5;1"
@@ -3454,7 +3471,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       attributeName="r"
                       values="0;12;18"
                       dur={`${duration}s`}
-                      begin="0s"
+                      begin={`-${stagger.toFixed(3)}s`}
                       repeatCount="indefinite"
                       calcMode="spline"
                       keyTimes="0;0.5;1"
@@ -3464,7 +3481,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       attributeName="opacity"
                       values="0;0.45;0"
                       dur={`${duration}s`}
-                      begin="0s"
+                      begin={`-${stagger.toFixed(3)}s`}
                       repeatCount="indefinite"
                       calcMode="spline"
                       keyTimes="0;0.5;1"
