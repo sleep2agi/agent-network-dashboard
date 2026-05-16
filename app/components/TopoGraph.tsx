@@ -6523,6 +6523,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       stay at pal.legendText regardless — empty doesn't
                       get to claim tier identity. 8th surface in the
                       hover-deepen-own-hue family. */}
+                  {/* Round 274 / Loop: legend per-row count picks up
+                      tabular-nums (sibling treatment to R225's recent-
+                      signal panel header flow-count + R230's group-
+                      label pip strip). The text uses fontFamily=
+                      'monospace' which is typically tabular by
+                      nature, but some monospace implementations have
+                      subtle digit-pair width variance (e.g., '0' vs
+                      '1' at the visual boundary). Explicit
+                      fontVariantNumeric: 'tabular-nums' is belt-and-
+                      suspenders: locks digit widths regardless of
+                      the rendered monospace font, so the count
+                      column stays planted as offline/idle/working
+                      counters roll across 9→10 / 99→100 thresholds.
+                      Pure CSS-level addition, no layout shift.
+                      10th surface in the info-density tabular-nums
+                      sweep family. */}
                   <text
                     x="215" y={row.y1}
                     textAnchor="end"
@@ -6535,7 +6551,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-legend-count={row.key}
                     data-legend-count-empty={row.count === 0 ? 'true' : 'false'}
                     data-legend-count-fill={row.count > 0 && (hoveredStatus === row.key || isPinned) ? 'tier' : 'neutral'}
-                    style={{ pointerEvents: 'none', transition: 'opacity 150ms ease-out, fill 150ms ease-out' }}
+                    style={{ pointerEvents: 'none', transition: 'opacity 150ms ease-out, fill 150ms ease-out', fontVariantNumeric: 'tabular-nums' }}
                   >{row.count}</text>
                 </g>
               );
