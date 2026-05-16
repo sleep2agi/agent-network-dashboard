@@ -6192,12 +6192,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     parent stays for status flips. data-node-halo-
                     breath-offset surfaces the chosen offset for
                     test introspection. */}
+                {/* Round 407 / Loop: offline node halo opacity lift —
+                    cyber 0.25 → 0.30 and light 0.4 → 0.45. Pre-R407
+                    offline node halos faded to α=0.25 cyber (75 %
+                    dim) / α=0.4 light. On the dark canvas the 0.25
+                    halo read as "nearly gone" — exactly the
+                    legibility floor R404/R405 just lifted on the
+                    hub-halo and R372 lifted on minimap offline dots.
+                    R407 closes the same family at the per-node halo
+                    surface: +0.05 lift on both themes so offline
+                    anchors stay legibly present without crossing into
+                    "could be online" territory (online cyber 0.65 /
+                    light 0.85 unchanged — the 0.30/0.65 cyber ratio
+                    still gives 2.17× contrast for online/offline).
+                    Stale-state legibility lift family (7 anchors now):
+                      R317 subordinate-text gray-500 → gray-400
+                      R358 freshness floor 0.25 → 0.30
+                      R372 minimap offline-dot 0.5 → 0.6
+                      R404 hub-halo cyber trough 0.08 → 0.10
+                      R405 hub-halo light trough 0.32 → 0.34
+                      R406 edge freshness floor 0.35 → 0.40
+                      R407 node halo offline opacity (this round)
+                        cyber 0.25 → 0.30
+                        light 0.4  → 0.45
+                    R278 retired-breath gate + R12 status.halo color
+                    + R226 phase stagger code-path preserved (the
+                    breath stays disabled per Vincent's R278 ask;
+                    only the BASE opacity floor shifts here). transi-
+                    tion list ('fill,opacity' 300ms ease-out) unchanged.
+                    data-node-halo-offline-opacity attr exposes the
+                    resolved value for tests. */}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
                   r={radius + 8}
                   fill={status.halo}
-                  opacity={isOnline ? (isLight ? 0.85 : 0.65) : (isLight ? 0.4 : 0.25)}
+                  opacity={isOnline ? (isLight ? 0.85 : 0.65) : (isLight ? 0.45 : 0.30)}
+                  data-node-halo-offline-opacity={isOnline ? undefined : (isLight ? 0.45 : 0.30)}
                   className="transition-[fill,opacity] duration-300 ease-out"
                   data-node-halo-breath={!reducedMotion && session.status === 'working' ? 'on' : 'off'}
                   data-node-halo-breath-offset={
