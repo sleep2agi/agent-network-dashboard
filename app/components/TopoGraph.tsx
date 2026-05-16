@@ -5589,8 +5589,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 pointerEvents: 'none',
               }}
             >
+              {/* Round 258 / Loop: re-center the empty state within the
+                  post-R256 88-tall panel. R45 placed "no flow yet" at
+                  y=54 + the hint at y=68 inside an 84-tall panel — those
+                  baselines sat 12px / 26px below the panel mid-line at
+                  y=42, optically balanced for the original height. R256
+                  grew the panel 84 → 88 to give the "+N more flows"
+                  footer underline breathing room, shifting the panel
+                  mid-line to y=44 — but the empty state stayed put,
+                  drifting 2px high. R258 pushes both empty-state lines
+                  +2 (main y=54 → y=56, hint y=68 → y=70) so the pair
+                  sits 12px / 26px below the new mid-line, restoring
+                  the R45 optical balance. The R222 always-mount opacity
+                  gate is unaffected (geometry-only shift), and the
+                  R200 SMIL breath continues unchanged. Hint baseline
+                  y=70 still sits 12px above the footer baseline (y=82),
+                  same vertical rhythm as the row 3 → footer gap. */}
               <text
-                x="115" y="54" textAnchor="middle"
+                x="115" y="56" textAnchor="middle"
                 fill={pal.legendText}
                 fontSize="10" fontFamily="monospace" fontStyle="italic"
                 opacity={0.65}
@@ -5608,7 +5624,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 )}
               </text>
               <text
-                x="115" y="68" textAnchor="middle"
+                x="115" y="70" textAnchor="middle"
                 fill={pal.legendText}
                 fontSize="8" fontFamily="monospace"
                 opacity={0.45}
