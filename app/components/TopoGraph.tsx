@@ -7027,11 +7027,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         <circle
                           cx={10}
                           cy={38 + index * 16 - 3}
-                          r={1.6}
+                          /* Round 359 / Loop: recency pip base radius
+                             1.6 → 1.8. Sibling lift to R358's freshness-
+                             floor bump (alpha 0.25 → 0.30) — pre-R358/
+                             R359 the stale pip painted at r=1.6 + α=0.25
+                             which read as near-invisible chrome. R358
+                             gave it more alpha; R359 gives it more area
+                             (1.8² / 1.6² ≈ 1.27, so ~27 % more glyph)
+                             so the pip stays distinguishable across the
+                             freshness ramp. Geometry: 1.8-radius dot
+                             centred at (10, row_y - 3) is bbox 3.6×3.6,
+                             still well inside the 7-px left margin
+                             (x=6 rect-start → x=13 text-start) the R160
+                             pip was placed in. Overlap-test reads the
+                             parent row rect's bbox, not this pip's, so
+                             grid+ring invariants hold. Matches the same
+                             1.6 → 1.8 visual-weight bump R295 applied
+                             to the legend swatch (5.5 → 6 base radius)
+                             and R287 to the minimap viewport stroke
+                             (1 → 1.5). data-recent-row-freshness-radius
+                             attr exposes the value for tests. */
+                          r={1.8}
                           fill={pal.legendAccent}
                           opacity={alpha}
                           data-recent-row-freshness={link.key}
                           data-recent-row-freshness-alpha={alpha.toFixed(2)}
+                          data-recent-row-freshness-radius="1.8"
                           style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out' }}
                         />
                       );
