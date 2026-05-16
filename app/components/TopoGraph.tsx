@@ -2484,11 +2484,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
            visually anchoring the snap. R253 declared
            "no visible snap remains" prematurely — this wrapper was
            the largest holdout. 200ms ease-out matches the panel
-           treatment (R247) so wrapper + panels ease as one unit. */
+           treatment (R247) so wrapper + panels ease as one unit.
+
+           Round 263 / Loop: close R254's holdover gap — the wrapper's
+           shadow-2xl + theme-conditional `shadow-{color}/{opacity}`
+           Tailwind class (cyber `shadow-cyan-950/30` ↔ light
+           `shadow-zinc-900/5`) ALSO changes on theme toggle, but the
+           inline transition list only covered background-color +
+           border-color. Result: every inner element eased through
+           theme, the wrapper bg/border eased, but the wrapper's
+           DROP-SHADOW snapped — a subtle but real holdover from
+           R254's "TRULY complete" claim. Adding `box-shadow 200ms
+           ease-out` to the transition list catches the className-
+           driven box-shadow swap (CSS transition on box-shadow eases
+           the shadow property even when its color comes from a
+           Tailwind class change, because the property itself is
+           transition-eligible regardless of source). */
         style={{
           background: pal.containerBg,
           borderColor: pal.containerBorder,
-          transition: 'background-color 200ms ease-out, border-color 200ms ease-out',
+          transition: 'background-color 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out',
         }}
       >
         <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${pal.topRailGradient}`} />
