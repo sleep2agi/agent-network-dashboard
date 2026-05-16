@@ -2792,7 +2792,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
       <div
         ref={containerRef}
-        className={`relative overflow-hidden rounded-lg border shadow-2xl ${isLight ? 'shadow-zinc-900/5' : 'shadow-cyan-950/30'} ${isFullscreen ? 'flex items-center justify-center' : ''}`}
+        /* Round 330 / Loop (milestone): canvas wrapper rounded-lg
+           → rounded-xl (8px → 12px corner radius). The biggest
+           single surface on the dashboard by pixel area now reads
+           as modern-SaaS-contemporary rather than 2020-conservative
+           — same 4px bump R197 applied to the legend swatch and
+           R295 applied to the title-block crescent. R330 ports
+           the gesture to the OUTER envelope.
+           Inner content (SVG viewBox 1000×680) sits behind
+           `overflow-hidden`, so corner-radius change only affects
+           the wrapper's own paint area and the shadow contour;
+           the topo-overlap-test reads SVG-internal geometry and is
+           unaffected. R254 background-color / R254 border-color /
+           R263 box-shadow transitions all carry through unchanged.
+           Marks R330 milestone of 5 rounds (R326-R330) of layout-
+           geometry polish (gap-tier + crescent fade + trailer
+           compensator + corner radius). */
+        className={`relative overflow-hidden rounded-xl border shadow-2xl ${isLight ? 'shadow-zinc-900/5' : 'shadow-cyan-950/30'} ${isFullscreen ? 'flex items-center justify-center' : ''}`}
         data-topo-wrapper
         /* Round 254 / Loop: top-level TopoGraph wrapper gains theme-
            toggle transition. This is the BIGGEST theme-driven surface
