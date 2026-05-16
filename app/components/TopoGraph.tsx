@@ -8495,13 +8495,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                                R383 recent-row pip radius 1.8 → 2.0  (this round)
                              data-recent-row-freshness-radius attr
                              bumps to '2.0' for tests. */
-                          r={2.0}
+                          /* Round 447 / Loop: recent-row freshness pip
+                             radius lift on (isRowHovered || isRowPinned)
+                             — r 2.0 → 2.5 (+0.5px, sibling to R442
+                             endpoint-ring r lift). Adds a geometric
+                             axis to the recent-row hover/pin gesture
+                             alongside R143 translateY + R104 row bg-
+                             tint + R434 letter-spacing + R445 count
+                             fw. Pre-R447 the pip stayed at r=2.0 always
+                             — the freshness alpha (R162) tracked
+                             recency but didn't telegraph "this row is
+                             in focus" geometrically. R447 lifts the
+                             pip outward by 25% area (π·2.5² / π·2.0²
+                             = 1.56) on attention, closing a 5-axis
+                             row-attention signature (geometry + paint
+                             + typography + spacing + position).
+                             SVG `r` as CSS property for interpolation
+                             (R197/R198 idiom). transition list extends
+                             to include 'r 200ms ease-out' matching the
+                             opacity cadence. data-recent-row-freshness-
+                             lifted attr exposes the gate for tests. */
                           fill={pal.legendAccent}
                           opacity={alpha}
                           data-recent-row-freshness={link.key}
                           data-recent-row-freshness-alpha={alpha.toFixed(2)}
-                          data-recent-row-freshness-radius="2.0"
-                          style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out' }}
+                          data-recent-row-freshness-radius={(isRowHovered || isRowPinned) ? 2.5 : 2.0}
+                          data-recent-row-freshness-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
+                          style={{
+                            pointerEvents: 'none',
+                            r: `${(isRowHovered || isRowPinned) ? 2.5 : 2.0}px`,
+                            transition: 'opacity 200ms ease-out, r 200ms ease-out',
+                          } as React.CSSProperties}
                         />
                       );
                     })()}
