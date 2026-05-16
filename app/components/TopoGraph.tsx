@@ -5061,12 +5061,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         />
                       );
                     })()}
+                    {/* Round 220 / Loop · milestone: recent-signal row
+                        text completes the pin-signature typography
+                        triple (R218 group labels / R219 legend rows /
+                        R220 recent-signal rows). All three label-based
+                        interactive surfaces now read "locked in" at
+                        the type level when pinned — letter-spacing
+                        spreads 0px → 0.5px on isRowPinned (NOT on
+                        hover — hover keeps default tracking so the
+                        eye can discriminate transient preview from
+                        sticky pin without checking chrome). Pin
+                        signature vocabulary now consistent across
+                        the entire interactive-label landscape of
+                        TopoGraph: every pin-able text element has
+                        a typography-level tell.
+                        transition extends 'letter-spacing 150ms'
+                        alongside R55 fill 150ms — same beat as
+                        R219 legend-row treatment. Hover still keeps
+                        its own R55 fill brighten exclusively;
+                        letter-spacing is pin-exclusive (note the
+                        isRowPinned not isRowActive gate). */}
                     <text
                       x="13" y={38 + index * 16}
                       fill={isRowActive ? pal.legendHeadline : pal.legendText}
                       fontSize="9"
                       fontFamily="monospace"
-                      style={{ transition: 'fill 150ms ease-out' }}
+                      data-recent-row-text={link.key}
+                      data-recent-row-text-pinned={isRowPinned ? 'true' : 'false'}
+                      style={{
+                        transition: 'fill 150ms ease-out, letter-spacing 150ms ease-out',
+                        letterSpacing: isRowPinned ? '0.5px' : '0px',
+                      }}
                     >
                       {/* R138 / Loop: typography unification with the rest
                          of the topology UI. Filter pills (R119) render
