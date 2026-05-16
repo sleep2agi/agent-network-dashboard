@@ -6622,12 +6622,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           the resolved value for tests. R348 drop-shadow
                           + rx=8 + stroke=pal.legendAccent + fill=pal.
                           labelBox.fill all preserved. */}
+                      {/* Round 390 / Loop: hover-detail card rx 8 → 10.
+                          Corner-radius cascade family — the hover-detail
+                          card is a panel-tier surface (192×88 floating
+                          info card with drop-shadow + stroke), so its
+                          corner radius should match the R331 panel tier
+                          (rx=10) used by the recent-signal and legend
+                          panels. Pre-R390 it shared rx=8 with the R332
+                          minimap and R375/R376 segmented-control tier
+                          (Layout-toggle, nodeSize, zoom wrappers),
+                          which is the "compact chrome control" tier —
+                          a tier mismatch for a content-bearing panel.
+                          Corner-radius cascade (6 anchors now):
+                            R330 canvas             rx 12  (root)
+                            R331 panels             rx 10  (recent-signal, legend)
+                            R332 minimap           rx 8   (compact chrome)
+                            R375 Layout-toggle     rx 8   (segmented control)
+                            R376 nodeSize/zoom     rx 8   (segmented control)
+                            R390 hover-detail      rx 10  (panel — this round)
+                          Pure paint change; no layout shift (rx grows
+                          the corner curve INWARD without changing the
+                          card's outer bbox). data-topo-hover-detail-
+                          rx attr exposes the resolved value for tests.
+                          R348 drop-shadow + stroke + R387 opacity all
+                          preserved. */}
                       <rect
-                        x="0" y="0" width={detailW} height={detailH} rx="8"
+                        x="0" y="0" width={detailW} height={detailH} rx="10"
                         fill={pal.labelBox.fill}
                         stroke={pal.legendAccent}
                         opacity={isLight ? 0.98 : 0.97}
                         data-topo-hover-detail-opacity={isLight ? 0.98 : 0.97}
+                        data-topo-hover-detail-rx="10"
                         style={{ filter: isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.16))' : 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' }}
                       />
                       <text x="10" y="16" fontSize="9" fontFamily="monospace" fill={pal.legendAccent} fontWeight="700">
