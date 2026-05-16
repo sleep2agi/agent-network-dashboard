@@ -6914,11 +6914,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
                     data-topo-minimap-viewport / -smooth expose state for
                     tests. */}
+                {/* Round 287 / Loop: minimap viewport rect strokeWidth
+                    1 → 1.5. The rect frames the user's current view
+                    within the full topology — it IS the wayfinding
+                    indicator. At 1px stroke against a 120×82 mini-
+                    canvas it was readable but reserved; 1.5px gives
+                    the boundary clearer presence without crowding the
+                    miniaturised dots (still r 1.2-1.7) inside.
+                    Same micro-polish family as R283 monogram stroke
+                    1 → 1.5 — small visual-weight bump on a high-
+                    information element to lift it above ambient
+                    chrome. opacity 0.9 stays — strokeWidth alone
+                    does the lifting. */}
                 <rect
                   x={Math.max(0, rectX)} y={Math.max(0, rectY)}
                   width={Math.max(0, Math.min(MW - Math.max(0, rectX), rectW))}
                   height={Math.max(0, Math.min(MH - Math.max(0, rectY), rectH))}
-                  fill="none" stroke={pal.legendAccent} strokeWidth="1" opacity="0.9"
+                  fill="none" stroke={pal.legendAccent} strokeWidth="1.5" opacity="0.9"
                   data-topo-minimap-viewport
                   data-topo-minimap-viewport-smooth={smoothView ? 'true' : 'false'}
                   style={{
