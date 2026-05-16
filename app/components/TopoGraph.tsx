@@ -2586,7 +2586,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       R150 pin-pill family parity now complete with
                       this composed-pin sibling). data-pin-intersection-
                       count-* attrs expose both spans for tests. */}
-                  <span className="tabular-nums" data-pin-intersection-count-dims>{pinDimCount}</span> pins<span className="opacity-70 tabular-nums" data-pin-intersection-count-matches> · {matchAliases.length}</span>
+                  {/* Round 341 / Loop: middle " pins" unit word
+                      previously sat as a bare text node between the
+                      two count spans, while the matches-count span
+                      already carried opacity-0.7 (R335 + R324 era).
+                      The pinDimCount span is prominent and the
+                      matches count is recessive — but the literal
+                      " pins" was at FULL opacity, breaking the
+                      chip-internal hierarchy unified across R333/
+                      R335/R336/R337/R338/R340. R341 wraps " pins"
+                      in an opacity-0.7 span so the chip reads:
+                        pinDimCount (prominent value)
+                        " pins"     (recessive unit)
+                        " · {N}"    (recessive count)
+                      Three-tier hierarchy on a single chip; 7th
+                      surface in the chip-internal-hierarchy arc. */}
+                  <span className="tabular-nums" data-pin-intersection-count-dims>{pinDimCount}</span><span className="opacity-70" data-pin-intersection-unit> pins</span><span className="opacity-70 tabular-nums" data-pin-intersection-count-matches> · {matchAliases.length}</span>
                   {/* Round 237 / Loop: ⚠ warning glyph picks up the
                       always-mount-opacity-gate idiom. Pre-R237 the
                       glyph was conditionally rendered on isEmpty,
