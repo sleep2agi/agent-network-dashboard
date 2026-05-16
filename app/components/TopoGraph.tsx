@@ -1823,12 +1823,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               while honoring R328's wider baseline rhythm. data-topo-
               chrome-layout-trailer attr unchanged — it still marks
               the boundary surface for the gap probe. */}
+          {/* Round 375 / Loop: Layout-toggle wrapper rounded-md → rounded-
+              lg (6 → 8 px). Extends the corner-radius cascade family
+              to the chrome-strip layout-toggle wrapper:
+                R330 canvas wrapper        rounded-xl  12 px
+                R331 SVG panels            rx=10       10 px
+                R332 minimap container     rounded-lg   8 px
+                R375 Layout-toggle wrapper rounded-lg   8 px  (this round)
+              Pre-R375 the wrapper at rounded-md (6 px) was the only
+              chrome-strip container still using the smaller corner
+              radius — both R330 outer wrapper and R332 minimap sit at
+              ≥ 8 px, so the Layout toggle's 6 px stood out as a
+              tighter corner against the family. R375 brings it into
+              the rounded-lg tier where the minimap already lives.
+              Pure paint change — overflow-hidden still clips the
+              inner buttons' bg-cyan-500/15 tints; no layout shift.
+              R268 border-color + 200ms transition + R329 mr-0.5 +
+              data-topo-chrome-layout-trailer all preserved. */}
           <div
-            className="mr-0.5 inline-flex rounded-md border overflow-hidden"
+            className="mr-0.5 inline-flex rounded-lg border overflow-hidden"
             style={{ borderColor: pal.containerBorder, transition: 'border-color 200ms ease-out' }}
             role="group"
             aria-label="Topology layout"
             data-topo-chrome-layout-trailer
+            data-topo-chrome-layout-radius="rounded-lg"
           >
             <button
               onClick={() => { popChrome('layout-ring'); if (layout !== 'ring') toggleLayout(); }}
