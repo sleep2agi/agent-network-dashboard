@@ -32,13 +32,13 @@ await ctx.route('**/api/hub/status*', async (route) => {
     network_id: nid, project_dir: null,
     created_at: fresh, updated_at: fresh, last_seen_at: fresh,
   });
-  // Mix 3 claude-opus-4 (vendor 'A') + 1 gpt-4 (vendor 'O') so
-  // vendorDist.length === 2 — chip strip render gate (line ~2116).
+  // R281 tightened chip threshold from >1 to >2 — need 3+ vendor types.
+  // 2 claude (A) + 1 gpt (O) + 1 InternLM (书) → vendorDist.length === 3.
   await route.fulfill({ response: r, json: { ...b, sessions: [
     mk('alpha', 'claude-opus-4'),
     mk('beta',  'claude-opus-4'),
-    mk('gamma', 'claude-opus-4'),
-    mk('delta', 'gpt-4'),
+    mk('gamma', 'gpt-4'),
+    mk('delta', 'internlm/internlm2'),
   ] } });
 });
 await ctx.route('**/api/hub/messages*', (r2) => r2.fulfill({ json: { messages: [] } }));
@@ -73,11 +73,14 @@ const hasTab = (s) => /tabular-nums/.test(s || '');
 
 // Build a map of initial → count from the chips we found.
 const countByInitial = Object.fromEntries(out.map(o => [o.initial, o.countAttr]));
+// R281 fixture uses 2 claude (A:2) + 1 gpt (O:1) + 1 InternLM (书:1)
+// to meet the new vendorDist.length > 2 threshold for chip render.
 const results = {
-  two_chips:               out.length === 2,
+  three_chips:             out.length === 3,
   all_have_initial:        out.every(o => typeof o.initial === 'string' && o.initial.length === 1),
-  anthropic_count_3:       countByInitial['A'] === '3',
+  anthropic_count_2:       countByInitial['A'] === '2',
   openai_count_1:          countByInitial['O'] === '1',
+  internlm_count_1:        countByInitial['书'] === '1',
   all_class_utility:       out.every(o => o.classListHas === true),
   all_fvn_tabular:         out.every(o => hasTab(o.fontVarNumeric)),
   all_inner_fvn_inherits:  out.every(o => hasTab(o.innerFvn)),
