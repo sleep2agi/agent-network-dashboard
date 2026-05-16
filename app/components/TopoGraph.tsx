@@ -4123,13 +4123,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               const spokeOpacity = isActiveSpoke
                 ? (isHoveredSpoke ? 0.95 : 0.80)
                 : (isHoveredSpoke ? 0.70 : 0.50);
+              /* Round 435 / Loop: hub-spoke stroke-width hover lift —
+                 sibling to R430 opacity hover at the same surface. When
+                 hoveredAlias matches, BOTH opacity AND stroke-width
+                 lift on the matched spoke so the eye registers a
+                 2-axis "this node's spoke" gesture (paint + geometry).
+                   idle    1.00 → 1.25  (Δ +0.25, +25%)
+                   active  2.25 → 2.50  (Δ +0.25, +11%)
+                 Same +0.25 absolute delta keeps the idle/active visual
+                 progression consistent — at rest sw ratio 2.25:1 = 2.25,
+                 on hover 2.50:1.25 = 2.0; both still clearly two-tier.
+                 R241 transition list already covers stroke-width 250ms
+                 so the lift eases for free.
+                 R51 sentinel-safe: spoke is canvas <path>, not
+                 data-node <circle> (the sentinel selector is gated to
+                 g[data-node] descendants). 1.25 and 2.5 are not in the
+                 reserved {1.5, 3} set so the overlap-test sentinel
+                 attribute selector wouldn't match either way. */
+              const spokeStrokeWidth = isActiveSpoke
+                ? (isHoveredSpoke ? 2.5 : 2.25)
+                : (isHoveredSpoke ? 1.25 : 1);
               return (
                 <path
                   key={`hub-${session.alias}`}
                   d={path}
                   fill="none"
                   stroke={isActiveSpoke ? pal.spokeStroke.active : pal.spokeStroke.idle}
-                  strokeWidth={isActiveSpoke ? 2.25 : 1}
+                  strokeWidth={spokeStrokeWidth}
                   strokeDasharray={isActiveSpoke ? 'none' : '6 14'}
                   strokeLinecap="round"
                   opacity={spokeOpacity}
@@ -4139,6 +4159,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-hub-spoke-active={isActiveSpoke ? 'true' : 'false'}
                   data-topo-hub-spoke-hovered={isHoveredSpoke ? 'true' : 'false'}
                   data-topo-hub-spoke-opacity={spokeOpacity}
+                  data-topo-hub-spoke-stroke-width={spokeStrokeWidth}
                   data-topo-hub-spoke-stroke-width-active="2.25"
                   data-topo-hub-spoke-linecap="round"
                   style={{
