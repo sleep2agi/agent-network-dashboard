@@ -9586,6 +9586,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // R347: letter-spacing hover tween — extends R344/R345
                 // hover-letter-spacing family into the chrome strip.
                 letterSpacing: hoveredZoomLevel ? '0.5px' : '0',
+                // Round 420 / Loop: zoom-level readout gains a SECOND
+                // hover axis — fontWeight 500 → 600 on hover. Sibling
+                // to R347 (same element, hover letter-spacing tween).
+                // The chrome strip's only data display now has a two-
+                // axis hover signature (letter-spacing + fontWeight),
+                // matching the R416 chip-row chip digit hover-bold
+                // pattern at the chrome scope. Pre-R420 hovering only
+                // spread the digits 0 → 0.5px; the weight stayed at
+                // R332's 'font-medium' (500) baseline. Post-R420
+                // hover lifts BOTH letter-spacing AND weight so the
+                // percent reads with the same data-tier emphasis
+                // intensification the chip-row chips do on hover.
+                // Inline fontWeight overrides the className's
+                // 'font-medium' since they target the same property.
+                // 200ms transition list extends to font-weight for
+                // smooth easing. data-topo-chrome-zoom-level-hover
+                // attr surfaces the hover state for tests.
+                fontWeight: hoveredZoomLevel ? 600 : 500,
                 /* Round 264 / Loop: zoom level readout gains theme-toggle
                    transition. The span has theme-driven color (pal.
                    legendText) + border-x (pal.containerBorder via the
@@ -9594,7 +9612,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    on theme flip while siblings eased. Sibling treatment
                    to the nodeSize + zoom wrapper transitions added this
                    round. */
-                transition: 'color 200ms ease-out, border-color 200ms ease-out, letter-spacing 200ms ease-out',
+                transition: 'color 200ms ease-out, border-color 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out',
               }}
               title="Current zoom level"
             >
