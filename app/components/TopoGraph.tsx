@@ -5030,6 +5030,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           opens chat (R136) but doesn't drive hovered
                           Alias, so this stroke tint is exclusively a
                           pointer-on-target signal. */}
+                      {/* Round 246 / Loop: label card chrome picks up
+                          fill + opacity in its transition list. R142
+                          already eased filter (drop-shadow) + stroke
+                          (R217 cyan tint on hover); the rect's fill
+                          (pal.labelBox.fill: cyber #020617 ↔ light
+                          #ffffff) and theme-derived opacity (0.94
+                          cyber / 1 light) still snapped on theme
+                          toggle. R211 already closed the alias/sub
+                          text-fill snap on the same card; R246
+                          closes the chrome-fill snap on the rect
+                          BEHIND that text, so the whole card
+                          (background + text) transitions as one
+                          unit through every theme switch. Same
+                          220ms cadence the existing filter/stroke
+                          pair uses — coordinated 4-property easing
+                          across the card. */}
                       <rect
                         x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="6"
                         fill={pal.labelBox.fill}
@@ -5049,7 +5065,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                             : (isLight
                                 ? 'drop-shadow(0 1px 2px rgba(15,23,42,0.08))'
                                 : 'drop-shadow(0 1px 2px rgba(0,0,0,0.30))'),
-                          transition: 'filter 220ms ease-out, stroke 220ms ease-out',
+                          transition: 'filter 220ms ease-out, stroke 220ms ease-out, fill 220ms ease-out, opacity 220ms ease-out',
                         }}
                       />
                       {/* Round 211 / Loop: alias + sub text fill eases on
