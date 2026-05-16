@@ -6495,6 +6495,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
             role="group"
             aria-label="Node size"
+            data-topo-chrome-fleet-group-trailer
           >
             {([['S', 0.7], ['M', 0.84], ['L', 1]] as const).map(([lbl, v], idx) => {
               const popKey = `size-${lbl}` as 'size-S' | 'size-M' | 'size-L';
@@ -6540,9 +6541,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               );
             })}
           </div>
+          {/* Round 255 / Loop: semantic gap between the fleet-control group
+              (node size S/M/L) and the view-control group (zoom / reset /
+              fullscreen). Pre-R255 the four groups sat at uniform gap-1.5
+              (6px); the spatial signal read as "4 separate things" instead
+              of "1 fleet control + 3 view controls". Doubling the gap before
+              the first view-control (ml-1.5 = 6px stacks on top of the
+              parent's gap-1.5 = 6px, total 12px) communicates the semantic
+              boundary through proximity alone — classic "law of proximity"
+              layout polish, no extra chrome, no new visual elements.
+              data-topo-chrome-view-group-leader marks the boundary surface
+              for the test probe; data-topo-chrome-fleet-group-trailer marks
+              the nodeSize wrapper's right edge for the gap measurement. */}
           <div
-            className="flex items-center rounded-md border overflow-hidden"
+            className="ml-1.5 flex items-center rounded-md border overflow-hidden"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
+            data-topo-chrome-view-group-leader
           >
             <button
               onClick={() => { popChrome('zoom-out'); zoomByDiscrete(1 / 1.2); }}
