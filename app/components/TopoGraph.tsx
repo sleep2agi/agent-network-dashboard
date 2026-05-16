@@ -6021,10 +6021,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   R200 SMIL breath continues unchanged. Hint baseline
                   y=70 still sits 12px above the footer baseline (y=82),
                   same vertical rhythm as the row 3 → footer gap. */}
+              {/* Round 302 / Loop: empty-state hint 'no flow yet' picks
+                  up letterSpacing='0.2' for editorial parity with R301
+                  panel titles (0.3) + R285 kicker tracking-widest +
+                  R289 watermark letterSpacing. The hint is the
+                  panel's quietest authored text (italic monospace
+                  fontSize 10 opacity 0.65); adding a small positive
+                  letter-spacing keeps it in the same designed-label
+                  family without lifting its visual weight. 0.2px is
+                  slightly less than the panel titles' 0.3 — appropriate
+                  for the smaller fontSize + lower opacity (empty-state
+                  is intentionally quieter than the header above it). */}
               <text
                 x="115" y="56" textAnchor="middle"
                 fill={pal.legendText}
                 fontSize="10" fontFamily="monospace" fontStyle="italic"
+                letterSpacing="0.2"
                 opacity={0.65}
                 data-recent-signal-empty
                 data-recent-signal-empty-breathes={reducedMotion ? 'false' : 'true'}
