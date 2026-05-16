@@ -4793,72 +4793,74 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 deliberate. Messages count CAN diverge from flowLinks
                 count (raw count vs. deduped pairs), so the placeholder
                 fires on flowLinks.length=0 specifically. */}
-            {flowLinks.length === 0 ? (
-              /* R45 placeholder. R110: add a sub-text hint so the
-                 empty state explains what it's empty OF — operators
-                 looking at "no flow yet" sometimes mistook it for
-                 a connection error. The sub-line reads as a quiet
-                 invitation, not an error. Two-line layout uses
-                 standard SVG <text>+<text> rather than tspan so the
-                 y-coordinates are explicit and the data-attr selector
-                 still finds the primary line.
+            {/* Round 222 / Loop: empty state always-mounts; visibility
+                crossfades via wrapper <g> opacity instead of conditional
+                mount/unmount on flowLinks.length === 0. Pre-R222 the
+                first flow arriving snap-removed the empty state in one
+                frame while R203 rows simultaneously faded IN — half-
+                smooth, half-snap on this "first data" first-impression
+                moment. R222 closes the snap so empty fades OUT while
+                rows fade IN — a proper crossfade for the user's most
+                emotionally-loaded moment (the empty-to-populated flip).
 
-                 Round 200 / Loop · milestone: empty-state lines now
-                 breathe in opacity. Pre-R200 the two texts sat at
-                 fixed 0.65 / 0.45 — visually identical to "frozen"
-                 or "broken". A slow 4.4s in-out breath (peak just
-                 above resting, trough just below) says "waiting,
-                 listening". Pacing matches R84 idle-hub breath at
-                 the slow end of its workingCount=0 cycle, so the
-                 two empty-state surfaces (hub centre + panel
-                 placeholder) share rhythm; when the first message
-                 arrives, both surfaces become non-empty in sync.
-                 Reduced-motion users see the resting opacity only
-                 (SMIL is gated to !reducedMotion, same idiom every
-                 other ambient animation uses). Negative `begin`
-                 phase-shifts the sub-line 1.5s behind the main
-                 line so the two read as a gentle inhale-exhale
-                 instead of a single double-loud pulse. */
-              <>
-                <text
-                  x="115" y="54" textAnchor="middle"
-                  fill={pal.legendText}
-                  fontSize="10" fontFamily="monospace" fontStyle="italic"
-                  opacity={0.65}
-                  data-recent-signal-empty
-                  data-recent-signal-empty-breathes={reducedMotion ? 'false' : 'true'}
-                >
-                  no flow yet
-                  {!reducedMotion && (
-                    <animate
-                      attributeName="opacity"
-                      values="0.55;0.78;0.55"
-                      dur="4.4s"
-                      repeatCount="indefinite"
-                    />
-                  )}
-                </text>
-                <text
-                  x="115" y="68" textAnchor="middle"
-                  fill={pal.legendText}
-                  fontSize="8" fontFamily="monospace"
-                  opacity={0.45}
-                  data-recent-signal-empty-hint
-                  data-recent-signal-empty-hint-breathes={reducedMotion ? 'false' : 'true'}
-                >
-                  send a message between agents
-                  {!reducedMotion && (
-                    <animate
-                      attributeName="opacity"
-                      values="0.36;0.58;0.36"
-                      dur="4.4s"
-                      begin="-1.5s"
-                      repeatCount="indefinite"
-                    />
-                  )}
-                </text>
-              </>
-            ) : (
+                R200 SMIL breath on each text continues running
+                regardless of parent opacity (SVG opacity is
+                multiplicative — same R214 pulse-dot composition idiom).
+                When parent opacity is 0, SMIL still animates child
+                opacity but the result composes to invisible. CSS and
+                SMIL don't fight, they layer.
+
+                300ms transition matches R203 row fade-in pace so the
+                empty-fade-out + rows-fade-in pair share rhythm during
+                the crossfade. */}
+            <g
+              data-recent-signal-empty-wrapper
+              data-recent-signal-empty-visible={flowLinks.length === 0 ? 'true' : 'false'}
+              style={{
+                opacity: flowLinks.length === 0 ? 1 : 0,
+                transition: 'opacity 300ms ease-out',
+                pointerEvents: 'none',
+              }}
+            >
+              <text
+                x="115" y="54" textAnchor="middle"
+                fill={pal.legendText}
+                fontSize="10" fontFamily="monospace" fontStyle="italic"
+                opacity={0.65}
+                data-recent-signal-empty
+                data-recent-signal-empty-breathes={reducedMotion ? 'false' : 'true'}
+              >
+                no flow yet
+                {!reducedMotion && (
+                  <animate
+                    attributeName="opacity"
+                    values="0.55;0.78;0.55"
+                    dur="4.4s"
+                    repeatCount="indefinite"
+                  />
+                )}
+              </text>
+              <text
+                x="115" y="68" textAnchor="middle"
+                fill={pal.legendText}
+                fontSize="8" fontFamily="monospace"
+                opacity={0.45}
+                data-recent-signal-empty-hint
+                data-recent-signal-empty-hint-breathes={reducedMotion ? 'false' : 'true'}
+              >
+                send a message between agents
+                {!reducedMotion && (
+                  <animate
+                    attributeName="opacity"
+                    values="0.36;0.58;0.36"
+                    dur="4.4s"
+                    begin="-1.5s"
+                    repeatCount="indefinite"
+                  />
+                )}
+              </text>
+            </g>
+            {flowLinks.length === 0 ? null : (
               // Round 56 / Loop: each row is a navigator into the canvas.
               // Hover a row → set hoveredEdgeKey, which the existing R50
               // edge-focus + R49 endpoint-highlight ladders consume. The
