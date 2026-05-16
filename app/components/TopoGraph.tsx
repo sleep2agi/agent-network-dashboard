@@ -6783,9 +6783,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               decorative additive after 7 rounds of 减法 (R275-
               R281). Adds 1 small text element back into the
               canvas — but Vincent specifically asked for it. */}
+          {/* Round 289 / Loop: brand watermark picks up letterSpacing
+              0.5px. For a 9-character wordmark at fontSize 11 monospace,
+              0.5px between characters (8 gaps × 0.5 = 4px total
+              widening) lifts "sleep2agi" from "body text that happens
+              to be a name" to "deliberate wordmark register". Same
+              R285-family idiom (kicker tracking-widest, title
+              tracking-tight) applied to the brand mark — letter-
+              spacing as typographic intent. Stays well inside the
+              bottom-left corner; opacity 0.4 unchanged so the
+              watermark stays a watermark. */}
           <text
             x="16" y="672"
             fontSize="11" fontFamily="monospace" fontWeight="600"
+            letterSpacing="0.5"
             fill={pal.legendText}
             opacity="0.4"
             data-topo-brand-watermark
