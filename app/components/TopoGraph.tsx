@@ -6310,6 +6310,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       counts. The R162 freshness fill (1.0→0.25 alpha
                       ramp) and R225 tabular-nums all preserved; only
                       the weight bumps. */}
+                  {/* Round 336 / Loop: split the digit from the unit
+                      word " flows" with a nested tspan at opacity=0.7.
+                      Same chip-internal-hierarchy pattern R333 (vendor
+                      count suffix) + R335 (filter pin prefix) applied
+                      to one chip — recurring "small label spans demote,
+                      value stays prominent" idiom at the panel-header
+                      count scope. The digit stays fw=600 + tabular-nums
+                      (R311 + R225 inheritance via the outer tspan);
+                      the unit tspan inherits fw=600 but adds opacity
+                      0.7. Reads as "5 (prominent) / flows (recessive
+                      unit)". data-recent-panel-count attribute stays
+                      on the OUTER tspan so existing R311 fontWeight
+                      tests + count value reads still resolve via
+                      .textContent. data-recent-panel-count-unit on
+                      the inner unit tspan for R336 introspection. */}
                   <tspan
                     fill={freshFill}
                     fontWeight="600"
@@ -6319,7 +6334,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       transition: 'fill 200ms ease-out',
                       fontVariantNumeric: 'tabular-nums',
                     }}
-                  >{flowLinks.length} flows</tspan>
+                  >{flowLinks.length}<tspan opacity="0.7" data-recent-panel-count-unit> flows</tspan></tspan>
                   {/* Round 190 / Loop: R129 hot-tail gets anet-fade-in
                       for entrance. Pre-R190 the tspan snapped into
                       the header the moment hotFlowCount crossed 0,
@@ -6384,7 +6399,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontVariantNumeric: 'tabular-nums',
                     }}
                   >
-                    {hotFlowCount > 0 ? ` · ${hotFlowCount} hot` : ''}
+                    {/* Round 336 / Loop: split hot count from " hot"
+                        unit word with nested opacity-0.7 tspan. Same
+                        chip-internal-hierarchy idiom this round
+                        applies to the "{N} flows" tspan above (R311
+                        sibling) — digit prominent at fw=700 + amber
+                        fill, unit recessive at 0.7 opacity. data-
+                        recent-panel-hot-count-unit exposes the unit
+                        tspan for R336 probes. */}
+                    {hotFlowCount > 0 ? (
+                      <>
+                        {` · ${hotFlowCount}`}
+                        <tspan opacity="0.7" data-recent-panel-hot-count-unit> hot</tspan>
+                      </>
+                    ) : ''}
                   </tspan>
                 </text>
               );
@@ -7130,6 +7158,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 the same legend panel. Existing pal.legendAccent
                 fill + tabular-nums + R266 fill transition all
                 preserved. */}
+            {/* Round 336 / Loop: split legend panel count digit from
+                unit " nodes" with nested opacity-0.7 tspan — sibling
+                treatment to the recent-signal panel count and hot-
+                count splits above. Three-panel-header surface family
+                now sharing the same chip-internal-hierarchy pattern:
+                  recent flows count + " flows" unit at 0.7
+                  recent hot count   + " hot" unit at 0.7
+                  legend nodes count + " nodes" unit at 0.7
+                data-legend-panel-count-unit on the inner tspan for
+                R336 introspection; the parent .textContent still
+                reads "{N} node(s)" so existing R310 count tests via
+                textContent unchanged. */}
             <text
               x="211" y="21" textAnchor="end"
               fill={pal.legendAccent} fontSize="10" fontFamily="monospace" fontWeight="600"
@@ -7138,7 +7178,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 transition: 'fill 200ms ease-out',
                 fontVariantNumeric: 'tabular-nums',
               }}
-            >{sessions.length} node{sessions.length === 1 ? '' : 's'}</text>
+            >{sessions.length}<tspan opacity="0.7" data-legend-panel-count-unit> node{sessions.length === 1 ? '' : 's'}</tspan></text>
             {(() => {
               const idleCount = onlineNodes.length - workingCount;
               // R106: rows shift +8 px (was y0=24, 48, 72 → 32, 56, 80)
