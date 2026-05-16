@@ -2460,7 +2460,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       <div
         ref={containerRef}
         className={`relative overflow-hidden rounded-lg border shadow-2xl ${isLight ? 'shadow-zinc-900/5' : 'shadow-cyan-950/30'} ${isFullscreen ? 'flex items-center justify-center' : ''}`}
-        style={{ background: pal.containerBg, borderColor: pal.containerBorder }}
+        data-topo-wrapper
+        /* Round 254 / Loop: top-level TopoGraph wrapper gains theme-
+           toggle transition. This is the BIGGEST theme-driven surface
+           on the dashboard by pixel area — pal.containerBg fills the
+           entire visible canvas area (cyber #080814 ↔ light #ffffff),
+           and pal.containerBorder rims it. Pre-R254 every inner
+           element eased through theme but the outer wrapper hard-cut,
+           visually anchoring the snap. R253 declared
+           "no visible snap remains" prematurely — this wrapper was
+           the largest holdout. 200ms ease-out matches the panel
+           treatment (R247) so wrapper + panels ease as one unit. */
+        style={{
+          background: pal.containerBg,
+          borderColor: pal.containerBorder,
+          transition: 'background-color 200ms ease-out, border-color 200ms ease-out',
+        }}
       >
         <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${pal.topRailGradient}`} />
 
@@ -6318,7 +6333,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 this moves from y=72 to y=80. Drop its pointerEvents so
                 the offline legend row stays hoverable (R55). It's
                 decoration, no need to receive events. */}
-            <path d="M140,80 Q164,56 196,80" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" style={{ pointerEvents: 'none' }} />
+            {/* Round 254 / Loop: legend flow-arrow swatch stroke
+                transition for theme toggle (cyber #67e8f9 ↔ light
+                #10b981). Last theme-driven legend element snap. */}
+            <path d="M140,80 Q164,56 196,80" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" data-legend-flow-arrow style={{ pointerEvents: 'none', transition: 'stroke 200ms ease-out' }} />
           </g>
         </svg>
 
@@ -6342,7 +6360,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           return (
             <div
               className="absolute right-3 rounded-md border shadow-lg shadow-black/30 overflow-hidden anet-fade-in anet-topo-chip-focus"
-              style={{ bottom: 56, background: pal.legendBox.fill, borderColor: pal.containerBorder, cursor: 'crosshair', color: pal.legendAccent }}
+              /* Round 254 / Loop: minimap container theme transitions —
+                 background-color, border-color, color (used for SVG
+                 currentColor inside) all ease at 200ms alongside the
+                 R254 wrapper + R247 panel treatments. */
+              style={{ bottom: 56, background: pal.legendBox.fill, borderColor: pal.containerBorder, cursor: 'crosshair', color: pal.legendAccent, transition: 'background-color 200ms ease-out, border-color 200ms ease-out, color 200ms ease-out' }}
               // R157: minimap a11y completion. Pre-R157 the element had
               // role="img" + aria-label but no tabIndex / onKeyDown — it
               // was clickable for mouse users (recenter to where you
