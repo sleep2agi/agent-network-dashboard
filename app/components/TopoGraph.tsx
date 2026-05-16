@@ -6098,7 +6098,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 paired. Title text at x=13 y=21; total fleet count
                 right-aligned at x=215 y=21 in the accent colour. */}
             <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700">legend</text>
-            <text x="215" y="21" textAnchor="end" fill={pal.legendAccent} fontSize="10" fontFamily="monospace" data-legend-panel-count>{sessions.length} node{sessions.length === 1 ? '' : 's'}</text>
+            {/* Round 257 / Loop: legend panel header count picks up the
+                symmetric 13L/13R inner-padding pattern from the recent-
+                signal panel. Pre-R257 the legend header was 13px from
+                the left edge (`x=13` title) but only 9px from the right
+                edge (`x=215` end-anchored count → 224-215=9), while the
+                recent-signal panel header used 13px on BOTH sides (x=13
+                title + x=217 end-count → 230-217=13). The two panels
+                sit as a side-by-side corner pair — mismatched header
+                inner-padding read as a typographic nit on the panel
+                chrome. x=211 (= 224-13) restores symmetric 13L/13R so
+                the panel pair shares one inset rhythm. The per-row
+                count text at x=215 (line ~6321) STAYS at 9px-from-right
+                — that one is paired with the flow-arrow swatch geometry
+                ('M140,80 Q164,56 196,80') and would visibly tighten
+                against the arrow tip if moved further left. Header
+                count has no such pairing; it stands alone. */}
+            <text x="211" y="21" textAnchor="end" fill={pal.legendAccent} fontSize="10" fontFamily="monospace" data-legend-panel-count>{sessions.length} node{sessions.length === 1 ? '' : 's'}</text>
             {(() => {
               const idleCount = onlineNodes.length - workingCount;
               // R106: rows shift +8 px (was y0=24, 48, 72 → 32, 56, 80)
