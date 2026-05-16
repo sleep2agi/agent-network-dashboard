@@ -4921,19 +4921,44 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       : undefined
                   }
                 >
-                  {/* Round 244 / Loop: working halo breath joins the
-                      R243 / R244 SMIL-ease-in-out family. R226's
-                      golden-ratio per-node phase stagger stays in
-                      place; R244 adds calcMode='spline' + keySplines
-                      '0.42 0 0.58 1' ×2 so each halo's breath also
-                      settles at its endpoints instead of constant-
-                      velocity marching. The three breath surfaces
-                      now share the same curve shape: hub grounding
-                      halo (R84+R244) + active-node pulse (R243) +
-                      working halo (R112+R226+R244). All breaths on
-                      canvas now feel calm at the extremes, alive
-                      through the middle. */}
-                  {!reducedMotion && session.status === 'working' && (
+                  {/* Round 278 / Loop: per-node working halo breath
+                      (R112+R226+R244 family) RETIRED per Vincent
+                      5214/5215-5217 simplification ask (减法 cut #4
+                      after R275 chip-row, R276 orbit, R277 legend).
+
+                      The breath was: each working agent's halo pulses
+                      0.73→0.92→0.73 (cyber 0.53→0.78→0.53) at 3 s
+                      cycle, R226-staggered per-node, R244-eased. For
+                      a 4-working fleet that's 4 simultaneous SMIL
+                      breaths competing with the hub-halo breath
+                      (R244 hub) for the "fleet busyness" visual
+                      signal.
+
+                      The signal is info-redundant: the hub-halo
+                      breath ALREADY conveys "the network is alive
+                      and busy"; per-node halo breath duplicates it
+                      at 4× volume. Plus working nodes are ALREADY
+                      distinguished by their halo color (status.halo
+                      green/teal/slate via R12 trio) — the static
+                      halo carries identity, the moving breath was
+                      decorative motion on top.
+
+                      R278 gates the SMIL animate with `false &&` so
+                      the code remains for rollback. Halo opacity
+                      stays at the BASE (non-breathing) values via
+                      the parent circle's `opacity` attr (0.85/0.65/
+                      0.4/0.25 from R12 + isOnline gate). Working
+                      nodes still show green halos; they just don't
+                      pulse.
+
+                      Net: -4 SMIL animations on canvas for typical
+                      4-working fleet. Combined with R276 orbit
+                      retirement (-4) and the hub halo breath kept
+                      as the SOLE "fleet busyness" motion signal,
+                      the canvas reads quieter. R226 + R244 per-node
+                      stagger / ease constants are dead code post-
+                      R278 (acceptable — family retires together). */}
+                  {false && !reducedMotion && session.status === 'working' && (
                     <animate
                       attributeName="opacity"
                       values={isLight ? '0.73;0.92;0.73' : '0.53;0.78;0.53'}
