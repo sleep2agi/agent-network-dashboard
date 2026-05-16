@@ -1050,6 +1050,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // 200ms ease-out joins the existing R264 color/border transition
   // list on the same span.
   const [hoveredZoomLevel, setHoveredZoomLevel] = useState(false);
+  // Round 350 / Loop: reset-button icon hover-rotate preview of the
+  // R184 click-spin. Pre-R350 hovering the reset button only changed
+  // the button bg (white/5); the icon inside stayed perfectly still.
+  // R350 nudges the icon -8° on hover — a tactile hint that this
+  // button rotates the icon on click. When the click fires, the
+  // R184 anet-reset-spin keyframe animation overrides the hover
+  // transform for its 450 ms run (CSS animations win over transitions
+  // on the same property); when the animation ends + React removes
+  // the className, the inline transform eases back to whatever the
+  // hover state says — either -8° (still hovering) or 0 (mouse left).
+  // 350th-round milestone polish.
+  const [hoveredReset, setHoveredReset] = useState(false);
   // R135: panel-wide hover-elevation. The recent-signal + legend
   // panels both already host clickable rows (R56/R116 recent rows,
   // R55/R61 legend rows) and a clickable footer (R133), so the
@@ -8244,6 +8256,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             onClick={() => { armResetSpin(); resetView(); }}
             data-topo-chrome-reset
             data-topo-chrome-reset-spinning={resetSpinning ? 'true' : 'false'}
+            data-topo-chrome-reset-hover={hoveredReset ? 'true' : 'false'}
+            // R350: hover state drives the icon transform below.
+            onMouseEnter={() => setHoveredReset(true)}
+            onMouseLeave={() => setHoveredReset(false)}
+            onFocus={() => setHoveredReset(true)}
+            onBlur={() => setHoveredReset(false)}
             // R196: press-state deepens before R184 reset-spin fires on
             // release — mouse-down dim then 450ms spin = full handshake.
             className="p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
@@ -8273,6 +8291,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               aria-hidden
               className={resetSpinning ? 'anet-reset-spin' : undefined}
               data-topo-chrome-reset-icon
+              // R350: hover-rotate preview of the R184 click-spin.
+              // Gated on !resetSpinning so the anet-reset-spin keyframe
+              // owns transform during its 450ms run. transformOrigin
+              // 'center' so rotation pivots around the icon's centre
+              // (default would be top-left and the icon would arc).
+              style={{
+                transform: hoveredReset && !resetSpinning ? 'rotate(-8deg)' : 'rotate(0deg)',
+                transformOrigin: 'center',
+                transition: 'transform 200ms ease-out',
+              }}
+              data-topo-chrome-reset-icon-hover={hoveredReset && !resetSpinning ? 'true' : 'false'}
             >
               <path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8" />
               <path d="M3 3v5h5" />
