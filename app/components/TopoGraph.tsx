@@ -5453,7 +5453,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         style={{
                           pointerEvents: 'none',
                           fontVariantNumeric: 'tabular-nums',
-                          letterSpacing: (isPinned || isHot) ? '0.4px' : '0px',
+                          /* R431 — edge-badge digit 3-tier letter-spacing:
+                             rest 0 / isHoveredEdge 0.2 / (isPinned || isHot) 0.4.
+                             Mirrors R427 node-alias 3-tier (rest/hover/chat-
+                             target → 0/0.3/0.5) at edge-badge scope. Pre-R431
+                             letter-spacing only fired on pin/hot (R220) while
+                             pure edge hover lifted stroke (R394) + opacity
+                             (R395) + radius (R164) but left the text dead-
+                             typographic. R431 adds the missing typographic
+                             spacing axis to the edge-hover gesture so the
+                             text rises with the badge geometry. Pin/hot
+                             tier (0.4) still wins; hover is the mid step.
+                             Hover-letter-spacing family extension (7 anchors
+                             now): R344/R345/R347/R351/R420/R427/R431. */
+                          letterSpacing: (isPinned || isHot) ? '0.4px' :
+                                         isHoveredEdge ? '0.2px' : '0px',
                           transition: 'letter-spacing 300ms ease-out, font-weight 300ms ease-out',
                         }}
                       >{link.count}</text>
