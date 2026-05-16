@@ -7068,8 +7068,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           transition: 'r 150ms ease-out, stroke-width 150ms ease-out',
                         } as React.CSSProperties}
                       />
+                      {/* Round 443 / Loop: runtime badge inner-icon
+                         strokeWidth lift on node hover — 2.4 → 2.8 on
+                         isNodeActive. Pre-R443 the outer badge ring
+                         lifted (R208 r + sw both grow on hover) but
+                         the inner icon path stayed locked at sw=2.4.
+                         The two layers of the runtime badge were
+                         out of phase: ring thickened, icon stayed
+                         thin. R443 closes the 2-axis hover signature
+                         on the badge so both ring and icon lift
+                         together. +0.4 absolute delta matches the
+                         R208 ring's +0.5 sw delta (badge ring 1.5 →
+                         2.0 absolute), proportional to the icon's
+                         heavier base of 2.4. Pure paint axis;
+                         strokeLinecap='round' + strokeLinejoin='round'
+                         preserved. transition list extends to include
+                         'stroke-width 150ms ease-out' matching R208
+                         outer-ring cadence. data-runtime-badge-icon
+                         + -active attrs exposed for tests. */}
                       <g transform={`translate(${bx - icon / 2} ${by - icon / 2}) scale(${icon / 24})`}>
-                        <path d={rt.iconPath} fill="none" stroke={rt.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                        <path
+                          d={rt.iconPath}
+                          fill="none"
+                          stroke={rt.color}
+                          strokeWidth={isNodeActive ? '2.8' : '2.4'}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          data-runtime-badge-icon={session.alias}
+                          data-runtime-badge-icon-active={isNodeActive ? 'true' : 'false'}
+                          data-runtime-badge-icon-stroke-width={isNodeActive ? '2.8' : '2.4'}
+                          style={{ transition: 'stroke-width 150ms ease-out' }}
+                        />
                       </g>
                     </g>
                   );
