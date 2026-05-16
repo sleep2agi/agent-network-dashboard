@@ -6633,7 +6633,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       <text x="10" y="16" fontSize="9" fontFamily="monospace" fill={pal.legendAccent} fontWeight="700">
                         {v.id !== 'unknown' ? v.label : '—'}
                       </text>
-                      <text x="10" y="32" fontSize="10" fontFamily="monospace" fill={pal.legendHeadline}>
+                      {/* Round 389 / Loop: hover-detail model line (y=32)
+                          fontWeight 400 → 600. R388 lifted body lines
+                          (runtime/host/task at fontSize=9) to fw=500;
+                          R389 closes the typography hierarchy by giving
+                          the model name (the dominant subhead text in
+                          the card) its own weight tier. Three-tier
+                          ladder now reads cleanly:
+                            vendor   fontSize=9  fw=700  (label badge)
+                            model    fontSize=10 fw=600  (subhead — this round)
+                            body 3×  fontSize=9  fw=500  (R388)
+                          One tier step per dimension (size + weight)
+                          between adjacent levels — classic editorial
+                          hierarchy idiom adapted to a 192×88 SVG card.
+                          Sibling to the chip-internal-hierarchy arc
+                          (R333-R341/R362/R369) which uses fw=600/500
+                          for digit/unit pairs; R389 applies the same
+                          fw=600 to a content-bearing identity line.
+                          data-topo-hover-detail-model-fw attr exposes
+                          the resolved value for tests. pal.legendHeadline
+                          fill preserved (R389 doesn't touch color). */}
+                      <text x="10" y="32" fontSize="10" fontFamily="monospace" fontWeight="600" fill={pal.legendHeadline} data-topo-hover-detail-model-fw="600">
                         {session.model || 'model · pending'}
                       </text>
                       {/* Round 388 / Loop: hover-detail body lines (the
