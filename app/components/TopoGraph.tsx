@@ -4528,14 +4528,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fill-inherit from parent label (hover-deepen-own-
                       hue family) preserved. data-group-label-count-
                       font-weight attr exposes the value for tests. */}
+                  {/* Round 444 / Loop: group label count tspan
+                      fontWeight 500 → 600 on isPinned. Extends the
+                      "data tightens under attention" typographic-
+                      weight pattern to a 5th anchor at the group-
+                      label-count scope:
+                        R416 chip-digit       (chip hover)
+                        R424 panel-digit      (panel hover)
+                        R425 hub-digit        (hub hover)
+                        R426 edge-badge-digit (pin/hot)
+                        R444 group-label-count (pinned)   ← this round
+                      Same idiom — when the group is locked, its
+                      member-count tightens typographically alongside
+                      the R432 letter-spacing spread (0 → 0.5px) on
+                      the parent label. Hover keeps rest fw (500) so
+                      the locked vs preview distinction at the type
+                      level stays intact — same gate R432 used.
+                      Monospace + R225 tabular-nums lock the digit
+                      width across fw changes; bbox unchanged; overlap-
+                      test invariants hold. transition list adds
+                      'font-weight 200ms ease-out' matching R432
+                      letter-spacing cadence. R229 fill-inherit
+                      preserved (parent text fill still drives the
+                      hover/pin color). data-group-label-count-font-
+                      weight + -pinned attrs exposed for tests. */}
                   <tspan
                     dx="6"
                     fontSize="11"
-                    fontWeight="500"
+                    fontWeight={isPinned ? '600' : '500'}
                     data-group-label-count={box.key}
                     data-group-label-count-value={box.count}
-                    data-group-label-count-font-weight="500"
-                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                    data-group-label-count-pinned={isPinned ? 'true' : 'false'}
+                    data-group-label-count-font-weight={isPinned ? '600' : '500'}
+                    style={{
+                      fontVariantNumeric: 'tabular-nums',
+                      transition: 'font-weight 200ms ease-out',
+                    }}
                   >· {box.count}</tspan>
                   {/* Round 58 / Loop: status mix pip strip. Compact text-
                       based chips (e.g. "2w 1i") so the strip stays inside
