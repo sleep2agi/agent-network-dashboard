@@ -7563,13 +7563,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       tests + count value reads still resolve via
                       .textContent. data-recent-panel-count-unit on
                       the inner unit tspan for R336 introspection. */}
+                  {/* R424 — recent-signal panel count digit fontWeight
+                      600 → 700 on panel hover. Closes the 5-layer panel
+                      hover cue stack with a typographic-weight axis at
+                      the panel-header data scope: depth (R135 drop-
+                      shadow) + solidity (R348 fill opacity) + spacing
+                      (R345 title letter-spacing) + edge color (R423
+                      stroke tint) + weight (THIS, digit fw). Sibling
+                      pattern to R416 chip-digit-hover-bold at chip
+                      scope — same "data tightens under attention"
+                      idiom now at the panel-header data scope. R311
+                      base fw=600 + R225 tabular-nums + R162 fill
+                      transition + R336 unit-tspan opacity-0.7 all
+                      preserved; only the weight axis tweens via R247's
+                      transition shape (added font-weight to the list). */}
                   <tspan
                     fill={freshFill}
-                    fontWeight="600"
+                    fontWeight={hoveredPanel === 'recent' ? '700' : '600'}
                     data-recent-panel-count
                     data-recent-panel-count-freshness-alpha={alpha.toFixed(2)}
                     style={{
-                      transition: 'fill 200ms ease-out',
+                      transition: 'fill 200ms ease-out, font-weight 200ms ease-out',
                       fontVariantNumeric: 'tabular-nums',
                     }}
                   >{flowLinks.length}<tspan opacity="0.7" data-recent-panel-count-unit> flows</tspan></tspan>
@@ -8551,9 +8565,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 R336 introspection; the parent .textContent still
                 reads "{N} node(s)" so existing R310 count tests via
                 textContent unchanged. */}
+            {/* R424 sibling — legend panel count digit fontWeight 600
+                → 700 on panel hover. Closes 5-layer panel hover cue
+                stack symmetric across both side panels (recent-signal
+                + legend): depth (R135) + solidity (R348) + spacing
+                (R345) + edge color (R423) + weight (R424). R310 base
+                fw=600 + R292 tabular-nums + R266 fill transition + R336
+                unit-tspan opacity-0.7 all preserved. Same "data tightens
+                under attention" idiom R416 established at chip scope. */}
             <text
               x="211" y="21" textAnchor="end"
-              fill={pal.legendAccent} fontSize="10" fontFamily="monospace" fontWeight="600"
+              fill={pal.legendAccent} fontSize="10" fontFamily="monospace" fontWeight={hoveredPanel === 'legend' ? '700' : '600'}
               // R349 sibling — legend panel header count picks up
               // letterSpacing="0.2", one tier below the R301 panel
               // title 0.3. Pairs with the recent-signal panel count
@@ -8563,7 +8585,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-legend-panel-count
               data-legend-panel-count-letter-spacing="0.2"
               style={{
-                transition: 'fill 200ms ease-out',
+                transition: 'fill 200ms ease-out, font-weight 200ms ease-out',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >{sessions.length}<tspan opacity="0.7" data-legend-panel-count-unit> node{sessions.length === 1 ? '' : 's'}</tspan></text>
