@@ -1,12 +1,68 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 import { Session } from './types';
 import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
 import { ChatPopover } from './ChatPopover';
 import { vendorForModel, runtimeIdentity, identityLine } from '../lib/vendorIdentity';
 import { parseHubTime, relativeAgo } from '../lib/time';
+
+/** v0.10.0 Hero 1+2 / §3.F server-health hook — fetches the normalized
+ *  /api/hub/servers payload (preview.370 unblocked real-data via the
+ *  proxy schema-normalize layer) and exposes a per-hostname health
+ *  tier. red → worst-of-CPU/Mem/Disk ≥ 85%; amber → 60-85%; green
+ *  → < 60%; null when telemetry hasn't shipped yet OR the host is
+ *  offline.
+ *
+ *  Shared with ServersDrawer via SWR's key-based dedup — both
+ *  consumers point at /api/hub/servers so the cache layer fans out
+ *  to a single fetch per refresh interval.
+ */
+interface ServerHealthRow {
+  hostname: string;
+  cpu_load_1min: number | null;
+  cpu_cores: number;
+  mem_used_gb: number | null;
+  mem_total_gb: number | null;
+  disk_used_gb: number | null;
+  disk_total_gb: number | null;
+  status: 'online' | 'offline';
+}
+type ServerTier = 'red' | 'amber' | 'green';
+function classifyServer(s: ServerHealthRow): ServerTier | null {
+  if (s.status === 'offline') return null;
+  const cpuPct = s.cpu_load_1min != null && s.cpu_cores > 0 ? (s.cpu_load_1min / s.cpu_cores) * 100 : null;
+  const memPct = s.mem_used_gb != null && s.mem_total_gb != null && s.mem_total_gb > 0 ? (s.mem_used_gb / s.mem_total_gb) * 100 : null;
+  const diskPct = s.disk_used_gb != null && s.disk_total_gb != null && s.disk_total_gb > 0 ? (s.disk_used_gb / s.disk_total_gb) * 100 : null;
+  const vals = [cpuPct, memPct, diskPct].filter((v): v is number => typeof v === 'number');
+  if (vals.length === 0) return null;
+  const worst = Math.max(...vals);
+  if (worst >= 85) return 'red';
+  if (worst >= 60) return 'amber';
+  return 'green';
+}
+const serversFetcher = async (url: string): Promise<{ servers: ServerHealthRow[] } | null> => {
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return res.json();
+};
+function useServerHealthMap(): Map<string, ServerTier> {
+  const { data } = useSWR<{ servers: ServerHealthRow[] } | null>(
+    '/api/hub/servers',
+    serversFetcher,
+    { refreshInterval: 15000, dedupingInterval: 5000 },
+  );
+  return useMemo(() => {
+    const m = new Map<string, ServerTier>();
+    for (const s of data?.servers ?? []) {
+      const tier = classifyServer(s);
+      if (tier) m.set(s.hostname, tier);
+    }
+    return m;
+  }, [data]);
+}
 
 interface MessageFlow {
   from_alias: string;
@@ -480,6 +536,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   const pal = isLight ? LIGHT_PALETTE : DARK_PALETTE;
   const brand = useBrand();
   const isIntern = brand === 'intern';
+  // v0.10.0 Hero 1+2 / §3.F — per-host health tier map. Composes
+  // with #119 ServersDrawer (same SWR key, deduped). When a node's
+  // host server crosses into the red tier (CPU/Mem/Disk ≥ 85%),
+  // the per-node SVG render adds a faint amber outer ring to flag
+  // the issue without leaving the topology view.
+  const hostHealthMap = useServerHealthMap();
   // R133: Next.js client-router for the recent-signal panel "+N more"
   // navigation. TopoGraph hasn't needed routing before — every other
   // affordance composes back into the canvas's own state — but the
@@ -1460,7 +1522,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           frame top — small but cumulative with the R298 internal
           tighten, the title block reads as a *deliberate* badge
           rather than a casually-stacked label. */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4 px-1">
+      {/* Round 334 / Loop: header outer wrapper mobile gap-3 → gap-2.5
+          (12 px → 10 px). The wrapper is `flex flex-col` on narrow
+          viewports (title-block above, chip-row below) — at mobile
+          its vertical gap was 12 px while the title-block internal
+          (R298) and chip-row internal (R328) both rhythm at 10 px.
+          R334 unifies the OUTER vertical gap to 10 px so mobile
+          stacked layout matches the established gap-rhythm tier
+          (title-block 10 / chip-row 10 / chrome 8 — R298/R328/R326).
+          Desktop `sm:flex-row` is unaffected: in row mode the gap-3
+          would have applied horizontally but the wrapper relies on
+          `sm:justify-between` for left/right anchoring (gap is then
+          decorative only between the two flex-grow groups). Net
+          mobile bump: 2 px tighter vertical breathing between
+          title-block + chip-row. Geometry-safe — topo-overlap-test
+          reads SVG-internal bbox, not header layout. */}
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between mb-4 px-1">
         {/* Round 267 / Loop: title block adopts leading-tight on both
             kicker and h2 for a tighter editorial-style rhythm. Pre-
             R267 the kicker used Tailwind's compound `text-xs` (line-
@@ -5451,6 +5528,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     transition: 'fill 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out',
                   }}
                 />
+                {/* v0.10.0 Hero 1+2 / §3.F server-health node-ring tint.
+                    When the host server this agent runs on is in the
+                    `red` tier (CPU/Mem/Disk worst-of ≥ 85% per
+                    classifyServer threshold), draw a faint amber outer
+                    halo at radius+8. strokeWidth=2.5 stays clear of the
+                    R51 overlap-test sentinels (1.5 = offline status ring,
+                    3 = online status ring). pointerEvents:none so the
+                    halo can't intercept node clicks. Falls back silent
+                    when host telemetry hasn't shipped yet (hostHealthMap
+                    is empty until commhub returns telemetry). Composes
+                    with R209 hover-ring (which sits BETWEEN the avatar
+                    and this halo on hover — different radii). */
+                }
+                {(() => {
+                  const tier = hostHealthMap.get(session.server);
+                  if (tier !== 'red') return null;
+                  return (
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y}
+                      r={radius + 8}
+                      fill="none"
+                      stroke={isLight ? '#d97706' : '#fbbf24'}
+                      strokeWidth="2.5"
+                      opacity="0.6"
+                      data-node-server-health="red"
+                      data-node-server-host={session.server}
+                      style={{
+                        pointerEvents: 'none',
+                        transition: 'stroke 200ms ease-out, opacity 200ms ease-out',
+                      }}
+                    />
+                  );
+                })()}
                 {/* Issue #96: node "avatar" is now driven by the model
                     vendor. Decision order:
                       1. ?brand=intern flag, or an intern-aliased node with
