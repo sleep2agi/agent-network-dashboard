@@ -5372,7 +5372,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             onMouseLeave={() => setHoveredPanel(prev => prev === 'recent' ? null : prev)}
           >
             <rect
-              x="0" y="0" width="230" height="84" rx="10"
+              x="0" y="0" width="230" height="88" rx="10"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
               opacity={isLight ? 0.97 : 0.92}
@@ -5942,12 +5942,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 rest. The R96 "X flows" header tells the total but
                 doesn't say "you're seeing top-3". This hint fires
                 only when flowLinks.length > 3 so quiet fleets stay
-                clean. Footer y=82 sits in the 10-px gap between
-                row 3 (baseline 70) and the panel bottom (84), so
-                overlap-test geometry is unchanged. fontStyle=italic
-                + opacity 0.55 reads as muted metadata, not an
-                actionable row — matches the R110 empty-state hint
-                idiom. */}
+                clean. Footer y=82 sits between row 3 (baseline 70)
+                and the panel bottom; the R256 height bump 84→88
+                adds 6 px of clear below the footer baseline so the
+                on-hover textDecoration:underline (which renders
+                ~3-4 px below baseline → y≈85-86) tucks INSIDE the
+                panel border instead of clipping past it at the
+                old 84-px floor. Overlap-test geometry unchanged
+                (panel selector at translate(16,16); corner-to-
+                center distance 342.6 → 340 still > 325 ring-clear
+                threshold). fontStyle=italic + opacity 0.55 reads
+                as muted metadata, not an actionable row — matches
+                the R110 empty-state hint idiom. */}
             {(() => {
               // Round 221 / Loop: footer always-mounts; visibility
               // crossfades via wrapper <g> opacity instead of React
