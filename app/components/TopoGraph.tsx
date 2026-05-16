@@ -4822,15 +4822,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           1.25 → 2 instead of 1 → 2, same ease pace.
                           data-edge-badge-stroke-width-rest exposes the
                           new baseline for tests. */}
+                      {/* Round 371 / Loop: edge-badge cyber opacity 0.82
+                          → 0.85. Sibling theme-consistency polish to R370
+                          hub hover-ring 0.7 → 0.8. R251 designed this
+                          badge with opacity 0.82 (cyber) / 0.95 (light)
+                          — 13 % delta. Cyber-theme dark bg needs more
+                          alpha to read as 'present'; R371 narrows the
+                          gap to 10 %, bringing the badge closer to light
+                          theme's 0.95 floor. Light stays at 0.95
+                          (already in the legibility band). data-edge-
+                          badge-opacity attr exposes the resolved value.
+                          Theme-consistency polish family:
+                            R246/R247  panel transition family
+                            R251       edge badge fill/opacity baseline
+                            R370       hub hover-ring cyber 0.7 → 0.8
+                            R371       edge badge cyber 0.82 → 0.85 (this round)
+                          R164 r=9/10.5 hover-lift + R188/R251 transition
+                          list + R367 strokeWidth=1.25 cold rest preserved. */}
                       <circle
                         cx={badgeX} cy={badgeY}
                         r={isHoveredEdge || isPinned ? 10.5 : 9}
                         fill={pal.legendBox.fill}
                         stroke={isPinned ? pal.legendHeadline : isHot ? hotStroke : pal.flowEdge}
                         strokeWidth={isPinned ? 2 : isHot ? 2 : 1.25}
-                        opacity={isLight ? 0.95 : 0.82}
+                        opacity={isLight ? 0.95 : 0.85}
                         data-edge-badge-lifted={(isHoveredEdge || isPinned) ? 'true' : 'false'}
                         data-edge-badge-stroke-width-rest="1.25"
+                        data-edge-badge-opacity={isLight ? 0.95 : 0.85}
                         style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out' }}
                       />
                       {/* Round 224 / Loop: edge badge text gains the 4th
