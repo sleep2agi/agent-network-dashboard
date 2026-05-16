@@ -2506,7 +2506,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           transition: 'background-color 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out',
         }}
       >
-        <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${pal.topRailGradient}`} />
+        {/* Round 265 / Loop: top-rail (1px-tall colored line at the top
+            of the canvas wrapper) picks up theme-toggle transition.
+            Pre-R265 the className `bg-gradient-to-r ${pal.topRail
+            Gradient}` was theme-conditional — cyber `via-cyan-400/70`
+            ↔ light `via-emerald-500/40` — but no inline transition,
+            so the rail SNAPPED on theme flip while the wrapper bg
+            (R254) + border (R254) + shadow (R263) all eased. The top-
+            rail is the THIN BRIGHT LINE that visually anchors the
+            canvas top edge — its hard color flip was a small but real
+            theme-snap that broke the otherwise-eased canvas envelope.
+            transition: background-image catches the className-driven
+            gradient swap; Chrome ≥ 89 / Safari ≥ 14.1 / FF ≥ 96
+            interpolate linear-gradients with matching stop structures
+            (both gradients are `from-transparent via-X to-transparent`
+            → same 3-stop layout). data-topo-top-rail makes the probe
+            deterministic. */}
+        <div
+          className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${pal.topRailGradient}`}
+          data-topo-top-rail
+          style={{ transition: 'background-image 200ms ease-out' }}
+        />
 
         {/* Round 158 / Loop: give the canvas SVG itself an accessible
             name + role description. R151-R157 added a11y to every
