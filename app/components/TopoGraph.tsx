@@ -1429,8 +1429,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   → active button responds too, says 'still clickable'
               data-topo-chrome-layout for testability symmetric with the
               R154 chrome buttons (data-topo-chrome-zoom-in / -reset /
-              -fullscreen etc). */}
-          <div className="inline-flex rounded-md border border-gray-500/25 overflow-hidden" role="group" aria-label="Topology layout">
+              -fullscreen etc).
+
+              Round 260 / Loop: chip-row semantic gap — Layout toggle is
+              the only CONTROL in the chip row; everything that follows
+              (working / online / pressure / vendor letters / active-
+              links / filter pills / freshness) is READ-ONLY display.
+              Pre-R260 all 8 children sat at uniform gap-2 (8px) — the
+              spatial signal read as "8 separate things" instead of
+              "1 control + 7 display". mr-1 (4px) on the Layout toggle
+              stacks on top of the parent flex's gap-2 (8px) for an
+              effective 12px gap before the first status chip — same
+              law-of-proximity pattern R255 applied to the bottom-right
+              chrome strip (fleet vs view groups). data-topo-chrome-
+              layout-trailer marks the boundary surface for the gap
+              probe. */}
+          <div className="mr-1 inline-flex rounded-md border border-gray-500/25 overflow-hidden" role="group" aria-label="Topology layout" data-topo-chrome-layout-trailer>
             <button
               onClick={() => { popChrome('layout-ring'); if (layout !== 'ring') toggleLayout(); }}
               aria-pressed={layout === 'ring'}
