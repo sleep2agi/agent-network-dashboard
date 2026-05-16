@@ -2954,8 +2954,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               simultaneously without competing. Same bucket
               thresholds (0 / 1-2 / 3-5 / 6+) the R84 block uses
               at line ~2702 so the two cadences stay in sync if
-              a future refactor shifts buckets. */}
-          {!isLight && (() => {
+              a future refactor shifts buckets.
+
+              Round 276 / Loop: orbit particles DISABLED by default
+              per Vincent 5214/5215-5217 visual-audit relay
+              (clutter cleanup for Twitter screenshot). The 4
+              particles encode workingCount busyness via speed
+              (R131) + opacity (R216) — but that signal is
+              ALREADY conveyed by:
+                · hub halo opacity breath (R244, R84)
+                · hub digit workingCount text (R130)
+                · pressure-bar working/idle/offline ratio (R31)
+              So orbit particles are info-redundant decoration:
+              they don't add new signal, just add visual noise at
+              the canvas outer edge. R276 gates the render block
+              with `false &&` so the code stays (commented context
+              + tests preserved for hypothetical rollback) but
+              nothing renders. R131 busy-bucket constant + R216
+              opacity-bucket constant are dead code post-R276 —
+              acceptable since the family was R50/R131/R216 and
+              R276 retires the family entirely. Net: 4 fewer
+              moving dots on canvas. */}
+          {false && !isLight && (() => {
             const busy = workingCount === 0 ? 0
                        : workingCount <= 2 ? 1
                        : workingCount <= 5 ? 2
