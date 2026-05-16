@@ -3108,14 +3108,52 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       Exit remains snap — matches R190's "fade-IN
                       smooth, accept exit snap" trade-off used for
                       the R129 hot-tail. */}
+                  {/* Round 230 / Loop: tabular-nums on the 3 status pips
+                      so the count digit doesn't jitter the adjacent
+                      pip when a tier crosses 9 → 10. The pips render
+                      in sequence at dx=8/4/4 — width-shift on any
+                      tier propagates rightward through the strip,
+                      visibly compressing or stretching the gap
+                      between adjacent tier chips. Tabular locks the
+                      digit so the strip stays stable as tiers grow.
+                      6th surface in the info-density tabular-nums
+                      sweep after R224 edge badge / R225 hub digit /
+                      R225 panel header / R225 recent row count /
+                      R229 group-label count. Tier-specific fill
+                      colours stay (semantic — working green /
+                      idle teal / offline slate). */}
                   {box.statuses.working > 0 && (
-                    <tspan dx="8" fill={isLight ? '#059669' : '#22c55e'} fontSize="11" fontWeight="600" className="anet-fade-in" data-group-pip="working">{box.statuses.working}w</tspan>
+                    <tspan
+                      dx="8"
+                      fill={isLight ? '#059669' : '#22c55e'}
+                      fontSize="11"
+                      fontWeight="600"
+                      className="anet-fade-in"
+                      data-group-pip="working"
+                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                    >{box.statuses.working}w</tspan>
                   )}
                   {box.statuses.idle > 0 && (
-                    <tspan dx="4" fill={isLight ? '#0d9488' : '#2dd4bf'} fontSize="11" fontWeight="600" className="anet-fade-in" data-group-pip="idle">{box.statuses.idle}i</tspan>
+                    <tspan
+                      dx="4"
+                      fill={isLight ? '#0d9488' : '#2dd4bf'}
+                      fontSize="11"
+                      fontWeight="600"
+                      className="anet-fade-in"
+                      data-group-pip="idle"
+                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                    >{box.statuses.idle}i</tspan>
                   )}
                   {box.statuses.offline > 0 && (
-                    <tspan dx="4" fill={isLight ? '#94a3b8' : '#6b7280'} fontSize="11" fontWeight="600" className="anet-fade-in" data-group-pip="offline">{box.statuses.offline}o</tspan>
+                    <tspan
+                      dx="4"
+                      fill={isLight ? '#94a3b8' : '#6b7280'}
+                      fontSize="11"
+                      fontWeight="600"
+                      className="anet-fade-in"
+                      data-group-pip="offline"
+                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                    >{box.statuses.offline}o</tspan>
                   )}
                 </text>
                 </g>
