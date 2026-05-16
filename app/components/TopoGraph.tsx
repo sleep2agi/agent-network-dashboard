@@ -5610,12 +5610,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           ring stroke) to the same beat so the node reads
                           as one coordinated status change.
                           data-node-alias-text exposes the gate for tests. */}
+                      {/* Round 305 / Loop: node alias label text picks
+                          up the pin-signature letter-spacing family
+                          (R219 / R220) when the node is the chat
+                          target. The alias is the per-node identity
+                          label inside the label card; when chat is
+                          open targeting this node, R242 already adds
+                          a cyan-tint stroke to the card. R305 brings
+                          the alias text into the same pin-signature
+                          family — letter-spacing 0px → 0.5px when
+                          chatAlias === session.alias. Same vocabulary
+                          R219 established for recent-row text (line
+                          ~6354), legend-row text (~6881), and the
+                          R220 edge-badge text (~4327, with 0.4 for
+                          hot/pin). Now the per-node alias has its
+                          own pin signature when chat is open on it.
+                          transition list extends 'letter-spacing
+                          200ms ease-out' so it eases alongside the
+                          existing 300ms fill transition. */}
                       <text
                         x="0" y="1" textAnchor="middle"
                         fill={status.text}
                         fontSize={aliasFs} fontFamily="monospace" fontWeight="700"
                         data-node-alias-text={session.alias}
-                        style={{ transition: 'fill 300ms ease-out' }}
+                        data-node-alias-chat-target={chatAlias === session.alias ? 'true' : 'false'}
+                        style={{
+                          transition: 'fill 300ms ease-out, letter-spacing 200ms ease-out',
+                          letterSpacing: chatAlias === session.alias ? '0.5px' : '0px',
+                        }}
                       >
                         {truncate(session.alias, fullMax)}
                       </text>
