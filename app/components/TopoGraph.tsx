@@ -6280,7 +6280,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               const rows = [
                 { key: 'working' as const, y0: 32, y1: 36, fill: isLight ? '#059669' : '#22c55e', label: 'working node', count: workingCount },
                 { key: 'idle'    as const, y0: 56, y1: 60, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle',  count: idleCount },
-                { key: 'offline' as const, y0: 80, y1: 84, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline / no SSE', count: offlineNodes.length },
+                /* Round 269 / Loop: " / " → " · " delimiter unification.
+                   R138 swept the recent-signal row separators from
+                   ASCII " / " to typographic " · " (matching filter
+                   pills, node tooltips, edge badges, active-links
+                   tooltip). The legend's offline-row label was the
+                   LAST hardcoded " / " holdover in TopoGraph. Same
+                   monospace cell width (no layout shift), completes
+                   the R138 delimiter sweep. */
+                { key: 'offline' as const, y0: 80, y1: 84, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline · no SSE', count: offlineNodes.length },
               ];
               return rows;
             })().map(row => {
