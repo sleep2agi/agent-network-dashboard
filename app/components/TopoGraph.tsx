@@ -4972,25 +4972,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      all preserved. data-edge-particle-radius attr
                      exposes the value for tests. */
                   <circle
-                    r="4.5"
+                    /* Round 439 / Loop: edge flow particle radius hover
+                       lift — r 4.5 → 5.5 on (isHoveredEdge ||
+                       isEndpointHoveredEdge). Continues edge paint-
+                       layer parity arc (R436 visible path sw / R437
+                       flow-rail sw / R439 particle r) so the whole
+                       edge surface — including the moving particle —
+                       lifts on hover, not just the static stripes.
+                       +1px radius gives ~50% area boost. Subtler than
+                       1.4× sw bump on visible path because the
+                       particle is already small + motion-bright;
+                       +1px reads as "the dot caught attention"
+                       without overshadowing the path lift. R252
+                       transition list extends to include r 200ms so
+                       the size change eases under the same fill/
+                       opacity cadence. */
+                    r={(isHoveredEdge || isEndpointHoveredEdge) ? 5.5 : 4.5}
                     fill={pal.flowParticle}
                     filter={isLight ? undefined : 'url(#topo-glow)'}
                     opacity={Math.min(1, fresh * edgeOpacityMul)}
                     data-edge-particle={link.key}
-                    data-edge-particle-radius="4.5"
-                    /* Round 252 / Loop: particle picks up fill +
-                       opacity transition for theme-toggle smoothing.
-                       Pre-R252 pal.flowParticle (cyber #fef08a yellow
-                       ↔ light #f59e0b amber) snapped on theme toggle
-                       while every other edge element eased (R245
-                       paths, R251 badge, R242 chat-target, R233
-                       endpoint ring). opacity is freshness-driven so
-                       it transitions per-frame as fresh decays anyway
-                       — but adding opacity to the explicit transition
-                       list also covers theme toggle (R3 className
-                       transition-opacity duration-300 was previously
-                       absent on this circle). */
-                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out' }}
+                    data-edge-particle-radius={(isHoveredEdge || isEndpointHoveredEdge) ? 5.5 : 4.5}
+                    data-edge-particle-lifted={(isHoveredEdge || isEndpointHoveredEdge) ? 'true' : 'false'}
+                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out, r 200ms ease-out' }}
                   >
                     <animateMotion
                       dur={`${duration}s`}
