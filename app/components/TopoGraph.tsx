@@ -7486,6 +7486,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       surface. transition list extends letter-spacing
                       200ms ease-out alongside the existing opacity/
                       fill easings. */}
+                  {/* Round 368 / Loop: `+N more flows` footer text gains
+                      fontWeight=500 (font-medium tier). Sibling small-
+                      text fw lift family with R363 recent-row alias
+                      + R364 legend-row label + R366 group-label count
+                      — all four lifts share the same theory: at small
+                      fontSize (9-11 px) against panel chrome, SVG-
+                      default fw 400 sits at the legibility floor;
+                      fw 500 brings the glyph into the deliberate-data
+                      band. fontStyle=italic + opacity 0.55 rest + R325
+                      letterSpacing 0.2 baseline + R344 hover-spread
+                      0.2 → 0.3 + R195 cyan fill on hover all preserved
+                      — the fw bump just thickens the italic stroke.
+                      Hover-state punch (R195 fill + R325 opacity 0.55
+                      → 0.85 + R344 letter-spacing + R133 underline)
+                      stays as is, so the rest-vs-hover delta still
+                      reads clearly. data-recent-panel-more-font-weight
+                      attr exposes the value for tests. */}
                   <text
                     x="115" y="82"
                     textAnchor="middle"
@@ -7493,11 +7510,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     fontSize="9"
                     fontFamily="monospace"
                     fontStyle="italic"
+                    fontWeight="500"
                     letterSpacing={hoveredRecentMore ? '0.3' : '0.2'}
                     opacity={hoveredRecentMore ? 0.85 : 0.55}
                     textDecoration={hoveredRecentMore ? 'underline' : 'none'}
                     data-recent-panel-more={moreCount}
                     data-recent-panel-more-hovered={hoveredRecentMore ? 'true' : 'false'}
+                    data-recent-panel-more-font-weight="500"
                     style={{ transition: 'opacity 150ms ease-out, fill 200ms ease-out, letter-spacing 200ms ease-out' }}
                   >
                     {`+ ${moreCount}`}
