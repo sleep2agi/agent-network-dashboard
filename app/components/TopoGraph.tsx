@@ -3055,7 +3055,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       the node↔label guard still catches if the chip ever
                       pushes the label far enough right to clip a node.
                       Smaller + lighter weight reads as metadata, not name. */}
-                  <tspan dx="6" fill={pal.legendText} fontSize="11" fontWeight="400">· {box.count}</tspan>
+                  {/* Round 229 / Loop: member-count chip drops its explicit
+                      fill so it inherits from the parent <text>, which means
+                      R142's hover-fill transition (legendText → legend-
+                      Headline, 200ms ease-out) NOW carries the count chip
+                      with it. Pre-R229 the parent name brightened on
+                      hover while the count tspan stayed at legendText —
+                      "name lit, count dimmer than at rest" inverted the
+                      tonal hierarchy. Inheriting matches the name's
+                      transition; both rest and hover keep the SAME
+                      tonal relationship between name and count.
+                      7th surface in the hover-deepen-own-hue family
+                      (legend rows, chip-row counts, status pip, recent
+                      row text, pressure-bar segments, group-box fill +
+                      this round's group-label-count chip).
+
+                      Also picks up tabular-nums (5th surface in the
+                      info-density tabular-nums sweep after R224 edge
+                      badge / R225 hub digit / R225 panel header /
+                      R225 recent row count). The member count rolls
+                      over often (4→5→…→9→10 as a group grows) and
+                      lives at a fixed dx=6 offset from the name, so a
+                      digit-width jitter at 9→10 used to shift the
+                      whole count visibly. Tabular locks it. */}
+                  <tspan
+                    dx="6"
+                    fontSize="11"
+                    fontWeight="400"
+                    data-group-label-count={box.key}
+                    data-group-label-count-value={box.count}
+                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                  >· {box.count}</tspan>
                   {/* Round 58 / Loop: status mix pip strip. Compact text-
                       based chips (e.g. "2w 1i") so the strip stays inside
                       the same <text> bbox the overlap-test reads — keeps
