@@ -3566,7 +3566,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      multiple). Edge order is stable (sorted by recent
                      activity), so the offsets feel calm rather than
                      reshuffling each refresh. */
-                  <circle r="4" fill={pal.flowParticle} filter={isLight ? undefined : 'url(#topo-glow)'} opacity={Math.min(1, fresh * edgeOpacityMul)}>
+                  <circle
+                    r="4"
+                    fill={pal.flowParticle}
+                    filter={isLight ? undefined : 'url(#topo-glow)'}
+                    opacity={Math.min(1, fresh * edgeOpacityMul)}
+                    data-edge-particle={link.key}
+                    /* Round 252 / Loop: particle picks up fill +
+                       opacity transition for theme-toggle smoothing.
+                       Pre-R252 pal.flowParticle (cyber #fef08a yellow
+                       ↔ light #f59e0b amber) snapped on theme toggle
+                       while every other edge element eased (R245
+                       paths, R251 badge, R242 chat-target, R233
+                       endpoint ring). opacity is freshness-driven so
+                       it transitions per-frame as fresh decays anyway
+                       — but adding opacity to the explicit transition
+                       list also covers theme toggle (R3 className
+                       transition-opacity duration-300 was previously
+                       absent on this circle). */
+                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out' }}
+                  >
                     <animateMotion
                       dur={`${duration}s`}
                       begin={`-${stagger.toFixed(3)}s`}
@@ -3594,7 +3613,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     stroke={pal.flowEdge}
                     strokeWidth="1.5"
                     opacity="0"
-                    style={{ pointerEvents: 'none' }}
+                    /* Round 252 / Loop: stroke transition for theme
+                       toggle. SMIL animates r + opacity continuously;
+                       stroke is static per render but theme-driven
+                       (pal.flowEdge: cyber cyan ↔ light emerald). */
+                    style={{ pointerEvents: 'none', transition: 'stroke 200ms ease-out' }}
                     data-arrival-ping={link.key}
                   >
                     {/* Round 228 / Loop: pulse-pop ease curves on the
@@ -3656,7 +3679,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     stroke={pal.flowEdge}
                     strokeWidth="1.5"
                     opacity="0"
-                    style={{ pointerEvents: 'none' }}
+                    /* Round 252 / Loop: stroke transition for theme
+                       toggle. Same idiom as arrival ping above. */
+                    style={{ pointerEvents: 'none', transition: 'stroke 200ms ease-out' }}
                     data-dispatch-pulse={link.key}
                   >
                     {/* Round 228 / Loop: same pulse-pop curves as the
