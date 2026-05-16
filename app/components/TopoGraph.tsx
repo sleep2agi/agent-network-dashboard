@@ -2259,7 +2259,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="status"
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedStatus(null)}
               style={{
@@ -2297,7 +2297,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="group"
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedGroup(null)}
               style={{
@@ -2347,7 +2347,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="vendor"
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear vendor filter'}
               onClick={() => setPinnedVendor(null)}
               style={{
@@ -2395,7 +2395,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-filter-match-count={link.count}
               data-filter-match-aliases={`${link.from},${link.to}`}
               data-active-filter-edge-hot={isHot ? 'true' : 'false'}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-xs border anet-fade-in anet-topo-chip-focus"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
               title={`${link.from} → ${link.to} (${link.count} msg${link.count === 1 ? '' : 's'}${isHot ? ', hot lane · ≥ 10' : ''}) — click to clear`}
               onClick={() => setPinnedEdgeKey(null)}
               style={{
