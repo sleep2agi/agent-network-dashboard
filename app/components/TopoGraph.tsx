@@ -2988,7 +2988,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        box-shadow + R354 glyph hover transform all
                        preserved. data-vendor-letter-hover-lift attr
                        surfaces the lift for tests. */
-                    className="tabular-nums font-medium inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu hover:-translate-y-px"
+                    // R417: `group` parent enables the count suffix to
+                    // brighten on chip hover via group-hover:opacity-100
+                    // — sibling to R355 filter-pill prefix/suffix + R414
+                    // chip-row unit brighten. Closes the inner-span
+                    // hover-brighten family at the vendor chip surface.
+                    className="group tabular-nums font-medium inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu hover:-translate-y-px"
                     data-vendor-letter={v.initial}
                     data-vendor-letter-count={v.count}
                     data-vendor-letter-hover-lift="true"
@@ -3105,8 +3110,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         reads it as "deliberate subordinate metadata"
                         rather than near-invisible chrome. data-vendor-
                         letter-count exposes the span for tests. */}
+                    {/* R417: count suffix opacity-70 + group-hover:
+                        opacity-100 brightens on chip hover. Inner-span
+                        hover-brighten family (3rd anchor) — sibling to
+                        R355 filter pill prefix/suffix and R414 chip-row
+                        unit. Effective shade at rest: text-gray-400 ×
+                        70 % alpha; on hover: full gray-400. The label-
+                        tier-vs-glyph differentiation persists on hover
+                        since the glyph (R369 fw=600) stays at full
+                        opacity. R333 :{count} format preserved. */}
                     <span
-                      className="text-gray-400 tabular-nums"
+                      className="text-gray-400 tabular-nums opacity-70 transition-opacity duration-200 group-hover:opacity-100"
                       data-vendor-letter-count-suffix
                     >:{v.count}</span>
                   </span>
