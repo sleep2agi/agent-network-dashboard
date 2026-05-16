@@ -5383,13 +5383,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 + 300ms opacity transition + pointerEvents:none all
                 preserved. data-topo-hub-highlight-radius attr exposes
                 the value for tests. */}
+            {/* Round 386 / Loop: hub-highlight idle opacity 0.9 → 0.95.
+                When workingCount===0 the highlight paints as the visible
+                idle "lamp lit but no work" core (R130 takeover gate).
+                Pre-R386 idle opacity was 0.9 — a ~6 % fade against full
+                paint that read as slightly-dimmed-ghost on the focal
+                point. R386 lifts to 0.95 (idle alpha gap halved 0.10
+                → 0.05) so the canvas anchor reads more confidently
+                as a present-but-idle state rather than a faded ghost.
+                Theme-consistency / canvas-presence polish family (4th
+                anchor):
+                  R370 hub hover-ring opacity 0.7 → 0.8 cyber
+                  R371 edge-badge rest opacity 0.82 → 0.85 cyber
+                  R372 minimap offline-dot opacity 0.5 → 0.6
+                  R386 hub-highlight idle opacity 0.9 → 0.95 (this round)
+                opacity=0 when working preserved so the hub-digit's
+                R130 takeover stays seamless. 300ms opacity transition
+                + R213 always-mount opacity-gate + pointerEvents:none
+                + R365 r=5.5 all preserved. data-topo-hub-highlight-
+                opacity attr exposes the resolved value for tests. */}
             <circle
               cx={cx} cy={cy} r="5.5"
               fill="#d1fae5"
-              opacity={workingCount > 0 ? 0 : 0.9}
+              opacity={workingCount > 0 ? 0 : 0.95}
               data-topo-hub-highlight
               data-topo-hub-highlight-visible={workingCount > 0 ? 'false' : 'true'}
               data-topo-hub-highlight-radius="5.5"
+              data-topo-hub-highlight-opacity={workingCount > 0 ? 0 : 0.95}
               style={{
                 pointerEvents: 'none',
                 transition: 'opacity 300ms ease-out',
