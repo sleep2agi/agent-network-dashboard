@@ -3313,8 +3313,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     style={{ pointerEvents: 'none' }}
                     data-arrival-ping={link.key}
                   >
-                    <animate attributeName="r" values="0;14;22" dur={`${duration}s`} begin={`-${(duration * 0.92).toFixed(2)}s`} repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0;0.55;0" dur={`${duration}s`} begin={`-${(duration * 0.92).toFixed(2)}s`} repeatCount="indefinite" />
+                    {/* Round 228 / Loop: pulse-pop ease curves on the
+                        arrival ping SMIL — extends R227's keySplines
+                        adoption from the click ripple (one-shot, two-
+                        value linear) to the canvas's repeating delivery-
+                        confirmation surfaces. Both <animate>s use
+                        calcMode=spline with keyTimes='0;0.5;1' (two
+                        segments).
+                        • r grows 0→14→22 (monotonic): unified ease-out
+                          across both segments — the ring decelerates
+                          as it expands, settling at its widest.
+                        • opacity bumps 0→0.55→0 (pulse): ease-out on
+                          the rise (fast appearance), ease-in on the
+                          fall (slow start of fade then accelerates) —
+                          the canonical "pulse-pop" kinetic shape.
+                        Together r decelerating and opacity pulse-popping
+                        give the arrival ping a real-event physicality
+                        instead of the prior linear-velocity tick. */}
+                    <animate
+                      attributeName="r"
+                      values="0;14;22"
+                      dur={`${duration}s`}
+                      begin={`-${(duration * 0.92).toFixed(2)}s`}
+                      repeatCount="indefinite"
+                      calcMode="spline"
+                      keyTimes="0;0.5;1"
+                      keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0;0.55;0"
+                      dur={`${duration}s`}
+                      begin={`-${(duration * 0.92).toFixed(2)}s`}
+                      repeatCount="indefinite"
+                      calcMode="spline"
+                      keyTimes="0;0.5;1"
+                      keySplines="0.25 0.1 0.25 1;0.42 0 1 1"
+                    />
                   </circle>
                 )}
                 {/* Round 76 / Loop: source dispatch pulse — mirror to the
@@ -3340,8 +3375,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     style={{ pointerEvents: 'none' }}
                     data-dispatch-pulse={link.key}
                   >
-                    <animate attributeName="r" values="0;12;18" dur={`${duration}s`} begin="0s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0;0.45;0" dur={`${duration}s`} begin="0s" repeatCount="indefinite" />
+                    {/* Round 228 / Loop: same pulse-pop curves as the
+                        arrival ping above. r ease-out + opacity
+                        ease-out→ease-in. The dispatch pulse is smaller
+                        (0→12→18 vs arrival's 0→14→22), but the kinetic
+                        feel should be identical — both bookend a
+                        single message in flight, so they should
+                        physically ease the same way. */}
+                    <animate
+                      attributeName="r"
+                      values="0;12;18"
+                      dur={`${duration}s`}
+                      begin="0s"
+                      repeatCount="indefinite"
+                      calcMode="spline"
+                      keyTimes="0;0.5;1"
+                      keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0;0.45;0"
+                      dur={`${duration}s`}
+                      begin="0s"
+                      repeatCount="indefinite"
+                      calcMode="spline"
+                      keyTimes="0;0.5;1"
+                      keySplines="0.25 0.1 0.25 1;0.42 0 1 1"
+                    />
                   </circle>
                 )}
                 {/* Round 100 / Loop: midpoint count badge for high-
