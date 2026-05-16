@@ -6724,8 +6724,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    tooltip). The legend's offline-row label was the
                    LAST hardcoded " / " holdover in TopoGraph. Same
                    monospace cell width (no layout shift), completes
-                   the R138 delimiter sweep. */
-                { key: 'offline' as const, y0: 68, y1: 72, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline · no SSE', count: offlineNodes.length },
+                   the R138 delimiter sweep.
+                   Round 307 / Loop: drop the ' · no SSE' qualifier.
+                   'offline · no SSE' (16 chars) → 'offline' (7 chars).
+                   The visual already communicates the same idea
+                   redundantly: status ring strokeDasharray='5 5' for
+                   offline nodes (line ~5193) + gray fill + offline
+                   row's own gray swatch. Text qualifier was
+                   technical disambiguation that the visual encodes
+                   directly. Same R275-R281/R290/R291/R294 减法
+                   register — remove redundant text the eye doesn't
+                   need. Sibling row labels 'working node' (12 chars)
+                   + 'online idle' (11 chars) read at roughly the
+                   same length now too — legend rows look more
+                   balanced across the 3 lines. */
+                { key: 'offline' as const, y0: 68, y1: 72, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline', count: offlineNodes.length },
               ];
               return rows;
             })().map(row => {
