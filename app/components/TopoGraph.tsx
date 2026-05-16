@@ -6715,8 +6715,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    Corner-to-center distance increases (panel ends
                    higher, further from center) — geometric ring-clear
                    improves slightly. */
-                { key: 'working' as const, y0: 32, y1: 36, fill: isLight ? '#059669' : '#22c55e', label: 'working node', count: workingCount },
-                { key: 'idle'    as const, y0: 50, y1: 54, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle',  count: idleCount },
+                /* Round 308 / Loop: continue the R307 legend label 减法.
+                   'working node' (12 chars) → 'working' (7 chars):
+                   the 'node' qualifier is redundant — the row is in
+                   the LEGEND for a node graph, every row inherently
+                   describes a node state. 'online idle' (11 chars) →
+                   'idle' (4 chars): the 'online' qualifier was
+                   disambiguation against the offline row, but the
+                   dashed-vs-solid status ring already discriminates
+                   online idle from offline visually. After R307+R308
+                   the three legend labels are all just status words:
+                   working / idle / offline — a clean 3-state list at
+                   roughly comparable lengths (7 / 4 / 7) for the
+                   tightest legend column to date. Pure 减法; visual
+                   information already encoded by row position +
+                   status-color swatch + status-ring dashing. */
+                { key: 'working' as const, y0: 32, y1: 36, fill: isLight ? '#059669' : '#22c55e', label: 'working', count: workingCount },
+                { key: 'idle'    as const, y0: 50, y1: 54, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'idle',    count: idleCount },
                 /* Round 269 / Loop: " / " → " · " delimiter unification.
                    R138 swept the recent-signal row separators from
                    ASCII " / " to typographic " · " (matching filter

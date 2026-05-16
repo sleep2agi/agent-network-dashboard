@@ -69,8 +69,9 @@ await browser.close();
 const results = {
   offline_label_simplified:        probe.offlineText === 'offline',
   offline_label_no_sse_dropped:    !/no SSE/i.test(probe.offlineText),
-  working_label_kept:              probe.workingText === 'working node',
-  idle_label_kept:                 probe.idleText === 'online idle',
+  // R308 superseded the working/idle assertions — both labels were
+  // simplified further (working node → working, online idle → idle).
+  // Keep this test focused on R307's offline simplification.
   r306_layout_ring_1_kept:         probe.layoutRingCls.includes('focus-visible:ring-1'),
   r306_layout_no_ring_2:           !probe.layoutRingCls.includes('focus-visible:ring-2'),
   r305_alias_chat_target_attr:     probe.aliasChatTargetAttr,
