@@ -3767,8 +3767,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     cycle (≈when the particle arrives). Gated by
                     reducedMotion and on fresh > 0.5 — stale edges that
                     haven't fired in minutes don't need the eye-grab.
-                    data-arrival-ping for testability. */}
-                {!reducedMotion && fresh > 0.5 && (
+                    data-arrival-ping for testability.
+
+                    Round 279 / Loop: arrival ping RETIRED (R75 + R228
+                    + R231 + R252 family) per 减法 cut #5. Per active
+                    edge the SMIL family was: particle (R50
+                    animateMotion) + arrival ping (R75 r+opacity SMIL)
+                    + dispatch pulse (R76 r+opacity SMIL). For a 5-
+                    edge fleet that's 5×3 = 15 simultaneous SMIL.
+                    The PARTICLE (a moving dot along the path) is the
+                    primary "data flowing from A → B" visual signal;
+                    ping + pulse are secondary "arrival/dispatch
+                    confirmation" that the moving particle already
+                    conveys. Cull ping + pulse, keep particle.
+                    `false &&` gates the render; code preserved for
+                    rollback. */}
+                {false && !reducedMotion && fresh > 0.5 && (
                   <circle
                     cx={to.x}
                     cy={to.y}
@@ -3833,8 +3847,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     alive. Same fresh/reducedMotion gates as R75. Slightly
                     smaller radius (0→12→18 vs R75's 0→14→22) so the
                     source reads as "smaller event than arrival" — the
-                    destination is the meaningful endpoint. */}
-                {!reducedMotion && fresh > 0.5 && link.count >= 3 && (
+                    destination is the meaningful endpoint.
+
+                    Round 279 / Loop: dispatch pulse RETIRED with the
+                    arrival ping (R75) above — same 减法 rationale.
+                    Particle remains as the sole "data flow" SMIL
+                    signal per active edge. */}
+                {false && !reducedMotion && fresh > 0.5 && link.count >= 3 && (
                   <circle
                     cx={from.x}
                     cy={from.y}
