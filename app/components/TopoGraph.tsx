@@ -6733,6 +6733,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       y=82 → underline ~y=85-86, panel bottom y=88 →
                       2-3px clear (R256 footer-breath invariant
                       preserved). */}
+                  {/* Round 325 / Loop: footer link joins the editorial
+                      letter-spacing family at 0.2px — same axis as
+                      R302 empty-state main hint (fontSize 10 opacity
+                      0.65). The footer is italic monospace fontSize 9
+                      opacity 0.55 acting as the panel's primary
+                      navigation affordance into /messages; pre-R325
+                      it sat orphaned from the R285/R289/R301/R302/R304
+                      editorial-spacing axis even though it carried
+                      the same designed-label semantics (action label,
+                      not row data). 0.2px is the same value as R302
+                      because at fontSize 9 vs 10 the visual density
+                      of "+ N more flows" is close to "no flow yet"
+                      and they're both italic — sibling-equal in the
+                      hierarchy. The R195 cyan-hover + R259 fontSize
+                      bump stay; this round only adds the spacing.
+                      6-axis editorial-letterspacing hierarchy now:
+                        R285 kicker:        1.2px (eyebrow loud)
+                        R289 watermark:     0.5px (wordmark brand)
+                        R301 panel titles:  0.3px (section headers)
+                        R302 empty main:    0.2px (empty-state hint)
+                        R325 footer link:   0.2px (panel nav action) ← NEW
+                        R304 empty sub:     0.15px (instructional sub) */}
                   <text
                     x="115" y="82"
                     textAnchor="middle"
@@ -6740,6 +6762,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     fontSize="9"
                     fontFamily="monospace"
                     fontStyle="italic"
+                    letterSpacing="0.2"
                     opacity={hoveredRecentMore ? 0.85 : 0.55}
                     textDecoration={hoveredRecentMore ? 'underline' : 'none'}
                     data-recent-panel-more={moreCount}
