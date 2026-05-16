@@ -8773,16 +8773,46 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     smoothView x/y/w/h transition all preserved.
                     data-topo-minimap-viewport-linejoin attr exposes
                     the value for tests. */}
+                {/* Round 393 / Loop: minimap viewport rect rx 0 → 2.
+                    Pre-R393 the cyan-stroked viewport rect (the frame
+                    showing what's currently visible on the canvas)
+                    drew with sharp corners inside the R332 rounded
+                    minimap container (rx=8). A small frame with sharp
+                    corners sitting inside a rounded container reads
+                    as visually loud — the 90° corners catch the eye
+                    against the soft container edge. R393 adds rx=2
+                    so the viewport corners get a subtle radius that
+                    matches the family's softening idiom on a sub-
+                    element scale. The R379 strokeLinejoin='round'
+                    already softens stroke joins; R393 adds a complete
+                    geometric soften via rx.
+                    Corner-radius cascade (7 anchors now):
+                      R330 canvas             rx 12
+                      R331 panels             rx 10
+                      R332 minimap container  rx 8
+                      R375 Layout-toggle      rx 8
+                      R376 nodeSize/zoom      rx 8
+                      R390 hover-detail       rx 10
+                      R393 minimap viewport   rx 2  (this round, sub-element)
+                    The 2-px radius is intentionally small — the
+                    viewport rect is typically only 30-50px wide,
+                    where rx=2 reads as "rounded enough to not snap"
+                    without feeling pillowy. data-topo-minimap-
+                    viewport-rx attr exposes the resolved value
+                    for tests. R346 hover-state tweens (strokeWidth
+                    + opacity) preserved verbatim. */}
                 <rect
                   x={Math.max(0, rectX)} y={Math.max(0, rectY)}
                   width={Math.max(0, Math.min(MW - Math.max(0, rectX), rectW))}
                   height={Math.max(0, Math.min(MH - Math.max(0, rectY), rectH))}
+                  rx="2"
                   fill="none" stroke={pal.legendAccent}
                   // R346: strokeWidth + opacity tween on container hover.
                   strokeWidth={hoveredMinimap ? '1.75' : '1.5'}
                   strokeLinejoin="round"
                   opacity={hoveredMinimap ? '1' : '0.9'}
                   data-topo-minimap-viewport
+                  data-topo-minimap-viewport-rx="2"
                   data-topo-minimap-viewport-smooth={smoothView ? 'true' : 'false'}
                   data-topo-minimap-viewport-hover={hoveredMinimap ? 'true' : 'false'}
                   data-topo-minimap-viewport-linejoin="round"
