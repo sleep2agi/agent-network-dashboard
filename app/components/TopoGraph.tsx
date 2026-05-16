@@ -6728,20 +6728,62 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     stroke-width="3"/"1.5" still works against the
                     DOM attribute value (React-rendered, not
                     interpolated). */}
-                <circle
-                  cx={pos.x}
-                  cy={pos.y}
-                  r={radius}
-                  fill={isOnline ? pal.nodeFill.online : pal.nodeFill.offline}
-                  stroke={status.primary}
-                  strokeWidth={isOnline ? 3 : 1.5}
-                  strokeDasharray={isOnline ? 'none' : '5 5'}
-                  filter={isOnline && !isLight ? 'url(#topo-glow)' : undefined}
-                  data-node-status-ring={status.label}
-                  style={{
-                    transition: 'fill 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out',
-                  }}
-                />
+                {(() => {
+                  /* Round 438 / Loop: status ring strokeWidth hover lift —
+                     when hoveredAlias matches, the node's status ring
+                     thickens by +0.5: online 3 → 3.5, offline 1.5 → 2.
+                     Same absolute delta as R435 hub-spoke (idle 1→1.25
+                     used Δ +0.25 because rest base was thinner; status
+                     ring's heavier rest values 1.5/3 need a bigger
+                     +0.5 to register as visible thickening).
+                     Status-ring axis joins the node-hover cue stack
+                     (now 9 layers including link surfaces):
+                       R26  group translateY -2px           per-node geometry
+                       R217 stroke tint legendAccent        per-node card
+                       R142 drop-shadow boost               per-node card
+                       R427 alias letter-spacing            per-node text
+                       R428 sub-text letter-spacing         per-node text
+                       R429 body opacity 0.94 → 1.0         per-node card
+                       R430 hub-spoke α+                    link to hub (paint)
+                       R435 hub-spoke sw+                   link to hub (geo)
+                       R94  edge α 1.7×                     inter-node link (paint)
+                       R436 edge sw 1.15×                   inter-node link (geo)
+                       R437 flow-rail sw 1 → 1.5            edge paint-layer
+                       R438 status-ring sw +0.5             ring geometry  ← this round
+                     R51 sentinel safety: rest values 3 / 1.5 unchanged
+                     so the overlap-test selector `circle[stroke-width=
+                     "3"]` / `circle[stroke-width="1.5"]` inside
+                     g[data-node] still matches at rest. Hover values
+                     3.5 / 2 are not in the reserved {1.5, 3} set so
+                     the selector wouldn't match them anyway; but the
+                     test runs WITHOUT hover so this never matters
+                     in practice. R167 stroke-width 300ms transition
+                     already in the style list eases the lift for
+                     free. data-node-status-ring-hovered exposes the
+                     gate for tests. */
+                  const isRingHovered = !reducedMotion && hoveredAlias === session.alias;
+                  const ringStrokeWidth = isOnline
+                    ? (isRingHovered ? 3.5 : 3)
+                    : (isRingHovered ? 2 : 1.5);
+                  return (
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y}
+                      r={radius}
+                      fill={isOnline ? pal.nodeFill.online : pal.nodeFill.offline}
+                      stroke={status.primary}
+                      strokeWidth={ringStrokeWidth}
+                      strokeDasharray={isOnline ? 'none' : '5 5'}
+                      filter={isOnline && !isLight ? 'url(#topo-glow)' : undefined}
+                      data-node-status-ring={status.label}
+                      data-node-status-ring-hovered={isRingHovered ? 'true' : 'false'}
+                      data-node-status-ring-stroke-width={ringStrokeWidth}
+                      style={{
+                        transition: 'fill 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out',
+                      }}
+                    />
+                  );
+                })()}
                 {/* v0.10.0 Hero 1+2 / §3.F server-health node-ring tint.
                     When the host server this agent runs on is in the
                     `red` tier (CPU/Mem/Disk worst-of ≥ 85% per
