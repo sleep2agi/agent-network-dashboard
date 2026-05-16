@@ -2138,7 +2138,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 <span>
                   <span className="hidden sm:inline" data-pin-intersection-prefix>match: </span>
                   {pinDimCount} pins<span className="opacity-70"> · {matchAliases.length}</span>
-                  {isEmpty && <span className="ml-1" aria-hidden>⚠</span>}
+                  {/* Round 237 / Loop: ⚠ warning glyph picks up the
+                      always-mount-opacity-gate idiom. Pre-R237 the
+                      glyph was conditionally rendered on isEmpty,
+                      snap-mounting when filter intersection
+                      narrowed to 0 AND introducing a layout shift
+                      (ml-1 margin appears alongside the glyph,
+                      widening the chip by ~16px). The R236 color
+                      easing made the colour crossing smooth but
+                      the glyph still pop-jumped, breaking the
+                      polish that R236 just installed at this
+                      same chip.
+
+                      Always-mount the glyph with opacity gated by
+                      isEmpty + the same 200ms ease-out that R236
+                      uses on the chip's colour transition. Now the
+                      whole isEmpty crossing — bg, color, border,
+                      AND glyph visibility — eases as one
+                      coordinated 200ms event. ml-1 margin is
+                      reserved permanently, so the chip width
+                      stays stable through the crossing (no
+                      layout-shift jank against neighbouring
+                      chips). data-pin-intersection-warning attr
+                      surfaces the visibility state for test
+                      introspection. 11th surface in the always-
+                      mount-opacity-gate family (R181 / R182 /
+                      R183 / R213 ×2 / R214 / R215 / R221 / R222 /
+                      R223 / R237). */}
+                  <span
+                    className="ml-1"
+                    aria-hidden
+                    data-pin-intersection-warning={isEmpty ? 'true' : 'false'}
+                    style={{ opacity: isEmpty ? 1 : 0, transition: 'opacity 200ms ease-out' }}
+                  >⚠</span>
                 </span>
               </span>
             );
