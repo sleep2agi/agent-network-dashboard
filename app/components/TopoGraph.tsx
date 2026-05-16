@@ -8694,12 +8694,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          preserved so status flips still ease smoothly.
                          data-topo-minimap-dot-radius attr exposes the
                          resolved value for tests. */
+                      /* Round 392 / Loop: minimap online dot opacity
+                         0.9 → 0.95. Theme-consistency / canvas-presence
+                         polish family (7th anchor) — mirrors R386's
+                         hub-highlight idle 0.9 → 0.95 lift on the
+                         minimap surface: the online-dot's idle alpha
+                         gap (0.10 against full presence) halves to
+                         0.05, so the live-fleet anchors on the minimap
+                         read more confidently. Offline dot stays at
+                         R372 0.6 — the binary online/offline contrast
+                         ratio shifts from 0.6/0.9 ≈ 0.67 to 0.6/0.95
+                         ≈ 0.63, preserved as a clear two-tier
+                         distinction. R198 opacity + fill + r transition
+                         list + R384 r=1.9 + R372 offline 0.6 all
+                         preserved. data-topo-minimap-dot-opacity attr
+                         bumps to '0.95' for tests. */
                       r={isOn ? 1.9 : 1.2}
                       fill={st.primary}
-                      opacity={isOn ? 0.9 : 0.6}
+                      opacity={isOn ? 0.95 : 0.6}
                       data-topo-minimap-dot={s.alias}
                       data-topo-minimap-dot-online={isOn ? 'true' : 'false'}
-                      data-topo-minimap-dot-opacity={isOn ? 0.9 : 0.6}
+                      data-topo-minimap-dot-opacity={isOn ? 0.95 : 0.6}
                       data-topo-minimap-dot-radius={isOn ? 1.9 : 1.2}
                       style={{
                         transition: 'opacity 200ms ease-out, fill 200ms ease-out, r 200ms ease-out',
