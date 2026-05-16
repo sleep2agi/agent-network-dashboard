@@ -6683,9 +6683,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 R225 (hub digit) / R224 (edge badge) / R232 (chip-row
                 counts) — tabular-nums sweep continues wherever digits
                 live next to non-digit characters. */}
+            {/* Round 310 / Loop: legend panel-header count picks up
+                fontWeight=600 for parity with R309 per-row count
+                weight. Pre-R310 the header count 'N nodes' rendered
+                at default 400 while the per-row counts (working
+                'N' / idle 'N' / offline 'N') went semibold in R309.
+                Same hierarchy reason as R309: the count is the DATA
+                operators scan; the label ('legend' panel title +
+                row labels 'working/idle/offline') is stable
+                structural anchor. R309 established the rule at the
+                row scope; R310 propagates it up to the panel-
+                summary scope so the count typography is consistent
+                across both the rollup and per-row counts inside
+                the same legend panel. Existing pal.legendAccent
+                fill + tabular-nums + R266 fill transition all
+                preserved. */}
             <text
               x="211" y="21" textAnchor="end"
-              fill={pal.legendAccent} fontSize="10" fontFamily="monospace"
+              fill={pal.legendAccent} fontSize="10" fontFamily="monospace" fontWeight="600"
               data-legend-panel-count
               style={{
                 transition: 'fill 200ms ease-out',
