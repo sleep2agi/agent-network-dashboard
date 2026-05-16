@@ -5169,10 +5169,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     return (
                       <>
                         <circle cx={pos.x} cy={pos.y} r={ar} fill={vendor.mono.bg} stroke={vendor.mono.ring} strokeWidth="1.5" />
+                        {/* Round 284 / Loop: known-vendor monogram letter
+                            swaps fontFamily monospace → system sans-serif.
+                            Continuation of R283 Vincent 5216 "vendor 头像
+                            polish 升级". A single centered letter does not
+                            benefit from monospace's digit-alignment
+                            property — its only effect at this scale is to
+                            land a slightly thinner, more code-text-like
+                            glyph. The system stack ('-apple-system',
+                            'BlinkMacSystemFont', 'Segoe UI', 'Inter',
+                            'sans-serif') picks the OS-preferred designed
+                            sans-serif, which renders a fuller, more
+                            "badge-mark" letterform — narrowing the
+                            visual-quality gap with the 书生 PNG (which is
+                            a hand-designed image). data-monogram-letter
+                            exposes the element for test probing.
+
+                            The prefix-group fallback at line ~5197
+                            INTENTIONALLY stays on monospace — same
+                            contrast pattern R283 established for ring
+                            stroke: "designed glyph" = known vendor,
+                            "code text" = unknown vendor bucket. */}
                         <text
                           x={pos.x} y={pos.y} dy="0.34em" textAnchor="middle"
                           fill={vendor.mono.text} fontSize={ar}
-                          fontFamily="monospace" fontWeight="700"
+                          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif"
+                          fontWeight="700"
+                          data-monogram-letter={vendor.initial}
                         >
                           {vendor.initial}
                         </text>
