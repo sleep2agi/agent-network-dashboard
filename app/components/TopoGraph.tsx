@@ -4092,6 +4092,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // data-topo-hub-spoke-opacity attr exposes the resolved
               // value for tests. R382 strokeLinecap='round' + R51
               // sentinel-safe sw (1 idle / 2 active) preserved.
+              /* Round 430 / Loop: hub-spoke opacity hover lift on
+                 hoveredAlias === session.alias. Adds a "this node's
+                 spoke" affordance to the node-hover gesture — in a
+                 dense ring layout the spokes are visually quiet
+                 (idle α=0.50 dashed, active α=0.80 solid) so hovering
+                 a node didn't telegraph which line connects to it.
+                 R430 lifts the matched spoke's opacity:
+                   idle    0.50 → 0.70   (hover-α=0.70, +0.20)
+                   active  0.80 → 0.95   (hover-α=0.95, +0.15)
+                 The +0.15-to-0.20 lift keeps the active/idle two-tier
+                 distinction (0.95 vs 0.70 still a clear gap) while
+                 making the hovered-node's spoke visibly brighter than
+                 every other spoke at its own activity tier. R241
+                 transition list already covers opacity 250ms so the
+                 lift eases for free. Sibling to R429 label-card body
+                 solidity lift — both surface a single-node-focused
+                 attention cue with the same easing cadence.
+                 Stacks with the 6-layer node hover cue stack at the
+                 inter-node-link scope:
+                   R26  group translateY -2px           (per-node)
+                   R217 stroke tint legendAccent        (per-node card)
+                   R142 drop-shadow boost               (per-node card)
+                   R427 alias letter-spacing            (per-node text)
+                   R428 sub-text letter-spacing         (per-node text)
+                   R429 body opacity 0.94 → 1.0         (per-node card)
+                   R430 spoke opacity α+ (this round)   (link to hub)
+                 data-topo-hub-spoke-hovered exposes the gate. */
+              const isHoveredSpoke = !reducedMotion && hoveredAlias === session.alias;
+              const spokeOpacity = isActiveSpoke
+                ? (isHoveredSpoke ? 0.95 : 0.80)
+                : (isHoveredSpoke ? 0.70 : 0.50);
               return (
                 <path
                   key={`hub-${session.alias}`}
@@ -4101,12 +4132,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth={isActiveSpoke ? 2.25 : 1}
                   strokeDasharray={isActiveSpoke ? 'none' : '6 14'}
                   strokeLinecap="round"
-                  opacity={isActiveSpoke ? 0.8 : 0.50}
+                  opacity={spokeOpacity}
                   className={isActiveSpoke ? undefined : 'anet-topo-spoke-flow'}
                   data-topo-spoke-bucket={isActiveSpoke ? undefined : busy}
                   data-topo-spoke-dur={isActiveSpoke ? undefined : spokeDur}
                   data-topo-hub-spoke-active={isActiveSpoke ? 'true' : 'false'}
-                  data-topo-hub-spoke-opacity={isActiveSpoke ? 0.8 : 0.50}
+                  data-topo-hub-spoke-hovered={isHoveredSpoke ? 'true' : 'false'}
+                  data-topo-hub-spoke-opacity={spokeOpacity}
                   data-topo-hub-spoke-stroke-width-active="2.25"
                   data-topo-hub-spoke-linecap="round"
                   style={{
