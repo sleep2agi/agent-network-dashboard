@@ -2400,7 +2400,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // R355: `group` lets the inner opacity-70 spans (prefix
               // `filter:` + count `· N`) brighten to 100 % on pill hover.
               // Sibling treatment on group + vendor pills below.
-              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedStatus(null)}
               style={{
@@ -2453,7 +2453,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
               // R355 sibling — `group` parent + group-hover on inner spans.
-              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedGroup(null)}
               style={{
@@ -2518,7 +2518,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
               // R355 sibling — `group` parent + group-hover on inner spans.
-              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear vendor filter'}
               onClick={() => setPinnedVendor(null)}
               style={{
@@ -2580,7 +2580,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-filter-match-count={link.count}
               data-filter-match-aliases={`${link.from},${link.to}`}
               data-active-filter-edge-hot={isHot ? 'true' : 'false'}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={`${link.from} → ${link.to} (${link.count} msg${link.count === 1 ? '' : 's'}${isHot ? ', hot lane · ≥ 10' : ''}) — click to clear`}
               onClick={() => setPinnedEdgeKey(null)}
               style={{
