@@ -4502,6 +4502,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out, stroke 300ms ease-out',
                   }}
                 />
+                {/* Round 378 / Loop: edge flow-path dashed-rail picks
+                    up strokeLinecap='round'. Pre-R378 the rail
+                    rendered '2 12' dashes as sharp 1×2 rectangles
+                    against the canvas backdrop; default 'butt' caps
+                    leave dash ends square. R378 rounds each cap so
+                    the dashes read as soft 3-px pills (1 px stroke +
+                    0.5 px round cap each end). The flow-rail is the
+                    secondary 'invisible-spine' line that gives the
+                    R57 spoke flow a directional rail to slide along
+                    — rounding the dashes softens its presence
+                    against the primary visible flow path (R245 has
+                    no strokeLinecap so it inherits 'butt' on a
+                    continuous line, irrelevant). Geometry-safe:
+                    round caps only widen the visible dash; the
+                    bbox of the path is unchanged so overlap-test
+                    invariants hold. data-edge-flow-rail-linecap
+                    attr exposes the value for tests. */}
                 <path
                   id={`flow-path-${index}`}
                   d={path}
@@ -4509,8 +4526,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   stroke={pal.flowPath}
                   strokeWidth="1"
                   strokeDasharray="2 12"
+                  strokeLinecap="round"
                   opacity={Math.min(1, (isLight ? 0.4 : 0.75) * fresh * edgeOpacityMul)}
                   data-edge-flow-rail={link.key}
+                  data-edge-flow-rail-linecap="round"
                   style={{ transition: 'opacity 300ms ease-out, stroke 300ms ease-out' }}
                 />
                 {!reducedMotion && (
