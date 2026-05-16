@@ -7173,9 +7173,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 rotation on click. CSS animation runs once; React removes
                 the className after 460ms (just past the 450ms duration)
                 so a subsequent click can replay. */}
+            {/* Round 288 / Loop: reset icon strokeWidth 2 → 2.5 unifies
+                the chrome icon weight family. Pre-R288 zoom-in / zoom-
+                out icons rendered at strokeWidth 2.5 while reset +
+                fullscreen icons sat thinner at strokeWidth 2 — five
+                chrome icons in a single horizontal strip with two
+                weights is exactly the inconsistency R268 closed for
+                border colors. Same unification idiom now applied to
+                icon strokes: zoom (2.5) + reset (2.5) + fullscreen
+                (2.5) all share one weight. View-box (24×24) and
+                display size (13×13) unchanged, so geometry stays
+                pixel-stable — only the stroke deepens. */}
             <svg
               width="13" height="13" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2"
+              fill="none" stroke="currentColor" strokeWidth="2.5"
               strokeLinecap="round" strokeLinejoin="round"
               aria-hidden
               className={resetSpinning ? 'anet-reset-spin' : undefined}
@@ -7227,12 +7238,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
+            {/* R288 / Loop: fullscreen enter + exit icons strokeWidth
+                2 → 2.5 — same chrome-icon weight unification described
+                at the reset icon above. data-topo-chrome-fullscreen-
+                icon attribute exposes BOTH variants (entered / exited)
+                for the round's stroke-width regression probe. */}
             {isFullscreen ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden data-topo-chrome-fullscreen-icon="exit">
                 <path d="M8 3v4a1 1 0 0 1-1 1H3M21 8h-4a1 1 0 0 1-1-1V3M3 16h4a1 1 0 0 1 1 1v4M16 21v-4a1 1 0 0 1 1-1h4" />
               </svg>
             ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden data-topo-chrome-fullscreen-icon="enter">
                 <path d="M3 8V5a2 2 0 0 1 2-2h3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M21 16v3a2 2 0 0 1-2 2h-3" />
               </svg>
             )}
