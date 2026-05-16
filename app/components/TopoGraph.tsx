@@ -1547,7 +1547,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               theme gray-500 is still appropriate as a muted-label
               shade on white bg. Hierarchy preserved: title-white >
               kicker-gray-500 (R285 tracking-widest still in place). */}
-          <div className="text-xs uppercase text-gray-500 tracking-widest leading-tight" data-topo-section-kicker>Network Topology</div>
+          {/* Round 300 / Loop (milestone): kicker picks up font-medium
+              (500). Pre-R300 the eyebrow used default font-weight
+              (400/normal). At text-xs (12px) + uppercase + R285
+              tracking-widest, default-weight letters read slightly
+              under-authored — uppercase at small sizes wants a touch
+              more stroke weight to feel like a deliberate label.
+              font-medium (500) is the conventional SaaS-eyebrow
+              weight (Stripe / Vercel / Linear marketing kicker
+              style — same family that informed R285's tracking-
+              widest decision). Stays clearly below the h2's font-
+              semibold (600) + larger size so hierarchy is preserved:
+              h2 (text-lg/600) > kicker (text-xs/500/gray-500).
+              R300 marks the milestone of 25 rounds (R275-R300) of
+              continuous TopoGraph polish + codex's Vincent 5215/
+              5222 logo asset+integration work. */}
+          <div className="text-xs uppercase text-gray-500 tracking-widest leading-tight font-medium" data-topo-section-kicker>Network Topology</div>
           {/* Round 286 / Loop: title 'Command mesh' adopts tracking-tight
               (-0.025em) to complement R285 kicker tracking-widest. Wide
               eyebrow + tight headline is the conventional editorial
