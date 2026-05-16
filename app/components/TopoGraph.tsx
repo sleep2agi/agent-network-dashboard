@@ -9221,12 +9221,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          list + R384 r=1.9 + R372 offline 0.6 all
                          preserved. data-topo-minimap-dot-opacity attr
                          bumps to '0.95' for tests. */
+                      /* Round 421 / Loop: online dot opacity 0.95 → 1.0
+                         on minimap container hover. Sibling to R346
+                         viewport rect strokeWidth/opacity hover tween.
+                         When the user hovers the minimap container,
+                         the live-fleet anchors brighten from R392
+                         baseline (0.95) to full opacity in concert
+                         with the R346 viewport rect lift. Offline
+                         stays at R372 0.6 — hover state focuses
+                         attention on the ACTIVE anchors, not the
+                         stale ones. data-topo-minimap-dot-opacity
+                         attr (R392) reflects the resolved hover-
+                         state value for tests. */
                       r={isOn ? 1.9 : 1.2}
                       fill={st.primary}
-                      opacity={isOn ? 0.95 : 0.6}
+                      opacity={isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6}
                       data-topo-minimap-dot={s.alias}
                       data-topo-minimap-dot-online={isOn ? 'true' : 'false'}
-                      data-topo-minimap-dot-opacity={isOn ? 0.95 : 0.6}
+                      data-topo-minimap-dot-opacity={isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6}
                       data-topo-minimap-dot-radius={isOn ? 1.9 : 1.2}
                       style={{
                         transition: 'opacity 200ms ease-out, fill 200ms ease-out, r 200ms ease-out',
