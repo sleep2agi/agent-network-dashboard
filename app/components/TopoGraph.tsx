@@ -6784,14 +6784,45 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           220ms cadence the existing filter/stroke
                           pair uses — coordinated 4-property easing
                           across the card. */}
+                      {/* Round 411 / Loop: node label card rx 6 → 8.
+                          Pre-R411 the per-node label card painted at
+                          rx=6, sitting one tier BELOW the R332/R375/
+                          R376 compact-chrome tier (rx=8). Inside the
+                          corner-radius cascade family the cards used
+                          to be the only "smaller" tier — but the
+                          label card is a content-bearing surface
+                          (alias + sub text + ring), not a sub-
+                          element decoration. R411 lifts rx=6 → 8
+                          to align with the compact-chrome / segmented-
+                          control tier so all "compact card" surfaces
+                          read with the same corner radius.
+                          Corner-radius cascade (8 anchors now):
+                            R330 canvas             rx 12  (root)
+                            R331 panels             rx 10  (recent-signal, legend)
+                            R332 minimap container  rx 8   (compact chrome)
+                            R375 Layout-toggle      rx 8   (segmented control)
+                            R376 nodeSize/zoom      rx 8   (segmented control)
+                            R390 hover-detail       rx 10  (panel)
+                            R393 minimap viewport   rx 2   (sub-element)
+                            R411 node label card    rx 6 → 8  (compact card, this round)
+                          Pure paint — rx grows the corner curve
+                          inward without changing the card's outer
+                          cardW × cardH bbox (cardW=92/cardH=22 for
+                          standard nodes per R23 / R187 sizing). R217
+                          hover-stroke cyan tint + R142 drop-shadow
+                          + R246 fill+opacity 220ms transition list
+                          + R211 alias/sub text-fill ease all
+                          preserved. data-node-label-card-rx attr
+                          exposes the value for tests. */}
                       <rect
-                        x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="6"
+                        x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="8"
                         fill={pal.labelBox.fill}
                         stroke={!reducedMotion && hoveredAlias === session.alias
                           ? pal.legendAccent
                           : pal.labelBox.stroke}
                         opacity={isLight ? 1 : 0.94}
                         data-node-label-card={session.alias}
+                        data-node-label-card-rx="8"
                         data-node-label-card-elevation={
                           !reducedMotion && hoveredAlias === session.alias ? 'hover' : 'idle'
                         }
