@@ -3981,12 +3981,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   opacity={isLight ? 0.42 : 0.12}
                   data-hub-busyness={busy}
                 >
+                  {/* Round 244 / Loop: hub grounding halo breath gets
+                      ease-in-out keySplines, matching the active-node
+                      pulse (R243) treatment. Pre-R244 default linear
+                      calcMode marched opacity at constant velocity
+                      through the 3-value trough→peak→trough bounce —
+                      mechanical pacing for a 'heartbeat at rest'
+                      visual. R244 adds calcMode='spline' + keyTimes
+                      '0;0.5;1' + keySplines '0.42 0 0.58 1' ×2 (CSS
+                      ease-in-out on both halves), so the breath
+                      decelerates near the troughs AND the peak —
+                      lingers briefly at each extreme like a real
+                      heart-rest cycle. Same SMIL-easing family as
+                      R227 (click ripple) / R228 (edge ping+pulse) /
+                      R243 (active-node pulse). The breath family
+                      is now 2 surfaces deep at this single hub
+                      element — R84 amplitude/tempo bucket + R244
+                      curve shape. */}
                   {!reducedMotion && (
                     <animate
                       attributeName="opacity"
                       values={isLight ? valuesLight : valuesDark}
                       dur={`${dur}s`}
                       repeatCount="indefinite"
+                      calcMode="spline"
+                      keyTimes="0;0.5;1"
+                      keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
                     />
                   )}
                 </circle>
@@ -4611,6 +4631,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       : undefined
                   }
                 >
+                  {/* Round 244 / Loop: working halo breath joins the
+                      R243 / R244 SMIL-ease-in-out family. R226's
+                      golden-ratio per-node phase stagger stays in
+                      place; R244 adds calcMode='spline' + keySplines
+                      '0.42 0 0.58 1' ×2 so each halo's breath also
+                      settles at its endpoints instead of constant-
+                      velocity marching. The three breath surfaces
+                      now share the same curve shape: hub grounding
+                      halo (R84+R244) + active-node pulse (R243) +
+                      working halo (R112+R226+R244). All breaths on
+                      canvas now feel calm at the extremes, alive
+                      through the middle. */}
                   {!reducedMotion && session.status === 'working' && (
                     <animate
                       attributeName="opacity"
@@ -4618,6 +4650,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       dur="3s"
                       begin={`-${((nodeIdx * 0.37) % 3).toFixed(3)}s`}
                       repeatCount="indefinite"
+                      calcMode="spline"
+                      keyTimes="0;0.5;1"
+                      keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
                     />
                   )}
                 </circle>
