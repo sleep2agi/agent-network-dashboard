@@ -4416,6 +4416,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     matches R142 fill timing so all the group-label
                     state-flip channels (fill colour, rect stroke,
                     rect drop-shadow, label tracking) ease as one. */}
+                {/* Round 432 / Loop: extend the group-label letter-
+                    spacing tween from 2-tier (rest/pin) to 3-tier
+                    (rest/hover/pin → 0/0.25/0.5). Pre-R432 R218
+                    spread the text only on pin; hover got an
+                    R63 fill brighten (legendText → legendHeadline)
+                    but no typographic axis of its own. R432 adds
+                    the missing mid tier so hover telegraphs through
+                    BOTH the fill brighten AND a subtle kerning
+                    spread — sibling pattern to R427 node-alias
+                    (0/0.3/0.5) and R431 edge-badge (0/0.2/0.4) at
+                    group-label scope. Pin tier (0.5) still wins.
+                    Subtler mid tier (0.25 vs alias 0.3) because the
+                    group label is a structural anchor — too much
+                    spread would steal weight from the per-node
+                    alias identity it groups. Hover-letter-spacing
+                    family extension (8 anchors now):
+                      R344 chip count digit
+                      R345 panel title
+                      R347 active-links chip
+                      R351 vendor chip
+                      R420 zoom-level chip
+                      R427 node alias text
+                      R431 edge-badge digit
+                      R432 group label text (this round)
+                    R218 transition list ('fill 200ms, letter-spacing
+                    200ms') untouched — additive conditional case. */}
                 <text
                   x={box.x + 12}
                   y={box.y + 14}
@@ -4423,9 +4449,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fontSize="13"
                   fontFamily="monospace"
                   fontWeight="700"
+                  data-group-label-hovered={isHovered && !isPinned ? 'true' : 'false'}
                   style={{
                     transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out',
-                    letterSpacing: isPinned ? '0.5px' : '0px',
+                    letterSpacing: isPinned ? '0.5px' :
+                                   isHovered ? '0.25px' : '0px',
                   }}
                   data-group-label={box.key}
                   data-group-label-pinned={isPinned ? 'true' : 'false'}
