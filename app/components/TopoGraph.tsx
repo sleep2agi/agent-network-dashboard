@@ -5623,10 +5623,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   />
                 )}
               </text>
+              {/* Round 259 / Loop: instructional hint bumps fontSize 8 → 9
+                  for readability. Pre-R259 the empty-state hint was at
+                  the smallest readable size on the canvas (8pt), with
+                  italic + opacity 0.45 layering legibility cost on top
+                  — instructional text users need to READ to act on,
+                  yet eye-straining at default 1× zoom. 9pt italic stays
+                  visually subordinate to the 10pt main "no flow yet"
+                  AND to the 9pt regular row text (italic alone
+                  discriminates from row content) while easing the
+                  legibility floor. Sibling change at the +N-more
+                  footer link (line ~6047) applies the same bump to
+                  the panel's other italic secondary text. Per-row
+                  timestamp at y=38+i*16 (fontSize 8 right-edge
+                  recency tag) STAYS at 8 — it's an at-a-glance
+                  recency tag tightly co-located with row text, not
+                  read-to-act instruction. */}
               <text
                 x="115" y="70" textAnchor="middle"
                 fill={pal.legendText}
-                fontSize="8" fontFamily="monospace"
+                fontSize="9" fontFamily="monospace"
                 opacity={0.45}
                 data-recent-signal-empty-hint
                 data-recent-signal-empty-hint-breathes={reducedMotion ? 'false' : 'true'}
@@ -6040,11 +6056,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       ease-out` so the colour swap eases instead of
                       snapping. data-recent-panel-more-hovered exposes
                       the gate for tests. */}
+                  {/* Round 259 / Loop: footer link bumps fontSize 8 → 9
+                      for clickable-text readability. Pre-R259 the
+                      "+N more flows" footer (the panel's primary
+                      navigation affordance into /messages) sat at the
+                      same 8pt as the empty-state hint — small enough
+                      to make the click target feel cheap. 9pt + italic
+                      + opacity 0.55 keeps it visually secondary to row
+                      content (9pt regular) while giving the link
+                      enough type-weight to read as a real affordance.
+                      Underline geometry verified: with fontSize 9 the
+                      underline still renders ~3-4px below baseline at
+                      y=82 → underline ~y=85-86, panel bottom y=88 →
+                      2-3px clear (R256 footer-breath invariant
+                      preserved). */}
                   <text
                     x="115" y="82"
                     textAnchor="middle"
                     fill={hoveredRecentMore ? pal.legendAccent : pal.legendText}
-                    fontSize="8"
+                    fontSize="9"
                     fontFamily="monospace"
                     fontStyle="italic"
                     opacity={hoveredRecentMore ? 0.85 : 0.55}
