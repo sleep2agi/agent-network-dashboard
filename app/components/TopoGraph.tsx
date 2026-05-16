@@ -2264,7 +2264,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 title={`${w} working · ${i} idle · ${o} offline`}
                 data-fleet-pressure
               >
-                <span className="text-[10px] tracking-wide">pressure</span>
+                {/* Round 373 / Loop: pressure-bar kicker label gains
+                    font-medium (fw 400 → 500). Sibling small-text fw
+                    lift family with R363 recent-row alias + R364
+                    legend-row label + R366 group-label count + R368
+                    +N more flows footer — extends to a 5th surface
+                    (the chip-row's 'pressure' label). At fontSize
+                    10 px tracking-wide against the chip's gray bg,
+                    the default fw 400 sat below the deliberate-data
+                    band; fw 500 brings it into parity with the
+                    chip-row 'working / online / active links' unit
+                    spans (chip-level font-medium R313). data-fleet-
+                    pressure-kicker attr exposes the kicker for tests. */}
+                <span className="text-[10px] tracking-wide font-medium" data-fleet-pressure-kicker>pressure</span>
                 <span className="inline-flex h-1.5 w-16 rounded-full overflow-hidden" style={{ background: 'rgb(75 85 99 / 0.25)' }}>
                   {seg(w, isLight ? '#059669' : '#22c55e', 'working', 'working')}
                   {seg(i, isLight ? '#0d9488' : '#2dd4bf', 'idle',    'idle')}
