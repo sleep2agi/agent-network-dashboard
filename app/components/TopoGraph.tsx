@@ -6189,47 +6189,49 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       />
                       {/* Round 409 / Loop: active-node pulse peak
                           opacity lift — cyber 0.18 → 0.20 / light
-                          0.12 → 0.14. The R243 pulse is the per-
-                          node "this alias has recent flow" breath;
-                          its peak amplitude was tuned in R243 but
-                          sat at 0.18 cyber / 0.12 light — visible
-                          but understated against the surrounding
-                          status halos (R407 lifted offline halos
-                          0.25→0.30 cyber; online halos sit at 0.65
-                          cyber). R409 lifts peak +0.02 on both
-                          themes so the active-state breath reads
-                          more confidently at its high-point while
-                          the trough (0.04 cyber / 0.02 light)
-                          stays put — breath amplitude widens
-                          slightly (cyber 0.14 → 0.16; light 0.10
-                          → 0.12) without changing rhythm or dur.
-                          Theme-consistency / canvas-presence family
-                          (9 anchors now):
-                            R370 hub hover-ring         0.7  → 0.8   cyber
-                            R371 edge-badge rest        0.82 → 0.85  cyber
-                            R372 minimap offline-dot    0.5  → 0.6
-                            R386 hub-highlight idle     0.9  → 0.95
-                            R387 hover-detail panel     0.94 → 0.97  cyber
-                            R391 hub-spoke active       0.7  → 0.8
-                            R392 minimap online-dot     0.9  → 0.95
-                            R403 click-ripple start     0.7  → 0.8
-                            R409 active-node pulse peak (this round)
-                              cyber 0.18 → 0.20
-                              light 0.12 → 0.14
+                          0.12 → 0.14. Theme-consistency / canvas-
+                          presence family 9th anchor. R243 family
+                          rhythm preserved.
+                          Round 413 / Loop: trough lift mirrors R409
+                          peak — cyber 0.04 → 0.05 / light 0.02 →
+                          0.03. Stale-state legibility lift family
+                          8th anchor — pairs with R404 (hub-halo
+                          cyber trough 0.08 → 0.10) and R405 (light
+                          trough 0.32 → 0.34). The per-node breath's
+                          low-point now reads slightly above the
+                          "nearly gone" zone while preserving the
+                          breath amplitude (cyber Δ 0.16 vs Δ pre-
+                          R409+R413 of 0.14; light Δ 0.11 vs 0.10).
+                          Both peak (R409) AND trough (R413) lift
+                          together so the active-pulse signal stays
+                          confidently present at both ends of its
+                          2.4s cycle.
+                          Stale-state legibility lift family (8):
+                            R317 subordinate-text gray-500→400
+                            R358 freshness floor 0.25→0.30
+                            R372 minimap offline-dot 0.5→0.6
+                            R404 hub-halo cyber trough 0.08→0.10
+                            R405 hub-halo light trough 0.32→0.34
+                            R406 edge freshness floor 0.35→0.40
+                            R407 node halo offline opacity (cyber+light)
+                            R413 active-node pulse trough (this round)
+                              cyber 0.04 → 0.05
+                              light 0.02 → 0.03
                           R243 always-mount opacity-gate + R243
                           ease-in-out keySplines + r animation
                           (radius+8 ↔ radius+22) preserved.
-                          data-node-pulse-peak attr exposes the
-                          resolved per-theme peak for tests. */}
+                          data-node-pulse-peak + new -pulse-trough
+                          attrs expose resolved per-theme values. */}
                       <animate
                         attributeName="opacity"
-                        values={isLight ? '0.14;0.02;0.14' : '0.20;0.04;0.20'}
+                        values={isLight ? '0.14;0.03;0.14' : '0.20;0.05;0.20'}
                         dur="2.4s"
                         repeatCount="indefinite"
                         calcMode="spline"
                         keyTimes="0;0.5;1"
                         keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
                         data-node-pulse-peak={isLight ? '0.14' : '0.20'}
+                        data-node-pulse-trough={isLight ? '0.03' : '0.05'}
                       />
                     </circle>
                   </g>
