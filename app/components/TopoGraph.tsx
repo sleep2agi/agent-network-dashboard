@@ -1038,6 +1038,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // 280ms ease-out transition list matches R199 smoothView vocabulary
   // so the visual joins the existing rhythm on the same rect.
   const [hoveredMinimap, setHoveredMinimap] = useState(false);
+  // Round 347 / Loop: zoom-level readout hover-state letter-spacing
+  // tween (0 → 0.5 px). The readout sandwiched between zoom-out /
+  // zoom-in is a passive percent display — pre-R347 it had no hover
+  // feedback at all (only a `title` tooltip). R347 extends the R344
+  // (`+N more flows` footer) + R345 (panel titles) hover-letter-
+  // spacing family from panel/footer surfaces into the HTML chrome
+  // strip. Hovering the readout spreads its digits 0.5 px, signalling
+  // "this is alive". tabular-nums + minWidth: 46 from R225 still lock
+  // the column so the tween doesn't shove neighbouring controls.
+  // 200ms ease-out joins the existing R264 color/border transition
+  // list on the same span.
+  const [hoveredZoomLevel, setHoveredZoomLevel] = useState(false);
   // R135: panel-wide hover-elevation. The recent-signal + legend
   // panels both already host clickable rows (R56/R116 recent rows,
   // R55/R61 legend rows) and a clickable footer (R133), so the
@@ -8145,11 +8157,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 chromePopping === 'zoom-in' || chromePopping === 'zoom-out'
                   ? 'true' : 'false'
               }
+              data-topo-chrome-zoom-level-hover={hoveredZoomLevel ? 'true' : 'false'}
+              onMouseEnter={() => setHoveredZoomLevel(true)}
+              onMouseLeave={() => setHoveredZoomLevel(false)}
               style={{
                 color: pal.legendText,
                 borderColor: pal.containerBorder,
                 minWidth: 46,
                 display: 'inline-block',
+                // R347: letter-spacing hover tween — extends R344/R345
+                // hover-letter-spacing family into the chrome strip.
+                letterSpacing: hoveredZoomLevel ? '0.5px' : '0',
                 /* Round 264 / Loop: zoom level readout gains theme-toggle
                    transition. The span has theme-driven color (pal.
                    legendText) + border-x (pal.containerBorder via the
@@ -8158,7 +8176,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    on theme flip while siblings eased. Sibling treatment
                    to the nodeSize + zoom wrapper transitions added this
                    round. */
-                transition: 'color 200ms ease-out, border-color 200ms ease-out',
+                transition: 'color 200ms ease-out, border-color 200ms ease-out, letter-spacing 200ms ease-out',
               }}
               title="Current zoom level"
             >
