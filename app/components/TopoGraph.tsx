@@ -9258,7 +9258,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             onBlur={() => setHoveredReset(false)}
             // R196: press-state deepens before R184 reset-spin fires on
             // release — mouse-down dim then 450ms spin = full handshake.
-            className="p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
+            /* Round 400 / Loop · milestone: chrome reset + fullscreen
+               buttons gain hover:-translate-y-px lift — closes the
+               hover-lift gesture vocabulary across every standalone
+               interactive HTML element in TopoGraph. Segmented
+               controls (zoom -/+, nodeSize S/M/L, Layout Ring/Grid)
+               intentionally stay planted: lifting one segment of a
+               unified strip would tear the visual unity of the
+               segmented control. Only the standalone chrome buttons
+               (reset, fullscreen) get the lift.
+               Gesture vocabulary post-R400 (now complete across HTML):
+                 chip-row chips (3×)  -1 px  R398, R399
+                 filter pin pills (4×) -1 px R397
+                 recent-signal row    -1 px  R143
+                 legend row           -1 px  R144
+                 reset button         -1 px  R400 (this round)
+                 fullscreen button    -1 px  R400 (this round)
+               Every standalone interactive HTML surface in TopoGraph
+               now lifts on hover. data-topo-chrome-reset-hover-lift
+               attr surfaces the lift for tests. */
+            className="p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 hover:-translate-y-px transition-colors transition-transform duration-200 ease-out transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
+            data-topo-chrome-reset-hover-lift="true"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
             aria-label="Reset view"
             title="Reset zoom + pan (0, or double-click the canvas)"
@@ -9334,11 +9354,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // icon hover-affordance arc (zoom-out / zoom-in / reset /
             // fullscreen now all carry an icon-level hover gesture in
             // addition to the bg hover).
-            className={`group p-1.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
+            // R400: hover translateY(-1px) lift — see reset button above for family doc.
+            className={`group p-1.5 rounded-md border hover:-translate-y-px transition-colors transition-transform duration-200 ease-out transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
                 ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25'
                 : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'
             }${chromePopping === 'fullscreen' ? ' anet-chrome-pop' : ''}`}
+            data-topo-chrome-fullscreen-hover-lift="true"
             style={{
               borderColor: pal.containerBorder,
               ...(isFullscreen
