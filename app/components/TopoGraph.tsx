@@ -4471,13 +4471,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // synchronised per-edge animation set.
             const stagger = (index * 0.37) % duration;
             // Round 10 / Loop: freshness fade. An edge that fired ≤30s ago
-            // stays at full intensity; over 5 minutes it decays to ~35%.
-            // Surfaces "what's happening now" vs background chatter without
-            // hiding old flow entirely (some context still useful). `now`
-            // captured at useMemo-recompute time (every 5s message refresh)
-            // — accuracy is within the poll interval, plenty.
+            // stays at full intensity; over 5 minutes it decays to a
+            // floor. Surfaces "what's happening now" vs background
+            // chatter without hiding old flow entirely (some context
+            // still useful). `now` captured at useMemo-recompute time
+            // (every 5s message refresh) — accuracy is within the poll
+            // interval, plenty.
+            //
+            // Round 406 / Loop: edge freshness fade floor 0.35 → 0.40.
+            // Stale-state legibility lift family (6th anchor) — pre-
+            // R406 edges older than 5 minutes faded to α=0.35 (a 65 %
+            // dim against full intensity). The decay rate is the same
+            // 1 - ageMs/300s curve; only the FLOOR shifts. Sibling
+            // treatment to:
+            //   R317 subordinate-text gray-500 → gray-400
+            //   R358 freshness ramp floor 0.25 → 0.30
+            //   R372 minimap offline-dot opacity 0.5 → 0.6
+            //   R404 hub-halo cyber trough 0.08 → 0.10
+            //   R405 hub-halo light trough 0.32 → 0.34
+            //   R406 edge freshness floor 0.35 → 0.40 (this round)
+            // Edges past 5min now sit at 40% intensity instead of 35%
+            // — they still recede against fresh edges but read
+            // legibly enough to convey "this conversation existed".
+            // ageMs threshold for the 5-minute decay unchanged; the
+            // decay curve shape (linear) unchanged. The visual delta
+            // is most pronounced on edges between 5-60 minutes old —
+            // where the floor was binding pre-R406.
             const ageMs = link.last_at ? Math.max(0, Date.now() - Date.parse(link.last_at)) : 0;
-            const fresh = Math.max(0.35, 1 - ageMs / (5 * 60 * 1000));
+            const fresh = Math.max(0.40, 1 - ageMs / (5 * 60 * 1000));
             // Round 16 arrow-tier binning — keep `topo-arrow` as the
             // medium tier id so the legend swatch picks it up unchanged.
             const arrowId = link.count <= 2 ? 'topo-arrow-s'
