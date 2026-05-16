@@ -5456,7 +5456,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               }}
               data-topo-panel-elevation="recent"
             />
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700">recent signal</text>
+            {/* Round 266 / Loop: panel title fill picks up theme-toggle
+                transition. Pre-R266 the title "recent signal" had
+                fill={pal.legendHeadline} (cyber #e5e7eb ↔ light
+                #0f172a) without any inline transition — so the BIGGEST
+                text in the recent-signal panel (fontSize 12 fontWeight
+                700) hard-flipped color on theme toggle while the panel
+                rect (R247) and every row inside (various) eased.
+                Sibling treatment to the legend panel title at line
+                ~6195 — the panel-pair's titles now ease together. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" style={{ transition: 'fill 200ms ease-out' }} data-recent-panel-title>recent signal</text>
             {/* R96: header count now matches what the rows show. Pre-R96
                 this read "X msgs" off the raw messages array, but the
                 rows below render DEDUPED flowLinks — so a fleet with 10
@@ -6192,7 +6201,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 font + position vocabulary so the two side panels feel
                 paired. Title text at x=13 y=21; total fleet count
                 right-aligned at x=215 y=21 in the accent colour. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700">legend</text>
+            {/* Round 266 / Loop: legend panel title fill picks up theme-
+                toggle transition — sibling treatment to the recent-
+                signal panel title at line ~5459. Pre-R266 both panel
+                titles hard-flipped color on theme toggle while their
+                surrounding chrome eased; R266 closes both at once. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" style={{ transition: 'fill 200ms ease-out' }} data-legend-panel-title>legend</text>
             {/* Round 257 / Loop: legend panel header count picks up the
                 symmetric 13L/13R inner-padding pattern from the recent-
                 signal panel. Pre-R257 the legend header was 13px from
@@ -6209,7 +6223,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 ('M140,80 Q164,56 196,80') and would visibly tighten
                 against the arrow tip if moved further left. Header
                 count has no such pairing; it stands alone. */}
-            <text x="211" y="21" textAnchor="end" fill={pal.legendAccent} fontSize="10" fontFamily="monospace" data-legend-panel-count>{sessions.length} node{sessions.length === 1 ? '' : 's'}</text>
+            {/* Round 266 / Loop: legend count fill (pal.legendAccent
+                — cyber #67e8f9 cyan ↔ light #10b981 emerald) picks up
+                theme-toggle transition. Pre-R266 the count snapped
+                color on theme flip; R266 eases it alongside the panel
+                title (sibling text in the same header band). */}
+            <text x="211" y="21" textAnchor="end" fill={pal.legendAccent} fontSize="10" fontFamily="monospace" data-legend-panel-count style={{ transition: 'fill 200ms ease-out' }}>{sessions.length} node{sessions.length === 1 ? '' : 's'}</text>
             {(() => {
               const idleCount = onlineNodes.length - workingCount;
               // R106: rows shift +8 px (was y0=24, 48, 72 → 32, 56, 80)
