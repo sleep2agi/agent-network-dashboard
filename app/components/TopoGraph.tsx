@@ -2865,7 +2865,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   }
                 }}
               >
-                {flowLinks.length} active link{flowLinks.length === 1 ? '' : 's'}
+                {/* R338 — active-links chip digit/unit split, completes
+                    the 5th chip surface in the R333/R335/R336/R337
+                    chip-internal-hierarchy arc. data-active-links-
+                    chip-unit exposes the unit span for tests. */}
+                {flowLinks.length}<span className="opacity-70" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
                 {rel ? (() => {
                   // Round 161 / Loop: extend R160's recency-pip
                   // vocabulary up one scope — from per-flow row to
