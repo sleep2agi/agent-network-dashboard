@@ -2027,11 +2027,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      7th surface in the info-density tabular-nums
                      sweep — and the first on the HTML side
                      (previous 6 were SVG <text>/<tspan>). */
-                  className={`tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                  /* Round 398 / Loop: chip-row chips gain hover translateY
+                     (-1px) lift on the CLICKABLE variant only (workingCount
+                     > 0 here / onlineNodes.length > 0 below / activeLinks
+                     > 0 deeper). Pre-R398 the chips brightened bg + border
+                     on hover (R201) but didn't lift — only their clickable
+                     siblings (filter pin pills R397, recent rows R143,
+                     legend rows R144) acknowledged cursor entry with a
+                     translate-y. R398 closes the chip-row by extending
+                     the same gesture to the static header chips, gated
+                     on the clickable role so empty chips (which have
+                     no role="button") stay planted at their R205
+                     opacity-50 receded paint. transition-transform
+                     + duration-200 + ease-out + transform-gpu added
+                     alongside existing transition-colors so the lift
+                     and the color tween share rhythm.
+                     Gesture-vocabulary table (post-R398):
+                       recent-signal row  -1 px  (R143)
+                       legend row         -1 px  (R144)
+                       group cluster box  fill+sw lift (R142)
+                       filter pin pills   -1 px  (R397)
+                       chip-row chips     -1 px  (R398, this round)
+                     Empty chips: no lift. Pin-mirror chips: no
+                     conflict (R180 inset double-ring is a box-shadow
+                     not a transform). new data-chip-hover-lift attr
+                     surfaces the lift surface for tests. */
+                  className={`tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     workingCount > 0
-                      ? 'bg-green-500/10 text-green-300 border-green-500/20 hover:bg-green-500/15 hover:border-green-500/30'
+                      ? 'bg-green-500/10 text-green-300 border-green-500/20 hover:bg-green-500/15 hover:border-green-500/30 hover:-translate-y-px'
                       : 'bg-green-500/10 text-green-300 border-green-500/20'
                   }`}
+                  data-chip-hover-lift={workingCount > 0 ? 'true' : 'false'}
                   data-working-chip
                   data-working-chip-aliases={workingAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
@@ -2125,11 +2151,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   /* Round 232 / Loop: tabular-nums on online chip
                      (sibling treatment to working chip — same row,
                      same digit-jitter physics on count crossings). */
-                  className={`tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                  // R398: hover translate-y lift on clickable variant — see working chip above.
+                  className={`tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     onlineNodes.length > 0
-                      ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:bg-cyan-500/15 hover:border-cyan-500/30'
+                      ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:-translate-y-px'
                       : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
                   }`}
+                  data-chip-hover-lift={onlineNodes.length > 0 ? 'true' : 'false'}
                   data-online-chip
                   data-online-chip-aliases={onlineAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
