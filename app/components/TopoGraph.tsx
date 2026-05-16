@@ -6955,14 +6955,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 keySplines="0.25 0.1 0.25 1"
                 fill="freeze"
               />
+              {/* Round 403 / Loop: click-ripple SMIL initial opacity
+                  0.7 → 0.8. Pre-R403 the ripple's opacity animation
+                  faded from 0.7 to 0 over 500ms, providing a clean
+                  click-feedback pulse. Theme-consistency / canvas-
+                  presence polish family (R370 hub hover-ring +
+                  R391 hub-spoke active) already lifted paired
+                  hover-state alphas from 0.7 → 0.8. R403 brings
+                  click-feedback into that same alpha — three canvas
+                  state-feedback indicators (hover-ring, active spoke,
+                  click ripple) now share a uniform 0.8 start alpha
+                  so the visual "I responded" signal carries the
+                  same weight regardless of which state fired it.
+                  Pre-R403 invariants preserved: 500ms duration,
+                  R227 calcMode='spline' + ease-out keySplines
+                  (0.25 0.1 0.25 1), fill='freeze', concurrent r
+                  animation. Theme-consistency family (8 anchors):
+                    R370 hub hover-ring        0.7  → 0.8
+                    R371 edge-badge rest       0.82 → 0.85 cyber
+                    R372 minimap offline-dot   0.5  → 0.6
+                    R386 hub-highlight idle    0.9  → 0.95
+                    R387 hover-detail panel    0.94 → 0.97 cyber
+                    R391 hub-spoke active      0.7  → 0.8
+                    R392 minimap online-dot    0.9  → 0.95
+                    R403 click-ripple start    0.7  → 0.8  (this round)
+                  data-click-ripple-start-opacity attr exposes the
+                  resolved value for tests. */}
               <animate
                 attributeName="opacity"
-                values="0.7;0"
+                values="0.8;0"
                 dur="0.5s"
                 calcMode="spline"
                 keyTimes="0;1"
                 keySplines="0.25 0.1 0.25 1"
                 fill="freeze"
+                data-click-ripple-start-opacity="0.8"
               />
             </circle>
           )}
