@@ -1780,7 +1780,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      7th surface in the info-density tabular-nums
                      sweep — and the first on the HTML side
                      (previous 6 were SVG <text>/<tspan>). */
-                  className={`tabular-nums px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                  className={`tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
                     workingCount > 0
                       ? 'bg-green-500/10 text-green-300 border-green-500/20 hover:bg-green-500/15 hover:border-green-500/30'
                       : 'bg-green-500/10 text-green-300 border-green-500/20'
@@ -1860,7 +1860,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   /* Round 232 / Loop: tabular-nums on online chip
                      (sibling treatment to working chip — same row,
                      same digit-jitter physics on count crossings). */
-                  className={`tabular-nums px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                  className={`tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
                     onlineNodes.length > 0
                       ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:bg-cyan-500/15 hover:border-cyan-500/30'
                       : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
@@ -2616,7 +2616,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    (third chip in the row — matches working + online
                    chip treatment so all three digits in the chip row
                    stay width-stable across counter crossings). */
-                className={`tabular-nums hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus ${
+                className={`tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus ${
                   isInteractive
                     ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30'
                     : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
