@@ -1466,7 +1466,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             h2 typography via flex layout. text-cyan-300 in cyber +
             text-emerald-600 in light keeps the moon brand-aligned
             with the canvas accent palette. */}
-        <div className="flex items-center gap-3">
+        {/* Round 298 / Loop: title-block gap-3 (12px) → gap-2.5 (10px).
+            The R297 codex-bundle brand-logo at 36×36 paired with the
+            R285 tracking-widest kicker + R286 tracking-tight h2 forms
+            an editorial "logo + title" unit. At gap-3 the 12px between
+            logo right-edge and text left-edge reads as two separate
+            elements — visual spacing slightly outpaces the relationship
+            density (logo IS the brand mark for the kicker's
+            "Network Topology"). gap-2.5 (10px) is the tight-pack
+            convention SaaS-product header logos use (Stripe / Vercel /
+            Linear top-nav logo + product name spacing), grouping logo
+            + title as one read. Geometry: 36 + 10 + ~120 (title text
+            width) = 166px total title-block width vs 168px pre-R298 —
+            no measurable layout shift, just a deliberate tighter
+            grouping. */}
+        <div className="flex items-center gap-2.5">
           {/* Round 297 / Loop: brand-logo color picks up the 200ms ease-
               out transition. Pre-R297 the moon glyph had theme-
               conditional color (cyber #67e8f9 cyan ↔ light #0d9488
