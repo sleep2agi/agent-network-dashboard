@@ -9503,20 +9503,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       labels to single status words, the count
                       becomes proportionally more important; this
                       round emphasizes that role typographically. */}
+                  {/* Round 446 / Loop: legend per-row count fontWeight
+                      lift 600 → 700 on isPinned. Mirror of R444 group-
+                      label-count + R445 recent-row-count at the
+                      legend-row scope. Closes the 3-panel-row family
+                      for the "data tightens under attention" pattern —
+                      every panel-row count now responds to pin with a
+                      typographic-weight bump:
+                        R444 group-label-count   500 → 600
+                        R445 recent-row-count    600 → 700  (cold-pin route)
+                        R446 legend-row-count    600 → 700  ← this round
+                      Hover gate (hoveredStatus===row.key) keeps rest
+                      fw=600 so the locked-vs-preview distinction at
+                      the type level stays intact — same gate R433 used
+                      on the parent <text> letter-spacing tween. R309
+                      fw=600 baseline + R204 empty-row opacity dim +
+                      R225 tabular-nums all preserved. transition list
+                      extends to include 'font-weight 150ms ease-out'
+                      matching R433 fill/letter-spacing cadence.
+                      data-legend-count-pinned + -font-weight attrs
+                      exposed for tests. */}
                   <text
                     x="215" y={row.y1}
                     textAnchor="end"
                     fill={row.count > 0 && (hoveredStatus === row.key || isPinned) ? row.fill : pal.legendText}
                     fontSize="11"
                     fontFamily="monospace"
-                    fontWeight="600"
+                    fontWeight={isPinned ? '700' : '600'}
                     opacity={row.count === 0
                       ? (isLight ? 0.28 : 0.30)
                       : (hoveredStatus === row.key || isPinned ? 0.95 : 0.65)}
                     data-legend-count={row.key}
                     data-legend-count-empty={row.count === 0 ? 'true' : 'false'}
+                    data-legend-count-pinned={isPinned ? 'true' : 'false'}
+                    data-legend-count-font-weight={isPinned ? '700' : '600'}
                     data-legend-count-fill={row.count > 0 && (hoveredStatus === row.key || isPinned) ? 'tier' : 'neutral'}
-                    style={{ pointerEvents: 'none', transition: 'opacity 150ms ease-out, fill 150ms ease-out', fontVariantNumeric: 'tabular-nums' }}
+                    style={{ pointerEvents: 'none', transition: 'opacity 150ms ease-out, fill 150ms ease-out, font-weight 150ms ease-out', fontVariantNumeric: 'tabular-nums' }}
                   >{row.count}</text>
                 </g>
               );
