@@ -4452,6 +4452,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     matches. */}
                 {(() => {
                   const isEndpoint = hoveredEdgeEndpoints && hoveredEdgeEndpoints.has(session.alias);
+                  /* Round 233 / Loop: endpoint ring picks up a stroke-
+                     width thicken on edge-hover, completing the hover-
+                     elevation gesture across the whole edge surface.
+                     Pre-R233 hovering an edge eased the visible path
+                     stroke (R166) and lifted the badge r (R164) — but
+                     the two endpoint rings only faded IN (R182
+                     opacity gate). Now they ALSO thicken 1.6 → 2.4 on
+                     hover, in 180ms ease-out matching R164 badge lift.
+                     The endpoint nodes feel like they "rise to meet"
+                     the edge as the cursor approaches it, instead of
+                     just appearing.
+
+                     1.6 and 2.4 both escape the R51 overlap-test
+                     sentinels (1.5 / 3 are reserved) — 2.4 sits
+                     comfortably between, visually 50% thicker than
+                     baseline so the gesture reads but the radius is
+                     unchanged (still r=radius+7) so geometry stays
+                     calm and the topo-overlap-test stays green. 9th
+                     surface in the hover-elevation family (R51
+                     nodes / R135 panels / R142 group boxes / R143-
+                     R144 rows / R164 edge badges / R177 hub ring /
+                     R229 group-label count brighten / R233 endpoint
+                     ring stroke-width). data-edge-endpoint-ring-
+                     stroke-width attr surfaces the chosen value for
+                     test introspection. */
                   return (
                     <circle
                       cx={pos.x}
@@ -4459,11 +4484,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       r={radius + 7}
                       fill="none"
                       stroke={pal.flowEdge}
-                      strokeWidth={1.6}
+                      strokeWidth={isEndpoint ? 2.4 : 1.6}
                       opacity={isEndpoint ? (isLight ? 0.9 : 0.85) : 0}
                       data-edge-endpoint-ring
                       data-edge-endpoint-active={isEndpoint ? 'true' : 'false'}
-                      style={{ pointerEvents: 'none', transition: 'opacity 180ms ease-out' }}
+                      data-edge-endpoint-ring-stroke-width={isEndpoint ? 2.4 : 1.6}
+                      style={{ pointerEvents: 'none', transition: 'opacity 180ms ease-out, stroke-width 180ms ease-out' }}
                     />
                   );
                 })()}
