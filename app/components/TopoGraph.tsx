@@ -3063,7 +3063,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // is preserved.
                   filter={(isPinned || isHovered) ? 'url(#topo-groupbox-lift)' : undefined}
                   style={{
-                    transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out, filter 200ms ease-out',
+                    /* Round 248 / Loop: append fill 200ms ease-out to
+                       the existing R66 transition list. Pre-R248 the
+                       rect's fill (isLight ? '#0f172a' (slate-900) :
+                       '#a5b4fc' (indigo-300)) snapped on theme toggle
+                       while stroke / fill-opacity / filter all eased.
+                       Closes the last theme-toggle snap on the group
+                       box surface — same idiom R246 + R247 used at
+                       per-node label-card and side-panel scopes. */
+                    transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out, filter 200ms ease-out, fill 200ms ease-out',
                     pointerEvents: 'none',
                     // CSS var consumed by `.anet-topo-groupbox-live`
                     // (line 877 of globals.css). React's CSSProperties
@@ -4036,8 +4044,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 </circle>
               );
             })()}
-            {/* core — 20px diameter, larger inner highlight reads as a "lit lamp" */}
-            <circle cx={cx} cy={cy} r="10" fill={isLight ? '#059669' : '#10b981'} />
+            {/* core — 20px diameter, larger inner highlight reads as a "lit lamp"
+                Round 248 / Loop: hub center core gets a fill transition.
+                Pre-R248 the core circle (the visual anchor at the centre
+                of the canvas, fill=isLight ? '#059669' emerald-600 :
+                '#10b981' emerald-500) hard-flipped on theme toggle —
+                the most visually prominent element on the canvas
+                snapping while everything else (R244 halo / R241 hub
+                spokes / R246 label cards / R247 side panels) eased.
+                Inline transition closes the gap. data-topo-hub-core
+                attr added for test introspection (the parent <g> at
+                line 3587 has data-topo-hub but the core specifically
+                is the canvas anchor). */}
+            <circle
+              cx={cx} cy={cy} r="10"
+              fill={isLight ? '#059669' : '#10b981'}
+              data-topo-hub-core
+              style={{ transition: 'fill 200ms ease-out' }}
+            />
             {/* R130 / Loop: when workingCount > 0, the decorative inner
                 highlight gets replaced with the workingCount digit. The
                 R84 busyness breath already encodes the same metric
