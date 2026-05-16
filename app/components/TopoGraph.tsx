@@ -2237,7 +2237,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedStatus}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline opacity-70" data-filter-prefix>filter: </span>{pinnedStatus}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear ${pinnedStatus} filter`}
@@ -2271,7 +2271,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedGroup}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline opacity-70" data-filter-prefix>filter: </span>{pinnedGroup}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
@@ -2321,7 +2321,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedVendor}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline opacity-70" data-filter-prefix>filter: </span>{pinnedVendor}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear vendor filter ${pinnedVendor}`}
@@ -2370,7 +2370,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               }}
             >
               <span>
-                <span className="hidden sm:inline" data-filter-prefix>filter: </span>
+                <span className="hidden sm:inline opacity-70" data-filter-prefix>filter: </span>
                 {link.from}→{link.to}
                 {/* Round 323 / Loop: edge filter pill count digit picks
                     up tabular-nums (Tailwind class on both cold +
@@ -2530,7 +2530,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 }}
               >
                 <span>
-                  <span className="hidden sm:inline" data-pin-intersection-prefix>match: </span>
+                  <span className="hidden sm:inline opacity-70" data-pin-intersection-prefix>match: </span>
                   {/* Round 324 / Loop: pin-intersection chip carries TWO
                       numeric counts in one breath — pinDimCount ("how
                       many filter pins are active") and matchAliases.
