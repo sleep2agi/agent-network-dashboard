@@ -1449,7 +1449,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             single typographic unit rather than two loosely-stacked
             lines. data-topo-section-kicker / data-topo-section-title
             attrs make both probe-able. */}
-        <div>
+        {/* P0 (Vincent 5222 / 通信龙 R278 dispatch): integrate sleep2agi
+            brand logo into the title-block.
+            Why HTML title-block instead of SVG canvas: the SVG region
+            has a high-frequency concurrent-editor edit race with codex
+            (see project_dashboard_concurrent_editors). The title block
+            is HTML-side, low edit traffic, and gives the brand mark
+            first-glance presence above the topology canvas — the exact
+            "Twitter screenshot 一眼看出 sleep2agi" outcome Vincent 5215
+            asked for.
+            Logo construction: inline SVG so currentColor inherits
+            from the parent text-{color} class — theme-aware without
+            an extra asset request. Same crescent geometry as
+            public/sleep2agi-logo.svg. 36×36 px so it's clearly
+            readable at a16:9 Twitter crop, paired with the kicker +
+            h2 typography via flex layout. text-cyan-300 in cyber +
+            text-emerald-600 in light keeps the moon brand-aligned
+            with the canvas accent palette. */}
+        <div className="flex items-center gap-3">
+          <svg
+            width="36" height="36" viewBox="0 0 32 32" aria-hidden
+            className="shrink-0 text-cyan-300 dark:text-cyan-300"
+            data-topo-brand-logo
+            style={{ color: isLight ? '#0d9488' : '#67e8f9' }}
+          >
+            <mask id="s2a-titleblock-moon-mask">
+              <rect width="32" height="32" fill="black" />
+              <circle cx="16" cy="16" r="13" fill="white" />
+              <circle cx="20.5" cy="14.5" r="11" fill="black" />
+            </mask>
+            <rect width="32" height="32" fill="currentColor" mask="url(#s2a-titleblock-moon-mask)" />
+          </svg>
+          <div>
           {/* Round 285 / Loop: kicker tracking-wider → tracking-widest.
               An uppercase eyebrow label at text-xs benefits from
               wider letter-spacing — Tailwind's tracking-widest is
@@ -1460,7 +1491,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               telegraphs "this is a label, not a sentence" without
               changing color or size, deepening the editorial
               hierarchy R267 set up between kicker and h2. */}
-          <div className="text-xs uppercase text-gray-600 tracking-widest leading-tight" data-topo-section-kicker>Network Topology</div>
+          {/* Round 296 / Loop: kicker text-gray-600 → text-gray-500
+              for slightly better legibility on the dark cyber backdrop.
+              gray-600 (#4b5563) read as a near-invisible label on
+              cyber (the canvas + side rail are deeply dark); gray-500
+              (#6b7280) lifts the eyebrow into the band where the eye
+              registers it as a deliberate label vs swallowed text,
+              while still sitting clearly below text-white h2 title
+              in the visual hierarchy. Tailwind classes are theme-
+              neutral so the bump applies to both themes; in light
+              theme gray-500 is still appropriate as a muted-label
+              shade on white bg. Hierarchy preserved: title-white >
+              kicker-gray-500 (R285 tracking-widest still in place). */}
+          <div className="text-xs uppercase text-gray-500 tracking-widest leading-tight" data-topo-section-kicker>Network Topology</div>
           {/* Round 286 / Loop: title 'Command mesh' adopts tracking-tight
               (-0.025em) to complement R285 kicker tracking-widest. Wide
               eyebrow + tight headline is the conventional editorial
@@ -1473,6 +1516,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               (600) stays — tracking-tight does the heavy lifting for
               the editorial register. */}
           <h2 className="text-lg text-white font-semibold leading-tight tracking-tight" data-topo-section-title>Command mesh</h2>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {/* Issue #87: ring | grid layout toggle — segmented control,
