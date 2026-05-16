@@ -6574,13 +6574,48 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     tion list ('fill,opacity' 300ms ease-out) unchanged.
                     data-node-halo-offline-opacity attr exposes the
                     resolved value for tests. */}
+                {(() => {
+                  /* Round 440 / Loop: node halo opacity hover lift —
+                     lifts toward full on the matched node. Pure paint
+                     axis: rest values unchanged for un-hovered halos,
+                     hover state lifts the matched halo's alpha by
+                     +0.15 on each tier:
+                       online cyber  0.65 → 0.80
+                       online light  0.85 → 1.00 (capped)
+                       offline cyber 0.30 → 0.45
+                       offline light 0.45 → 0.60
+                     Same paint-only mental model as R430 hub-spoke
+                     opacity lift + R429 label-card body opacity lift,
+                     now at the per-node halo scope. No geometry
+                     change so R51 sentinels stay safe and the overlap-
+                     test invariant is unchanged (test runs at rest).
+                     Closes a chroma/presence axis on the per-node
+                     hover signature alongside the 12-layer cue stack
+                     (R26/R217/R142/R427/R428/R429 card + R430/R435/
+                     R436/R437/R94 link + R438 ring). R407 offline
+                     halo opacity floor (cyber 0.30 / light 0.45) is
+                     the rest branch unchanged. Existing transition-
+                     [fill,opacity] duration-300 className handles
+                     the easing. data-node-halo-hovered exposes the
+                     gate; data-node-halo-resolved-opacity exposes
+                     the four-state resolved value for tests. */
+                  const isHaloHovered = !reducedMotion && hoveredAlias === session.alias;
+                  const haloOpacity = (() => {
+                    if (isOnline) {
+                      return isLight ? (isHaloHovered ? 1   : 0.85) : (isHaloHovered ? 0.80 : 0.65);
+                    }
+                    return isLight ? (isHaloHovered ? 0.60 : 0.45) : (isHaloHovered ? 0.45 : 0.30);
+                  })();
+                  return (
                 <circle
                   cx={pos.x}
                   cy={pos.y}
                   r={radius + 8}
                   fill={status.halo}
-                  opacity={isOnline ? (isLight ? 0.85 : 0.65) : (isLight ? 0.45 : 0.30)}
+                  opacity={haloOpacity}
                   data-node-halo-offline-opacity={isOnline ? undefined : (isLight ? 0.45 : 0.30)}
+                  data-node-halo-hovered={isHaloHovered ? 'true' : 'false'}
+                  data-node-halo-resolved-opacity={haloOpacity}
                   className="transition-[fill,opacity] duration-300 ease-out"
                   data-node-halo-breath={!reducedMotion && session.status === 'working' ? 'on' : 'off'}
                   data-node-halo-breath-offset={
@@ -6639,6 +6674,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     />
                   )}
                 </circle>
+                  );
+                })()}
                 {/* Round 111 / Loop: edge-endpoint emphasis ring. R49
                     already keeps endpoint nodes at opacity 1 while
                     others dim when an edge is hovered, but the
