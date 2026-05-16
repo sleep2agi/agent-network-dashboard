@@ -8515,8 +8515,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               own transition-colors. Same R254 holdover pattern that
               R263 just closed at the canvas wrapper scope, now at the
               chrome strip's nodeSize sub-wrapper scope. */}
+          {/* Round 376 / Loop: nodeSize wrapper rounded-md → rounded-lg.
+              Sibling polish to R375 Layout-toggle wrapper. Three
+              chrome-strip segmented controls now all share rounded-lg
+              at the wrapper tier:
+                R375 Layout-toggle wrapper  rounded-lg  8 px
+                R376 nodeSize  wrapper      rounded-lg  8 px (this round)
+                R376 zoom      wrapper      rounded-lg  8 px (this round)
+              Individual atomic chrome buttons (reset, fullscreen) keep
+              rounded-md (6 px) as their own atomic-button tier — the
+              chrome strip's typography now expresses a clear two-tier
+              hierarchy: 'segmented control container' (rounded-lg)
+              vs 'standalone button' (rounded-md). Pure paint change,
+              no layout shift. */}
           <div
-            className="flex items-center rounded-md border overflow-hidden"
+            className="flex items-center rounded-lg border overflow-hidden"
+            data-topo-chrome-nodesize-radius="rounded-lg"
             style={{
               background: pal.legendBox.fill,
               borderColor: pal.containerBorder,
@@ -8596,8 +8610,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-topo-chrome-view-group-leader marks the boundary surface
               for the test probe; data-topo-chrome-fleet-group-trailer marks
               the nodeSize wrapper's right edge for the gap measurement. */}
+          {/* R376 sibling — zoom wrapper rounded-md → rounded-lg.
+              Closes the chrome-strip segmented-control corner radius
+              cascade (Layout R375 + nodeSize R376 + zoom R376). */}
           <div
-            className="ml-1.5 flex items-center rounded-md border overflow-hidden"
+            className="ml-1.5 flex items-center rounded-lg border overflow-hidden"
+            data-topo-chrome-zoom-wrapper-radius="rounded-lg"
             style={{
               background: pal.legendBox.fill,
               borderColor: pal.containerBorder,
