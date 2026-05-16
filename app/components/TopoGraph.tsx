@@ -138,7 +138,19 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
       data-freshness-chip
       data-freshness-chip-stale={stale ? 'true' : 'false'}
     >
-      live · {sec}s
+      {/* Round 272 / Loop: swap prefix word to match color state so
+          text and color point the same way. Pre-R272 the chip read
+          "live · {sec}s" in BOTH fresh (gray) and stale (amber)
+          states — the amber color signals "concerning" but "live"
+          still says "fresh data flowing", a visual contradiction.
+          Post-R272: fresh="live · {sec}s" (gray + reassuring), stale=
+          "lag · {sec}s" (amber + signals lagging). Same monospace
+          cell count (3 chars + " · " + digits + "s") so no chip
+          width jitter on threshold crossing; R187 transition-colors
+          duration-300 still eases the bg/color flip. Title (hover
+          tooltip) still spells out the full meaning in either
+          state. */}
+      {stale ? 'lag' : 'live'} · {sec}s
     </span>
   );
 }
