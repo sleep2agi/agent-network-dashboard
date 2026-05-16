@@ -1511,7 +1511,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // toggleLayout if state changes. The pop runs even when
               // clicking the already-active layout (no state change),
               // confirming the click was received either way.
-              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
             >
               Ring
             </button>
@@ -1525,7 +1525,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // Round 196 / Loop: R163 layout-toggle Grid variant picks up
               // press-state — same tier pattern as Ring above.
               // Round 249 / Loop: chrome-pop on click — same as Ring.
-              className={`px-2.5 py-1 border-l transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 border-l transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
               /* Round 268 / Loop: Grid button's left border (the
                  internal divider between Ring and Grid) picks up
                  pal.containerBorder, matching the wrapper change at
