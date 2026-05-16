@@ -557,8 +557,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   useEffect(() => {
     try {
       const saved = localStorage.getItem('anet-topo-layout');
-      if (saved === 'grid' || saved === 'ring') setLayout(saved);
+      if (saved === 'grid' || saved === 'ring') {
+        setLayout(saved);
+      } else if (sessions.length >= 20) {
+        // v0.10.0 Hero 3 Wave 1 §3.D — auto-grid for dense fleets.
+        // When the user hasn't explicitly chosen a layout (no
+        // localStorage entry), default to `grid` once the fleet
+        // crosses 20 nodes. Below 20, the ring layout reads more
+        // attractive (per #87 + R97-99 tier-ring history); at 20+
+        // the ring starts packing tier 3 (R98 triple-tier
+        // threshold) and grid scales cleaner — every cell visible
+        // at the same density, no overlap-test risk from tier
+        // crowding. The user's explicit toggle (R163 chrome
+        // Ring|Grid) always wins by writing to anet-topo-layout,
+        // so this only sets the *initial* preference for first-
+        // time users on a dense fleet. Threshold 20 picked to
+        // align with the existing density-aware breakpoints (R98
+        // tier flip; R109 dense-label gating at 16). */}
+        setLayout('grid');
+      }
     } catch {}
+  // sessions.length intentionally NOT in deps — this runs once on
+  // mount and shouldn't re-fire when nodes join/leave (which would
+  // override a user's mid-session toggle). The Ring|Grid chrome
+  // button remains the authoritative source post-mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Round 170 / Loop: layout toggle (Ring ↔ Grid) used to teleport
   // every node from its old position to its new one in one paint
@@ -1537,7 +1560,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           mobile bump: 2 px tighter vertical breathing between
           title-block + chip-row. Geometry-safe — topo-overlap-test
           reads SVG-internal bbox, not header layout. */}
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between mb-4 px-1">
+      <div
+        className={`flex flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between mb-4 px-1${isFullscreen ? ' hidden' : ''}`}
+        data-topo-header-row
+        data-topo-header-hidden={isFullscreen ? 'true' : 'false'}
+      >
         {/* Round 267 / Loop: title block adopts leading-tight on both
             kicker and h2 for a tighter editorial-style rhythm. Pre-
             R267 the kicker used Tailwind's compound `text-xs` (line-
@@ -1976,7 +2003,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     }
                   }}
                 >
-                  {workingCount} working
+                  {/* Round 337 / Loop: split working chip into digit +
+                      " working" unit, with the unit at opacity-70.
+                      Extends the R333/R335/R336 chip-internal-hierarchy
+                      arc from SVG (panel headers) and pin-chip prefix
+                      surfaces into HTML chip-row chips. Recurring
+                      pattern: small label spans demote, value stays
+                      prominent. data-working-chip-unit exposes the
+                      span for tests. */}
+                  {workingCount}<span className="opacity-70" data-working-chip-unit> working</span>
                 </span>
                 <span
                   // Round 201 / Loop: online chip — mirror of the working
@@ -2038,7 +2073,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     }
                   }}
                 >
-                  {onlineNodes.length} online
+                  {/* R337 sibling — online chip unit demotion. */}
+                  {onlineNodes.length}<span className="opacity-70" data-online-chip-unit> online</span>
                 </span>
               </>
             );
