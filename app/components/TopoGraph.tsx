@@ -1069,8 +1069,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // is currently popping so only that icon picks up the class.
   // Arms for 240ms (CSS animation 220ms + 20ms buffer) so a quick
   // re-click can replay cleanly.
-  const [chromePopping, setChromePopping] = useState<'zoom-in' | 'zoom-out' | null>(null);
-  const popChrome = (which: 'zoom-in' | 'zoom-out') => {
+  // Round 249 / Loop: extend chromePopping to cover ring/grid layout
+  // toggle + fullscreen button alongside the existing zoom-in/zoom-out.
+  // Pre-R249 only the zoom buttons fired the R186 .anet-chrome-pop scale
+  // pulse on click; the other chrome controls (layout toggle, fullscreen)
+  // had no transient "I just clicked" signal — silent click → state change
+  // with only the post-click visual difference to confirm action. R249
+  // gives every clickable chrome control the same 220ms scale pulse, so
+  // the whole strip speaks one consistent click vocabulary. Reset button
+  // keeps its own R184 rotation animation (different gesture, semantic).
+  // Node-size S/M/L keep their R171 layoutSwitching crossfade (already
+  // gestural). Type union grows but the helper signature stays one-arg.
+  type ChromePop = 'zoom-in' | 'zoom-out' | 'layout-ring' | 'layout-grid' | 'fullscreen';
+  const [chromePopping, setChromePopping] = useState<ChromePop | null>(null);
+  const popChrome = (which: ChromePop) => {
     setChromePopping(which);
     setTimeout(() => setChromePopping(prev => prev === which ? null : prev), 240);
   };
@@ -1420,29 +1432,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               -fullscreen etc). */}
           <div className="inline-flex rounded-md border border-gray-500/25 overflow-hidden" role="group" aria-label="Topology layout">
             <button
-              onClick={() => { if (layout !== 'ring') toggleLayout(); }}
+              onClick={() => { popChrome('layout-ring'); if (layout !== 'ring') toggleLayout(); }}
               aria-pressed={layout === 'ring'}
               title="Ring layout (l to toggle)"
               data-topo-chrome-layout="ring"
               data-topo-chrome-layout-active={layout === 'ring' ? 'true' : 'false'}
+              data-topo-chrome-layout-ring-popping={chromePopping === 'layout-ring' ? 'true' : 'false'}
               // Round 196 / Loop: add active: (pressed) state for tactile
               // click feedback — bridges mouse-down → R186/R184/R192 pop-on-
               // release. Selected variant deepens to cyan-500/25 (one tier
               // above its hover:cyan-500/20); unselected variant deepens
               // to cyan-500/15 (one tier above its hover:cyan-500/5).
-              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'}`}
+              // Round 249 / Loop: chrome-pop joins the click handshake —
+              // mouse-down deepens cyan press (R196), release fires
+              // .anet-chrome-pop on the button (R249) AND triggers
+              // toggleLayout if state changes. The pop runs even when
+              // clicking the already-active layout (no state change),
+              // confirming the click was received either way.
+              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
             >
               Ring
             </button>
             <button
-              onClick={() => { if (layout !== 'grid') toggleLayout(); }}
+              onClick={() => { popChrome('layout-grid'); if (layout !== 'grid') toggleLayout(); }}
               aria-pressed={layout === 'grid'}
               title="Grid layout (l to toggle)"
               data-topo-chrome-layout="grid"
               data-topo-chrome-layout-active={layout === 'grid' ? 'true' : 'false'}
+              data-topo-chrome-layout-grid-popping={chromePopping === 'layout-grid' ? 'true' : 'false'}
               // Round 196 / Loop: R163 layout-toggle Grid variant picks up
               // press-state — same tier pattern as Ring above.
-              className={`px-2.5 py-1 border-l border-gray-500/25 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'}`}
+              // Round 249 / Loop: chrome-pop on click — same as Ring.
+              className={`px-2.5 py-1 border-l border-gray-500/25 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-gray-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
             >
               Grid
             </button>
@@ -6545,17 +6566,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               background + color when active so the Tailwind cyan
               classes win specificity. */}
           <button
-            onClick={toggleFullscreen}
+            onClick={() => { popChrome('fullscreen'); toggleFullscreen(); }}
             data-topo-chrome-fullscreen
             data-topo-chrome-fullscreen-active={isFullscreen ? 'true' : 'false'}
+            data-topo-chrome-fullscreen-popping={chromePopping === 'fullscreen' ? 'true' : 'false'}
             // R196: fullscreen also picks up press-state — active variant
             // deepens cyan-500/20 → cyan-500/25 on press; non-active
             // deepens white/5 → white/10.
+            // R249: chrome-pop on click — same one-vocabulary click signal
+            // as layout toggle and zoom buttons.
             className={`p-1.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
                 ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25'
                 : 'hover:bg-white/5 active:bg-white/10'
-            }`}
+            }${chromePopping === 'fullscreen' ? ' anet-chrome-pop' : ''}`}
             style={{
               borderColor: pal.containerBorder,
               ...(isFullscreen
