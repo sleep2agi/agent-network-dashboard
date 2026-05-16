@@ -8285,10 +8285,44 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontWeight="500"
                       data-recent-row-text={link.key}
                       data-recent-row-text-pinned={isRowPinned ? 'true' : 'false'}
+                      data-recent-row-text-hovered={!isRowPinned && isRowHovered ? 'true' : 'false'}
                       data-recent-row-text-font-weight="500"
+                      /* Round 434 / Loop: recent-signal row text extends
+                         from R220's pin-only letter-spacing (0 → 0.5 on
+                         isRowPinned) to a 3-tier scale matching R433
+                         legend-row at the sibling panel-row scope:
+                           rest               → 0px
+                           isRowHovered       → 0.25px   ← this round
+                           isRowPinned        → 0.5px   (R220 preserved)
+                         Pre-R434 R220 noted: "Hover stays at default
+                         tracking — the spread is pin-exclusive so
+                         users can read pinned vs hovered at the text
+                         alone." R427-R433 established a 3-tier pattern
+                         across 4 surfaces (node-alias, edge-badge,
+                         group-label, legend-row) where hover gets a
+                         subtler intermediate kerning step distinct
+                         from the pin tier's stronger spread — the
+                         locked vs preview discrimination R220 wanted
+                         is preserved (0.5 > 0.25) AND hover gets a
+                         typographic axis of its own. R434 completes
+                         the 5-surface arc.
+                         5-surface 3-tier letter-spacing pattern now
+                         spans every interactive label on TopoGraph
+                         that distinguishes hover from pin:
+                           node-alias  (R427)   0 / 0.3  / 0.5
+                           edge-badge  (R431)   0 / 0.2  / 0.4
+                           group-label (R432)   0 / 0.25 / 0.5
+                           legend-row  (R433)   0 / 0.25 / 0.5
+                           recent-row  (R434)   0 / 0.25 / 0.5  ← this round
+                         Hover-letter-spacing family extension
+                         (10 anchors now): R344/R345/R347/R351/R420/
+                         R427/R431/R432/R433/R434. R55 fill 150ms +
+                         R220 letter-spacing 150ms transition kept
+                         (additive conditional case, no new property). */
                       style={{
                         transition: 'fill 150ms ease-out, letter-spacing 150ms ease-out',
-                        letterSpacing: isRowPinned ? '0.5px' : '0px',
+                        letterSpacing: isRowPinned ? '0.5px' :
+                                       isRowHovered ? '0.25px' : '0px',
                       }}
                     >
                       {/* R138 / Loop: typography unification with the rest
