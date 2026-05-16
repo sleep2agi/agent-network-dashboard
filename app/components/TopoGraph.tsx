@@ -3994,6 +3994,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // node radius. Geometry-safe; paint-only. R51 sentinel
               // strokeWidth 1.5/3 untouched (idle=1, active=2). data-
               // topo-hub-spoke-linecap attr exposes the value for tests.
+              // Round 415 / Loop: hub-spoke active strokeWidth 2 → 2.25.
+              // Pairs with R391 (active opacity 0.7 → 0.8) so the same
+              // active-state path lifts BOTH stroke weight AND opacity
+              // in concert. Pre-R415 active strokes sat at sw=2 — clear
+              // step over idle sw=1, but a touch lighter than the
+              // weight family's other "active" indicators (R385 hub
+              // hover-ring sw=1.75 / R402 legend pin-ring sw=1.75 /
+              // R367 edge-badge rest sw=1.25). R415 bumps to 2.25 so
+              // the active spoke reads with proportional weight to its
+              // role — the line connecting the focal point to the
+              // active node deserves the heaviest active stroke in the
+              // family (after pin/hot edge-badge sw=2). Stays clear of
+              // R51 sentinels (1.5 / 3) at 2.25.
+              // Visual-weight bump family (14 anchors now):
+              //   R287 minimap viewport stroke    1   → 1.5
+              //   R295 legend swatch radius       5.5 → 6
+              //   R359 recent-row pip radius      1.6 → 1.8
+              //   R360 hub digit fontSize         11  → 12
+              //   R361 edge-badge digit fontSize  10  → 11
+              //   R365 hub-highlight radius       5   → 5.5
+              //   R367 edge-badge rest stroke     1   → 1.25
+              //   R374 pressure-bar height        1.5 → 2
+              //   R383 recent-row pip radius      1.8 → 2.0
+              //   R384 minimap online dot         1.7 → 1.9
+              //   R385 hub hover-ring stroke      1.5 → 1.75
+              //   R402 legend pin-ring stroke     1.5 → 1.75
+              //   R408 hub-halo radius            18  → 20
+              //   R415 hub-spoke active stroke    2   → 2.25  (this round)
+              // R382 strokeLinecap='round' + R391 opacity 0.45/0.8 +
+              // R51-safe idle sw=1 all preserved. 250ms transition
+              // list already covers stroke-width — the new tier eases
+              // naturally. data-topo-hub-spoke-stroke-width-active
+              // attr surfaces the active value for tests.
+              //
               // Round 391 / Loop: hub-spoke active opacity 0.7 → 0.8.
               // Pre-R391 active spokes (the spoke connecting the hub
               // to the currently-active alias — hovered or pinned)
@@ -4025,7 +4059,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   d={path}
                   fill="none"
                   stroke={isActiveSpoke ? pal.spokeStroke.active : pal.spokeStroke.idle}
-                  strokeWidth={isActiveSpoke ? 2 : 1}
+                  strokeWidth={isActiveSpoke ? 2.25 : 1}
                   strokeDasharray={isActiveSpoke ? 'none' : '6 14'}
                   strokeLinecap="round"
                   opacity={isActiveSpoke ? 0.8 : 0.45}
@@ -4034,6 +4068,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-spoke-dur={isActiveSpoke ? undefined : spokeDur}
                   data-topo-hub-spoke-active={isActiveSpoke ? 'true' : 'false'}
                   data-topo-hub-spoke-opacity={isActiveSpoke ? 0.8 : 0.45}
+                  data-topo-hub-spoke-stroke-width-active="2.25"
                   data-topo-hub-spoke-linecap="round"
                   style={{
                     transition: 'stroke 250ms ease-out, stroke-width 250ms ease-out, opacity 250ms ease-out',
