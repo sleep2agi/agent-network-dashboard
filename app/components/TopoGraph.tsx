@@ -4679,6 +4679,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               ts so a re-click on any node (same or different) remounts the
               <circle> and the SMIL <animate> elements replay from t=0.
               strokeWidth=2 doesn't match the overlap-test selectors. */}
+          {/* Round 227 / Loop: click-ripple SMIL gets ease-out curve.
+              Pre-R227 both <animate>s ran with default calcMode=linear,
+              which made the ripple grow at constant velocity from
+              r0+4 → r0+30 over 500ms — a mechanical "expansion at
+              uniform rate" feel that didn't match the rest of the
+              topology's interaction vocabulary (every CSS transition
+              on hover-lift, status-flip, pin-signature uses
+              `ease-out`). On click, the ripple is the user's primary
+              "I did that" confirmation feedback — it should feel
+              fast-then-settle like a real pressure wave, not metric.
+
+              calcMode="spline" + keyTimes="0;1" + keySplines="0.25 0.1
+              0.25 1" maps directly onto CSS cubic-bezier(0.25, 0.1,
+              0.25, 1), the canonical ease-out curve. SMIL's keySplines
+              uses the same 4 control-point convention as CSS but
+              space-separated. Applied to BOTH the r and opacity
+              <animate> elements so they ease in lockstep — the ring
+              decelerates as it expands and fades, the two motions
+              together feeling like one organic pulse.
+
+              One change reaches three click surfaces — hub center
+              (R52), node body (R14), edge midpoint badge (R185) — all
+              reuse this single ripple element via the shared
+              setClickRipple state. data-click-ripple attr surfaces
+              the element for test introspection; calcMode attribute
+              on the <animate> reflects the ease-out adoption. */}
           {clickRipple && !reducedMotion && (
             <circle
               key={clickRipple.ts}
@@ -4689,10 +4715,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               stroke={clickRipple.color}
               strokeWidth="2"
               opacity="0"
+              data-click-ripple
               style={{ pointerEvents: 'none' }}
             >
-              <animate attributeName="r" values={`${clickRipple.r0 + 4};${clickRipple.r0 + 30}`} dur="0.5s" fill="freeze" />
-              <animate attributeName="opacity" values="0.7;0" dur="0.5s" fill="freeze" />
+              <animate
+                attributeName="r"
+                values={`${clickRipple.r0 + 4};${clickRipple.r0 + 30}`}
+                dur="0.5s"
+                calcMode="spline"
+                keyTimes="0;1"
+                keySplines="0.25 0.1 0.25 1"
+                fill="freeze"
+              />
+              <animate
+                attributeName="opacity"
+                values="0.7;0"
+                dur="0.5s"
+                calcMode="spline"
+                keyTimes="0;1"
+                keySplines="0.25 0.1 0.25 1"
+                fill="freeze"
+              />
             </circle>
           )}
 
