@@ -1461,7 +1461,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               changing color or size, deepening the editorial
               hierarchy R267 set up between kicker and h2. */}
           <div className="text-xs uppercase text-gray-600 tracking-widest leading-tight" data-topo-section-kicker>Network Topology</div>
-          <h2 className="text-lg text-white font-semibold leading-tight" data-topo-section-title>Command mesh</h2>
+          {/* Round 286 / Loop: title 'Command mesh' adopts tracking-tight
+              (-0.025em) to complement R285 kicker tracking-widest. Wide
+              eyebrow + tight headline is the conventional editorial
+              pairing — Apple / Stripe / Vercel / Linear all use this
+              dual-axis typographic rhythm. The kicker's 0.1em pushes
+              letters APART (label feel); the headline's -0.025em pulls
+              them TOGETHER (deliberate, designed-headline feel). At
+              text-lg (18px) the shift is ~0.45px per gap — small but
+              cumulatively legible across 12 characters. font-semibold
+              (600) stays — tracking-tight does the heavy lifting for
+              the editorial register. */}
+          <h2 className="text-lg text-white font-semibold leading-tight tracking-tight" data-topo-section-title>Command mesh</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {/* Issue #87: ring | grid layout toggle — segmented control,
