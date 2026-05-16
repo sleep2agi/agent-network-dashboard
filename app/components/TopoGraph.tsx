@@ -2285,7 +2285,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               </span>
             );
           })()}
-          {vendorDist.length > 1 && (
+          {/* Round 281 / Loop: vendor letters chip threshold tightens
+              from >1 to >2 per 减法 cut #7. Pre-R281 the chip showed
+              whenever ≥2 vendor types existed in the fleet — for a
+              typical demo (claude + 1 other = 2 types), the chip
+              rendered "A:N C:M" adding ~50-80px to the chip-row width.
+              Tightening to >2 keeps the chip useful for fleets with
+              ACTUAL vendor diversity (3+ types) where the
+              composition matters at a glance, but hides it for the
+              common 1-2 vendor case where the info is low-signal.
+              Continues the R275-R280 simplification arc. */}
+          {vendorDist.length > 2 && (
             <span
               className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
               title="Hover to highlight; click to pin"

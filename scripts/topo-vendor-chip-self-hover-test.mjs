@@ -48,12 +48,13 @@ await ctx.route('**/api/hub/status*', async (route) => {
     network_id: nid, project_dir: null,
     created_at: fresh, updated_at: fresh, last_seen_at: fresh,
   });
-  // Two Anthropic + two OpenAI → vendorDist={A:2, O:2}
+  // 3+ vendor types (R281 threshold tightened to >2): one Anthropic +
+  // one OpenAI + one InternLM (书生) + one unknown → vendorDist 4 types.
   await route.fulfill({ response: r, json: { ...b, sessions: [
     mk('alpha', 'claude-opus-4'),
-    mk('beta',  'claude-sonnet-4'),
-    mk('gamma', 'gpt-4o'),
-    mk('delta', 'gpt-4'),
+    mk('beta',  'gpt-4o'),
+    mk('gamma', 'internlm/internlm2'),
+    mk('delta', 'some-unknown-model'),
   ] } });
 });
 await ctx.route('**/api/hub/messages*', (route) => route.fulfill({ json: { messages: [] } }));
