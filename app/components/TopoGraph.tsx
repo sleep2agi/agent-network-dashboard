@@ -5787,12 +5787,45 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 attr added for test introspection (the parent <g> at
                 line 3587 has data-topo-hub but the core specifically
                 is the canvas anchor). */}
-            <circle
-              cx={cx} cy={cy} r="10"
-              fill={isLight ? '#059669' : '#10b981'}
-              data-topo-hub-core
-              style={{ transition: 'fill 200ms ease-out' }}
-            />
+            {(() => {
+              /* Round 441 / Loop: hub center core fill brighten on
+                 hoveredHub. Pre-R441 the core was static (cyber
+                 emerald-500 #10b981 / light emerald-600 #059669) and
+                 the hub-hover gesture lifted ring radius (R177) +
+                 digit scale (R209) + digit fw (R425) + halo opacity
+                 (R370) + highlight opacity (R386) but the focal core
+                 ITSELF stayed planted at rest tone. R441 shifts the
+                 fill one emerald tier brighter on hover so the canvas
+                 anchor itself responds:
+                   cyber  emerald-500 → emerald-400  (#10b981 → #34d399)
+                   light  emerald-600 → emerald-500  (#059669 → #10b981)
+                 Same +100 step on the emerald scale across both themes.
+                 Pure paint axis; no geometry change. R248 fill 200ms
+                 transition already in the style list eases the shift.
+                 Closes the chroma axis on the hub-hover gesture stack:
+                   R177 ring radius lift          geometry
+                   R209 digit scale 1.08          geometry
+                   R425 digit fw 700 → 800        typography
+                   R370 halo opacity 0.7 → 0.8    paint
+                   R386 highlight opacity         paint
+                   R441 core fill brighten        chroma             ← this round
+                 data-topo-hub-core-hovered + -fill attrs exposed
+                 for tests. */
+              const isCoreHovered = !reducedMotion && hoveredHub;
+              const coreFill = isLight
+                ? (isCoreHovered ? '#10b981' : '#059669')
+                : (isCoreHovered ? '#34d399' : '#10b981');
+              return (
+                <circle
+                  cx={cx} cy={cy} r="10"
+                  fill={coreFill}
+                  data-topo-hub-core
+                  data-topo-hub-core-hovered={isCoreHovered ? 'true' : 'false'}
+                  data-topo-hub-core-fill={coreFill}
+                  style={{ transition: 'fill 200ms ease-out' }}
+                />
+              );
+            })()}
             {/* R130 / Loop: when workingCount > 0, the decorative inner
                 highlight gets replaced with the workingCount digit. The
                 R84 busyness breath already encodes the same metric
