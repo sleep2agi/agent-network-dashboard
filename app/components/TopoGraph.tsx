@@ -5792,6 +5792,58 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     </text>
                   );
                 })()}
+                {/* v0.10.0 Hero 3 Wave 1 §3.E — hover detail card.
+                    Renders an extended-info SVG card next to the
+                    hovered node showing vendor / model / runtime /
+                    server fields that don't fit in the compact label
+                    card. Position flips to the left when the node is
+                    in the right half of the canvas so the card
+                    doesn't extend past the viewBox right edge. Only
+                    one card is visible at any time (gated on
+                    hoveredAlias === session.alias), so layout cost
+                    stays bounded.
+                    Reuses pal.labelBox.fill / pal.legendAccent for
+                    chrome consistency with the existing label card +
+                    legend panel. data-topo-hover-detail attribute
+                    exposes the element for test probes.
+                    Not rendered in dense layout (>16 nodes) — same
+                    gate as showFullLabel; dense fleets already have
+                    too much per-node chrome competing. */}
+                {!reducedMotion && hoveredAlias === session.alias && !denseLayout && (() => {
+                  const v = vendorForModel(session.model);
+                  const rt = runtimeIdentity(session.runtime);
+                  const flipLeft = pos.x > VIEWBOX_W * 0.65;
+                  const detailW = 192;
+                  const detailH = 88;
+                  const detailX = flipLeft ? pos.x - radius - 18 - detailW : pos.x + radius + 18;
+                  const detailY = pos.y - detailH / 2;
+                  return (
+                    <g transform={`translate(${detailX}, ${detailY})`} data-topo-hover-detail={session.alias} style={{ pointerEvents: 'none' }}>
+                      <rect
+                        x="0" y="0" width={detailW} height={detailH} rx="8"
+                        fill={pal.labelBox.fill}
+                        stroke={pal.legendAccent}
+                        opacity={isLight ? 0.98 : 0.94}
+                        style={{ filter: isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.16))' : 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' }}
+                      />
+                      <text x="10" y="16" fontSize="9" fontFamily="monospace" fill={pal.legendAccent} fontWeight="700">
+                        {v.id !== 'unknown' ? v.label : '—'}
+                      </text>
+                      <text x="10" y="32" fontSize="10" fontFamily="monospace" fill={pal.legendHeadline}>
+                        {session.model || 'model · pending'}
+                      </text>
+                      <text x="10" y="48" fontSize="9" fontFamily="monospace" fill={pal.legendText}>
+                        {rt ? rt.label : 'runtime · pending'}
+                      </text>
+                      <text x="10" y="64" fontSize="9" fontFamily="monospace" fill={pal.legendText}>
+                        host · {session.server || 'unknown'}
+                      </text>
+                      <text x="10" y="80" fontSize="9" fontFamily="monospace" fill={pal.legendText} opacity="0.7">
+                        {session.task ? truncate(session.task, 28) : 'no recent task'}
+                      </text>
+                    </g>
+                  );
+                })()}
               </g>
             );
           })}
@@ -7325,26 +7377,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               other inline crescents. opacity 0.35 (slightly more
               subtle than the bottom watermark's 0.4 since the
               canvas top-left has more contrast headroom). */}
-          {flowLinks.length === 0 && (
-            <g
-              opacity="0.35"
-              data-topo-brand-canvas-mark
-              style={{ pointerEvents: 'none', transition: 'fill 200ms ease-out' }}
-            >
-              <defs>
-                <mask id="s2a-canvas-corner-mask">
-                  <rect x="0" y="0" width="28" height="28" fill="black" />
-                  <circle cx="14" cy="14" r="12" fill="white" />
-                  <circle cx="17.5" cy="13" r="10" fill="black" />
-                </mask>
-              </defs>
-              <rect
-                x="16" y="16" width="28" height="28"
-                fill={pal.legendText}
-                mask="url(#s2a-canvas-corner-mask)"
-              />
-            </g>
-          )}
+          {/* Round 327 / Loop: canvas brand crescent joins the always-
+              mount-opacity-gate family (R181/R182/R183/R213×2/R214/R215/
+              R221/R222/R223). Pre-R327 the crescent conditionally
+              mounted on `flowLinks.length === 0` — first flow arriving
+              SNAP-removed it, last flow leaving SNAP-added it. The
+              recent-signal panel at the same (16,16) corner has the
+              same snap problem on its conditional-mount path; this
+              round closes the crescent's snap-on-mount (the panel's
+              own crossfade is a larger surface, deferred).
+
+              Always-mounted with `opacity={flowLinks.length === 0 ?
+              0.35 : 0}` + 300ms ease-out transition: when the panel
+              hides, the crescent fades in over 300ms; when the panel
+              shows, the crescent fades out. Same opacity ramp time
+              the R175 panel-fade-in uses for cascade rhythm. data-
+              topo-brand-canvas-mark-visible exposes the gate for
+              tests. */}
+          <g
+            opacity={flowLinks.length === 0 ? 0.35 : 0}
+            data-topo-brand-canvas-mark
+            data-topo-brand-canvas-mark-visible={flowLinks.length === 0 ? 'true' : 'false'}
+            style={{ pointerEvents: 'none', transition: 'opacity 300ms ease-out, fill 200ms ease-out' }}
+          >
+            <defs>
+              <mask id="s2a-canvas-corner-mask">
+                <rect x="0" y="0" width="28" height="28" fill="black" />
+                <circle cx="14" cy="14" r="12" fill="white" />
+                <circle cx="17.5" cy="13" r="10" fill="black" />
+              </mask>
+            </defs>
+            <rect
+              x="16" y="16" width="28" height="28"
+              fill={pal.legendText}
+              mask="url(#s2a-canvas-corner-mask)"
+            />
+          </g>
         </svg>
 
         {/* Round 30 / Loop: minimap. Big fleets in fullscreen mode at high
