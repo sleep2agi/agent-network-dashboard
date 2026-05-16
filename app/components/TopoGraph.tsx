@@ -5428,12 +5428,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               const dur         = [4.0, 3.2, 2.7, 2.4][busy];
               const valuesLight = `${troughLight};${peakLight};${troughLight}`;
               const valuesDark  = `${troughDark};${peakDark};${troughDark}`;
+              // Round 408 / Loop: hub-halo radius 18 → 20. The
+              // grounding halo (the breathing outer circle around
+              // the hub center) is the canvas's signature breath
+              // element — R84 family. R408 bumps r=18 → 20 so the
+              // breath extends slightly further while keeping 4px
+              // clearance before the spoke origin (still room for
+              // spoke start anchors). Visual presence on the
+              // canvas focal point lifts ~23% area (π·20²/π·18²
+              // = 1.23) without changing the per-bucket opacity
+              // envelope or breath rhythm. Visual-weight bump
+              // family 13th anchor — pairs with R404/R405 trough
+              // lifts so the halo now breathes both with more
+              // visible amplitude AND more visual footprint.
+              // R84 per-bucket peak/dur invariants + R244 calc-
+              // Mode='spline' + R245 ease-in-out keySplines all
+              // preserved. data-topo-hub-halo-radius attr exposes
+              // value for tests.
               return (
                 <circle
-                  cx={cx} cy={cy} r="18"
+                  cx={cx} cy={cy} r="20"
                   fill={isLight ? '#d1fae5' : '#10b981'}
                   opacity={isLight ? 0.42 : 0.12}
                   data-hub-busyness={busy}
+                  data-topo-hub-halo-radius="20"
                   data-topo-hub-halo-trough={isLight ? troughLight : troughDark}
                   data-topo-hub-halo-peak={isLight ? peakLight : peakDark}
                   /* Round 253 / Loop: hub grounding halo fill transition
