@@ -2066,12 +2066,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      conflict (R180 inset double-ring is a box-shadow
                      not a transform). new data-chip-hover-lift attr
                      surfaces the lift surface for tests. */
-                  className={`tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
+                  // R414: chip-row chips gain `group` so inner unit
+                  // span brightens via group-hover:opacity-100 — sibling
+                  // to R355 filter pin pill inner-span hover-brighten.
+                  // Hover-brighten family extends from filter pills to
+                  // chip-row chips at the inner-span scope.
+                  className={`group tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     workingCount > 0
                       ? 'bg-green-500/10 text-green-300 border-green-500/20 hover:bg-green-500/15 hover:border-green-500/30 hover:-translate-y-px'
                       : 'bg-green-500/10 text-green-300 border-green-500/20'
                   }`}
                   data-chip-hover-lift={workingCount > 0 ? 'true' : 'false'}
+                  data-chip-group-hover-brighten="true"
                   data-working-chip
                   data-working-chip-aliases={workingAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
@@ -2151,7 +2157,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       at the chip-count scope. Sibling edits on the
                       online + active-links chip digits below. data-
                       working-chip-digit attr exposes the digit span. */}
-                  <span className="font-semibold" data-working-chip-digit>{workingCount}</span><span className="opacity-70" data-working-chip-unit> working</span>
+                  <span className="font-semibold" data-working-chip-digit>{workingCount}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-working-chip-unit> working</span>
                 </span>
                 <span
                   // Round 201 / Loop: online chip — mirror of the working
@@ -2166,12 +2172,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      (sibling treatment to working chip — same row,
                      same digit-jitter physics on count crossings). */
                   // R398: hover translate-y lift on clickable variant — see working chip above.
-                  className={`tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
+                  // R414: `group` parent + inner unit span group-hover-brighten — see working chip above.
+                  className={`group tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     onlineNodes.length > 0
                       ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:-translate-y-px'
                       : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
                   }`}
                   data-chip-hover-lift={onlineNodes.length > 0 ? 'true' : 'false'}
+                  data-chip-group-hover-brighten="true"
                   data-online-chip
                   data-online-chip-aliases={onlineAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
@@ -2217,7 +2225,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 >
                   {/* R337 sibling — online chip unit demotion. */}
                   {/* R362 sibling — online-chip digit gains font-semibold. */}
-                  <span className="font-semibold" data-online-chip-digit>{onlineNodes.length}</span><span className="opacity-70" data-online-chip-unit> online</span>
+                  <span className="font-semibold" data-online-chip-digit>{onlineNodes.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-online-chip-unit> online</span>
                 </span>
               </>
             );
@@ -3208,12 +3216,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    Every interactive chip in TopoGraph lifts on hover.
                    data-chip-hover-lift attr exposes the lift surface
                    state ('true' clickable, 'false' empty) for tests. */
-                className={`tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu ${
+                // R414: `group` parent + inner unit span group-hover-brighten — see working chip above.
+                className={`group tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu ${
                   isInteractive
                     ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30 hover:-translate-y-px'
                     : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
                 }`}
                 data-chip-hover-lift={isInteractive ? 'true' : 'false'}
+                data-chip-group-hover-brighten="true"
                 data-active-links-chip
                 data-active-links-flow-count={flowLinks.length}
                 data-active-links-clickable={isInteractive ? 'true' : 'false'}
@@ -3242,7 +3252,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     chip-internal-hierarchy arc. data-active-links-
                     chip-unit exposes the unit span for tests. */}
                 {/* R362 sibling — active-links chip digit gains font-semibold. */}
-                <span className="font-semibold" data-active-links-chip-digit>{flowLinks.length}</span><span className="opacity-70" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
+                <span className="font-semibold" data-active-links-chip-digit>{flowLinks.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
                 {rel ? (() => {
                   // Round 161 / Loop: extend R160's recency-pip
                   // vocabulary up one scope — from per-flow row to
