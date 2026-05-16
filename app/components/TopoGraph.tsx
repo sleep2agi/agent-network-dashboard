@@ -5050,17 +5050,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           the new tier naturally. data-edge-badge-
                           stroke-width-hover attr exposes the hover
                           value for tests. */}
+                      {/* Round 395 / Loop: edge-badge gains a third
+                          hover axis — opacity 0.85 (cyber) / 0.95
+                          (light) → 1.0 on isHoveredEdge. Pre-R395
+                          hovering thickened the stroke (R394 1.25 →
+                          1.5) and grew the radius (R164 9 → 10.5)
+                          but the badge's translucency stayed put at
+                          R371's rest alpha (cyber 0.85 / light 0.95).
+                          R395 lifts hover to a clean 1.0 — fully
+                          opaque — so the hovered badge reads as
+                          "in focus" against the dim siblings.
+                          Three-axis hover-lift parity now complete:
+                            hub hover-ring (R177/R370/R385):
+                              r 14 → 17, opacity 0 → 0.8 cyber, sw 1.5 → 1.75
+                            edge badge (R164/R394/R395):
+                              r 9 → 10.5, sw 1.25 → 1.5, opacity → 1.0
+                          200ms opacity transition (already in the
+                          style list) eases the new axis naturally.
+                          R371 rest opacity (0.85 cyber / 0.95 light)
+                          preserved as the resting alpha — R395
+                          adds an isHoveredEdge override on top.
+                          data-edge-badge-opacity-hover attr exposes
+                          the hover value for tests. */}
                       <circle
                         cx={badgeX} cy={badgeY}
                         r={isHoveredEdge || isPinned ? 10.5 : 9}
                         fill={pal.legendBox.fill}
                         stroke={isPinned ? pal.legendHeadline : isHot ? hotStroke : pal.flowEdge}
                         strokeWidth={isPinned ? 2 : isHot ? 2 : isHoveredEdge ? 1.5 : 1.25}
-                        opacity={isLight ? 0.95 : 0.85}
+                        opacity={isHoveredEdge ? 1 : (isLight ? 0.95 : 0.85)}
                         data-edge-badge-lifted={(isHoveredEdge || isPinned) ? 'true' : 'false'}
                         data-edge-badge-stroke-width-rest="1.25"
                         data-edge-badge-stroke-width-hover="1.5"
-                        data-edge-badge-opacity={isLight ? 0.95 : 0.85}
+                        data-edge-badge-opacity={isHoveredEdge ? 1 : (isLight ? 0.95 : 0.85)}
+                        data-edge-badge-opacity-rest={isLight ? 0.95 : 0.85}
+                        data-edge-badge-opacity-hover="1"
                         style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out' }}
                       />
                       {/* Round 224 / Loop: edge badge text gains the 4th
