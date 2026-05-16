@@ -1450,7 +1450,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             lines. data-topo-section-kicker / data-topo-section-title
             attrs make both probe-able. */}
         <div>
-          <div className="text-xs uppercase text-gray-600 tracking-wider leading-tight" data-topo-section-kicker>Network Topology</div>
+          {/* Round 285 / Loop: kicker tracking-wider → tracking-widest.
+              An uppercase eyebrow label at text-xs benefits from
+              wider letter-spacing — Tailwind's tracking-widest is
+              0.1em vs tracking-wider's 0.05em. At small caps,
+              0.1em is the conventional SaaS-eyebrow spacing (Stripe,
+              Linear, Vercel marketing kicker style); 0.05em reads
+              closer to body-text density. The widened spacing
+              telegraphs "this is a label, not a sentence" without
+              changing color or size, deepening the editorial
+              hierarchy R267 set up between kicker and h2. */}
+          <div className="text-xs uppercase text-gray-600 tracking-widest leading-tight" data-topo-section-kicker>Network Topology</div>
           <h2 className="text-lg text-white font-semibold leading-tight" data-topo-section-title>Command mesh</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
