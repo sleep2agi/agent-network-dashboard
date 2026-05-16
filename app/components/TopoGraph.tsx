@@ -6276,7 +6276,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 title (line ~6556) — both panels share the same
                 editorial-text-spacing convention. data-recent-panel-
                 title handle unchanged so R266 test still resolves. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" letterSpacing="0.3" style={{ transition: 'fill 200ms ease-out' }} data-recent-panel-title>recent signal</text>
+            {/* Round 345 / Loop: recent-signal panel title gains
+                letter-spacing tween 0.3 → 0.4 on panel hover.
+                hoveredPanel === 'recent' is set by the panel <g>
+                wrapper's onMouseEnter (line ~6263 area). Sibling to
+                R344 hover-letter-spacing applied to the +N more
+                flows footer — same gesture vocabulary at a panel-
+                title scope: hovering the panel chrome spreads the
+                title 0.1 px, signalling "this is a coherent unit
+                you're entering". transition list extends letter-
+                spacing 200ms ease-out alongside existing fill 200ms. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out' }} data-recent-panel-title>recent signal</text>
             {/* R96: header count now matches what the rows show. Pre-R96
                 this read "X msgs" off the raw messages array, but the
                 rows below render DEDUPED flowLinks — so a fleet with 10
@@ -7209,7 +7219,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 surrounding chrome eased; R266 closes both at once. */}
             {/* R301: sibling to recent-signal panel title above —
                 same letterSpacing 0.3 for editorial parity. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" letterSpacing="0.3" style={{ transition: 'fill 200ms ease-out' }} data-legend-panel-title>legend</text>
+            {/* R345 sibling — legend panel title same hover letter-
+                spacing tween 0.3 → 0.4 on panel hover. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out' }} data-legend-panel-title>legend</text>
             {/* Round 257 / Loop: legend panel header count picks up the
                 symmetric 13L/13R inner-padding pattern from the recent-
                 signal panel. Pre-R257 the legend header was 13px from
