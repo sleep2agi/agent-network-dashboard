@@ -7356,17 +7356,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             <rect
               x="0" y="0" width="230" height="88" rx="10"
               fill={pal.legendBox.fill}
-              stroke={pal.legendBox.stroke}
-              // Round 348 / Loop: recent-signal panel rect opacity hover-
-              // state bump — joins the panel-hover cue stack (R135 drop-
-              // shadow boost + R345 title letter-spacing tween 0.3 → 0.4
-              // + R266 fill theme-flip). Cyber 0.92 → 0.97, light 0.97 →
-              // 1.0 on hoveredPanel === 'recent'. The panel "solidifies"
-              // on hover — pure paint-level change, geometry-safe (bbox
-              // unchanged so topo-overlap-test invariants hold). The
-              // R247 transition list already includes `opacity 200ms
-              // ease-out` so the value tween is automatic. Sibling
-              // change at legend panel rect below (~line 7222).
+              // Round 423 / Loop: panel rect stroke tints to legendAccent
+              // (cyan) on hover — sibling to R217 label-card stroke
+              // hover-tint at the panel scope. Pre-R423 the panel rect
+              // stroke painted pal.legendBox.stroke (neutral) regardless
+              // of hover state, while every other panel hover cue stacked:
+              //   R135 drop-shadow boost
+              //   R348 rect opacity 0.92 → 0.97 cyber
+              //   R345 title letter-spacing 0.3 → 0.4
+              //   R423 rect stroke → legendAccent  (this round)
+              // Four hover layers now telegraph "you're entering this
+              // panel" through structural, paint, and typographic axes
+              // simultaneously. R247 transition list already covers
+              // stroke 200ms ease-out so the tint eases naturally.
+              // Sibling change at the legend panel rect below.
+              stroke={hoveredPanel === 'recent' ? pal.legendAccent : pal.legendBox.stroke}
               opacity={hoveredPanel === 'recent' ? (isLight ? 1 : 0.97) : (isLight ? 0.97 : 0.92)}
               style={{
                 /* R135: drop-shadow intensifies on panel hover. Base
@@ -8451,7 +8455,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             <rect
               x="0" y="0" width="224" height="88" rx="10"
               fill={pal.legendBox.fill}
-              stroke={pal.legendBox.stroke}
+              // R423 sibling — legend panel rect stroke tints to
+              // legendAccent on hover (mirrors recent-signal panel
+              // above). 4-layer hover cue stack now symmetric across
+              // both side panels.
+              stroke={hoveredPanel === 'legend' ? pal.legendAccent : pal.legendBox.stroke}
               // R348 sibling — legend panel rect opacity hover-state
               // bump 0.92 → 0.97 (cyber) / 0.97 → 1 (light) on
               // hoveredPanel === 'legend'. Pairs with the recent-signal
