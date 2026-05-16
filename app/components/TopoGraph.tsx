@@ -8648,13 +8648,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           distinct, plus the fill flip from legendText
                           → amber carries the dramatic part of the cue).
                           Sibling treatment in the data-weight tier. */}
+                      {/* Round 445 / Loop: extend the R320 cold/hot fw
+                          binary (600/700) to ALSO fire on isRowPinned —
+                          pinned-cold now lifts to 700 alongside the
+                          existing hot-triggered lift. Sibling to R444
+                          group-label-count-pin (500→600) at the
+                          recent-row scope. Both panel-row counts now
+                          respond to pin with a typographic weight lift,
+                          part of the "data tightens under attention"
+                          family (R416/R424/R425/R426/R444/R445).
+                          Effective tiers:
+                            cold + un-pinned     → fw 600
+                            cold + pinned        → fw 700  ← this round
+                            hot  (any pin state) → fw 700  (R320 preserved)
+                            hot is still amber-filled (R127); cold pin
+                            stays at the parent fill, so the two routes
+                            to fw=700 are visually distinct (color vs
+                            no color). transition list adds 'font-
+                            weight 200ms ease-out' so the lift eases
+                            under the same R320 fill cadence. data-
+                            recent-row-count-pinned attr exposes the
+                            pin gate for tests. */}
                       <tspan
                         fill={isHot ? hotStroke : undefined}
-                        fontWeight={isHot ? '700' : '600'}
+                        fontWeight={(isHot || isRowPinned) ? '700' : '600'}
                         data-recent-row-count
+                        data-recent-row-count-pinned={isRowPinned ? 'true' : 'false'}
+                        data-recent-row-count-font-weight={(isHot || isRowPinned) ? '700' : '600'}
                         {...(isHot ? { 'data-recent-row-count-hot': 'true' } : {})}
                         style={{
-                          transition: 'fill 300ms ease-out',
+                          transition: 'fill 300ms ease-out, font-weight 200ms ease-out',
                           fontVariantNumeric: 'tabular-nums',
                         }}
                       >
