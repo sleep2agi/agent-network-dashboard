@@ -7138,8 +7138,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fill={isRowActive ? pal.legendHeadline : pal.legendText}
                       fontSize="9"
                       fontFamily="monospace"
+                      /* Round 363 / Loop: recent-row text fontWeight 400
+                         → 500 (font-medium tier). At fontSize=9 the
+                         default-weight 400 glyphs read thin against the
+                         panel chrome (pal.legendBox.fill with 0.92/0.97
+                         opacity); the 100-weight bump lifts the alias→
+                         alias text into the legibility band without
+                         changing geometry. The R320 count tspan fw=600
+                         (cold) / fw=700 (hot) override still wins
+                         locally via inline fontWeight on the inner
+                         tspan, so the count-vs-alias hierarchy stays
+                         intact:
+                           alias  fw 500  (R363, this round)
+                           count  fw 600/700  (R320)
+                         Sibling typography lift to R362 chip-row digit
+                         500 → 600 — both nudge a within-element data
+                         tier without disturbing the surrounding family
+                         baseline. data-recent-row-text-font-weight attr
+                         exposes the value for tests. */
+                      fontWeight="500"
                       data-recent-row-text={link.key}
                       data-recent-row-text-pinned={isRowPinned ? 'true' : 'false'}
+                      data-recent-row-text-font-weight="500"
                       style={{
                         transition: 'fill 150ms ease-out, letter-spacing 150ms ease-out',
                         letterSpacing: isRowPinned ? '0.5px' : '0px',
