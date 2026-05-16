@@ -1669,8 +1669,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               theme-ease vocabulary (eases on cyber↔light toggle
               instead of snapping). Same change applied to the Grid
               button's border-l on line ~1493. */}
+          {/* Round 329 / Loop: Layout toggle wrapper `mr-1` → `mr-0.5`
+              to compensate for R328's chip-row gap bump (8 → 10 px).
+              R260 designed for an effective 12 px gap between the
+              Layout CONTROL and the first DISPLAY chip (working /
+              online / etc): mr-1 (4 px) + chip-row gap-2 (8 px) = 12.
+              R328 widened chip-row to gap-2.5 (10 px), pushing the
+              effective gap to 14 px — semantically still "control
+              vs display" but louder than R260 specified.
+              R329 dials mr-1 → mr-0.5 (2 px) so the effective gap
+              returns to 12 px (mr-0.5 + chip-row gap-2.5 = 2 + 10).
+              Keeps the law-of-proximity semantic R260 designed
+              while honoring R328's wider baseline rhythm. data-topo-
+              chrome-layout-trailer attr unchanged — it still marks
+              the boundary surface for the gap probe. */}
           <div
-            className="mr-1 inline-flex rounded-md border overflow-hidden"
+            className="mr-0.5 inline-flex rounded-md border overflow-hidden"
             style={{ borderColor: pal.containerBorder, transition: 'border-color 200ms ease-out' }}
             role="group"
             aria-label="Topology layout"
