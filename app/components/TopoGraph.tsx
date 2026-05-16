@@ -1655,7 +1655,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // toggleLayout if state changes. The pop runs even when
               // clicking the already-active layout (no state change),
               // confirming the click was received either way.
-              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              /* Round 306 / Loop: focus-visible:ring-2 → ring-1 unifies
+                 with the rest of the chrome button family. Pre-R306
+                 the Layout toggle (Ring/Grid) used `focus-visible:
+                 ring-2` (2px outline) while nodeSize S/M/L (line
+                 ~7291), zoom -/+ (~7328/~7395), reset (~7417), and
+                 fullscreen (~7477) all use `focus-visible:ring-1`
+                 (1px outline). Two different focus-ring widths on
+                 visually-analogous chrome controls — same R268
+                 border-color unification + R288 icon-stroke
+                 unification family. Reducing Ring/Grid to ring-1
+                 lets all 7 chrome buttons share one focus-ring
+                 weight; cyan-400/60 + ring-inset retained. The
+                 R163/R196 hover/active deeps + R249 chrome-pop
+                 click feedback continue unchanged. */
+              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
             >
               Ring
             </button>
@@ -1669,7 +1683,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // Round 196 / Loop: R163 layout-toggle Grid variant picks up
               // press-state — same tier pattern as Ring above.
               // Round 249 / Loop: chrome-pop on click — same as Ring.
-              className={`px-2.5 py-1 border-l transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              // Round 306 / Loop: focus-visible:ring-2 → ring-1 sibling
+              // change to Ring above — unifies focus-ring width across
+              // all chrome buttons.
+              className={`px-2.5 py-1 border-l transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
               /* Round 268 / Loop: Grid button's left border (the
                  internal divider between Ring and Grid) picks up
                  pal.containerBorder, matching the wrapper change at
