@@ -3084,7 +3084,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fill="none"
                   stroke={tierStroke}
                   strokeWidth="0.7"
-                  strokeDasharray="2 8"
+                  /* Round 303 / Loop: tier guide dashes tighten from
+                     "2 8" → "2 6" (8px gap → 6px gap). R54 set "2 8"
+                     to read as a faint hint behind everything else;
+                     after R290 (inner radar ring retired) + R291
+                     (starfield 50%) cleared the surrounding backdrop
+                     density, the tier guides carry more "this is the
+                     ring nodes sit on" visual responsibility. Pulling
+                     the gap from 8→6 puts dashes closer together so
+                     the ring reads as a clearer continuous mark
+                     rather than scattered dots, without bumping
+                     strokeWidth (0.7) or opacity (R92 bucketed). The
+                     2px dash itself unchanged — same density signal
+                     per dash, just fewer-px space between them. */
+                  strokeDasharray="2 6"
                   opacity={isLight ? opLight : opDark}
                   className="anet-fade-in"
                   style={{
