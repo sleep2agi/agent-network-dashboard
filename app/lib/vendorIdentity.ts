@@ -54,7 +54,10 @@ const VENDOR_RULES: Array<{ test: (m: string) => boolean; vendor: VendorIdentity
       label: 'MiniMax',
       mono: { bg: 'hsl(18 50% 26%)', ring: 'hsl(18 65% 52%)', text: 'hsl(20 80% 82%)' },
       initial: 'M',
-      logo: null, // → public/vendors/minimax.* when assets land
+      // P0 (Vincent 5222) custom-designed vendor badge — NOT a copy of
+      // the MiniMax trademark; geometric min/max zigzag in their warm-
+      // red palette. Replaces plain-letter "M" fallback.
+      logo: '/vendors/minimax.svg',
     },
   },
   {
@@ -64,7 +67,11 @@ const VENDOR_RULES: Array<{ test: (m: string) => boolean; vendor: VendorIdentity
       label: 'Anthropic',
       mono: { bg: 'hsl(16 32% 26%)', ring: 'hsl(16 48% 54%)', text: 'hsl(18 60% 84%)' },
       initial: 'A',
-      logo: null,
+      // P0 (Vincent 5222) custom-designed vendor badge — NOT a copy of
+      // the Anthropic trademark; 4-pointed sparkle in their warm-orange
+      // palette evokes AI/Claude without imitating the official mark.
+      // Real Anthropic logo still pending Vincent-direct asset OK.
+      logo: '/vendors/claude.svg',
     },
   },
   {
@@ -74,7 +81,11 @@ const VENDOR_RULES: Array<{ test: (m: string) => boolean; vendor: VendorIdentity
       label: 'OpenAI',
       mono: { bg: 'hsl(165 26% 22%)', ring: 'hsl(165 40% 44%)', text: 'hsl(165 45% 80%)' },
       initial: 'O',
-      logo: null,
+      // P0 (Vincent 5222) custom-designed vendor badge — NOT a copy of
+      // the OpenAI trademark; hexagonal frame + center dot in their
+      // teal palette evokes geometric AI lattice without imitating the
+      // knot. Real OpenAI logo still pending Vincent-direct asset OK.
+      logo: '/vendors/openai.svg',
     },
   },
 ];

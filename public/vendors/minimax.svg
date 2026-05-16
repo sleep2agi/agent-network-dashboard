@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- MiniMax vendor mark. NOT a copy of the MiniMax trademark —
+       custom designed badge: angular min/max zigzag in warm-red
+       palette evokes the function-shape without imitating the official
+       mark. Real MiniMax logo asset still gated on Vincent-direct. -->
+  <circle cx="32" cy="32" r="32" fill="hsl(18 50% 22%)" />
+  <circle cx="32" cy="32" r="30" fill="none" stroke="hsl(18 65% 52%)" stroke-width="2" />
+  <polyline points="14,42 22,22 32,42 42,22 50,42"
+            fill="none" stroke="hsl(20 80% 80%)" stroke-width="4"
+            stroke-linecap="round" stroke-linejoin="round" />
+</svg>
