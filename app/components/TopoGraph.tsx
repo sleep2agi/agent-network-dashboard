@@ -2915,8 +2915,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const dotColor = isLight
                     ? `rgba(13, 148, 136, ${alpha.toFixed(2)})`
                     : `rgba(34, 211, 238, ${alpha.toFixed(2)})`;
+                  // Round 342 / Loop: active-links chip freshness suffix
+                  // wrapper text-gray-500 → text-gray-400 (R317
+                  // subordinate-text-lift family applied to chrome
+                  // inactive Layout toggle + R333 vendor count suffix).
+                  // The "last 5s ago" suffix is chip-subordinate
+                  // metadata; gray-500 sat near-invisible against the
+                  // chip's outer color, gray-400 lifts it into the band
+                  // where the eye reads it as deliberate freshness
+                  // annotation. The freshness DOT keeps its own inline
+                  // color: dotColor — the lift only affects the trailing
+                  // literal "last {rel}" text.
                   return (
-                    <span className="text-gray-500">
+                    <span className="text-gray-400">
                       <span
                         data-active-links-freshness-dot
                         data-active-links-freshness-alpha={alpha.toFixed(2)}
