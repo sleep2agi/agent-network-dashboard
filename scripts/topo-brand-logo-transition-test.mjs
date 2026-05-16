@@ -77,7 +77,8 @@ const isGrayish = (s) => /(rgb|oklab|lab|oklch|hsl)/.test(s || '');
 
 const results = {
   brand_logo_present:       probe !== null,
-  brand_logo_width_36:      probe?.width === '36',
+  // R316 bumped width 36 → 40; assertion updated.
+  brand_logo_width_40:      probe?.width === '40',
   transition_has_color:     hasColorTransition(probe?.transition),
   transition_200ms:         isAround200ms(probe?.transition),
   r296_kicker_not_gray600:  isNotGray600(probe?.kickerColor),
