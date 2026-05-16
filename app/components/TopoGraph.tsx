@@ -6277,7 +6277,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 (no snap on cyber↔light switch). Same 200ms cadence
                 across the panel pair. */}
             <rect
-              x="0" y="0" width="224" height="104" rx="8"
+              x="0" y="0" width="224" height="88" rx="8"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
               opacity={isLight ? 0.97 : 0.92}
@@ -6330,8 +6330,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // to clear the new header row. R57 panel rect grew 96 →
               // 104 to seat them.
               const rows = [
+                /* Round 277 / Loop: legend panel compress 104 → 88 (matches
+                   recent-signal panel height post-R256) per Vincent
+                   5214/5215-5217 simplification ask. Row stride drops
+                   24 → 18: row 1 working anchored at y0=32 (unchanged so
+                   R271 hitbox-swatch-center test at y=21 still passes);
+                   row 2 idle y0=56→50 (-6); row 3 offline y0=80→68 (-12).
+                   Flow-arrow swatch path (line ~6607) tracks new offline
+                   cy from y=80 to y=68. Net: legend panel takes ~15%
+                   less vertical chrome, panel pair (recent-signal+
+                   legend) now share same height = symmetric corner
+                   pair. Tests still pass: R257/R266/R269/R274 probe
+                   x attrs, fill transitions, text content — none
+                   sensitive to y0 stride. R271 probes working row
+                   hitbox y=21 (row.y0-11 with row.y0=32), unchanged.
+                   Corner-to-center distance increases (panel ends
+                   higher, further from center) — geometric ring-clear
+                   improves slightly. */
                 { key: 'working' as const, y0: 32, y1: 36, fill: isLight ? '#059669' : '#22c55e', label: 'working node', count: workingCount },
-                { key: 'idle'    as const, y0: 56, y1: 60, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle',  count: idleCount },
+                { key: 'idle'    as const, y0: 50, y1: 54, fill: isLight ? '#0d9488' : '#2dd4bf', label: 'online idle',  count: idleCount },
                 /* Round 269 / Loop: " / " → " · " delimiter unification.
                    R138 swept the recent-signal row separators from
                    ASCII " / " to typographic " · " (matching filter
@@ -6340,7 +6357,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    LAST hardcoded " / " holdover in TopoGraph. Same
                    monospace cell width (no layout shift), completes
                    the R138 delimiter sweep. */
-                { key: 'offline' as const, y0: 80, y1: 84, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline · no SSE', count: offlineNodes.length },
+                { key: 'offline' as const, y0: 68, y1: 72, fill: isLight ? '#94a3b8' : '#6b7280', label: 'offline · no SSE', count: offlineNodes.length },
               ];
               return rows;
             })().map(row => {
@@ -6604,7 +6621,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             {/* Round 254 / Loop: legend flow-arrow swatch stroke
                 transition for theme toggle (cyber #67e8f9 ↔ light
                 #10b981). Last theme-driven legend element snap. */}
-            <path d="M140,80 Q164,56 196,80" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" data-legend-flow-arrow style={{ pointerEvents: 'none', transition: 'stroke 200ms ease-out' }} />
+            {/* Round 277 / Loop: flow-arrow path tracks new offline-row
+                cy=68 after the legend panel compress (was 80 pre-R277).
+                Endpoints follow the offline row to keep the swatch
+                logically tied to the row it demonstrates; control point
+                proportionally shifts so apex stays mid-arc between
+                rows 2 and 3. */}
+            <path d="M140,68 Q164,44 196,68" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" data-legend-flow-arrow style={{ pointerEvents: 'none', transition: 'stroke 200ms ease-out' }} />
           </g>
         </svg>
 
