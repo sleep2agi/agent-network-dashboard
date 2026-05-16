@@ -8164,7 +8164,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // R196: press-state deepens bg one tier above hover (white/5
               // → white/10) so mouse-down has a tactile dim before the
               // R186 icon pop fires on release.
-              className="px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
+              // R352: `group` lets the inner svg respond via group-hover.
+              className="group px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom out"
               title="Zoom out (−)"
@@ -8172,11 +8173,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               {/* R186: icon pop on click. CSS animation runs once;
                   React removes the class after 240ms so a quick
                   re-click can replay. */}
+              {/* Round 352 / Loop: zoom-out icon picks up group-hover:
+                  scale-110 — sibling to R350 reset hover-rotate. Pre-
+                  R352 hovering the zoom button only changed the bg
+                  (white/5); the icon inside stayed perfectly still.
+                  R352 lifts the icon 10% on hover for a tactile "this
+                  button does something" cue. The R186 anet-chrome-pop
+                  keyframe (220ms scale 1→1.06→1) still owns transform
+                  during click via CSS-animation precedence over
+                  transition-transform; after the pop ends + className
+                  is removed, the group-hover scale-110 picks up
+                  smoothly. `transform-gpu` hint promotes the svg to
+                  its own compositor layer for crisper edges during
+                  the scale tween. Sibling change on zoom-in icon
+                  below. */}
               <svg
                 width="12" height="12" viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
                 aria-hidden
-                className={chromePopping === 'zoom-out' ? 'anet-chrome-pop' : undefined}
+                className={`transition-transform duration-200 ease-out group-hover:scale-110 transform-gpu${chromePopping === 'zoom-out' ? ' anet-chrome-pop' : ''}`}
                 data-topo-chrome-zoom-out-icon
               ><path d="M5 12h14" /></svg>
             </button>
@@ -8252,18 +8267,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-topo-chrome-zoom-in
               data-topo-chrome-zoom-in-popping={chromePopping === 'zoom-in' ? 'true' : 'false'}
               // R196: press-state (mirror of zoom-out above).
-              className="px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
+              // R352: `group` lets the inner svg respond via group-hover.
+              className="group px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom in"
               title="Zoom in (+)"
             >
               {/* R186: icon pop on click. Same one-shot CSS animation
                   as zoom-out; React removes the class after 240ms. */}
+              {/* R352 sibling — zoom-in icon picks up the same
+                  group-hover:scale-110 family. Mirror change at
+                  the zoom-out icon above. */}
               <svg
                 width="12" height="12" viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
                 aria-hidden
-                className={chromePopping === 'zoom-in' ? 'anet-chrome-pop' : undefined}
+                className={`transition-transform duration-200 ease-out group-hover:scale-110 transform-gpu${chromePopping === 'zoom-in' ? ' anet-chrome-pop' : ''}`}
                 data-topo-chrome-zoom-in-icon
               ><path d="M12 5v14M5 12h14" /></svg>
             </button>
