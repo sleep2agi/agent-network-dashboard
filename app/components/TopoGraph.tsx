@@ -1404,9 +1404,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   return (
     <section className="w-full max-w-6xl mx-auto mb-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-3 px-1">
+        {/* Round 267 / Loop: title block adopts leading-tight on both
+            kicker and h2 for a tighter editorial-style rhythm. Pre-
+            R267 the kicker used Tailwind's compound `text-xs` (line-
+            height 16px = 1.33 ratio) and the h2 used `text-lg` (line-
+            height 28px = 1.56) — adequate but loose for a kicker→
+            title sequence. R267 applies `leading-tight` (1.25) to
+            both, shrinking effective line-heights to 15px + 22.5px =
+            37.5px total title block height (vs 44px pre-R267 → ~15%
+            more compact) while preserving the cap-top to descender
+            visual proportions. Result: kicker and title read as a
+            single typographic unit rather than two loosely-stacked
+            lines. data-topo-section-kicker / data-topo-section-title
+            attrs make both probe-able. */}
         <div>
-          <div className="text-xs uppercase text-gray-600 tracking-wider">Network Topology</div>
-          <h2 className="text-lg text-white font-semibold">Command mesh</h2>
+          <div className="text-xs uppercase text-gray-600 tracking-wider leading-tight" data-topo-section-kicker>Network Topology</div>
+          <h2 className="text-lg text-white font-semibold leading-tight" data-topo-section-title>Command mesh</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {/* Issue #87: ring | grid layout toggle — segmented control,
