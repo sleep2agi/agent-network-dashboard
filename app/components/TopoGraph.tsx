@@ -2844,18 +2844,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             ));
           })()}
 
-          {[0, 30, 60, 90, 120, 150].map(angle => (
-            <line
-              key={angle}
-              x1={cx - 360 * Math.cos(angle * Math.PI / 180)}
-              y1={cy - 360 * Math.sin(angle * Math.PI / 180)}
-              x2={cx + 360 * Math.cos(angle * Math.PI / 180)}
-              y2={cy + 360 * Math.sin(angle * Math.PI / 180)}
-              stroke={pal.ringStroke}
-              strokeWidth="1"
-              opacity={isLight ? 0.35 : 0.18}
-            />
-          ))}
+          {/* Round 240 / Loop: extend R93 anyPin tinting from tier-rings
+              to backdrop spokes. Pre-R240 the 6 radar-style spokes
+              stayed at pal.ringStroke regardless of filter state,
+              while R93 already shifted tier-rings to pal.legendAccent
+              on any active pin. Result: ring scaffolding said
+              'filtered mode' but spoke scaffolding said 'rest' — the
+              two halves of the canvas's spatial guide were out of
+              sync. R240 ties them together; whole backdrop now reads
+              as one filtered-mode-coloured unit when a pin is active.
+
+              Same anyPin signal R93 uses (pinnedStatus || pinnedGroup
+              || pinnedVendor). Same legendAccent tint colour. Same
+              200ms ease-out transition timing — pin a status, both
+              tier-rings AND spokes ease to cyan together. */}
+          {(() => {
+            const anyPin = !!(pinnedStatus || pinnedGroup || pinnedVendor);
+            const spokeStroke = anyPin ? pal.legendAccent : pal.ringStroke;
+            return [0, 30, 60, 90, 120, 150].map(angle => (
+              <line
+                key={angle}
+                x1={cx - 360 * Math.cos(angle * Math.PI / 180)}
+                y1={cy - 360 * Math.sin(angle * Math.PI / 180)}
+                x2={cx + 360 * Math.cos(angle * Math.PI / 180)}
+                y2={cy + 360 * Math.sin(angle * Math.PI / 180)}
+                stroke={spokeStroke}
+                strokeWidth="1"
+                opacity={isLight ? 0.35 : 0.18}
+                data-topo-spoke-angle={angle}
+                data-topo-spoke-tinted={anyPin ? 'true' : 'false'}
+                style={{ transition: 'stroke 200ms ease-out' }}
+              />
+            ));
+          })()}
           </>)}
 
           {/* hub links — round 46: idle spokes now have animated
