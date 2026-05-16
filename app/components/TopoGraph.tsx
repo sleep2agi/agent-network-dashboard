@@ -6480,7 +6480,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 theme-toggle transition. Pre-R266 the count snapped
                 color on theme flip; R266 eases it alongside the panel
                 title (sibling text in the same header band). */}
-            <text x="211" y="21" textAnchor="end" fill={pal.legendAccent} fontSize="10" fontFamily="monospace" data-legend-panel-count style={{ transition: 'fill 200ms ease-out' }}>{sessions.length} node{sessions.length === 1 ? '' : 's'}</text>
+            {/* Round 292 / Loop: legend panel header count adopts explicit
+                fontVariantNumeric: 'tabular-nums' for parity with the
+                recent-signal panel header count at line ~5814 (R232).
+                The text is already fontFamily='monospace' so digit width
+                is technically tabular by definition — the explicit
+                directive documents intent at code level, survives a
+                future font-family change without silently losing
+                tabular alignment, and eliminates an asymmetry between
+                two sibling panel-header counts. Sibling treatment to
+                R225 (hub digit) / R224 (edge badge) / R232 (chip-row
+                counts) — tabular-nums sweep continues wherever digits
+                live next to non-digit characters. */}
+            <text
+              x="211" y="21" textAnchor="end"
+              fill={pal.legendAccent} fontSize="10" fontFamily="monospace"
+              data-legend-panel-count
+              style={{
+                transition: 'fill 200ms ease-out',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >{sessions.length} node{sessions.length === 1 ? '' : 's'}</text>
             {(() => {
               const idleCount = onlineNodes.length - workingCount;
               // R106: rows shift +8 px (was y0=24, 48, 72 → 32, 56, 80)
