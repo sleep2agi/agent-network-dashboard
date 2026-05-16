@@ -7011,15 +7011,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           transition list extends 'letter-spacing
                           200ms ease-out' so it eases alongside the
                           existing 300ms fill transition. */}
+                      {/* Round 427 / Loop: extend the node alias label
+                          letter-spacing family to a 3-tier scale —
+                          rest 0px → hover 0.3px → chat-target 0.5px.
+                          Pre-R427 the alias text shifted only when
+                          chat was actively pinned (R305); pure node-
+                          hover left the text dead-typographic while
+                          the surrounding card lifted (R26 translateY
+                          + R242 stroke + filter cues). R427 adds the
+                          missing typographic axis to the hover gesture
+                          so the alias text rises with the card.
+                          The chat-target tier still wins (0.5 > 0.3)
+                          so the pin signature stays at the top of the
+                          scale — hover is the mid tier between rest
+                          and chat-target.
+                          Hover-letter-spacing family extension:
+                            R344 chip count digit
+                            R345 panel title (R423 sibling)
+                            R347 active-links chip
+                            R351 vendor chip
+                            R420 zoom-level chip
+                            R427 node alias text (this round)
+                          R211 fill 300ms + R305 letter-spacing 200ms
+                          transition list preserved; only the
+                          conditional gets a middle case. */}
                       <text
                         x="0" y="1" textAnchor="middle"
                         fill={status.text}
                         fontSize={aliasFs} fontFamily="monospace" fontWeight="700"
                         data-node-alias-text={session.alias}
                         data-node-alias-chat-target={chatAlias === session.alias ? 'true' : 'false'}
+                        data-node-alias-hovered={hoveredAlias === session.alias ? 'true' : 'false'}
                         style={{
                           transition: 'fill 300ms ease-out, letter-spacing 200ms ease-out',
-                          letterSpacing: chatAlias === session.alias ? '0.5px' : '0px',
+                          letterSpacing:
+                            chatAlias    === session.alias ? '0.5px' :
+                            hoveredAlias === session.alias ? '0.3px' : '0px',
                         }}
                       >
                         {truncate(session.alias, fullMax)}
