@@ -7500,7 +7500,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           const rectH = (VIEWBOX_H / view.zoom) * sy;
           return (
             <div
-              className="absolute right-4 rounded-md border shadow-lg shadow-black/30 overflow-hidden anet-fade-in anet-topo-chip-focus"
+              /* Round 332 / Loop: minimap container rounded-md → rounded-lg
+                 (6 → 8 px) — continues the R330-R331 corner-radius cascade
+                 onto the minimap overlay card. The minimap is a smaller
+                 surface than the inner SVG panels (120×82 vs 230×88), so
+                 it sits one tier inward in the size hierarchy: panels at
+                 rx=10 (R331), minimap at rounded-lg=8 (R332), inner
+                 detail card at rx=8 (codex 8f981a9). Same 2 px gradient
+                 step the rest of the cascade uses. Geometry-safe — the
+                 minimap is an HTML overlay positioned `bottom: 56` +
+                 `right-4`, no impact on SVG layout or topo-overlap-test. */
+              className="absolute right-4 rounded-lg border shadow-lg shadow-black/30 overflow-hidden anet-fade-in anet-topo-chip-focus"
               /* Round 254 / Loop: minimap container theme transitions —
                  background-color, border-color, color (used for SVG
                  currentColor inside) all ease at 200ms alongside the
