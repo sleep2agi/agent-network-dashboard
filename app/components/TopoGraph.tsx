@@ -2909,6 +2909,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               const path = curvePath({ x: cx, y: cy }, pos, 0);
               const isActiveSpoke = activeAliases.has(session.alias);
 
+              /* Round 241 / Loop: hub-link spokes (agent→hub paths in
+                 ring layout) eased state-flip between idle and active.
+                 Pre-R241 when a node sent or received a message its
+                 hub-spoke jumped one-frame from idle gray (pal.spoke-
+                 Stroke.idle + strokeWidth=1 + opacity=0.45) to active
+                 cyan (pal.spokeStroke.active + strokeWidth=2 + opacity
+                 =0.7) — three discrete property snaps in lockstep.
+                 R241 adds a 250ms ease-out transition list covering
+                 stroke + stroke-width + opacity so the activation
+                 'lights up' smoothly. strokeDasharray stays binary
+                 (none ↔ '6 14') — dasharray doesn't interpolate
+                 cleanly between continuous and discrete forms across
+                 browsers (same lesson R167 documented for the node
+                 status ring). The CSS keyframe animation on idle
+                 spokes (anet-topo-spoke-flow) drives stroke-dashoffset
+                 separately and stays untouched. data-topo-hub-spoke-
+                 active surfaces the activity state for test probes
+                 (active spokes don't carry the bucket/dur attrs so
+                 they need their own data anchor). */
               return (
                 <path
                   key={`hub-${session.alias}`}
@@ -2921,14 +2940,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   className={isActiveSpoke ? undefined : 'anet-topo-spoke-flow'}
                   data-topo-spoke-bucket={isActiveSpoke ? undefined : busy}
                   data-topo-spoke-dur={isActiveSpoke ? undefined : spokeDur}
-                  style={isActiveSpoke ? undefined : ({
-                    animationDelay: `${-(idx * 0.25)}s`,
-                    // CSS var consumed by `.anet-topo-spoke-flow`
-                    // (line 859 of globals.css). React's CSSProperties
-                    // type doesn't model custom properties → cast
-                    // through Record<string, string>.
-                    ...({ ['--spoke-dur']: `${spokeDur}s` } as Record<string, string>),
-                  } as React.CSSProperties)}
+                  data-topo-hub-spoke-active={isActiveSpoke ? 'true' : 'false'}
+                  style={{
+                    transition: 'stroke 250ms ease-out, stroke-width 250ms ease-out, opacity 250ms ease-out',
+                    ...(isActiveSpoke ? {} : {
+                      animationDelay: `${-(idx * 0.25)}s`,
+                      // CSS var consumed by `.anet-topo-spoke-flow`
+                      // (line 859 of globals.css). React's CSSProperties
+                      // type doesn't model custom properties → cast
+                      // through Record<string, string>.
+                      ...({ ['--spoke-dur']: `${spokeDur}s` } as Record<string, string>),
+                    }),
+                  } as React.CSSProperties}
                 />
               );
             });
