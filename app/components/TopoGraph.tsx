@@ -1435,7 +1435,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
   return (
     <section className="w-full max-w-6xl mx-auto mb-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-3 px-1">
+      {/* Round 299 / Loop: title block bottom margin mb-3 (12px) →
+          mb-4 (16px). After R298 tightened the title-block internal
+          gap (12→10px) packing brand-logo + kicker + h2 into a more
+          cohesive editorial unit, the outer bottom margin to the
+          topology canvas should breathe more — denser title block
+          + tighter follow-on space read as cramped. Bumping the
+          gap below the title block lets the canvas frame
+          itself more clearly as the main visual subject. 16px is
+          the conventional SaaS-product section-header-to-content
+          baseline (Stripe / Linear / Vercel marketing). Geometry:
+          adds 4 CSS px between title block bottom and topology
+          frame top — small but cumulative with the R298 internal
+          tighten, the title block reads as a *deliberate* badge
+          rather than a casually-stacked label. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4 px-1">
         {/* Round 267 / Loop: title block adopts leading-tight on both
             kicker and h2 for a tighter editorial-style rhythm. Pre-
             R267 the kicker used Tailwind's compound `text-xs` (line-
