@@ -1690,7 +1690,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  weight; cyan-400/60 + ring-inset retained. The
                  R163/R196 hover/active deeps + R249 chrome-pop
                  click feedback continue unchanged. */
-              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
             >
               Ring
             </button>
@@ -1707,7 +1707,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // Round 306 / Loop: focus-visible:ring-2 → ring-1 sibling
               // change to Ring above — unifies focus-ring width across
               // all chrome buttons.
-              className={`px-2.5 py-1 border-l transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 border-l transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
               /* Round 268 / Loop: Grid button's left border (the
                  internal divider between Ring and Grid) picks up
                  pal.containerBorder, matching the wrapper change at
@@ -7409,7 +7409,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    / fullscreen) preview their active state on hover.
                    Pure actions (zoom -/+, reset) stay white — they
                    aren't toggles, have no active state to preview. */
-                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
+                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
                 {lbl}
@@ -7612,7 +7612,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                the nodeSize buttons at line ~6711. */
             className={`p-1.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
-                ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25'
+                ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25'
                 : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'
             }${chromePopping === 'fullscreen' ? ' anet-chrome-pop' : ''}`}
             style={{
