@@ -4490,11 +4490,72 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     </circle>
                   );
                 })()}
-                {isActive && !reducedMotion && (
-                  <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
-                    <animate attributeName="r" values={`${radius + 8};${radius + 22};${radius + 8}`} dur="2.4s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values={isLight ? '0.12;0.02;0.12' : '0.18;0.04;0.18'} dur="2.4s" repeatCount="indefinite" />
-                  </circle>
+                {/* Round 243 / Loop: active-node pulse (the breathing
+                    aura ring at r=radius+14 fill=status.primary, shown
+                    on nodes participating in a recent flow) gains TWO
+                    polishes:
+
+                    1) Always-mount + opacity-gate wrapper <g>. Pre-
+                       R243 the circle conditionally mounted on
+                       isActive — when a node joined a flow, the pulse
+                       snap-appeared at radius+8 (first SMIL phase
+                       value), and when the flow stopped, snap-
+                       disappeared. R243 keeps the SMIL animation
+                       running continuously inside an opacity-gated
+                       <g>; isActive flips the WRAPPER opacity
+                       1↔0 with a 300ms ease-out transition so the
+                       pulse fades in/out at its current phase
+                       instead of restarting from +8. The reduced-
+                       motion gate stays at the conditional render
+                       level — reduced-motion users see no pulse at
+                       all (no point without the animation).
+
+                       12th surface in the always-mount-opacity-gate
+                       family (R181/R182/R183/R213×2/R214/R215/R221/
+                       R222/R223/R237/R243).
+
+                    2) SMIL ease-in-out keySplines on both r and
+                       opacity animates. Pre-R243 default linear
+                       calcMode produced a constant-velocity breath
+                       (radius marched +8 → +22 at fixed dr/dt;
+                       opacity dimmed 0.12 → 0.02 at fixed dα/dt) —
+                       mechanical, not organic. calcMode='spline'
+                       + keyTimes='0;0.5;1' + per-segment keySplines
+                       '0.42 0 0.58 1' (canonical CSS ease-in-out)
+                       both ways gives a settled breath: slow at
+                       both endpoints (small and large radius / lit
+                       and dim opacity), fast through the middle.
+                       Same SMIL-easing family R227 / R228 already
+                       inhabits at the click ripple + edge ping +
+                       pulse. */}
+                {!reducedMotion && (
+                  <g
+                    opacity={isActive ? 1 : 0}
+                    data-node-pulse={session.alias}
+                    data-node-pulse-active={isActive ? 'true' : 'false'}
+                    style={{ transition: 'opacity 300ms ease-out' }}
+                  >
+                    <circle cx={pos.x} cy={pos.y} r={radius + 14} fill={status.primary} opacity={isLight ? 0.08 : 0.12}>
+                      <animate
+                        attributeName="r"
+                        values={`${radius + 8};${radius + 22};${radius + 8}`}
+                        dur="2.4s"
+                        repeatCount="indefinite"
+                        calcMode="spline"
+                        keyTimes="0;0.5;1"
+                        keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
+                      />
+                      <animate
+                        attributeName="opacity"
+                        values={isLight ? '0.12;0.02;0.12' : '0.18;0.04;0.18'}
+                        dur="2.4s"
+                        repeatCount="indefinite"
+                        calcMode="spline"
+                        keyTimes="0;0.5;1"
+                        keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
+                      />
+                    </circle>
+                  </g>
                 )}
                 {/* Round 4 / Loop: transition-[fill,stroke,opacity] smooths
                     status colour changes so idle↔working↔offline doesn't snap
