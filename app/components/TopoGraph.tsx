@@ -2992,8 +2992,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               leading-edge gradient. Slow 6s rotation reads as a radar
               scan without being noisy. Inline transform-origin on the
               <g> wrapper ensures Chrome / Firefox rotate around (cx,cy)
-              instead of the SVG viewBox corner. */}
-          {(() => {
+              instead of the SVG viewBox corner.
+
+              v0.10.0 Hero 3 Wave 1 / RFC §3.B (Vincent 5222 holdover):
+              sweep arc retired. The diagonal rotating wedge competes
+              with working-halo SMIL, hub busyness breath, and edge
+              flow animation — on a 16:9 Twitter screenshot it reads
+              'wow lots of motion' rather than 'agents communicating'.
+              Same idiom as R278/R279/R280 retirements — `false &&`
+              short-circuits the IIFE so it's a one-line rollback. */}
+          {false && (() => {
             // R146: radar sweep rotation buckets on workingCount, joining
             // R84 hub breath / R131 outer orbit / R132 group march /
             // R145 idle spokes as the 5th and final layer in the busyness-
@@ -5838,7 +5846,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-topo-panel-elevation tag so the test can verify both
               panels carry the filter. The filter is on the rect, not
               the parent <g>, so it doesn't shadow the rows + text inside
-              — only the panel chrome lifts. */}
+              — only the panel chrome lifts.
+
+              v0.10.0 Hero 3 Wave 1 / RFC §3.C (Vincent 5222 holdover):
+              hide recent-signal panel when there's no flow to show.
+              Pre-v0.10.0 the panel always-mounted with a "no flow yet
+              · send a message between agents" placeholder. On a fresh
+              fleet that's a full corner of chrome doing nothing —
+              exactly the always-mount-stack 5222 calls out. Render the
+              panel only when flowLinks actually has rows. R175 fade-in
+              still applies — first flow that arrives still eases in.
+              Composes with §3.I canvas-corner watermark (only shows
+              when this panel is absent). */}
+          {flowLinks.length > 0 && (
           <g
             transform="translate(16, 16)"
             data-topo-panel="recent"
@@ -6521,6 +6541,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       {' · '}{truncate(link.content, 8)}
                     </text>
                     {lastAt ? (
+                      /* Round 321 / Loop: lastAt freshness timestamp picks
+                         up fontVariantNumeric tabular-nums. The string
+                         marches through 1s..59s (1 digit / 2 digits) /
+                         1m..59m / 1h..24h every second the panel ticks,
+                         and the textAnchor="end" right-aligns against
+                         x=217. Pre-R321 a 9s→10s crossing slid the chip
+                         left ~3px in monospace (digit '1' narrower than
+                         '0' even in mono) — same one-frame visible jitter
+                         R225 / R230 fixed elsewhere. Tabular-nums locks
+                         the digit slot so the timestamp stays planted as
+                         seconds tick. 7th surface in the info-density
+                         tabular-nums sweep after R224 edge badge / R225
+                         hub digit + panel header + recent row count /
+                         R229 group-label count / R230 group-label
+                         status pips / R320 recent-row count fw=600
+                         (count and timestamp now both lock). */
                       <text
                         x="217" y={38 + index * 16}
                         textAnchor="end"
@@ -6530,7 +6566,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         opacity={tsAlpha}
                         data-recent-row-ts={link.key}
                         data-recent-row-ts-alpha={tsAlpha.toFixed(2)}
-                        style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out' }}
+                        style={{
+                          pointerEvents: 'none',
+                          transition: 'opacity 200ms ease-out',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
                       >
                         {lastAt}
                       </text>
@@ -6660,6 +6700,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               );
             })()}
           </g>
+          )}
 
           {/* legend — Round 55 / Loop: each status row is now a hover
               target. Pointer enter sets `hoveredStatus`; pointer leave
