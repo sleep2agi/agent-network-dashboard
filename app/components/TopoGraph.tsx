@@ -2063,7 +2063,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       pattern: small label spans demote, value stays
                       prominent. data-working-chip-unit exposes the
                       span for tests. */}
-                  {workingCount}<span className="opacity-70" data-working-chip-unit> working</span>
+                  {/* Round 362 / Loop: digit picks up font-semibold
+                      (fw 500 → 600) for within-chip weight tier. The
+                      chip's outer className stays at font-medium (R313
+                      data-weight baseline); the digit overrides to
+                      semibold so it reads heavier than its " working"
+                      unit (which keeps fw 500 + R338 opacity-70).
+                      Joins the R333-R341 chip-internal-hierarchy arc
+                      at the chip-count scope. Sibling edits on the
+                      online + active-links chip digits below. data-
+                      working-chip-digit attr exposes the digit span. */}
+                  <span className="font-semibold" data-working-chip-digit>{workingCount}</span><span className="opacity-70" data-working-chip-unit> working</span>
                 </span>
                 <span
                   // Round 201 / Loop: online chip — mirror of the working
@@ -2126,7 +2136,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   }}
                 >
                   {/* R337 sibling — online chip unit demotion. */}
-                  {onlineNodes.length}<span className="opacity-70" data-online-chip-unit> online</span>
+                  {/* R362 sibling — online-chip digit gains font-semibold. */}
+                  <span className="font-semibold" data-online-chip-digit>{onlineNodes.length}</span><span className="opacity-70" data-online-chip-unit> online</span>
                 </span>
               </>
             );
@@ -3030,7 +3041,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     the 5th chip surface in the R333/R335/R336/R337
                     chip-internal-hierarchy arc. data-active-links-
                     chip-unit exposes the unit span for tests. */}
-                {flowLinks.length}<span className="opacity-70" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
+                {/* R362 sibling — active-links chip digit gains font-semibold. */}
+                <span className="font-semibold" data-active-links-chip-digit>{flowLinks.length}</span><span className="opacity-70" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
                 {rel ? (() => {
                   // Round 161 / Loop: extend R160's recency-pip
                   // vocabulary up one scope — from per-flow row to
