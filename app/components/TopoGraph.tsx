@@ -9989,7 +9989,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // R346: strokeWidth + opacity tween on container hover.
                   strokeWidth={hoveredMinimap ? '1.75' : '1.5'}
                   strokeLinejoin="round"
-                  opacity={hoveredMinimap ? '1' : '0.9'}
+                  /* Round 450 / Loop · milestone: minimap viewport rest
+                     opacity 0.9 → 0.95. Closes half the alpha gap on
+                     the wayfinding indicator while preserving the
+                     R346 hover delta to 1.0. Pre-R450 the rest viewport
+                     sat at 0.9 (10 pct alpha gap) — adequate but
+                     under-confident for the user's primary "you are
+                     here" indicator on the minimap. R450 lifts to 0.95
+                     so the rest read is more present without erasing
+                     the hover lift cue (the +0.05 rest-to-hover delta
+                     is small but pairs with R346 sw 1.5→1.75 to keep
+                     hover clearly distinguishable). Sibling to R449
+                     legend-count active opacity 0.95→1.0 — same
+                     "close the active-presence alpha gap" idiom now
+                     applied to the REST tier of the wayfinding rect
+                     (the minimap viewport stays at canvas-presence
+                     register even when un-hovered since it's the
+                     spatial referent). Theme-consistency / canvas-
+                     presence family (8th anchor on the active-
+                     presence lift sub-arc).
+                     R287 strokeWidth=1.5 + R379 strokeLinejoin='round'
+                     + R346 hover-state tweens + R393 rx=2 + R199
+                     smoothView x/y/w/h transition all preserved. */
+                  opacity={hoveredMinimap ? '1' : '0.95'}
                   data-topo-minimap-viewport
                   data-topo-minimap-viewport-rx="2"
                   data-topo-minimap-viewport-smooth={smoothView ? 'true' : 'false'}
