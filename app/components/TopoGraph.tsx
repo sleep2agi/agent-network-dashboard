@@ -8128,7 +8128,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       >
                         {link.count}
                       </tspan>
-                      {' · '}{truncate(link.content, 8)}
+                      {/* Round 418 / Loop: recent-row content preview
+                          gains opacity=0.7 wrapper — subordinate-text
+                          tier at the SVG-text scope. Pre-R418 the
+                          truncated content preview (e.g. " · hi there")
+                          inherited the row's full opacity, reading at
+                          the same emphasis as the alias text and
+                          count digit. R418 wraps it in a <tspan> at
+                          opacity=0.7 so the preview reads as
+                          subordinate metadata — sibling to R333-R341/
+                          R362/R369/R389/R410/R412 chip-internal-
+                          hierarchy "label tier" (opacity-70) at the
+                          HTML scope, and R317 subordinate-text-lift
+                          gray-500 → gray-400 family. The leading
+                          " · " separator stays at full opacity so
+                          the row punctuation rhythm holds. data-
+                          recent-row-content-tspan attr surfaces the
+                          subordinate wrapper for tests. */}
+                      {' · '}
+                      <tspan opacity="0.7" data-recent-row-content-tspan>{truncate(link.content, 8)}</tspan>
                     </text>
                     {lastAt ? (
                       /* Round 321 / Loop: lastAt freshness timestamp picks
