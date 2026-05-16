@@ -7841,8 +7841,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     fill={hoveredStatus === row.key || isPinned ? pal.legendHeadline : pal.legendText}
                     fontSize="11"
                     fontFamily="monospace"
+                    /* Round 364 / Loop: legend-row label fontWeight 400
+                       → 500. Sibling typography lift to R363 recent-row
+                       text fw 400 → 500. Both surfaces render small
+                       monospace text against panel chrome at fontSize
+                       9-11 where SVG-default fw 400 sits at the
+                       legibility floor. font-medium tier (500) gives
+                       the label a more deliberate-data register.
+                       The R309 per-row count text (separate element
+                       below at x=215 textAnchor=end) keeps its own
+                       fontWeight 600 inline override, so the count >
+                       label hierarchy stays intact at the legend
+                       scope same as R363 holds it at the recent-row
+                       scope:
+                         legend  label  fw 500  (R364, this round)
+                         legend  count  fw 600  (R309)
+                         recent  alias  fw 500  (R363)
+                         recent  count  fw 600/700  (R320)
+                       data-legend-row-label-font-weight attr exposes
+                       the value for tests. R219 letter-spacing pin
+                       tween + R55 fill transition + R181 always-mount
+                       pin ring all preserved. */
+                    fontWeight="500"
                     data-legend-row-label={row.key}
                     data-legend-row-label-pinned={isPinned ? 'true' : 'false'}
+                    data-legend-row-label-font-weight="500"
                     style={{
                       transition: 'fill 150ms ease-out, letter-spacing 150ms ease-out',
                       letterSpacing: isPinned ? '0.5px' : '0px',
