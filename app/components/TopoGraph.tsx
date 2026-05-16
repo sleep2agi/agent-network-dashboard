@@ -3073,7 +3073,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // color: dotColor — the lift only affects the trailing
                   // literal "last {rel}" text.
                   return (
-                    <span className="text-gray-400">
+                    // Round 357 / Loop: active-links chip freshness
+                    // suffix wrapper picks up `tabular-nums` for digit
+                    // width-lock. Pre-R357 the literal "last {rel}"
+                    // text (e.g. "last 5s ago", "last 10s ago",
+                    // "last 1m ago") had natural-figure digits — the
+                    // freshness ticker updates every second, so the
+                    // 9→10 boundary on the seconds counter and the
+                    // 59→60s → 1m flip both jittered ~1-2 px of glyph
+                    // width which propagated through the chip-row's
+                    // inline-flex layout, nudging the freshness DOT
+                    // and the chip's left edge. Tabular-nums on the
+                    // wrapper applies to all descendant digits only
+                    // (letters render at natural widths) so the
+                    // ticker stays planted across every count cross.
+                    // Joins the R224-R232 info-density tabular-nums
+                    // sweep at the chip-row freshness scope. Pure
+                    // paint-level change, no geometry shift on rest.
+                    // The R342 text-gray-400 lift + R161 dot freshness
+                    // alpha ramp + R317 subordinate-text-lift family
+                    // all preserved. data-active-links-freshness-
+                    // wrapper attr exposes the wrapper for tests.
+                    <span className="text-gray-400 tabular-nums" data-active-links-freshness-wrapper>
                       <span
                         data-active-links-freshness-dot
                         data-active-links-freshness-alpha={alpha.toFixed(2)}
