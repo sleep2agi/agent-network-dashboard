@@ -6640,14 +6640,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       CSS r-as-property is interpolatable by Chrome/Safari/
                       FF post-2020. Geometry-unchanged at rest, so the
                       overlap test sees the same baseline. */}
+                  {/* Round 295 / Loop: legend swatch base radius 5.5 → 6.
+                      Pre-R295 the swatch idle radius was 5.5 and R197
+                      grew it to 7 on hover/pin — a 1.5px jump (~27%
+                      area). Bumping idle to 6 keeps hover at 7, so
+                      the hover delta becomes a smoother 1px (~36%
+                      area but 17% radius). Side effect: idle swatch
+                      reads slightly more like an authored color
+                      anchor than a faint dot — matches the post-R294
+                      减法 register where the legend is one of the
+                      few remaining persistent canvas-side info
+                      surfaces. Geometry stays well inside the r=8
+                      R181 pin ring (6 + 0 stroke vs 8 - 0.75 inner
+                      ≈ 7.25). data-legend-swatch is unchanged so
+                      R197 / R55 / R61 tests probe the same handle. */}
                   <circle
                     cx="16" cy={row.y0}
-                    r="5.5"
+                    r="6"
                     fill={row.fill}
                     data-legend-swatch={row.key}
                     data-legend-swatch-state={isPinned ? 'pinned' : isRowHovered ? 'hover' : 'idle'}
                     style={{
-                      r: isRowHovered || isPinned ? '7px' : '5.5px',
+                      r: isRowHovered || isPinned ? '7px' : '6px',
                       transition: 'r 150ms ease-out',
                     } as React.CSSProperties}
                   />
