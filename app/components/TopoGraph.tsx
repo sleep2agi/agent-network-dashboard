@@ -3476,6 +3476,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     motion via the R29 globals.css blanket
                     override that neutralises transition-duration
                     universally. */}
+                {/* Round 245 / Loop: edge surface picks up stroke
+                    color transition for theme-toggle smoothing.
+                    R166 already eased opacity + stroke-width on the
+                    visible flow path; the stroke COLOR (pal.flowEdge:
+                    cyber cyan ↔ light emerald) and the underlying
+                    flow-rail's stroke (pal.flowPath: cyber pale-sky
+                    ↔ light slate-600) still snapped on theme switch.
+                    The rest of the topology smooths theme through R4
+                    transitions (status rings) / R242 chat-target ring
+                    / R244 halos / R241 hub spokes / R240 backdrop
+                    spokes — R245 closes the edge surface.
+
+                    Visible flow path: append 'stroke 300ms ease-out'
+                    to the existing transition list (300ms matches
+                    R166 opacity + stroke-width pace).
+
+                    Flow rail (dashed underline): convert the Tailwind
+                    `transition-opacity` className to inline style so
+                    we can list opacity AND stroke together at 300ms
+                    ease-out (same idiom R201 used on the working/
+                    online chips to splice in additional properties
+                    beside Tailwind's). data-edge-flow-rail attr
+                    surfaces the path for test introspection. */}
                 <path
                   d={path}
                   fill="none"
@@ -3487,7 +3510,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-edge-visible={link.key}
                   style={{
                     pointerEvents: 'none',
-                    transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out',
+                    transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out, stroke 300ms ease-out',
                   }}
                 />
                 <path
@@ -3498,7 +3521,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth="1"
                   strokeDasharray="2 12"
                   opacity={Math.min(1, (isLight ? 0.4 : 0.75) * fresh * edgeOpacityMul)}
-                  className="transition-opacity duration-300"
+                  data-edge-flow-rail={link.key}
+                  style={{ transition: 'opacity 300ms ease-out, stroke 300ms ease-out' }}
                 />
                 {!reducedMotion && (
                   /* Round 103 / Loop: phase-stagger the particles so
