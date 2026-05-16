@@ -3869,6 +3869,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  active surfaces the activity state for test probes
                  (active spokes don't carry the bucket/dur attrs so
                  they need their own data anchor). */
+              // Round 382 / Loop: hub-spoke path picks up
+              // strokeLinecap='round'. Sibling polish to R378 flow-
+              // rail dashes + R380 group box dashes — three dashed-
+              // stroke surfaces now share 'round' linecap:
+              //   R378 flow-rail   '2 12'  -> soft 3-px pills
+              //   R380 group box   '6 6'   -> soft 7.5-px pills
+              //   R382 hub spoke   '6 14'  -> soft 7-px pills (this round)
+              // For idle spokes (dashed at sw=1), each 6-px dash gains
+              // 0.5-px round caps and reads as a soft pill instead of
+              // a sharp 6 x 1 rectangle. Active spokes (solid, no
+              // dasharray) have caps mostly hidden by the hub center +
+              // node radius. Geometry-safe; paint-only. R51 sentinel
+              // strokeWidth 1.5/3 untouched (idle=1, active=2). data-
+              // topo-hub-spoke-linecap attr exposes the value for tests.
               return (
                 <path
                   key={`hub-${session.alias}`}
@@ -3877,11 +3891,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   stroke={isActiveSpoke ? pal.spokeStroke.active : pal.spokeStroke.idle}
                   strokeWidth={isActiveSpoke ? 2 : 1}
                   strokeDasharray={isActiveSpoke ? 'none' : '6 14'}
+                  strokeLinecap="round"
                   opacity={isActiveSpoke ? 0.7 : 0.45}
                   className={isActiveSpoke ? undefined : 'anet-topo-spoke-flow'}
                   data-topo-spoke-bucket={isActiveSpoke ? undefined : busy}
                   data-topo-spoke-dur={isActiveSpoke ? undefined : spokeDur}
                   data-topo-hub-spoke-active={isActiveSpoke ? 'true' : 'false'}
+                  data-topo-hub-spoke-linecap="round"
                   style={{
                     transition: 'stroke 250ms ease-out, stroke-width 250ms ease-out, opacity 250ms ease-out',
                     ...(isActiveSpoke ? {} : {
