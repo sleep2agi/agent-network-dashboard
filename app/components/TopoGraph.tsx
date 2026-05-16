@@ -3038,7 +3038,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               || pinnedVendor). Same legendAccent tint colour. Same
               200ms ease-out transition timing — pin a status, both
               tier-rings AND spokes ease to cyan together. */}
-          {(() => {
+          {/* Round 280 / Loop: backdrop spokes RETIRED (R93 family with
+              R240 tinting) per 减法 cut #6. The 6 radial lines at
+              every 30° formed 12 rays from canvas center — even at
+              opacity 0.18 (cyber) / 0.35 (light) they added explicit
+              radial-line clutter behind the hub-and-spoke topology.
+              The radial-gradient backdrop (topo-radar) ALREADY
+              provides soft hub-centered glow; explicit lines on top
+              were decorative density without structural signal that
+              the topology itself doesn't already convey (hub at
+              center + nodes on rings = radial structure inherent).
+              `false &&` gates the render; code preserved for
+              rollback. Same idiom as R276 orbit / R278 working halo
+              / R279 ping+pulse retirements. */}
+          {false && (() => {
             const anyPin = !!(pinnedStatus || pinnedGroup || pinnedVendor);
             const spokeStroke = anyPin ? pal.legendAccent : pal.ringStroke;
             return [0, 30, 60, 90, 120, 150].map(angle => (
