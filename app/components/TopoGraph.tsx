@@ -4074,12 +4074,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       lives at a fixed dx=6 offset from the name, so a
                       digit-width jitter at 9→10 used to shift the
                       whole count visibly. Tabular locks it. */}
+                  {/* Round 366 / Loop: group label member-count tspan
+                      fontWeight 400 → 500. Sibling polish to R363
+                      recent-row alias text fw 400 → 500 + R364 legend-
+                      row label fw 400 → 500 — closes the per-row 'count
+                      is fw 500 against label-tier fw 700' pattern at
+                      the group-label scope (grid layout cluster mark).
+                      Hierarchy snapshot post-R366 across all 3 row
+                      surfaces:
+                        recent  count(hot/cold)  fw 700/600  (R320)
+                        recent  alias            fw 500      (R363)
+                        legend  count            fw 600      (R309)
+                        legend  label            fw 500      (R364)
+                        group   name             fw 700      (legacy)
+                        group   count            fw 500      (R366, this round)
+                      Monospace family + R225 tabular-nums lock digit
+                      width, so the fw bump is paint-only — bbox
+                      unchanged + overlap-test invariants hold. R229
+                      fill-inherit from parent label (hover-deepen-own-
+                      hue family) preserved. data-group-label-count-
+                      font-weight attr exposes the value for tests. */}
                   <tspan
                     dx="6"
                     fontSize="11"
-                    fontWeight="400"
+                    fontWeight="500"
                     data-group-label-count={box.key}
                     data-group-label-count-value={box.count}
+                    data-group-label-count-font-weight="500"
                     style={{ fontVariantNumeric: 'tabular-nums' }}
                   >· {box.count}</tspan>
                   {/* Round 58 / Loop: status mix pip strip. Compact text-
