@@ -5151,9 +5151,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   if (vendor.id !== 'unknown') {
                     // Known model house, logo asset not in public/vendors/
                     // yet — vendor-tinted monogram stands in.
+                    /* Round 283 / Loop: monogram circle strokeWidth bumps
+                       1 → 1.5 per Vincent 5216 "书生头像风格延续 — 其他
+                       vendor 头像 plain text/abbreviation 比书生差, polish
+                       升级". Without real vendor logo PNG/SVG assets in
+                       public/vendors/, the monogram is the visual stand-
+                       in; bumping its ring weight from 1 to 1.5 narrows
+                       the visual-quality gap with the 书生 image avatar
+                       (which is a designed PNG, naturally more
+                       substantial). The 1px → 1.5px stroke is the same
+                       weight increment R268 used on the chrome-strip
+                       border unification — small but perceptible. The
+                       prefix-group fallback (line ~5172) stays at
+                       strokeWidth=1 since that's for UNKNOWN vendors
+                       where less visual weight signals "we don't know
+                       what this is" appropriately. */
                     return (
                       <>
-                        <circle cx={pos.x} cy={pos.y} r={ar} fill={vendor.mono.bg} stroke={vendor.mono.ring} strokeWidth="1" />
+                        <circle cx={pos.x} cy={pos.y} r={ar} fill={vendor.mono.bg} stroke={vendor.mono.ring} strokeWidth="1.5" />
                         <text
                           x={pos.x} y={pos.y} dy="0.34em" textAnchor="middle"
                           fill={vendor.mono.text} fontSize={ar}
