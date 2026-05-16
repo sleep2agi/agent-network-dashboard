@@ -6014,8 +6014,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             onMouseEnter={() => setHoveredPanel('recent')}
             onMouseLeave={() => setHoveredPanel(prev => prev === 'recent' ? null : prev)}
           >
+            {/* Round 331 / Loop: recent-signal panel rect rx 8 → 10
+                for proportional corner-radius rhythm after R330
+                bumped the outer canvas wrapper to rounded-xl (12 px).
+                Pre-R331 the panel sat at rx=8 (matching the legacy
+                rounded-lg wrapper envelope); now it follows the
+                wrapper one tier down:
+                  outer wrapper      rounded-xl   12 px  (R330)
+                  inner SVG panels   rx=10        10 px  (R331)
+                  inner detail card  rx=8          8 px  (codex 8f981a9)
+                  node label card    rx=6          6 px  (legacy R63)
+                Geometry-safe: rx changes paint only, not bbox; the
+                topo-overlap-test reads bbox geometry. Sibling change
+                at the legend panel rect below (~line 6914) keeps
+                the two corner panels symmetric. */}
             <rect
-              x="0" y="0" width="230" height="88" rx="8"
+              x="0" y="0" width="230" height="88" rx="10"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
               opacity={isLight ? 0.97 : 0.92}
@@ -6910,8 +6924,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 the legend panel also eases through theme toggles
                 (no snap on cyber↔light switch). Same 200ms cadence
                 across the panel pair. */}
+            {/* Round 331 / Loop: legend panel rect rx 8 → 10 — sibling
+                treatment to the recent-signal panel above. Same
+                proportional-rhythm step under R330's rounded-xl
+                canvas wrapper envelope. */}
             <rect
-              x="0" y="0" width="224" height="88" rx="8"
+              x="0" y="0" width="224" height="88" rx="10"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
               opacity={isLight ? 0.97 : 0.92}
