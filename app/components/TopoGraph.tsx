@@ -5263,13 +5263,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    pin status (R61). Reuses R18's KPI-card hover-
                    elevation idiom for visual consistency. Theme-
                    aware shadow colour stays the same; just the
-                   spread + blur grow. */
+                   spread + blur grow.
+
+                   Round 247 / Loop: extend the transition list to
+                   include fill + stroke + opacity at 200ms. R135
+                   already eased filter (hover drop-shadow); the
+                   three theme-driven properties (pal.legendBox.fill
+                   cyber #020617 ↔ light #ffffff, pal.legendBox.
+                   stroke cyber #1f2937 ↔ light #e2e8f0, opacity
+                   0.92 ↔ 0.97) still snapped on theme toggle. Same
+                   per-element 4-property easing R246 added to the
+                   per-node label card chrome — now applied at the
+                   panel scope so the whole panel (background + chrome
+                   + shadow) eases as one unit through theme switches. */
                 filter: hoveredPanel === 'recent'
                   ? (isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.14))'
                              : 'drop-shadow(0 4px 12px rgba(0,0,0,0.65))')
                   : (isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))'
                              : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))'),
-                transition: 'filter 200ms ease-out',
+                transition: 'filter 200ms ease-out, fill 200ms ease-out, stroke 200ms ease-out, opacity 200ms ease-out',
               }}
               data-topo-panel-elevation="recent"
             />
@@ -5932,6 +5944,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 rect at line ~3299. Both panels grow their shadow on
                 hover to telegraph "the chrome is interactive" since
                 their rows pin / nav. */}
+            {/* Round 247 / Loop: sibling treatment to the recent-signal
+                panel — fill + stroke + opacity transitions added so
+                the legend panel also eases through theme toggles
+                (no snap on cyber↔light switch). Same 200ms cadence
+                across the panel pair. */}
             <rect
               x="0" y="0" width="224" height="104" rx="10"
               fill={pal.legendBox.fill}
@@ -5943,7 +5960,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              : 'drop-shadow(0 4px 12px rgba(0,0,0,0.65))')
                   : (isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))'
                              : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))'),
-                transition: 'filter 200ms ease-out',
+                transition: 'filter 200ms ease-out, fill 200ms ease-out, stroke 200ms ease-out, opacity 200ms ease-out',
               }}
               data-topo-panel-elevation="legend"
             />
