@@ -1080,7 +1080,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // keeps its own R184 rotation animation (different gesture, semantic).
   // Node-size S/M/L keep their R171 layoutSwitching crossfade (already
   // gestural). Type union grows but the helper signature stays one-arg.
-  type ChromePop = 'zoom-in' | 'zoom-out' | 'layout-ring' | 'layout-grid' | 'fullscreen';
+  type ChromePop = 'zoom-in' | 'zoom-out' | 'layout-ring' | 'layout-grid' | 'fullscreen' | 'size-S' | 'size-M' | 'size-L';
   const [chromePopping, setChromePopping] = useState<ChromePop | null>(null);
   const popChrome = (which: ChromePop) => {
     setChromePopping(which);
@@ -6412,13 +6412,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             role="group"
             aria-label="Node size"
           >
-            {([['S', 0.7], ['M', 0.84], ['L', 1]] as const).map(([lbl, v], idx) => (
+            {([['S', 0.7], ['M', 0.84], ['L', 1]] as const).map(([lbl, v], idx) => {
+              const popKey = `size-${lbl}` as 'size-S' | 'size-M' | 'size-L';
+              return (
               <button
                 key={lbl}
-                onClick={() => pickNodeScale(v)}
+                onClick={() => { popChrome(popKey); pickNodeScale(v); }}
                 aria-pressed={nodeScale === v}
                 data-topo-chrome-nodesize={lbl}
                 data-topo-chrome-nodesize-active={nodeScale === v ? 'true' : 'false'}
+                data-topo-chrome-nodesize-popping={chromePopping === popKey ? 'true' : 'false'}
                 title={`Node size: ${lbl === 'S' ? 'small' : lbl === 'M' ? 'medium' : 'large'}`}
                 // Round 179 / Loop: nodeSize S/M/L active-button hover
                 // variant closes the inconsistency with R163 layout
@@ -6434,12 +6437,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // (active:) — selected variant deepens to cyan-500/25,
                 // unselected to white/10. Same tier pattern as R196 layout
                 // toggle + zoom/reset/fullscreen below.
-                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-white/5 active:bg-white/10'}`}
+                // Round 250 / Loop: nodeSize buttons close the chrome-pop
+                // family — every clickable chrome button now fires the
+                // R186 .anet-chrome-pop scale-pulse on release. R171
+                // canvas crossfade (nodeSizeSwitching) keeps masking the
+                // node radius change at the global scope; R250 chrome-pop
+                // adds the LOCAL button-level confirmation. The two
+                // happen simultaneously without conflict — local scale
+                // pulse on the button, global canvas dim around it.
+                // Milestone round: the entire chrome strip (zoom -/+,
+                // ring/grid, fullscreen, S/M/L) now speaks one
+                // consistent click vocabulary.
+                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-white/5 active:bg-white/10'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
                 {lbl}
               </button>
-            ))}
+              );
+            })}
           </div>
           <div
             className="flex items-center rounded-md border overflow-hidden"
