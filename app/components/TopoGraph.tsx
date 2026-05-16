@@ -7006,12 +7006,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       Pure CSS-level addition, no layout shift.
                       10th surface in the info-density tabular-nums
                       sweep family. */}
+                  {/* Round 309 / Loop: legend per-row count gains
+                      fontWeight=600 (semibold). The count is the
+                      DATA the operator scans (how many working /
+                      idle / offline nodes); the row label is the
+                      stable status word. Default weight (400) on
+                      both makes them visually equal — but a glance-
+                      first read pattern needs the digit to register
+                      faster than the label.
+                      fontWeight=600 gives the digit semibold
+                      emphasis (matching the h2 'Command mesh'
+                      semibold in the title block) while the row
+                      label stays at default 400/normal — a clean
+                      'digit semibold > label regular' hierarchy
+                      that makes the count the optical anchor in
+                      each row. After R307+R308 simplified the
+                      labels to single status words, the count
+                      becomes proportionally more important; this
+                      round emphasizes that role typographically. */}
                   <text
                     x="215" y={row.y1}
                     textAnchor="end"
                     fill={row.count > 0 && (hoveredStatus === row.key || isPinned) ? row.fill : pal.legendText}
                     fontSize="11"
                     fontFamily="monospace"
+                    fontWeight="600"
                     opacity={row.count === 0
                       ? (isLight ? 0.28 : 0.30)
                       : (hoveredStatus === row.key || isPinned ? 0.95 : 0.65)}
