@@ -2128,7 +2128,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedStatus}<span className="opacity-70"> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedStatus}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear ${pinnedStatus} filter`}
@@ -2162,7 +2162,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedGroup}<span className="opacity-70"> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedGroup}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
@@ -2212,7 +2212,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedVendor}<span className="opacity-70"> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline" data-filter-prefix>filter: </span>{pinnedVendor}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear vendor filter ${pinnedVendor}`}
@@ -2263,16 +2263,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               <span>
                 <span className="hidden sm:inline" data-filter-prefix>filter: </span>
                 {link.from}→{link.to}
+                {/* Round 323 / Loop: edge filter pill count digit picks
+                    up tabular-nums (Tailwind class on both cold +
+                    hot branches). Sibling treatment to the status /
+                    group / vendor pin pills (R323 replace_all upstream
+                    in this same round added `tabular-nums` to those
+                    three pills' count spans). Pre-R323 a matchCount /
+                    link.count crossing 9→10 widened the digit and
+                    shifted the trailing × button right ~3px in font-
+                    mono (mono digits still have natural-vs-tabular
+                    variance). Locks the slot so the × button stays
+                    planted as the count grows. 9th surface in the
+                    info-density tabular-nums sweep after R322 panel
+                    hot count. */}
                 {isHot ? (
                   <span
-                    className="opacity-90"
+                    className="opacity-90 tabular-nums"
                     style={{ color: hotStroke, fontWeight: 700 }}
                     data-active-filter-edge-count-hot
                   >
                     {' · '}{link.count}
                   </span>
                 ) : (
-                  <span className="opacity-70" data-active-filter-edge-count>
+                  <span className="opacity-70 tabular-nums" data-active-filter-edge-count>
                     {' · '}{link.count}
                   </span>
                 )}
