@@ -3136,11 +3136,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    (third chip in the row — matches working + online
                    chip treatment so all three digits in the chip row
                    stay width-stable across counter crossings). */
-                className={`tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus ${
+                /* Round 399 / Loop: active-links chip closes the 3-chip
+                   chip-row by extending R398's hover translateY(-1px)
+                   lift onto the third (rightmost) chip. The R398 family
+                   already covered working + online chips on the
+                   clickable variant; R399 adds the same gate (isInter-
+                   active = flowLinks.length > 0) so empty active-links
+                   stays planted at R206's opacity-50 receded paint.
+                   transition-transform + ease-out + transform-gpu join
+                   the inline transition list (different property axes
+                   compose cleanly: inline handles color/bg/border/
+                   opacity, className handles transform).
+                   Gesture-vocabulary table (post-R399 — now complete
+                   across the chip-row):
+                     working chip      -1 px  (R398)
+                     online chip       -1 px  (R398)
+                     active-links chip -1 px  (R399, this round)
+                     filter pin pills  -1 px  (R397)
+                     recent-signal row -1 px  (R143)
+                     legend row        -1 px  (R144)
+                   Every interactive chip in TopoGraph lifts on hover.
+                   data-chip-hover-lift attr exposes the lift surface
+                   state ('true' clickable, 'false' empty) for tests. */
+                className={`tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu ${
                   isInteractive
-                    ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30'
+                    ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30 hover:-translate-y-px'
                     : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
                 }`}
+                data-chip-hover-lift={isInteractive ? 'true' : 'false'}
                 data-active-links-chip
                 data-active-links-flow-count={flowLinks.length}
                 data-active-links-clickable={isInteractive ? 'true' : 'false'}
