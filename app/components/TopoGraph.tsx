@@ -6746,7 +6746,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // Milestone round: the entire chrome strip (zoom -/+,
                 // ring/grid, fullscreen, S/M/L) now speaks one
                 // consistent click vocabulary.
-                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-white/5 active:bg-white/10'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
+                /* Round 270 / Loop: nodeSize INACTIVE buttons align with
+                   the Layout toggle's R163 hover-preview pattern. Pre-
+                   R270 inactive S/M/L used `hover:bg-white/5
+                   active:bg-white/10` (neutral white tint) while the
+                   Layout toggle's inactive Ring/Grid uses `hover:bg-
+                   cyan-500/5 active:bg-cyan-500/15` (faint cyan ghost
+                   that previews what the active state will look like —
+                   the active variant is bg-cyan-500/15). Two different
+                   hover vocabularies for visually-analogous toggle
+                   controls. R270 unifies inactive toggle hover to
+                   cyan so all TOGGLE chrome buttons (Layout / nodeSize
+                   / fullscreen) preview their active state on hover.
+                   Pure actions (zoom -/+, reset) stay white — they
+                   aren't toggles, have no active state to preview. */
+                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
                 {lbl}
@@ -6915,10 +6929,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // deepens white/5 → white/10.
             // R249: chrome-pop on click — same one-vocabulary click signal
             // as layout toggle and zoom buttons.
+            /* Round 270 / Loop: fullscreen INACTIVE picks up the cyan
+               hover-preview pattern from the Layout toggle. The
+               fullscreen button is a TOGGLE (enter/exit fullscreen) so
+               its inactive state benefits from the same "hover previews
+               active state" idiom R163 designed. Sibling treatment to
+               the nodeSize buttons at line ~6711. */
             className={`p-1.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
                 ? 'bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/20 active:bg-cyan-500/25'
-                : 'hover:bg-white/5 active:bg-white/10'
+                : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'
             }${chromePopping === 'fullscreen' ? ' anet-chrome-pop' : ''}`}
             style={{
               borderColor: pal.containerBorder,
