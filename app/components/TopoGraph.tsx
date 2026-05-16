@@ -2872,9 +2872,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
           {/* radar rings — pure decoration at fixed radii, independent of
               node positions so the radar aesthetic is preserved across tier
-              changes. */}
-          {[90, 170, 250, 330].map(radius => (
-            <circle key={radius} cx={cx} cy={cy} r={radius} fill="none" stroke={pal.ringStroke} strokeWidth="1" opacity={isLight ? 0.6 : 0.35} />
+              changes.
+              Round 290 / Loop: drop the innermost radar ring at r=90.
+              That ring sat ~66px outside the hub (hub radius 24, halo
+              r=18), in the exact zone R276 (orbit particles) / R278
+              (working halo) / R280 (backdrop spokes) cleared during
+              the R275-R281 减法 arc. Post-cleanup the lone r=90 ring
+              read as a leftover decorative loop hugging the hub — a
+              visual element with no remaining sibling to anchor.
+              Dropping it returns to the subtractive register after
+              R282-R289's 8 加法 rounds and lets the hub breathe. The
+              outer three rings (170 / 250 / 330) still carry the
+              radar aesthetic across the canvas. New data-topo-radar-
+              ring attribute exposes each remaining ring radius for
+              test probing. */}
+          {[170, 250, 330].map(radius => (
+            <circle
+              key={radius}
+              cx={cx} cy={cy} r={radius}
+              fill="none" stroke={pal.ringStroke} strokeWidth="1"
+              opacity={isLight ? 0.6 : 0.35}
+              data-topo-radar-ring={radius}
+            />
           ))}
 
           {/* Round 54 / Loop: tier-radius guide rings. The radar rings above
