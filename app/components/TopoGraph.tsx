@@ -6083,6 +6083,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       the gate for tests. Always-mount-opacity-gate
                       family now hits 10 surfaces (R181/R182/R183/R213×2/
                       R214/R215/R221/R222/R223). */}
+                  {/* Round 322 / Loop: hot count tspan picks up
+                      fontVariantNumeric tabular-nums for parity with
+                      its left-sibling tspan (R311 `{flowLinks.length}
+                      flows`, already tabular). Pre-R322 a hotFlowCount
+                      crossing 1→10 widened the leading digit and (since
+                      the parent <text> is textAnchor="end") shifted the
+                      WHOLE header left a few pixels — visible micro-
+                      jitter against the panel rect's left edge. Tabular-
+                      nums locks the digit so the right-anchored block
+                      stays stable as hotFlowCount grows. 8th surface
+                      in the info-density tabular-nums sweep:
+                        R224 edge badge / R225 hub digit / R225 panel
+                        flows-count + recent-row count / R229 group-
+                        label count / R230 group-label status pips /
+                        R320 recent-row count fw=600 (left neighbour) /
+                        R321 recent-row timestamp / R322 panel hot
+                        count (this round). */}
                   <tspan
                     fill={hotStroke}
                     fontWeight="700"
@@ -6090,7 +6107,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-recent-panel-hot-visible={hotFlowCount > 0 ? 'true' : 'false'}
                     className="anet-fade-in"
                     opacity={hotFlowCount > 0 ? 1 : 0}
-                    style={{ transition: 'opacity 300ms ease-out' }}
+                    style={{
+                      transition: 'opacity 300ms ease-out',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
                   >
                     {hotFlowCount > 0 ? ` · ${hotFlowCount} hot` : ''}
                   </tspan>
@@ -7233,6 +7253,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             data-topo-brand-watermark
             style={{ pointerEvents: 'none', transition: 'fill 200ms ease-out' }}
           >sleep2agi</text>
+          {/* v0.10.0 Hero 3 Wave 1 / RFC §3.I (Vincent 5215 + 通信龙
+              lead-autonomy Q4 dual-anchor minimal): canvas top-left
+              crescent moon brand mark, visible ONLY when the
+              recent-signal panel is hidden (composes with §3.C). The
+              two never co-exist — when flowLinks.length > 0 the
+              recent-signal panel occupies the (16,16) corner; when
+              flowLinks.length === 0 the corner is empty and the
+              brand crescent fills it. R310 title-block crescent
+              remains the primary mark; this one is the secondary
+              canvas-internal anchor (Q4 dual-anchor minimal).
+              Inline path geometry identical to public/sleep2agi-
+              logo.svg + the title-block SVG (mask = outer disc minus
+              offset inner disc → crescent). Local mask id
+              (`s2a-canvas-corner-mask`) prevents collision with the
+              other inline crescents. opacity 0.35 (slightly more
+              subtle than the bottom watermark's 0.4 since the
+              canvas top-left has more contrast headroom). */}
+          {flowLinks.length === 0 && (
+            <g
+              opacity="0.35"
+              data-topo-brand-canvas-mark
+              style={{ pointerEvents: 'none', transition: 'fill 200ms ease-out' }}
+            >
+              <defs>
+                <mask id="s2a-canvas-corner-mask">
+                  <rect x="0" y="0" width="28" height="28" fill="black" />
+                  <circle cx="14" cy="14" r="12" fill="white" />
+                  <circle cx="17.5" cy="13" r="10" fill="black" />
+                </mask>
+              </defs>
+              <rect
+                x="16" y="16" width="28" height="28"
+                fill={pal.legendText}
+                mask="url(#s2a-canvas-corner-mask)"
+              />
+            </g>
+          )}
         </svg>
 
         {/* Round 30 / Loop: minimap. Big fleets in fullscreen mode at high
