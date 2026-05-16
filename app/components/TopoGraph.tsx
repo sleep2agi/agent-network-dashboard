@@ -2810,19 +2810,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               the hub click outright. */}
           <circle cx={cx} cy={cy} r="330" fill="url(#topo-radar)" style={{ pointerEvents: 'none' }} />
 
-          {/* Round 45: subtle star field — 24 deterministic dots scattered
+          {/* Round 45: subtle star field — deterministic dots scattered
               across the canvas give the radar bg some depth. Skipped on
-              light theme so the white surface stays clean. */}
+              light theme so the white surface stays clean.
+              Round 291 / Loop: starfield dot count 28 → 14 (50%
+              reduction). Post-R290 inner radar ring retirement the
+              canvas has cleared meaningfully — sweep + 3 radar rings
+              + tier guides + nodes + edges are doing the visual work.
+              The starfield's role is atmospheric depth, not
+              information; cutting density by half preserves the
+              "space/radar" feel while removing decoration the eye
+              has to skip. Same R275-R281 减法 family idiom as the
+              orbit / halo / spoke retirements; same R290 pivot back
+              to subtractive register. data-topo-starfield-dot
+              attribute makes the dots probe-able for the regression
+              test. */}
           {!isLight && (
-            <g opacity="0.5" style={{ pointerEvents: 'none' }}>
-              {Array.from({ length: 28 }).map((_, i) => {
+            <g opacity="0.5" style={{ pointerEvents: 'none' }} data-topo-starfield>
+              {Array.from({ length: 14 }).map((_, i) => {
                 // Deterministic pseudo-random scatter so positions are
                 // stable between renders (no JS hydration mismatch).
                 const seed = i * 9301 + 49297;
                 const x = ((seed * 13) % 1000);
                 const y = ((seed * 7) % 680);
                 const r = (i % 3 === 0) ? 1.2 : 0.7;
-                return <circle key={i} cx={x} cy={y} r={r} fill="#a5b4fc" opacity={0.35 + (i % 4) * 0.05} />;
+                return <circle key={i} cx={x} cy={y} r={r} fill="#a5b4fc" opacity={0.35 + (i % 4) * 0.05} data-topo-starfield-dot={i} />;
               })}
             </g>
           )}
