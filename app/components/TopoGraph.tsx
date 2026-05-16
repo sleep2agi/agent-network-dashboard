@@ -3973,7 +3973,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   stroke={(isPinned || isHovered) ? pal.legendAccent : pal.ringStroke}
                   strokeWidth={isPinned ? 3 : isHovered ? 2 : 1.5}
                   strokeDasharray={(isPinned || isHovered) ? 'none' : '6 6'}
+                  /* Round 380 / Loop: cluster box stroke gets round
+                     linecap + round linejoin. Sibling SVG stroke-
+                     softening polish to R378 flow-rail linecap + R379
+                     minimap viewport linejoin — extends the family to
+                     the group cluster boundary box (grid layout only):
+                       R288 chrome icons         strokeLinecap='round'
+                       R378 flow-rail dashes     strokeLinecap='round'
+                       R380 group box dashes     strokeLinecap='round' (this round)
+                       R379 viewport rect        strokeLinejoin='round'
+                       R380 group box corners    strokeLinejoin='round' (this round)
+                     Linecap rounds the R85 '6 6' marching-ants dash
+                     pills at rest — each 6 px dash gains a ~0.75 px
+                     round cap (sw=1.5 idle), reading as soft pills
+                     instead of sharp 6 × 1.5 px rectangles. Linejoin
+                     rounds the 4 sharp 90° corners (any state — solid
+                     or dashed); at sw=1.5 the join arc is ~0.75 px,
+                     matching R379 viewport vocabulary. Geometry-safe:
+                     stroke-* properties only affect paint, not bbox.
+                     The R51 sentinel 1.5/3 strokeWidth values stay
+                     intact (the overlap probe is gated to g[data-
+                     node], so this cluster-internal rect is invisible
+                     to it anyway). data-group-box-linecap + -linejoin
+                     attrs expose the values for tests. */
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   data-group-box-pinned={isPinned ? 'true' : 'false'}
+                  data-group-box-linecap="round"
+                  data-group-box-linejoin="round"
                   // R85: ambient "marching ants" drift on the perimeter
                   // when this group has at least one working member, and
                   // neither pin nor hover is active (those treatments
