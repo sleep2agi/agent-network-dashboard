@@ -20,6 +20,14 @@ import useSWR from 'swr';
  * so old hubs don't read as "something broke".
  */
 
+interface ServerAgent {
+  alias: string;
+  runtime: string | null;
+  status: 'working' | 'idle' | 'offline';
+  last_seen_at?: string | null;
+  progress?: number | null;  // 0..1
+}
+
 interface ServerCard {
   hostname: string;
   ip?: string | null;
@@ -27,6 +35,17 @@ interface ServerCard {
   cpu_cores: number;
   mem_used_gb: number | null;
   mem_total_gb: number | null;
+  /** Hero 1 v0.10.0: disk usage. Optional — older hubs don't report. */
+  disk_used_gb?: number | null;
+  disk_total_gb?: number | null;
+  /** Hero 1 v0.10.0: short history for sparklines (5-min sliding window).
+   *  Each is the rolling 1-min average sampled at ~30s cadence (so ~10
+   *  data points for 5-min). Optional — older hubs don't report. */
+  cpu_history?: number[];
+  mem_history?: number[];
+  /** Hero 2 v0.10.0: per-server agent rollup. Optional — older hubs
+   *  send only aggregate agent_count. */
+  agents?: ServerAgent[];
   agent_count: number;
   status: 'online' | 'offline';
   note?: string;
@@ -74,16 +93,120 @@ function Bar({ pct, label }: { pct: number; label: string }) {
   );
 }
 
+/** Hero 1 v0.10.0 — inline SVG sparkline for 5-min rolling history.
+ *  Zero-dep (no recharts). Renders a stroked polyline + filled area.
+ *  Values are percentages (0..100); clamps inside. */
+function Sparkline({ values, tint, label }: { values: number[]; tint: string; label: string }) {
+  if (!values || values.length < 2) return null;
+  const w = 100, h = 18;
+  const max = 100;
+  const stride = w / Math.max(1, values.length - 1);
+  const pts = values.map((v, i) => {
+    const x = i * stride;
+    const y = h - (Math.max(0, Math.min(max, v)) / max) * h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const polyline = pts.join(' ');
+  const area = `M0,${h} L${pts.join(' L')} L${w},${h} Z`;
+  return (
+    <svg
+      width="100%" height={h} viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none" aria-label={`${label} 5-min history`}
+      data-server-sparkline={label}
+    >
+      <path d={area} fill={tint} opacity="0.18" />
+      <polyline points={polyline} fill="none" stroke={tint} strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+/** Hero 1 v0.10.0 — single health badge derived from the worst of
+ *  CPU / Mem / Disk percentages. Green ≤60%, amber 60-85%, red >85%
+ *  (same thresholds as Bar). Returns null when no percentages available
+ *  (e.g. offline server) so the card layout reads "n/a · offline" instead. */
+function HealthBadge({ cpu, mem, disk }: { cpu: number | null; mem: number | null; disk: number | null }) {
+  const vals = [cpu, mem, disk].filter((v): v is number => typeof v === 'number');
+  if (vals.length === 0) return null;
+  const worst = Math.max(...vals);
+  const t = barTint(worst);
+  const status = worst >= 85 ? 'red' : worst >= 60 ? 'amber' : 'green';
+  return (
+    <span
+      className="inline-block w-2 h-2 rounded-full shrink-0"
+      style={{ background: t.fill, boxShadow: `0 0 0 2px ${t.track}` }}
+      data-server-health-badge={status}
+      title={`worst: ${Math.round(worst)}%`}
+    />
+  );
+}
+
+/** Hero 2 v0.10.0 — per-server expandable agent list. Renders compact
+ *  rows: alias · runtime · status chip · last_seen relative. progress
+ *  bar appears when an agent reports progress (0..1). When the upstream
+ *  hub doesn't report agents[], the row falls through to a small
+ *  "agent list pending hub upgrade" hint. */
+function AgentList({ agents }: { agents?: ServerAgent[] }) {
+  if (!agents || agents.length === 0) {
+    return (
+      <div className="text-[9px] text-[var(--fg-dim)] font-mono italic px-1 py-1">
+        agent rollup pending hub ≥ 0.8.2-preview
+      </div>
+    );
+  }
+  return (
+    <ul className="space-y-1" data-server-agent-list>
+      {agents.map(a => {
+        const statusColor =
+          a.status === 'working' ? '#10b981' :
+          a.status === 'idle'    ? '#06b6d4' : '#6b7280';
+        return (
+          <li
+            key={a.alias}
+            className="flex items-center gap-1.5 text-[10px] font-mono"
+            data-server-agent={a.alias}
+          >
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: statusColor }} />
+            <span className="font-semibold truncate" style={{ color: 'var(--fg)' }}>{a.alias}</span>
+            {a.runtime && (
+              <span className="text-[9px] text-[var(--fg-dim)] shrink-0">· {a.runtime}</span>
+            )}
+            {typeof a.progress === 'number' && a.progress > 0 && (
+              <span className="ml-auto text-[9px] tabular-nums text-[var(--fg-muted)]">
+                {Math.round(a.progress * 100)}%
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function ServersDrawer() {
   const [open, setOpen] = useState(false);
+  /** v0.10.0 Hero 1+2 — per-server expanded state for detail card
+   *  (sparklines + disk bar + agent rollup). Stored as a Set of
+   *  hostnames; persists in localStorage so the user's last selection
+   *  survives reload. Independent of the drawer's open/close state. */
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   // Drawer state is per-user-machine — persist like the other dashboard
   // sticky toggles (`anet-topo-layout`, `anet-topo-view`, etc.).
   useEffect(() => {
     try { if (localStorage.getItem('anet-servers-drawer') === '1') setOpen(true); } catch {}
+    try {
+      const raw = localStorage.getItem('anet-servers-drawer-expanded');
+      if (raw) setExpanded(new Set(JSON.parse(raw)));
+    } catch {}
   }, []);
   const toggle = () => setOpen(prev => {
     const next = !prev;
     try { localStorage.setItem('anet-servers-drawer', next ? '1' : '0'); } catch {}
+    return next;
+  });
+  const toggleExpanded = (hostname: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(hostname)) next.delete(hostname); else next.add(hostname);
+    try { localStorage.setItem('anet-servers-drawer-expanded', JSON.stringify([...next])); } catch {}
     return next;
   });
 
@@ -162,6 +285,8 @@ export function ServersDrawer() {
             const offline = s.status === 'offline';
             const cpuPct = s.cpu_load_1min != null && s.cpu_cores > 0 ? (s.cpu_load_1min / s.cpu_cores) * 100 : null;
             const memPct = s.mem_used_gb != null && s.mem_total_gb != null && s.mem_total_gb > 0 ? (s.mem_used_gb / s.mem_total_gb) * 100 : null;
+            const diskPct = s.disk_used_gb != null && s.disk_total_gb != null && s.disk_total_gb > 0 ? (s.disk_used_gb / s.disk_total_gb) * 100 : null;
+            const isExpanded = expanded.has(s.hostname);
             return (
               <div
                 key={s.hostname}
@@ -171,17 +296,39 @@ export function ServersDrawer() {
                   borderColor: 'var(--border)',
                   opacity: offline ? 0.55 : 1,
                 }}
+                data-server-card={s.hostname}
+                data-server-expanded={isExpanded ? 'true' : 'false'}
                 title={s.ip ? `${s.hostname} · ${s.ip}` : s.hostname}
               >
-                <div className="flex items-baseline justify-between gap-2">
-                  <div className="min-w-0 flex items-baseline gap-1.5">
+                {/* v0.10.0 Hero 1+2: header row — click toggles expanded
+                    detail view (sparklines + disk + agent rollup). */}
+                <button
+                  type="button"
+                  onClick={() => toggleExpanded(s.hostname)}
+                  aria-expanded={isExpanded}
+                  className="w-full flex items-center justify-between gap-2 text-left"
+                  data-server-card-toggle={s.hostname}
+                >
+                  <div className="min-w-0 flex items-center gap-1.5">
+                    {/* Hero 1 health badge — worst-of CPU/Mem/Disk */}
+                    {!offline && <HealthBadge cpu={cpuPct} mem={memPct} disk={diskPct} />}
                     <span className="font-mono text-[12px] font-semibold truncate" style={{ color: 'var(--fg)' }}>{s.hostname}</span>
                     {s.note && <span className="text-[9px] text-[var(--fg-dim)]">({s.note})</span>}
                   </div>
-                  <span className="text-[10px] text-[var(--fg-muted)] font-mono tabular-nums shrink-0">
-                    {s.agent_count}&nbsp;agent{s.agent_count === 1 ? '' : 's'}
+                  <span className="flex items-center gap-1 shrink-0">
+                    <span className="text-[10px] text-[var(--fg-muted)] font-mono tabular-nums">
+                      {s.agent_count}&nbsp;agent{s.agent_count === 1 ? '' : 's'}
+                    </span>
+                    {/* Chevron — rotates 90° on expanded */}
+                    <svg
+                      width="10" height="10" viewBox="0 0 10 10"
+                      style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }}
+                      aria-hidden
+                    >
+                      <path d="M3 1.5L7 5L3 8.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </span>
-                </div>
+                </button>
                 {!offline && cpuPct != null && (
                   <Bar pct={cpuPct} label={`CPU ${s.cpu_load_1min!.toFixed(2)}/${s.cpu_cores}`} />
                 )}
@@ -190,6 +337,35 @@ export function ServersDrawer() {
                 )}
                 {offline && (
                   <div className="text-[10px] text-[var(--fg-dim)] font-mono italic">CPU n/a · RAM n/a · offline</div>
+                )}
+                {/* v0.10.0 Hero 1+2: expanded detail — disk bar +
+                    5-min sparklines + agent rollup. Visible only when
+                    the user clicks the card. Renders gracefully when
+                    upstream hub hasn't shipped optional fields. */}
+                {isExpanded && !offline && (
+                  <div className="pt-1 mt-1 border-t space-y-1.5" style={{ borderColor: 'var(--border)' }}>
+                    {diskPct != null ? (
+                      <Bar pct={diskPct} label={`DISK ${s.disk_used_gb!.toFixed(1)}/${s.disk_total_gb!.toFixed(1)}G`} />
+                    ) : (
+                      <div className="text-[9px] text-[var(--fg-dim)] font-mono italic">disk metric pending hub ≥ 0.8.2-preview</div>
+                    )}
+                    {s.cpu_history && s.cpu_history.length >= 2 && (
+                      <div className="space-y-0.5">
+                        <div className="text-[9px] text-[var(--fg-muted)] font-mono">CPU · 5-min</div>
+                        <Sparkline values={s.cpu_history} tint="#10b981" label="CPU" />
+                      </div>
+                    )}
+                    {s.mem_history && s.mem_history.length >= 2 && (
+                      <div className="space-y-0.5">
+                        <div className="text-[9px] text-[var(--fg-muted)] font-mono">RAM · 5-min</div>
+                        <Sparkline values={s.mem_history} tint="#06b6d4" label="MEM" />
+                      </div>
+                    )}
+                    <div className="pt-1">
+                      <div className="text-[9px] text-[var(--fg-muted)] font-mono mb-0.5">agents</div>
+                      <AgentList agents={s.agents} />
+                    </div>
+                  </div>
                 )}
               </div>
             );
