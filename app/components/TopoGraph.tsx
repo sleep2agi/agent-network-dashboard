@@ -5252,9 +5252,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               fill="none"
               stroke={isLight ? '#059669' : '#10b981'}
               strokeWidth="1.5"
-              opacity={hoveredHub ? (isLight ? 0.85 : 0.7) : 0}
+              /* Round 370 / Loop: hub hover-ring cyber opacity 0.7 →
+                 0.8. R177 designed the hub hover-ring at opacity-0 →
+                 0.85 (light) / 0 → 0.7 (cyber). The 15 % gap between
+                 the two themes meant cyber-theme operators got a
+                 noticeably softer hover cue than light-theme users
+                 against backgrounds that should equalise (dark bg
+                 needs more luminance to read as 'on'). R370 bumps
+                 cyber 0.7 → 0.8, narrowing the theme gap to 5 % —
+                 sibling theme-consistency polish to R251 edge badge
+                 fill/opacity (cyber 0.82 / light 0.95) and R246/R247
+                 panel transition families. Light theme 0.85 stays
+                 as is (already in the legibility band). data-topo-
+                 hub-hover-ring-opacity attr exposes the value for
+                 tests. */
+              opacity={hoveredHub ? (isLight ? 0.85 : 0.8) : 0}
               data-topo-hub-hover-ring
               data-topo-hub-hover-ring-radius={hoveredHub ? 17 : 14}
+              data-topo-hub-hover-ring-opacity={hoveredHub ? (isLight ? 0.85 : 0.8) : 0}
               /* Round 253 / Loop: hub hover ring also gets stroke
                  transition for theme toggle (cyber #10b981 ↔ light
                  #059669). The opacity + r transitions stay for hover
