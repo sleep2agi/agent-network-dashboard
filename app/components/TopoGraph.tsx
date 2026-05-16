@@ -2483,7 +2483,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        but font-variant-numeric inherits, so applying
                        it at the outer chip span reaches every
                        descendant glyph for free. */
-                    className="tabular-nums inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus"
+                    /* Round 314 / Loop: vendor letter chip joins the
+                       R312-R313 'HTML-context data chip = font-medium'
+                       family. R313 weighted the 3 main chips
+                       (working/online/active-links); R314 closes the
+                       chip-row weight sweep by extending to the
+                       vendor letter chips ('A:N', 'O:N', '书:N',
+                       '?:N'). They display vendor-distribution
+                       data; same tier as the sibling data chips. */
+                    className="tabular-nums font-medium inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus"
                     data-vendor-letter={v.initial}
                     data-vendor-letter-count={v.count}
                     data-vendor-pinned={isPinned ? 'true' : 'false'}
