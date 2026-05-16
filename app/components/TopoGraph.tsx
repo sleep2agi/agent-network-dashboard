@@ -5072,19 +5072,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           adds an isHoveredEdge override on top.
                           data-edge-badge-opacity-hover attr exposes
                           the hover value for tests. */}
+                      {/* Round 396 / Loop: extend the R395 opacity → 1.0
+                          lift to the pinned state. Pre-R396 the badge
+                          shared `r=10.5` on both hover AND pin (R164
+                          unified-lift) but R395's opacity lift fired
+                          ONLY on isHoveredEdge — pinned badges stayed
+                          at R371 rest alpha (cyber 0.85 / light 0.95).
+                          That left pin (sticky selection) reading
+                          softer than hover (transient preview), even
+                          though pin is the stronger commitment.
+                          R396 unifies hover + pin at opacity=1.0
+                          so the same data-edge-badge-lifted='true'
+                          surface uniformly carries full alpha. Pin
+                          stroke (R188 sw=2 + pal.legendHeadline color)
+                          continues to differentiate pin from hover —
+                          the opacity track now closes the lift parity.
+                          The new gate (isHoveredEdge || isPinned)
+                          mirrors the existing R164 r-lift gate, so
+                          the badge has a single "active state"
+                          signature across r + opacity.
+                          200ms opacity transition (already in style
+                          list) eases pin/unpin naturally. R371 rest
+                          opacity preserved as the resting alpha.
+                          data-edge-badge-opacity-hover renamed
+                          semantically to -active (covers hover+pin)
+                          via the new -opacity-active attr; the
+                          legacy -opacity-hover attr kept for R395
+                          test compatibility. */}
                       <circle
                         cx={badgeX} cy={badgeY}
                         r={isHoveredEdge || isPinned ? 10.5 : 9}
                         fill={pal.legendBox.fill}
                         stroke={isPinned ? pal.legendHeadline : isHot ? hotStroke : pal.flowEdge}
                         strokeWidth={isPinned ? 2 : isHot ? 2 : isHoveredEdge ? 1.5 : 1.25}
-                        opacity={isHoveredEdge ? 1 : (isLight ? 0.95 : 0.85)}
+                        opacity={(isHoveredEdge || isPinned) ? 1 : (isLight ? 0.95 : 0.85)}
                         data-edge-badge-lifted={(isHoveredEdge || isPinned) ? 'true' : 'false'}
                         data-edge-badge-stroke-width-rest="1.25"
                         data-edge-badge-stroke-width-hover="1.5"
-                        data-edge-badge-opacity={isHoveredEdge ? 1 : (isLight ? 0.95 : 0.85)}
+                        data-edge-badge-opacity={(isHoveredEdge || isPinned) ? 1 : (isLight ? 0.95 : 0.85)}
                         data-edge-badge-opacity-rest={isLight ? 0.95 : 0.85}
                         data-edge-badge-opacity-hover="1"
+                        data-edge-badge-opacity-active="1"
                         style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out' }}
                       />
                       {/* Round 224 / Loop: edge badge text gains the 4th
