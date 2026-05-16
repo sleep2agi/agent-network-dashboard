@@ -5164,8 +5164,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 + opacity 0.55 reads as muted metadata, not an
                 actionable row — matches the R110 empty-state hint
                 idiom. */}
-            {flowLinks.length > 3 && (() => {
-              const moreCount = flowLinks.length - 3;
+            {(() => {
+              // Round 221 / Loop: footer always-mounts; visibility
+              // crossfades via wrapper <g> opacity instead of React
+              // conditional mount/unmount on flowLinks.length > 3.
+              // Pre-R221 a fleet's 4th flow appearing snap-popped the
+              // footer in; tapering back to 3 flows snap-removed it.
+              // Same threshold-crossing snap R215 closed for edge
+              // midpoint badges, now applied to the recent-panel
+              // footer surface. moreCount clamps at 0 so when invisible
+              // (length ≤ 3) the data attribute and text don't show
+              // garbage negative numbers. a11y trio (role / tabIndex /
+              // aria-hidden) and pointerEvents follow visibility so
+              // the hidden footer doesn't appear in tab order or
+              // intercept clicks at its midpoint coordinates.
+              const visible = flowLinks.length > 3;
+              const moreCount = Math.max(0, flowLinks.length - 3);
               const label = `+ ${moreCount} more flow${moreCount === 1 ? '' : 's'}`;
               // R133: the truncation hint becomes a clickable nav to
               // /messages. R128 introduced the footer as pure metadata
@@ -5176,21 +5190,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // visual cue tells users this is interactive. The hover
               // state is React-controlled (no CSS :hover on SVG <g>
               // descendant text would feel reliable across Chrome's
-              // SVG quirks). pointerEvents:all so the text receives
-              // the click; onPointerDown stop-propagation so the
-              // R103 zoom/pan capture doesn't intercept first.
+              // SVG quirks). pointerEvents follows visibility (R215
+              // pattern) so the hidden footer can't intercept clicks
+              // at its midpoint when it's invisible (sub-threshold
+              // fleets).
               return (
                 <g
                   data-recent-panel-more-nav
-                  role="link"
-                  tabIndex={0}
+                  data-recent-panel-more-visible={visible ? 'true' : 'false'}
+                  role={visible ? 'link' : undefined}
+                  tabIndex={visible ? 0 : -1}
+                  aria-hidden={visible ? undefined : true}
                   className="anet-topo-svg-focus"
-                  style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                  style={{
+                    cursor: visible ? 'pointer' : undefined,
+                    pointerEvents: visible ? 'all' : 'none',
+                    opacity: visible ? 1 : 0,
+                    transition: 'opacity 300ms ease-out',
+                  }}
                   onPointerDown={(e) => e.stopPropagation()}
-                  onMouseEnter={() => setHoveredRecentMore(true)}
+                  onMouseEnter={() => { if (visible) setHoveredRecentMore(true); }}
                   onMouseLeave={() => setHoveredRecentMore(false)}
-                  onClick={() => router.push('/messages')}
+                  onClick={() => { if (visible) router.push('/messages'); }}
                   onKeyDown={(e) => {
+                    if (!visible) return;
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       router.push('/messages');
