@@ -5812,7 +5812,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 rect (R247) and every row inside (various) eased.
                 Sibling treatment to the legend panel title at line
                 ~6195 — the panel-pair's titles now ease together. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" style={{ transition: 'fill 200ms ease-out' }} data-recent-panel-title>recent signal</text>
+            {/* Round 301 / Loop: panel titles get letterSpacing="0.3"
+                for editorial parity with R289 watermark letterSpacing
+                + R285 kicker tracking-widest. At fontSize 12 monospace
+                fontWeight 700, default 0px letter-spacing reads as a
+                code-style label; 0.3px gives it a touch of designed-
+                header register without changing the lowercase
+                terminal-style aesthetic. Sibling treatment applied
+                to recent-signal panel title (here) and legend panel
+                title (line ~6556) — both panels share the same
+                editorial-text-spacing convention. data-recent-panel-
+                title handle unchanged so R266 test still resolves. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" letterSpacing="0.3" style={{ transition: 'fill 200ms ease-out' }} data-recent-panel-title>recent signal</text>
             {/* R96: header count now matches what the rows show. Pre-R96
                 this read "X msgs" off the raw messages array, but the
                 rows below render DEDUPED flowLinks — so a fleet with 10
@@ -6553,7 +6564,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 signal panel title at line ~5459. Pre-R266 both panel
                 titles hard-flipped color on theme toggle while their
                 surrounding chrome eased; R266 closes both at once. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" style={{ transition: 'fill 200ms ease-out' }} data-legend-panel-title>legend</text>
+            {/* R301: sibling to recent-signal panel title above —
+                same letterSpacing 0.3 for editorial parity. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" letterSpacing="0.3" style={{ transition: 'fill 200ms ease-out' }} data-legend-panel-title>legend</text>
             {/* Round 257 / Loop: legend panel header count picks up the
                 symmetric 13L/13R inner-padding pattern from the recent-
                 signal panel. Pre-R257 the legend header was 13px from
