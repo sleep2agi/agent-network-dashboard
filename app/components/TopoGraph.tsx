@@ -5386,7 +5386,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             onMouseLeave={() => setHoveredPanel(prev => prev === 'recent' ? null : prev)}
           >
             <rect
-              x="0" y="0" width="230" height="88" rx="10"
+              x="0" y="0" width="230" height="88" rx="8"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
               opacity={isLight ? 0.97 : 0.92}
@@ -6138,7 +6138,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 (no snap on cyber↔light switch). Same 200ms cadence
                 across the panel pair. */}
             <rect
-              x="0" y="0" width="224" height="104" rx="10"
+              x="0" y="0" width="224" height="104" rx="8"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
               opacity={isLight ? 0.97 : 0.92}
