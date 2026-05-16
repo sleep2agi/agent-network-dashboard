@@ -127,7 +127,18 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
   // recovery (amber → gray) ease through the bg / text / border
   // palette together. 300ms matches R161/R162 active-links chip
   // freshness fade timing for visual consistency in the chip row.
-  const baseClass = "hidden sm:inline px-2.5 py-1 rounded-md font-mono border transition-colors duration-300";
+  // Round 315 / Loop: FreshnessChip joins the R313-R314 chip-row
+  // data-weight family. When it appears (stale state only — R275
+  // gated rendering to stale), it sits next to working/online/
+  // active-links chips that all carry font-medium (R313) plus the
+  // vendor letter chips (R314). Without font-medium the warning
+  // chip would render at default 400 next to data chips at 500
+  // — visual inconsistency right at the moment the chip exists to
+  // grab attention. font-medium adds it to the HTML-context data
+  // tier (R312-R314 family); the amber bg/text/border still does
+  // the warning-state work, the weight just keeps the chip in the
+  // same data-typography ladder as its siblings.
+  const baseClass = "hidden sm:inline px-2.5 py-1 rounded-md font-mono font-medium border transition-colors duration-300";
   const colorClass = stale
     ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
     : "bg-gray-500/10 text-gray-400 border-gray-500/20";
