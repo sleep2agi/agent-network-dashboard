@@ -5323,36 +5323,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     </g>
                   );
                 })()}
-                {(() => {
-                  // Round 24 / Loop: pulse rate ↔ traffic. The dot's dur
-                  // was a flat 1.1s — every working node looked equally
-                  // busy. Mapping it to sse:N lets the eye land on what's
-                  // actually hot. 3 discrete tiers read cleaner than
-                  // continuous easing at a glance; thresholds picked so
-                  // typical 1-2-SSE Claude/Codex sessions stay in the
-                  // "active" tier and only multi-pane orchestrators pop
-                  // into the "busy" tier. Geometry unchanged (r=2.5).
-                  //
-                  // Round 214 / Loop: pulse dot always-mounts; visibility
-                  // crossfades via parent <g> opacity instead of React
-                  // conditional mount/unmount. Pre-R214 a node going
-                  // working ↔ idle snapped the pulse dot in/out in one
-                  // frame at the node's top. R214 extends the always-
-                  // mount-opacity-gate pattern (R181/R182/R183/R213 hub
-                  // family) down to per-node grain so the working-state
-                  // appearance/disappearance now eases over 300ms,
-                  // matching R167 ring fill / R211 text fill / R213 hub
-                  // crossfade — every status-flip beat across the
-                  // entire node ensemble runs on the same 300ms metre.
-                  //
-                  // SMIL <animate> on the inner <circle>'s opacity keeps
-                  // running regardless of parent visibility (SMIL is
-                  // unaffected by CSS opacity composition). When the
-                  // parent <g> opacity is 0, the inner pulse is
-                  // invisible; when it's 1 the pulse is fully visible.
-                  // Opacities compose multiplicatively, so no SMIL/CSS
-                  // fight — SMIL animates child opacity 1→0.25→1, CSS
-                  // crossfades parent opacity 1↔0 on status flip.
+                {/* Round 294 / Loop: per-node "working" pulse dot retired.
+                    The pulse was R24's per-node working indicator — a
+                    small green circle at the top of each working node,
+                    SMIL-animated opacity 1→0.25→1. After R278 retired the
+                    working halo, R279 retired arrival ping + dispatch
+                    pulse, R280 retired backdrop spokes, the pulse dot
+                    was the last surviving per-node SMIL animation in
+                    the original "working = breathing" visual family.
+                    Status info is preserved through 4 redundant signals:
+                    status ring green color (R167), label sub-text
+                    'working' (R211), chip-row 'X working' count (top
+                    of canvas), hub centre digit (R130). With 30+
+                    working nodes on a real fleet, 30 simultaneous SMIL
+                    pulses add cognitive load with zero new information.
+                    Same R275-R281/R290/R291 减法 family idiom — the
+                    last 'wiggling per-node decoration' retires. Gated
+                    via `{false && ...}` per the R276/R278/R279/R280
+                    rollback-friendly pattern; the block stays in the
+                    file documented + dead-coded so future readers see
+                    the retired pulse-dot rationale + can A/B-restore
+                    it by flipping the gate. */}
+                {false && (() => {
                   const sse = sseCountFor ?? 0;
                   const dur = sse >= 4 ? '0.7s' : sse >= 2 ? '0.9s' : '1.2s';
                   const visible = session.status === 'working';

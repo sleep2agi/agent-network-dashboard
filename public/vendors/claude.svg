@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Anthropic / Claude vendor mark.
+       NOT a copy of the Anthropic trademark — custom designed badge
+       in warm-orange palette. 4-rayed sparkle = "AI spark of insight".
+       Real Anthropic logo asset still gated on Vincent-direct. -->
+  <circle cx="32" cy="32" r="32" fill="hsl(16 32% 22%)" />
+  <circle cx="32" cy="32" r="30" fill="none" stroke="hsl(16 48% 54%)" stroke-width="2" />
+  <g fill="hsl(20 80% 78%)" transform="translate(32 32)">
+    <path d="M 0 -18 L 4 -4 L 18 0 L 4 4 L 0 18 L -4 4 L -18 0 L -4 -4 Z" />
+  </g>
+</svg>
