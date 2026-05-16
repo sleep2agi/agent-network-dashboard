@@ -2333,7 +2333,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 type="button"
                 aria-label={`Clear ${pinnedStatus} filter`}
                 onClick={(e) => { e.stopPropagation(); setPinnedStatus(null); }}
-                className="ml-0.5 leading-none hover:opacity-70"
+                /* Round 356 / Loop: filter pin pill × buttons gain
+                   hover:scale-110 (Tailwind 4 modern CSS `scale` property,
+                   not legacy transform). Sibling polish to R354 vendor
+                   letter glyph + R350/R352/R353 chrome icon hover-scales.
+                   Pre-R356 the × had only hover:opacity-70 — the target
+                   dimmed under cursor but didn't lift. R356 adds a 10 %
+                   scale on hover so the click-target reads as "press me"
+                   alongside the dim. transform-gpu hint promotes the
+                   button to its own compositor layer for crisper edges
+                   during the scale tween. transition-transform duration-
+                   200 matches the chrome icon hover-scale timing family.
+                   inline-block is default for <button> so no display
+                   tweak needed. replace_all covers all 4 filter pin
+                   pills (status / group / vendor / edge) at once. */
+                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 transform-gpu"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
@@ -2368,7 +2382,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
                 onClick={(e) => { e.stopPropagation(); setPinnedGroup(null); }}
-                className="ml-0.5 leading-none hover:opacity-70"
+                /* Round 356 / Loop: filter pin pill × buttons gain
+                   hover:scale-110 (Tailwind 4 modern CSS `scale` property,
+                   not legacy transform). Sibling polish to R354 vendor
+                   letter glyph + R350/R352/R353 chrome icon hover-scales.
+                   Pre-R356 the × had only hover:opacity-70 — the target
+                   dimmed under cursor but didn't lift. R356 adds a 10 %
+                   scale on hover so the click-target reads as "press me"
+                   alongside the dim. transform-gpu hint promotes the
+                   button to its own compositor layer for crisper edges
+                   during the scale tween. transition-transform duration-
+                   200 matches the chrome icon hover-scale timing family.
+                   inline-block is default for <button> so no display
+                   tweak needed. replace_all covers all 4 filter pin
+                   pills (status / group / vendor / edge) at once. */
+                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 transform-gpu"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
@@ -2419,7 +2447,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 type="button"
                 aria-label={`Clear vendor filter ${pinnedVendor}`}
                 onClick={(e) => { e.stopPropagation(); setPinnedVendor(null); }}
-                className="ml-0.5 leading-none hover:opacity-70"
+                /* Round 356 / Loop: filter pin pill × buttons gain
+                   hover:scale-110 (Tailwind 4 modern CSS `scale` property,
+                   not legacy transform). Sibling polish to R354 vendor
+                   letter glyph + R350/R352/R353 chrome icon hover-scales.
+                   Pre-R356 the × had only hover:opacity-70 — the target
+                   dimmed under cursor but didn't lift. R356 adds a 10 %
+                   scale on hover so the click-target reads as "press me"
+                   alongside the dim. transform-gpu hint promotes the
+                   button to its own compositor layer for crisper edges
+                   during the scale tween. transition-transform duration-
+                   200 matches the chrome icon hover-scale timing family.
+                   inline-block is default for <button> so no display
+                   tweak needed. replace_all covers all 4 filter pin
+                   pills (status / group / vendor / edge) at once. */
+                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 transform-gpu"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
@@ -2496,7 +2538,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 type="button"
                 aria-label={`Clear edge filter ${link.from} → ${link.to}`}
                 onClick={(e) => { e.stopPropagation(); setPinnedEdgeKey(null); }}
-                className="ml-0.5 leading-none hover:opacity-70"
+                /* Round 356 / Loop: filter pin pill × buttons gain
+                   hover:scale-110 (Tailwind 4 modern CSS `scale` property,
+                   not legacy transform). Sibling polish to R354 vendor
+                   letter glyph + R350/R352/R353 chrome icon hover-scales.
+                   Pre-R356 the × had only hover:opacity-70 — the target
+                   dimmed under cursor but didn't lift. R356 adds a 10 %
+                   scale on hover so the click-target reads as "press me"
+                   alongside the dim. transform-gpu hint promotes the
+                   button to its own compositor layer for crisper edges
+                   during the scale tween. transition-transform duration-
+                   200 matches the chrome icon hover-scale timing family.
+                   inline-block is default for <button> so no display
+                   tweak needed. replace_all covers all 4 filter pin
+                   pills (status / group / vendor / edge) at once. */
+                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 transform-gpu"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
