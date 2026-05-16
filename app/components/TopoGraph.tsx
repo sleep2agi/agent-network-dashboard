@@ -4008,6 +4008,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // node radius. Geometry-safe; paint-only. R51 sentinel
               // strokeWidth 1.5/3 untouched (idle=1, active=2). data-
               // topo-hub-spoke-linecap attr exposes the value for tests.
+              // Round 419 / Loop: hub-spoke idle opacity 0.45 → 0.50.
+              // Stale-state legibility lift family 9th anchor — pairs
+              // with R391 (active 0.7 → 0.8) and R415 (active sw 2 →
+              // 2.25) so the same spoke path is now polished on BOTH
+              // active AND idle tiers. Pre-R419 idle spokes painted
+              // at α=0.45 with R46 anet-topo-spoke-flow dashed
+              // animation; the dashed pulses sat at the "background
+              // chatter" floor — visible but understated. R419
+              // lifts to 0.50 so idle spokes read more confidently
+              // while the active/idle contrast ratio stays clear
+              // (0.8/0.50 = 1.6× vs prior 0.8/0.45 = 1.78×; still
+              // a sharp two-tier distinction).
+              // Stale-state legibility lift family (9 anchors now):
+              //   R317 subordinate-text gray-500 → gray-400
+              //   R358 freshness floor 0.25 → 0.30
+              //   R372 minimap offline-dot 0.5 → 0.6
+              //   R404 hub-halo cyber trough 0.08 → 0.10
+              //   R405 hub-halo light trough 0.32 → 0.34
+              //   R406 edge freshness floor 0.35 → 0.40
+              //   R407 node halo offline opacity (cyber + light)
+              //   R413 active-node pulse trough (cyber + light)
+              //   R419 hub-spoke idle opacity 0.45 → 0.50 (this round)
+              // data-topo-hub-spoke-opacity attr (R391) updates to
+              // surface the resolved per-state value.
+              //
               // Round 415 / Loop: hub-spoke active strokeWidth 2 → 2.25.
               // Pairs with R391 (active opacity 0.7 → 0.8) so the same
               // active-state path lifts BOTH stroke weight AND opacity
@@ -4076,12 +4101,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth={isActiveSpoke ? 2.25 : 1}
                   strokeDasharray={isActiveSpoke ? 'none' : '6 14'}
                   strokeLinecap="round"
-                  opacity={isActiveSpoke ? 0.8 : 0.45}
+                  opacity={isActiveSpoke ? 0.8 : 0.50}
                   className={isActiveSpoke ? undefined : 'anet-topo-spoke-flow'}
                   data-topo-spoke-bucket={isActiveSpoke ? undefined : busy}
                   data-topo-spoke-dur={isActiveSpoke ? undefined : spokeDur}
                   data-topo-hub-spoke-active={isActiveSpoke ? 'true' : 'false'}
-                  data-topo-hub-spoke-opacity={isActiveSpoke ? 0.8 : 0.45}
+                  data-topo-hub-spoke-opacity={isActiveSpoke ? 0.8 : 0.50}
                   data-topo-hub-spoke-stroke-width-active="2.25"
                   data-topo-hub-spoke-linecap="round"
                   style={{
