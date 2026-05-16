@@ -8325,14 +8325,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const isOn = s.status !== 'offline' || !!sseN;
                   const st = nodeStatus(s, isOn, isLight);
                   return (
+                    /* Round 372 / Loop: minimap offline-dot opacity
+                       0.5 → 0.6. Sibling stale-state legibility lift
+                       to R358 freshness ramp floor 0.25 → 0.30 + R317
+                       subordinate-text-lift family. Pre-R372 R198
+                       drew offline dots at α=0.5 (44 % below online
+                       0.9). The minimap is a small overlay against
+                       the canvas backdrop — at α=0.5 offline dots
+                       sat at the legibility floor when the minimap
+                       mounted (only on non-default view). R372 lifts
+                       offline 0.5 → 0.6 for +20 % relative presence;
+                       online stays at 0.9 so the offline/online
+                       contrast ratio is now 0.6/0.9 ≈ 0.67 (vs prior
+                       0.5/0.9 ≈ 0.56) — still a clear two-tier
+                       distinction. R198 opacity + fill + r transition
+                       list preserved so status flips still ease
+                       smoothly. data-topo-minimap-dot-opacity attr
+                       exposes the resolved value for tests. */
                     <circle
                       key={s.alias}
                       cx={p.x * sx} cy={p.y * sy}
                       r={isOn ? 1.7 : 1.2}
                       fill={st.primary}
-                      opacity={isOn ? 0.9 : 0.5}
+                      opacity={isOn ? 0.9 : 0.6}
                       data-topo-minimap-dot={s.alias}
                       data-topo-minimap-dot-online={isOn ? 'true' : 'false'}
+                      data-topo-minimap-dot-opacity={isOn ? 0.9 : 0.6}
                       style={{
                         transition: 'opacity 200ms ease-out, fill 200ms ease-out, r 200ms ease-out',
                       } as React.CSSProperties}
