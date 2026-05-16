@@ -4773,16 +4773,35 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       stable as the digit grows. Exit-snap is rare
                       in steady operation: a hot flow cooling back
                       below 10 messages doesn't happen often. */}
-                  {hotFlowCount > 0 && (
-                    <tspan
-                      fill={hotStroke}
-                      fontWeight="700"
-                      data-recent-panel-hot-count={hotFlowCount}
-                      className="anet-fade-in"
-                    >
-                      {' · '}{hotFlowCount} hot
-                    </tspan>
-                  )}
+                  {/* Round 223 / Loop: hot-tail tspan always-mounts;
+                      visibility crossfades via inline opacity gate
+                      instead of conditional mount/unmount on hot
+                      FlowCount > 0. Pre-R223 R190's anet-fade-in gave
+                      a smooth entrance but exit was snap (the family's
+                      original "fade-IN smooth, accept exit snap" trade-
+                      off). R223 closes the asymmetry — both directions
+                      now ease 300ms. anet-fade-in className kept for
+                      R190 test compat (plays once on initial render
+                      if the page loads with hotFlowCount > 0); subsequent
+                      threshold crossings use the opacity transition
+                      bi-directionally. Text content gates to empty
+                      string when hidden so the parent <text textAnchor=
+                      "end"> doesn't compute anchor against stale "·"
+                      separator. data-recent-panel-hot-visible exposes
+                      the gate for tests. Always-mount-opacity-gate
+                      family now hits 10 surfaces (R181/R182/R183/R213×2/
+                      R214/R215/R221/R222/R223). */}
+                  <tspan
+                    fill={hotStroke}
+                    fontWeight="700"
+                    data-recent-panel-hot-count={hotFlowCount}
+                    data-recent-panel-hot-visible={hotFlowCount > 0 ? 'true' : 'false'}
+                    className="anet-fade-in"
+                    opacity={hotFlowCount > 0 ? 1 : 0}
+                    style={{ transition: 'opacity 300ms ease-out' }}
+                  >
+                    {hotFlowCount > 0 ? ` · ${hotFlowCount} hot` : ''}
+                  </tspan>
                 </text>
               );
             })()}
