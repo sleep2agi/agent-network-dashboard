@@ -5397,7 +5397,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            stroke-width pin/hot transitions all preserved. */
                         fontSize="11"
                         fontFamily="monospace"
-                        fontWeight="700"
+                        /* R426 — edge-badge digit fontWeight 700 → 800 on
+                           (isPinned || isHot). 4th anchor on the "data
+                           tightens under attention" typographic-weight
+                           pattern:
+                             R416 chip-digit  (chip-row hover trigger)
+                             R424 panel-digit (panel hover trigger)
+                             R425 hub-digit   (hub hover trigger)
+                             R426 edge-badge-digit (pin/hot trigger) ← this
+                           The badge digit is the per-edge equivalent of
+                           the hub digit (R361 sibling fontSize bump
+                           reasoning). Stacks with R188 stroke-width pin/
+                           hot lift (1.25 → 1.5) + R220 letter-spacing pin/
+                           hot tween (0 → 0.4) for a 3-axis pin/hot signa-
+                           ture (edge structure + text spacing + text
+                           weight). The R408 transition is letter-spacing
+                           300ms; R426 appends font-weight 300ms so the
+                           weight bump co-eases under the same cadence. */
+                        fontWeight={(isPinned || isHot) ? '800' : '700'}
                         data-edge-badge-text={link.key}
                         data-edge-badge-text-pin={(isPinned || isHot) ? 'true' : 'false'}
                         data-edge-badge-text-font-size="11"
@@ -5405,7 +5422,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           pointerEvents: 'none',
                           fontVariantNumeric: 'tabular-nums',
                           letterSpacing: (isPinned || isHot) ? '0.4px' : '0px',
-                          transition: 'letter-spacing 300ms ease-out',
+                          transition: 'letter-spacing 300ms ease-out, font-weight 300ms ease-out',
                         }}
                       >{link.count}</text>
                     </g>
