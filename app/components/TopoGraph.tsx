@@ -6573,10 +6573,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     R304 empty hint:    0.15px (instructional sub)
                   Each step ~0.1-0.5x scale-down matches the
                   font-size + opacity descent. */}
+              {/* Round 339 / Loop: empty-state sub-hint picks up
+                  fontStyle="italic" for parity with the main hint
+                  above (line ~6526). Pre-R339 the main hint "no
+                  flow yet" was italic while the sub-hint "send a
+                  message between agents" was upright — two empty-
+                  state texts sharing the same quiet informational
+                  role but rendered in different styles. R339 closes
+                  the inconsistency: both texts now read as deliberate
+                  italic empty-state messaging. The R304 letter-
+                  spacing 0.15 + R259 fontSize 9 + opacity 0.45 +
+                  SMIL opacity breath all preserved. */}
               <text
                 x="115" y="70" textAnchor="middle"
                 fill={pal.legendText}
-                fontSize="9" fontFamily="monospace"
+                fontSize="9" fontFamily="monospace" fontStyle="italic"
                 letterSpacing="0.15"
                 opacity={0.45}
                 data-recent-signal-empty-hint
