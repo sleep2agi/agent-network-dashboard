@@ -3698,7 +3698,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       tier-coloured pips alongside every other
                       theme-driven element. R230's tabular-nums
                       stays. */}
-                  {box.statuses.working > 0 && (
+                  {/* Round 319 / Loop: drop a tier pip when its count
+                      equals box.count — i.e. single-tier groups (all
+                      working, all idle, all offline). Pre-R319 a 4-all-
+                      idle group rendered as `P站 · 4 4i` with the "4"
+                      visually doubled; Vincent telegram 5304 flagged
+                      this as 比较难看 in a real-data screenshot
+                      (ai-insight · 6 6i, blueleap · 3 3i, P站 · 4 4i).
+                      The dropped pip's information is already conveyed
+                      by the group-box stroke colour (R68 isPinned/
+                      hover accent uses the dominant-tier hue) plus
+                      the SVG <title> tooltip listing the status
+                      breakdown. Multi-tier groups (e.g. `alpha · 3
+                      2w 1i`) render unchanged — those pips genuinely
+                      add breakdown info that the total doesn't carry. */}
+                  {box.statuses.working > 0 && box.statuses.working !== box.count && (
                     <tspan
                       dx="8"
                       fill={isLight ? '#059669' : '#22c55e'}
@@ -3709,7 +3723,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       style={{ fontVariantNumeric: 'tabular-nums', transition: 'fill 200ms ease-out' }}
                     >{box.statuses.working}w</tspan>
                   )}
-                  {box.statuses.idle > 0 && (
+                  {box.statuses.idle > 0 && box.statuses.idle !== box.count && (
                     <tspan
                       dx="4"
                       fill={isLight ? '#0d9488' : '#2dd4bf'}
@@ -3720,7 +3734,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       style={{ fontVariantNumeric: 'tabular-nums', transition: 'fill 200ms ease-out' }}
                     >{box.statuses.idle}i</tspan>
                   )}
-                  {box.statuses.offline > 0 && (
+                  {box.statuses.offline > 0 && box.statuses.offline !== box.count && (
                     <tspan
                       dx="4"
                       fill={isLight ? '#94a3b8' : '#6b7280'}

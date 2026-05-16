@@ -44,10 +44,14 @@ await ctx.route('**/api/hub/status*', async (route) => {
     created_at: fresh, updated_at: fresh, last_seen_at: fresh,
   });
   await route.fulfill({ response: r, json: { ...b, sessions: [
+    // R319 fixture: both groups must be multi-tier so all tier pips
+    // render. Pre-R319 beta was 2 working (single-tier) and its pip
+    // rendered fine; post-R319 a tier pip is dropped when its count
+    // equals box.count, so beta needs idle to remain multi-tier here.
     mk('alpha-1', 'working'),
     mk('alpha-2', 'idle'),
     mk('beta-1',  'working'),
-    mk('beta-2',  'working'),
+    mk('beta-2',  'idle'),
   ] } });
 });
 await ctx.route('**/api/hub/messages*', (r2) => r2.fulfill({ json: { messages: [] } }));
