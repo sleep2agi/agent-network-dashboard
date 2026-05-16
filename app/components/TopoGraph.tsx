@@ -6696,6 +6696,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 rows 2 and 3. */}
             <path d="M140,68 Q164,44 196,68" fill="none" stroke={pal.flowEdge} strokeWidth="3" markerEnd="url(#topo-arrow)" data-legend-flow-arrow style={{ pointerEvents: 'none', transition: 'stroke 200ms ease-out' }} />
           </g>
+
+          {/* Round 282 / Loop: sleep2agi brand watermark per Vincent
+              5215 ask (relayed via 通信龙). Plain monospace text at
+              canvas bottom-left (the only fully-empty corner — top
+              corners hold recent-signal + legend panels, bottom-
+              right holds the chrome strip). No icon yet — public/
+              has only favicon.svg (small abstract network icon
+              with hardcoded #0a0a1a dark bg that wouldn't blend on
+              light theme) + intern_avatar.png (书生 brand-specific).
+              Without a sleep2agi-specific crescent/lockup asset,
+              R282 ships a low-opacity text-only mark; R283+ can
+              swap in the real logo if Vincent provides the asset.
+
+              Position: x=16 (matches the 16-unit SVG inset that the
+              corner panels use); y=672 (≈12 px from viewBox bottom
+              y=680, descender ≈ y=675, so the entire glyph sits
+              clear of the bottom edge). Theme-aware fill:
+              pal.legendText (cyber #94a3b8 slate-400 ↔ light
+              #475569 slate-600). 0.4 opacity makes it a
+              watermark — present but not visually loud. Pointer-
+              events:none so it can't intercept clicks on the
+              canvas backdrop.
+
+              Note: the brand mark is INTENTIONALLY in a corner
+              that no overlay/panel occupies, AND it's purely
+              decorative additive after 7 rounds of 减法 (R275-
+              R281). Adds 1 small text element back into the
+              canvas — but Vincent specifically asked for it. */}
+          <text
+            x="16" y="672"
+            fontSize="11" fontFamily="monospace" fontWeight="600"
+            fill={pal.legendText}
+            opacity="0.4"
+            data-topo-brand-watermark
+            style={{ pointerEvents: 'none', transition: 'fill 200ms ease-out' }}
+          >sleep2agi</text>
         </svg>
 
         {/* Round 30 / Loop: minimap. Big fleets in fullscreen mode at high
