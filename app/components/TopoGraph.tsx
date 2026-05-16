@@ -4515,15 +4515,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     online chips to splice in additional properties
                     beside Tailwind's). data-edge-flow-rail attr
                     surfaces the path for test introspection. */}
+                {/* Round 381 / Loop: edge visible flow path picks up
+                    strokeLinecap='round'. Sibling polish to R378
+                    flow-rail dashed linecap — both flow-element paths
+                    (visible primary + dashed secondary rail) now share
+                    'round' linecap vocabulary. The visible path runs
+                    source-node → dest-node as one continuous line, so
+                    the dest-end is covered by the markerEnd arrow and
+                    the source-end usually sits inside the source-node
+                    circle. At certain alignments (post-zoom, post-
+                    layout-switch transitions), the source-end may peek
+                    out by a fraction of a px past the node edge —
+                    round caps render that overshoot as a smooth half-
+                    disc instead of a sharp rectangle. Pure paint
+                    refinement, geometry-safe (bbox of the stroke
+                    unchanged at the join with the arrow marker).
+                    data-edge-visible-linecap attr exposes the value
+                    for tests. */}
                 <path
                   d={path}
                   fill="none"
                   stroke={pal.flowEdge}
                   strokeWidth={renderWidth}
+                  strokeLinecap="round"
                   opacity={Math.min(1, (isLight ? 0.22 : 0.28) * fresh * edgeOpacityMul)}
                   filter={isLight ? undefined : 'url(#topo-glow)'}
                   markerEnd={`url(#${arrowId})`}
                   data-edge-visible={link.key}
+                  data-edge-visible-linecap="round"
                   style={{
                     pointerEvents: 'none',
                     transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out, stroke 300ms ease-out',
