@@ -257,7 +257,21 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
           duration-300 still eases the bg/color flip. Title (hover
           tooltip) still spells out the full meaning in either
           state. */}
-      {stale ? 'lag' : 'live'} · {sec}s
+      {/* Round 410 / Loop: FreshnessChip body picks up the chip-
+          internal-hierarchy arc. Pre-R410 the body rendered as a
+          single text node `lag · {sec}s` with the parent's font-
+          medium (fw=500) applied uniformly. R410 splits the digit
+          and unit into separate spans so the chip's internal
+          typography mirrors the family pattern R333-R341/R362/R369/
+          R389 established for the chip row:
+            digit  (fw=600)  data tier
+            unit   (fw=500 + opacity=0.7)  label tier
+          The `lag` prefix stays at the chip's baseline (fw=500
+          from parent font-medium) — it labels the state, not a
+          data value. data-freshness-chip-digit / -unit attrs
+          surface the spans for tests. tabular-nums + transition-
+          colors + R275 stale-only gate all preserved. */}
+      {stale ? 'lag' : 'live'} · <span className="font-semibold" data-freshness-chip-digit>{sec}</span><span className="opacity-70" data-freshness-chip-unit>s</span>
     </span>
   );
 }
