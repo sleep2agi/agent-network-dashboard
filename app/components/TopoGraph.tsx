@@ -3297,6 +3297,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       R229 group-label count. Tier-specific fill
                       colours stay (semantic — working green /
                       idle teal / offline slate). */}
+                  {/* Round 253 / Loop: append fill 200ms ease-out to
+                      each tspan's style so theme toggle eases the
+                      tier-coloured pips alongside every other
+                      theme-driven element. R230's tabular-nums
+                      stays. */}
                   {box.statuses.working > 0 && (
                     <tspan
                       dx="8"
@@ -3305,7 +3310,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontWeight="600"
                       className="anet-fade-in"
                       data-group-pip="working"
-                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                      style={{ fontVariantNumeric: 'tabular-nums', transition: 'fill 200ms ease-out' }}
                     >{box.statuses.working}w</tspan>
                   )}
                   {box.statuses.idle > 0 && (
@@ -3316,7 +3321,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontWeight="600"
                       className="anet-fade-in"
                       data-group-pip="idle"
-                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                      style={{ fontVariantNumeric: 'tabular-nums', transition: 'fill 200ms ease-out' }}
                     >{box.statuses.idle}i</tspan>
                   )}
                   {box.statuses.offline > 0 && (
@@ -3327,7 +3332,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontWeight="600"
                       className="anet-fade-in"
                       data-group-pip="offline"
-                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                      style={{ fontVariantNumeric: 'tabular-nums', transition: 'fill 200ms ease-out' }}
                     >{box.statuses.offline}o</tspan>
                   )}
                 </text>
@@ -4075,6 +4080,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fill={isLight ? '#d1fae5' : '#10b981'}
                   opacity={isLight ? 0.42 : 0.12}
                   data-hub-busyness={busy}
+                  /* Round 253 / Loop: hub grounding halo fill transition
+                     for theme toggle. Pre-R253 the base fill (cyber
+                     #10b981 ↔ light #d1fae5) snapped while R244's SMIL
+                     animate on opacity continued running. CSS fill
+                     transition is independent of the SMIL animate
+                     (different attributes), so they compose without
+                     conflict. */
+                  style={{ transition: 'fill 200ms ease-out' }}
                 >
                   {/* Round 244 / Loop: hub grounding halo breath gets
                       ease-in-out keySplines, matching the active-node
@@ -4195,12 +4208,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // through every count change. Pure visual tightening;
                 // no test trap (computed font-variant-numeric resolves
                 // to the keyword 'tabular-nums' verbatim).
+                /* Round 253 / Loop: append fill 200ms to the hub
+                   digit transition list — theme toggle (cyber #ecfdf5
+                   ↔ light #d1fae5) was the last hub-area snap. */
                 style={{
                   pointerEvents: 'none',
                   transform: !reducedMotion && hoveredHub ? 'scale(1.08)' : 'scale(1)',
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
-                  transition: 'transform 200ms ease-out, opacity 300ms ease-out',
+                  transition: 'transform 200ms ease-out, opacity 300ms ease-out, fill 200ms ease-out',
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
@@ -4252,9 +4268,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               opacity={hoveredHub ? (isLight ? 0.85 : 0.7) : 0}
               data-topo-hub-hover-ring
               data-topo-hub-hover-ring-radius={hoveredHub ? 17 : 14}
+              /* Round 253 / Loop: hub hover ring also gets stroke
+                 transition for theme toggle (cyber #10b981 ↔ light
+                 #059669). The opacity + r transitions stay for hover
+                 lift; stroke closes the theme-snap. */
               style={{
                 pointerEvents: 'none',
-                transition: 'opacity 180ms ease-out, r 180ms ease-out',
+                transition: 'opacity 180ms ease-out, r 180ms ease-out, stroke 200ms ease-out',
               }}
             />
           </g>)}
