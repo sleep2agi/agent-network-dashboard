@@ -1512,7 +1512,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // (10→15 bg, 20→30 border) only when clickable.
                   // transition-colors duration-200 blends the swap to
                   // match R193's timing on the active-links chip.
-                  className={`px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                  /* Round 232 / Loop: HTML chip row picks up the
+                     tabular-nums info-density treatment R224-R230
+                     established on the SVG side. The chip text reads
+                     "{N} working"; when workingCount crosses 9→10
+                     the leading digit's width shift propagates the
+                     trailing ' working' label right by the digit-vs-
+                     control glyph delta, and the chip's right edge
+                     re-flows because the parent is inline flex. The
+                     Tailwind `tabular-nums` utility sets font-variant-
+                     numeric: tabular-nums, locking the digit width
+                     so the chip text + chip width stay stable across
+                     all counter values. Sibling chips (online,
+                     active-links) get the same treatment in this
+                     round so the three-chip row reads uniformly.
+                     7th surface in the info-density tabular-nums
+                     sweep — and the first on the HTML side
+                     (previous 6 were SVG <text>/<tspan>). */
+                  className={`tabular-nums px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
                     workingCount > 0
                       ? 'bg-green-500/10 text-green-300 border-green-500/20 hover:bg-green-500/15 hover:border-green-500/30'
                       : 'bg-green-500/10 text-green-300 border-green-500/20'
@@ -1589,7 +1606,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   //   working chip   · green 10→15 (R201)
                   //   online chip    · cyan  10→15 (R201)
                   //   active-links   · gray  → cyan (R193)
-                  className={`px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
+                  /* Round 232 / Loop: tabular-nums on online chip
+                     (sibling treatment to working chip — same row,
+                     same digit-jitter physics on count crossings). */
+                  className={`tabular-nums px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors duration-200 ${
                     onlineNodes.length > 0
                       ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:bg-cyan-500/15 hover:border-cyan-500/30'
                       : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
@@ -2253,7 +2273,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // we replicate color/bg/border transitions inline
                 // alongside the new opacity 200ms — same splice idiom
                 // R201 used on the working/online chips.
-                className={`hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus ${
+                /* Round 232 / Loop: tabular-nums on active-links chip
+                   (third chip in the row — matches working + online
+                   chip treatment so all three digits in the chip row
+                   stay width-stable across counter crossings). */
+                className={`tabular-nums hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus ${
                   isInteractive
                     ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30'
                     : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
