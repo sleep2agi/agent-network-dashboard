@@ -6395,6 +6395,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   textAnchor="end"
                   fontSize="10"
                   fontFamily="monospace"
+                  // Round 349 / Loop: editorial letter-spacing 0.2 on the
+                  // recent-signal panel header count. Sits one tier below
+                  // the R301 panel title letterSpacing="0.3" so the panel
+                  // header reads as a 2-step hierarchy (title 0.3 / count
+                  // 0.2). Sibling change on the legend panel count below
+                  // closes the panel-pair editorial symmetry. Joins the
+                  // R285 / R289 / R301 / R302 / R304 / R325 editorial-
+                  // letterspacing tier at the panel-summary scope. The
+                  // R162 freshness fill, R225 tabular-nums, R311 fw=600,
+                  // R336 unit-tspan opacity-0.7 split all preserved —
+                  // the tier propagates to all descendant tspans via
+                  // SVG inheritance. data-recent-panel-count-letter-
+                  // spacing exposes the value for tests.
+                  letterSpacing="0.2"
+                  data-recent-panel-count-letter-spacing="0.2"
                 >
                   {/* Round 225 / Loop: tabular-nums on the panel-header
                       flow-count tspan. The "{N} flows" string lives in
@@ -7324,7 +7339,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             <text
               x="211" y="21" textAnchor="end"
               fill={pal.legendAccent} fontSize="10" fontFamily="monospace" fontWeight="600"
+              // R349 sibling — legend panel header count picks up
+              // letterSpacing="0.2", one tier below the R301 panel
+              // title 0.3. Pairs with the recent-signal panel count
+              // letter-spacing above so the two corner panels' header
+              // typography stays editorially symmetric.
+              letterSpacing="0.2"
               data-legend-panel-count
+              data-legend-panel-count-letter-spacing="0.2"
               style={{
                 transition: 'fill 200ms ease-out',
                 fontVariantNumeric: 'tabular-nums',
