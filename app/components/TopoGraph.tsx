@@ -4445,6 +4445,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    (sentinels are 1.5/3 inside g[data-node]), so the
                    ring is invisible to the overlap-test selector
                    even when always-mounted. */}
+                {/* Round 242 / Loop: extend the chat-target ring's
+                    transition list to include stroke + filter.
+                    Pre-R242 only `opacity` eased (R183 200ms): a
+                    chat-target node going working → idle hard-
+                    flipped the ring's stroke colour (status.primary
+                    green → teal) in one frame even though the rest
+                    of the ring was a smooth presence. Filter (glow
+                    on cyber, none on light) also snapped on chat
+                    toggle AND on theme switch.
+
+                    Add `stroke 200ms ease-out` + `filter 200ms
+                    ease-out` so the colour and glow both ease at
+                    the same cadence as the opacity gate. Same
+                    idiom R167 (node status-ring) uses for
+                    coordinated colour-easing on status flip;
+                    R242 brings the chat-target ring up to that
+                    bar. */}
                 {(() => {
                   const isChat = chatAlias === session.alias;
                   return (
@@ -4457,7 +4474,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       strokeWidth="2.5"
                       opacity={isChat ? (isLight ? 0.85 : 0.95) : 0}
                       filter={!isLight && isChat ? 'url(#topo-glow)' : undefined}
-                      style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out' }}
+                      style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out, stroke 200ms ease-out, filter 200ms ease-out' }}
                       data-chat-target-ring
                       data-chat-target-active={isChat ? 'true' : 'false'}
                       data-chat-target-breath={!reducedMotion && isChat ? 'on' : 'off'}
