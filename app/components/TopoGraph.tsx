@@ -4757,7 +4757,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // tracks it even at low message counts (width was 3 → 4.5 on
             // hover). 1.4× is enough to read as "lifted" without
             // breaching the 16-px hitbox bound.
-            const renderWidth = isHoveredEdge ? Math.min(width * 1.4, 10) : width;
+            // Round 436 / Loop: extend the thickening to the
+            // "hovered-endpoint" case — when hoveredAlias matches one
+            // of this edge's endpoints, lift width by 1.15× (capped at
+            // 8 px to stay clear of the 16-px hitbox). Pre-R436 the
+            // edgeOpacityMul=1.7 (line 4703) lifted the matched edge's
+            // OPACITY when an endpoint was hovered but the stroke-WIDTH
+            // stayed at base — so the edge faded brighter without
+            // thickening, leaving the paint+geometry axes mismatched.
+            // Mirror of R430/R435 hub-spoke pattern (opacity + stroke-
+            // width co-lift on hoveredAlias); R436 brings the same
+            // dual-axis "this node's link" gesture to the edge scope.
+            // 1.15× is subtler than isHoveredEdge=1.4× because
+            // endpoint-hover lifts MANY edges at once (every edge
+            // incident on the hovered node) while edge-hover lifts ONE
+            // — the gesture should read as "highlighted" not "loud".
+            // R166 stroke-width 300ms transition already in the
+            // visible-path style list so the lift eases for free.
+            const isEndpointHoveredEdge = !!hoveredAlias && (link.from === hoveredAlias || link.to === hoveredAlias);
+            const renderWidth = isHoveredEdge ? Math.min(width * 1.4, 10)
+                              : isEndpointHoveredEdge ? Math.min(width * 1.15, 8)
+                              : width;
             return (
               <g
                 key={link.key}
@@ -4872,6 +4892,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   markerEnd={`url(#${arrowId})`}
                   data-edge-visible={link.key}
                   data-edge-visible-linecap="round"
+                  data-edge-visible-endpoint-hovered={isEndpointHoveredEdge ? 'true' : 'false'}
+                  data-edge-visible-stroke-width={renderWidth}
                   style={{
                     pointerEvents: 'none',
                     transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out, stroke 300ms ease-out',
