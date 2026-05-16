@@ -4789,11 +4789,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         x={badgeX} y={badgeY + 3}
                         textAnchor="middle"
                         fill={pal.legendHeadline}
-                        fontSize="10"
+                        /* Round 361 / Loop: edge midpoint badge text
+                           fontSize 10 → 11. Sibling visual-weight bump
+                           to R360 hub digit 11 → 12. The badge digit
+                           is the per-edge equivalent of the hub digit
+                           — a high-information scalar (link.count) at
+                           a stable canvas position. Pre-R361 fontSize=
+                           10 + R220 letter-spacing 0.4 + R224 tabular-
+                           nums made the digit READABLE but small
+                           against the r=9 / 18-px badge envelope;
+                           fontSize=11 nudges the glyph ~10 % bigger
+                           (bbox ~7×10 px from ~6×9 px) so the count
+                           reads more cleanly at glance — still well
+                           inside the r=9 idle circle and the r=10.5
+                           hover/pin lift (R164). y=badgeY+3 empirical
+                           vertical centring kept (1px drift at the
+                           bumped size is below the noise floor in
+                           the on-curve flow path).
+                           Visual-weight bump family:
+                             R287 minimap viewport stroke 1 → 1.5
+                             R295 legend swatch base radius 5.5 → 6
+                             R359 recent-row pip base radius 1.6 → 1.8
+                             R360 hub digit fontSize 11 → 12
+                             R361 edge-badge digit fontSize 10 → 11 (this round)
+                           data-edge-badge-text-font-size attr exposes
+                           the value for tests. R220 pin/hot letter-
+                           spacing tween + R224 tabular-nums + R188
+                           stroke-width pin/hot transitions all preserved. */
+                        fontSize="11"
                         fontFamily="monospace"
                         fontWeight="700"
                         data-edge-badge-text={link.key}
                         data-edge-badge-text-pin={(isPinned || isHot) ? 'true' : 'false'}
+                        data-edge-badge-text-font-size="11"
                         style={{
                           pointerEvents: 'none',
                           fontVariantNumeric: 'tabular-nums',
