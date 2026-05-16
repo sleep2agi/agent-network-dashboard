@@ -131,6 +131,26 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
   const colorClass = stale
     ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
     : "bg-gray-500/10 text-gray-400 border-gray-500/20";
+  /* Round 275 / Loop: simplification per Vincent 5214/5215-5217 visual
+     audit (clutter cleanup for Twitter screenshot). Pre-R275 the chip
+     ALWAYS rendered — "live · 5s" gray-on-gray at rest, "lag · 15s"
+     amber when stale. The fresh state is an "everything's fine"
+     affirmation that's implicit elsewhere on the canvas (counts
+     updating, flows animating). Adding a permanent chip to the chip-
+     row's right end for that affirmation is added visual chrome
+     without proportional info value.
+
+     R275 converts the chip to a CONDITIONAL warning indicator: render
+     only when stale (sec > 10). Fresh state → null (chip absent). The
+     amber stale chip still appears as a warning when SWR lags, so
+     users see the problem signal; the fresh state implicitly relies
+     on other liveness signals (recent-signal panel rows, edge
+     animations, count updates).
+
+     Net effect: chip-row at rest has 1 fewer chip (cleaner Twitter
+     screenshot, less right-edge chrome), but signals appear on
+     stale-onset to direct attention. */
+  if (!stale) return null;
   return (
     <span
       className={`${baseClass} ${colorClass}`}
