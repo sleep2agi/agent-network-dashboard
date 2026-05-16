@@ -9071,10 +9071,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     fontWeight="500"
                     data-legend-row-label={row.key}
                     data-legend-row-label-pinned={isPinned ? 'true' : 'false'}
+                    data-legend-row-label-hovered={!isPinned && hoveredStatus === row.key ? 'true' : 'false'}
                     data-legend-row-label-font-weight="500"
+                    /* Round 433 / Loop: legend-row text extends from
+                       R219's pin-only letter-spacing (0px → 0.5px on
+                       isPinned) to a 3-tier scale matching the R432
+                       group-label pattern:
+                         rest             → 0px
+                         hoveredStatus    → 0.25px   ← this round
+                         isPinned         → 0.5px   (R219 preserved)
+                       Pre-R433 hover already brightened the fill
+                       (hoveredStatus===row.key || isPinned matches the
+                       legendHeadline branch) but the letter-form
+                       stayed dead-typographic on transient hover —
+                       only the pin tier carried a kerning signature.
+                       R433 adds the missing mid tier so hover
+                       telegraphs through BOTH fill brighten AND a
+                       subtle 0.25-px kerning spread, mirroring
+                       R427/R431/R432 at legend-row scope. Pin tier
+                       still wins so the locked vs preview distinction
+                       at the type level stays intact.
+                       Hover-letter-spacing family extension (9 anchors
+                       now): R344/R345/R347/R351/R420/R427/R431/R432/
+                       R433. 3-tier letter-spacing pattern now spans 4
+                       surfaces (node-alias R427, edge-badge R431,
+                       group-label R432, legend-row R433). R55 fill
+                       150ms + R219 letter-spacing 150ms transition
+                       untouched — additive conditional case. */
                     style={{
                       transition: 'fill 150ms ease-out, letter-spacing 150ms ease-out',
-                      letterSpacing: isPinned ? '0.5px' : '0px',
+                      letterSpacing: isPinned ? '0.5px' :
+                                     hoveredStatus === row.key ? '0.25px' : '0px',
                     }}
                   >{row.label}</text>
                   {/* R95: live count anchored to the right edge of the
