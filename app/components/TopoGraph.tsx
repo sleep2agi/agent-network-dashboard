@@ -2931,9 +2931,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        vendor letter chips ('A:N', 'O:N', '书:N',
                        '?:N'). They display vendor-distribution
                        data; same tier as the sibling data chips. */
-                    className="tabular-nums font-medium inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus"
+                    /* Round 401 / Loop: vendor letter chip closes the
+                       hover-lift gesture family at its last unaddressed
+                       interactive HTML surface. R397/R398/R399 lifted
+                       filter pin pills + chip-row chips (working /
+                       online / active-links); R400 lifted standalone
+                       chrome buttons (reset / fullscreen). The vendor
+                       letter chips (A:N / O:N / 书:N / ?:N) are
+                       sibling interactive chips in the same chip-row
+                       — clickable to toggle the vendor filter pin —
+                       but were not yet on the hover-lift family.
+                       R401 closes the gap with hover:-translate-y-px
+                       + transition-transform + transform-gpu added
+                       to the className. The inline transition list
+                       (box-shadow + background-color) keeps eaching
+                       independently — different property axes compose
+                       cleanly. Existing R354 glyph scale-1.1 (inner
+                       span) + R202 chip bg color-mix + R180 pin-mirror
+                       box-shadow + R354 glyph hover transform all
+                       preserved. data-vendor-letter-hover-lift attr
+                       surfaces the lift for tests. */
+                    className="tabular-nums font-medium inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu hover:-translate-y-px"
                     data-vendor-letter={v.initial}
                     data-vendor-letter-count={v.count}
+                    data-vendor-letter-hover-lift="true"
                     data-vendor-pinned={isPinned ? 'true' : 'false'}
                     data-vendor-hovered={hoveredVendor === v.initial ? 'true' : 'false'}
                     data-vendor-aliases={aliases.join(',')}
