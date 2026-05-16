@@ -3883,6 +3883,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // node radius. Geometry-safe; paint-only. R51 sentinel
               // strokeWidth 1.5/3 untouched (idle=1, active=2). data-
               // topo-hub-spoke-linecap attr exposes the value for tests.
+              // Round 391 / Loop: hub-spoke active opacity 0.7 → 0.8.
+              // Pre-R391 active spokes (the spoke connecting the hub
+              // to the currently-active alias — hovered or pinned)
+              // lifted opacity from rest 0.45 to active 0.7 — a clear
+              // step but slightly understated against the canvas
+              // chrome. R391 lifts active to 0.8 so the "this spoke
+              // connects to your active node" signal reads with
+              // matching weight to the R370 hub hover-ring opacity
+              // (0.7 → 0.8 cyber) — paired canvas signals now share
+              // the same active-state alpha (0.8) so when a user
+              // hovers a node, both the spoke and the hub-ring lift
+              // to identical opacity. Rest 0.45 invariant preserved.
+              // Theme-consistency / canvas-presence polish family
+              // (6th anchor):
+              //   R370 hub hover-ring opacity      0.7  → 0.8   cyber
+              //   R371 edge-badge rest opacity     0.82 → 0.85  cyber
+              //   R372 minimap offline-dot opacity 0.5  → 0.6
+              //   R386 hub-highlight idle opacity  0.9  → 0.95
+              //   R387 hover-detail panel opacity  0.94 → 0.97  cyber
+              //   R391 hub-spoke active opacity    0.7  → 0.8   (this round)
+              // Idle path (45% alpha + dashed flow animation) entirely
+              // untouched — R391 is an active-state-only lift.
+              // data-topo-hub-spoke-opacity attr exposes the resolved
+              // value for tests. R382 strokeLinecap='round' + R51
+              // sentinel-safe sw (1 idle / 2 active) preserved.
               return (
                 <path
                   key={`hub-${session.alias}`}
@@ -3892,11 +3917,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth={isActiveSpoke ? 2 : 1}
                   strokeDasharray={isActiveSpoke ? 'none' : '6 14'}
                   strokeLinecap="round"
-                  opacity={isActiveSpoke ? 0.7 : 0.45}
+                  opacity={isActiveSpoke ? 0.8 : 0.45}
                   className={isActiveSpoke ? undefined : 'anet-topo-spoke-flow'}
                   data-topo-spoke-bucket={isActiveSpoke ? undefined : busy}
                   data-topo-spoke-dur={isActiveSpoke ? undefined : spokeDur}
                   data-topo-hub-spoke-active={isActiveSpoke ? 'true' : 'false'}
+                  data-topo-hub-spoke-opacity={isActiveSpoke ? 0.8 : 0.45}
                   data-topo-hub-spoke-linecap="round"
                   style={{
                     transition: 'stroke 250ms ease-out, stroke-width 250ms ease-out, opacity 250ms ease-out',
