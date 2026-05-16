@@ -3520,6 +3520,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-edge-badge-lifted={(isHoveredEdge || isPinned) ? 'true' : 'false'}
                         style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out' }}
                       />
+                      {/* Round 224 / Loop: edge badge text gains the 4th
+                          pin-signature typography. Pre-R224 the digit
+                          rendered with no transition surface: when the
+                          flow crossed count=10 (isHot flip) the badge
+                          stroke eased 300ms (R188) but the digit itself
+                          stayed dead-typographic. R224 adds two clean
+                          improvements stacked on the same <text> node:
+
+                          1) fontVariantNumeric: 'tabular-nums' — locks
+                             digit width so a 9→10 transition doesn't
+                             jitter the textAnchor='middle' centering by
+                             half a glyph. The badge is on a curved
+                             flow path; any width-change of the centered
+                             digit visibly shifts the anchor relative
+                             to the underlying circle. Info-density
+                             win — digits transition cleanly without
+                             pixel-jitter at the boundary.
+
+                          2) letterSpacing pin signature, 4th surface
+                             after R218 group label / R219 legend row /
+                             R220 recent row. Baseline 0px; widens to
+                             0.4px when isPinned || isHot. The transition
+                             marks the "this lane just went special"
+                             event typographically — same 300ms cadence
+                             as the R188 stroke flip, so the badge stroke
+                             + text co-ease on the hot/pin threshold.
+                             '0px' resolves to keyword 'normal' in
+                             computed style (R218 test trap learned);
+                             test parsers must accept either form.
+
+                          data-edge-badge-text-pin attr surfaces the
+                          isPinned||isHot state for introspection. */}
                       <text
                         x={badgeX} y={badgeY + 3}
                         textAnchor="middle"
@@ -3527,7 +3559,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         fontSize="10"
                         fontFamily="monospace"
                         fontWeight="700"
-                        style={{ pointerEvents: 'none' }}
+                        data-edge-badge-text={link.key}
+                        data-edge-badge-text-pin={(isPinned || isHot) ? 'true' : 'false'}
+                        style={{
+                          pointerEvents: 'none',
+                          fontVariantNumeric: 'tabular-nums',
+                          letterSpacing: (isPinned || isHot) ? '0.4px' : '0px',
+                          transition: 'letter-spacing 300ms ease-out',
+                        }}
                       >{link.count}</text>
                     </g>
                   );
