@@ -7074,6 +7074,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         R302 empty main:    0.2px (empty-state hint)
                         R325 footer link:   0.2px (panel nav action) ← NEW
                         R304 empty sub:     0.15px (instructional sub) */}
+                  {/* Round 340 / Loop: +N more flows footer link extends
+                      the R333/R335/R336/R337/R338 chip-internal-hierarchy
+                      arc to a 6th surface. The digit `{moreCount}` reads
+                      as the primary data ("how many more flows"); the
+                      unit text ` more flow(s)` recedes via a nested
+                      tspan with opacity-0.7 (multiplicative against the
+                      parent <text>'s hover/rest opacity, so unit always
+                      sits below the digit). The `label` variable is
+                      preserved for the <title> tooltip — only the SVG
+                      render splits. data-recent-panel-more-unit exposes
+                      the unit tspan for tests. */}
                   <text
                     x="115" y="82"
                     textAnchor="middle"
@@ -7088,7 +7099,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-recent-panel-more-hovered={hoveredRecentMore ? 'true' : 'false'}
                     style={{ transition: 'opacity 150ms ease-out, fill 200ms ease-out' }}
                   >
-                    {label}
+                    {`+ ${moreCount}`}
+                    <tspan opacity="0.7" data-recent-panel-more-unit>{` more flow${moreCount === 1 ? '' : 's'}`}</tspan>
                   </text>
                 </g>
               );
