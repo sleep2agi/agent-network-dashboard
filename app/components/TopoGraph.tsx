@@ -6765,11 +6765,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      ring stroke-width). data-edge-endpoint-ring-
                      stroke-width attr surfaces the chosen value for
                      test introspection. */
+                  /* Round 442 / Loop: endpoint emphasis ring radius
+                     hover lift — r=radius+7 → radius+8 on isEndpoint,
+                     closing a 3-axis hover-elevation parity at endpoint
+                     ring scope (r + sw + opacity):
+                       opacity  R182  0    → 0.85/0.9
+                       sw       R233  1.6  → 2.4
+                       r        R442  +7   → +8        ← this round
+                     Mirrors the 3-axis trios already established at
+                     hub hover-ring (R177/R370/R385) and edge badge
+                     (R164/R394/R395). Pre-R442 the endpoint ring
+                     faded in + thickened on edge-hover but its radius
+                     stayed locked at radius+7 — only the paint/weight
+                     axes lifted while the GEOMETRY stayed unchanged.
+                     +1px (~radius+7 to radius+8) gives a subtle outward
+                     pulse on hover without crowding the status ring
+                     (which sits at radius from R438 sw3.5 hover) or
+                     the halo (radius+8 from R440 opacity hover — the
+                     endpoint ring sits at the SAME radius as the halo
+                     but with stroke=cyan vs fill=status.halo so they
+                     don't visually collide). The transition list
+                     extends to include 'r 180ms ease-out' so the new
+                     axis eases under the same R233 cadence. SVG `r`
+                     on a <circle> uses CSS-property syntax for inter-
+                     polation (same idiom R197/R198 used on the
+                     legend swatch). data-edge-endpoint-ring-radius
+                     attr exposes the resolved value for tests. */
+                  const endpointR = isEndpoint ? radius + 8 : radius + 7;
                   return (
                     <circle
                       cx={pos.x}
                       cy={pos.y}
-                      r={radius + 7}
                       fill="none"
                       stroke={pal.flowEdge}
                       strokeWidth={isEndpoint ? 2.4 : 1.6}
@@ -6777,7 +6803,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-edge-endpoint-ring
                       data-edge-endpoint-active={isEndpoint ? 'true' : 'false'}
                       data-edge-endpoint-ring-stroke-width={isEndpoint ? 2.4 : 1.6}
-                      style={{ pointerEvents: 'none', transition: 'opacity 180ms ease-out, stroke-width 180ms ease-out' }}
+                      data-edge-endpoint-ring-radius={endpointR}
+                      style={{
+                        pointerEvents: 'none',
+                        r: `${endpointR}px`,
+                        transition: 'opacity 180ms ease-out, stroke-width 180ms ease-out, r 180ms ease-out',
+                      } as React.CSSProperties}
                     />
                   );
                 })()}
