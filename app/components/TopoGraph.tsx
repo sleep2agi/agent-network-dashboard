@@ -2456,7 +2456,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span>{pinnedStatus}<span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
+              {/* Round 412 / Loop: filter pin pill VALUE picks up the
+                  chip-internal-hierarchy arc. Pre-R412 the value span
+                  (pinnedStatus / pinnedGroup / pinnedVendor) inherited
+                  the parent's font-medium (fw=500); prefix and suffix
+                  were opacity-70 label-tier but the VALUE itself sat
+                  at the same baseline weight. R412 wraps the value in
+                  a font-semibold span (fw=600) so the pill now reads
+                  with proper data-tier emphasis — sibling treatment
+                  to R333/R335-R341/R362/R369/R389/R410. data-filter-
+                  value attr surfaces the value span for tests.
+                  4-pill replace family — status / group / vendor / edge. */}
+              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span><span className="font-semibold" data-filter-value>{pinnedStatus}</span><span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear ${pinnedStatus} filter`}
@@ -2505,7 +2516,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span>{pinnedGroup}<span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
+              {/* R412: see status pill above — filter value fw=600 data tier. */}
+              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span><span className="font-semibold" data-filter-value>{pinnedGroup}</span><span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
@@ -2570,7 +2582,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span>{pinnedVendor}<span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
+              {/* R412: see status pill above — filter value fw=600 data tier. */}
+              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span><span className="font-semibold" data-filter-value>{pinnedVendor}</span><span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear vendor filter ${pinnedVendor}`}
@@ -2632,9 +2645,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
+              {/* R412: filter pin pill value (edge variant) picks up fw=600.
+                  Sibling treatment to the status/group/vendor pills above. */}
               <span>
                 <span className="hidden sm:inline opacity-70" data-filter-prefix>filter: </span>
-                {link.from}→{link.to}
+                <span className="font-semibold" data-filter-value>{link.from}→{link.to}</span>
                 {/* Round 323 / Loop: edge filter pill count digit picks
                     up tabular-nums (Tailwind class on both cold +
                     hot branches). Sibling treatment to the status /
