@@ -1519,8 +1519,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               one unit. CSS color transition is well supported on the
               `color` property (which currentColor inside the masked
               <rect> inherits), so no SMIL trick needed. */}
+          {/* Round 316 / Loop: brand-logo width/height 36 → 40 for
+              slightly stronger first-glance presence. After R298
+              tightened the title-block flex gap (12→10px) and R299
+              widened the bottom margin (12→16px), the logo can hold
+              more visual weight to balance the kicker+h2 stack on
+              its right. 40px is 11% larger by edge, ~23% by area —
+              visible bump on a Twitter-screenshot crop without
+              overpowering the h2 at text-lg/font-semibold (R286).
+              viewBox 32×32 unchanged so the inner crescent geometry
+              scales proportionally. */}
           <svg
-            width="36" height="36" viewBox="0 0 32 32" aria-hidden
+            width="40" height="40" viewBox="0 0 32 32" aria-hidden
             className="shrink-0"
             data-topo-brand-logo
             style={{
