@@ -6158,14 +6158,49 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         keyTimes="0;0.5;1"
                         keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
                       />
+                      {/* Round 409 / Loop: active-node pulse peak
+                          opacity lift — cyber 0.18 → 0.20 / light
+                          0.12 → 0.14. The R243 pulse is the per-
+                          node "this alias has recent flow" breath;
+                          its peak amplitude was tuned in R243 but
+                          sat at 0.18 cyber / 0.12 light — visible
+                          but understated against the surrounding
+                          status halos (R407 lifted offline halos
+                          0.25→0.30 cyber; online halos sit at 0.65
+                          cyber). R409 lifts peak +0.02 on both
+                          themes so the active-state breath reads
+                          more confidently at its high-point while
+                          the trough (0.04 cyber / 0.02 light)
+                          stays put — breath amplitude widens
+                          slightly (cyber 0.14 → 0.16; light 0.10
+                          → 0.12) without changing rhythm or dur.
+                          Theme-consistency / canvas-presence family
+                          (9 anchors now):
+                            R370 hub hover-ring         0.7  → 0.8   cyber
+                            R371 edge-badge rest        0.82 → 0.85  cyber
+                            R372 minimap offline-dot    0.5  → 0.6
+                            R386 hub-highlight idle     0.9  → 0.95
+                            R387 hover-detail panel     0.94 → 0.97  cyber
+                            R391 hub-spoke active       0.7  → 0.8
+                            R392 minimap online-dot     0.9  → 0.95
+                            R403 click-ripple start     0.7  → 0.8
+                            R409 active-node pulse peak (this round)
+                              cyber 0.18 → 0.20
+                              light 0.12 → 0.14
+                          R243 always-mount opacity-gate + R243
+                          ease-in-out keySplines + r animation
+                          (radius+8 ↔ radius+22) preserved.
+                          data-node-pulse-peak attr exposes the
+                          resolved per-theme peak for tests. */}
                       <animate
                         attributeName="opacity"
-                        values={isLight ? '0.12;0.02;0.12' : '0.18;0.04;0.18'}
+                        values={isLight ? '0.14;0.02;0.14' : '0.20;0.04;0.20'}
                         dur="2.4s"
                         repeatCount="indefinite"
                         calcMode="spline"
                         keyTimes="0;0.5;1"
                         keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
+                        data-node-pulse-peak={isLight ? '0.14' : '0.20'}
                       />
                     </circle>
                   </g>
