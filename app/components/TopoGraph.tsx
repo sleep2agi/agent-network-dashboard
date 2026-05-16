@@ -6366,8 +6366,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       the tinted row with its colour swatch instead of
                       a generic accent. Pin is a stronger tint than
                       hover; idle stays fully transparent. */}
+                  {/* Round 271 / Loop: hitbox y shifts row.y0-12 → row.y0-11
+                      so hitbox center aligns exactly with swatch cy=row.y0.
+                      Pre-R271 hitbox spanned y=row.y0-12 to y=row.y0+10
+                      (center at row.y0-1), with swatch cy at row.y0 — 1px
+                      asymmetric. Hover/pin tint band drifted 1px above
+                      the swatch. Post-R271: hitbox spans y=row.y0-11 to
+                      y=row.y0+11 (center exactly at row.y0), swatch sits
+                      11px from both edges (symmetric). Label text
+                      vertical center also benefits — label baseline
+                      y=row.y1=row.y0+4, visual midpoint ~row.y0+1.25,
+                      now ~1.25px below hitbox center (vs ~2.25px pre).
+                      No height change, no test ripple (other than this
+                      one), no R260/R268/R270 chrome regressions. */}
                   <rect
-                    x="6" y={row.y0 - 12}
+                    x="6" y={row.y0 - 11}
                     width="170" height="22" rx="3"
                     fill={hoveredStatus === row.key || isPinned ? row.fill : 'transparent'}
                     opacity={isPinned ? (isLight ? 0.14 : 0.18)
