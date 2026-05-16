@@ -6248,7 +6248,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               x="0" y="0" width="230" height="88" rx="10"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
-              opacity={isLight ? 0.97 : 0.92}
+              // Round 348 / Loop: recent-signal panel rect opacity hover-
+              // state bump — joins the panel-hover cue stack (R135 drop-
+              // shadow boost + R345 title letter-spacing tween 0.3 → 0.4
+              // + R266 fill theme-flip). Cyber 0.92 → 0.97, light 0.97 →
+              // 1.0 on hoveredPanel === 'recent'. The panel "solidifies"
+              // on hover — pure paint-level change, geometry-safe (bbox
+              // unchanged so topo-overlap-test invariants hold). The
+              // R247 transition list already includes `opacity 200ms
+              // ease-out` so the value tween is automatic. Sibling
+              // change at legend panel rect below (~line 7222).
+              opacity={hoveredPanel === 'recent' ? (isLight ? 1 : 0.97) : (isLight ? 0.97 : 0.92)}
               style={{
                 /* R135: drop-shadow intensifies on panel hover. Base
                    shadow (2px / 6px blur) signals card elevation
@@ -7220,7 +7230,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               x="0" y="0" width="224" height="88" rx="10"
               fill={pal.legendBox.fill}
               stroke={pal.legendBox.stroke}
-              opacity={isLight ? 0.97 : 0.92}
+              // R348 sibling — legend panel rect opacity hover-state
+              // bump 0.92 → 0.97 (cyber) / 0.97 → 1 (light) on
+              // hoveredPanel === 'legend'. Pairs with the recent-signal
+              // panel rect above so the two corner panels' hover cues
+              // stay symmetric. Geometry-safe (paint-only).
+              opacity={hoveredPanel === 'legend' ? (isLight ? 1 : 0.97) : (isLight ? 0.97 : 0.92)}
               style={{
                 filter: hoveredPanel === 'legend'
                   ? (isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.14))'
