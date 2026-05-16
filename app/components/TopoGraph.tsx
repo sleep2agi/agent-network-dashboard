@@ -6600,9 +6600,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               keyboard navigation lands somewhere visible against the
               dark canvas (browser default outline often vanishes on
               cyber theme). */}
+          {/* Round 264 / Loop: nodeSize wrapper gains theme-toggle
+              transition. Pre-R264 the wrapper's bg (pal.legendBox.fill)
+              + borderColor (pal.containerBorder) were inline theme-
+              conditional, but neither inline transition nor a
+              transition-colors className → wrapper snapped on cyber↔
+              light flip while the inner S/M/L buttons eased via their
+              own transition-colors. Same R254 holdover pattern that
+              R263 just closed at the canvas wrapper scope, now at the
+              chrome strip's nodeSize sub-wrapper scope. */}
           <div
             className="flex items-center rounded-md border overflow-hidden"
-            style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
+            style={{
+              background: pal.legendBox.fill,
+              borderColor: pal.containerBorder,
+              transition: 'background-color 200ms ease-out, border-color 200ms ease-out',
+            }}
             role="group"
             aria-label="Node size"
             data-topo-chrome-fleet-group-trailer
@@ -6665,8 +6678,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               the nodeSize wrapper's right edge for the gap measurement. */}
           <div
             className="ml-1.5 flex items-center rounded-md border overflow-hidden"
-            style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder }}
+            style={{
+              background: pal.legendBox.fill,
+              borderColor: pal.containerBorder,
+              transition: 'background-color 200ms ease-out, border-color 200ms ease-out',
+            }}
             data-topo-chrome-view-group-leader
+            data-topo-chrome-zoom-wrapper
           >
             <button
               onClick={() => { popChrome('zoom-out'); zoomByDiscrete(1 / 1.2); }}
@@ -6723,6 +6741,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 borderColor: pal.containerBorder,
                 minWidth: 46,
                 display: 'inline-block',
+                /* Round 264 / Loop: zoom level readout gains theme-toggle
+                   transition. The span has theme-driven color (pal.
+                   legendText) + border-x (pal.containerBorder via the
+                   inline borderColor) but className lacks transition-
+                   colors — the readout's text + side dividers snapped
+                   on theme flip while siblings eased. Sibling treatment
+                   to the nodeSize + zoom wrapper transitions added this
+                   round. */
+                transition: 'color 200ms ease-out, border-color 200ms ease-out',
               }}
               title="Current zoom level"
             >
