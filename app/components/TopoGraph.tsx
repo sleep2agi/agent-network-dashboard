@@ -4839,12 +4839,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      multiple). Edge order is stable (sorted by recent
                      activity), so the offsets feel calm rather than
                      reshuffling each refresh. */
+                  /* Round 422 / Loop: edge flow particle radius 4 → 4.5.
+                     Visual-weight bump family (15th anchor) — particles
+                     riding along the edge animateMotion path get +0.5px
+                     radius lift, increasing visual area by ~27%
+                     (π·4.5² / π·4² = 1.27). Sibling magnitude to R383
+                     recent-row pip 1.8 → 2.0 (+25% area), R384 minimap
+                     online dot 1.7 → 1.9 (+25% area). R251 fill +
+                     R252 transitions + R103 phase-stagger animateMotion
+                     all preserved. data-edge-particle-radius attr
+                     exposes the value for tests. */
                   <circle
-                    r="4"
+                    r="4.5"
                     fill={pal.flowParticle}
                     filter={isLight ? undefined : 'url(#topo-glow)'}
                     opacity={Math.min(1, fresh * edgeOpacityMul)}
                     data-edge-particle={link.key}
+                    data-edge-particle-radius="4.5"
                     /* Round 252 / Loop: particle picks up fill +
                        opacity transition for theme-toggle smoothing.
                        Pre-R252 pal.flowParticle (cyber #fef08a yellow
