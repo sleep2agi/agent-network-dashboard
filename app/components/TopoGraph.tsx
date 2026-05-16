@@ -2623,7 +2623,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     }}
                   >
                     <span style={{ color: v.color }}>{v.initial}</span>
-                    <span className="text-gray-500">:{v.count}</span>
+                    {/* Round 333 / Loop: vendor count suffix `:{N}` joins
+                        the R317 subordinate-text-lift family (gray-500 →
+                        gray-400) plus picks up tabular-nums for digit
+                        width-lock. Pre-R333 a vendor whose count
+                        crossed 9→10 widened the suffix and (since the
+                        parent chip has `px-2.5` padding but no fixed
+                        width) shifted the chip-row's downstream chips
+                        a couple px right. Tabular-nums locks the slot;
+                        gray-400 lifts the digit into the band where eye
+                        reads it as "deliberate subordinate metadata"
+                        rather than near-invisible chrome. data-vendor-
+                        letter-count exposes the span for tests. */}
+                    <span
+                      className="text-gray-400 tabular-nums"
+                      data-vendor-letter-count-suffix
+                    >:{v.count}</span>
                   </span>
                 );
               })}
