@@ -2108,6 +2108,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    intersection. */
                 className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono tabular-nums text-xs border anet-fade-in anet-topo-chip-focus"
                 title={tooltip}
+                /* Round 236 / Loop: smooth the empty/non-empty colour
+                   crossing. Pre-R236 the chip snap-flipped between
+                   slate-on-slate (non-empty filter intersection) and
+                   amber-on-amber (empty intersection — the 'your
+                   pinned filters cancel out' warning). bg, color,
+                   and borderColor (which inherits currentColor) all
+                   changed in one frame. R236 adds a 200ms ease-out
+                   transition on all three so when a filter tightens
+                   matches across the 0-boundary the chip eases
+                   through the colour shift instead of snapping. Same
+                   200ms cadence the other chip-row members use
+                   (R201 working/online tint, R193 active-links
+                   tint, R202 vendor letter color-mix). One more
+                   surface where colour state-changes ease rather
+                   than snap — consistent with the topology's
+                   broader transitions vocabulary. */
                 style={{
                   background: isEmpty
                     ? (isLight ? '#d97706' + '14' : '#fbbf24' + '1f')
@@ -2116,6 +2132,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     ? emptyColor
                     : (isLight ? '#475569' : '#9ca3af'),
                   borderColor: 'currentColor',
+                  transition: 'background-color 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out',
                 }}
               >
                 <span>
