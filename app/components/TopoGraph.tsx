@@ -4776,14 +4776,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           R251 closes the per-edge surface theme-toggle
                           smoothness — every theme-driven property on
                           every edge element now eases under cyber↔light. */}
+                      {/* Round 367 / Loop: edge midpoint badge rest
+                          stroke-width 1 → 1.25. Sibling visual-weight
+                          bump family (7th canvas anchor now):
+                            R287 minimap viewport stroke 1 → 1.5
+                            R295 legend swatch base radius 5.5 → 6
+                            R359 recent-row pip base radius 1.6 → 1.8
+                            R360 hub digit fontSize 11 → 12
+                            R361 edge-badge digit fontSize 10 → 11
+                            R365 hub-highlight base radius 5 → 5.5
+                            R367 edge-badge rest stroke 1 → 1.25 (this round)
+                          Cold edge badges gain ~25 % stroke presence
+                          (1.25/1.0 = 1.25). Stays clear of the R51
+                          overlap-test sentinel values (1.5 / 3 reserved
+                          for node strokes — the test selector is gated
+                          to g[data-node] ancestors so this edge-internal
+                          circle is invisible to that probe anyway, but
+                          1.25 is a safe non-sentinel value regardless).
+                          R188 transition list 'stroke-width 300ms ease-
+                          out' still smoothes the hot/pin flip — now
+                          1.25 → 2 instead of 1 → 2, same ease pace.
+                          data-edge-badge-stroke-width-rest exposes the
+                          new baseline for tests. */}
                       <circle
                         cx={badgeX} cy={badgeY}
                         r={isHoveredEdge || isPinned ? 10.5 : 9}
                         fill={pal.legendBox.fill}
                         stroke={isPinned ? pal.legendHeadline : isHot ? hotStroke : pal.flowEdge}
-                        strokeWidth={isPinned ? 2 : isHot ? 2 : 1}
+                        strokeWidth={isPinned ? 2 : isHot ? 2 : 1.25}
                         opacity={isLight ? 0.95 : 0.82}
                         data-edge-badge-lifted={(isHoveredEdge || isPinned) ? 'true' : 'false'}
+                        data-edge-badge-stroke-width-rest="1.25"
                         style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out' }}
                       />
                       {/* Round 224 / Loop: edge badge text gains the 4th
