@@ -1026,6 +1026,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // navigation footer. Drives the on-hover opacity boost + underline
   // that signals interactivity, mirroring the hoveredHub idiom above.
   const [hoveredRecentMore, setHoveredRecentMore] = useState(false);
+  // Round 346 / Loop: minimap-container hover affordance. The minimap
+  // is a click-target (role=button at line ~7810, recenter-on-click +
+  // Enter→resetView) but pre-R346 nothing visually changed on hover —
+  // the only hint was the `cursor: crosshair` style. R346 lifts the
+  // viewport rect (strokeWidth 1.5 → 1.75 + opacity 0.9 → 1.0) when
+  // the user enters the minimap, marking "this is the recenter target
+  // and it's alive". Sibling polish to the R332 minimap rounded-md →
+  // rounded-lg corner family — that round refined geometry, this one
+  // gives the viewport indicator inside the geometry a hover state.
+  // 280ms ease-out transition list matches R199 smoothView vocabulary
+  // so the visual joins the existing rhythm on the same rect.
+  const [hoveredMinimap, setHoveredMinimap] = useState(false);
   // R135: panel-wide hover-elevation. The recent-signal + legend
   // panels both already host clickable rows (R56/R116 recent rows,
   // R55/R61 legend rows) and a clickable footer (R133), so the
@@ -7827,7 +7839,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   resetView();
                 }
               }}
+              // R346: viewport rect hover affordance driven by parent.
+              onMouseEnter={() => setHoveredMinimap(true)}
+              onMouseLeave={() => setHoveredMinimap(false)}
+              onFocus={() => setHoveredMinimap(true)}
+              onBlur={() => setHoveredMinimap(false)}
               data-topo-minimap
+              data-topo-minimap-hovered={hoveredMinimap ? 'true' : 'false'}
             >
               <svg width={MW} height={MH} viewBox={`0 0 ${MW} ${MH}`} style={{ display: 'block' }}>
                 {/* Round 198 / Loop: minimap dots gain smooth status
@@ -7906,13 +7924,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   x={Math.max(0, rectX)} y={Math.max(0, rectY)}
                   width={Math.max(0, Math.min(MW - Math.max(0, rectX), rectW))}
                   height={Math.max(0, Math.min(MH - Math.max(0, rectY), rectH))}
-                  fill="none" stroke={pal.legendAccent} strokeWidth="1.5" opacity="0.9"
+                  fill="none" stroke={pal.legendAccent}
+                  // R346: strokeWidth + opacity tween on container hover.
+                  strokeWidth={hoveredMinimap ? '1.75' : '1.5'}
+                  opacity={hoveredMinimap ? '1' : '0.9'}
                   data-topo-minimap-viewport
                   data-topo-minimap-viewport-smooth={smoothView ? 'true' : 'false'}
+                  data-topo-minimap-viewport-hover={hoveredMinimap ? 'true' : 'false'}
                   style={{
                     transition: smoothView
-                      ? 'x 280ms ease-out, y 280ms ease-out, width 280ms ease-out, height 280ms ease-out'
-                      : 'none',
+                      ? 'x 280ms ease-out, y 280ms ease-out, width 280ms ease-out, height 280ms ease-out, stroke-width 200ms ease-out, opacity 200ms ease-out'
+                      : 'stroke-width 200ms ease-out, opacity 200ms ease-out',
                   } as React.CSSProperties}
                 />
               </svg>
