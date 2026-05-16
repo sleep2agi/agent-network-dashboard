@@ -2802,7 +2802,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       }
                     }}
                   >
-                    <span style={{ color: v.color }}>{v.initial}</span>
+                    {/* Round 354 / Loop: vendor letter glyph scales
+                        1.0 → 1.1 on hover. R88 already dims OTHER
+                        vendors on hover via canvas-wide opacity
+                        masking; R202 added a chip-level bg tint
+                        (color-mix 12 % alpha) so the chip itself
+                        responds. R354 closes the trio with a glyph-
+                        level lift: the focused vendor LETTER actively
+                        rises (transform scale) rather than the chip
+                        merely changing colour. Three layers of positive
+                        feedback on the hovered vendor + canvas-wide
+                        negative feedback on the others — a clean
+                        figure/ground separation.
+
+                        display: inline-block is required for transform
+                        to apply (inline elements ignore transform).
+                        transformOrigin: 'center' so the glyph pivots
+                        around its centre instead of arcing from the
+                        baseline anchor. transition rides the existing
+                        Tailwind 4 transform/scale list (no new
+                        property — Tailwind already lists transform in
+                        the default transition-property set). 200ms
+                        matches the R202 chip bg-tint timing so the
+                        glyph lift and chip background ease in concert. */}
+                    <span
+                      data-vendor-letter-glyph={v.initial}
+                      data-vendor-letter-glyph-hover={hoveredVendor === v.initial ? 'true' : 'false'}
+                      style={{
+                        color: v.color,
+                        display: 'inline-block',
+                        transform: hoveredVendor === v.initial ? 'scale(1.1)' : 'scale(1)',
+                        transformOrigin: 'center',
+                        transition: 'transform 200ms ease-out',
+                      }}
+                    >{v.initial}</span>
                     {/* Round 333 / Loop: vendor count suffix `:{N}` joins
                         the R317 subordinate-text-lift family (gray-500 →
                         gray-400) plus picks up tabular-nums for digit
