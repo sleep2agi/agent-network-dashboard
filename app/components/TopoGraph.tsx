@@ -9576,9 +9576,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     fontSize="11"
                     fontFamily="monospace"
                     fontWeight={isPinned ? '700' : '600'}
+                    /* Round 449 / Loop: legend-row count active-state
+                       opacity 0.95 → 1.0 on (hoveredStatus===row.key
+                       || isPinned). Pre-R449 R204 lifted populated-row
+                       active opacity from rest 0.65 to 0.95 — visibly
+                       brighter but kept a 5 pct alpha gap (1 - 0.95).
+                       R449 closes the gap to 1.0 so the active count
+                       reads as confidently present alongside the R446
+                       fw=600→700 + R433 letter-spacing tween. Theme-
+                       consistency / canvas-presence family extension
+                       (7th anchor on the active-presence lift sub-
+                       family): R370 hub hover-ring 0.7→0.8, R371 edge-
+                       badge rest 0.82→0.85, R372 minimap offline-dot
+                       0.5→0.6, R386 hub-highlight idle 0.9→0.95, R387
+                       hover-detail panel 0.94→0.97, R429 label-card
+                       body 0.94→1.0, R449 legend-count active 0.95→1.0
+                       ← this round. Empty-row opacity (R204: 0.28
+                       light / 0.30 cyber) and idle 0.65 rest both
+                       preserved. */
                     opacity={row.count === 0
                       ? (isLight ? 0.28 : 0.30)
-                      : (hoveredStatus === row.key || isPinned ? 0.95 : 0.65)}
+                      : (hoveredStatus === row.key || isPinned ? 1 : 0.65)}
                     data-legend-count={row.key}
                     data-legend-count-empty={row.count === 0 ? 'true' : 'false'}
                     data-legend-count-pinned={isPinned ? 'true' : 'false'}
