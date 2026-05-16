@@ -2277,7 +2277,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     spans (chip-level font-medium R313). data-fleet-
                     pressure-kicker attr exposes the kicker for tests. */}
                 <span className="text-[10px] tracking-wide font-medium" data-fleet-pressure-kicker>pressure</span>
-                <span className="inline-flex h-1.5 w-16 rounded-full overflow-hidden" style={{ background: 'rgb(75 85 99 / 0.25)' }}>
+                {/* Round 374 / Loop: pressure-bar height h-1.5 → h-2
+                    (6 → 8 px) — sibling visual-weight bump (8th anchor
+                    in the family):
+                      R287 minimap viewport stroke 1 → 1.5
+                      R295 legend swatch base radius 5.5 → 6
+                      R359 recent-row pip base radius 1.6 → 1.8
+                      R360 hub digit fontSize 11 → 12
+                      R361 edge-badge digit fontSize 10 → 11
+                      R365 hub-highlight base radius 5 → 5.5
+                      R367 edge-badge rest stroke 1 → 1.25
+                      R374 pressure-bar height 1.5 → 2  (this round)
+                    +33 % bar height gives the working/idle/offline
+                    segments more visibility — at h-1.5 the 3-segment
+                    proportion bar was readable but slim; at h-2 the
+                    segments parse cleanly even when one tier is
+                    < 10 % share. Geometry-safe: items-center flex
+                    centers the bar inside the chip's py-1 (4 px top +
+                    4 px bottom) — bar at 8 px stays comfortably
+                    inside the 10-px text-row height. R165 segment
+                    width transitions + R210 brightness hover + R83
+                    pin-mirror box-shadow on segments all preserved
+                    (segments inherit width from parent so the height
+                    bump propagates without segment-side edits).
+                    data-fleet-pressure-bar-height attr exposes the
+                    height token for tests. */}
+                <span className="inline-flex h-2 w-16 rounded-full overflow-hidden" style={{ background: 'rgb(75 85 99 / 0.25)' }} data-fleet-pressure-bar-height="h-2">
                   {seg(w, isLight ? '#059669' : '#22c55e', 'working', 'working')}
                   {seg(i, isLight ? '#0d9488' : '#2dd4bf', 'idle',    'idle')}
                   {seg(o, isLight ? '#94a3b8' : '#6b7280', 'offline', 'offline')}
