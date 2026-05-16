@@ -7111,6 +7111,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       preserved for the <title> tooltip — only the SVG
                       render splits. data-recent-panel-more-unit exposes
                       the unit tspan for tests. */}
+                  {/* Round 344 / Loop: footer hover gains letter-spacing
+                      tween 0.2 → 0.3. R325 set rest letter-spacing
+                      0.2 to join the editorial-spacing family; R344
+                      adds a 0.1px hover spread that layers on top of
+                      R195 cyan fill + R325 spacing + R133 underline
+                      so the footer reads "lit up and spaced" on
+                      hover — sibling to R218/R219/R220 pin-signature
+                      letter-spacing family applied to a hover-only
+                      surface. transition list extends letter-spacing
+                      200ms ease-out alongside the existing opacity/
+                      fill easings. */}
                   <text
                     x="115" y="82"
                     textAnchor="middle"
@@ -7118,12 +7129,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     fontSize="9"
                     fontFamily="monospace"
                     fontStyle="italic"
-                    letterSpacing="0.2"
+                    letterSpacing={hoveredRecentMore ? '0.3' : '0.2'}
                     opacity={hoveredRecentMore ? 0.85 : 0.55}
                     textDecoration={hoveredRecentMore ? 'underline' : 'none'}
                     data-recent-panel-more={moreCount}
                     data-recent-panel-more-hovered={hoveredRecentMore ? 'true' : 'false'}
-                    style={{ transition: 'opacity 150ms ease-out, fill 200ms ease-out' }}
+                    style={{ transition: 'opacity 150ms ease-out, fill 200ms ease-out, letter-spacing 200ms ease-out' }}
                   >
                     {`+ ${moreCount}`}
                     <tspan opacity="0.7" data-recent-panel-more-unit>{` more flow${moreCount === 1 ? '' : 's'}`}</tspan>
