@@ -6441,7 +6441,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           const rectH = (VIEWBOX_H / view.zoom) * sy;
           return (
             <div
-              className="absolute right-3 rounded-md border shadow-lg shadow-black/30 overflow-hidden anet-fade-in anet-topo-chip-focus"
+              className="absolute right-4 rounded-md border shadow-lg shadow-black/30 overflow-hidden anet-fade-in anet-topo-chip-focus"
               /* Round 254 / Loop: minimap container theme transitions —
                  background-color, border-color, color (used for SVG
                  currentColor inside) all ease at 200ms alongside the
@@ -6566,7 +6566,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             behind the "%" label (looked like an indicator, not a button).
             Split into a plain % readout + an explicit reset button with
             its own icon + tooltip. */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 text-xs select-none" data-topo-chrome>
+        {/* Round 261 / Loop: chrome strip bottom-3 right-3 (12 CSS px) →
+            bottom-4 right-4 (16 CSS px) to align HTML overlay padding
+            with the SVG corner panels at (16, 16) panel-translate. Pre-
+            R261 the SVG panels (at 16 SVG units from canvas edges,
+            ≈ 15 CSS px after render-scale ~0.94) and the HTML chrome
+            (at 12 CSS px) sat at visually different distances from
+            the canvas edges — small but real ~3 CSS px optical
+            asymmetry between SVG-layer and HTML-layer overlay padding.
+            16 CSS px ≈ 17 SVG units, unifying the visual padding
+            vocabulary across both layers. Sibling change at the
+            minimap container (line ~6444, `absolute right-3` →
+            `right-4`) keeps the bottom-right corner HTML overlays
+            aligned at the same canvas-edge inset. */}
+        <div className="absolute bottom-4 right-4 flex items-center gap-1.5 text-xs select-none" data-topo-chrome>
           {/* #113: node size — S / M / L segmented control (Vincent 4727).
               R154: stable data-* hooks for tests + focus-visible ring so
               keyboard navigation lands somewhere visible against the
