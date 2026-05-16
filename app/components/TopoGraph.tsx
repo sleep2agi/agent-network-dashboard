@@ -8485,6 +8485,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     information element to lift it above ambient
                     chrome. opacity 0.9 stays — strokeWidth alone
                     does the lifting. */}
+                {/* Round 379 / Loop: minimap viewport rect picks up
+                    strokeLinejoin='round'. Pre-R379 the rect's 4
+                    corners painted with default 'miter' joins —
+                    sharp 90° corners with a small miter overshoot
+                    (≈ strokeWidth × 1.4 = 2.1 px at sw=1.5). R379
+                    rounds the joins so corners arc smoothly through
+                    a quarter-circle of radius ≈ strokeWidth/2. At
+                    sw=1.5 that's a 0.75-px radius — subtle but
+                    matches the same stroke-softening vocabulary R288
+                    chrome icons (zoom/reset/fullscreen) and R378
+                    flow-rail already speak. Geometry-safe: stroke-
+                    linejoin only affects the corner overshoot, the
+                    rect's bbox is unchanged. R287 strokeWidth=1.5 +
+                    R346 hover-state strokeWidth/opacity bump + R199
+                    smoothView x/y/w/h transition all preserved.
+                    data-topo-minimap-viewport-linejoin attr exposes
+                    the value for tests. */}
                 <rect
                   x={Math.max(0, rectX)} y={Math.max(0, rectY)}
                   width={Math.max(0, Math.min(MW - Math.max(0, rectX), rectW))}
@@ -8492,10 +8509,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fill="none" stroke={pal.legendAccent}
                   // R346: strokeWidth + opacity tween on container hover.
                   strokeWidth={hoveredMinimap ? '1.75' : '1.5'}
+                  strokeLinejoin="round"
                   opacity={hoveredMinimap ? '1' : '0.9'}
                   data-topo-minimap-viewport
                   data-topo-minimap-viewport-smooth={smoothView ? 'true' : 'false'}
                   data-topo-minimap-viewport-hover={hoveredMinimap ? 'true' : 'false'}
+                  data-topo-minimap-viewport-linejoin="round"
                   style={{
                     transition: smoothView
                       ? 'x 280ms ease-out, y 280ms ease-out, width 280ms ease-out, height 280ms ease-out, stroke-width 200ms ease-out, opacity 200ms ease-out'
