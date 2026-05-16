@@ -5963,8 +5963,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       locks both, so the header reads stable through
                       9 flows → 10 flows growth. Sibling treatment to
                       R224 edge badge / R225 hub digit. */}
+                  {/* Round 311 / Loop: recent-signal panel count tspan
+                      picks up fontWeight=600 for sibling parity with
+                      R310 legend panel count. Closes the panel-pair
+                      count typography symmetry — both top-corner
+                      panels now have:
+                        title fontWeight=700 (panel chrome anchor)
+                        count fontWeight=600 + tabular-nums (data)
+                      Same digit-semibold rule R309 established for
+                      per-row counts now applied to BOTH panel-summary
+                      counts. The R162 freshness fill (1.0→0.25 alpha
+                      ramp) and R225 tabular-nums all preserved; only
+                      the weight bumps. */}
                   <tspan
                     fill={freshFill}
+                    fontWeight="600"
                     data-recent-panel-count
                     data-recent-panel-count-freshness-alpha={alpha.toFixed(2)}
                     style={{
