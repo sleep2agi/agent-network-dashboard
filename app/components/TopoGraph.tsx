@@ -8436,14 +8436,45 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       so this legend-internal circle is invisible to
                       that probe. pointerEvents:none so the ring can't
                       intercept the row click that produced it. */}
+                  {/* Round 402 / Loop: legend pin-ring strokeWidth 1.5
+                      → 1.75. Sibling visual-weight bump (12th anchor)
+                      to R385 hub hover-ring strokeWidth 1.5 → 1.75 —
+                      both are pin/hover state indicators painted as
+                      stroke-only circles outside their target swatch
+                      with the R51 sentinel value 1.5. R402 lifts to
+                      1.75 (matching R385's choice) so the pin signal
+                      reads slightly heavier without crossing the
+                      R51 sentinel band (3 reserved for offline node).
+                      The R51 selector is gated to g[data-node]
+                      ancestors so this legend-internal circle (lives
+                      under a <g data-legend-status>) is invisible
+                      to the probe — same lesson R177/R385 documented.
+                      Visual-weight bump family (12 anchors now):
+                        R287 minimap viewport stroke   1   → 1.5
+                        R295 legend swatch radius      5.5 → 6
+                        R359 recent-row pip radius     1.6 → 1.8
+                        R360 hub digit fontSize        11  → 12
+                        R361 edge-badge digit fontSize 10  → 11
+                        R365 hub-highlight radius      5   → 5.5
+                        R367 edge-badge rest stroke    1   → 1.25
+                        R374 pressure-bar height       1.5 → 2
+                        R383 recent-row pip radius     1.8 → 2.0
+                        R384 minimap online dot        1.7 → 1.9
+                        R385 hub hover-ring stroke     1.5 → 1.75
+                        R402 legend pin-ring stroke    1.5 → 1.75  (this round)
+                      R181 always-mount opacity gate + 150ms transition
+                      + pointerEvents:none all preserved. data-legend-
+                      pin-ring-stroke-width attr exposes the value for
+                      tests. */}
                   <circle
                     cx="16" cy={row.y0} r="8"
                     fill="none"
                     stroke={row.fill}
-                    strokeWidth="1.5"
+                    strokeWidth="1.75"
                     opacity={isPinned ? 1 : 0}
                     data-legend-pin-ring={row.key}
                     data-legend-pin-ring-pinned={isPinned ? 'true' : 'false'}
+                    data-legend-pin-ring-stroke-width="1.75"
                     style={{
                       pointerEvents: 'none',
                       transition: 'opacity 150ms ease-out',
