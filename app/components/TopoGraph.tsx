@@ -2311,7 +2311,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="status"
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
+              // R355: `group` lets the inner opacity-70 spans (prefix
+              // `filter:` + count `· N`) brighten to 100 % on pill hover.
+              // Sibling treatment on group + vendor pills below.
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedStatus(null)}
               style={{
@@ -2325,7 +2328,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline opacity-70" data-filter-prefix>filter: </span>{pinnedStatus}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span>{pinnedStatus}<span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear ${pinnedStatus} filter`}
@@ -2349,7 +2352,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="group"
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
+              // R355 sibling — `group` parent + group-hover on inner spans.
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedGroup(null)}
               style={{
@@ -2359,7 +2363,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline opacity-70" data-filter-prefix>filter: </span>{pinnedGroup}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span>{pinnedGroup}<span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
@@ -2399,7 +2403,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-active-filter="vendor"
               data-filter-match-count={matchCount}
               data-filter-match-aliases={matchAliases.join(',')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
+              // R355 sibling — `group` parent + group-hover on inner spans.
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear vendor filter'}
               onClick={() => setPinnedVendor(null)}
               style={{
@@ -2409,7 +2414,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 cursor: 'pointer',
               }}
             >
-              <span><span className="hidden sm:inline opacity-70" data-filter-prefix>filter: </span>{pinnedVendor}<span className="opacity-70 tabular-nums" data-filter-pill-count> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span>{pinnedVendor}<span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear vendor filter ${pinnedVendor}`}
