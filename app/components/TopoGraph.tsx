@@ -3055,8 +3055,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const alpha = ageSec <= 30
                     ? 1
                     : ageSec <= 300
-                      ? 1 - ((ageSec - 30) / 270) * 0.75
-                      : 0.25;
+                      ? 1 - ((ageSec - 30) / 270) * 0.70 /* R358: floor 0.25 → 0.30 lift across 3 freshness scopes */
+                      : 0.30; /* R358: stale floor lifted 0.25 → 0.30 — 20% legibility bump while preserving fresh/stale ratio */
                   // Cyan dark / teal light to match palette legendAccent.
                   const dotColor = isLight
                     ? `rgba(13, 148, 136, ${alpha.toFixed(2)})`
@@ -6524,8 +6524,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               const alpha = ageSec <= 30
                 ? 1
                 : ageSec <= 300
-                  ? 1 - ((ageSec - 30) / 270) * 0.75
-                  : 0.25;
+                  ? 1 - ((ageSec - 30) / 270) * 0.70 /* R358: floor 0.25 → 0.30 lift across 3 freshness scopes */
+                  : 0.30; /* R358: stale floor lifted 0.25 → 0.30 — 20% legibility bump while preserving fresh/stale ratio */
               // Dark cyan-400 / light teal-600 with alpha — same
               // palette as R161's chip bullet so the two scopes
               // visually align even side-by-side.
@@ -7021,8 +7021,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       const alpha = ageSec <= 30
                         ? 1
                         : ageSec <= 300
-                          ? 1 - ((ageSec - 30) / 270) * 0.75
-                          : 0.25;
+                          ? 1 - ((ageSec - 30) / 270) * 0.70 /* R358: floor 0.25 → 0.30 lift across 3 freshness scopes */
+                          : 0.30; /* R358: stale floor lifted 0.25 → 0.30 — 20% legibility bump while preserving fresh/stale ratio */
                       return (
                         <circle
                           cx={10}
