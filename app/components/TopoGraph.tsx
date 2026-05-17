@@ -9829,7 +9829,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // (same support matrix R197/R198/R199 leveraged:
                   // Chrome ≥95 / Safari ≥16 / FF ≥70). data-runtime-
                   // badge-active exposes the gate for tests.
-                  const isNodeActive = !reducedMotion && hoveredAlias === session.alias;
+                  /* R620 — extend isNodeActive gate to include
+                     chatAlias === session.alias. Single conceptual
+                     change cascades across ALL 6 runtime badge axes:
+                       R208 ring r          7   → 8
+                       R208 ring sw         1.5 → 2
+                       R443 icon sw         2.4 → 2.8
+                       R559 drop-shadow     → rt.color halo
+                       R586 brightness      1   → 1.15
+                       R599 outer rotate    0   → 3deg
+                     6th anchor in chat-target-gated brightness family
+                     (R615 chat ring + R618 card + R616 alias + R617
+                     sub-text + R619 avatar + R620 runtime badge).
+                     The chat partner's runtime badge now performs the
+                     same densest-per-node hover gesture — full 6-axis
+                     cascade on chat-target match. */
+                  const isNodeActive = !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias);
                   return (
                     /* Round 559 / Loop — runtime badge outer <g> picks up
                        a drop-shadow glow on node hover, using the runtime's
