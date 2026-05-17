@@ -11059,11 +11059,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          spacing values unchanged; R363 fw + R55 fill
                          brighten unchanged — only the timing axis
                          shifts. */
+                      /* Round 568 / Loop — extends the drop-shadow visual-
+                         polish family (16 anchors after R559) to a 17th
+                         anchor at the recent-row text scope. Adds a soft
+                         pal.legendAccent glow on isRowHovered || isRow-
+                         Pinned, completing the row's hover/pin signature
+                         at 4 paint+typography axes:
+                           R55   fill brighten         (fill)
+                           R434  letter-spacing 3-tier (typography kerning)
+                           R530  fontWeight 500 → 600  (typography weight)
+                           R568  drop-shadow glow      (paint glow)  ← this round
+                         Mirror of R550 panel-title pin-gated glow pattern,
+                         applied at the panel-ROW tier rather than panel-
+                         TITLE tier. Hue: pal.legendAccent + hex alpha 80
+                         (~50%) — same strength as R479 group-label /
+                         R550 panel-title glows for cross-element
+                         consistency. 2px blur (smaller than R478 pip's
+                         3px since text is fontSize 9 and a heavier blur
+                         would bleed into adjacent row text); blur 2px
+                         keeps the glow tight to the row's text glyphs.
+                         transition list extends to include 'filter
+                         200ms ease-out' matching the R474 200ms cadence
+                         of the existing 3 axes.
+                         data-recent-row-text-glow attr surfaces the
+                         gate for tests. */
                       data-recent-row-text-transition="200ms"
+                      data-recent-row-text-glow={(isRowHovered || isRowPinned) ? 'true' : 'false'}
                       style={{
-                        transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out',
+                        transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
                         letterSpacing: isRowPinned ? '0.5px' :
                                        isRowHovered ? '0.25px' : '0px',
+                        filter: (isRowHovered || isRowPinned)
+                          ? `drop-shadow(0 0 2px ${pal.legendAccent}80)`
+                          : undefined,
                       }}
                     >
                       {/* R138 / Loop: typography unification with the rest
