@@ -4437,8 +4437,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        unified ease rather than "tint pops, label
                        follows". data-group-label-tint-transition
                        attr exposes the timing for tests. */
+                    /* Round 460 / Loop — extend the R459-200ms tint rect
+                       transition list to include `x` + `width` so the
+                       hitbox slides into place when a cluster grows or
+                       shrinks (member joins / leaves / status change
+                       re-pricing box.w). Pre-R460 every resize snap-
+                       jumped the hitbox bounds — a small but visible
+                       glitch right at the moment the operator's
+                       attention is on the cluster. SVG2 CSS animation
+                       on geometry attrs has shipped in Chrome 95+ /
+                       Safari 16+ / FF 70+; the runtime gracefully
+                       no-ops on older browsers. Sibling motion idiom
+                       to R134 / R141 / R142 (panel rect transitions)
+                       at the group-label hitbox tier.
+                       data-group-label-tint-geom-transition attr
+                       exposes the geometry-axis presence for tests. */
                     data-group-label-tint-transition="200ms"
-                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out' }}
+                    data-group-label-tint-geom-transition="x,width"
+                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out, x 200ms ease-out, width 200ms ease-out' }}
                   />
                 {/* Round 218 / Loop: group label gains a letter-spacing
                     transition on pin — the text subtly spaces out
