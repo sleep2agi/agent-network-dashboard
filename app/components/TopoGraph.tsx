@@ -12527,8 +12527,53 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           the row punctuation rhythm holds. data-
                           recent-row-content-tspan attr surfaces the
                           subordinate wrapper for tests. */}
+                      {/* Round 635 / Loop — content preview opacity
+                          lifts 0.7 → 1.0 on isRowHovered || isRowPinned.
+                          Extends the inspection-overrides-encoding
+                          pattern to a 5th anchor: when the user is
+                          actively inspecting a row (hover OR pin), the
+                          subordinate 0.7 ENCODING yields to full
+                          opacity because the operator is now reading
+                          the truncated content preview — the very
+                          datum the row exists to surface.
+                          Pre-R635 R418's 0.7 baseline was static across
+                          all row states; even on pin (sticky selection)
+                          the preview stayed at 70% relative alpha, soft
+                          against the alias-name + count-digit at 100%.
+                          R635 closes that — pinned rows read their
+                          content at full alpha, matching the row's
+                          attended-to typography lift (R434 letter-
+                          spacing + R572 brightness + R568 drop-shadow).
+                          Inspection-overrides-encoding family (5
+                          anchors now):
+                            R484 recent-row timestamp   freshness → 1.0
+                            R485 edge particle         freshness → 1.0
+                            R486 minimap dot           online → 1.0
+                            R628 minimap dot (chat)    online → 1.0 (chat ext)
+                            R635 recent-row content    subordinate 0.7 → 1.0 ← this
+                          200ms ease-out transition on opacity so the
+                          lift eases under the row's existing hover
+                          rhythm (R143 translateY / R104 row bg-tint
+                          / R434 letter-spacing all 200ms). Gate stays
+                          at (isRowHovered || isRowPinned) — chat-
+                          endpoint extension intentionally omitted per
+                          R625 design rationale (typographic axes stay
+                          on explicit-attended gates, not chat-target).
+                          R418's 0.7 baseline preserved as the rest
+                          encoding; data-recent-row-content-lifted attr
+                          exposes the gate; data-recent-row-content-
+                          opacity-rest preserves the 0.7 reading. */}
                       {' · '}
-                      <tspan opacity="0.7" data-recent-row-content-tspan>{truncate(link.content, 8)}</tspan>
+                      <tspan
+                        data-recent-row-content-tspan
+                        data-recent-row-content-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
+                        data-recent-row-content-opacity-rest="0.7"
+                        data-recent-row-content-opacity={(isRowHovered || isRowPinned) ? '1' : '0.7'}
+                        style={{
+                          opacity: (isRowHovered || isRowPinned) ? 1 : 0.7,
+                          transition: 'opacity 200ms ease-out',
+                        }}
+                      >{truncate(link.content, 8)}</tspan>
                     </text>
                     {/* Round 484 / Loop — recent-row timestamp opacity
                        lifts to 1.0 when isRowHovered || isRowPinned,
