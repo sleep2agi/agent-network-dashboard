@@ -6658,7 +6658,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-edge-particle-lifted={(isHoveredEdge || isEndpointHoveredEdge) ? 'true' : 'false'}
                     data-edge-particle-opacity-rest={Math.min(1, fresh * edgeOpacityMul).toFixed(2)}
                     data-edge-particle-opacity-lifted={(isHoveredEdge || isEndpointHoveredEdge) ? 'true' : 'false'}
-                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out, r 200ms ease-out' }}
+                    /* Round 583 — flow particle joins per-element
+                       brightness family at 22nd anchor. Adds
+                       brightness(1.15) on edge hover or endpoint
+                       hover, joining R485 opacity inspection-override
+                       + R422 r-lift (4 → 4.5) + R164 hover-r-lift
+                       (4.5 → 5.5). Particle now has 4-axis active
+                       signature on edge inspection:
+                         R485 opacity (freshness → 1.0)
+                         R164 r 4.5 → 5.5
+                         R422 r-base 4 → 4.5 (visual-weight bump)
+                         R583 brightness(1.15)  ← this round
+                       Particle becomes the brightest paint element
+                       along the edge during inspection. */
+                    data-edge-particle-brightness={(isHoveredEdge || isEndpointHoveredEdge) ? '1.15' : '1'}
+                    style={{
+                      transition: 'fill 200ms ease-out, opacity 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
+                      /* R583 — stack brightness(1.15) onto the existing
+                         url(#topo-glow) (cyber) or apply plain brightness
+                         (light). Inline style.filter overrides attribute
+                         filter; stacked syntax preserves the cyber glow
+                         on hover. Same R582 visible-path stack pattern. */
+                      filter: (isHoveredEdge || isEndpointHoveredEdge)
+                        ? (isLight ? 'brightness(1.15)' : 'url(#topo-glow) brightness(1.15)')
+                        : undefined,
+                    }}
                   >
                     <animateMotion
                       dur={`${duration}s`}
