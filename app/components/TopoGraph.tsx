@@ -7342,6 +7342,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-edge-badge-glow={(isHoveredEdge || isPinned || isEndpointHoveredEdge) ? 'hover' : isHot ? 'hot' : 'false'}
                         data-edge-badge-brightness={(isHoveredEdge || isPinned || isHot || isEndpointHoveredEdge) ? '1.15' : '1'}
                         data-edge-badge-endpoint-active={isEndpointHoveredEdge ? 'true' : 'false'}
+                        /* Round 633 / Loop — edge-badge CIRCLE joins the
+                           hot-pulse family at the geometric axis. R498
+                           originated panel-row digit opacity breath; R632
+                           extended it to the canvas-edge digit. R633
+                           extends the same family to the badge CIRCLE
+                           via stroke-width SMIL: sw 2 ↔ 2.5 over 3s
+                           ease-in-out cubic-bezier(0.42, 0, 0.58, 1) on
+                           both halves, in lockstep with the R632 digit
+                           opacity pulse.
+                           The badge now reads with FOUR coordinated hot
+                           signatures:
+                             R126/R332  stroke fill   → amber hotStroke
+                             R426       digit fw      → 700 → 800
+                             R220/R431  digit ls      → 0 → 0.4
+                             R480       drop-shadow   → amber halo
+                             R632       digit pulse   → opacity 0.85↔1.0
+                             R633       circle pulse  → sw 2↔2.5         ← this
+                           Geometry (R633) + Paint (R632) breathe together
+                           at 3s cadence — the badge swells AND brightens
+                           as one organic gesture. Pre-R633 only the digit
+                           breathed; the surrounding ring stayed visually
+                           static even when its rim color and filter both
+                           signalled hot.
+                           SMIL on attributeName='stroke-width' mounts
+                           with first frame = 2 (matching React-set sw on
+                           hot), so no snap at the hot threshold crossing.
+                           Unmounts smoothly on hot→cold transition; React
+                           sets sw=1.25 and CSS transition (already 300ms
+                           in style) eases it down.
+                           R51 sentinel safety: badge is edge-internal
+                           (not g[data-node] descendant); SMIL sw range
+                           [2, 2.5] never matches reserved {1.5, 3} mid-
+                           cycle anyway. topo-overlap-test invariants
+                           hold across hot lanes.
+                           Hot-pulse family ledger (3 anchors):
+                             R498  panel-row count digit  (opacity)
+                             R632  edge-badge digit       (opacity)
+                             R633  edge-badge circle      (stroke-width) ← this
+                           data-edge-badge-hot-pulse attr exposes the
+                           new gate axis for tests. */
+                        data-edge-badge-hot-pulse={isHot && !reducedMotion ? 'on' : 'off'}
                         /* Round 534 / Loop — extends edge-badge drop-shadow
                            coverage from hot-only (R480 amber) to also fire
                            on hover/pin with a cyan accent glow. Pre-R534
@@ -7431,7 +7472,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                               : undefined,
                           transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                         }}
-                      />
+                      >
+                        {isHot && !reducedMotion && (
+                          <animate
+                            attributeName="stroke-width"
+                            values="2;2.5;2"
+                            dur="3s"
+                            calcMode="spline"
+                            keyTimes="0;0.5;1"
+                            keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
+                            repeatCount="indefinite"
+                          />
+                        )}
+                      </circle>
                       {/* Round 224 / Loop: edge badge text gains the 4th
                           pin-signature typography. Pre-R224 the digit
                           rendered with no transition surface: when the
