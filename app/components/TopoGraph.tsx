@@ -9138,6 +9138,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          data-chat-target-ring-sw-breath attr exposes the
                          new gate for tests. */
                       data-chat-target-ring-sw-breath={!reducedMotion && isChat ? 'on' : 'off'}
+                      /* Round 640 / Loop — chat-target ring gains a THIRD
+                         breath axis: radius. Pre-R640 R120 ran the opacity
+                         breath (paint) and R630 layered a stroke-width
+                         breath (line weight) — 2 axes. R640 stacks an r
+                         breath `radius+14 ↔ radius+14.5` over the same
+                         3s cadence, all three SMIL animates running in
+                         lockstep through the same fragment gate.
+                         Now the ring's 呼吸感 spans THREE concentric
+                         axes synchronized at 3s ease-out spline:
+                           opacity    paint   (R120)
+                           stroke-wd  line    (R630, +10% amplitude)
+                           radius     bbox    (R640, +3.6% amplitude) ← this
+                         The ring breathes paint + weight + size together
+                         as one organic gesture — the most complete
+                         呼吸感 surface on the canvas now.
+                         Amplitude 0.5px is conservative: peak r =
+                         radius+14.5 stays under any neighbouring ring
+                         tier boundary. In ring layout (R72 tiered radii
+                         single 220 / dual 175+260 / triple 145/215/285
+                         / offline 325+) tier spacing is ≥50px, so
+                         +0.5px breath has no overlap risk. In grid
+                         layout the chat-target ring's box is one node-
+                         wide; the cluster box around it is much wider.
+                         Gated `!reducedMotion && isChat` like the
+                         existing breath axes — three-axis SMIL only
+                         runs for the active chat target; reduced-motion
+                         users see no extra motion.
+                         R51 sentinel safety: r is not a sentinel
+                         attribute (selector targets stroke-width). The
+                         ring's bbox grows by ±0.5px during peak but
+                         only when chat is open; topo-overlap-test runs
+                         without chat open so bbox stays at radius+14.
+                         data-chat-target-ring-r-breath attr exposes the
+                         new gate for tests. */
+                      data-chat-target-ring-r-breath={!reducedMotion && isChat ? 'on' : 'off'}
                     >
                       {!reducedMotion && isChat && (
                         <>
@@ -9150,6 +9185,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           <animate
                             attributeName="stroke-width"
                             values="2.5;2.75;2.5"
+                            dur="3s"
+                            repeatCount="indefinite"
+                          />
+                          <animate
+                            attributeName="r"
+                            values={`${radius + 14};${radius + 14.5};${radius + 14}`}
                             dur="3s"
                             repeatCount="indefinite"
                           />
