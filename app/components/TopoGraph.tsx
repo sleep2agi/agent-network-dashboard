@@ -11636,7 +11636,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // transition-colors only — without the transform transition,
                 // active:scale-95 would hard-cut. transform-gpu promotes the
                 // layer so scale doesn't trigger paint thrash.
-                className={`px-2 py-1 transition-colors transition-transform duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
+                /* Round 521 / Loop — extends R270's hover-preview pattern
+                   (inactive toggle hover previews the active state's
+                   visual register) to the TYPOGRAPHY axis at the chrome
+                   nodeSize S/M/L surface. Pre-R521 the inactive variant
+                   had `hover:bg-cyan-500/5` (R270 bg preview) but no
+                   typography preview — active variant uses `font-medium`
+                   (fw 500), inactive variant sat at default fw 400 even
+                   on hover.
+                   R521 adds `hover:font-medium` + `transition-[font-
+                   weight]` to the inactive variant so hovering an
+                   inactive S/M/L letter thickens the glyph 400 → 500,
+                   previewing the typography of the active state the
+                   click would commit to. Sibling to R421 chrome zoom-
+                   level fontWeight hover delta (rest 500 → hover 600)
+                   and R520 footer fontWeight hover (500 → 600) — same
+                   idiom: thicken-on-hover for chrome surfaces with a
+                   pre-commit gesture.
+                   `font-medium` (500) matches the ACTIVE variant's
+                   fw exactly — the inactive hover landing weight equals
+                   the active locked weight, so clicking commits to a
+                   typography state the eye already saw 'on the way in'.
+                   Hover-fw family extension (5 anchors now):
+                     R416  chip-row count digit  rest 500 → hover 700/600
+                     R420  chrome zoom-level     rest 500 → hover 600
+                     R425  hub-center digit      rest 700 → hover 800
+                     R520  +N more flows footer  rest 500 → hover 600
+                     R521  chrome nodeSize S/M/L inactive rest 400 → hover 500 ← this round
+                   Active variant `font-medium` unchanged so the rest-vs-
+                   active typography distinction stays intact when the
+                   user IS clicked-in (active stays at fw 500, inactive
+                   rest at fw 400, inactive hover preview at fw 500).
+                   data-topo-chrome-nodesize-hover-preview-fw="500" attr
+                   exposes the polish for tests. */
+                className={`px-2 py-1 transition-colors transition-transform transition-[font-weight] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
+                data-topo-chrome-nodesize-hover-preview-fw={nodeScale === v ? null : '500'}
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
                 {lbl}
