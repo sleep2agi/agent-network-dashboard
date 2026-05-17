@@ -12045,12 +12045,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      (the minimap viewport is small, ~120×82 px).
                      Filter is paint-only — bbox unchanged. transition
                      list extends to include 'filter 200ms ease-out'
-                     so the glow eases when zoom crosses 1.5x. */
-                  data-topo-minimap-viewport-glow={view.zoom > 1.5 ? 'true' : 'false'}
+                     so the glow eases when zoom crosses 1.5x.
+                     R540: extends the drop-shadow to also fire on
+                     hoveredMinimap with HOVER PRECEDENCE over zoom-
+                     state. Pre-R540 the viewport drop-shadow was
+                     zoom-only (single gate); R540 adds an
+                     interactional gate at lighter blur intensity.
+                     Hover wins when both true — interactional signal
+                     (user is inspecting) trumps informational signal
+                     (you're zoomed). Sibling to R534 edge-badge
+                     hover-precedence + R538 group-label hover-tier
+                     extensions.
+                     2-tier alpha ladder:
+                       hover (interactional)  legendAccent 99 (~60%)
+                       zoom > 1.5 (info)      legendAccent 80 (~50%)
+                       rest                   none
+                     data-topo-minimap-viewport-glow attr upgraded
+                     binary ('true'/'false') → 3-value ('hover' |
+                     'zoom' | 'false') so tests can distinguish
+                     gate cause. */
+                  data-topo-minimap-viewport-glow={hoveredMinimap ? 'hover' : view.zoom > 1.5 ? 'zoom' : 'false'}
                   style={{
-                    filter: view.zoom > 1.5
-                      ? `drop-shadow(0 0 2px ${pal.legendAccent}80)`
-                      : undefined,
+                    filter: hoveredMinimap
+                      ? `drop-shadow(0 0 2px ${pal.legendAccent}99)`
+                      : view.zoom > 1.5
+                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80)`
+                        : undefined,
                     transition: smoothView
                       ? 'x 280ms ease-out, y 280ms ease-out, width 280ms ease-out, height 280ms ease-out, stroke-width 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out'
                       : 'stroke-width 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
