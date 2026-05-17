@@ -9173,26 +9173,63 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          data-chat-target-ring-r-breath attr exposes the
                          new gate for tests. */
                       data-chat-target-ring-r-breath={!reducedMotion && isChat ? 'on' : 'off'}
+                      data-chat-target-ring-breath-curve={!reducedMotion && isChat ? 'ease-in-out' : 'none'}
                     >
                       {!reducedMotion && isChat && (
+                        /* Round 641 / Loop — chat-target ring 3-axis breath
+                           gains SMIL ease-in-out keySplines on all three
+                           animates. Pre-R641 R120/R630/R640 ran their
+                           SMIL animates with default linear calcMode —
+                           opacity / sw / r interpolated at constant
+                           velocity through the 3-value trough→peak→
+                           trough bounce. Linear breath reads mechanical:
+                           dα/dt, dsw/dt, dr/dt all constant, no settle
+                           at the endpoints.
+                           R641 adds `calcMode="spline" keyTimes="0;0.5;1"
+                           keySplines="0.42 0 0.58 1;0.42 0 0.58 1"`
+                           (canonical CSS ease-in-out cubic-bezier) to
+                           all three animates — same easing family as
+                           R227 click ripple / R243 active-pulse /
+                           R244 hub-halo. The ring's breath now settles
+                           briefly at each peak and trough, fast through
+                           the middle: a heart-rest cycle feel.
+                           Three coordinated organic eases at the SAME
+                           cadence + SAME curve = the most coherent
+                           呼吸感 surface on the canvas. The breath now
+                           reads as ONE motion-coherent gesture across
+                           paint + stroke + geometry, not three
+                           independent oscillations.
+                           Reduced-motion gate unchanged; only the curve
+                           shape shifts inside the existing 3s window.
+                           data-chat-target-ring-breath-curve attr
+                           exposes the easing for tests. */
                         <>
                           <animate
                             attributeName="opacity"
                             values={isLight ? '0.72;0.95;0.72' : '0.82;1;0.82'}
                             dur="3s"
                             repeatCount="indefinite"
+                            calcMode="spline"
+                            keyTimes="0;0.5;1"
+                            keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
                           />
                           <animate
                             attributeName="stroke-width"
                             values="2.5;2.75;2.5"
                             dur="3s"
                             repeatCount="indefinite"
+                            calcMode="spline"
+                            keyTimes="0;0.5;1"
+                            keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
                           />
                           <animate
                             attributeName="r"
                             values={`${radius + 14};${radius + 14.5};${radius + 14}`}
                             dur="3s"
                             repeatCount="indefinite"
+                            calcMode="spline"
+                            keyTimes="0;0.5;1"
+                            keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
                           />
                         </>
                       )}
