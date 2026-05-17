@@ -55,6 +55,7 @@ await ctx.route('**/api/hub/servers*', (route) => {
           disk_total_gb: 500,
           cpu_history: [80, 88, 92, 95, 96, 94, 93, 91, 90, 89],
           mem_history: [85, 87, 89, 91, 90, 92, 93, 91, 90, 91],
+          disk_history: [86, 88, 89, 90, 90, 91, 92, 92, 92, 92],
           agents: [
             { alias: 'minimax-busy', runtime: 'claude-code-cli', status: 'working', progress: 0.78 },
           ],
