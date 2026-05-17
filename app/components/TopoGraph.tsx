@@ -7030,6 +7030,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                                 : 0.95;
               const resolvedOpacity = hubRecede ? baseOpacity * 0.85 : baseOpacity;
               const breathActive = !reducedMotion && workingCount === 0 && !hubRecede && !hoveredHub;
+              /* Round 529 / Loop — focal-amplify family 3rd anchor.
+                 Hub-highlight gains geometric amplify r 5.5 → 6 on
+                 hub-hover, mirroring R451's hub-halo r 20 → 22 hover
+                 pattern. Pre-R529 the highlight had paint-axis
+                 amplify only (R511 opacity 0.95 → 1.0 on hub-hover);
+                 R529 adds geometric amplify so the focal disc
+                 BREATHES outward on hub attention, like the halo
+                 does. Composes with the existing 2-axis hub-hover
+                 lift on this element:
+                   R511  opacity 0.95 → 1.0   paint (focal-amplify 1st)
+                   R529  r       5.5  → 6     geometry (this round)
+                 Implementation matches R451: CSS `r` property
+                 (R197/R198 idiom) for smooth interpolation. SVG
+                 attribute `r="5.5"` provides SSR fallback and serves
+                 as default; inline style.r overrides for animated
+                 value. transition list extends to include `r 200ms
+                 ease-out`, matching the fill cadence (also 200ms);
+                 opacity transition stays at 300ms (existing).
+                 r 6 sits well inside the existing visual envelope
+                 (next-larger sibling r=10 hub core, r=14 hub hover
+                 ring). The 0.5px lift is +9% radius / +19% area —
+                 enough to read as 'lift' without breaching the core
+                 boundary or invalidating overlap-test invariants.
+                 SMIL animate on opacity continues independently
+                 (animateAttr='opacity' vs CSS-property r — non-
+                 conflicting, same pattern R451 noted for halo).
+                 Focal-amplify family extension (3 anchors):
+                   R511  hub-highlight opacity 0.95 → 1.0
+                   R527  hub-digit letter-spacing 0 → 0.3px
+                   R529  hub-highlight radius 5.5 → 6  ← this round
+                 data-topo-hub-highlight-radius attr now reports the
+                 dynamic value (was static '5.5'). */
+              const highlightR = !reducedMotion && hoveredHub ? 6 : 5.5;
               return (
                 <circle
                   cx={cx} cy={cy} r="5.5"
@@ -7061,10 +7094,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   opacity={resolvedOpacity}
                   data-topo-hub-highlight
                   data-topo-hub-highlight-visible={workingCount > 0 ? 'false' : 'true'}
-                  data-topo-hub-highlight-radius="5.5"
+                  data-topo-hub-highlight-radius={highlightR}
                   data-topo-hub-highlight-opacity={resolvedOpacity}
                   data-topo-hub-highlight-breath={breathActive ? 'true' : 'false'}
                   data-topo-hub-highlight-recede={hubRecede ? 'true' : 'false'}
+                  data-topo-hub-highlight-hovered={!reducedMotion && hoveredHub ? 'true' : 'false'}
                   /* Round 510 / Loop — R509 follow-on: theme-toggle fill
                      ease. Pre-R510 the hub-highlight transition spec only
                      listed `opacity 300ms ease-out`. When R509 introduced
@@ -7077,11 +7111,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      theme transitions now share a cadence so the focal
                      cluster (digit + highlight + halo) eases as a unit.
                      R508's recede opacity transition unchanged (300ms);
-                     fill is independent. */
+                     fill is independent.
+                     R529: r as CSS property (R197/R198 idiom) + `r
+                     200ms ease-out` appended to transition list so
+                     the new hub-hover radius lift (5.5 → 6) eases
+                     under the same fill cadence. SVG attr r="5.5"
+                     above provides SSR fallback; inline style.r
+                     wins the cascade for the dynamic value. */
                   style={{
                     pointerEvents: 'none',
-                    transition: 'opacity 300ms ease-out, fill 200ms ease-out',
-                  }}
+                    r: `${highlightR}px`,
+                    transition: 'opacity 300ms ease-out, fill 200ms ease-out, r 200ms ease-out',
+                  } as React.CSSProperties}
                 >
               {/* Round 497 / Loop — idle-state breath (呼吸感 theme pivot
                   from the R492-R496 press-family arc). Pre-R497 the hub
