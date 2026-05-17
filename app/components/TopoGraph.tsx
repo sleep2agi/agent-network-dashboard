@@ -2444,7 +2444,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     height: '100%',
                     cursor: 'pointer',
                     boxShadow: isPinned ? `inset 0 0 0 1px ${color}, inset 0 0 0 2px rgba(255,255,255,0.6)` : undefined,
-                    filter: hoveredStatus === key ? 'brightness(1.2)' : undefined,
+                    /* Round 542 / Loop — pressure-bar segments gain
+                       drop-shadow tier-color glow on hover, stacked
+                       on R210 brightness(1.2). Sibling to R537 legend
+                       swatch + R541 vendor chip glow at the chip-row
+                       scope — three same-pattern surfaces (legend
+                       swatch / vendor chip / pressure segment) all
+                       radiate their identity color on hover.
+                       3rd anchor in the chip-row tier-color paint
+                       glow sub-family:
+                         R537  legend swatch  row.fill (status hex)
+                         R541  vendor chip    v.color (hsl via color-mix)
+                         R542  pressure seg   color (status hex)  ← this round
+                       Stacked filter syntax (brightness + drop-shadow
+                       in same filter declaration): `brightness(1.2)
+                       drop-shadow(...)`. CSS filter supports multiple
+                       functions; they apply left-to-right. Brightness
+                       boosts the segment's own color, drop-shadow
+                       paints the outer halo. Together: hovered seg
+                       looks "lit up" with both inner glow + outer
+                       halo in its tier color.
+                       Hue: `${color}99` hex+alpha (60%) — color here
+                       is a 6-char hex (e.g., '#22c55e' for working
+                       cyber, '#0d9488' for idle light), not hsl, so
+                       hex+alpha concat works (unlike R541 vendor
+                       which needed color-mix for hsl). Banked
+                       pattern: hex sources use hex+alpha; hsl/color()
+                       sources use color-mix.
+                       2px blur (vs R537's 3px) since pressure-seg is
+                       small (h-2 = 8px tall, variable width) — a
+                       smaller blur keeps the glow tight to the
+                       segment without bleeding into neighbors.
+                       filter is paint-only; bbox unchanged; R51
+                       overlap-test invariants hold. Transition list
+                       already includes `filter` (post-R524). */
+                    filter: hoveredStatus === key ? `brightness(1.2) drop-shadow(0 0 2px ${color}99)` : undefined,
                     transition: 'width 220ms ease-out, box-shadow 150ms ease-out, filter 150ms ease-out',
                   }}
                   onClick={(e) => {
