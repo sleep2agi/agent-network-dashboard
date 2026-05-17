@@ -7196,6 +7196,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-edge-badge-text={link.key}
                         data-edge-badge-text-pin={(isPinned || isHot) ? 'true' : 'false'}
                         data-edge-badge-text-font-size="11"
+                        /* Round 570 / Loop — edge-badge digit joins the per-
+                           element brightness consistency family (R501/R558/
+                           R564/R567) at uniform +15%. 7th anchor.
+                           Gate: (isHoveredEdge || isPinned || isHot) — same
+                           3-tier set as R431 ls (with hover the mid step
+                           and pin/hot the strong step). Brightness lifts
+                           uniformly across all 3 active sub-states; the
+                           ls/fw axes still distinguish hover from pin/hot.
+                           Pure paint axis on the digit glyph; bbox
+                           unchanged. The R540 badge-circle drop-shadow
+                           sits on the parent CIRCLE element (separate
+                           filter); the digit's filter is independent and
+                           doesn't compound with circle filter (different
+                           SVG element).
+                           Per-element brightness family — 7 anchors at +15%:
+                             R501  vendor.logo image
+                             R558  vendor monogram
+                             R558  prefix-group fallback
+                             R564  alias text (stacked w/ DS)
+                             R567  node sub-text
+                             R570  edge-badge digit  ← this round
+                           Plus runtime badge drop-shadow (R559) on same
+                           isNodeActive gate. data-edge-badge-text-brightness
+                           attr surfaces the lift for tests. */
+                        data-edge-badge-text-brightness={(isHoveredEdge || isPinned || isHot) ? '1.15' : '1'}
                         style={{
                           pointerEvents: 'none',
                           fontVariantNumeric: 'tabular-nums',
@@ -7214,7 +7239,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              now): R344/R345/R347/R351/R420/R427/R431. */
                           letterSpacing: (isPinned || isHot) ? '0.4px' :
                                          isHoveredEdge ? '0.2px' : '0px',
-                          transition: 'letter-spacing 300ms ease-out, font-weight 300ms ease-out',
+                          filter: (isHoveredEdge || isPinned || isHot)
+                            ? 'brightness(1.15)'
+                            : undefined,
+                          transition: 'letter-spacing 300ms ease-out, font-weight 300ms ease-out, filter 300ms ease-out',
                         }}
                       >{link.count}</text>
                     </g>
