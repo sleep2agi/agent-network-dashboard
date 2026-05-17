@@ -5339,6 +5339,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      data-topo-hub-spoke-glow attr exposes the gate
                      state for tests. */
                   data-topo-hub-spoke-glow={!reducedMotion && (hoveredHub || isHoveredSpoke) ? 'true' : 'false'}
+                  data-topo-hub-spoke-halo-layers={!reducedMotion && (hoveredHub || isHoveredSpoke) ? '2' : '0'}
                   /* Round 580 (65-round milestone) — hub-spokes complete
                      the hub-cluster brightness coverage at 5/5 concentric
                      elements. Stacks brightness(1.15) onto R533's drop-
@@ -5388,10 +5389,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-hub-spoke-brightness-self={!reducedMotion && isHoveredSpoke ? 'true' : 'false'}
                   style={{
                     transition: 'stroke 250ms ease-out, stroke-width 250ms ease-out, opacity 250ms ease-out, filter 250ms ease-out',
+                    /* Round 654 / Loop — hub-spoke drop-shadow gains a
+                       SECOND outer layer at 3px blur + 0.2 alpha (half
+                       R533 inner 0.4). Closes the hub-cluster glow
+                       QUINTET (R476/R532/R533/R535/R536) at 5/5 multi-
+                       layer. R650-R653 already covered digit/halo/
+                       highlight/hover-ring; R654 finishes hub-spokes —
+                       the mesh radial lines connecting hub to nodes.
+                       Spokes use 1.5px + 3px stride (smaller than rings)
+                       and teal/cyan tint (R533 mesh palette, not the
+                       emerald focal-cluster palette). The wide outer
+                       3px glow at half alpha keeps the spokes thin
+                       (sw 1-2.5) but radiant when active. Same R642-
+                       R653 0.5x falloff vocabulary applied to the
+                       mesh tier. */
                     filter: !reducedMotion && (hoveredHub || isHoveredSpoke)
                       ? (isLight
-                          ? 'drop-shadow(0 0 1.5px rgba(13, 148, 136, 0.4)) brightness(1.15)'
-                          : 'drop-shadow(0 0 1.5px rgba(34, 211, 238, 0.4)) brightness(1.15)')
+                          ? 'drop-shadow(0 0 1.5px rgba(13, 148, 136, 0.4)) drop-shadow(0 0 3px rgba(13, 148, 136, 0.2)) brightness(1.15)'
+                          : 'drop-shadow(0 0 1.5px rgba(34, 211, 238, 0.4)) drop-shadow(0 0 3px rgba(34, 211, 238, 0.2)) brightness(1.15)')
                       : undefined,
                     ...(isActiveSpoke ? {} : {
                       animationDelay: `${-(idx * 0.25)}s`,
