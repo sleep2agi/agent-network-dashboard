@@ -8,6 +8,7 @@ import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
 import { ChatPopover } from './ChatPopover';
 import { vendorForModel, runtimeIdentity, identityLine } from '../lib/vendorIdentity';
 import { parseHubTime, relativeAgo } from '../lib/time';
+import { DASHBOARD_VERSION } from '../lib/version';
 
 /** v0.10.0 Hero 1+2 / §3.F server-health hook — fetches the normalized
  *  /api/hub/servers payload (preview.370 unblocked real-data via the
@@ -3457,6 +3458,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             return `Agent network topology — ${parts.join(' · ')}. Tab to navigate nodes, double-click canvas to reset view.`;
           })()}
           data-topo-canvas-aria
+          /* Round 462 / Loop — surface DASHBOARD_VERSION on the root SVG
+             element as `data-dashboard-version`. Directly closes the
+             feedback_dash_zombie_port_3000.md memory rule: "verify ships
+             via SVG DOM, not tmux 'Ready' — zombie next-servers + stale
+             global installs silently serve old code". Pre-R462 the only
+             ways to know which preview the dash was serving were:
+               1. parse the npm registry for the latest tag (network)
+               2. fetch /api/dashboard/version (API surface, no DOM)
+               3. inspect the /login footer or /settings page (off-route)
+             Test scripts that probe TopoGraph DOM (overlap, group-label
+             tint, pip strip, etc.) couldn't tell whether the dash was
+             actually serving the build they expected to verify. R462
+             threads DASHBOARD_VERSION through to the root <svg> so:
+               - Playwright probes can read svg[data-dashboard-version]
+                 directly + fail-fast on stale-build mismatch
+               - the memory rule's manual zombie check ("inspect SVG
+                 dom") becomes a one-attr probe
+               - operators DOM-inspect to confirm the live version
+                 matches the npm tag without leaving the topology page
+             Geometry/visual impact: ZERO (data-* attrs don't paint).
+             The version string is build-time injected via the existing
+             DASHBOARD_VERSION constant (R51 footer + R51 settings page
+             already consume it from app/lib/version.ts → reads
+             package.json pkg.version). No business logic added. */
+          data-dashboard-version={DASHBOARD_VERSION}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
