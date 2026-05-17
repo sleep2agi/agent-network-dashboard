@@ -11598,7 +11598,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 const lastAt = rawAt ? rawAt.replace(/\s+ago$/, '') : null;
                 const isRowHovered = hoveredEdgeKey === link.key;
                 const isRowPinned  = pinnedEdgeKey === link.key;
-                const isRowActive  = isRowHovered || isRowPinned;
+                /* R625 — extend isRowActive to also fire when the row's
+                   from/to alias matches chatAlias (the active chat
+                   target). Single-line gate union cascades the R611
+                   tint rect brightness + R611 fill/opacity lift to
+                   recent-signal rows involving the chat partner.
+
+                   11th anchor in chat-target-gated brightness family
+                   (R615 ring + R618 card + R616 alias + R617 sub +
+                   R619 avatar + R620 badge + R621 status ring + R622
+                   spoke + R623 halo + R624 incident edges + R625
+                   recent rows). The chat identification gesture
+                   extends from the canvas (per-node + edges) to the
+                   recent-signal panel — rows mentioning the chat
+                   partner now light up alongside everything else,
+                   so users can scan "which messages involve my chat
+                   partner" without crossing to /messages.
+
+                   Row text axes (R572 brightness, R443 fw, R427 ls)
+                   still gate on isRowHovered || isRowPinned only —
+                   chat-target endpoint match doesn't trigger those
+                   typographic tightenings since the row was never
+                   explicitly attended-to. Only the TINT BAND (R611)
+                   lifts on chat-endpoint, matching the same softer
+                   "this is related to your chat" signal R617 uses
+                   for sub-text. */
+                const isChatEndpointRow = !!chatAlias && (link.from === chatAlias || link.to === chatAlias);
+                const isRowActive  = isRowHovered || isRowPinned || isChatEndpointRow;
                 // Round 191 / Loop: timestamp text on row's right edge
                 // picks up the R160 row-pip freshness ramp at a
                 // different alpha range — gives the timestamp the same
