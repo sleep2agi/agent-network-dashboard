@@ -6507,7 +6507,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // — the gesture should read as "highlighted" not "loud".
             // R166 stroke-width 300ms transition already in the
             // visible-path style list so the lift eases for free.
-            const isEndpointHoveredEdge = !!hoveredAlias && (link.from === hoveredAlias || link.to === hoveredAlias);
+            /* R624 — extend isEndpointHoveredEdge to include chatAlias.
+               Single conceptual change cascades all edge-endpoint-
+               related axes (R94 visible-path α 1.7×, R436 sw 1.15×,
+               R164 endpoint ring r+sw+opacity) to lift on ANY edge
+               incident on the chat partner — same gate union as the
+               other R615-R623 chat-target gates.
+
+               10th anchor in chat-target-gated brightness family:
+                 R615 chat ring + R618 card + R616 alias + R617 sub +
+                 R619 avatar + R620 badge + R621 status ring + R622
+                 spoke + R623 halo + R624 incident edges ← this round.
+
+               Pre-R624 the chat partner's connecting edges stayed
+               at rest opacity/sw while every other surface lit up —
+               visual disconnect at the message-flow tier. Post-R624
+               all edges in/out of the chat partner thicken + brighten,
+               completing the canvas-wide "I am chatting with this
+               agent and these are its conversation partners" gesture. */
+            const isEndpointHoveredEdge = (!!hoveredAlias && (link.from === hoveredAlias || link.to === hoveredAlias))
+                                       || (!!chatAlias    && (link.from === chatAlias    || link.to === chatAlias));
             const renderWidth = isHoveredEdge ? Math.min(width * 1.4, 10)
                               : isEndpointHoveredEdge ? Math.min(width * 1.15, 8)
                               : width;
