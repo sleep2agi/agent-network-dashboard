@@ -10288,7 +10288,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 state lift.
                 data-recent-panel-title-glow attr exposes the gate
                 state for tests. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: activeEdgeKey ? `drop-shadow(0 0 2px ${pal.legendAccent}80)` : undefined }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-glow={activeEdgeKey ? 'true' : 'false'}>recent signal</text>
+            {/* Round 573 / Loop — recent panel-title joins per-element
+                brightness family at 11th anchor. Stacks brightness(1.15)
+                onto R550's active-gated drop-shadow. Mirrors R572
+                panel-row text pattern at the panel-TITLE tier — both
+                panels now have brightness in their active signature
+                at BOTH chrome tiers (title + row text), completing
+                the panel paint-axis cascade. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: activeEdgeKey ? `drop-shadow(0 0 2px ${pal.legendAccent}80) brightness(1.15)` : undefined }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-glow={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-brightness={activeEdgeKey ? '1.15' : '1'}>recent signal</text>
             {/* R96: header count now matches what the rows show. Pre-R96
                 this read "X msgs" off the raw messages array, but the
                 rows below render DEDUPED flowLinks — so a fleet with 10
@@ -11673,7 +11680,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 glow quintet pattern — two co-shipping anchors
                 under a single round number).
                 data-legend-panel-title-glow attr added. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: pinnedStatus ? `drop-shadow(0 0 2px ${pal.legendAccent}80)` : undefined }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-glow={pinnedStatus ? 'true' : 'false'}>legend</text>
+            {/* Round 573 sibling — legend panel-title 12th anchor.
+                Same stacked filter pattern at the legend-panel-title
+                scope. Both panel titles now lift in lockstep. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: pinnedStatus ? `drop-shadow(0 0 2px ${pal.legendAccent}80) brightness(1.15)` : undefined }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-glow={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-brightness={pinnedStatus ? '1.15' : '1'}>legend</text>
             {/* Round 257 / Loop: legend panel header count picks up the
                 symmetric 13L/13R inner-padding pattern from the recent-
                 signal panel. Pre-R257 the legend header was 13px from
