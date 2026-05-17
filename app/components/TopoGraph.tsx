@@ -5533,7 +5533,44 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   fontSize="9"
                   fontFamily="monospace"
                   fontWeight={isPinned ? '800' : '700'}
-                  opacity={isPinned || isHovered ? 1 : 0.55}
+                  /* Round 551 / Loop — category-differentiation family
+                     4th anchor. Orphan band ("其他" catchall) rest-state
+                     LABEL opacity drops 0.55 → 0.4 (~27% relative dim),
+                     mirroring R506's rect fillOpacity drop pattern at
+                     the label-paint tier. Adds a 4th independent
+                     channel to the orphan visual signature at rest:
+                       R499  fontStyle italic    (typography style)
+                       R503  '3 6' dash pattern  (rect stroke)
+                       R506  lower rect fill-opacity (rect fill)
+                       R551  lower label opacity (label paint)  ← this round
+                     Four independent channels (typography style +
+                     stroke pattern + rect fill density + label paint
+                     density) collectively encode the catchall semantic
+                     at rest — orphan band reads as "misc bucket, less
+                     attention-deserving" through every available paint
+                     channel, no chrome / color / geometry change.
+                     Pin and hover branches UNCHANGED — orphan label
+                     restores to full opacity 1 on inspection, same as
+                     prefix groups. The differentiation lives ONLY in
+                     the unsolicited rest state. The ~27% drop (0.55 →
+                     0.4) is dimmer than R506's ~40% (rect could
+                     tolerate it; small 9px text needs more residual
+                     paint to stay legible) — orphan label stays
+                     readable when scanning, just clearly quieter.
+                     Pure paint axis; bbox unchanged; R51 SVG sentinel
+                     safety untouched (overlap-test gates to g[data-
+                     node], this group-label is invisible to it).
+                     transition list (R55/R432/R457/R479: fill, ls,
+                     fw, filter all 200ms) already eases opacity since
+                     `opacity 300ms ease-out` lives in the parent <text>
+                     CSS — wait, only filter/ls/fw/fill 200ms are
+                     listed. Need to add 'opacity 200ms ease-out' for
+                     smooth orphan opacity flip on pin/hover transitions
+                     (currently opacity 0.55 → 1 was snapping).
+                     data-group-label-opacity attr exposes the resolved
+                     value for tests. */
+                  opacity={isPinned || isHovered ? 1 : box.isOrphan ? 0.4 : 0.55}
+                  data-group-label-opacity={isPinned || isHovered ? 1 : box.isOrphan ? 0.4 : 0.55}
                   data-group-label-hovered={isHovered && !isPinned ? 'true' : 'false'}
                   data-group-label-font-weight={isPinned ? '800' : '700'}
                   /* Round 479 / Loop — extend drop-shadow visual-polish
