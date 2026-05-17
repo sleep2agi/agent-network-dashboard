@@ -2334,6 +2334,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // lists once for both chips to share.
             const workingAliases = onlineNodes.filter(s => s.status === 'working').map(s => s.alias);
             const onlineAliases  = onlineNodes.map(s => s.alias);
+            /* Round 565 (50-round milestone) / Loop — extend the
+               inspection-overrides-encoding family to a 7th anchor at
+               the chip-row chip scope. Computes the hovered alias's
+               status tier (same idiom as R562/R563) so each chip's
+               className can include the "lit" bg/border treatment when
+               operator hovers a node matching its tier.
+               Family progression — 7 anchors complete:
+                 R484  recent-row timestamp     alias hover
+                 R485  edge particle opacity    alias hover
+                 R486  minimap dot opacity      alias hover
+                 R561  group-label + ants-gate  member-alias hover
+                 R562  legend-swatch r + glow   member-alias status match
+                 R563  pressure-seg brightness  member-alias status match
+                 R565  chip-row chip bg/border  member-alias status match ← this round
+               Status-tier-match feedback now SATURATES across panel
+               chrome at 4 surfaces simultaneously:
+                 minimap dot (R486)
+                 legend swatch (R562)
+                 pressure-seg (R563)
+                 chip-row chip (R565)  ← this round
+               When operator hovers a 'working' node alias, ALL FOUR
+               surfaces light up in green; 'idle' → all four in teal;
+               'offline' → all four in slate. The eye gets 4-way
+               confirmation of "your inspected node is in this tier"
+               across every persistent status-reference surface. */
+            const hoveredAliasTierKey: 'working' | 'idle' | 'offline' | null = (() => {
+              if (!hoveredAlias) return null;
+              const s = onlineNodes.find(n => n.alias === hoveredAlias)
+                     ?? offlineNodes.find(n => n.alias === hoveredAlias);
+              if (!s) return null;
+              if (s.status === 'working') return 'working';
+              return offlineNodes.includes(s) ? 'offline' : 'idle';
+            })();
+            const isWorkingChipLit = hoveredAliasTierKey === 'working';
+            const isOnlineChipLit  = hoveredAliasTierKey === 'idle';
             const truncate = (list: string[]) => {
               const head = list.slice(0, 8).join(', ');
               const tail = list.length > 8 ? ` + ${list.length - 8} more` : '';
@@ -2426,13 +2461,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // R398 hover-lift conditional. Composes with hover:-
                   // translate-y-px for the same lift-and-compress
                   // tactile signature R493 brought to reset/fullscreen.
+                  /* R565: when isWorkingChipLit (operator hovers a working
+                     node), chip stays in its "lit" bg-green-500/15 +
+                     border-green-500/30 state at rest. Same visual as
+                     hover; member-alias-matching pins the lift without
+                     requiring cursor on the chip. */
                   className={`group tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     workingCount > 0
-                      ? 'bg-green-500/10 text-green-300 border-green-500/20 hover:bg-green-500/15 hover:border-green-500/30 hover:-translate-y-px active:scale-95'
+                      ? `${isWorkingChipLit ? 'bg-green-500/15 border-green-500/30' : 'bg-green-500/10 border-green-500/20'} text-green-300 hover:bg-green-500/15 hover:border-green-500/30 hover:-translate-y-px active:scale-95`
                       : 'bg-green-500/10 text-green-300 border-green-500/20'
                   }`}
                   data-chip-hover-lift={workingCount > 0 ? 'true' : 'false'}
                   data-chip-group-hover-brighten="true"
+                  data-working-chip-member-alias-lit={isWorkingChipLit ? 'true' : 'false'}
                   data-working-chip
                   data-working-chip-aliases={workingAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'working' ? 'true' : 'false'}
@@ -2550,13 +2591,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // R494 sibling — online chip joins the active:scale-95 press
                   // family (gated on onlineNodes.length > 0 clickable branch,
                   // same conditional pattern as the working chip above).
+                  /* R565: same lit-on-member-alias-match pattern as
+                     working chip — online chip routes hover to 'idle'
+                     tier (see onMouseEnter below), so its member-alias
+                     gate is `hoveredAliasTierKey === 'idle'`. */
                   className={`group tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     onlineNodes.length > 0
-                      ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:-translate-y-px active:scale-95'
+                      ? `${isOnlineChipLit ? 'bg-cyan-500/15 border-cyan-500/30' : 'bg-cyan-500/10 border-cyan-500/20'} text-cyan-300 hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:-translate-y-px active:scale-95`
                       : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
                   }`}
                   data-chip-hover-lift={onlineNodes.length > 0 ? 'true' : 'false'}
                   data-chip-group-hover-brighten="true"
+                  data-online-chip-member-alias-lit={isOnlineChipLit ? 'true' : 'false'}
                   data-online-chip
                   data-online-chip-aliases={onlineAliases.join(',')}
                   data-pin-mirror={pinnedStatus === 'idle' ? 'true' : 'false'}
