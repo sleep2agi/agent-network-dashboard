@@ -4279,10 +4279,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // reused on the data attribute + the inline custom property.
             const w = box.statuses.working;
             const marchDur = w >= 6 ? 8 : w >= 4 ? 10 : w >= 2 ? 12 : 14;
+            // Round 468 / Loop — single-tier classifier. Surfaces the
+            // semantic the R319 pip-strip already encodes implicitly:
+            // a cluster where every member sits in one status tier
+            // renders as `name · count` only (offending duplicate pip
+            // dropped). Pre-R468 that "all members in tier X" fact
+            // was visible to the eye (no pips) but not queryable from
+            // the DOM. R468 attaches the classifier as
+            // `data-group-tier`:
+            //   'all-working' — w===count, fleet uniformly busy
+            //   'all-idle'    — i===count, fleet uniformly waiting
+            //   'all-offline' — o===count, fleet uniformly down
+            //   'mixed'       — at least 2 tiers present
+            // Sibling R466/R467 pattern — expose composed state as a
+            // data-attr without changing paint. Use cases: Playwright
+            // assertions, external CSS hooks, accessibility enrichment.
+            const groupTier =
+              box.statuses.working === box.count ? 'all-working' :
+              box.statuses.idle    === box.count ? 'all-idle' :
+              box.statuses.offline === box.count ? 'all-offline' :
+                                                    'mixed';
             return (
               <g
                 key={`grp-${box.key}`}
                 data-group={box.key}
+                data-group-tier={groupTier}
                 // Round 173 / Loop: group boxes pick up the first-paint
                 // fade-in wave alongside R9 staggered nodes (0-540ms)
                 // and R172 staggered edges (280-980ms). Pre-R173 the
