@@ -5247,7 +5247,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    R429 body opacity 0.94 → 1.0         (per-node card)
                    R430 spoke opacity α+ (this round)   (link to hub)
                  data-topo-hub-spoke-hovered exposes the gate. */
-              const isHoveredSpoke = !reducedMotion && hoveredAlias === session.alias;
+              /* R622 — extend isHoveredSpoke gate to include
+                 chatAlias === session.alias. Single conceptual change
+                 cascades the spoke's hover axes:
+                   R430 opacity   0.50 → 0.70 (idle hover)
+                                  0.80 → 0.95 (active hover)
+                   R435 sw        1.0 → 1.25 (idle hover)
+                                  2.25 → 2.5 (active hover)
+                   R533/R580 drop-shadow + brightness already gated on
+                   hub-hover, not per-spoke isHovered — so those don't
+                   join this gate union, only the geometry/opacity axes.
+
+                 The radial spoke from hub to the chat partner now
+                 thickens + brightens — completing the "line of
+                 attention" from hub center to chat target.
+
+                 8th anchor in chat-target-gated brightness family
+                 (R615 ring + R618 card + R616 alias + R617 sub +
+                 R619 avatar + R620 badge + R621 status ring + R622
+                 hub-spoke). */
+              const isHoveredSpoke = !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias);
               const spokeOpacity = isActiveSpoke
                 ? (isHoveredSpoke ? 0.95 : 0.80)
                 : (isHoveredSpoke ? 0.70 : 0.50);
