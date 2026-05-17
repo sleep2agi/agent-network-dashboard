@@ -3458,6 +3458,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             return `Agent network topology — ${parts.join(' · ')}. Tab to navigate nodes, double-click canvas to reset view.`;
           })()}
           data-topo-canvas-aria
+          /* Round 469 / Loop — fleet-split numeric attrs on the root
+             svg. The aria-label already encodes online/working/offline
+             /flow counts in text form (R7 origin) but DOM probes had
+             to PARSE the label string to extract the numbers. R469
+             surfaces them as 4 numeric data-attrs alongside the R462
+             dashboard-version + R466 any-hover + R467 any-pinned set
+             that already live on the root svg:
+               data-topo-online-count      total online sessions
+               data-topo-working-count     subset currently working
+               data-topo-offline-count     offline / ghost-purged
+               data-topo-flow-count        active flow links
+             Use cases:
+               - Playwright: one-line `svg.getAttribute('data-topo-
+                 working-count')` instead of parsing aria-label
+               - external CSS: data-attribute selectors for empty
+                 vs populated states (`[data-topo-online-count='0']`)
+               - a11y enrichment: screen-reader scripts can read the
+                 numeric attrs directly
+               - hub-aria parity: the hub-center text already shows
+                 `workingCount` digit (R130); R469 puts the same scalar
+                 on the canvas root for non-visual consumers.
+             Composed from existing onlineNodes / workingCount /
+             offlineNodes / flowLinks — no new state. */
+          data-topo-online-count={onlineNodes.length}
+          data-topo-working-count={workingCount}
+          data-topo-offline-count={offlineNodes.length}
+          data-topo-flow-count={flowLinks.length}
           /* Round 466 / Loop — aggregate hover signal on the root SVG.
              Exposes a single boolean `data-topo-any-hover` that
              reflects whether ANY hover state in the topology is
