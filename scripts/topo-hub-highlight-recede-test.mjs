@@ -109,7 +109,11 @@ await browser.close();
 const src = readFileSync('/home/vansin/agent-network-dashboard/app/components/TopoGraph.tsx', 'utf8');
 const sourceIIFE = /const hubRecede = !!\(\(hoveredAlias \|\| hoveredEdgeKey \|\| hoveredGroupLabel/.test(src);
 const sourceOpacityMultiplier = /const resolvedOpacity = hubRecede \? baseOpacity \* 0\.85 : baseOpacity;/.test(src);
-const sourceBreathGate = /const breathActive = !reducedMotion && workingCount === 0 && !hubRecede;/.test(src);
+// R511 extension: breathActive now also halts on hoveredHub (hub-hover
+// amplify state added to the 3-state opacity ladder). Regex updated to
+// match the extended formula. Runtime DOM contract (rest = breath true)
+// unchanged.
+const sourceBreathGate = /const breathActive = !reducedMotion && workingCount === 0 && !hubRecede && !hoveredHub;/.test(src);
 const sourceAnimateGate = /\{breathActive && \(\s*<animate/.test(src);
 
 const approxEq = (a, b) => Math.abs(parseFloat(a) - b) < 0.01;
