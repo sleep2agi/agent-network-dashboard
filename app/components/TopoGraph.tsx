@@ -12571,6 +12571,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           data-recent-row-freshness-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
                           data-recent-row-freshness-glow={alpha > 0.7 ? 'true' : 'false'}
                           data-recent-row-freshness-brightness={alpha > 0.7 ? '1.15' : '1'}
+                          data-recent-row-freshness-halo-layers={alpha > 0.7 ? '2' : '0'}
                           style={{
                             pointerEvents: 'none',
                             r: `${(isRowHovered || isRowPinned) ? 2.5 : 2.0}px`,
@@ -12600,8 +12601,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                                "this signal is live" semantic that R478
                                established. data-recent-row-freshness-
                                brightness attr exposes the gate for tests. */
+                            /* Round 647 / Loop — recent-row freshness pip
+                               filter gains a SECOND drop-shadow layer at
+                               6px blur + 0x40 alpha (half R478's inner
+                               0x80 alpha). Extends the multi-layer halo
+                               family from rings + text + edge-badge to
+                               the panel-side freshness indicator —
+                               first panel-tier anchor in the family.
+                               Inner layer (R478): 3px + 0x80 alpha (50%),
+                                 pal.legendAccent — sharp fresh-pulse glow
+                               Outer layer (R647): 6px + 0x40 alpha (25%),
+                                 pal.legendAccent — soft ambient falloff
+                               Both layers fresh-gated on alpha > 0.7
+                               (R478 semantic preserved: "this signal is
+                               live" — the wider outer glow only paints
+                               when the row is actually fresh, NOT on
+                               inspection).
+                               Same R642-R646 0.5x falloff vocabulary at
+                               2x blur stride. The pip at r=2.0-2.5
+                               radiates a near + far cyan glow when fresh
+                               — most visible polish in the recent-signal
+                               panel for live activity.
+                               Multi-layer halo family ledger (6 anchors):
+                                 chat-target ring (R637 + R642): 3px+6px
+                                 endpoint ring    (R639 + R644): 2px+4px
+                                 status ring      (R638 + R643): 2px+4px
+                                 alias text       (R500 + R645): 2px+4px
+                                 edge-badge ring  (R534/R480 + R646): 3px+6px
+                                 freshness pip    (R478 + R647): 3px+6px ← this
+                               R51 sentinel safety: pip is panel-internal,
+                               not g[data-node] descendant — selector
+                               doesn't match. Filter paint-only, no bbox
+                               change. data-recent-row-freshness-halo-layers
+                               attr exposes the gate state. */
                             filter: alpha > 0.7
-                              ? `drop-shadow(0 0 3px ${pal.legendAccent}80) brightness(1.15)`
+                              ? `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) brightness(1.15)`
                               : undefined,
                             transition: 'opacity 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                           } as React.CSSProperties}
