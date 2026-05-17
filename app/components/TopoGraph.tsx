@@ -8821,7 +8821,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       strokeWidth="2.5"
                       opacity={isChat ? (isLight ? 0.85 : 0.95) : 0}
                       filter={!isLight && isChat ? 'url(#topo-glow)' : undefined}
-                      style={{ pointerEvents: 'none', transition: 'opacity 200ms ease-out, stroke 200ms ease-out, filter 200ms ease-out' }}
+                      data-node-chat-ring-brightness={isChat ? '1.15' : '1'}
+                      /* 🎯 R615 — 100th consecutive visible-polish round.
+                         Chat-target ring (visible only when chatAlias ===
+                         session.alias) stacks brightness(1.15) onto its
+                         existing url(#topo-glow) SVG filter on cyber, or
+                         plain brightness on light. Same R582/R583 stacked-
+                         filter pattern.
+
+                         INTRODUCES A NEW 4th BRIGHTNESS GATE TYPE — chat-
+                         target-gated. The cross-gate brightness family
+                         taxonomy now spans 4 distinct trigger conditions:
+                           hover-gated:         R501-R613 (many surfaces)
+                           pin/active-gated:    R571 + R587 + R607 + R609-R612
+                           freshness-gated:     R606 (recent-row pip)
+                           chat-target-gated:   R615 (this round, chat ring)
+
+                         When the user opens a chat popover with a specific
+                         node, that node's surrounding ring (r=radius+14)
+                         identifies the chat target with status.primary
+                         stroke. R615 adds +15% brightness so the
+                         identification ring reads brighter — the active
+                         chat partner is unmistakable on the canvas.
+
+                         Inline style.filter overrides the attribute
+                         filter; stacked syntax preserves the url(#topo-
+                         glow) on cyber. Same pattern banked at R582
+                         visible-path + R583 particle + R584 status-ring. */
+                      style={{
+                        pointerEvents: 'none',
+                        filter: isChat
+                          ? (isLight
+                              ? 'brightness(1.15)'
+                              : 'url(#topo-glow) brightness(1.15)')
+                          : undefined,
+                        transition: 'opacity 200ms ease-out, stroke 200ms ease-out, filter 200ms ease-out',
+                      } as React.CSSProperties}
                       data-chat-target-ring
                       data-chat-target-active={isChat ? 'true' : 'false'}
                       data-chat-target-breath={!reducedMotion && isChat ? 'on' : 'off'}
