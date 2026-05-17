@@ -11674,10 +11674,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   ? 'true' : 'false'
               }
               data-topo-chrome-zoom-level-hover={hoveredZoomLevel ? 'true' : 'false'}
+              /* Round 517 / Loop — extends the chrome zoom-level readout
+                 from 2-axis (R347 letter-spacing + R420 fontWeight) to
+                 3-axis hover signature by adding a color brighten to
+                 pal.legendHeadline. Pre-R517 the readout's color stayed
+                 at pal.legendText on hover; the digits got tighter
+                 kerning (0→0.5px) and heavier weight (500→600) but
+                 stayed the same legendText gray tone. R517 lifts color
+                 to legendHeadline on hover so the readout brightens
+                 into the headline tier at the same beat — matching the
+                 R55/R197/R239 hover-deepen-own-hue idiom that legend-
+                 row label + count carry at panel scope. Chrome strip's
+                 only data display now has full 3-axis hover signature
+                 (letter-spacing + fontWeight + color), parity with the
+                 chip-row chips' own hover-brighten pattern.
+                 Implementation: inline color uses the same hoveredZoom-
+                 Level state as R347/R420 — no new state. Transition
+                 already includes 'color 200ms ease-out' (R264) so the
+                 brighten eases under the same cadence as the kerning +
+                 weight tweens — one motion-coherent 3-axis lift.
+                 data-topo-chrome-zoom-level-color attr exposes the
+                 resolved color string for tests. */
+              data-topo-chrome-zoom-level-color={hoveredZoomLevel ? 'headline' : 'text'}
               onMouseEnter={() => setHoveredZoomLevel(true)}
               onMouseLeave={() => setHoveredZoomLevel(false)}
               style={{
-                color: pal.legendText,
+                color: hoveredZoomLevel ? pal.legendHeadline : pal.legendText,
                 borderColor: pal.containerBorder,
                 minWidth: 46,
                 display: 'inline-block',
