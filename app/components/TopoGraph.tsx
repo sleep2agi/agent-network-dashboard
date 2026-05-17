@@ -15167,6 +15167,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      gate cause. */
                   data-topo-minimap-viewport-glow={hoveredMinimap ? 'hover' : view.zoom > 1.5 ? 'zoom' : 'false'}
                   data-topo-minimap-viewport-brightness={(hoveredMinimap || view.zoom > 1.5) ? '1.15' : '1'}
+                  data-topo-minimap-viewport-halo-layers={(hoveredMinimap || view.zoom > 1.5) ? '2' : '0'}
                   style={{
                     /* R627 — minimap viewport rect stacks brightness(1.15)
                        onto the existing hover drop-shadow + zoom>1.5
@@ -15185,10 +15186,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        drop-shadow glow. The cyan viewport indicator
                        now reads ~15% brighter on hover, distinguishing
                        it from sibling minimap chrome at quick glance. */
+                    /* Round 655 / Loop — minimap viewport rect filter gains
+                       a SECOND outer drop-shadow on both hover (alpha
+                       0x99 → 0x4c) and zoom>1.5 (alpha 0x80 → 0x40)
+                       branches. 14th anchor in multi-layer halo family
+                       (1st minimap-tier anchor). 2+4 stride matches
+                       R643/R644 small-element scope; same R642-R654
+                       0.5x alpha falloff vocabulary applied to the
+                       minimap chrome.
+                       The viewport rect at 120×82 minimap scale is a
+                       small ~24×16 indicator — the wide outer halo
+                       gives the cyan zoom indicator an ambient glow
+                       so the canvas's current viewport reads as
+                       "lit up" within the minimap envelope, matching
+                       the visual grammar the rest of the canvas uses
+                       for active indicators. */
                     filter: hoveredMinimap
-                      ? `drop-shadow(0 0 2px ${pal.legendAccent}99) brightness(1.15)`
+                      ? `drop-shadow(0 0 2px ${pal.legendAccent}99) drop-shadow(0 0 4px ${pal.legendAccent}4c) brightness(1.15)`
                       : view.zoom > 1.5
-                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80) brightness(1.15)`
+                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)`
                         : undefined,
                     transition: smoothView
                       ? 'x 280ms ease-out, y 280ms ease-out, width 280ms ease-out, height 280ms ease-out, stroke-width 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out'
