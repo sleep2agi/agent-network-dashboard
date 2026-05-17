@@ -8197,12 +8197,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  data-topo-hub-hover-ring-glow attr exposes the gate
                  state for tests. */
               data-topo-hub-hover-ring-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
+              /* Round 579 — hub-hover-ring joins per-element brightness
+                 family at 18th anchor. Stacks brightness(1.15) onto
+                 R535's drop-shadow — same R564/R570/R571/R572/R573/R574/
+                 R575/R577/R578 stacked-filter pattern. Closes hub-
+                 cluster brightness at 4 concentric elements (digit
+                 R575 + highlight R574 + halo R577 + hover-ring R579). */
+              data-topo-hub-hover-ring-brightness={!reducedMotion && hoveredHub ? '1.15' : '1'}
               style={{
                 pointerEvents: 'none',
                 filter: !reducedMotion && hoveredHub
                   ? (isLight
-                      ? 'drop-shadow(0 0 3px rgba(16, 185, 129, 0.5))'
-                      : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.5))')
+                      ? 'drop-shadow(0 0 3px rgba(16, 185, 129, 0.5)) brightness(1.15)'
+                      : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.5)) brightness(1.15)')
                   : undefined,
                 transition: 'opacity 180ms ease-out, r 180ms ease-out, stroke 200ms ease-out, filter 200ms ease-out',
               }}
