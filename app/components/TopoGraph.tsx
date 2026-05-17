@@ -3485,6 +3485,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           data-topo-working-count={workingCount}
           data-topo-offline-count={offlineNodes.length}
           data-topo-flow-count={flowLinks.length}
+          /* Round 471 / Loop — surface 2 remaining canvas-level mode
+             attrs alongside the R462/R466/R467/R469 set. Pre-R471 the
+             root svg exposed 7 attrs but tests probing "what layout
+             is active" had to query DOM internals (data-topo-chrome-
+             layout-active on the chrome button row) or parse the URL
+             for theme. R471 puts both modes on the root for one-stop
+             snapshot reads:
+               data-topo-layout — 'ring' | 'grid'
+               data-topo-theme  — 'cyber' | 'light'
+             Together with R469 the canvas root now carries 9 cross-
+             cutting attrs (1 build identity + 2 inspection mode + 4
+             fleet split + 2 layout/theme). Test harness can read the
+             FULL canvas state with 9 getAttribute calls; no traversal
+             into chrome strip / theme provider / panel rows.
+             Composed from existing `layout` (R138 ring↔grid toggle
+             state) + `isLight` (R12 theme palette gate) — no new
+             state, zero re-render cost. */
+          data-topo-layout={layout}
+          data-topo-theme={isLight ? 'light' : 'cyber'}
           /* Round 466 / Loop — aggregate hover signal on the root SVG.
              Exposes a single boolean `data-topo-any-hover` that
              reflects whether ANY hover state in the topology is
