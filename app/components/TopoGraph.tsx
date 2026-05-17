@@ -9061,10 +9061,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-edge-endpoint-active={isEndpoint ? 'true' : 'false'}
                       data-edge-endpoint-ring-stroke-width={isEndpoint ? 2.4 : 1.6}
                       data-edge-endpoint-ring-radius={endpointR}
+                      data-edge-endpoint-ring-brightness={isEndpoint ? '1.15' : '1'}
                       style={{
                         pointerEvents: 'none',
                         r: `${endpointR}px`,
-                        transition: 'opacity 180ms ease-out, stroke-width 180ms ease-out, r 180ms ease-out',
+                        /* R585 — endpoint emphasis ring gains filter
+                           brightness(1.15) when an edge endpoint
+                           activates. 24th anchor in per-element
+                           brightness family, and the FOURTH edge-tier
+                           paint layer:
+                             rail          (R581)
+                             visible path  (R582)
+                             flow particle (R583)
+                             endpoint ring (R585)  ← this round
+                           Edge-tier brightness coverage closes at 4/4
+                           paint surfaces. The endpoint ring is the
+                           edge's affinity marker at the connected
+                           nodes — when an edge lights up, all four
+                           paint surfaces brighten together for a
+                           single coherent edge-active gesture spanning
+                           the curve + the node ends.
+                           Endpoint ring 4-axis active signature now:
+                             opacity   R182  0    → 0.85/0.9
+                             sw        R233  1.6  → 2.4
+                             r         R442  +7   → +8
+                             brightness R585  —   → 1.15  ← this round
+                           Plain brightness (no url-filter stack) since
+                           the endpoint ring has no rest-time filter
+                           attribute. Inline style.filter undefined at
+                           rest (no flicker; opacity=0 already hides
+                           the ring). */
+                        filter: isEndpoint ? 'brightness(1.15)' : undefined,
+                        transition: 'opacity 180ms ease-out, stroke-width 180ms ease-out, r 180ms ease-out, filter 180ms ease-out',
                       } as React.CSSProperties}
                     />
                   );
