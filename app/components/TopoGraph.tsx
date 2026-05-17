@@ -11885,7 +11885,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-recent-panel-more-hovered={hoveredRecentMore ? 'true' : 'false'}
                     data-recent-panel-more-font-weight={hoveredRecentMore ? '600' : '500'}
                     data-recent-panel-more-transition="200ms"
-                    style={{ transition: 'opacity 200ms ease-out, fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out' }}
+                    data-recent-panel-more-brightness={hoveredRecentMore ? '1.15' : '1'}
+                    style={{
+                      /* R592 — +N more flows footer gains filter
+                         brightness(1.15) on hover. 31st anchor in
+                         per-element brightness family. Closes the
+                         footer's hover signature at 6 axes — the
+                         densest hover signature on any topology
+                         surface:
+                           R195  fill           legendText → legendAccent
+                           R325  letter-spacing 0.2 → 0.3 (R344 tween)
+                           R325  opacity        0.55 → 0.85
+                           R133  underline      none → underline
+                           R520  fontWeight     500 → 600
+                           R592  brightness     1 → 1.15  ← this round
+
+                         The footer is the recent-signal panel's
+                         primary nav affordance into /messages — when
+                         user hovers it, EVERYTHING about it shifts:
+                         color (cyan), size (fw), spacing (ls), opacity
+                         (0.85), decoration (underline), brightness
+                         (+15%). 6-axis hover signature reads as "this
+                         is the most actionable thing on the panel —
+                         click me".
+
+                         Triple-paint multiplicative interaction:
+                         opacity 0.85 × cyan fill × brightness(1.15)
+                         — the cyan reads dramatically brighter than
+                         a plain fill swap would.
+
+                         Existing transition list extends with 'filter
+                         200ms ease-out' matching the existing 200ms
+                         cadence across all 5 other axes. */
+                      filter: hoveredRecentMore ? 'brightness(1.15)' : undefined,
+                      transition: 'opacity 200ms ease-out, fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
+                    }}
                   >
                     {`+ ${moreCount}`}
                     <tspan opacity="0.7" data-recent-panel-more-unit>{` more flow${moreCount === 1 ? '' : 's'}`}</tspan>
