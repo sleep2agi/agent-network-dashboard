@@ -5211,6 +5211,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               a node click. Restrained dashed container + group-name label. */}
           {groupBoxes.map((box, boxIdx) => {
             const isHovered = activeGroup === box.key;
+            /* Round 561 / Loop — inspection-overrides-encoding family
+               4th anchor. When operator hovers a NODE ALIAS on the
+               canvas, the group-label that CONTAINS that node lifts
+               to full opacity, signalling "this is the cluster
+               whose member you're inspecting".
+               Family progression (4 anchors now):
+                 R484  recent-row timestamp   brightens on alias hover
+                 R485  edge particle opacity  lifts on alias hover
+                 R486  minimap dot opacity    lifts on alias hover
+                 R561  group-label opacity    lifts on member-alias hover ← this round
+               Pure paint axis (opacity only) — same restraint as
+               R486. NOT bundled into the existing `isHovered` flag
+               so the marching-ants live animation (gated on
+               `!isPinned && !isHovered`) keeps running; the box
+               rect stroke widen / fill brighten / letter-spacing
+               / filter glow gates stay tied to direct label
+               hover/pin semantics.
+               Mirror of R486's pattern: `hoveredAlias === s.alias`
+               extends a focused opacity branch independent from
+               the rest-state encoding (online/offline). R561 here:
+               `groupKeys[hoveredAlias] === box.key` extends a
+               cluster-awareness opacity branch independent from
+               the existing isHovered / isPinned semantics. */
+            const isMemberAliasHovered = !!hoveredAlias && groupKeys[hoveredAlias] === box.key;
             // R68: distinguish "locked by click" from "currently hovered".
             // R63 made pinned and hovered identical (both hit isHovered
             // via activeGroup). A user with one team pinned should see at
@@ -5452,10 +5476,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // motion layers (hub / ring / group) keep a coherent
                   // tempo grammar. Default 12s when working=0 doesn't
                   // matter — the className is only applied when working>0.
-                  data-group-box-live={!isPinned && !isHovered && box.statuses.working > 0 ? 'true' : 'false'}
+                  /* Round 561 — marching-ants gate refined to halt only
+                     on direct-label-hover (or pin), NOT on member-alias-
+                     hover. Pre-R561 `isHovered` covered BOTH cases via
+                     the line 1044 fallback `hoveredGroup ?? (hoveredAlias
+                     → groupKeys[hoveredAlias])` — so hovering ANY member
+                     node halted the ants, treating indirect inspection
+                     the same as direct attention.
+                     R561 differentiates: ants now keep running during
+                     member-alias hover (indirect / cluster-awareness
+                     inspection), halting ONLY on direct label hover or
+                     pin. The cluster's live signal stays alive while
+                     operator inspects member nodes — distinct visual
+                     telegraph for "directly attending this cluster"
+                     vs "inspecting one of its members".
+                     Gate uses `hoveredGroupLabel === box.key` directly
+                     (the LABEL hover state) instead of `isHovered`
+                     (which combines label-hover + member-alias-hover
+                     via activeGroup). data-group-box-live + the live
+                     className both flip on the same refined gate. */
+                  data-group-box-live={!isPinned && hoveredGroupLabel !== box.key && box.statuses.working > 0 ? 'true' : 'false'}
                   data-group-box-march-dur={marchDur}
                   data-group-box-lifted={(isPinned || isHovered) ? 'true' : 'false'}
-                  className={!isPinned && !isHovered && box.statuses.working > 0 ? 'anet-topo-groupbox-live' : undefined}
+                  className={!isPinned && hoveredGroupLabel !== box.key && box.statuses.working > 0 ? 'anet-topo-groupbox-live' : undefined}
                   // R142: drop-shadow filter when pinned or hovered. Box
                   // visually "rises off the canvas" — same vocabulary
                   // R18 KPI cards + R135 overlay panels use. Idle group
@@ -5762,9 +5805,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      (currently opacity 0.55 → 1 was snapping).
                      data-group-label-opacity attr exposes the resolved
                      value for tests. */
-                  opacity={isPinned || isHovered ? 1 : box.isOrphan ? 0.4 : 0.55}
-                  data-group-label-opacity={isPinned || isHovered ? 1 : box.isOrphan ? 0.4 : 0.55}
+                  /* Round 561 — opacity ladder gains inspection-
+                     overrides-encoding branch via isMemberAliasHovered.
+                     Resolution order (most-emphatic first):
+                       isPinned || isHovered            → 1   (direct attention)
+                       isMemberAliasHovered             → 1   (R561 inspection)
+                       box.isOrphan                     → 0.4 (R551 orphan rest)
+                       (default)                        → 0.55
+                     R484/R485/R486-family mirror. */
+                  opacity={isPinned || isHovered || isMemberAliasHovered ? 1 : box.isOrphan ? 0.4 : 0.55}
+                  data-group-label-opacity={isPinned || isHovered || isMemberAliasHovered ? 1 : box.isOrphan ? 0.4 : 0.55}
                   data-group-label-hovered={isHovered && !isPinned ? 'true' : 'false'}
+                  data-group-label-member-alias-hovered={isMemberAliasHovered ? 'true' : 'false'}
                   data-group-label-font-weight={isPinned ? '800' : '700'}
                   /* Round 479 / Loop — extend drop-shadow visual-polish
                      family to a 4th anchor: group-label parent text
