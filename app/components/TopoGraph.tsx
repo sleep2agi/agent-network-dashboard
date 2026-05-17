@@ -10943,11 +10943,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        the value for tests. R219 letter-spacing pin
                        tween + R55 fill transition + R181 always-mount
                        pin ring all preserved. */
-                    fontWeight="500"
+                    /* Round 531 / Loop — extends hover-fw family (R416/
+                       R420/R425/R520/R521/R522/R530, 7 anchors) to an
+                       8th anchor at the legend-row label. Pre-R531
+                       R364 set fw=500 statically; hover/pin lifted
+                       other axes (R55 fill brighten / R433 letter-
+                       spacing 3-tier / R181 pin ring) but the fw
+                       stayed flat. R531 mirrors R530's recent-row
+                       alias pattern at the legend-row label scope.
+                       Hover OR pin (hoveredStatus===row.key ||
+                       isPinned) lifts fw to 600, matching the
+                       legend-row count tier (R309 fw=600 / R446
+                       pin lift 600→700). Active label now reads at
+                       the count's data tier — sibling treatment to
+                       R530 recent-row.
+                       Hover-fw family extension (8 anchors):
+                         R416  chip-row count digit
+                         R420  chrome zoom-level
+                         R425  hub-center digit
+                         R520  +N more flows footer
+                         R521  chrome nodeSize S/M/L inactive
+                         R522  chrome layout Ring/Grid inactive
+                         R530  recent-row alias text
+                         R531  legend-row label  ← this round
+                       Two panel-row label surfaces (R530 recent-
+                       row alias + R531 legend-row label) now have
+                       parallel hover-fw signatures. R475 cadence
+                       at 200ms already covers font-weight via the
+                       existing transition list extension at this
+                       element. data-legend-row-label-font-weight
+                       attr flips '500' → '600' on isActive (was
+                       static '500' pre-R531). */
+                    fontWeight={(hoveredStatus === row.key || isPinned) ? '600' : '500'}
                     data-legend-row-label={row.key}
                     data-legend-row-label-pinned={isPinned ? 'true' : 'false'}
                     data-legend-row-label-hovered={!isPinned && hoveredStatus === row.key ? 'true' : 'false'}
-                    data-legend-row-label-font-weight="500"
+                    data-legend-row-label-font-weight={(hoveredStatus === row.key || isPinned) ? '600' : '500'}
                     /* Round 433 / Loop: legend-row text extends from
                        R219's pin-only letter-spacing (0px → 0.5px on
                        isPinned) to a 3-tier scale matching the R432
@@ -10990,7 +11021,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        the timing axis shifts. */
                     data-legend-row-label-transition="200ms"
                     style={{
-                      transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out',
+                      transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out',
                       letterSpacing: isPinned ? '0.5px' :
                                      hoveredStatus === row.key ? '0.25px' : '0px',
                     }}
