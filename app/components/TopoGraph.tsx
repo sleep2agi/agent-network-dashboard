@@ -8825,6 +8825,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         the chip-row pills. R116: pinned rows tint
                         stronger than hovered ones so locked vs preview
                         is discriminable. */}
+                    {/* Round 472 / Loop — cadence-sync follow-on to the
+                       R459/R460/R461/R464/R465/R470 200ms uniform
+                       motion stack established at the cluster scope.
+                       This R104 recent-signal row tint rect was still
+                       at the legacy 150ms cadence — when a user
+                       hovers/pins a recent-signal row, the tint
+                       snapped in 50ms ahead of the rest of the row's
+                       state-change cascade (R143 translateY,
+                       R220+R434 letter-spacing, R434 fill tween).
+                       R472 lifts to 200ms ease-out to match. Same
+                       sibling idiom R459 closed at the group-label
+                       hitbox tier; now applied at the recent-signal
+                       row tier. data-recent-row-tint-transition attr
+                       exposes the cadence for tests.
+                       Geometry/paint logic unchanged — purely the
+                       transition timing. */}
                     <rect
                       x="6" y={38 + index * 16 - 10}
                       width="218" height="14" rx="3"
@@ -8832,7 +8848,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       opacity={isRowPinned ? (isLight ? 0.18 : 0.22)
                               : isRowHovered ? (isLight ? 0.10 : 0.14)
                               : 1}
-                      style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
+                      data-recent-row-tint={link.key}
+                      data-recent-row-tint-transition="200ms"
+                      style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out' }}
                     />
                     {/* Round 160 / Loop: recency pip. Canvas flow edges
                         fade by freshness (R10: full intensity ≤30s →
