@@ -6884,7 +6884,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     in when the cursor enters the node, signalling clickability
                     (real-user feedback for the chat-popover open). Pure CSS via
                     Tailwind group-hover, so it costs nothing per frame and
-                    respects prefers-reduced-motion via the global media query. */}
+                    respects prefers-reduced-motion via the global media query.
+                    Round 489 / Loop — duration harmonized from 150ms → 200ms
+                    to join the Hero D #147 motion-coherence stack (R459-R475
+                    cluster surfaces + cadence-sync family). R2 originally
+                    picked 150ms for a "snappier feel" before the 200ms ease-
+                    out vocabulary was banked as the canvas-wide motion
+                    default. Bringing this ring into the family means hover-
+                    in / hover-out / cluster cadence / pip-strip transitions
+                    all settle on the same timing — the canvas now reads as
+                    one motion vocabulary instead of two competing tempos.
+                    11th surface in the motion-coherence stack. */}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
@@ -6896,7 +6906,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // exact widths and would mis-count this invisible hover
                   // ring as a node footprint.
                   strokeWidth="2"
-                  className="opacity-0 group-hover:opacity-70 transition-opacity duration-150"
+                  className="opacity-0 group-hover:opacity-70 transition-opacity duration-200"
                   style={{ pointerEvents: 'none' }}
                 />
                 {/* Round 11 / Loop: chat-focus ring — when the ChatPopover is
