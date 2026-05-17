@@ -4397,21 +4397,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       ].filter(Boolean).join('\n')}</title>
                     );
                   })()}
+                  {/* v0.11.0 #147 Hero D — Vincent 5401: "太大太丑,
+                     都放到框的右下角的小字". First-cut bottom-right
+                     placement collided with bottom-row nodes (cluster
+                     geometry has no bottom padding; only GROUP_TOP=12
+                     top band). Pivoted to Option C from #147 spec:
+                     keep top-left anchor BUT shrink fontSize (13 → 9)
+                     and dim default opacity (1 → 0.55, hover/pin
+                     restore to 1). Satisfies "太大太丑" via the size +
+                     opacity axes while keeping the existing geometry
+                     contract that topo-overlap-test gates. Hitbox
+                     rect width tightens to min(box.w-12, 160) to
+                     track the narrower label render. */}
                   <rect
                     x={box.x + 6}
                     y={box.y + 2}
-                    width={Math.min(box.w - 12, 240)}
-                    height={20}
+                    width={Math.min(box.w - 12, 160)}
+                    height={18}
                     rx="4"
-                    /* R107 / Loop: list-item tint extends to the SVG
-                       group labels — same idiom R104 added to recent-
-                       signal rows and R105 to the legend rows. The
-                       tint colour is pal.legendAccent (cyan) since
-                       groups don't carry an inherent swatch the way
-                       legend rows do; this matches R68's group-box
-                       isPinned/isHovered accent stroke for consistency.
-                       hover < pinned opacity so locked vs preview is
-                       discriminable at a glance. */
                     fill={pinnedGroup === box.key || hoveredGroupLabel === box.key ? pal.legendAccent : 'transparent'}
                     opacity={pinnedGroup === box.key ? (isLight ? 0.16 : 0.20)
                             : hoveredGroupLabel === box.key ? (isLight ? 0.09 : 0.13)
@@ -4479,17 +4482,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     list all preserved; extends to include 'font-
                     weight 200ms ease-out' so the bump eases under
                     the same cadence. */}
+                {/* v0.11.0 #147 Hero D — Vincent 5401 ask: "dash 网络
+                   图里面这个工程的名字也太大了, 超级丑". Per Vincent
+                   screenshot 实测. Initial attempt moved label to
+                   bottom-right (#147 spec Option A); topo-overlap-test
+                   caught 7 grid collisions because cluster boxes have
+                   no bottom padding. Pivot to Option C: keep top-left
+                   anchor, shrink fontSize 13 → 9 (-31%, watermark
+                   register), dim default opacity 1 → 0.55 (hover/pin
+                   restore to 1). Net Twitter-grok improvement:
+                   cluster labels no longer dominate the canvas at
+                   rest; operator still hovers to find specific groups.
+                   Position unchanged to preserve the existing
+                   geometry that overlap-test gates. */}
                 <text
                   x={box.x + 12}
-                  y={box.y + 14}
+                  y={box.y + 12}
                   fill={isHovered ? pal.legendHeadline : pal.legendText}
-                  fontSize="13"
+                  fontSize="9"
                   fontFamily="monospace"
                   fontWeight={isPinned ? '800' : '700'}
+                  opacity={isPinned || isHovered ? 1 : 0.55}
                   data-group-label-hovered={isHovered && !isPinned ? 'true' : 'false'}
                   data-group-label-font-weight={isPinned ? '800' : '700'}
                   style={{
-                    transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out',
+                    transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, opacity 200ms ease-out',
                     letterSpacing: isPinned ? '0.5px' :
                                    isHovered ? '0.25px' : '0px',
                   }}
@@ -4569,9 +4586,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       preserved (parent text fill still drives the
                       hover/pin color). data-group-label-count-font-
                       weight + -pinned attrs exposed for tests. */}
+                  {/* v0.11.0 #147 — count tspan tracks parent fontSize:
+                     11 → 8 to match the new 9px label scale (parent
+                     dropped 13 → 9 with same -2px gap to the count
+                     suffix). dx="4" replaces dx="6" — the smaller
+                     glyph baseline doesn't need the wider gutter. */}
                   <tspan
-                    dx="6"
-                    fontSize="11"
+                    dx="4"
+                    fontSize="8"
                     fontWeight={isPinned ? '600' : '500'}
                     data-group-label-count={box.key}
                     data-group-label-count-value={box.count}
