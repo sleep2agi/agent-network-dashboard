@@ -9362,7 +9362,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      already in the style list eases the lift for
                      free. data-node-status-ring-hovered exposes the
                      gate for tests. */
-                  const isRingHovered = !reducedMotion && hoveredAlias === session.alias;
+                  /* R621 — extend isRingHovered gate to include
+                     chatAlias === session.alias. Single conceptual
+                     change cascades across BOTH status-ring axes:
+                       R438 stroke-width  3   → 3.5 (online)
+                                          1.5 → 2   (offline)
+                       R584 brightness    1   → 1.15 (stacked w/
+                                                      url(#topo-glow))
+                     7th anchor in chat-target-gated brightness family
+                     (R615 ring + R618 card + R616 alias + R617 sub +
+                     R619 avatar + R620 badge + R621 status ring).
+                     The chat partner's tier-colored status ring (the
+                     primary status identifier visible without hovering)
+                     now thickens + brightens on chat-target — its
+                     status color (green/teal/slate) reads as +15%
+                     more vivid at glance, distinguishing it from
+                     sibling rings across the canvas. */
+                  const isRingHovered = !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias);
                   const ringStrokeWidth = isOnline
                     ? (isRingHovered ? 3.5 : 3)
                     : (isRingHovered ? 2 : 1.5);
