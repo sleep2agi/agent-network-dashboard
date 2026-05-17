@@ -4069,7 +4069,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 const x = ((seed * 13) % 1000);
                 const y = ((seed * 7) % 680);
                 const r = (i % 3 === 0) ? 1.2 : 0.7;
-                return <circle key={i} cx={x} cy={y} r={r} fill="#a5b4fc" opacity={0.35 + (i % 4) * 0.05} data-topo-starfield-dot={i} />;
+                /* Round 523 / Loop — 配色 family extension to a 3rd anchor.
+                   Pre-R523 all 14 starfield dots painted at the same
+                   hardcoded `#a5b4fc` (indigo-300). The starfield's role
+                   is atmospheric depth (R45, R291 comment), but a flat
+                   single-hue field reads more like a regular dot grid
+                   than a star field — real starlight has color
+                   temperature variation (blue-white hot stars / yellow
+                   sun-like / cool red).
+                   R523 cycles a 3-color deterministic rotation based on
+                   `i % 3`:
+                     i % 3 === 0  →  #a5b4fc  indigo-300  (original, cool)
+                     i % 3 === 1  →  #67e8f9  cyan-300    (cyber accent, hot)
+                     i % 3 === 2  →  #cbd5e1  slate-300   (neutral, warm white)
+                   All three hues sit inside the cyber theme's palette
+                   family (indigo / cyan / slate) so the starfield reads
+                   varied-but-coherent rather than rainbow. At opacity
+                   0.5 (parent <g>) * 0.35-0.50 (per-dot) the temperature
+                   shifts are gentle but perceptible — closes the gap
+                   between 'dot grid' and 'star field'.
+                   配色 family extension (3 anchors): R509/R510 hub-
+                   highlight cross-theme fill + R523 starfield color
+                   temperature variation. Light theme unaffected
+                   (starfield gated `!isLight` so light theme stays
+                   clean per R45's original 'white surface stays clean'
+                   intent).
+                   Deterministic on `i` — no JS hydration mismatch,
+                   same SSR/client output. data-topo-starfield-dot-hue
+                   attr exposes the resolved hue category for tests. */
+                const hues = ['#a5b4fc', '#67e8f9', '#cbd5e1'] as const;
+                const hueNames = ['indigo', 'cyan', 'slate'] as const;
+                const hueIdx = i % 3;
+                return <circle key={i} cx={x} cy={y} r={r} fill={hues[hueIdx]} opacity={0.35 + (i % 4) * 0.05} data-topo-starfield-dot={i} data-topo-starfield-dot-hue={hueNames[hueIdx]} />;
               })}
             </g>
           )}
