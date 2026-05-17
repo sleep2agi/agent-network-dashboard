@@ -10429,12 +10429,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         fontWeight="500"
                         data-node-sub-text={session.alias}
                         data-node-sub-text-hovered={hoveredAlias === session.alias ? 'true' : 'false'}
+                        data-node-sub-text-chat-target={chatAlias === session.alias ? 'true' : 'false'}
                         data-node-sub-text-font-weight="500"
-                        data-node-sub-text-brightness={!reducedMotion && hoveredAlias === session.alias ? '1.15' : '1'}
+                        data-node-sub-text-brightness={!reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias) ? '1.15' : '1'}
+                        /* R617 — extends R567 sub-text brightness gate
+                           to ALSO fire on chatAlias === alias. 3rd anchor
+                           in chat-target-gated brightness family (R615
+                           chat ring + R616 alias text + R617 sub-text).
+
+                           Both per-node text lines (alias + sub-text)
+                           now brighten together when their node is the
+                           chat partner — unified "this is the chat
+                           partner" gesture across all per-node text
+                           identification surfaces.
+
+                           Same R567 plain brightness(1.15) filter (no
+                           drop-shadow stack at sub-text scope per R567).
+                           Same gate-union pattern as R616. */
                         style={{
                           transition: 'fill 300ms ease-out, letter-spacing 200ms ease-out, filter 200ms ease-out',
                           letterSpacing: hoveredAlias === session.alias ? '0.2px' : '0px',
-                          filter: !reducedMotion && hoveredAlias === session.alias
+                          filter: !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias)
                             ? 'brightness(1.15)'
                             : undefined,
                         }}
