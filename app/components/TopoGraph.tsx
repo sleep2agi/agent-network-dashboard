@@ -5234,7 +5234,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      transition list extends to include 'filter 200ms
                      ease-out' alongside the existing fill/ls/fw/opacity
                      200ms tweens. */
-                  data-group-label-glow={isPinned ? 'true' : 'false'}
+                  /* Round 538 / Loop — extends R479 group-label drop-
+                     shadow from pin-only to ALSO fire on hover, with
+                     a 2-tier alpha ladder matching the R432 letter-
+                     spacing 3-tier (hover at 0.25px / pin at 0.5px)
+                     pattern. Pre-R538 the paint axis was binary (lit
+                     on pin, dark on hover); R538 adds a softer hover
+                     glow that distinguishes from the stronger pin
+                     glow without losing the "active state lights up"
+                     gesture.
+                     2-tier alpha ladder:
+                       pin (committed)    cyan 80 hex (~50% alpha)
+                       hover (preview)    cyan 4d hex (~30% alpha)
+                       rest               none
+                     Pin signature stays distinctively brighter, but
+                     hover now telegraphs paint-axis attention too.
+                     Sibling to R534 edge-badge hover-precedence
+                     extension at the drop-shadow family. R479 hue
+                     (pal.legendAccent) preserved across both tiers.
+                     data-group-label-glow attr upgraded from binary
+                     ('true'/'false') to 3-value ('pin' | 'hover' |
+                     'false') so tests can distinguish gate cause. */
+                  data-group-label-glow={isPinned ? 'pin' : isHovered ? 'hover' : 'false'}
                   /* Round 499 / Loop — orphan band "其他" label gets
                      fontStyle: italic to visually distinguish the
                      catchall from real prefix-group bands. Pre-R499
@@ -5263,7 +5284,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     fontStyle: box.isOrphan ? 'italic' : undefined,
                     filter: isPinned
                       ? `drop-shadow(0 0 3px ${pal.legendAccent}80)`
-                      : undefined,
+                      : isHovered
+                        ? `drop-shadow(0 0 3px ${pal.legendAccent}4d)`
+                        : undefined,
                   }}
                   data-group-label={box.key}
                   data-group-label-pinned={isPinned ? 'true' : 'false'}
