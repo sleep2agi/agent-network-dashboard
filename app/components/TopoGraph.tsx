@@ -5815,6 +5815,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           via the new -opacity-active attr; the
                           legacy -opacity-hover attr kept for R395
                           test compatibility. */}
+                      {/* Round 480 / Loop — 5th anchor in the drop-shadow
+                         visual-polish family. Gates on isHot (link.
+                         count >= 10, R129 hot-lane threshold) so the
+                         badge gets a warm-amber halo when its edge
+                         crosses the high-traffic boundary.
+                         Drop-shadow family ledger now:
+                           R476  hub digit       hover-gated      emerald
+                           R477  legend pin-ring pin-gated        row.fill
+                           R478  freshness pip   freshness-gated  cyan
+                           R479  group label     pin-gated        cyan
+                           R480  edge badge      hot-lane-gated   amber  ← this round
+                         5th gate type — traffic volume — joins hover,
+                         pin, freshness, pin. Each polish anchor uses
+                         a distinct semantic gate but the same paint
+                         vocabulary. Hue: hotStroke (amber-tinted
+                         palette member) at 0x80 alpha — picks up the
+                         R126/R188 hot-edge accent colour family so
+                         the glow reads as a chromatic extension of
+                         the existing hot-lane stroke. 3-px blur
+                         radius reads as soft heat rather than
+                         emergency klaxon.
+                         R51 sentinel safety: badge sw=2 only matters
+                         when the overlap probe runs on g[data-node]
+                         descendants, which this edge-internal badge
+                         is not. Filter is paint-only, bbox unchanged.
+                         transition list extends to include 'filter
+                         200ms ease-out' so the heat halo eases on
+                         the count-crosses-threshold flip. */}
                       <circle
                         cx={badgeX} cy={badgeY}
                         r={isHoveredEdge || isPinned ? 10.5 : 9}
@@ -5829,7 +5857,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-edge-badge-opacity-rest={isLight ? 0.95 : 0.85}
                         data-edge-badge-opacity-hover="1"
                         data-edge-badge-opacity-active="1"
-                        style={{ transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out' }}
+                        data-edge-badge-glow={isHot ? 'true' : 'false'}
+                        style={{
+                          filter: isHot
+                            ? `drop-shadow(0 0 3px ${hotStroke}80)`
+                            : undefined,
+                          transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
+                        }}
                       />
                       {/* Round 224 / Loop: edge badge text gains the 4th
                           pin-signature typography. Pre-R224 the digit
