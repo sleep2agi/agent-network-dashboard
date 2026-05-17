@@ -13734,6 +13734,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               onClick={() => { popChrome('zoom-out'); zoomByDiscrete(1 / 1.2); }}
               data-topo-chrome-zoom-out
               data-topo-chrome-zoom-out-popping={chromePopping === 'zoom-out' ? 'true' : 'false'}
+              data-topo-chrome-zoom-out-brightness-hover="1.15"
               // R196: press-state deepens bg one tier above hover (white/5
               // → white/10) so mouse-down has a tactile dim before the
               // R186 icon pop fires on release.
@@ -13742,7 +13743,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // press-feedback family (R492 + nodeSize above). transition-
               // transform + duration-200 + ease-out + transform-gpu added
               // since the className had only transition-colors.
-              className="group px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors transition-transform duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
+              /* R596 — zoom-out segmented button gains hover:brightness-[1.15]
+                 (35th anchor in per-element brightness family, 4th HTML).
+                 Sibling to zoom-in below — paired-anchor round closing the
+                 entire zoom trio at brightness parity (R593 zoom-level
+                 readout + R596 zoom-out + zoom-in).
+
+                 Segmented-control constraint preserved: brightness is pure
+                 paint (no geometry shift) so it doesn't break the R400
+                 segmented-unity rule (which only excludes geometric hover-
+                 lift like translateY). Each segment can brighten
+                 independently while the strip stays planted as one unit.
+
+                 Tailwind v4 arbitrary `[transition-property:...]` replaces
+                 `transition-colors transition-transform` so the filter
+                 property joins the existing 200ms cadence — bg / color /
+                 transform / filter all ease in unison.
+
+                 data-topo-chrome-zoom-out-brightness-hover='1.15' attr
+                 documents the hover value for tests. */
+              className="group px-2 py-1 hover:bg-white/5 hover:brightness-[1.15] active:bg-white/10 [transition-property:color,background-color,transform,filter] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom out"
               title="Zoom out (−)"
@@ -13933,13 +13953,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               onClick={() => { popChrome('zoom-in'); zoomByDiscrete(1.2); }}
               data-topo-chrome-zoom-in
               data-topo-chrome-zoom-in-popping={chromePopping === 'zoom-in' ? 'true' : 'false'}
+              data-topo-chrome-zoom-in-brightness-hover="1.15"
               // R196: press-state (mirror of zoom-out above).
               // R352: `group` lets the inner svg respond via group-hover.
               // R493 — zoom +/− buttons join the chrome-strip active:scale-95
               // press-feedback family (R492 + nodeSize above). transition-
               // transform + duration-200 + ease-out + transform-gpu added
               // since the className had only transition-colors.
-              className="group px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors transition-transform duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
+              /* R596 sibling — zoom-in mirrors zoom-out above. 36th anchor
+                 in per-element brightness family, 5th HTML. */
+              className="group px-2 py-1 hover:bg-white/5 hover:brightness-[1.15] active:bg-white/10 [transition-property:color,background-color,transform,filter] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom in"
               title="Zoom in (+)"
