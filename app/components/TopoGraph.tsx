@@ -4647,9 +4647,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   //   pinned   → fill 0.08 / 0.13, stroke 3 px (locked)
                   //   hovered  → fill 0.05 / 0.09, stroke 2 px (inspecting)
                   //   idle     → fill 0.025 / 0.045, stroke 1.5 px dashed
-                  fillOpacity={isPinned ? (isLight ? 0.08 : 0.13)
-                              : isHovered ? (isLight ? 0.05 : 0.09)
-                              : (isLight ? 0.025 : 0.045)}
+                  /* Round 506 / Loop — category-differentiation family
+                     3rd anchor. Orphan band rest-state fillOpacity drops
+                     slightly below prefix-group rest (0.025/0.045 →
+                     0.015/0.028). Adds a 3rd independent paint
+                     differentiator to the orphan visual signature:
+                       R499  fontStyle: italic    (label text)
+                       R503  '3 6' dash pattern   (rect stroke)
+                       R506  lower fillOpacity    (rect fill)  ← this round
+                     Three independent channels (typography + stroke
+                     pattern + fill density) collectively encode the
+                     catchall semantic at rest. Pin and hover branches
+                     UNCHANGED (still 0.05/0.09 hover, 0.08/0.13 pin) —
+                     orphan box gets full visual emphasis on inspection
+                     identical to prefix groups; the differentiation
+                     lives ONLY in the unsolicited rest state. The
+                     ~40% drop (0.045 → 0.028 cyber, 0.025 → 0.015
+                     light) is subtle enough that the orphan box stays
+                     visible at rest, just quieter — matches the
+                     "misc bucket, less attention-deserving" semantic
+                     without losing the visual anchor.
+                     Pure paint axis; bbox unchanged; R51 SVG sentinel
+                     safety untouched (overlap-test gates to g[data-
+                     node], cluster rect invisible to it).
+                     data-group-box-fill-opacity attr surfaces the
+                     resolved value for tests. */
+                  fillOpacity={
+                    isPinned ? (isLight ? 0.08 : 0.13)
+                    : isHovered ? (isLight ? 0.05 : 0.09)
+                    : box.isOrphan ? (isLight ? 0.015 : 0.028)
+                    : (isLight ? 0.025 : 0.045)
+                  }
+                  data-group-box-fill-opacity={
+                    isPinned ? (isLight ? 0.08 : 0.13)
+                    : isHovered ? (isLight ? 0.05 : 0.09)
+                    : box.isOrphan ? (isLight ? 0.015 : 0.028)
+                    : (isLight ? 0.025 : 0.045)
+                  }
                   stroke={(isPinned || isHovered) ? pal.legendAccent : pal.ringStroke}
                   strokeWidth={isPinned ? 3 : isHovered ? 2 : 1.5}
                   /* Round 503 / Loop — category-differentiation family
