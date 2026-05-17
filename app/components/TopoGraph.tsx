@@ -3458,6 +3458,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             return `Agent network topology — ${parts.join(' · ')}. Tab to navigate nodes, double-click canvas to reset view.`;
           })()}
           data-topo-canvas-aria
+          /* Round 466 / Loop — aggregate hover signal on the root SVG.
+             Exposes a single boolean `data-topo-any-hover` that
+             reflects whether ANY hover state in the topology is
+             active. Composed from the existing per-surface hover
+             vars; doesn't introduce new state. Useful for:
+               - Playwright tests asserting "topology entered a hover
+                 mode" without enumerating per-surface attrs
+               - external CSS hooks targeting `[data-topo-any-hover=
+                 "true"]` to dim adjacent UI (e.g. chrome strip)
+                 while the user is inspecting the canvas
+               - debug overlays that visualise hover dwell-time
+             The 6 hover sources contributing:
+               hoveredAlias       (node circle / card / alias text)
+               hoveredHub         (hub center, halo, ring)
+               hoveredEdgeKey     (flow link path / particle / endpoint)
+               hoveredGroupLabel  (cluster name / count / pips)
+               hoveredStatus      (legend row)
+               hoveredVendor      (vendor chip in chip row)
+             Read-only computed attr — zero re-render cost beyond the
+             React update that already fires when any of those state
+             vars flips. Geometry / paint untouched. */
+          data-topo-any-hover={
+            (hoveredAlias || hoveredHub || hoveredEdgeKey || hoveredGroupLabel ||
+             hoveredStatus || hoveredVendor) ? 'true' : 'false'
+          }
           /* Round 462 / Loop — surface DASHBOARD_VERSION on the root SVG
              element as `data-dashboard-version`. Directly closes the
              feedback_dash_zombie_port_3000.md memory rule: "verify ships
