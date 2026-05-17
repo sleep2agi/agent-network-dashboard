@@ -3767,6 +3767,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              'true' / 'false' string values (consistent with R466/
              R467/R513 boolean attrs). */
           data-topo-fullscreen={isFullscreen ? 'true' : 'false'}
+          /* Round 516 / Loop — 17th canvas state attr. Surfaces the
+             grid layout's content-bottom y-coordinate so tests can
+             verify grid content doesn't extend past the viewBox or
+             collide with chrome elements positioned below the canvas.
+             Composed from existing gridContentBottom derived state
+             (computed at line ~915 from gy0 + totalRows * cellH + 8).
+             In ring layout, gridContentBottom is 0 (no grid). In grid
+             layout it's the actual pixel y-coordinate where the
+             cluster bands end.
+             Use cases:
+               - Playwright: assert grid layout doesn't exceed viewBox
+                 height (680) without re-computing the layout math
+               - External CSS: `[data-topo-grid-content-bottom='0']` to
+                 distinguish ring-mode (no grid content) from grid-mode
+                 in CSS without parsing layout attr
+               - Future polish gates: if cluster count grows large
+                 enough to push grid bottom past viewBox, can trigger
+                 a 'compact' mode automatically */
+          data-topo-grid-content-bottom={gridContentBottom}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
