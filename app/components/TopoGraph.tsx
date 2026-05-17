@@ -9046,8 +9046,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          R427/R431/R432/R433/R434. R55 fill 150ms +
                          R220 letter-spacing 150ms transition kept
                          (additive conditional case, no new property). */
+                      /* Round 474 / Loop — cadence-sync follow-on to
+                         R472. R472 lifted the recent-row TINT RECT
+                         to 200ms but the row TEXT alongside still
+                         ran 150ms — same panel-row scope, two
+                         different rates. When a user hovered/pinned
+                         a row the rect background brightened in
+                         200ms while the text fill + letter-spacing
+                         finished in 150ms. R474 closes that internal
+                         desync by lifting the text transitions to
+                         match. Whole recent-row state-flip now
+                         eases at 200ms ease-out across rect AND
+                         text. data-recent-row-text-transition='200ms'
+                         attr exposed for tests. R434 3-tier letter-
+                         spacing values unchanged; R363 fw + R55 fill
+                         brighten unchanged — only the timing axis
+                         shifts. */
+                      data-recent-row-text-transition="200ms"
                       style={{
-                        transition: 'fill 150ms ease-out, letter-spacing 150ms ease-out',
+                        transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out',
                         letterSpacing: isRowPinned ? '0.5px' :
                                        isRowHovered ? '0.25px' : '0px',
                       }}
