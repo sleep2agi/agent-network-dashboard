@@ -6707,11 +6707,45 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    so the glow eases under the same cadence as the
                    scale + fw + fill axes. */
                 data-topo-hub-working-count-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
+                /* Round 507 / Loop — focal recede. When ANY non-hub
+                   canvas surface is hovered (a node / an edge / a
+                   group label / a legend row / a vendor chip), the
+                   hub-center workingCount digit fades to 0.85 opacity,
+                   signaling "you're inspecting elsewhere, hub recedes
+                   to background." When the user un-hovers (or hovers
+                   the hub itself), opacity returns to 1.0. Pure paint
+                   polish at the canvas's most prominent focal point.
+                   Hits 信息密度 + 动效 themes — the hub digit gives
+                   way visually to the surface under inspection,
+                   reinforcing the "this is the focal point right now"
+                   gesture without requiring users to track which
+                   surface holds attention.
+                   Gate excludes hoveredHub specifically: hovering the
+                   hub itself should LIFT the digit (R425 fw bump +
+                   R476 glow + R209 scale 1.08) — the existing hover-
+                   on-hub signature is intact; only inspection
+                   ELSEWHERE recedes the hub.
+                   Composed from existing hoveredAlias / hoveredEdge-
+                   Key / hoveredGroupLabel / hoveredStatus / hovered-
+                   Vendor — no new state. 300ms ease-out opacity
+                   transition already in the style list (existing R213
+                   transition spec), so the fade rides on existing
+                   infrastructure.
+                   data-topo-hub-recede attr surfaces the gate state
+                   for tests. */
+                data-topo-hub-recede={
+                  (hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
+                   hoveredStatus || hoveredVendor) && !hoveredHub ? 'true' : 'false'
+                }
                 style={{
                   pointerEvents: 'none',
                   transform: !reducedMotion && hoveredHub ? 'scale(1.08)' : 'scale(1)',
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
+                  opacity: (hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
+                            hoveredStatus || hoveredVendor) && !hoveredHub
+                    ? 0.85
+                    : 1,
                   filter: !reducedMotion && hoveredHub
                     ? (isLight
                         ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6))'
@@ -6721,7 +6755,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      bump 700 → 800 eases under the same cadence as
                      R209 scale + R253 fill + R213 opacity.
                      R476: filter 200ms appended so the new drop-
-                     shadow glow eases at the same cadence. */
+                     shadow glow eases at the same cadence.
+                     R507: opacity 300ms (existing in list) covers
+                     the new focal-recede fade. */
                   transition: 'transform 200ms ease-out, opacity 300ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
                   fontVariantNumeric: 'tabular-nums',
                 }}
