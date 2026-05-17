@@ -11794,8 +11794,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // owns transform during its 450ms run. transformOrigin
               // 'center' so rotation pivots around the icon's centre
               // (default would be top-left and the icon would arc).
+              /* Round 514 / Loop — extends R352/R353 chrome icon hover-
+                 scale family to the reset button. Pre-R514 the reset
+                 icon had hover-rotate (-8°, R350) + hover-sw (2.5→2.8,
+                 R453) but no hover-scale, while zoom-out (R352), zoom-
+                 in (R352), and fullscreen (R353) icons all carried
+                 `group-hover:scale-110`. R514 brings the reset icon
+                 into the same 3-axis hover signature (rotate + sw +
+                 scale) as the rest of the chrome strip.
+                 Implementation: inline transform composes rotate +
+                 scale into one string. `transform: rotate(-8deg)
+                 scale(1.1)` on hover; `rotate(0) scale(1)` at rest.
+                 transformOrigin 'center' applies to both — rotation
+                 pivots around centre AND scale grows from centre.
+                 The Tailwind `group-hover:scale-110` approach can't
+                 work here because inline `style.transform` overrides
+                 className-based transforms; compose the multi-axis
+                 transform inline instead.
+                 Chrome icon hover gesture parity (post-R514):
+                   zoom-out         scale-110 + sw-lift (R352/R454)
+                   zoom-in          scale-110 + sw-lift (R352/R454)
+                   fullscreen       scale-110 + sw-lift (R353/R455)
+                   reset            scale-1.1 + sw-lift + rotate -8°
+                                    (R514 + R453 + R350)
+                 reset gets the EXTRA rotate axis because R350's spin
+                 preview semantic is reset-specific — the rotation
+                 hints at the click-spin (R184) the button will fire. */
               style={{
-                transform: hoveredReset && !resetSpinning ? 'rotate(-8deg)' : 'rotate(0deg)',
+                transform: hoveredReset && !resetSpinning ? 'rotate(-8deg) scale(1.1)' : 'rotate(0deg) scale(1)',
                 transformOrigin: 'center',
                 transition: 'transform 200ms ease-out, stroke-width 200ms ease-out',
               }}
