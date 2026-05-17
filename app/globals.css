@@ -949,15 +949,40 @@ body {
      all preserved) plus `outline-color` for R490. All at 200ms ease-
      out, matching the chip-row's existing Tailwind duration-200 ease-
      out so visible animations on the chip are unchanged.
-     Trade-off: chips with inline `style.transition` (e.g. R210
-     pressure-bar segments at 220ms width / 150ms boxShadow / 150ms
-     filter, line 2338 in TopoGraph.tsx) keep their inline value
-     because inline style wins over class rules regardless of
-     !important. That's intentional — those custom timings were
-     deliberate and stay scoped to their element. */
+
+     Round 524 / Loop — CORRECTION + bug fix.
+     R490's original 'trade-off' note read:
+       'chips with inline style.transition (R210 pressure-bar
+        segments at 220ms width / 150ms boxShadow / 150ms filter)
+        keep their inline value because inline style wins over class
+        rules regardless of !important.'
+     That was WRONG about CSS cascade. Per the spec, `!important`
+     author declarations DO override normal-priority inline-style
+     declarations. So R490's transition-property list silently
+     dropped every inline transition that targeted a property NOT
+     in this class's list — including R165's width 220ms tween on
+     the pressure-bar segments AND R210's filter brightness(1.2)
+     hover on those same segments. Both motion polishes have been
+     silently broken (snapping instead of easing) since R490
+     landed; banked as test-craft lesson in R523.
+     R524 fixes by extending the transition-property list to
+     include `width` and `filter` so the pressure-bar segments
+     (and any future chip-focus surface with width/filter motion)
+     animate per the class's unified 200ms ease-out. The cadence
+     shift (R165's 220ms → 200ms, R210's 150ms → 200ms) loses 20-
+     50ms of intent precision but slots into the dashboard's
+     uniform 200ms motion vocabulary the rest of the chip family
+     already uses — net visible improvement (motion was DEAD,
+     now eases at 200ms; that's a strictly better state than
+     snapping).
+     Other chip-focus surfaces (filter pills, online/working
+     chips, minimap container, "+N more" footer's <g>) don't
+     change width or filter at runtime, so adding these
+     properties to the list is a no-op for them. */
   transition-property:
     outline-color, color, background-color, border-color,
-    text-decoration-color, fill, stroke, opacity, box-shadow, transform
+    text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+    width, filter
     !important;
   transition-duration: 200ms !important;
   transition-timing-function: ease-out !important;
