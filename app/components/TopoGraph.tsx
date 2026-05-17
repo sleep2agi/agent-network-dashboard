@@ -9703,6 +9703,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       now ~1.25px below hitbox center (vs ~2.25px pre).
                       No height change, no test ripple (other than this
                       one), no R260/R268/R270 chrome regressions. */}
+                  {/* Round 473 / Loop — final cadence-sync follow-on,
+                     closing the legacy 150ms transition at the
+                     LEGEND-ROW tint scope. R459 (group-label hitbox)
+                     + R472 (recent-row hitbox) already lifted the
+                     two sibling panel-row hitboxes to 200ms; the
+                     legend-row was the last per-row tint still
+                     snapping at 150ms.
+                     After R473 the 200ms ease-out vocabulary is
+                     uniform across ALL three panel-row scopes —
+                     group-label, recent-signal, and legend — so
+                     hover/pin state-change cascades read coherently
+                     at every panel-tier surface. data-legend-row-
+                     tint-transition='200ms' attr exposed for tests.
+                     Geometry/paint unchanged. */}
                   <rect
                     x="6" y={row.y0 - 11}
                     width="170" height="22" rx="3"
@@ -9711,7 +9725,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                             : hoveredStatus === row.key ? (isLight ? 0.08 : 0.12)
                             : 1}
                     data-legend-row-tinted={isPinned ? 'pinned' : hoveredStatus === row.key ? 'hover' : 'none'}
-                    style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
+                    data-legend-row-tint-transition="200ms"
+                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out' }}
                   />
                   {/* Round 197 / Loop: swatch dot scales r 5.5 → 7 when its
                       row is hovered or pinned. Pre-R197 the swatch was a
