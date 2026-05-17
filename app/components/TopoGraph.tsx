@@ -1749,12 +1749,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               overpowering the h2 at text-lg/font-semibold (R286).
               viewBox 32×32 unchanged so the inner crescent geometry
               scales proportionally. */}
+          {/* Round 548 / Loop — title-block brand logo gains subtle
+              hover-scale gesture. Pre-R548 the 40×40 crescent was
+              fully static — no hover affordance. R548 adds hover:
+              scale-105 (Tailwind 4 emits as `scale: 1.05`) so the
+              brand mark gently responds to attention as the user's
+              cursor sweeps across the title block. 5% scale is
+              intentionally subtle (vs R350 chrome icon hover-scale-
+              110): the brand logo is a passive identity mark, not
+              an interactive control, so the gesture stays small.
+              cursor: default to clarify non-clickability (the SVG
+              isn't a button; just a brand element).
+              transition-transform duration-200 ease-out matches the
+              dashboard's R350-family hover-scale cadence so the
+              brand logo's response shares the same motion vocabulary
+              as the chrome strip's icon scales. transform-gpu hint
+              promotes the SVG to its own compositor layer for crisp
+              edges during the tween.
+              Brand-mark delight gesture family (1 anchor):
+                R548  title-block brand logo  hover:scale-105
+              The crescent at canvas top-left (data-topo-brand-
+              canvas-mark) and the watermark at bottom-left (data-
+              topo-brand-watermark) are intentionally LEFT STATIC —
+              both have pointerEvents:none and exist as ambient
+              decoration with their own breath/recede dynamics
+              (R519/R525/R526/R528). The title-block logo is the
+              ONLY brand surface that's a candidate for hover affordance,
+              since it sits in the chrome-band where the cursor
+              naturally passes during normal use. */}
           <svg
             width="40" height="40" viewBox="0 0 32 32" aria-hidden
-            className="shrink-0"
+            className="shrink-0 transition-transform duration-200 ease-out hover:scale-105 transform-gpu"
             data-topo-brand-logo
+            data-topo-brand-logo-hover-scale="1.05"
             style={{
               color: isLight ? '#0d9488' : '#67e8f9',
+              cursor: 'default',
               transition: 'color 200ms ease-out',
             }}
           >
