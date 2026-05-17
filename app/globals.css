@@ -900,10 +900,47 @@ body {
    and doesn't fight box-shadow, so we use it here. `currentColor`
    inherits the chip's own accent (green for working, cyan for online,
    per-vendor for letters, etc.). Only fires on :focus-visible
-   (keyboard) — mouse focus stays unstyled. */
-.anet-topo-chip-focus:focus-visible {
-  outline: 2px solid currentColor;
+   (keyboard) — mouse focus stays unstyled.
+   Round 490 / Loop — focus outline transitions on color rather than
+   hard-cutting. Pre-R490 the keyboard focus ring snapped in/out
+   instantly (no `transition` declaration), while every other hover/
+   pin state on the same chip eased through the Hero D 200ms ease-out
+   vocabulary (R459-R475 cluster + R489 hover ring). Keyboard users
+   tabbing through chips saw discontinuous focus jumps — pointer
+   users saw smooth motion. R490 unifies the two by holding a
+   permanent transparent outline (no painted footprint, no layout
+   shift — `outline` is drawn outside the border-box and doesn't
+   trigger reflow) and transitioning ONLY outline-color when focus
+   arrives/leaves. The cyber-theme dark canvas keyboard nav now
+   reads as one motion vocabulary with pointer hover. */
+.anet-topo-chip-focus {
+  outline: 2px solid transparent;
   outline-offset: 1px;
+  /* R490 (revised) — Tailwind utility classes on the chips (transition-
+     colors / transition-transform / duration-200) set their own
+     `transition-property` list at the same selector specificity (0,1,0),
+     and since Tailwind's stylesheet loads after globals.css they win
+     the cascade — without `!important` my outline-color transition is
+     ignored. The unified list below replaces Tailwind's narrower list
+     with a superset (color, bg, border, opacity, box-shadow, transform
+     all preserved) plus `outline-color` for R490. All at 200ms ease-
+     out, matching the chip-row's existing Tailwind duration-200 ease-
+     out so visible animations on the chip are unchanged.
+     Trade-off: chips with inline `style.transition` (e.g. R210
+     pressure-bar segments at 220ms width / 150ms boxShadow / 150ms
+     filter, line 2338 in TopoGraph.tsx) keep their inline value
+     because inline style wins over class rules regardless of
+     !important. That's intentional — those custom timings were
+     deliberate and stay scoped to their element. */
+  transition-property:
+    outline-color, color, background-color, border-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow, transform
+    !important;
+  transition-duration: 200ms !important;
+  transition-timing-function: ease-out !important;
+}
+.anet-topo-chip-focus:focus-visible {
+  outline-color: currentColor;
 }
 
 /* R156 — focus-visible outline for SVG-side TopoGraph interactives.
