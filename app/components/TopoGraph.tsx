@@ -7512,6 +7512,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     // CSS pseudo-class; only the transition-property
                     // moves to inline. Big fleets benefit most — this is
                     // the path users see when their dashboard is busiest.
+                    /* Round 452 / Loop: dense plain-text alias rest
+                       opacity 0.9 → 0.95. Closes the alpha gap on the
+                       dense fleet's per-node label, sibling to R449
+                       legend-count-active 0.95→1.0 and R450 minimap
+                       viewport rest 0.9→0.95 — same "close the
+                       active-presence alpha gap" idiom applied here
+                       to the dense-mode alias text at fontSize=9-10
+                       monospace. Pre-R452 dense aliases at α=0.9 sat
+                       just below full alpha; for un-hovered nodes in
+                       a busy >16-node fleet this is the only label
+                       readable, so the 10% alpha gap added a subtle
+                       "soft-focused chrome" feel where the labels
+                       should read as definitive. +0.05 lift makes
+                       them confidently present without erasing the
+                       status.text + R110 stroke halo + paintOrder
+                       layering. R26 group-hover translate + R212
+                       fill 300ms transition + R110 stroke=container-
+                       Bg halo all preserved. data-node-dense-alias-
+                       text-opacity attr exposes the resolved value
+                       for tests. */
                     <text
                       x={pos.x}
                       y={pos.y + radius + denseDrop}
@@ -7520,9 +7540,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       fontSize={denseFs}
                       fontFamily="monospace"
                       fontWeight="700"
-                      opacity={0.9}
+                      opacity={0.95}
                       className="group-hover:-translate-y-[1.5px]"
                       data-node-dense-alias-text={session.alias}
+                      data-node-dense-alias-text-opacity="0.95"
                       style={{
                         pointerEvents: 'none',
                         paintOrder: 'stroke',
