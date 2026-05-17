@@ -11543,6 +11543,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               opacity="0"
               data-click-ripple
               data-click-ripple-glow={`0 0 4px ${clickRipple.color}99`}
+              data-click-ripple-halo-layers="2"
               style={{
                 pointerEvents: 'none',
                 /* R608 — click-ripple gains drop-shadow glow that
@@ -11572,7 +11573,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    carries the visual decay automatically). No
                    transition needed since the element is created
                    fresh each click. */
-                filter: `drop-shadow(0 0 4px ${clickRipple.color}99)`,
+                /* Round 657 / Loop — click-ripple drop-shadow gains a
+                   SECOND outer layer at 8px blur + 0x4c alpha (half
+                   R608 inner 0x99). 16th anchor in multi-layer halo
+                   family (1st click-feedback anchor).
+                   4+8 stride scales R642 chat-target ring outer
+                   stride for the ripple's large expansion range
+                   (r0+4 → r0+30 over 500ms — much wider scope than
+                   the rings). Inner 4px halo paints sharp ripple
+                   front; outer 8px halo extends the ambient glow,
+                   reading as a real expanding wavefront with soft
+                   falloff. clickRipple.color tint preserved across
+                   both layers — chromatic identity matches the
+                   click source's status (green for working, teal
+                   for idle, slate offline, cyan for hub).
+                   Filter is static; the opacity SMIL animate carries
+                   the visual decay naturally — both inner + outer
+                   halos fade together via the parent <circle>'s
+                   opacity (no separate filter animation needed). */
+                filter: `drop-shadow(0 0 4px ${clickRipple.color}99) drop-shadow(0 0 8px ${clickRipple.color}4c)`,
               }}
             >
               <animate
