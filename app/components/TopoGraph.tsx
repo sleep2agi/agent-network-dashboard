@@ -10262,11 +10262,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   its own compositor layer for crisper edges during
                   the scale tween. Sibling change on zoom-in icon
                   below. */}
+              {/* Round 454 / Loop: extend R453 chrome reset icon hover
+                  sw lift to zoom +/− icons via Tailwind arbitrary class
+                  group-hover:[stroke-width:2.8]. Chrome icon hover sw
+                  lift family now 5 anchors:
+                    R208 runtime badge outer ring   1.5 → 2
+                    R443 runtime badge inner icon   2.4 → 2.8
+                    R453 chrome reset icon          2.5 → 2.8
+                    R454 chrome zoom-out icon       2.5 → 2.8  ← this round
+                    R454 chrome zoom-in icon        2.5 → 2.8  ← this round
+                  Tailwind v4 arbitrary-value group-hover variant
+                  resolves [stroke-width:2.8] as a CSS property which
+                  overrides the static strokeWidth='2.5' attribute on
+                  hover. transition-[stroke-width] appended to the
+                  existing transition-transform list so the sw tween
+                  eases under the same 200ms cadence as R352 group-
+                  hover:scale-110. R186 anet-chrome-pop keyframe still
+                  owns transform during click via CSS-animation
+                  precedence over transition-transform. Sibling change
+                  on zoom-in icon below. */}
               <svg
                 width="12" height="12" viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
                 aria-hidden
-                className={`transition-transform duration-200 ease-out group-hover:scale-110 transform-gpu${chromePopping === 'zoom-out' ? ' anet-chrome-pop' : ''}`}
+                className={`transition-[transform,stroke-width] duration-200 ease-out group-hover:scale-110 group-hover:[stroke-width:2.8] transform-gpu${chromePopping === 'zoom-out' ? ' anet-chrome-pop' : ''}`}
                 data-topo-chrome-zoom-out-icon
               ><path d="M5 12h14" /></svg>
             </button>
@@ -10371,11 +10390,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               {/* R352 sibling — zoom-in icon picks up the same
                   group-hover:scale-110 family. Mirror change at
                   the zoom-out icon above. */}
+              {/* R454 sibling — zoom-in icon picks up the same
+                  group-hover:[stroke-width:2.8] family lift. */}
               <svg
                 width="12" height="12" viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
                 aria-hidden
-                className={`transition-transform duration-200 ease-out group-hover:scale-110 transform-gpu${chromePopping === 'zoom-in' ? ' anet-chrome-pop' : ''}`}
+                className={`transition-[transform,stroke-width] duration-200 ease-out group-hover:scale-110 group-hover:[stroke-width:2.8] transform-gpu${chromePopping === 'zoom-in' ? ' anet-chrome-pop' : ''}`}
                 data-topo-chrome-zoom-in-icon
               ><path d="M12 5v14M5 12h14" /></svg>
             </button>
