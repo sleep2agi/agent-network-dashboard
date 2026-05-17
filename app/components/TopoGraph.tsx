@@ -9345,6 +9345,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-node-avatar={session.alias}
                         data-node-avatar-hovered={isAvatarHovered ? 'true' : 'false'}
                         data-node-avatar-rotate={isAvatarHovered ? '3' : '0'}
+                        data-node-avatar-scale={isAvatarHovered ? '1.05' : '1'}
                         style={{
                           /* R600 milestone — node vendor avatar gains
                              hover-rotate-3 via Tailwind v4 individual
@@ -9391,9 +9392,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              ease-out' alongside the existing 'filter
                              200ms ease-out' — both axes ride one beat. */
                           rotate: isAvatarHovered ? '3deg' : '0deg',
+                          /* R602 — per-node avatar gains hover-scale-1.05.
+                             Mirrors R548 brand 书生 logo's scale-105 idiom
+                             at the per-node tier. Stacks with R600 rotate
+                             + R501 brightness so the avatar gets a 3-axis
+                             hover signature (scale + rotate + brightness)
+                             matching the brand-logo polish vocabulary.
+                             Tailwind v4 individual `scale` CSS property
+                             (banked R547 sibling to `rotate`) — independent
+                             of SVG <image>'s x/y/width/height attributes;
+                             composes cleanly with rotate. transform-origin
+                             shared with R600 — pivots around node center.
+                             Pure paint axis: SVG bbox attributes unchanged
+                             at rest, so overlap-test invariant holds (the
+                             probe reads attributes, not visual bbox post-
+                             CSS transform). Scale only fires on hover. */
+                          scale: isAvatarHovered ? '1.05' : '1',
                           transformOrigin: `${pos.x}px ${pos.y}px`,
                           filter: isAvatarHovered ? 'brightness(1.15)' : undefined,
-                          transition: 'filter 200ms ease-out, rotate 200ms ease-out',
+                          transition: 'filter 200ms ease-out, rotate 200ms ease-out, scale 200ms ease-out',
                         }}
                       />
                     );
@@ -9445,6 +9462,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-node-avatar-monogram={session.alias}
                         data-node-avatar-monogram-hovered={isAvatarFallbackHovered ? 'true' : 'false'}
                         data-node-avatar-monogram-rotate={isAvatarFallbackHovered ? '3' : '0'}
+                        data-node-avatar-monogram-scale={isAvatarFallbackHovered ? '1.05' : '1'}
                         style={{
                           /* R601 — vendor-monogram fallback gains hover-
                              rotate-3 mirroring R600's image-branch
@@ -9460,9 +9478,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              transform-origin pinned to node center
                              (pos.x, pos.y) — same idiom as R600. */
                           rotate: isAvatarFallbackHovered ? '3deg' : '0deg',
+                          /* R602 sibling — vendor monogram fallback
+                             gains hover-scale-1.05 to match the image
+                             branch above. Per-node avatar scale coverage
+                             now 2/3 (image R602, monogram R602 here;
+                             prefix-group fallback completes 3/3 below). */
+                          scale: isAvatarFallbackHovered ? '1.05' : '1',
                           transformOrigin: `${pos.x}px ${pos.y}px`,
                           filter: isAvatarFallbackHovered ? 'brightness(1.15)' : undefined,
-                          transition: 'filter 200ms ease-out, rotate 200ms ease-out',
+                          transition: 'filter 200ms ease-out, rotate 200ms ease-out, scale 200ms ease-out',
                         }}
                       >
                         <circle cx={pos.x} cy={pos.y} r={ar} fill={vendor.mono.bg} stroke={vendor.mono.ring} strokeWidth="1.5" />
@@ -9507,6 +9531,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-node-avatar-fallback={session.alias}
                       data-node-avatar-fallback-hovered={isAvatarFallbackHovered ? 'true' : 'false'}
                       data-node-avatar-fallback-rotate={isAvatarFallbackHovered ? '3' : '0'}
+                      data-node-avatar-fallback-scale={isAvatarFallbackHovered ? '1.05' : '1'}
                       style={{
                         /* R601 — prefix-group hue-hashed initial fallback
                            gains hover-rotate-3 closing per-node avatar
@@ -9521,9 +9546,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            / hue-hashed initial), the user gets the same
                            +3° wobble-awake gesture on alias hover. */
                         rotate: isAvatarFallbackHovered ? '3deg' : '0deg',
+                        /* R602 sibling — prefix-group hue-hashed fallback
+                           gains hover-scale-1.05 closing per-node avatar
+                           scale coverage at 3/3 branches (image + monogram
+                           + fallback all share the same scale-1.05 +
+                           rotate-3deg + brightness-1.15 hover signature). */
+                        scale: isAvatarFallbackHovered ? '1.05' : '1',
                         transformOrigin: `${pos.x}px ${pos.y}px`,
                         filter: isAvatarFallbackHovered ? 'brightness(1.15)' : undefined,
-                        transition: 'filter 200ms ease-out, rotate 200ms ease-out',
+                        transition: 'filter 200ms ease-out, rotate 200ms ease-out, scale 200ms ease-out',
                       }}
                     >
                       <circle cx={pos.x} cy={pos.y} r={ar} fill={c.bg} stroke={c.ring} strokeWidth="1" />
