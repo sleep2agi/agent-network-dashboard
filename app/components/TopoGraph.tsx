@@ -10146,20 +10146,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       <rect
                         x={-cardW / 2} y={cardTopY} width={cardW} height={cardH} rx="8"
                         fill={pal.labelBox.fill}
-                        stroke={!reducedMotion && hoveredAlias === session.alias
+                        stroke={!reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias)
                           ? pal.legendAccent
                           : pal.labelBox.stroke}
                         opacity={
-                          !reducedMotion && hoveredAlias === session.alias
+                          !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias)
                             ? 1
                             : (isLight ? 1 : 0.94)
                         }
                         data-node-label-card={session.alias}
                         data-node-label-card-rx="8"
                         data-node-label-card-elevation={
-                          !reducedMotion && hoveredAlias === session.alias ? 'hover' : 'idle'
+                          !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias) ? 'hover' : 'idle'
                         }
-                        data-node-label-card-brightness={!reducedMotion && hoveredAlias === session.alias ? '1.15' : '1'}
+                        data-node-label-card-chat-target={chatAlias === session.alias ? 'true' : 'false'}
+                        data-node-label-card-brightness={!reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias) ? '1.15' : '1'}
                         style={{
                           /* R613 — per-node label card stacks brightness
                              (1.15) onto R142's hover drop-shadow. Same
@@ -10188,7 +10189,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
                              Existing 'filter 220ms ease-out' transition
                              covers brightness at the same cadence. */
-                          filter: !reducedMotion && hoveredAlias === session.alias
+                          /* R618 — extends R142 hover drop-shadow + R613
+                             stacked brightness gate to ALSO fire on
+                             chatAlias === alias. 4th anchor in chat-
+                             target-gated brightness family (R615 chat
+                             ring + R616 alias text + R617 sub-text +
+                             R618 label card).
+
+                             Pre-R618 the R217 comment ("pin + chat
+                             states don't compete... this stroke tint
+                             is exclusively a pointer-on-target signal")
+                             was authored when chat-target had no
+                             visual response. Post-R616/R617 the chat
+                             partner's alias + sub-text both brighten,
+                             but the label CARD around them stayed
+                             at idle elevation — visual disconnect
+                             between the lit text and its plain card.
+                             R618 closes that gap.
+
+                             Card 4-axis hover signature now also
+                             responds on chat-target:
+                               R217 stroke tint  → pal.legendAccent
+                               R211 fill ease    200ms
+                               R142 drop-shadow  rest → hover (deeper)
+                               R613 brightness   1   → 1.15
+
+                             All 4 axes now share gate union
+                             (hover || chat-target). Chat partner reads
+                             as fully identified across:
+                               R615 chat ring (glow)
+                               R618 card (lift + tint + glow + brightness)
+                               R616 alias text (brighter)
+                               R617 sub-text (brighter) */
+                          filter: !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias)
                             ? (isLight
                                 ? 'drop-shadow(0 3px 8px rgba(15,23,42,0.20)) brightness(1.15)'
                                 : 'drop-shadow(0 4px 12px rgba(0,0,0,0.60)) brightness(1.15)')
