@@ -13734,12 +13734,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 + R455 fullscreen (this round). transition-[transform,
                 stroke-width] expands existing transition-transform
                 so the sw lift eases under R352 scale-110 cadence. */}
+            {/* Round 576 / Loop — fullscreen icon picks up hover-rotate-3.
+                Joins R350 reset / R547 pill × / R549 brand logo at 4th
+                anchor in hover-rotate idiom. Corner arrows rotate 3° on
+                hover — subtle "preparing to transform" gesture (enter
+                or exit fullscreen). Tailwind v4 emits individual rotate
+                property (banked R547) — sits alongside group-hover:
+                scale-110 in independent rotate axis. */}
             {isFullscreen ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-[transform,stroke-width] duration-200 ease-out group-hover:scale-110 group-hover:[stroke-width:2.8] transform-gpu" data-topo-chrome-fullscreen-icon="exit">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-[transform,stroke-width] duration-200 ease-out group-hover:scale-110 group-hover:rotate-3 group-hover:[stroke-width:2.8] transform-gpu" data-topo-chrome-fullscreen-icon="exit">
                 <path d="M8 3v4a1 1 0 0 1-1 1H3M21 8h-4a1 1 0 0 1-1-1V3M3 16h4a1 1 0 0 1 1 1v4M16 21v-4a1 1 0 0 1 1-1h4" />
               </svg>
             ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-[transform,stroke-width] duration-200 ease-out group-hover:scale-110 group-hover:[stroke-width:2.8] transform-gpu" data-topo-chrome-fullscreen-icon="enter">
+              // R576 sibling — enter variant also picks up rotate-3.
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-[transform,stroke-width] duration-200 ease-out group-hover:scale-110 group-hover:rotate-3 group-hover:[stroke-width:2.8] transform-gpu" data-topo-chrome-fullscreen-icon="enter">
                 <path d="M3 8V5a2 2 0 0 1 2-2h3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M21 16v3a2 2 0 0 1-2 2h-3" />
               </svg>
             )}
