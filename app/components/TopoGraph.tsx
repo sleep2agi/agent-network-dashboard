@@ -1836,17 +1836,60 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               0.001ms under prefers-reduced-motion: reduce).
               data-topo-brand-logo-breath attr exposes the gate
               state for tests. */}
+          {/* Round 557 / Loop — brand logo gains 4th hover axis:
+              hover:brightness-110 (filter). Adds a chromatic axis
+              to the brand-mark hover signature alongside R548
+              scale, R549 rotate, R553 idle breath:
+                R548  hover:scale-105       transform-scale
+                R549  hover:rotate-6        transform-rotate
+                R553  idle breath (5s)      opacity (animation)
+                R557  hover:brightness-110  filter        ← this round
+              All 4 axes ride on INDEPENDENT CSS properties (scale,
+              rotate, opacity, filter) — they compose freely without
+              clobbering each other. The cyan/teal crescent gains a
+              soft +10% brightness boost on hover, layered on top of
+              the existing scale + rotate lift + ongoing idle breath.
+              Why +10% (vs more aggressive 125/150): brand mark wants
+              restraint. The eye reads the brightness shift as "this
+              mark lights up under attention" without crossing into
+              "this mark is now glowing".
+              Implementation: className extends transition-transform
+              → transition-[transform,filter] so the brightness
+              tweens at the same 200ms ease-out cadence as the scale
+              + rotate axes — one motion-coherent 3-property hover
+              lift on the className tier (plus the inline color 200ms
+              transition for theme-toggle eases).
+              Brand-mark family axis count: 4 hover-state axes
+              cleanly factor across:
+                geometry (scale + rotate)
+                paint    (opacity breath + brightness on hover)
+              Cluster reads as "alive, lifting, and lighting up under
+              attention" — three independent gesture vocabularies on
+              one surface.
+              data-topo-brand-logo-hover-brightness attr surfaces
+              the landing value for tests. */}
           <svg
             width="40" height="40" viewBox="0 0 32 32" aria-hidden
-            className={`shrink-0 transition-transform duration-200 ease-out hover:scale-105 hover:rotate-6 transform-gpu${!reducedMotion ? ' anet-topo-brand-logo-breath' : ''}`}
+            className={`shrink-0 transition-[transform,filter] duration-200 ease-out hover:scale-105 hover:rotate-6 hover:brightness-110 transform-gpu${!reducedMotion ? ' anet-topo-brand-logo-breath' : ''}`}
             data-topo-brand-logo
             data-topo-brand-logo-hover-scale="1.05"
             data-topo-brand-logo-hover-rotate="6deg"
+            data-topo-brand-logo-hover-brightness="1.1"
             data-topo-brand-logo-breath={!reducedMotion ? 'true' : 'false'}
             style={{
               color: isLight ? '#0d9488' : '#67e8f9',
               cursor: 'default',
-              transition: 'color 200ms ease-out',
+              // R557 — extend transition list to include filter (and
+              // re-spec transform for cadence parity) so the new
+              // hover:brightness-110 axis eases at 200ms alongside
+              // the existing color 200ms (theme-toggle ease) and the
+              // className-based hover:scale-105 / hover:rotate-6.
+              // Inline transition is a shorthand and overrides the
+              // className's transition-[transform,filter] — listing
+              // all axes here ensures the eased property set covers
+              // color (theme) + transform (scale + rotate) + filter
+              // (brightness) at uniform 200ms ease-out.
+              transition: 'color 200ms ease-out, transform 200ms ease-out, filter 200ms ease-out',
             }}
           >
             <mask id="s2a-titleblock-moon-mask">
