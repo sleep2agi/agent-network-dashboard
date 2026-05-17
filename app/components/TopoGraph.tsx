@@ -9472,10 +9472,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        for tests. */
                     <g
                       data-runtime-badge-glow={isNodeActive ? 'true' : 'false'}
+                      data-runtime-badge-brightness={isNodeActive ? '1.15' : '1'}
                       style={{
                         pointerEvents: 'none',
+                        /* R586 — runtime badge outer <g> stacks
+                           brightness(1.15) onto the existing R559
+                           drop-shadow on node hover. 25th anchor in
+                           per-element brightness family, 18th in
+                           stacked-filter sub-pattern.
+
+                           Runtime badge hover signature now CLOSED
+                           at 4 axes (geometry + stroke + paint glow
+                           + paint brightness):
+                             R208  ring r         7   → 8
+                             R208  ring sw        1.5 → 2
+                             R443  icon sw        2.4 → 2.8
+                             R559  outer filter   none → drop-shadow(rt.color)
+                             R586  outer filter   stack brightness(1.15)  ← this round
+
+                           The drop-shadow + brightness stack is the
+                           banked R564/R570 "halo + glow" pattern —
+                           drop-shadow paints the colored halo, brightness
+                           lifts the underlying paint (ring stroke +
+                           icon path both gain ~15% luminance). Single
+                           CSS filter chain on the outer <g> covers
+                           both child layers uniformly.
+
+                           Same R208/R443/R559 150ms cadence preserved
+                           via the existing transition. */
                         filter: isNodeActive
-                          ? `drop-shadow(0 0 2px ${rt.color}99)`
+                          ? `drop-shadow(0 0 2px ${rt.color}99) brightness(1.15)`
                           : undefined,
                         transition: 'filter 150ms ease-out',
                       }}
