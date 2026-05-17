@@ -13713,8 +13713,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    rest at fw 400, inactive hover preview at fw 500).
                    data-topo-chrome-nodesize-hover-preview-fw="500" attr
                    exposes the polish for tests. */
-                className={`px-2 py-1 transition-colors transition-transform transition-[font-weight] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
+                /* R598 — nodeSize S/M/L segmented buttons gain hover:
+                   brightness-[1.15] (39+40+41st anchors, 8+9+10th HTML).
+                   Final segmented chrome control to close brightness
+                   coverage. After R598 all three segmented controls
+                   (zoom + layout + nodeSize) have full hover-brightness
+                   parity.
+                   Tailwind v4 arbitrary `[transition-property:color,
+                   background-color,transform,font-weight,filter]`
+                   replaces the chain of `transition-colors transition-
+                   transform transition-[font-weight]` so the filter
+                   property joins the existing 200ms cadence at the
+                   same beat. Segmented-unity rule (R400) preserved —
+                   brightness is pure paint, no geometric break.
+                   data-topo-chrome-nodesize-brightness-hover='1.15'
+                   attr documents the hover value for tests. */
+                className={`px-2 py-1 [transition-property:color,background-color,transform,font-weight,filter] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:brightness-[1.15] ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
                 data-topo-chrome-nodesize-hover-preview-fw={nodeScale === v ? null : '500'}
+                data-topo-chrome-nodesize-brightness-hover="1.15"
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
                 {lbl}
