@@ -2696,7 +2696,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    inline-block is default for <button> so no display
                    tweak needed. replace_all covers all 4 filter pin
                    pills (status / group / vendor / edge) at once. */
-                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 transform-gpu"
+                /* Round 547 / Loop — extends pill × close-button hover
+                   gesture from scale-110 (R356) + opacity-70 to ALSO
+                   include rotate-12 on hover. Pre-R547 the × dimmed
+                   and grew on hover; R547 adds a 12° twist so the
+                   close action telegraphs "discarding/spinning away"
+                   with a small delight gesture. Composes with
+                   transition-transform (existing) — Tailwind's
+                   hover:rotate-12 + hover:scale-110 stack into one
+                   transform under the same 200ms ease-out tween.
+                   Applied to all 4 pill × buttons (status / group /
+                   vendor / edge) via replace_all since the className
+                   is identical. Closes the pill × hover gesture
+                   vocabulary at 3 axes:
+                     hover:opacity-70  paint dim
+                     hover:scale-110   geometry grow (R356)
+                     hover:rotate-12   geometry twist (R547, this round)
+                   Hover-gesture parity across the 4-pill family. */
+                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 hover:rotate-12 transform-gpu"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
@@ -2779,7 +2796,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    inline-block is default for <button> so no display
                    tweak needed. replace_all covers all 4 filter pin
                    pills (status / group / vendor / edge) at once. */
-                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 transform-gpu"
+                /* Round 547 / Loop — extends pill × close-button hover
+                   gesture from scale-110 (R356) + opacity-70 to ALSO
+                   include rotate-12 on hover. Pre-R547 the × dimmed
+                   and grew on hover; R547 adds a 12° twist so the
+                   close action telegraphs "discarding/spinning away"
+                   with a small delight gesture. Composes with
+                   transition-transform (existing) — Tailwind's
+                   hover:rotate-12 + hover:scale-110 stack into one
+                   transform under the same 200ms ease-out tween.
+                   Applied to all 4 pill × buttons (status / group /
+                   vendor / edge) via replace_all since the className
+                   is identical. Closes the pill × hover gesture
+                   vocabulary at 3 axes:
+                     hover:opacity-70  paint dim
+                     hover:scale-110   geometry grow (R356)
+                     hover:rotate-12   geometry twist (R547, this round)
+                   Hover-gesture parity across the 4-pill family. */
+                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 hover:rotate-12 transform-gpu"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
@@ -2871,7 +2905,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    inline-block is default for <button> so no display
                    tweak needed. replace_all covers all 4 filter pin
                    pills (status / group / vendor / edge) at once. */
-                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 transform-gpu"
+                /* Round 547 / Loop — extends pill × close-button hover
+                   gesture from scale-110 (R356) + opacity-70 to ALSO
+                   include rotate-12 on hover. Pre-R547 the × dimmed
+                   and grew on hover; R547 adds a 12° twist so the
+                   close action telegraphs "discarding/spinning away"
+                   with a small delight gesture. Composes with
+                   transition-transform (existing) — Tailwind's
+                   hover:rotate-12 + hover:scale-110 stack into one
+                   transform under the same 200ms ease-out tween.
+                   Applied to all 4 pill × buttons (status / group /
+                   vendor / edge) via replace_all since the className
+                   is identical. Closes the pill × hover gesture
+                   vocabulary at 3 axes:
+                     hover:opacity-70  paint dim
+                     hover:scale-110   geometry grow (R356)
+                     hover:rotate-12   geometry twist (R547, this round)
+                   Hover-gesture parity across the 4-pill family. */
+                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 hover:rotate-12 transform-gpu"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
@@ -2990,7 +3041,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    inline-block is default for <button> so no display
                    tweak needed. replace_all covers all 4 filter pin
                    pills (status / group / vendor / edge) at once. */
-                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 transform-gpu"
+                /* Round 547 / Loop — extends pill × close-button hover
+                   gesture from scale-110 (R356) + opacity-70 to ALSO
+                   include rotate-12 on hover. Pre-R547 the × dimmed
+                   and grew on hover; R547 adds a 12° twist so the
+                   close action telegraphs "discarding/spinning away"
+                   with a small delight gesture. Composes with
+                   transition-transform (existing) — Tailwind's
+                   hover:rotate-12 + hover:scale-110 stack into one
+                   transform under the same 200ms ease-out tween.
+                   Applied to all 4 pill × buttons (status / group /
+                   vendor / edge) via replace_all since the className
+                   is identical. Closes the pill × hover gesture
+                   vocabulary at 3 axes:
+                     hover:opacity-70  paint dim
+                     hover:scale-110   geometry grow (R356)
+                     hover:rotate-12   geometry twist (R547, this round)
+                   Hover-gesture parity across the 4-pill family. */
+                className="ml-0.5 leading-none hover:opacity-70 transition-transform duration-200 ease-out hover:scale-110 hover:rotate-12 transform-gpu"
                 style={{ background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0 }}
               >×</button>
             </span>
