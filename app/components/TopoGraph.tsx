@@ -10327,11 +10327,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              text). Cross-element brightness consistency.
                              data-node-alias-brightness attr surfaces
                              the lift for tests. */
-                          filter: !reducedMotion && hoveredAlias === session.alias
+                          /* R616 — extends R564 alias text brightness
+                             gate to ALSO fire on chatAlias === alias.
+                             2nd anchor in chat-target-gated brightness
+                             family (sibling to R615 chat ring).
+
+                             Pre-R616: filter only fired on hoveredAlias
+                             match. The chat-target stayed at flat fill
+                             color while the chat ring glowed around it
+                             — visual disparity between identification
+                             elements that should read as a unified
+                             "this is the chat partner" gesture.
+
+                             Post-R616: alias text brightens on EITHER
+                             hover OR chat-target. Mirrors the existing
+                             3-tier letter-spacing (R427/R427-chat) which
+                             already responds to both gates. The chat
+                             partner's alias text now reads:
+                               +15% brighter (R616)
+                               +0.5px letter-spaced (R427-chat tier)
+                               surrounded by a glowing ring (R615)
+                             Unified identification gesture across 3
+                             axes when chat is open.
+
+                             Same drop-shadow + brightness filter chain
+                             (no separate color for chat — same R564
+                             pattern, just expanded gate). */
+                          filter: !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias)
                             ? `drop-shadow(0 0 2px ${status.text}80) brightness(1.15)`
                             : undefined,
                         }}
-                        data-node-alias-brightness={!reducedMotion && hoveredAlias === session.alias ? '1.15' : '1'}
+                        data-node-alias-brightness={!reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias) ? '1.15' : '1'}
                       >
                         {truncate(session.alias, fullMax)}
                       </text>
