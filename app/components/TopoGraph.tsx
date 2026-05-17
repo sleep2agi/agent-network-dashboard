@@ -6829,9 +6829,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             {(() => {
               const hubRecede = !!((hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
                                     hoveredStatus || hoveredVendor) && !hoveredHub);
-              const baseOpacity = workingCount > 0 ? 0 : 0.95;
+              /* Round 511 / Loop — hub-highlight gains a 3rd opacity tier
+                 (hovered-amplify). Pre-R511 the highlight had 2 visible
+                 states: rest (0.95) and recede (0.81 = 0.95 × 0.85).
+                 When the hub itself was hovered, the digit got R425 fw
+                 lift + R476 drop-shadow + R209 scale-1.08, but the
+                 highlight disc sibling stayed at 0.95 — the focal
+                 cluster lifted in 3 channels (typography/paint/scale)
+                 but the highlight didn't participate.
+                 R511 closes that asymmetry: when hoveredHub is true,
+                 highlight base opacity lifts to 1.0 (5% boost from
+                 rest 0.95). Cluster now lifts as a unit on hub-hover,
+                 just like it recedes as a unit on non-hub-hover
+                 (R508).
+                 3-state opacity ladder:
+                   hub-hovered:        baseOpacity = 1.0   (R511 NEW)
+                   rest (no hover):    baseOpacity = 0.95  (existing)
+                   non-hub canvas hov: baseOpacity × 0.85 = 0.81 (R508)
+                 Composes cleanly: hubRecede gate requires !hoveredHub,
+                 so the hovered-amplify and recede states are mutually
+                 exclusive (they can't both fire). breathActive
+                 continues to halt on either non-rest state (recede OR
+                 hub-hover would visually compete with the 0.85↔1
+                 breath — clean for the unit-lift semantic too). */
+              const baseOpacity = workingCount > 0 ? 0
+                                : hoveredHub ? 1.0
+                                : 0.95;
               const resolvedOpacity = hubRecede ? baseOpacity * 0.85 : baseOpacity;
-              const breathActive = !reducedMotion && workingCount === 0 && !hubRecede;
+              const breathActive = !reducedMotion && workingCount === 0 && !hubRecede && !hoveredHub;
               return (
                 <circle
                   cx={cx} cy={cy} r="5.5"
