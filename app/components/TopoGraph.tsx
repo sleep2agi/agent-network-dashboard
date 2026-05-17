@@ -3523,6 +3523,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              state, zero re-render cost. */
           data-topo-layout={layout}
           data-topo-theme={isLight ? 'light' : 'cyber'}
+          /* Round 487 / Loop — extends R469/R471 root-svg state surface
+             with current zoom level (numeric attr, 2 decimals). Pre-
+             R487 the canvas zoom was queryable via `data-topo-minimap-
+             viewport-glow='true'` boolean (R481, gated at > 1.5) but
+             the exact zoom number only lived in the chrome-strip span
+             (`{Math.round(view.zoom * 100)}%`). Tests + external CSS
+             that need the zoom value had to traverse to the chrome
+             strip or read view state via React internals.
+             R487 surfaces it at the canvas root, consistent with
+             R469's fleet-count numeric pattern. Two-decimal precision
+             matches the internal `view.zoom` float without losing
+             info. Composed from existing state — no new state.
+             Root svg attribute set now 10 attrs total:
+               R462 data-dashboard-version    build identity
+               R466 data-topo-any-hover       transient mode
+               R467 data-topo-any-pinned      sticky mode
+               R469 data-topo-online-count    fleet (4 numeric)
+               R469 data-topo-working-count
+               R469 data-topo-offline-count
+               R469 data-topo-flow-count
+               R471 data-topo-layout          canvas mode
+               R471 data-topo-theme           canvas mode
+               R487 data-topo-zoom            canvas zoom (this round) */
+          data-topo-zoom={view.zoom.toFixed(2)}
           /* Round 466 / Loop — aggregate hover signal on the root SVG.
              Exposes a single boolean `data-topo-any-hover` that
              reflects whether ANY hover state in the topology is
