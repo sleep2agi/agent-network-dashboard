@@ -1985,8 +1985,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // overlays the release-pop. Matching `transform-gpu`
               // promotes the layer so the scale doesn't trigger
               // layout/paint thrash. Sibling change on Grid below.
-              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
-              style={{ transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out, transform 150ms ease-out' }}
+              /* Round 522 / Loop — extends R521's typography-preview
+                 idiom (chrome nodeSize hover:font-medium 400 → 500) to
+                 the Ring/Grid layout toggle's inactive variant. Pre-
+                 R522 the inactive Ring/Grid had `hover:text-cyan-300
+                 hover:bg-cyan-500/5` (R270 color + bg previews of the
+                 active state) but no typography preview — the active
+                 variant uses `font-medium` (fw 500), inactive sat at
+                 default fw 400 even on hover. R522 adds `hover:font-
+                 medium` to the inactive Ring/Grid so the rest-vs-hover
+                 transition previews the typography state the click
+                 would commit to, matching the click commits's locked
+                 weight.
+                 font-weight 150ms appended to the transition list
+                 matching the existing 150ms color/bg cadence at this
+                 button — when hover lifts color (gray-400 → cyan-300)
+                 + bg (transparent → cyan-500/5) + fw (400 → 500), all
+                 3 ease at the same 150ms beat.
+                 Hover-fw family extension (6 anchors): R416/R420/R425/
+                 R520/R521/R522. R522 closes the chrome toggle group
+                 typography preview at the last remaining toggle —
+                 layout (Ring/Grid). After R521 (nodeSize) + R522
+                 (layout), every multi-state chrome toggle has hover-
+                 fw preview on its inactive variant.
+                 data-topo-chrome-layout-hover-preview-fw="500" attr
+                 on inactive button exposes the polish for tests. */
+              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              data-topo-chrome-layout-hover-preview-fw={layout === 'ring' ? null : '500'}
+              style={{ transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease' }}
             >
               Ring
             </button>
@@ -2008,7 +2034,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // R492 sibling — Grid button picks up active:scale-95
               // press feedback + transform in transition list. Same
               // vocabulary as Ring above.
-              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              /* Round 522 sibling — Grid button mirrors Ring above:
+                 inactive variant gains `hover:font-medium` typography
+                 preview + font-weight 150ms in inline transition list.
+                 Same idiom, same family (R522 chrome layout). */
+              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              data-topo-chrome-layout-hover-preview-fw={layout === 'grid' ? null : '500'}
               /* Round 268 / Loop: Grid button's left border (the
                  internal divider between Ring and Grid) picks up
                  pal.containerBorder, matching the wrapper change at
@@ -2021,7 +2052,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  keeps R268's theme-toggle smoothness intact.
                  R492 adds `transform 150ms ease-out` so active:scale-95
                  eases smoothly. */
-              style={{ borderColor: pal.containerBorder, transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out, transform 150ms ease-out' }}
+              style={{ borderColor: pal.containerBorder, transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease' }}
             >
               Grid
             </button>
