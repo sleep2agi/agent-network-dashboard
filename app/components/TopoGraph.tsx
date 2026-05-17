@@ -12764,9 +12764,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        resolved value for tests. */
                     data-legend-count-letter-spacing={isPinned ? '0.5px' : hoveredStatus === row.key ? '0.25px' : '0px'}
                     data-legend-count-transition="200ms"
+                    /* R590 — legend-row count gains filter brightness(1.15)
+                       on hover/pin. 29th anchor in per-element brightness
+                       family. Closes legend-row label↔count brightness
+                       parity within each row:
+                         legend label (R572, 10th anchor — stacks w/ DS)
+                         legend count (R590 ← this round, plain brightness)
+                       Plain brightness (no DS stack) because the count
+                       has its own multi-axis hover signature already
+                       (opacity 0.65 → 1.0, fill neutral → row.fill tier
+                       color, fw 600 → 700 on pin, letter-spacing 3-tier)
+                       — adding brightness amplifies the tier-color fill
+                       to its hover-locked brightest possible.
+                       Triple multiplicative interaction: opacity 1.0 ×
+                       tier-color fill × brightness(1.15) — the count
+                       reads as confidently "this is the active tier".
+                       Existing transition list extends with 'filter
+                       200ms ease-out' matching the existing 200ms
+                       cadence across opacity / fill / fw / letter-
+                       spacing.
+                       Legend-row scope now has parity with recent-row:
+                       both row text and count surfaces brighten +15%
+                       on row inspection. Recent-row count INHERITS its
+                       brightness via the parent <text>'s R572 filter
+                       (single ancestor filter covers all child tspans);
+                       legend-row count is a sibling <text> so it needs
+                       its OWN filter — R590 supplies that.
+                       data-legend-count-brightness attr exposes gate. */
+                    data-legend-count-brightness={(hoveredStatus === row.key || isPinned) ? '1.15' : '1'}
                     style={{
                       pointerEvents: 'none',
-                      transition: 'opacity 200ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out, letter-spacing 200ms ease-out',
+                      filter: (hoveredStatus === row.key || isPinned)
+                        ? 'brightness(1.15)'
+                        : undefined,
+                      transition: 'opacity 200ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out, letter-spacing 200ms ease-out, filter 200ms ease-out',
                       fontVariantNumeric: 'tabular-nums',
                       letterSpacing: isPinned ? '0.5px' :
                                      hoveredStatus === row.key ? '0.25px' : '0px',
