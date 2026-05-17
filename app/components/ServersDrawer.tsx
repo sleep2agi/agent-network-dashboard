@@ -151,8 +151,18 @@ function HealthBadge({ cpu, mem, disk }: { cpu: number | null; mem: number | nul
 function AgentList({ agents }: { agents?: ServerAgent[] }) {
   if (!agents || agents.length === 0) {
     return (
-      <div className="text-[9px] text-[var(--fg-dim)] font-mono italic px-1 py-1">
-        agent rollup pending hub ≥ 0.8.2-preview
+      <div className="text-[9px] text-[var(--fg-dim)] font-mono italic px-1 py-1" data-server-agents-missing="true">
+        {/* #157 fix — copy update. Pre-#157 the placeholder read
+            "agent rollup pending hub ≥ 0.8.2-preview". commhub-server@
+            0.8.2 is LIVE in prod (Vincent screenshot 5560 verified) but
+            still doesn't ship `agents[]`. Version-specific text was
+            misleading — implied upgrade-needed when hub already
+            crossed the threshold. New copy drops the version pinning
+            and just states the data-shape: hub hasn't reported the
+            agent rollup for this server (could be hub-side feature
+            gap or session-source gap). data-server-agents-missing
+            attr surfaces the gate for tests. */}
+        agent rollup not reported by hub
       </div>
     );
   }
@@ -350,7 +360,10 @@ export function ServersDrawer() {
                     {diskPct != null ? (
                       <Bar pct={diskPct} label={`DISK ${s.disk_used_gb!.toFixed(1)}/${s.disk_total_gb!.toFixed(1)}G`} />
                     ) : (
-                      <div className="text-[9px] text-[var(--fg-dim)] font-mono italic">disk metric pending hub ≥ 0.8.2-preview</div>
+                      /* #157 sibling fix — same misleading version-pin copy
+                         dropped at the disk-metric placeholder. Same
+                         rationale as the agent-rollup copy above. */
+                      <div className="text-[9px] text-[var(--fg-dim)] font-mono italic" data-server-disk-missing="true">disk metric not reported by hub</div>
                     )}
                     {s.cpu_history && s.cpu_history.length >= 2 && (
                       <div className="space-y-0.5">
