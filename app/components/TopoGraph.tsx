@@ -9919,11 +9919,46 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          tier without disturbing the surrounding family
                          baseline. data-recent-row-text-font-weight attr
                          exposes the value for tests. */
-                      fontWeight="500"
+                      /* Round 530 / Loop — extends hover-fw family
+                         (R416/R420/R425/R520/R521/R522, 6 anchors) to
+                         a 7th anchor: recent-row alias text gains
+                         fontWeight 500 → 600 on (isRowHovered ||
+                         isRowPinned). Pre-R530 R363 set fw=500
+                         statically; hover/pin lifted other axes
+                         (R55 fill brighten / R434 letter-spacing
+                         3-tier / R143 translateY / R104 row bg-
+                         tint / R474 cadence) but the fw stayed
+                         flat — same asymmetry R520 closed at the
+                         +N more footer.
+                         R530 mirrors R520's pattern at the row-
+                         text scope. Hover OR pin (isRowActive
+                         union) lifts fw to 600, matching the count
+                         tspan's cold-state tier (R320 fw=600), so
+                         on active state the alias label reads at
+                         the same data tier as the count it sits
+                         next to. Inner count tspan has its own
+                         explicit fontWeight (600 or 700 per R320/
+                         R445) so parent fw lift doesn't bleed
+                         (inheritance overridden).
+                         Hover-fw family extension (7 anchors):
+                           R416  chip-row count digit
+                           R420  chrome zoom-level
+                           R425  hub-center digit
+                           R520  +N more flows footer
+                           R521  chrome nodeSize S/M/L inactive
+                           R522  chrome layout Ring/Grid inactive
+                           R530  recent-row alias text  ← this round
+                         transition list extends to include
+                         'font-weight 200ms ease-out', matching the
+                         R474 cadence of the existing fill +
+                         letter-spacing axes on this element.
+                         data-recent-row-text-font-weight attr
+                         flips '500' → '600' on isRowActive. */
+                      fontWeight={(isRowHovered || isRowPinned) ? '600' : '500'}
                       data-recent-row-text={link.key}
                       data-recent-row-text-pinned={isRowPinned ? 'true' : 'false'}
                       data-recent-row-text-hovered={!isRowPinned && isRowHovered ? 'true' : 'false'}
-                      data-recent-row-text-font-weight="500"
+                      data-recent-row-text-font-weight={(isRowHovered || isRowPinned) ? '600' : '500'}
                       /* Round 434 / Loop: recent-signal row text extends
                          from R220's pin-only letter-spacing (0 → 0.5 on
                          isRowPinned) to a 3-tier scale matching R433
@@ -9974,7 +10009,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          shifts. */
                       data-recent-row-text-transition="200ms"
                       style={{
-                        transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out',
+                        transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out',
                         letterSpacing: isRowPinned ? '0.5px' :
                                        isRowHovered ? '0.25px' : '0px',
                       }}
