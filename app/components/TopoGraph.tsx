@@ -4463,16 +4463,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       R432 group label text (this round)
                     R218 transition list ('fill 200ms, letter-spacing
                     200ms') untouched — additive conditional case. */}
+                {/* Round 457 / Loop: group label parent text fontWeight
+                    700 → 800 on isPinned. Adds typographic weight axis
+                    to the group-label parent text, sibling to R432
+                    letter-spacing tween at the same surface. Pre-R457
+                    pin lifted ls 0 → 0.5px (R218→R432 3-tier) but the
+                    fw stayed planted at R63's 700 — locked groups
+                    read as wider-but-same-weight. R457 adds the
+                    weight axis so pinned groups read as tightened
+                    AND wider, matching the R416/R424/R425/R426/R444/
+                    R445/R446 "data tightens under attention" idiom
+                    (now extended to the parent-text scope at the
+                    group-label tier). R63 fill brighten + R432
+                    letter-spacing 0/0.25/0.5 3-tier + R55 transition
+                    list all preserved; extends to include 'font-
+                    weight 200ms ease-out' so the bump eases under
+                    the same cadence. */}
                 <text
                   x={box.x + 12}
                   y={box.y + 14}
                   fill={isHovered ? pal.legendHeadline : pal.legendText}
                   fontSize="13"
                   fontFamily="monospace"
-                  fontWeight="700"
+                  fontWeight={isPinned ? '800' : '700'}
                   data-group-label-hovered={isHovered && !isPinned ? 'true' : 'false'}
+                  data-group-label-font-weight={isPinned ? '800' : '700'}
                   style={{
-                    transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out',
+                    transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out',
                     letterSpacing: isPinned ? '0.5px' :
                                    isHovered ? '0.25px' : '0px',
                   }}
