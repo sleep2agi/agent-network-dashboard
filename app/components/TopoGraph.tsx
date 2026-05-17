@@ -867,12 +867,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           // R63 label render + R86 hover-pin keying + #99 tooltip
           // member listing, so all the existing group-box machinery
           // applies uniformly to the orphan bucket too.
+          // Round 499 / Loop — surface `isOrphan` flag on the box
+          // shape so downstream renderers (label text, future polish)
+          // can apply orphan-specific typography (italic) without
+          // re-deriving the flag from key === '其他' (key matching
+          // would also catch a legitimate "其他" prefix-group, this
+          // flag is canonical from the band assignment pass).
           return {
             key: band.isOrphan
               ? '其他'
               : band.members.length
                 ? groupKeys[band.members[0].alias]
                 : '',
+            isOrphan: !!band.isOrphan,
             count: band.members.length,
             statuses: { working: w, idle: i, offline: o },
             x: minX - GROUP_PAD,
@@ -977,7 +984,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       groupKeys,
       // #111: group boxes are a grid-layout feature only — radially scattered
       // ring nodes can't be cleanly boxed. Ring keeps the #83 prefix hue.
-      groupBoxes: [] as { key: string; count: number; statuses: { working: number; idle: number; offline: number }; x: number; y: number; w: number; h: number }[],
+      groupBoxes: [] as { key: string; isOrphan?: boolean; count: number; statuses: { working: number; idle: number; offline: number }; x: number; y: number; w: number; h: number }[],
       // ring fits within VIEWBOX_H by construction (offlineRadius=325 + centre at y=330)
       gridContentBottom: 0,
     };
@@ -4906,16 +4913,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      ease-out' alongside the existing fill/ls/fw/opacity
                      200ms tweens. */
                   data-group-label-glow={isPinned ? 'true' : 'false'}
+                  /* Round 499 / Loop — orphan band "其他" label gets
+                     fontStyle: italic to visually distinguish the
+                     catchall from real prefix-group bands. Pre-R499
+                     the orphan box label rendered identically to
+                     prefix-group labels (Hero D fontSize=9, fw=700,
+                     opacity 0.55 rest), so users had to read the
+                     literal text "其他" to identify the catchall. R499
+                     adds a pure-typography differentiation: italic
+                     signals "this is the misc bucket, not a real
+                     named group" while preserving full opacity
+                     affordance on hover/pin — the orphan box stays
+                     equally inspectable, just typographically marked
+                     as a different category. No geometry change
+                     (italic shifts glyph slant within the same bbox),
+                     no opacity loss, no behavior change. Sibling to
+                     R432 letter-spacing 3-tier + R457 pin fw-lift +
+                     R479 pin drop-shadow at the group-label scope.
+                     Falls under 配色 / 节点视觉 themes per the prompt;
+                     advances the "信息密度" axis by encoding
+                     category-distinction into a single typography
+                     channel without adding visual chrome. */
                   style={{
                     transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                     letterSpacing: isPinned ? '0.5px' :
                                    isHovered ? '0.25px' : '0px',
+                    fontStyle: box.isOrphan ? 'italic' : undefined,
                     filter: isPinned
                       ? `drop-shadow(0 0 3px ${pal.legendAccent}80)`
                       : undefined,
                   }}
                   data-group-label={box.key}
                   data-group-label-pinned={isPinned ? 'true' : 'false'}
+                  data-group-label-orphan={box.isOrphan ? 'true' : 'false'}
                 >
                   {box.key}
                   {/* Round 19 / Loop: member-count chip. Inline tspan stays
