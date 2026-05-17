@@ -7675,6 +7675,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 data-topo-hub-working-count={workingCount}
                 data-topo-hub-working-count-font-size="12"
                 data-topo-hub-working-count-hovered={hoveredHub ? 'true' : 'false'}
+                data-topo-hub-working-count-brightness={!reducedMotion && hoveredHub ? '1.15' : '1'}
                 data-topo-hub-working-count-visible={workingCount > 0 ? 'true' : 'false'}
                 // Round 209 / Loop: hub workingCount digit scales 1.0 →
                 // 1.08 on hub-hover, matching R177's r 14→17 ring grow.
@@ -7793,10 +7794,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                             hoveredStatus || hoveredVendor) && !hoveredHub
                     ? 0.85
                     : 1,
+                  /* Round 575 (60-round milestone) — hub digit joins per-
+                     element brightness family at 14th anchor. Stacks
+                     brightness(1.15) onto R476's hub-hover drop-shadow
+                     — same R564/R570/R571/R572/R573/R574 pattern (drop-
+                     shadow + brightness in one filter chain). Closes
+                     the hub-cluster focal-element brightness coverage
+                     symmetrically: hub digit + hub-highlight disc
+                     (R574) now BOTH have stacked filter on hub-hover.
+                     Hub digit hub-hover signature post-R575 — 5 active
+                     axes:
+                       R209 scale 1.08         (geometry)
+                       R425 fw 700 → 800        (typography)
+                       R527 ls 0 → 0.3px        (typography)
+                       R476 drop-shadow glow    (paint halo)
+                       R575 brightness(1.15)    (paint glow) ← this round
+                     Hub-cluster focal cluster (digit + highlight) now
+                     has UNIFIED 5-axis hub-hover signature reading as
+                     one tightly-coupled motion-coherent lift. */
                   filter: !reducedMotion && hoveredHub
                     ? (isLight
-                        ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6))'
-                        : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6))')
+                        ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6)) brightness(1.15)'
+                        : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6)) brightness(1.15)')
                     : undefined,
                   letterSpacing: !reducedMotion && hoveredHub ? '0.3px' : '0px',
                   /* R425: font-weight 200ms appended so the hover fw
