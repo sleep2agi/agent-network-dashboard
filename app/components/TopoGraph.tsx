@@ -3066,7 +3066,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     // — sibling to R355 filter-pill prefix/suffix + R414
                     // chip-row unit brighten. Closes the inner-span
                     // hover-brighten family at the vendor chip surface.
-                    className="group tabular-nums font-medium inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu hover:-translate-y-px"
+                    // R496 — vendor letter chip joins active:scale-95 press
+                    // family. Last vendor-row clickable joining the family
+                    // R495 cashed via R490's transition-cascade dividend.
+                    // Same compound w/ R401 hover-lift idiom — lift-and-
+                    // compress on press, springs back on release.
+                    className="group tabular-nums font-medium inline-flex items-baseline gap-0.5 px-1 rounded anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu hover:-translate-y-px active:scale-95"
                     data-vendor-letter={v.initial}
                     data-vendor-letter-count={v.count}
                     data-vendor-letter-hover-lift="true"
@@ -3304,9 +3309,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    data-chip-hover-lift attr exposes the lift surface
                    state ('true' clickable, 'false' empty) for tests. */
                 // R414: `group` parent + inner unit span group-hover-brighten — see working chip above.
+                // R496 — active-links chip joins active:scale-95 press
+                // family. Sibling to working+online chips (R494). Gated
+                // on `isInteractive` (flowLinks.length > 0) — same R399
+                // conditional pattern used for hover-lift.
                 className={`group tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu ${
                   isInteractive
-                    ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30 hover:-translate-y-px'
+                    ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30 hover:-translate-y-px active:scale-95'
                     : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
                 }`}
                 data-chip-hover-lift={isInteractive ? 'true' : 'false'}
