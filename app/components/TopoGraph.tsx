@@ -2265,9 +2265,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  hover-color brighten family extension at the chrome strip
                  active-variant scope; sibling to the inactive variant's
                  R163/R178/R179/R270 hover:text-cyan-300 idiom. */
-              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide hover:brightness-[1.15] active:scale-95 transform-gpu ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
               data-topo-chrome-layout-hover-preview-fw={layout === 'ring' ? null : '500'}
-              style={{ transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease' }}
+              data-topo-chrome-layout-ring-brightness-hover="1.15"
+              /* R597 — Ring/Grid segmented buttons gain hover:
+                 brightness-[1.15] (37+38th anchors in per-element
+                 brightness family, 6+7th HTML). Paired-anchor round
+                 mirroring R596's zoom +/- closure at the second
+                 segmented control. Same segmented-unity rule
+                 (brightness = pure paint, no geometry break).
+                 Inline transition list extends with 'filter 150ms
+                 ease' so brightness eases under the existing R522
+                 150ms beat that bg/color/fw share (letter-spacing
+                 + transform on their own 200ms/150ms cadences).
+                 R557 banked pattern: when an element has both
+                 inline transition AND new transition-driven axis,
+                 extend the INLINE list — not the className. */
+              style={{ transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease, filter 150ms ease' }}
             >
               Ring
             </button>
@@ -2293,8 +2307,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  inactive variant gains `hover:font-medium` typography
                  preview + font-weight 150ms in inline transition list.
                  Same idiom, same family (R522 chrome layout). */
-              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide hover:brightness-[1.15] active:scale-95 transform-gpu ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
               data-topo-chrome-layout-hover-preview-fw={layout === 'grid' ? null : '500'}
+              data-topo-chrome-layout-grid-brightness-hover="1.15"
               /* Round 268 / Loop: Grid button's left border (the
                  internal divider between Ring and Grid) picks up
                  pal.containerBorder, matching the wrapper change at
@@ -2306,8 +2321,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  the border-color flip — border-color 200ms ease-out
                  keeps R268's theme-toggle smoothness intact.
                  R492 adds `transform 150ms ease-out` so active:scale-95
-                 eases smoothly. */
-              style={{ borderColor: pal.containerBorder, transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease' }}
+                 eases smoothly.
+                 R597 sibling — Grid button mirrors Ring above:
+                 hover:brightness-[1.15] + filter 150ms ease in
+                 the inline transition list. */
+              style={{ borderColor: pal.containerBorder, transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease, filter 150ms ease' }}
             >
               Grid
             </button>
