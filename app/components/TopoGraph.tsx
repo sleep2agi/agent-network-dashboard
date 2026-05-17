@@ -9526,8 +9526,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     <g
                       data-runtime-badge-glow={isNodeActive ? 'true' : 'false'}
                       data-runtime-badge-brightness={isNodeActive ? '1.15' : '1'}
+                      data-runtime-badge-rotate={isNodeActive ? '3' : '0'}
                       style={{
                         pointerEvents: 'none',
+                        /* R599 — runtime badge gains hover-rotate-3.
+                           5th anchor in hover-rotate idiom (R350 reset
+                           -8° / R547 pill × / R549 brand logo / R576
+                           fullscreen +3° / R599 runtime badge +3°).
+                           Same +3° tilt as R576 fullscreen icon — at the
+                           14×14 badge scale, a 3° rotation reads as a
+                           subtle "wobble awake under attention" gesture
+                           that doesn't overwhelm the small surface.
+                           Applied via CSS individual `rotate` property
+                           (Tailwind v4 banked R547 — independent of SVG
+                           transform attribute, composes cleanly with
+                           the inner <g>'s translate+scale transform).
+                           transform-origin pinned to the badge center
+                           (bx, by) so rotation pivots around the
+                           visual centre, not the outer <g>'s default
+                           bbox corner — keeps the ring and icon spinning
+                           in place rather than orbiting offset.
+                           Runtime badge hover signature now 6 axes —
+                           densest per-node element in TopoGraph:
+                             R208  ring r          7   → 8
+                             R208  ring sw         1.5 → 2
+                             R443  icon sw         2.4 → 2.8
+                             R559  outer filter    none → drop-shadow(rt.color)
+                             R586  outer filter    stack brightness(1.15)
+                             R599  outer rotate    0   → 3deg  ← this round
+                           transition list extends with 'rotate 150ms
+                           ease-out' matching R586/R559 cadence at this
+                           surface. Six axes all ride one 150ms beat.
+                           Hover-rotate idiom family extension
+                           (5 anchors): R350 / R547 / R549 / R576 / R599. */
+                        rotate: isNodeActive ? '3deg' : '0deg',
+                        transformOrigin: `${bx}px ${by}px`,
                         /* R586 — runtime badge outer <g> stacks
                            brightness(1.15) onto the existing R559
                            drop-shadow on node hover. 25th anchor in
@@ -9556,7 +9589,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         filter: isNodeActive
                           ? `drop-shadow(0 0 2px ${rt.color}99) brightness(1.15)`
                           : undefined,
-                        transition: 'filter 150ms ease-out',
+                        transition: 'filter 150ms ease-out, rotate 150ms ease-out',
                       }}
                     >
                       <circle
