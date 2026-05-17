@@ -13975,6 +13975,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-legend-pin-ring-stroke-width="1.75"
                     data-legend-pin-ring-glow={isPinned ? 'true' : 'false'}
                     data-legend-pin-ring-brightness={isPinned ? '1.15' : '1'}
+                    data-legend-pin-ring-halo-layers={isPinned ? '2' : '0'}
                     style={{
                       pointerEvents: 'none',
                       /* R607 — legend pin-ring stacks brightness(1.15)
@@ -13996,8 +13997,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          vividly under the brightness lift.
                          Existing 'filter 200ms ease-out' transition
                          covers brightness ease at the same cadence. */
+                      /* Round 649 / Loop — legend pin-ring drop-shadow
+                         gains a SECOND outer layer at 6px blur + 0x44
+                         alpha (half R477's inner 0x88). Extends multi-
+                         layer halo family (R642-R648) to the 3rd panel-
+                         tier anchor — legend filter chip pin signal.
+                         Inner layer (R477): 3px + 0x88 alpha (~53%),
+                           row.fill tier color (working green / idle
+                           teal / offline slate) — sharp pin halo
+                         Outer layer (R649): 6px + 0x44 alpha (~27%),
+                           same row.fill tint — soft ambient falloff
+                         Same R642-R648 0.5x falloff (0x88 → 0x44) + 2x
+                         blur stride (3 → 6) vocabulary. The pin-ring
+                         now radiates a near + far tier-coloured glow
+                         when a status filter is locked in — visually
+                         emphasises which tier the user has pinned at
+                         the panel-row scope.
+                         data-legend-pin-ring-halo-layers attr exposes
+                         the gate ('2' pin / '0' rest). */
                       filter: isPinned
-                        ? `drop-shadow(0 0 3px ${row.fill}88) brightness(1.15)`
+                        ? `drop-shadow(0 0 3px ${row.fill}88) drop-shadow(0 0 6px ${row.fill}44) brightness(1.15)`
                         : undefined,
                       transition: 'opacity 150ms ease-out, filter 200ms ease-out',
                     }}
