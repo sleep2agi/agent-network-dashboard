@@ -12954,12 +12954,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          across alias / sub-text / edge-badge / group-
                          label / and now recent-row text. */
                       data-recent-row-text-brightness={(isRowHovered || isRowPinned) ? '1.15' : '1'}
+                      data-recent-row-text-halo-layers={(isRowHovered || isRowPinned) ? '2' : '0'}
                       style={{
                         transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
                         letterSpacing: isRowPinned ? '0.5px' :
                                        isRowHovered ? '0.25px' : '0px',
+                        /* Round 659 / Loop — recent-row text filter gains a
+                           SECOND outer drop-shadow at 4px + 0x40 alpha
+                           (half R568 inner 0x80). 18th anchor in multi-
+                           layer halo family (1st recent-row-text anchor).
+                           Same R642-R658 0.5x falloff vocabulary + 2x
+                           blur stride (2 → 4). pal.legendAccent tint
+                           preserved across both layers. */
                         filter: (isRowHovered || isRowPinned)
-                          ? `drop-shadow(0 0 2px ${pal.legendAccent}80) brightness(1.15)`
+                          ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)`
                           : undefined,
                       }}
                     >
