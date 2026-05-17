@@ -10330,7 +10330,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                                R602       scale      1   → 1.05
                                R605       drop-shadow → pal.legendAccent  ← this round */
                           filter: isAvatarHovered
-                            ? `drop-shadow(0 0 4px ${pal.legendAccent}99) brightness(1.15)`
+                            ? `drop-shadow(0 0 4px ${pal.legendAccent}99) drop-shadow(0 0 8px ${pal.legendAccent}4c) brightness(1.15)`
                             : undefined,
                           transition: 'filter 200ms ease-out, rotate 200ms ease-out, scale 200ms ease-out',
                         }}
@@ -10420,7 +10420,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              stacked drop-shadow + brightness filter
                              on hover, mirroring the image branch above. */
                           filter: isAvatarFallbackHovered
-                            ? `drop-shadow(0 0 4px ${pal.legendAccent}99) brightness(1.15)`
+                            ? `drop-shadow(0 0 4px ${pal.legendAccent}99) drop-shadow(0 0 8px ${pal.legendAccent}4c) brightness(1.15)`
                             : undefined,
                           transition: 'filter 200ms ease-out, rotate 200ms ease-out, scale 200ms ease-out',
                         }}
@@ -10496,7 +10496,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            coverage at 3/3 branches (image + monogram +
                            fallback all share the same stacked filter). */
                         filter: isAvatarFallbackHovered
-                          ? `drop-shadow(0 0 4px ${pal.legendAccent}99) brightness(1.15)`
+                          ? `drop-shadow(0 0 4px ${pal.legendAccent}99) drop-shadow(0 0 8px ${pal.legendAccent}4c) brightness(1.15)`
                           : undefined,
                         transition: 'filter 200ms ease-out, rotate 200ms ease-out, scale 200ms ease-out',
                       }}
