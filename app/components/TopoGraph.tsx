@@ -1142,6 +1142,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // hover state says — either -8° (still hovering) or 0 (mouse left).
   // 350th-round milestone polish.
   const [hoveredReset, setHoveredReset] = useState(false);
+  // R595: hover state for the chrome fullscreen button — drives the
+  // brightness(1.15) filter on hover, sibling to hoveredReset above.
+  // Same pattern as R593 hoveredZoomLevel + R594 hoveredReset; closes
+  // the standalone chrome button pair (reset + fullscreen) at
+  // brightness parity.
+  const [hoveredFullscreen, setHoveredFullscreen] = useState(false);
   // R135: panel-wide hover-elevation. The recent-signal + legend
   // panels both already host clickable rows (R56/R116 recent rows,
   // R55/R61 legend rows) and a clickable footer (R133), so the
@@ -14131,9 +14137,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               classes win specificity. */}
           <button
             onClick={() => { popChrome('fullscreen'); toggleFullscreen(); }}
+            onMouseEnter={() => setHoveredFullscreen(true)}
+            onMouseLeave={() => setHoveredFullscreen(false)}
+            onFocus={() => setHoveredFullscreen(true)}
+            onBlur={() => setHoveredFullscreen(false)}
             data-topo-chrome-fullscreen
             data-topo-chrome-fullscreen-active={isFullscreen ? 'true' : 'false'}
             data-topo-chrome-fullscreen-popping={chromePopping === 'fullscreen' ? 'true' : 'false'}
+            data-topo-chrome-fullscreen-hover={hoveredFullscreen ? 'true' : 'false'}
+            data-topo-chrome-fullscreen-brightness={hoveredFullscreen ? '1.15' : '1'}
             // R196: fullscreen also picks up press-state — active variant
             // deepens cyan-500/20 → cyan-500/25 on press; non-active
             // deepens white/5 → white/10.
@@ -14153,17 +14165,48 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // R400: hover translateY(-1px) lift — see reset button above for family doc.
             // R493 — fullscreen joins active:scale-95 press family (same as
             // reset above: lift-and-compress compound transform on press).
-            className={`group p-1.5 rounded-md border hover:-translate-y-px active:scale-95 transition-colors transition-transform duration-200 ease-out transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
+            className={`group p-1.5 rounded-md border hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
                 ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25'
                 : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'
             }${chromePopping === 'fullscreen' ? ' anet-chrome-pop' : ''}`}
             data-topo-chrome-fullscreen-hover-lift="true"
+            /* R595 — chrome fullscreen button gains filter brightness(1.15)
+               on hoveredFullscreen. 34th anchor in per-element brightness
+               family, 3rd HTML-element anchor (R593 zoom-level + R594
+               reset). Sibling to R594 — closes the standalone chrome
+               button pair (reset + fullscreen) at full brightness parity.
+
+               Per the R400 family doc, reset + fullscreen are the only
+               two standalone (non-segmented) chrome buttons. Both now
+               share the same 5-axis hover signature pattern:
+                 button hover-lift translateY(-1px)  R400
+                 icon hover-scale  1.0 → 1.10        R353 (full) / R514 (reset)
+                 icon stroke-width 2.5 → 2.8         R455 (full) / R453 (reset)
+                 icon hover-rotate                    R576 (full +3°) / R350 (reset -8°)
+                 button brightness 1 → 1.15          R595 (full) / R594 (reset)
+
+               Inline transition shorthand replaces the className-based
+               `transition-colors transition-transform` (R557 banked:
+               inline overrides className for transition-driven hover
+               axes). 5 transition properties (bg / color / border /
+               transform / filter) ride one 200ms ease-out beat.
+
+               Active-variant interaction: when isFullscreen=true the
+               className applies cyan bg + cyan text. brightness(1.15)
+               on top makes the active+hovered state read at maximum
+               vivid cyan — the user knows they're poised to EXIT
+               fullscreen with extra visual confirmation.
+
+               data-topo-chrome-fullscreen-brightness attr exposes
+               the gate for tests. */
             style={{
               borderColor: pal.containerBorder,
               ...(isFullscreen
                 ? {}
                 : { background: pal.legendBox.fill, color: pal.legendText }),
+              filter: hoveredFullscreen ? 'brightness(1.15)' : undefined,
+              transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out, filter 200ms ease-out',
             }}
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
