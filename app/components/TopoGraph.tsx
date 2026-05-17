@@ -9491,7 +9491,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        Gated on !reducedMotion as a courtesy (brightness
                        transition < ~50ms still feels instant; the gate
                        avoids the transition cycle for a11y users). */
-                    const isAvatarHovered = !reducedMotion && hoveredAlias === session.alias;
+                    /* R619 — extend isAvatarHovered gate to include
+                       chatAlias === session.alias. Single conceptual
+                       change cascades across ALL 4 avatar axes (R501
+                       brightness + R600 rotate + R602 scale + R605
+                       drop-shadow) for the image branch. The chat
+                       partner's vendor logo now performs the full
+                       4-axis identification gesture, matching the
+                       brand 书生 logo's hub-center vocabulary.
+
+                       5th anchor in chat-target-gated brightness
+                       family (R615 chat ring + R616 alias text +
+                       R617 sub-text + R618 label card + R619 avatar
+                       — image branch). The sibling fallback branches
+                       extend via isAvatarFallbackHovered below.
+                       Same hover treatments at this surface — gate
+                       union just widens the trigger condition. */
+                    const isAvatarHovered = !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias);
                     return (
                       <image
                         href={vendor.logo ?? '/intern_avatar.png'}
@@ -9630,7 +9646,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
                      data-node-avatar-monogram-hovered + -fallback-
                      hovered attrs surface the gates for tests. */
-                  const isAvatarFallbackHovered = !reducedMotion && hoveredAlias === session.alias;
+                  /* R619 sibling — extend isAvatarFallbackHovered gate to
+                     include chatAlias === session.alias. Cascades the
+                     same 4 axes to vendor monogram + prefix-group
+                     fallback branches. The chat partner's avatar
+                     identification gesture is now consistent across
+                     all 3 vendor-detection branches (image / monogram /
+                     fallback) — same as R600/R601 rotate closure and
+                     R501/R558 brightness closure. */
+                  const isAvatarFallbackHovered = !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias);
                   if (vendor.id !== 'unknown') {
                     // Known model house, logo asset not in public/vendors/
                     // yet — vendor-tinted monogram stands in.
