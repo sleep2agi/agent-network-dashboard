@@ -4281,6 +4281,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-group-box-pinned={isPinned ? 'true' : 'false'}
                   data-group-box-linecap="round"
                   data-group-box-linejoin="round"
+                  data-group-box-geom-transition="x,y,width,height"
                   // R85: ambient "marching ants" drift on the perimeter
                   // when this group has at least one working member, and
                   // neither pin nor hover is active (those treatments
@@ -4318,8 +4319,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        while stroke / fill-opacity / filter all eased.
                        Closes the last theme-toggle snap on the group
                        box surface — same idiom R246 + R247 used at
-                       per-node label-card and side-panel scopes. */
-                    transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out, filter 200ms ease-out, fill 200ms ease-out',
+                       per-node label-card and side-panel scopes.
+                       Round 461 / Loop: extend the transition list to
+                       all 4 geometry axes (x, y, width, height) so
+                       when a cluster grows / shrinks (member joins,
+                       leaves, prefix rebalance, dense toggle, status
+                       flip) the BIG outer container slides into the
+                       new bounds at the same 200ms cadence the R460
+                       inner hitbox tint rect now uses. Pre-R461 the
+                       outer 200×140 px box snap-jumped on cluster
+                       resize while the inner 160×18 hitbox slid —
+                       jarring two-rate motion at the same surface.
+                       R461 unifies both rects to slide as one, with
+                       the parent box driving the visual envelope and
+                       the inner hitbox tracking the bottom-edge tint.
+                       Hero D #147 motion-coherence at the FULL cluster
+                       container tier (not just the label tint).
+                       data-group-box-geom-transition attr exposed. */
+                    transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out, filter 200ms ease-out, fill 200ms ease-out, x 200ms ease-out, y 200ms ease-out, width 200ms ease-out, height 200ms ease-out',
                     pointerEvents: 'none',
                     // CSS var consumed by `.anet-topo-groupbox-live`
                     // (line 877 of globals.css). React's CSSProperties
