@@ -5563,6 +5563,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-group-box-linecap="round"
                   data-group-box-linejoin="round"
                   data-group-box-geom-transition="x,y,width,height"
+                  data-group-box-brightness={(isPinned || isHovered) ? '1.15' : '1'}
                   // R85: ambient "marching ants" drift on the perimeter
                   // when this group has at least one working member, and
                   // neither pin nor hover is active (those treatments
@@ -5612,6 +5613,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // is preserved.
                   filter={(isPinned || isHovered) ? 'url(#topo-groupbox-lift)' : undefined}
                   style={{
+                    /* R587 — group box gains stacked brightness(1.15)
+                       on hover/pin. 26th anchor in per-element
+                       brightness family, 19th in stacked-filter
+                       sub-pattern. Inline style.filter overrides the
+                       attribute filter (kept intact for the R142
+                       documentation trail); stacked syntax preserves
+                       the R142 url(#topo-groupbox-lift) SVG drop-shadow
+                       lift on hover/pin, with brightness layered on
+                       top.
+
+                       Same R582/R583 stacked-filter pattern at the
+                       group-cluster scope.
+
+                       Group box inspection signature now 6 layers
+                       (spans paint + stroke + geometry + filter):
+                         R68   fillOpacity 0.045 → 0.13 (cyber pin)
+                         R68   strokeWidth 1.5 → 2 → 3
+                         R68   stroke tint → legendAccent
+                         R503  strokeDasharray → 'none' on activation
+                         R142  filter → url(#topo-groupbox-lift)
+                         R587  filter stack → brightness(1.15)  ← this round
+
+                       Same existing transition list already includes
+                       'filter 200ms ease-out' (R142 cadence). No
+                       transition change needed. */
+                    filter: (isPinned || isHovered)
+                      ? 'url(#topo-groupbox-lift) brightness(1.15)'
+                      : undefined,
                     /* Round 248 / Loop: append fill 200ms ease-out to
                        the existing R66 transition list. Pre-R248 the
                        rect's fill (isLight ? '#0f172a' (slate-900) :
