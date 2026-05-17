@@ -6599,11 +6599,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-topo-hub-highlight-visible={workingCount > 0 ? 'false' : 'true'}
               data-topo-hub-highlight-radius="5.5"
               data-topo-hub-highlight-opacity={workingCount > 0 ? 0 : 0.95}
+              data-topo-hub-highlight-breath={!reducedMotion && workingCount === 0 ? 'true' : 'false'}
               style={{
                 pointerEvents: 'none',
                 transition: 'opacity 300ms ease-out',
               }}
-            />
+            >
+              {/* Round 497 / Loop — idle-state breath (呼吸感 theme pivot
+                  from the R492-R496 press-family arc). Pre-R497 the hub
+                  idle highlight read as a static dim disc — present but
+                  motionless, visually mute. R497 adds a 4s opacity breath
+                  (0.85 ↔ 1.0 ↔ 0.85) so the hub reads "alive but quiet"
+                  instead of "frozen", giving the empty-fleet state a
+                  subtle living signature.
+                  Gates:
+                    - !reducedMotion (R29 a11y blanket) — reducedMotion
+                      users see static 0.95 disc, no animate
+                    - workingCount === 0 — when fleet is busy, the
+                      highlight is invisible (opacity=0) so the animate
+                      would waste paint cycles. Gating saves work.
+                  SMIL <animate> overrides the static opacity={0.95}
+                  during its run; falls back to 0.95 when reducedMotion
+                  flips on (the animate node simply doesn't render).
+                  4s cycle is long enough to feel like ambient breath
+                  rather than a pulse, matching the "quiet" semantic.
+                  data-topo-hub-highlight-breath attr exposes the
+                  resolved gate state for tests. */}
+              {!reducedMotion && workingCount === 0 && (
+                <animate attributeName="opacity" values="0.85;1;0.85" dur="4s" repeatCount="indefinite" />
+              )}
+            </circle>
             {/* R115 / Loop: hover hint ring. Stroke-only circle at r=14
                 that fades in when the hub is hovered — the same idea
                 R44 used for node avatars (group-hover stroke). r=14
