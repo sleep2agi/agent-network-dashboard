@@ -74,8 +74,14 @@ const idleA11y = await probe({ sessions: [{ alias: 'a·1', status: 'idle' }], re
 const busy  = await probe({ sessions: [{ alias: 'a·1', status: 'working' }], reducedMotion: false });
 
 const src = readFileSync('/home/vansin/agent-network-dashboard/app/components/TopoGraph.tsx', 'utf8');
-const sourceWired = /!reducedMotion && workingCount === 0 &&\s*\(\s*<animate attributeName="opacity" values="0\.85;1;0\.85" dur="4s" repeatCount="indefinite"/.test(src);
-const breathAttrWired = /data-topo-hub-highlight-breath=\{!reducedMotion && workingCount === 0 \? 'true' : 'false'\}/.test(src);
+// R508 refactor: the hub-highlight rendering was hoisted into an IIFE
+// so digit + highlight share a single `hubRecede` gate. The R497 source
+// formula now lives inside the IIFE: `breathActive = !reducedMotion &&
+// workingCount === 0 && !hubRecede` AND `breath_attr` uses `breathActive`.
+// Update regex anchors to match the new structure. Runtime DOM contract
+// (idle visible, busy invisible, a11y no-animate) unchanged.
+const sourceWired = /const breathActive = !reducedMotion && workingCount === 0 && !hubRecede;[\s\S]*?\{breathActive && \(\s*<animate attributeName="opacity" values="0\.85;1;0\.85" dur="4s" repeatCount="indefinite"/.test(src);
+const breathAttrWired = /data-topo-hub-highlight-breath=\{breathActive \? 'true' : 'false'\}/.test(src);
 
 const results = {
   // Idle + motion: visible + animate present + breath='true'

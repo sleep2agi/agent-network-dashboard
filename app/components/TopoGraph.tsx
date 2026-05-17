@@ -6804,20 +6804,50 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 + R213 always-mount opacity-gate + pointerEvents:none
                 + R365 r=5.5 all preserved. data-topo-hub-highlight-
                 opacity attr exposes the resolved value for tests. */}
-            <circle
-              cx={cx} cy={cy} r="5.5"
-              fill="#d1fae5"
-              opacity={workingCount > 0 ? 0 : 0.95}
-              data-topo-hub-highlight
-              data-topo-hub-highlight-visible={workingCount > 0 ? 'false' : 'true'}
-              data-topo-hub-highlight-radius="5.5"
-              data-topo-hub-highlight-opacity={workingCount > 0 ? 0 : 0.95}
-              data-topo-hub-highlight-breath={!reducedMotion && workingCount === 0 ? 'true' : 'false'}
-              style={{
-                pointerEvents: 'none',
-                transition: 'opacity 300ms ease-out',
-              }}
-            >
+            {/* Round 508 / Loop — focal-recede pattern 2nd anchor.
+                Extends R507's hub-digit recede to the hub-highlight
+                circle so the hub focal CLUSTER (digit at z-top + this
+                idle-state highlight beneath) recedes as a unit when
+                canvas attention is elsewhere. Computed once: a single
+                non-hub-hover gate drives BOTH the digit (R507) AND
+                this highlight (R508) so they always co-move.
+                Recede multiplies the visible opacity by 0.85 — when
+                workingCount===0 the rest opacity 0.95 becomes 0.81
+                during external-hover; when workingCount>0 the
+                opacity stays 0 (invisible) regardless of recede.
+                Additionally, when recede is active the SMIL breath
+                animation halts (animate node un-mounts) so the
+                receded state reads as quietly static, not pulsing
+                at 0.85↔1.0 against the recede multiplier (which
+                would visually conflict — competing 15% drops). On
+                un-hover the animate re-mounts and breath resumes.
+                data-topo-hub-recede on both digit AND highlight
+                provides a stable test handle for the unified-recede
+                gate.
+                Composed from existing hover state vars — no new
+                state. Pure paint axis. */}
+            {(() => {
+              const hubRecede = !!((hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
+                                    hoveredStatus || hoveredVendor) && !hoveredHub);
+              const baseOpacity = workingCount > 0 ? 0 : 0.95;
+              const resolvedOpacity = hubRecede ? baseOpacity * 0.85 : baseOpacity;
+              const breathActive = !reducedMotion && workingCount === 0 && !hubRecede;
+              return (
+                <circle
+                  cx={cx} cy={cy} r="5.5"
+                  fill="#d1fae5"
+                  opacity={resolvedOpacity}
+                  data-topo-hub-highlight
+                  data-topo-hub-highlight-visible={workingCount > 0 ? 'false' : 'true'}
+                  data-topo-hub-highlight-radius="5.5"
+                  data-topo-hub-highlight-opacity={resolvedOpacity}
+                  data-topo-hub-highlight-breath={breathActive ? 'true' : 'false'}
+                  data-topo-hub-highlight-recede={hubRecede ? 'true' : 'false'}
+                  style={{
+                    pointerEvents: 'none',
+                    transition: 'opacity 300ms ease-out',
+                  }}
+                >
               {/* Round 497 / Loop — idle-state breath (呼吸感 theme pivot
                   from the R492-R496 press-family arc). Pre-R497 the hub
                   idle highlight read as a static dim disc — present but
@@ -6838,10 +6868,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   rather than a pulse, matching the "quiet" semantic.
                   data-topo-hub-highlight-breath attr exposes the
                   resolved gate state for tests. */}
-              {!reducedMotion && workingCount === 0 && (
+              {breathActive && (
                 <animate attributeName="opacity" values="0.85;1;0.85" dur="4s" repeatCount="indefinite" />
               )}
             </circle>
+              );
+            })()}
             {/* R115 / Loop: hover hint ring. Stroke-only circle at r=14
                 that fades in when the hub is hovered — the same idea
                 R44 used for node avatars (group-hover stroke). r=14
