@@ -9060,7 +9060,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // badge-active exposes the gate for tests.
                   const isNodeActive = !reducedMotion && hoveredAlias === session.alias;
                   return (
-                    <g style={{ pointerEvents: 'none' }}>
+                    /* Round 559 / Loop — runtime badge outer <g> picks up
+                       a drop-shadow glow on node hover, using the runtime's
+                       own identity color (rt.color, hex). 16th anchor in
+                       the drop-shadow visual-polish family. Pairs with
+                       existing R208 ring r-lift + R443 icon sw-lift for
+                       a 3-axis runtime-badge hover signature now spanning
+                       geometry + stroke + paint glow:
+                         R208  ring r        7   → 8     (online)
+                         R208  ring sw       1.5 → 2
+                         R443  icon sw       2.4 → 2.8
+                         R559  outer filter  none → drop-shadow(rt.color)  ← this round
+                       Filter on the OUTER <g> applies uniformly to both
+                       the ring <circle> and the inner icon <path> —
+                       single paint-axis lift covers both layers in one
+                       motion-coherent gesture.
+                       Hue: `${rt.color}99` hex+alpha (60%) — rt.color is
+                       6-digit hex (#a78bfa / #38bdf8 / #34d399 / #fbbf24
+                       per lib/vendorIdentity.ts), so hex+alpha concat is
+                       safe (banked R541 pattern: hex sources use hex+
+                       alpha; only hsl/color()/dynamic sources need color-
+                       mix).
+                       2px blur reads tight on a small badge (r=7 online
+                       / r=5.5 offline). transition list adds 'filter
+                       150ms ease-out' matching the R208 ring r/sw cadence
+                       at this surface.
+                       Drop-shadow visual-polish family extension (16
+                       anchors now): R476/R477/R478/R479/R480/R481 +
+                       R500/R532-R536/R537/R538/R540/R543-R546/R550 +
+                       R559 (this round).
+                       data-runtime-badge-glow attr surfaces the gate
+                       for tests. */
+                    <g
+                      data-runtime-badge-glow={isNodeActive ? 'true' : 'false'}
+                      style={{
+                        pointerEvents: 'none',
+                        filter: isNodeActive
+                          ? `drop-shadow(0 0 2px ${rt.color}99)`
+                          : undefined,
+                        transition: 'filter 150ms ease-out',
+                      }}
+                    >
                       <circle
                         cx={bx} cy={by} r={br}
                         fill={pal.containerBg}
