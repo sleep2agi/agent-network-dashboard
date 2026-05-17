@@ -5382,7 +5382,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               flow links + nodes; pointer-events off so they never intercept
               a node click. Restrained dashed container + group-name label. */}
           {groupBoxes.map((box, boxIdx) => {
-            const isHovered = activeGroup === box.key;
+            /* R626 — extend isHovered gate to also fire when box.key
+               matches the chat partner's prefix-group. Single-line
+               gate union cascades the group cluster's hover
+               treatments (R587 brightness + R68 stroke tint to
+               legendAccent + R142 url(#topo-groupbox-lift) drop-
+               shadow + R68 dashed→solid stroke + R610 label tint
+               rect brightness + group label glow R479) to the chat
+               partner's prefix-group cluster.
+
+               12th anchor in chat-target-gated brightness family —
+               extends chat identification gesture from per-node +
+               edges + recent-rows (R615-R625) to the GROUP CLUSTER
+               scope. The chat partner's group box, label tint,
+               drop-shadow lift, and stroke all light up softly when
+               chat is open — providing a baseline "your chat
+               partner is in this cluster" signal that composes with
+               the per-node R618-R624 cascade.
+
+               Computed locally here (rather than at the line ~1061
+               activeGroup declaration) because chatAlias is declared
+               at line ~1369, after activeGroup. Local computation
+               avoids the forward-reference TS error while delivering
+               the same effective gate union at the only call site
+               (line 5385). */
+            const chatGroupKey = chatAlias ? (groupKeys[chatAlias] ?? chatAlias) : null;
+            const isHovered = activeGroup === box.key || chatGroupKey === box.key;
             /* Round 561 / Loop — inspection-overrides-encoding family
                4th anchor. When operator hovers a NODE ALIAS on the
                canvas, the group-label that CONTAINS that node lifts
