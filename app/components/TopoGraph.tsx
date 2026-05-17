@@ -2066,7 +2066,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  fw preview on its inactive variant.
                  data-topo-chrome-layout-hover-preview-fw="500" attr
                  on inactive button exposes the polish for tests. */
-              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              /* Round 552 / Loop — chrome active-variant gains hover:
+                 text-cyan-200, lifting text one brightness tier alongside
+                 the existing hover:bg-cyan-500/20 bg deepen. Coordinated
+                 4-anchor edit (replace_all touched 4 sibling lines sharing
+                 the identical active-variant className substring):
+                   Ring   (this line)        layout === 'ring'
+                   Grid   (line ~2097)       layout === 'grid'
+                   S/M/L  (line ~12635)      nodeScale === v
+                   Fscrn  (line ~13030)      isFullscreen
+                 Pre-R552 the active variant's hover state only deepened bg
+                 (cyan-500/15 → /20); text stayed planted at cyan-300. The
+                 inactive variant already lifts text on hover (text-gray-400
+                 → text-cyan-300). R552 brings parity: active variant lifts
+                 text one tier brighter (cyan-300 → cyan-200) on hover,
+                 mirroring the inactive variant's "text brightens on hover"
+                 gesture at the next brightness step.
+                 Brightness ladder snapshot (cyan):
+                   cyan-400  brand chrome focus ring
+                   cyan-300  active-variant rest    ←─┐
+                                                      │  +1 tier on hover
+                   cyan-200  active-variant hover  ←─┘  (this round)
+                 Pure paint axis (text color); bbox/geometry unchanged.
+                 transition-colors already in the class list so the cyan-
+                 300 → cyan-200 swap eases at the existing 200ms cadence.
+                 hover-color brighten family extension at the chrome strip
+                 active-variant scope; sibling to the inactive variant's
+                 R163/R178/R179/R270 hover:text-cyan-300 idiom. */
+              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
               data-topo-chrome-layout-hover-preview-fw={layout === 'ring' ? null : '500'}
               style={{ transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease' }}
             >
@@ -2094,7 +2121,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  inactive variant gains `hover:font-medium` typography
                  preview + font-weight 150ms in inline transition list.
                  Same idiom, same family (R522 chrome layout). */
-              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
               data-topo-chrome-layout-hover-preview-fw={layout === 'grid' ? null : '500'}
               /* Round 268 / Loop: Grid button's left border (the
                  internal divider between Ring and Grid) picks up
@@ -12632,7 +12659,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    rest at fw 400, inactive hover preview at fw 500).
                    data-topo-chrome-nodesize-hover-preview-fw="500" attr
                    exposes the polish for tests. */
-                className={`px-2 py-1 transition-colors transition-transform transition-[font-weight] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
+                className={`px-2 py-1 transition-colors transition-transform transition-[font-weight] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
                 data-topo-chrome-nodesize-hover-preview-fw={nodeScale === v ? null : '500'}
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
@@ -13027,7 +13054,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // reset above: lift-and-compress compound transform on press).
             className={`group p-1.5 rounded-md border hover:-translate-y-px active:scale-95 transition-colors transition-transform duration-200 ease-out transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
-                ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25'
+                ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25'
                 : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'
             }${chromePopping === 'fullscreen' ? ' anet-chrome-pop' : ''}`}
             data-topo-chrome-fullscreen-hover-lift="true"
