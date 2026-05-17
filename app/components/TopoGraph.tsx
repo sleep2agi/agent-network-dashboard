@@ -3569,6 +3569,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  on the canvas root for non-visual consumers.
              Composed from existing onlineNodes / workingCount /
              offlineNodes / flowLinks — no new state. */
+          /* Round 502 / Loop — categorical density-tier paired with the
+             R469 numeric counts. data-topo-fleet-density-tier classifies
+             the fleet size into 5 buckets so external consumers (CSS
+             selectors, Playwright probes, future density-conditional
+             polish gates like R109 dense-label collapse at 16+ nodes)
+             can branch on a stable tier name without re-deriving the
+             threshold logic from the raw numeric. Buckets:
+               'empty'      — onlineNodes.length === 0
+               'sparse'     — 1-3 nodes
+               'normal'     — 4-15 nodes
+               'dense'      — 16-30 nodes  (matches R109 collapse gate)
+               'very-dense' — 31+ nodes
+             Picks the gate boundaries that already drive CONDITIONAL
+             RENDER decisions elsewhere (R109 denseLayout = >16, R110
+             plain-text fallback) so the tier name is semantically
+             aligned with the visual mode the canvas already switches
+             to. Composed from existing onlineNodes — no new state.
+             12th attr in the canvas state surface set (R462/R466/R467/
+             R469×4/R471×2/R487/R488/R502). 12 attrs covers: build
+             identity, transient/sticky inspection modes, fleet split
+             numerics, fleet density tier, canvas layout/theme, canvas
+             zoom, hover identity. A test harness can snapshot the
+             full canvas state with 12 getAttribute calls. */
+          data-topo-fleet-density-tier={
+            onlineNodes.length === 0 ? 'empty' :
+            onlineNodes.length <= 3 ? 'sparse' :
+            onlineNodes.length <= 15 ? 'normal' :
+            onlineNodes.length <= 30 ? 'dense' :
+            'very-dense'
+          }
           data-topo-online-count={onlineNodes.length}
           data-topo-working-count={workingCount}
           data-topo-offline-count={offlineNodes.length}
