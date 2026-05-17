@@ -8578,6 +8578,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-hub-highlight-recede={hubRecede ? 'true' : 'false'}
                   data-topo-hub-highlight-hovered={!reducedMotion && hoveredHub ? 'true' : 'false'}
                   data-topo-hub-highlight-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
+                  data-topo-hub-highlight-halo-layers={!reducedMotion && hoveredHub ? '2' : '0'}
                   /* Round 574 — hub-highlight joins per-element brightness
                      family at 13th anchor. Stacks brightness(1.15) onto
                      R532's drop-shadow filter — same R564/R570/R571/R572/
@@ -8629,10 +8630,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   style={{
                     pointerEvents: 'none',
                     r: `${highlightR}px`,
+                    /* Round 652 / Loop — hub-highlight disc drop-shadow
+                       gains a SECOND outer layer at 4px/6px blur with
+                       halved alpha. 11th anchor in multi-layer halo
+                       family (3rd hub-cluster anchor after R650 digit
+                       + R651 halo). Both light + cyber branches stack
+                       2 drop-shadows ahead of brightness — same R650
+                       stride pattern (light 2+4 / cyber 3+6) and 50%
+                       alpha falloff (0.6 → 0.3). The MIDDLE disc of
+                       the hub focal cluster now matches the outermost
+                       halo (R651) + innermost digit (R650) halo
+                       grammar — 3-tier hub focal cluster now fully
+                       multi-layer on hover. Same emerald tint across
+                       both layers, chromatic identity preserved. */
                     filter: !reducedMotion && hoveredHub
                       ? (isLight
-                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6)) brightness(1.15)'
-                          : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6)) brightness(1.15)')
+                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6)) drop-shadow(0 0 4px rgba(16, 185, 129, 0.3)) brightness(1.15)'
+                          : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6)) drop-shadow(0 0 6px rgba(52, 211, 153, 0.3)) brightness(1.15)')
                       : undefined,
                     transition: 'opacity 300ms ease-out, fill 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                   } as React.CSSProperties}
