@@ -5363,10 +5363,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     r={(isHoveredEdge || isEndpointHoveredEdge) ? 5.5 : 4.5}
                     fill={pal.flowParticle}
                     filter={isLight ? undefined : 'url(#topo-glow)'}
-                    opacity={Math.min(1, fresh * edgeOpacityMul)}
+                    /* Round 485 / Loop — extends R484's "inspection
+                       overrides encoding" pattern to a 2nd anchor:
+                       edge particle opacity lifts to 1.0 on
+                       isHoveredEdge OR isEndpointHoveredEdge (user
+                       hovering the edge directly OR hovering one
+                       of its endpoint nodes). Pre-R485 the particle
+                       inherited freshness × edgeOpacityMul decay
+                       so a stale edge's particle painted near the
+                       0.30 floor even when the operator was
+                       inspecting it; R485 lifts to 1.0 on attention.
+                       data-recent-row-ts-alpha-attribute analog —
+                       freshness encoding preserved on rest tier,
+                       opacity override engages only on inspection.
+                       Sibling lift family — inspection-overrides-
+                       encoding pattern, now 2 anchors:
+                         R484 recent-row timestamp   freshness → 1.0
+                         R485 edge particle          freshness → 1.0  (this)
+                       data-edge-particle-opacity-lifted attr exposes
+                       the override gate; data-edge-particle-opacity-
+                       rest preserves the freshness reading. */
+                    opacity={(isHoveredEdge || isEndpointHoveredEdge) ? 1 : Math.min(1, fresh * edgeOpacityMul)}
                     data-edge-particle={link.key}
                     data-edge-particle-radius={(isHoveredEdge || isEndpointHoveredEdge) ? 5.5 : 4.5}
                     data-edge-particle-lifted={(isHoveredEdge || isEndpointHoveredEdge) ? 'true' : 'false'}
+                    data-edge-particle-opacity-rest={Math.min(1, fresh * edgeOpacityMul).toFixed(2)}
+                    data-edge-particle-opacity-lifted={(isHoveredEdge || isEndpointHoveredEdge) ? 'true' : 'false'}
                     style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out, r 200ms ease-out' }}
                   >
                     <animateMotion
