@@ -6835,7 +6835,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               return (
                 <circle
                   cx={cx} cy={cy} r="5.5"
-                  fill="#d1fae5"
+                  /* Round 509 / Loop — 配色 cross-theme cleanup. Pre-R509
+                     the hub-highlight fill was hardcoded `#d1fae5`
+                     (emerald-100, a pale tone). On the light theme this
+                     near-white green ran against a pale background at
+                     0.95 opacity — the disc was effectively invisible.
+                     Matches the existing R253 halo theme-inversion
+                     pattern (line ~6481): light theme picks the dark
+                     vibrant emerald (#10b981 emerald-600), dark theme
+                     keeps the pale emerald (#d1fae5 emerald-100). Both
+                     read at the same 0.95 opacity against their
+                     respective backdrops — light gets a saturated
+                     focal dot; dark keeps the soft glow signature.
+                     Pure paint axis (fill change only); bbox unchanged;
+                     R51 SVG sentinel safety untouched.
+                     transition list already includes `fill 200ms`?
+                     Actually the existing transition spec is `opacity
+                     300ms ease-out` — fill change on theme toggle
+                     will be instant. That's acceptable: theme toggle
+                     is a discrete event, and the halo (line 6500)
+                     already snaps fill on theme toggle the same way
+                     (`fill 200ms ease-out` was added later to halo
+                     via R253). Future round could add `fill 200ms`
+                     to highlight too if theme-switch flicker is
+                     noticed. */
+                  fill={isLight ? '#10b981' : '#d1fae5'}
                   opacity={resolvedOpacity}
                   data-topo-hub-highlight
                   data-topo-hub-highlight-visible={workingCount > 0 ? 'false' : 'true'}
