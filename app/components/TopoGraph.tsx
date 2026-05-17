@@ -7643,6 +7643,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   const internByAlias = /书生|书小生|intern/i.test(session.alias);
 
                   if (isIntern || internByAlias || vendor.logo) {
+                    /* Round 501 / Loop — vendor avatar inside node circles
+                       gains a hover-gated brightness lift. Pre-R501 the
+                       avatar <image> was the only per-node surface with
+                       NO hover treatment: R26 lifted the card, R242 tinted
+                       the card stroke, R427 spread the alias letter-
+                       spacing, R500 added the alias drop-shadow, R208
+                       lifted the runtime badge ring, R443 thickened
+                       the badge icon stroke, R177 brightened the
+                       halo — but the most visually-prominent element
+                       (the vendor logo / 书生 coin centred in each node)
+                       stayed paint-static. R501 closes the per-node
+                       hover-affordance arc by adding a 15% brightness
+                       lift on hover.
+                       Implementation: CSS filter: brightness(1.15)
+                       when hoveredAlias === session.alias. Pure paint
+                       axis on the <image> element — no geometry change,
+                       no bbox shift. Modern-browser supported (Chrome 64+
+                       / FF 56+ / Safari 9.1+).
+                       Hits 节点视觉 theme. data-node-avatar-hovered
+                       attr surfaces the gate for tests.
+                       Gated on !reducedMotion as a courtesy (brightness
+                       transition < ~50ms still feels instant; the gate
+                       avoids the transition cycle for a11y users). */
+                    const isAvatarHovered = !reducedMotion && hoveredAlias === session.alias;
                     return (
                       <image
                         href={vendor.logo ?? '/intern_avatar.png'}
@@ -7651,6 +7675,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         width={size}
                         height={size}
                         preserveAspectRatio="xMidYMid meet"
+                        data-node-avatar={session.alias}
+                        data-node-avatar-hovered={isAvatarHovered ? 'true' : 'false'}
+                        style={{
+                          filter: isAvatarHovered ? 'brightness(1.15)' : undefined,
+                          transition: 'filter 200ms ease-out',
+                        }}
                       />
                     );
                   }
