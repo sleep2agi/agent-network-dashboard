@@ -5869,7 +5869,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        exposes the geometry-axis presence for tests. */
                     data-group-label-tint-transition="200ms"
                     data-group-label-tint-geom-transition="x,width,rx"
-                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out, x 200ms ease-out, width 200ms ease-out, rx 200ms ease-out' }}
+                    data-group-label-tint-brightness={(pinnedGroup === box.key || hoveredGroupLabel === box.key) ? '1.15' : '1'}
+                    style={{
+                      /* R610 — group label tint rect gains filter
+                         brightness(1.15) on the same pin OR hover-label
+                         gate that drives the fill swap. The pal.legend-
+                         Accent cyan/teal fill (0.20 pin / 0.13 hover
+                         alpha) lifts +15% — small but perceivable lift
+                         that ties the tint band's paint axis to its
+                         already-strong fill/opacity/geometry response
+                         on inspection.
+
+                         Pin/hover-gated brightness family extension:
+                         tint-band joins the legend pin-ring (R607) +
+                         group box (R587) + group label text (R571) +
+                         flow-arrow on legend hover (R609) at the
+                         panel-tier brightness coverage.
+
+                         Pure paint axis; no geometry shift. transition
+                         list extends with 'filter 200ms ease-out'
+                         alongside the existing 200ms fill/opacity/geom
+                         cadence. */
+                      filter: (pinnedGroup === box.key || hoveredGroupLabel === box.key)
+                        ? 'brightness(1.15)'
+                        : undefined,
+                      transition: 'fill 200ms ease-out, opacity 200ms ease-out, x 200ms ease-out, width 200ms ease-out, rx 200ms ease-out, filter 200ms ease-out',
+                    }}
                   />
                 {/* Round 218 / Loop: group label gains a letter-spacing
                     transition on pin — the text subtly spaces out
