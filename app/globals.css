@@ -1074,6 +1074,32 @@ body {
   animation-iteration-count: infinite;
 }
 
+/* Round 553 — title-block brand logo subtle idle breath.
+   5th anchor in the 呼吸感 breath family — cadence ladder:
+     row hot      3s
+     hub idle     4s
+     brand logo   5s   ← this round
+     watermark    6s
+     crescent     7s
+   Pure opacity breath (0.92 ↔ 1, ~8% delta) on the title-block
+   crescent SVG so the brand mark reads as a "living mark" at
+   rest. Composes cleanly with R548 hover:scale-105 +
+   R549 hover:rotate-6 (independent properties: opacity vs
+   scale/rotate; the moon keeps breathing as it lifts on hover).
+   prefers-reduced-motion handled by R29 blanket override —
+   animation-duration → 0.001ms neutralises the keyframe without
+   killing the static opacity baseline. Component-side gate also
+   applied (`!reducedMotion` toggles the className) as canonical
+   TopoGraph breath pattern (sibling to R130 hub idle / R519
+   watermark / R326 crescent breath gates). */
+@keyframes anet-topo-brand-logo-breath-kf {
+  0%, 100% { opacity: 1;    }
+  50%      { opacity: 0.92; }
+}
+.anet-topo-brand-logo-breath {
+  animation: anet-topo-brand-logo-breath-kf 5s ease-in-out infinite;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
