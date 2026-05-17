@@ -7313,13 +7313,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-topo-hub-hover-ring-radius={hoveredHub ? 17 : 14}
               data-topo-hub-hover-ring-stroke-width="1.75"
               data-topo-hub-hover-ring-opacity={hoveredHub ? (isLight ? 0.85 : 0.8) : 0}
-              /* Round 253 / Loop: hub hover ring also gets stroke
-                 transition for theme toggle (cyber #10b981 ↔ light
-                 #059669). The opacity + r transitions stay for hover
-                 lift; stroke closes the theme-snap. */
+              /* Round 535 / Loop — completes the hub-cluster glow
+                 QUARTET by adding drop-shadow to the hub-hover-ring.
+                 Pre-R535 the hub-hover trio (R476 digit + R532 highlight
+                 disc + R533 spokes) glowed in unified emerald (digit/
+                 disc) + cyan/teal (spokes) on hub-hover, but the ring
+                 itself — the outermost solid emerald boundary at
+                 r=14→17 — stayed flat. R535 adds the matching emerald
+                 drop-shadow to the ring so the FULL hub-cluster glows
+                 across all four concentric surfaces on hub-hover:
+                   digit (typography center)  drop-shadow 0 0 3px emerald
+                   highlight disc (r=5.5/6)   drop-shadow 0 0 3px emerald
+                   hover-ring (r=14/17)       drop-shadow 0 0 3px emerald ← this round
+                   spokes (mesh)              drop-shadow 0 0 1.5px cyan/teal
+                 The ring is only visible on hub-hover (opacity=0 rest);
+                 adding drop-shadow at the same gate means the glow shows
+                 the moment the ring shows — no extra state needed.
+                 Same R476/R532 emerald palette since the ring sits
+                 inside the focal-disc tier (its color is also emerald
+                 #059669/#10b981).
+                 transition list extends to include 'filter 200ms ease-
+                 out' alongside the existing 180ms opacity/r — slight
+                 cadence mismatch (180 vs 200) is acceptable; the filter
+                 only appears AFTER the ring fades in via opacity, and
+                 the 200ms vs 180ms 20ms tail difference is below
+                 perceptual threshold.
+                 Drop-shadow visual-polish family extension (11 anchors):
+                 the hub-cluster glow quartet (R476/R532/R533/R535) plus
+                 the 7 non-hub anchors (R477/R478/R479/R480/R481/R483/
+                 R534) makes for a thoroughly polished glow vocabulary
+                 across the canvas.
+                 data-topo-hub-hover-ring-glow attr exposes the gate
+                 state for tests. */
+              data-topo-hub-hover-ring-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
               style={{
                 pointerEvents: 'none',
-                transition: 'opacity 180ms ease-out, r 180ms ease-out, stroke 200ms ease-out',
+                filter: !reducedMotion && hoveredHub
+                  ? (isLight
+                      ? 'drop-shadow(0 0 3px rgba(16, 185, 129, 0.5))'
+                      : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.5))')
+                  : undefined,
+                transition: 'opacity 180ms ease-out, r 180ms ease-out, stroke 200ms ease-out, filter 200ms ease-out',
               }}
             />
           </g>)}
