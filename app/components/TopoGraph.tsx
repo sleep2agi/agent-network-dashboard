@@ -6354,11 +6354,48 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-edge-badge-opacity-rest={isLight ? 0.95 : 0.85}
                         data-edge-badge-opacity-hover="1"
                         data-edge-badge-opacity-active="1"
-                        data-edge-badge-glow={isHot ? 'true' : 'false'}
+                        data-edge-badge-glow={(isHoveredEdge || isPinned) ? 'hover' : isHot ? 'hot' : 'false'}
+                        /* Round 534 / Loop — extends edge-badge drop-shadow
+                           coverage from hot-only (R480 amber) to also fire
+                           on hover/pin with a cyan accent glow. Pre-R534
+                           the badge's hover/pin lifted r (R164 9 → 10.5)
+                           + sw (R394 1.25 → 1.5) + opacity (R395/R396 →
+                           1.0), but the paint axis stayed at the badge's
+                           rest fill — no glow to telegraph "in focus" at
+                           the paint layer. R534 closes that 4-axis hover-
+                           lift parity by adding drop-shadow glow on
+                           (hovered || pinned).
+                           Precedence: (hover || pin) wins over isHot when
+                           BOTH true — interactive signal (user is
+                           inspecting) overrides informational signal
+                           (hot lane). When only isHot fires (no hover/
+                           pin) the amber R480 glow remains; the hover/
+                           pin case paints cyan/teal `pal.legendAccent`
+                           at 0x99 alpha (~60%) — bright enough to read
+                           as "lit" but won't overwhelm at small badge
+                           size (r=10.5).
+                           Edge-badge 4-axis hover-lift parity now:
+                             R164  r          9    → 10.5
+                             R394  stroke-wd  1.25 → 1.5
+                             R395  opacity    rest → 1.0
+                             R534  filter     none → drop-shadow glow ← this round
+                           Drop-shadow visual-polish family extension —
+                           edge-badge surface upgraded from single-gate
+                           (R480 isHot) to two-gate (isHot OR hover-pin).
+                           transition list already includes filter 200ms
+                           ease-out (R480). data-edge-badge-glow attr
+                           upgraded from `isHot ? true : false` to a
+                           3-value string: 'hot' | 'hover' | 'false' so
+                           tests can distinguish gate cause.
+                           R51 sentinel safety: badge is edge-internal
+                           (not g[data-node] ancestor); filter is paint-
+                           only; bbox unchanged. */
                         style={{
-                          filter: isHot
-                            ? `drop-shadow(0 0 3px ${hotStroke}80)`
-                            : undefined,
+                          filter: (isHoveredEdge || isPinned)
+                            ? `drop-shadow(0 0 3px ${pal.legendAccent}99)`
+                            : isHot
+                              ? `drop-shadow(0 0 3px ${hotStroke}80)`
+                              : undefined,
                           transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                         }}
                       />
