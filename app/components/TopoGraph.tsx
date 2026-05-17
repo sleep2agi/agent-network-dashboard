@@ -4598,7 +4598,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                               : (isLight ? 0.025 : 0.045)}
                   stroke={(isPinned || isHovered) ? pal.legendAccent : pal.ringStroke}
                   strokeWidth={isPinned ? 3 : isHovered ? 2 : 1.5}
-                  strokeDasharray={(isPinned || isHovered) ? 'none' : '6 6'}
+                  /* Round 503 / Loop — category-differentiation family
+                     2nd anchor (R499 = orphan label italic, 1st anchor).
+                     Orphan band rest-state strokeDasharray switches from
+                     '6 6' (prefix-group default) to '3 6' (tighter
+                     dashes). Pre-R503 the rect dash pattern was uniform
+                     across all bands; combined with R499's italic label,
+                     the orphan box now has TWO independent paint/
+                     typography differentiators at rest:
+                       R499  fontStyle: italic  (label text)
+                       R503  '3 6' dash pattern (rect stroke)  ← this round
+                     The R85 marching-ants animation continues to work
+                     with the new dash size (uses --march-dur custom
+                     property, dash-length-agnostic) — orphan's ants
+                     just have a different visual rhythm than prefix-
+                     group ants, reinforcing the catchall semantic.
+                     Pinned/hovered orphan still gets 'none' (solid
+                     stroke) so the hover/pin affordance is preserved
+                     — the differentiation lives ONLY in the rest
+                     state, never blocking inspection.
+                     Pure paint axis; no geometry change; bbox unchanged
+                     (strokeDasharray is paint-only). R51 SVG sentinel
+                     safety untouched (overlap-test gates to g[data-
+                     node], this cluster rect is invisible to it).
+                     data-group-box-orphan attr surfaces the gate for
+                     tests + future polish references. */
+                  strokeDasharray={
+                    (isPinned || isHovered) ? 'none' :
+                    box.isOrphan ? '3 6' : '6 6'
+                  }
+                  data-group-box-orphan={box.isOrphan ? 'true' : 'false'}
                   /* Round 380 / Loop: cluster box stroke gets round
                      linecap + round linejoin. Sibling SVG stroke-
                      softening polish to R378 flow-rail linecap + R379
