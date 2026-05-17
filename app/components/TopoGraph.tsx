@@ -3755,10 +3755,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       boxShadow: isPinned
                         ? `inset 0 0 0 1px ${v.color}, inset 0 0 0 2px rgba(255,255,255,0.45)`
                         : undefined,
+                      /* R578 sibling — vendor chip stacks brightness(1.15)
+                         onto R541 drop-shadow. Closes chip-row tier-color
+                         glow trio at consistent stacked-filter pattern. */
                       filter: isPinned
-                        ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 60%, transparent))`
+                        ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 60%, transparent)) brightness(1.15)`
                         : hoveredVendor === v.initial
-                          ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 40%, transparent))`
+                          ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 40%, transparent)) brightness(1.15)`
                           : undefined,
                       transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, filter 200ms ease-out',
                     }}
@@ -12081,15 +12084,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-legend-swatch-state={isPinned ? 'pinned' : isRowHovered ? 'hover' : isMemberAliasMatching ? 'member-alias-matching' : 'idle'}
                     data-legend-swatch-glow={isSwatchLifted ? 'true' : 'false'}
                     data-legend-swatch-member-alias-matching={isMemberAliasMatching ? 'true' : 'false'}
+                    /* Round 578 — legend swatch joins per-element brightness
+                       family at 16th anchor. Stacks brightness(1.15) onto
+                       R537 drop-shadow. Closes chip-row tier-color glow
+                       trio at consistent stacked-filter pattern alongside
+                       R542 pressure-seg (already stacks brightness 1.2)
+                       and the sibling vendor chip (R578-sibling). */
+                    data-legend-swatch-brightness={isSwatchLifted ? '1.15' : '1'}
                     style={{
-                      /* R562: swatch lifts on direct row hover, pin, OR
-                         member-alias-matching (operator inspecting a node
-                         whose status matches this row's tier). Pure paint
-                         + geometry axes — label/fill/ls/fw stay tied to
-                         direct row-hover semantics. */
                       r: isSwatchLifted ? '7px' : '6px',
                       filter: isSwatchLifted
-                        ? `drop-shadow(0 0 3px ${row.fill}99)`
+                        ? `drop-shadow(0 0 3px ${row.fill}99) brightness(1.15)`
                         : undefined,
                       transition: 'r 150ms ease-out, filter 150ms ease-out',
                     } as React.CSSProperties}
