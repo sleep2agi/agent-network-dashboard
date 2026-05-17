@@ -8384,8 +8384,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 title scope: hovering the panel chrome spreads the
                 title 0.1 px, signalling "this is a coherent unit
                 you're entering". transition list extends letter-
-                spacing 200ms ease-out alongside existing fill 200ms. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out' }} data-recent-panel-title>recent signal</text>
+                spacing 200ms ease-out alongside existing fill 200ms.
+                Round 482 / Loop — add 2nd typographic axis to the
+                title: fontWeight 700 → 800 on activeEdgeKey (any
+                row hover OR pin propagates from hoveredEdgeKey ??
+                pinnedEdgeKey). Pre-R482 the title only responded
+                to panel-chrome hover via R345 ls; when a specific
+                row was hovered/pinned inside the panel, the title
+                stayed flat. R482 closes the gap: when ANY row is
+                active inside the panel, the title tightens
+                typographically alongside the row's own R143 lift +
+                R472 tint + R474 text spread. data tightens under
+                attention pattern extension (panel-scope variant
+                following R416/R424/R425/R426/R444/R445/R446/R457
+                at the chip / panel / hub / edge / count / parent-
+                label tiers).
+                transition list extends to include 'font-weight
+                200ms ease-out' alongside R345's ls + R55's fill
+                200ms. data-recent-panel-title-fw exposes the
+                resolved weight for tests. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out' }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'}>recent signal</text>
             {/* R96: header count now matches what the rows show. Pre-R96
                 this read "X msgs" off the raw messages array, but the
                 rows below render DEDUPED flowLinks — so a fleet with 10
