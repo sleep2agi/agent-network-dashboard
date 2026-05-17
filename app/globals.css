@@ -951,10 +951,35 @@ body {
    R144/R151/R152). Browser default focus outline on SVG is hard
    to spot against the canvas; explicit cyan-300 ring matches the
    dashboard's legendAccent. 2-px outline-offset gives breathing
-   room around the painted bounding box. */
-.anet-topo-svg-focus:focus-visible {
-  outline: 2px solid #67e8f9;
+   room around the painted bounding box.
+   Round 491 / Loop — SVG-side counterpart to R490's chip-focus
+   outline-color transition. Pre-R491 keyboard focus on SVG g
+   elements (recent rows, legend rows, group labels, edge badges,
+   nodes, "+N more") snapped instantly; HTML chips (post-R490) now
+   ease through 200ms ease-out but SVG g still hard-cut. Same
+   baseline-transparent + transition-outline-color recipe brings
+   the SVG canvas into the unified keyboard motion vocabulary —
+   keyboard users tabbing between chip-row and SVG canvas see
+   ONE smooth fade timing instead of HTML-smooth-then-SVG-snap.
+   The cyan-300 (#67e8f9) target color matches R156's original
+   choice (legendAccent visual identity); only the transition
+   timing is new.
+   Note on cascade: SVG g elements rarely carry Tailwind
+   transition-* utility classes (Tailwind defaults are HTML-
+   centric), so the (0,1,0) specificity of .anet-topo-svg-focus
+   typically wins without !important. Adding !important defensively
+   anyway since the React component may add future inline styles
+   or Tailwind classes. Same trade-off as R490 (inline
+   style.transition still wins if added). */
+.anet-topo-svg-focus {
+  outline: 2px solid transparent;
   outline-offset: 2px;
+  transition-property: outline-color !important;
+  transition-duration: 200ms !important;
+  transition-timing-function: ease-out !important;
+}
+.anet-topo-svg-focus:focus-visible {
+  outline-color: #67e8f9;
 }
 
 /* Round 46 — animated dashed spokes flowing from hub outward. Each spoke
