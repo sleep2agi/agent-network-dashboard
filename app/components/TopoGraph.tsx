@@ -10432,13 +10432,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 (2.5) all share one weight. View-box (24×24) and
                 display size (13×13) unchanged, so geometry stays
                 pixel-stable — only the stroke deepens. */}
+            {/* Round 453 / Loop: chrome reset icon strokeWidth hover
+                lift — 2.5 → 2.8 on hoveredReset && !resetSpinning.
+                Sibling to R443 runtime badge inner-icon sw lift
+                (2.4→2.8) — both chrome icons now thicken on hover
+                for tactile feedback. Pre-R453 reset hover was a
+                rotate-only cue (R350); R453 adds a stroke-weight
+                axis so the affordance reads with both motion (R350
+                rotate -8°) AND geometry (R453 sw +0.3). Gated on
+                !resetSpinning so the R184 spin keyframe owns paint
+                during its 450ms run. 200ms stroke-width transition
+                appended to the style list matches R350 transform
+                cadence. data-topo-chrome-reset-icon-stroke-width
+                attr exposes the resolved value for tests. */}
             <svg
               width="13" height="13" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2.5"
+              fill="none" stroke="currentColor"
+              strokeWidth={hoveredReset && !resetSpinning ? '2.8' : '2.5'}
               strokeLinecap="round" strokeLinejoin="round"
               aria-hidden
               className={resetSpinning ? 'anet-reset-spin' : undefined}
               data-topo-chrome-reset-icon
+              data-topo-chrome-reset-icon-stroke-width={hoveredReset && !resetSpinning ? '2.8' : '2.5'}
               // R350: hover-rotate preview of the R184 click-spin.
               // Gated on !resetSpinning so the anet-reset-spin keyframe
               // owns transform during its 450ms run. transformOrigin
@@ -10447,7 +10462,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               style={{
                 transform: hoveredReset && !resetSpinning ? 'rotate(-8deg)' : 'rotate(0deg)',
                 transformOrigin: 'center',
-                transition: 'transform 200ms ease-out',
+                transition: 'transform 200ms ease-out, stroke-width 200ms ease-out',
               }}
               data-topo-chrome-reset-icon-hover={hoveredReset && !resetSpinning ? 'true' : 'false'}
             >
