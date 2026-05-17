@@ -9906,6 +9906,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          data-node-status-ring-halo-color attr exposes
                          the resolved color for tests. */
                       data-node-status-ring-halo-color={isRingHovered ? status.primary : 'none'}
+                      data-node-status-ring-halo-layers={isRingHovered ? '2' : '0'}
                       style={{
                         /* R584 — status ring gets brightness(1.15) on
                            hover. 23rd anchor in per-element brightness
@@ -9937,12 +9938,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            color matches the stroke color (status.primary)
                            — completes the chromatic identity at the
                            innermost per-node identity surface. */
+                        /* Round 643 / Loop — status ring filter gains a
+                           SECOND drop-shadow layer at 4px blur + 0x20
+                           alpha. Mirrors R642's multi-layer halo pattern
+                           from the chat-target ring (3px + 6px) down to
+                           the innermost identity ring tier (2px + 4px).
+                           Per-node identity rings now share a uniform
+                           "near + far" halo vocabulary on hover/chat:
+                             chat-target ring (r+14): 3px + 6px (R637 + R642)
+                             status ring     (r=R):   2px + 4px (R638 + R643) ← this
+                           Outer-ring uses 2x blur stride (3→6); inner-ring
+                           uses 2x stride (2→4) — same multiplier scaled to
+                           ring scale.
+                           Avatar circle sits at r ~ radius-2 (inside
+                           status ring); 4px outer halo extends paint
+                           past r=radius+2 outward, NOT inward toward
+                           avatar — bleed direction is safe.
+                           Both drop-shadows use the same status.primary
+                           tint at descending alphas (0x40 → 0x20), so
+                           chromatic identity preserved AND falloff
+                           reads as one organic ambient gradient. */
                         filter: isRingHovered
                           ? (isLight
-                              ? `drop-shadow(0 0 2px ${status.primary}40) brightness(1.15)`
+                              ? `drop-shadow(0 0 2px ${status.primary}40) drop-shadow(0 0 4px ${status.primary}20) brightness(1.15)`
                               : (isOnline
-                                  ? `drop-shadow(0 0 2px ${status.primary}40) url(#topo-glow) brightness(1.15)`
-                                  : `drop-shadow(0 0 2px ${status.primary}40) brightness(1.15)`))
+                                  ? `drop-shadow(0 0 2px ${status.primary}40) drop-shadow(0 0 4px ${status.primary}20) url(#topo-glow) brightness(1.15)`
+                                  : `drop-shadow(0 0 2px ${status.primary}40) drop-shadow(0 0 4px ${status.primary}20) brightness(1.15)`))
                           : undefined,
                         transition: 'fill 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, filter 300ms ease-out',
                       }}
