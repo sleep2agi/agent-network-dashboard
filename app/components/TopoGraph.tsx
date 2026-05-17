@@ -7819,7 +7819,50 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-hub-core
                   data-topo-hub-core-hovered={isCoreHovered ? 'true' : 'false'}
                   data-topo-hub-core-fill={coreFill}
-                  style={{ transition: 'fill 200ms ease-out' }}
+                  data-topo-hub-core-glow={isCoreHovered ? 'true' : 'false'}
+                  data-topo-hub-core-brightness={isCoreHovered ? '1.15' : '1'}
+                  /* R614 — hub-core gains stacked drop-shadow + brightness
+                     on hub-hover. Extends hub-cluster brightness coverage
+                     to a 6th concentric element (innermost emerald r=10
+                     disc), beyond R580's 5/5 closure (digit + highlight +
+                     hover-ring + halo + spokes).
+
+                     Hub-cluster concentric brightness coverage now 6/6:
+                       hub digit       (R575)  innermost typo
+                       hub-core        (R614)  innermost emerald disc  ← this round
+                       hub-highlight   (R574)  middle disc
+                       hub-hover-ring  (R579)  outer ring boundary
+                       hub-halo        (R577)  outermost atmosphere
+                       hub-spokes      (R580)  mesh radial lines
+
+                     Compounds R441's fill brighten (emerald-600→500 or
+                     emerald-500→400) with stacked drop-shadow + brightness.
+                     Triple-paint multiplicative interaction at hub-core:
+                       R441 fill swap (emerald tier brighter) ×
+                       R614 brightness(1.15) ×
+                       R614 drop-shadow (emerald halo)
+                     The focal anchor reads as fully "lit and pulled
+                     forward" on hub-hover, with paint-chroma + glow +
+                     brightness all firing in unison.
+
+                     Theme-aware drop-shadow palette matches the cluster:
+                       light: rgba(16, 185, 129, 0.5)   emerald-500
+                       cyber: rgba(52, 211, 153, 0.5)   emerald-400
+                     2px blur — slightly tighter than the halo's 2px
+                     (R536) since core is smallest concentric element.
+                     0.5 alpha matches the hover-ring (R535).
+
+                     Same banked R582/R583 stacked-filter pattern.
+                     transition list extends with 'filter 200ms ease-out'
+                     alongside the existing fill 200ms cadence. */
+                  style={{
+                    filter: isCoreHovered
+                      ? (isLight
+                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.5)) brightness(1.15)'
+                          : 'drop-shadow(0 0 2px rgba(52, 211, 153, 0.5)) brightness(1.15)')
+                      : undefined,
+                    transition: 'fill 200ms ease-out, filter 200ms ease-out',
+                  }}
                 />
               );
             })()}
