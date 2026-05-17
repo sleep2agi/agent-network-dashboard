@@ -9727,6 +9727,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          data-edge-endpoint-ring-halo-color attr exposes
                          the resolved halo color for tests. */
                       data-edge-endpoint-ring-halo-color={isEndpoint ? pal.flowEdge : 'none'}
+                      data-edge-endpoint-ring-halo-layers={isEndpoint ? '2' : '0'}
                       style={{
                         pointerEvents: 'none',
                         r: `${endpointR}px`,
@@ -9763,8 +9764,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            completes the chromatic identity at the
                            endpoint-ring surface (3rd anchor in
                            chromatic-identity family). */
+                        /* Round 644 / Loop — endpoint emphasis ring filter
+                           gains a SECOND drop-shadow layer at 4px blur +
+                           0x20 alpha. Closes the multi-layer halo family
+                           at all 3 per-node identity rings:
+                             chat-target ring (r+14, OUTERMOST): 3px + 6px
+                             endpoint ring    (r+7→+8, MID):     2px + 4px ← this
+                             status ring      (r=R,   INNERMOST): 2px + 4px
+                           Mid + inner rings share 2px + 4px stride
+                           because they sit at similar small radii; outer
+                           ring uses 3px + 6px for proportional scale.
+                           pal.flowEdge tint stays consistent across both
+                           layers (cyber #67e8f9 cyan / light #10b981
+                           emerald) — chromatic identity preserved. Alpha
+                           falloff 0x40 → 0x20 matches R642/R643 ambient
+                           gradient vocabulary. */
                         filter: isEndpoint
-                          ? `drop-shadow(0 0 2px ${pal.flowEdge}40) brightness(1.15)`
+                          ? `drop-shadow(0 0 2px ${pal.flowEdge}40) drop-shadow(0 0 4px ${pal.flowEdge}20) brightness(1.15)`
                           : undefined,
                         transition: 'opacity 180ms ease-out, stroke-width 180ms ease-out, r 180ms ease-out, filter 180ms ease-out',
                       } as React.CSSProperties}
