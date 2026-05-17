@@ -5338,7 +5338,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      respond to per-alias state, not just hub state).
                      data-topo-hub-spoke-glow attr exposes the gate
                      state for tests. */
-                  data-topo-hub-spoke-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
+                  data-topo-hub-spoke-glow={!reducedMotion && (hoveredHub || isHoveredSpoke) ? 'true' : 'false'}
                   /* Round 580 (65-round milestone) — hub-spokes complete
                      the hub-cluster brightness coverage at 5/5 concentric
                      elements. Stacks brightness(1.15) onto R533's drop-
@@ -5355,10 +5355,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      hub-hover. The hub focal cluster now responds as ONE
                      unified motion-coherent paint pulse from center
                      outward through every layer. */
-                  data-topo-hub-spoke-brightness={!reducedMotion && hoveredHub ? '1.15' : '1'}
+                  /* Round 636 / Loop — extend the hub-spoke filter gate
+                     from hub-wide (hoveredHub) to ALSO fire per-spoke
+                     on isHoveredSpoke. Pre-R636 the filter was bound to
+                     "user is hovering the hub center" — ALL spokes glow
+                     uniformly. R622 already extended the spoke's geometry
+                     (sw) + paint (opacity) axes to per-spoke triggers
+                     (hoveredAlias || chatAlias), but the FILTER axis
+                     (drop-shadow + brightness) stayed on hub-wide only,
+                     leaving a partial 4-axis coverage on per-spoke focus
+                     (sw + opacity per-spoke, filter only hub-wide).
+                     R636 closes that — when the user hovers a single
+                     node OR chat is open with one, ONLY that node's
+                     radial spoke lights up with the drop-shadow halo +
+                     brightness, surfacing a focused "line of attention"
+                     from hub to participant. Hub-wide hub-hover behavior
+                     preserved (filter still fires across all spokes when
+                     hovering the hub center).
+                     Same teal (light) / cyan (cyber) drop-shadow as the
+                     R533 hub-hover gate — colour vocabulary continues
+                     uniform across both spoke focus triggers.
+                     Sibling completion of the chat-target-gated brightness
+                     family at the spoke surface: R622 (sw/opacity) +
+                     R636 (filter) — 4-axis chat-target focus signature
+                     on the hub-spoke now matches the node body's R615/
+                     R618/R619/R620/R621 multi-axis treatment.
+                     Reduced-motion gate preserved on the OR-chain.
+                     data-topo-hub-spoke-brightness-self attr exposes
+                     the per-spoke gate axis for tests (vs the existing
+                     -brightness which stays bound to the wider gate). */
+                  data-topo-hub-spoke-brightness={!reducedMotion && (hoveredHub || isHoveredSpoke) ? '1.15' : '1'}
+                  data-topo-hub-spoke-brightness-self={!reducedMotion && isHoveredSpoke ? 'true' : 'false'}
                   style={{
                     transition: 'stroke 250ms ease-out, stroke-width 250ms ease-out, opacity 250ms ease-out, filter 250ms ease-out',
-                    filter: !reducedMotion && hoveredHub
+                    filter: !reducedMotion && (hoveredHub || isHoveredSpoke)
                       ? (isLight
                           ? 'drop-shadow(0 0 1.5px rgba(13, 148, 136, 0.4)) brightness(1.15)'
                           : 'drop-shadow(0 0 1.5px rgba(34, 211, 238, 0.4)) brightness(1.15)')
