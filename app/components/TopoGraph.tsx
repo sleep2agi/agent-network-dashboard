@@ -11619,9 +11619,51 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-recent-row-ts={link.key}
                         data-recent-row-ts-alpha={tsAlpha.toFixed(2)}
                         data-recent-row-ts-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
+                        data-recent-row-ts-brightness={(isRowHovered || isRowPinned) ? '1.15' : '1'}
                         style={{
                           pointerEvents: 'none',
-                          transition: 'opacity 200ms ease-out',
+                          /* R591 — recent-row timestamp gains filter
+                             brightness(1.15) on row hover/pin. 30th
+                             anchor in per-element brightness family.
+                             Closes recent-row 3-element brightness
+                             coverage:
+                               recent-row text  (R572, parent <text>
+                                                 filter — count tspan
+                                                 inherits)
+                               recent-row ts    (R591, sibling <text>
+                                                 — its own filter)  ← this round
+
+                             Symmetric with the legend-row R590 closure
+                             pattern: when a sibling text element can't
+                             inherit the row's brightness via ancestor
+                             filter, it needs its own filter. R590
+                             solved this for legend-count; R591 does
+                             the same for recent-ts.
+
+                             Triple multiplicative interaction at this
+                             surface:
+                               opacity: tsAlpha (R191 freshness 1.0 →
+                                       0.25 by ageSec) → 1.0 on hover/pin
+                                       (R484)
+                               fill:   pal.legendText (neutral gray)
+                               brightness: 1.0 → 1.15 on hover/pin
+
+                             Stale-data hover semantic: a stale row's
+                             timestamp at tsAlpha=0.25 gets opacity 0.25
+                             × brightness 1.0 at rest, but jumps to
+                             opacity 1.0 × brightness 1.15 on hover —
+                             revealing the dim metadata at maximum
+                             legibility under attention. Hover brightness
+                             is freshness-overriding at this surface,
+                             same as R589's freshness-amplifying behavior
+                             at the recent-panel count above.
+
+                             data-recent-row-ts-brightness attr exposes
+                             the gate for tests. */
+                          filter: (isRowHovered || isRowPinned)
+                            ? 'brightness(1.15)'
+                            : undefined,
+                          transition: 'opacity 200ms ease-out, filter 200ms ease-out',
                           fontVariantNumeric: 'tabular-nums',
                         }}
                       >
