@@ -3545,8 +3545,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                R469 data-topo-flow-count
                R471 data-topo-layout          canvas mode
                R471 data-topo-theme           canvas mode
-               R487 data-topo-zoom            canvas zoom (this round) */
+               R487 data-topo-zoom            canvas zoom */
           data-topo-zoom={view.zoom.toFixed(2)}
+          /* Round 488 / Loop — pairs the R466 hover-aggregate BOOLEAN
+             with the corresponding hover IDENTITY attr. Pre-R488 a
+             test harness could query "is anything hovered" but had to
+             traverse per-node `data-node` elements with focus-state
+             attrs to recover WHICH alias. R488 surfaces it directly
+             at canvas root. Empty string when null (always-present
+             attr, consistent with the 10-attr state-surface set —
+             never `undefined`-collapsed so observers can rely on a
+             single `getAttribute('data-topo-hovered-alias')` returning
+             either '' or the alias string).
+             Note: only the `hoveredAlias` axis (R466's first source)
+             gets the identity twin in R488. The other 5 hover sources
+             (hoveredHub / hoveredEdgeKey / hoveredGroupLabel / hovered
+             Status / hoveredVendor) are non-alias-shaped (hub center
+             is singleton; edge has `from→to` key; status/vendor are
+             categorical) — separate dedicated attrs if/when needed.
+             Root svg attribute set now 11 attrs total. */
+          data-topo-hovered-alias={hoveredAlias ?? ''}
           /* Round 466 / Loop — aggregate hover signal on the root SVG.
              Exposes a single boolean `data-topo-any-hover` that
              reflects whether ANY hover state in the topology is
