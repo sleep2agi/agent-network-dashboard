@@ -7339,8 +7339,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-edge-badge-opacity-rest={isLight ? 0.95 : 0.85}
                         data-edge-badge-opacity-hover="1"
                         data-edge-badge-opacity-active="1"
-                        data-edge-badge-glow={(isHoveredEdge || isPinned) ? 'hover' : isHot ? 'hot' : 'false'}
-                        data-edge-badge-brightness={(isHoveredEdge || isPinned || isHot) ? '1.15' : '1'}
+                        data-edge-badge-glow={(isHoveredEdge || isPinned || isEndpointHoveredEdge) ? 'hover' : isHot ? 'hot' : 'false'}
+                        data-edge-badge-brightness={(isHoveredEdge || isPinned || isHot || isEndpointHoveredEdge) ? '1.15' : '1'}
+                        data-edge-badge-endpoint-active={isEndpointHoveredEdge ? 'true' : 'false'}
                         /* Round 534 / Loop — extends edge-badge drop-shadow
                            coverage from hot-only (R480 amber) to also fire
                            on hover/pin with a cyan accent glow. Pre-R534
@@ -7405,7 +7406,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              transition list already includes 'filter
                              200ms ease-out' (R534 cadence). No
                              transition change needed. */
-                          filter: (isHoveredEdge || isPinned)
+                          /* R629 — extend the badge CIRCLE's filter gate
+                             to also fire on isEndpointHoveredEdge. Pre-
+                             R629 the badge only glowed on direct edge
+                             hover/pin or hot threshold, leaving a visible
+                             inconsistency: R624 brightened the visible
+                             path on endpoint-hover (including the chat-
+                             target case via R624's chat extension), but
+                             the badge sitting ON that brightened path
+                             stayed at rest filter. R629 closes that
+                             badge↔edge parity at the brightness axis.
+                             Adds two gate axes simultaneously through
+                             one expression: endpoint-hover (hover-gated)
+                             AND chat-target endpoint match (chat-gated,
+                             14th anchor in chat-target-gated family,
+                             indirectly via R624's isEndpointHoveredEdge
+                             extension). The drop-shadow halo uses the
+                             cyan/teal pal.legendAccent — same colour as
+                             the existing hover/pin branch. */
+                          filter: (isHoveredEdge || isPinned || isEndpointHoveredEdge)
                             ? `drop-shadow(0 0 3px ${pal.legendAccent}99) brightness(1.15)`
                             : isHot
                               ? `drop-shadow(0 0 3px ${hotStroke}80) brightness(1.15)`
@@ -7523,7 +7542,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            Plus runtime badge drop-shadow (R559) on same
                            isNodeActive gate. data-edge-badge-text-brightness
                            attr surfaces the lift for tests. */
-                        data-edge-badge-text-brightness={(isHoveredEdge || isPinned || isHot) ? '1.15' : '1'}
+                        data-edge-badge-text-brightness={(isHoveredEdge || isPinned || isHot || isEndpointHoveredEdge) ? '1.15' : '1'}
+                        data-edge-badge-text-endpoint-active={isEndpointHoveredEdge ? 'true' : 'false'}
                         style={{
                           pointerEvents: 'none',
                           fontVariantNumeric: 'tabular-nums',
@@ -7542,7 +7562,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              now): R344/R345/R347/R351/R420/R427/R431. */
                           letterSpacing: (isPinned || isHot) ? '0.4px' :
                                          isHoveredEdge ? '0.2px' : '0px',
-                          filter: (isHoveredEdge || isPinned || isHot)
+                          /* R629 — sibling extension to the badge CIRCLE
+                             above. Text digit's brightness gate now
+                             also fires on isEndpointHoveredEdge, so the
+                             digit glyph lifts in concert with the circle
+                             ring + the underlying edge path on endpoint
+                             hover OR chat-target match. Keeps the badge
+                             CIRCLE + TEXT brightness coverage in lockstep
+                             (the R603/R570 parity arc the ring and digit
+                             established for the 3-state gate). */
+                          filter: (isHoveredEdge || isPinned || isHot || isEndpointHoveredEdge)
                             ? 'brightness(1.15)'
                             : undefined,
                           transition: 'letter-spacing 300ms ease-out, font-weight 300ms ease-out, filter 300ms ease-out',
