@@ -9556,10 +9556,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           letterSpacing:
                             chatAlias    === session.alias ? '0.5px' :
                             hoveredAlias === session.alias ? '0.3px' : '0px',
+                          /* Round 564 / Loop — alias text filter stacks
+                             brightness(1.15) on top of R500's drop-shadow
+                             on hover. Mirrors R542 pressure-seg pattern
+                             (brightness + drop-shadow in one stacked
+                             filter declaration). Pre-R564 hover added
+                             only a drop-shadow halo around the glyph;
+                             post-R564 the glyph ALSO brightens, so the
+                             identity text reads as both "glowing" AND
+                             "lit up" under attention — dual paint axes
+                             through one filter chain.
+                             CSS filter supports multiple functions
+                             applied left-to-right. brightness(1.15)
+                             lifts the per-status text color (status.text:
+                             green/teal/slate per tier) by 15%; the drop-
+                             shadow then paints the outer halo in the
+                             status-tier hue. Together: the alias glyph
+                             both intensifies its identity color AND
+                             radiates outward in that same color.
+                             Same +15% brightness as R501 vendor logo
+                             avatar (banked per-node hover-brightness
+                             pattern). Consistent +15% across all per-
+                             node identity surfaces (logo, monogram,
+                             fallback avatar from R558, AND now alias
+                             text). Cross-element brightness consistency.
+                             data-node-alias-brightness attr surfaces
+                             the lift for tests. */
                           filter: !reducedMotion && hoveredAlias === session.alias
-                            ? `drop-shadow(0 0 2px ${status.text}80)`
+                            ? `drop-shadow(0 0 2px ${status.text}80) brightness(1.15)`
                             : undefined,
                         }}
+                        data-node-alias-brightness={!reducedMotion && hoveredAlias === session.alias ? '1.15' : '1'}
                       >
                         {truncate(session.alias, fullMax)}
                       </text>
