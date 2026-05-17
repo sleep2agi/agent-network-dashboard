@@ -9619,9 +9619,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 surrounding chrome eased; R266 closes both at once. */}
             {/* R301: sibling to recent-signal panel title above —
                 same letterSpacing 0.3 for editorial parity. */}
+            {/* Round 483 / Loop — sibling to R482 (recent-signal panel
+               title): legend panel title fontWeight 700 → 800 on
+               pinnedStatus (any legend row pinned propagates to the
+               panel title). Pre-R483 the title responded only to
+               panel-chrome hover via R345 ls; the pinnedStatus row
+               highlighted its own swatch + tint via R181/R477 but
+               the title stayed flat — no upstream tightening to
+               signal "panel context = inspecting".
+               R483 closes the symmetry with R482: both panel titles
+               (recent-signal + legend) now tighten typographically
+               when ANY row inside them is in the active filter
+               state. Same idiom, mirrored at the legend-row scope.
+               data tightens family — now 10 anchors:
+                 R416/R424/R425/R426 chip/panel/hub/edge digits
+                 R444/R445/R446      group/recent/legend counts
+                 R457                group-label parent
+                 R482                recent-panel title
+                 R483                legend-panel title  (this round)
+               transition list extends to include 'font-weight 200ms
+               ease-out' alongside R345's ls + R55's fill 200ms.
+               data-legend-panel-title-fw + -active exposed for tests. */}
             {/* R345 sibling — legend panel title same hover letter-
                 spacing tween 0.3 → 0.4 on panel hover. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight="700" letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out' }} data-legend-panel-title>legend</text>
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out' }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'}>legend</text>
             {/* Round 257 / Loop: legend panel header count picks up the
                 symmetric 13L/13R inner-padding pattern from the recent-
                 signal panel. Pre-R257 the legend header was 13px from
