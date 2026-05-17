@@ -11225,10 +11225,46 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               the R175 panel-fade-in uses for cascade rhythm. data-
               topo-brand-canvas-mark-visible exposes the gate for
               tests. */}
+          {/* Round 526 / Loop — focal-recede family 4th anchor.
+              Symmetric polish to R525 (watermark recede). The
+              brand crescent at canvas top-left is the second
+              decorative brand element on the canvas; pre-R526 it
+              stayed at flat opacity 0.35 (when visible) regardless
+              of canvas attention. R526 multiplies its visible
+              opacity by 0.7 when ANY non-hub canvas surface is
+              hovered, matching R525's deeper-recede semantic for
+              decorative brand elements (vs hub focal cluster's
+              0.85× recede at R507/R508).
+              Composes cleanly with existing flowLinks gate:
+                normal,    flowLinks=0: opacity = 0.35 * 1.0  = 0.350
+                recede,    flowLinks=0: opacity = 0.35 * 0.7  = 0.245
+                invisible, flowLinks>0: opacity = 0.00 * any  = 0.000
+              Multiplicative chain means recede only matters when
+              crescent is visible (quiet canvas, flowLinks=0) —
+              exactly when canvas attention elsewhere should
+              dim the decorative register. 300ms transition
+              already covers both axes (the existing visibility
+              opacity ramp + the new recede multiplier easing).
+              Focal-recede family extension (4 anchors): R507 hub
+              digit / R508 hub-highlight / R525 watermark / R526
+              crescent (this round). Canvas brand surfaces (R525
+              watermark + R526 crescent) now BOTH carry focal-
+              recede at the same 0.7 multiplier, fading as a
+              decorative pair when the canvas's focal attention
+              shifts elsewhere.
+              data-topo-brand-canvas-mark-recede attr exposes the
+              gate state for tests. */}
           <g
-            opacity={flowLinks.length === 0 ? 0.35 : 0}
+            opacity={(flowLinks.length === 0 ? 0.35 : 0) * (
+              (hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
+               hoveredStatus || hoveredVendor) && !hoveredHub ? 0.7 : 1
+            )}
             data-topo-brand-canvas-mark
             data-topo-brand-canvas-mark-visible={flowLinks.length === 0 ? 'true' : 'false'}
+            data-topo-brand-canvas-mark-recede={
+              (hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
+               hoveredStatus || hoveredVendor) && !hoveredHub ? 'true' : 'false'
+            }
             style={{ pointerEvents: 'none', transition: 'opacity 300ms ease-out, fill 200ms ease-out' }}
           >
             <defs>
