@@ -13992,9 +13992,49 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // active state during press = hover-lift (-1px) + scale-95
             // composes as translateY(-1px) scale(0.95) — lift-and-compress
             // for tactile click feel.
-            className="p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 hover:-translate-y-px active:scale-95 transition-colors transition-transform duration-200 ease-out transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
+            className="p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
             data-topo-chrome-reset-hover-lift="true"
-            style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
+            /* R594 — chrome reset button gains filter brightness(1.15)
+               on hoveredReset. 33rd anchor in per-element brightness
+               family, 2nd HTML-element anchor (R593 zoom-level was
+               the first).
+
+               Closes reset button hover signature at 5 axes:
+                 R400  button hover-lift  translateY(-1px)
+                 R350  icon hover-rotate  -8°
+                 R453  icon stroke-width  2.5 → 2.8
+                 R514  icon scale         1.0 → 1.10
+                 R594  button brightness  1   → 1.15  ← this round
+
+               The reset button now has the densest hover signature
+               among the 2 standalone chrome buttons (reset + fullscreen
+               from R400). When user hovers, the entire button lifts
+               (-1px), brightens (+15%), AND its icon rotates (-8°),
+               thickens (+0.3 sw), and scales up (+10%). Inside +
+               outside motion-coherent.
+
+               Triple-paint multiplicative interaction at this surface:
+                 bg (hover:bg-white/5) × border (pal.containerBorder)
+                 × color (pal.legendText) ALL get brightness(1.15)
+                 multiplied in — the button's chrome stack uniformly
+                 brightens, reading as "this control is awake under
+                 your cursor".
+
+               Inline transition shorthand replaces the className-
+               based `transition-colors transition-transform` (R557
+               banked: when adding new transition-driven hover axes
+               to an element, extend the INLINE list — inline
+               overrides className). All 5 transition properties (bg
+               / color / border / transform / filter) now ride one
+               200ms ease-out beat. */
+            data-topo-chrome-reset-brightness={hoveredReset ? '1.15' : '1'}
+            style={{
+              background: pal.legendBox.fill,
+              borderColor: pal.containerBorder,
+              color: pal.legendText,
+              filter: hoveredReset ? 'brightness(1.15)' : undefined,
+              transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out, filter 200ms ease-out',
+            }}
             aria-label="Reset view"
             title="Reset zoom + pan (0, or double-click the canvas)"
           >
