@@ -10971,15 +10971,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       R181 pin ring (6 + 0 stroke vs 8 - 0.75 inner
                       ≈ 7.25). data-legend-swatch is unchanged so
                       R197 / R55 / R61 tests probe the same handle. */}
+                  {/* Round 537 / Loop — extends drop-shadow visual-polish
+                      family (12 anchors after R536) to a 13th anchor: the
+                      legend swatch gains drop-shadow glow on hover/pin
+                      using its OWN row fill color (working green / idle
+                      teal / offline slate). Pre-R537 the swatch lifted
+                      only r (R197/R295 6 → 7) on attention — geometry
+                      axis only, no paint glow. R537 adds the paint axis,
+                      composing with R181/R402 pin-ring (separate concen-
+                      tric circle in the same row.fill color) so on
+                      hover/pin the SWATCH AND its pin-ring both contri-
+                      bute to a unified tier-coloured glow signature.
+                      Hue: row.fill (status hex) concatenated with `99`
+                      hex alpha (~60%). Working green / idle teal /
+                      offline slate each glow in their OWN tier color
+                      — the legend acts as a color-keyed status mirror.
+                      3px blur reads soft; 60% alpha legible without
+                      overwhelming the swatch's own paint.
+                      Drop-shadow visual-polish family extension (13
+                      anchors). filter is paint-only; bbox unchanged.
+                      transition list extends to include 'filter 150ms
+                      ease-out', matching the existing R197 r 150ms
+                      cadence at this swatch. data-legend-swatch-glow
+                      attr exposes the gate state for tests. */}
                   <circle
                     cx="16" cy={row.y0}
                     r="6"
                     fill={row.fill}
                     data-legend-swatch={row.key}
                     data-legend-swatch-state={isPinned ? 'pinned' : isRowHovered ? 'hover' : 'idle'}
+                    data-legend-swatch-glow={(isRowHovered || isPinned) ? 'true' : 'false'}
                     style={{
                       r: isRowHovered || isPinned ? '7px' : '6px',
-                      transition: 'r 150ms ease-out',
+                      filter: (isRowHovered || isPinned)
+                        ? `drop-shadow(0 0 3px ${row.fill}99)`
+                        : undefined,
+                      transition: 'r 150ms ease-out, filter 150ms ease-out',
                     } as React.CSSProperties}
                   />
                   {/* R61 pinned-state ring — concentric stroke at r=8 in
