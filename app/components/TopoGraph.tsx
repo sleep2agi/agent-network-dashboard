@@ -3664,6 +3664,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              categorical) — separate dedicated attrs if/when needed.
              Root svg attribute set now 11 attrs total. */
           data-topo-hovered-alias={hoveredAlias ?? ''}
+          /* Round 504 / Loop — categorical pin-aspect attr paired with
+             R467 any-pinned boolean and R488 hovered-alias identity.
+             Pre-R504 the canvas state surface set told tests WHETHER
+             any pin was active (R467 boolean) but tests had to enumerate
+             4 individual state vars to determine WHICH pin axis fired:
+                 pinnedStatus    legend-row status filter
+                 pinnedGroup     prefix-cluster lock
+                 pinnedVendor    vendor-chip filter
+                 pinnedEdgeKey   edge-focus
+             R504 surfaces the active aspect as a single categorical
+             attribute: data-topo-pinned-aspect ∈
+                 'none'    no pin active
+                 'status'  pinnedStatus only
+                 'group'   pinnedGroup only
+                 'vendor'  pinnedVendor only
+                 'edge'    pinnedEdgeKey only
+                 'multi'   2 or more pins active simultaneously
+             ('multi' covers cross-cutting filters — e.g. user pins
+             status='working' AND vendor='claude' simultaneously to
+             narrow the canvas. Each pin axis is independently
+             dismissable via Esc / individual chip click, so multi
+             states are reachable and worth surfacing as a distinct
+             tier.)
+             13th attr in the canvas state surface set after R502.
+             Composed from 4 existing state vars — no new state. */
+          data-topo-pinned-aspect={(() => {
+            const aspects: string[] = [];
+            if (pinnedStatus) aspects.push('status');
+            if (pinnedGroup) aspects.push('group');
+            if (pinnedVendor) aspects.push('vendor');
+            if (pinnedEdgeKey) aspects.push('edge');
+            if (aspects.length === 0) return 'none';
+            if (aspects.length === 1) return aspects[0];
+            return 'multi';
+          })()}
           /* Round 466 / Loop — aggregate hover signal on the root SVG.
              Exposes a single boolean `data-topo-any-hover` that
              reflects whether ANY hover state in the topology is
