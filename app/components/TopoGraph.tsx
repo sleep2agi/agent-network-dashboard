@@ -1943,8 +1943,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // doesn't list letter-spacing, so without this the
               // hover:tracking-wide would snap. Sibling change on
               // the Grid button below.
-              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
-              style={{ transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out' }}
+              // Round 492 / Loop — add `active:scale-95` press feedback
+              // alongside R196's `active:bg-cyan-500/25` color-deepen.
+              // Pre-R492 the chrome-strip Ring/Grid buttons had color
+              // tactile (deeper cyan on mouse-down) + R249 chrome-pop
+              // on release, but no transform during the press itself —
+              // the button stayed planted between mouse-down and pop.
+              // Adding `active:scale-95` (5% compression) on the
+              // pressed pseudo-state, with `transform 150ms ease-out`
+              // bundled into the inline transition list, gives haptic-
+              // like push-back feedback. The press-down (down to 95%
+              // scale) eases in over 150ms in sync with the bg/color
+              // deepen; the release auto-springs back to scale-100 via
+              // the same transition, then R249's anet-chrome-pop class
+              // overlays the release-pop. Matching `transform-gpu`
+              // promotes the layer so the scale doesn't trigger
+              // layout/paint thrash. Sibling change on Grid below.
+              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              style={{ transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out, transform 150ms ease-out' }}
             >
               Ring
             </button>
@@ -1963,7 +1979,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // all chrome buttons.
               // R351 sibling — Grid button picks up hover:tracking-wide
               // + inline transition spec. Same vocabulary as Ring.
-              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              // R492 sibling — Grid button picks up active:scale-95
+              // press feedback + transform in transition list. Same
+              // vocabulary as Ring above.
+              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide active:scale-95 transform-gpu ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
               /* Round 268 / Loop: Grid button's left border (the
                  internal divider between Ring and Grid) picks up
                  pal.containerBorder, matching the wrapper change at
@@ -1973,8 +1992,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  transition list into the inline spec below so the
                  letter-spacing tween rides alongside without snapping
                  the border-color flip — border-color 200ms ease-out
-                 keeps R268's theme-toggle smoothness intact. */
-              style={{ borderColor: pal.containerBorder, transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out' }}
+                 keeps R268's theme-toggle smoothness intact.
+                 R492 adds `transform 150ms ease-out` so active:scale-95
+                 eases smoothly. */
+              style={{ borderColor: pal.containerBorder, transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out, transform 150ms ease-out' }}
             >
               Grid
             </button>
