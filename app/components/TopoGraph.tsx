@@ -2619,6 +2619,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const o = offlineNodes.length;
             const total = w + i + o;
             if (total === 0) return null;
+            /* Round 563 / Loop — inspection-overrides-encoding family
+               6th anchor at the pressure-bar segment scope. When
+               operator hovers a NODE ALIAS on the canvas, the segment
+               matching that node's status tier lights up with its
+               R210 brightness + R542 drop-shadow treatment — mirror
+               of R562 legend-swatch pattern at the pressure-bar scope.
+               Family progression (6 anchors):
+                 R484  recent-row timestamp     alias hover
+                 R485  edge particle opacity    alias hover
+                 R486  minimap dot opacity      alias hover
+                 R561  group-label + ants-gate  member-alias hover
+                 R562  legend-swatch r + glow   member-alias status match
+                 R563  pressure-seg brightness  member-alias status match ← this round
+               Same status-tier-match computation as R562 (banked
+               idiom): find the hovered alias's session, map to
+               working/idle/offline tier, then per-segment check
+               `hoveredAliasRowKey === key`. Computed once at IIFE
+               scope, used inside the seg() closure. */
+            const hoveredSession = hoveredAlias
+              ? (onlineNodes.find(s => s.alias === hoveredAlias) ?? offlineNodes.find(s => s.alias === hoveredAlias))
+              : null;
+            const hoveredAliasTierKey: 'working' | 'idle' | 'offline' | null = !hoveredSession ? null
+              : hoveredSession.status === 'working' ? 'working'
+              : offlineNodes.includes(hoveredSession) ? 'offline'
+              : 'idle';
             // Round 60 / Loop: each segment toggles a sticky filter via
             // `pinnedStatus`. Click the working segment → all non-working
             // nodes dim; click again → release. Segments share width with
@@ -2631,6 +2656,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const seg = (n: number, color: string, key: 'working' | 'idle' | 'offline', label: string) => {
               if (n === 0) return null;
               const isPinned = pinnedStatus === key;
+              // R563: member-alias-matching flag — when operator hovers
+              // a node alias whose status matches this segment's tier.
+              const isMemberAliasMatching = hoveredAliasTierKey === key;
+              const isSegLit = hoveredStatus === key || isMemberAliasMatching;
               // R102: list the aliases that match this segment's bucket
               // so the title answers WHICH n, not just HOW MANY. Closes
               // the last "info-density gap" in the chip-row surfaces
@@ -2650,6 +2679,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-pressure-seg={key}
                   data-pressure-seg-aliases={matchAliases.join(',')}
                   data-pressure-seg-hovered={hoveredStatus === key ? 'true' : 'false'}
+                  data-pressure-seg-member-alias-matching={isMemberAliasMatching ? 'true' : 'false'}
+                  data-pressure-seg-lit={isSegLit ? 'true' : 'false'}
                   role="button"
                   tabIndex={0}
                   aria-pressed={isPinned}
@@ -2727,7 +2758,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        filter is paint-only; bbox unchanged; R51
                        overlap-test invariants hold. Transition list
                        already includes `filter` (post-R524). */
-                    filter: hoveredStatus === key ? `brightness(1.2) drop-shadow(0 0 2px ${color}99)` : undefined,
+                    /* R563: filter lifts on EITHER direct hover OR member-
+                       alias-matching (operator inspecting a node whose
+                       status matches this segment's tier). Same R210
+                       brightness + R542 drop-shadow value across both
+                       gate sources — uniform visual response, distinct
+                       semantic gates. */
+                    filter: isSegLit ? `brightness(1.2) drop-shadow(0 0 2px ${color}99)` : undefined,
                     transition: 'width 220ms ease-out, box-shadow 150ms ease-out, filter 150ms ease-out',
                   }}
                   onClick={(e) => {
