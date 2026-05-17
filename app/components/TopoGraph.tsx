@@ -11137,6 +11137,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               exposes the gate state for tests.
               呼吸感 family extension (3 anchors): R497 hub idle / R498
               recent-row hot / R519 brand watermark ambient. */}
+          {/* Round 525 / Loop — focal-recede family 3rd anchor. R507
+              receded the hub-center workingCount digit; R508 receded
+              the hub-highlight disc; both fade to 0.85× when any non-
+              hub canvas surface is hovered (alias / edge / group /
+              status / vendor) — the "you're inspecting elsewhere"
+              gesture. R525 extends the pattern to the brand watermark
+              at canvas bottom-left, the always-on decorative brand
+              element. Pre-R525 the watermark stayed at its R519
+              breath baseline (0.32-0.48 SMIL pulse) regardless of
+              canvas attention; post-R525 it fades to 70% wrapper
+              opacity (effective 0.224-0.336 with breath) when canvas
+              attention is elsewhere, matching the same focal-recede
+              semantic R507/R508 establish at the hub focal cluster.
+              Implementation: wrap the existing <text> in a <g>
+              wrapper whose opacity multiplies with the inner text's
+              SMIL-animated opacity. SVG opacity composes
+              multiplicatively across the parent/child chain, so:
+                normal: g.opacity=1.0  × text.opacity(SMIL 0.32-0.48) = 0.32-0.48
+                recede: g.opacity=0.7  × text.opacity(SMIL 0.32-0.48) = 0.224-0.336
+              SMIL on inner text continues running through both
+              states; only the wrapper opacity flips. 300ms ease-out
+              transition on wrapper (matches R508 hub-highlight recede
+              transition).
+              Gate matches R507/R508 — focal-recede is a UNIFIED
+              non-hub-canvas-hover signal driving multiple anchors,
+              so all three (hub digit / hub-highlight / brand
+              watermark) fade together as the canvas's decorative
+              register, leaving only the surface under inspection
+              foregrounded.
+              Focal-recede family extension (3 anchors): R507 hub
+              digit / R508 hub-highlight / R525 brand watermark. */}
+          <g
+            opacity={(hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
+                      hoveredStatus || hoveredVendor) && !hoveredHub ? 0.7 : 1}
+            data-topo-brand-watermark-wrapper
+            data-topo-brand-watermark-recede={
+              (hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
+               hoveredStatus || hoveredVendor) && !hoveredHub ? 'true' : 'false'
+            }
+            style={{ pointerEvents: 'none', transition: 'opacity 300ms ease-out' }}
+          >
           <text
             x="16" y="672"
             fontSize="11" fontFamily="monospace" fontWeight="600"
@@ -11149,6 +11190,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           >sleep2agi{!reducedMotion && (
             <animate attributeName="opacity" values="0.32;0.48;0.32" dur="6s" repeatCount="indefinite" />
           )}</text>
+          </g>
           {/* v0.10.0 Hero 3 Wave 1 / RFC §3.I (Vincent 5215 + 通信龙
               lead-autonomy Q4 dual-anchor minimal): canvas top-left
               crescent moon brand mark, visible ONLY when the
