@@ -11144,12 +11144,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          gate for tests. */
                       data-recent-row-text-transition="200ms"
                       data-recent-row-text-glow={(isRowHovered || isRowPinned) ? 'true' : 'false'}
+                      /* Round 572 / Loop — per-element brightness family
+                         9th anchor at recent-row text scope. Stacks
+                         brightness(1.15) onto R568's drop-shadow in
+                         one filter chain (same R564/R570/R571 pattern).
+                         Glyph BOTH glows (R568 drop-shadow halo) AND
+                         brightens (R572 inner lift) simultaneously.
+                         Cross-element brightness consistency: same +15%
+                         across alias / sub-text / edge-badge / group-
+                         label / and now recent-row text. */
+                      data-recent-row-text-brightness={(isRowHovered || isRowPinned) ? '1.15' : '1'}
                       style={{
                         transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
                         letterSpacing: isRowPinned ? '0.5px' :
                                        isRowHovered ? '0.25px' : '0px',
                         filter: (isRowHovered || isRowPinned)
-                          ? `drop-shadow(0 0 2px ${pal.legendAccent}80)`
+                          ? `drop-shadow(0 0 2px ${pal.legendAccent}80) brightness(1.15)`
                           : undefined,
                       }}
                     >
@@ -12264,12 +12274,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        (R568 was 17; R569 = 18).
                        data-legend-row-label-glow attr added for tests. */
                     data-legend-row-label-glow={(hoveredStatus === row.key || isPinned) ? 'true' : 'false'}
+                    /* Round 572 / Loop — sibling to recent-row text above.
+                       Stacks brightness(1.15) onto R569's drop-shadow at
+                       legend-row label scope (10th anchor in per-element
+                       brightness family). Matches recent-row text 4-axis
+                       signature exactly: fill + ls + fw + drop-shadow +
+                       brightness now BOTH panel-row text surfaces. */
+                    data-legend-row-label-brightness={(hoveredStatus === row.key || isPinned) ? '1.15' : '1'}
                     style={{
                       transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
                       letterSpacing: isPinned ? '0.5px' :
                                      hoveredStatus === row.key ? '0.25px' : '0px',
                       filter: (hoveredStatus === row.key || isPinned)
-                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80)`
+                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80) brightness(1.15)`
                         : undefined,
                     }}
                   >{row.label}</text>
