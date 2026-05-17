@@ -1894,7 +1894,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               R300 marks the milestone of 25 rounds (R275-R300) of
               continuous TopoGraph polish + codex's Vincent 5215/
               5222 logo asset+integration work. */}
-          <div className="text-xs uppercase text-gray-500 tracking-widest leading-tight font-medium" data-topo-section-kicker>Network Topology</div>
+          {/* Round 555 / Loop — kicker "Network Topology" gains group-
+              hover affordance via the R554 wrapper's `group` flag,
+              closing the title-block cluster's hover coverage at 3
+              surfaces (brand logo + H2 + kicker).
+              Picks up the small-label SPREAD direction (R554 banked
+              "small labels SPREAD on hover / large headlines TIGHTEN"
+              — kicker is xs uppercase, definitely a small label) plus
+              a color brighten (text-gray-500 #6b7280 → text-gray-400
+              #9ca3af).
+              Spread: tracking-widest (0.1em rest) → 0.13em hover —
+              +30% kerning bump. At text-xs (12px) the per-gap shift
+              is 1.2px → 1.56px (+0.36px/gap), legible without
+              overshooting the rest's tracking-widest editorial base.
+              Color: text-gray-500 → text-gray-400 — one tier lighter,
+              same idiom as R296 (kicker rest tone-up from gray-600 to
+              gray-500), now extended at the hover-state tier.
+              transition-[letter-spacing,color] duration-200 ease-out
+              matches the 200ms cadence of R554 H2 ls + the rest of
+              the hover-ls family (R344/R345/R347/R351/R420/R427/R431/
+              R432/R434/R527/R539).
+              Title-block cluster signature post-R555 (3 surfaces):
+                brand logo  loud      scale + rotate + breath
+                                       (R548/R549/R553)
+                H2          subtle    tracking-tighter
+                                       (R554, editorial-tighten)
+                kicker      subtle    tracking-spread + color lift
+                                       (R555, data-spread)  ← this round
+              Two of the three surfaces are typographic; the brand
+              logo carries the geometric+chromatic motion. Cluster
+              reads as ONE coherent hover unit through three
+              independent gesture vocabularies.
+              data-topo-section-kicker-hover-tracking + -hover-color
+              attrs expose the landing values for tests. */}
+          <div className="text-xs uppercase text-gray-500 group-hover:text-gray-400 tracking-widest group-hover:tracking-[0.13em] transition-[letter-spacing,color] duration-200 ease-out leading-tight font-medium" data-topo-section-kicker data-topo-section-kicker-hover-tracking="0.13em" data-topo-section-kicker-hover-color="text-gray-400">Network Topology</div>
           {/* Round 286 / Loop: title 'Command mesh' adopts tracking-tight
               (-0.025em) to complement R285 kicker tracking-widest. Wide
               eyebrow + tight headline is the conventional editorial
