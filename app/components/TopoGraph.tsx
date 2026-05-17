@@ -240,11 +240,30 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
      stale-onset to direct attention. */
   if (!stale) return null;
   return (
+    /* Round 505 / Loop — FreshnessChip mount animation. Pre-R505 the
+       chip popped into the chip-row instantly when SWR data crossed
+       the 10s stale threshold; users saw an abrupt amber pill appear
+       mid-row. R505 adds the existing `anet-fade-in` class so the
+       chip eases through opacity 0→1 over 150ms (R51 globals.css
+       keyframe) on first appearance. The chip itself only renders
+       when stale (R275 conditional), so the fade plays exactly when
+       the stale signal first arrives — perfectly aligned with the
+       semantic. Mount-once via React reconciliation (key not used
+       since FreshnessChip is a singleton in the parent).
+       a11y respected via R29 blanket — `@media (prefers-reduced-
+       motion: reduce)` neutralizes anet-fade-in to `animation:none`
+       (globals.css line 1083-1089 includes anet-fade-in in the
+       blanket list). Reduced-motion users see the chip pop instantly,
+       same as pre-R505 behavior — no regression.
+       Pure paint-axis addition (opacity animation, no geometry),
+       bbox unchanged. data-freshness-chip-mount-fade attr exposes
+       the gate for tests. */
     <span
-      className={`${baseClass} ${colorClass}`}
+      className={`${baseClass} ${colorClass} anet-fade-in`}
       title={stale ? `Last sync ${sec}s ago — SWR refresh may be lagging` : `Live data · refreshes every 5s · last sync ${sec}s ago`}
       data-freshness-chip
       data-freshness-chip-stale={stale ? 'true' : 'false'}
+      data-freshness-chip-mount-fade="true"
     >
       {/* Round 272 / Loop: swap prefix word to match color state so
           text and color point the same way. Pre-R272 the chip read
