@@ -1876,11 +1876,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               the landing value for tests. */}
           <svg
             width="40" height="40" viewBox="0 0 32 32" aria-hidden
-            className={`shrink-0 transition-[transform,filter] duration-200 ease-out hover:scale-105 hover:rotate-6 hover:brightness-110 transform-gpu${!reducedMotion ? ' anet-topo-brand-logo-breath' : ''}`}
+            /* R604 — brand 书生 logo gains hover-drop-shadow as 5th
+               axis (4 hover + 1 always-on breath). Tailwind v4 arbitrary
+               drop-shadow with currentColor — the glow inherits the
+               brand-mark's own colour (light teal #0d9488 / cyber cyan
+               #67e8f9 per inline style.color). 8px radius reads as a
+               "lit up under attention" halo without overwhelming the
+               40×40 logo footprint.
+
+               Tailwind v4 emits filter utilities through CSS-var system
+               (--tw-drop-shadow, --tw-brightness) that combine in the
+               `filter` shorthand — so hover:brightness-110 + hover:
+               drop-shadow-[0_0_8px_currentColor] stack instead of
+               clobbering each other. Same banked R564/R570 "halo +
+               glow" pattern, now at the brand-mark scope.
+
+               Brand-logo hover signature now 5 axes:
+                 R548  hover:scale-105       transform-scale
+                 R549  hover:rotate-6        transform-rotate
+                 R553  idle breath (5s)      opacity (always-on)
+                 R557  hover:brightness-110  filter brightness
+                 R604  hover:drop-shadow     filter drop-shadow  ← this round
+
+               Existing inline transition already covers 'filter 200ms
+               ease-out' (R557 cadence) — both brightness AND drop-
+               shadow ease at the same beat. */
+            className={`shrink-0 transition-[transform,filter] duration-200 ease-out hover:scale-105 hover:rotate-6 hover:brightness-110 hover:drop-shadow-[0_0_8px_currentColor] transform-gpu${!reducedMotion ? ' anet-topo-brand-logo-breath' : ''}`}
             data-topo-brand-logo
             data-topo-brand-logo-hover-scale="1.05"
             data-topo-brand-logo-hover-rotate="6deg"
             data-topo-brand-logo-hover-brightness="1.1"
+            data-topo-brand-logo-hover-drop-shadow="0_0_8px_currentColor"
             data-topo-brand-logo-breath={!reducedMotion ? 'true' : 'false'}
             style={{
               color: isLight ? '#0d9488' : '#67e8f9',
