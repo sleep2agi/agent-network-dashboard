@@ -12808,10 +12808,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-legend-pin-ring-pinned={isPinned ? 'true' : 'false'}
                     data-legend-pin-ring-stroke-width="1.75"
                     data-legend-pin-ring-glow={isPinned ? 'true' : 'false'}
+                    data-legend-pin-ring-brightness={isPinned ? '1.15' : '1'}
                     style={{
                       pointerEvents: 'none',
+                      /* R607 — legend pin-ring stacks brightness(1.15)
+                         onto R477's pin-gated drop-shadow. Extends the
+                         pin-gated brightness family to a 3rd anchor:
+                           R571  group label text   (pin-gated)
+                           R587  group cluster box  (pin-gated)
+                           R607  legend pin-ring    (pin-gated)  ← this round
+                         Same banked R582/R583 stacked-filter pattern.
+                         Pin-ring 3-axis pin signature now:
+                           R181 opacity     0 → 1
+                           R477 drop-shadow → row.fill 88 alpha
+                           R607 brightness  1 → 1.15  ← this round
+                         The row.fill tier color (green working / teal
+                         idle / slate offline) brightens ~15% alongside
+                         the drop-shadow halo — the pin-ring reads as
+                         "lit + locked" instead of just "locked". The
+                         color signal (which tier you pinned) reads more
+                         vividly under the brightness lift.
+                         Existing 'filter 200ms ease-out' transition
+                         covers brightness ease at the same cadence. */
                       filter: isPinned
-                        ? `drop-shadow(0 0 3px ${row.fill}88)`
+                        ? `drop-shadow(0 0 3px ${row.fill}88) brightness(1.15)`
                         : undefined,
                       transition: 'opacity 150ms ease-out, filter 200ms ease-out',
                     }}
