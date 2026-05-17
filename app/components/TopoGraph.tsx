@@ -8982,16 +8982,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              to include 'r 200ms ease-out' matching the
                              opacity cadence. data-recent-row-freshness-
                              lifted attr exposes the gate for tests. */
+                          /* Round 478 / Loop — extend the R476/R477
+                             drop-shadow vocabulary to a third anchor:
+                             the recent-row freshness pip on `alpha
+                             > 0.7` (just-fired flow within ~30s per
+                             R10 freshness ramp). Gate is FRESHNESS-
+                             driven not pin/hover-driven, so the glow
+                             reads as "this signal is live" rather
+                             than "user is inspecting". As the alpha
+                             decays past 0.7 (≈45s after last fire),
+                             the glow eases off — natural breathing
+                             feel that tracks actual data freshness.
+                             Hue: pal.legendAccent at 0.5 alpha so
+                             the glow inherits the row's accent color
+                             family. 2.5-3px blur reads as soft
+                             radiance, not loud bloom.
+                             Drop-shadow visual-polish family now 3
+                             anchors:
+                               R476  hub digit         hover-gated
+                               R477  legend pin-ring   pin-gated
+                               R478  recent freshness  freshness-gated
+                             Each anchor uses a different state gate
+                             but the same `filter: drop-shadow` paint
+                             vocabulary. Filter affects paint only —
+                             bbox unchanged, overlap-test invariants
+                             hold. Transition list extends to include
+                             'filter 200ms ease-out' alongside
+                             R10/R447 opacity + r tweens. */
                           fill={pal.legendAccent}
                           opacity={alpha}
                           data-recent-row-freshness={link.key}
                           data-recent-row-freshness-alpha={alpha.toFixed(2)}
                           data-recent-row-freshness-radius={(isRowHovered || isRowPinned) ? 2.5 : 2.0}
                           data-recent-row-freshness-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
+                          data-recent-row-freshness-glow={alpha > 0.7 ? 'true' : 'false'}
                           style={{
                             pointerEvents: 'none',
                             r: `${(isRowHovered || isRowPinned) ? 2.5 : 2.0}px`,
-                            transition: 'opacity 200ms ease-out, r 200ms ease-out',
+                            filter: alpha > 0.7
+                              ? `drop-shadow(0 0 3px ${pal.legendAccent}80)`
+                              : undefined,
+                            transition: 'opacity 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                           } as React.CSSProperties}
                         />
                       );
