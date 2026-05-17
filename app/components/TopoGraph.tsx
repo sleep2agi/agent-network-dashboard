@@ -3727,6 +3727,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              Always renders (0 in ring layout, N in grid), so tests can
              rely on attribute presence + value. */
           data-topo-cluster-count={groupBoxes.length}
+          /* Round 513 / Loop — 15th canvas state attr. Surfaces the
+             user's prefers-reduced-motion preference directly on the
+             root SVG so external CSS / Playwright tests can branch on
+             a11y state without re-reading the media query.
+             reducedMotion is already in component scope (R29 a11y
+             blanket reads it via a useEffect listener); R513 just
+             exposes it as a stable attribute handle.
+             Use cases:
+               - Playwright: assert reduced-motion gates from one attr
+                 read instead of mocking media-query state per test
+               - External CSS hooks: `[data-topo-prefers-reduced-motion=
+                 "true"]` to apply paint-only overrides (e.g. mute
+                 hover glows entirely on a11y instead of just
+                 disabling transitions)
+               - Future polish rounds: any motion-gated render can
+                 read this attr server-side without the media-query
+                 hydration mismatch risk
+             'true' / 'false' string values (consistent with R466/R467
+             boolean attrs). */
+          data-topo-prefers-reduced-motion={reducedMotion ? 'true' : 'false'}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
