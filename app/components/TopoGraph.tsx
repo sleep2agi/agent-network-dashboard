@@ -12011,8 +12011,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.2'}
               data-legend-panel-count
               data-legend-panel-count-letter-spacing={hoveredPanel === 'legend' ? '0.4' : '0.2'}
+              data-legend-panel-count-brightness={hoveredPanel === 'legend' ? '1.15' : '1'}
               style={{
-                transition: 'fill 200ms ease-out, font-weight 200ms ease-out, letter-spacing 200ms ease-out',
+                /* R588 — legend panel count gains brightness(1.15) on
+                   panel hover. 27th anchor in per-element brightness
+                   family. Closes title↔count parity at the legend
+                   panel header — the title already has brightness
+                   (R571/R567 lineage on pinnedStatus gate at line
+                   ~11926); the count now matches at the broader
+                   hoveredPanel gate.
+
+                   Legend panel count hover signature now 3 axes:
+                     R310/R424  fontWeight 600 → 700
+                     R349/R566  letter-spacing 0.2 → 0.4
+                     R588       brightness 1 → 1.15  ← this round
+
+                   The cyan numeral (pal.legendAccent) lifts ~15%
+                   alongside the typographic tightening — 3-axis
+                   panel-count hover signal at full visual presence.
+
+                   Pure paint filter on <text> root element (NOT a
+                   nested tspan — SVG filter on tspan is unreliable
+                   cross-browser; the parent <text> takes the filter
+                   and inherits to children). */
+                filter: hoveredPanel === 'legend' ? 'brightness(1.15)' : undefined,
+                transition: 'fill 200ms ease-out, font-weight 200ms ease-out, letter-spacing 200ms ease-out, filter 200ms ease-out',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >{sessions.length}<tspan opacity="0.7" data-legend-panel-count-unit> node{sessions.length === 1 ? '' : 's'}</tspan></text>
