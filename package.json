@@ -1,6 +1,6 @@
 {
   "name": "@sleep2agi/agent-network-dashboard",
-  "version": "0.5.2-preview.5",
+  "version": "0.5.2-preview.6",
   "description": "Agent Network Dashboard — Web UI for managing AI Agent networks",
   "scripts": {
     "dev": "next dev",
