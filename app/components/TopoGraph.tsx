@@ -10542,7 +10542,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               strokeWidth="2"
               opacity="0"
               data-click-ripple
-              style={{ pointerEvents: 'none' }}
+              data-click-ripple-glow={`0 0 4px ${clickRipple.color}99`}
+              style={{
+                pointerEvents: 'none',
+                /* R608 — click-ripple gains drop-shadow glow that
+                   matches the ripple's stroke color. The expanding
+                   ring (r0+4 → r0+30 over 500ms) now visually pulses
+                   outward as a "lit" ring rather than a plain stroke
+                   line — the user's "I clicked" moment reads more
+                   confidently as a feedback signal.
+
+                   Color: clickRipple.color (status.primary from the
+                   click target: green for working / teal for idle /
+                   slate for offline; cyan for hub clicks) at 0x99
+                   alpha (~60%) — matches the source element's status
+                   identity, so the ripple inherits the visual hue of
+                   what the user clicked.
+
+                   4px blur radius is the same as R605 avatar
+                   drop-shadow; reads as soft halo, not loud bloom,
+                   at the ripple's wide 30+ px expansion range.
+
+                   Drop-shadow visual-polish family extension —
+                   click-feedback surface adds 1 more anchor to the
+                   family (now ~23 anchors with R604/R605 + R608).
+
+                   The SMIL animates r and opacity for 500ms; filter
+                   is static (no animation needed — the opacity fade
+                   carries the visual decay automatically). No
+                   transition needed since the element is created
+                   fresh each click. */
+                filter: `drop-shadow(0 0 4px ${clickRipple.color}99)`,
+              }}
             >
               <animate
                 attributeName="r"
