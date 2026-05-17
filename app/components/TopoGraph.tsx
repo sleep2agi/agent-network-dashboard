@@ -6491,6 +6491,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     unchanged at the join with the arrow marker).
                     data-edge-visible-linecap attr exposes the value
                     for tests. */}
+                {/* Round 582 — edge visible flow path joins per-element
+                    brightness family at 21st anchor. Stacks
+                    brightness(1.15) with the existing url(#topo-glow)
+                    SVG filter (cyber) or applies plain brightness
+                    (light). CSS filter accepts mixed url() + function
+                    values; inline style.filter overrides any
+                    attribute-level filter. Closes edge-tier brightness
+                    sub-family at 2 surfaces:
+                      R581 flow-rail (dashed underline)  brightness
+                      R582 visible path (primary curve)  brightness ← this round
+                    transition list extends to include 'filter 300ms
+                    ease-out' matching the existing opacity/sw/stroke
+                    cadence. */}
                 <path
                   d={path}
                   fill="none"
@@ -6498,15 +6511,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   strokeWidth={renderWidth}
                   strokeLinecap="round"
                   opacity={Math.min(1, (isLight ? 0.22 : 0.28) * fresh * edgeOpacityMul)}
-                  filter={isLight ? undefined : 'url(#topo-glow)'}
                   markerEnd={`url(#${arrowId})`}
                   data-edge-visible={link.key}
                   data-edge-visible-linecap="round"
                   data-edge-visible-endpoint-hovered={isEndpointHoveredEdge ? 'true' : 'false'}
                   data-edge-visible-stroke-width={renderWidth}
+                  data-edge-visible-brightness={(isHoveredEdge || isEndpointHoveredEdge) ? '1.15' : '1'}
                   style={{
                     pointerEvents: 'none',
-                    transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out, stroke 300ms ease-out',
+                    transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out, stroke 300ms ease-out, filter 300ms ease-out',
+                    filter: (isHoveredEdge || isEndpointHoveredEdge)
+                      ? (isLight ? 'brightness(1.15)' : 'url(#topo-glow) brightness(1.15)')
+                      : (isLight ? undefined : 'url(#topo-glow)'),
                   }}
                 />
                 {/* Round 378 / Loop: edge flow-path dashed-rail picks
