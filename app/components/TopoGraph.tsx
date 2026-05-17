@@ -14324,11 +14324,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      'zoom' | 'false') so tests can distinguish
                      gate cause. */
                   data-topo-minimap-viewport-glow={hoveredMinimap ? 'hover' : view.zoom > 1.5 ? 'zoom' : 'false'}
+                  data-topo-minimap-viewport-brightness={(hoveredMinimap || view.zoom > 1.5) ? '1.15' : '1'}
                   style={{
+                    /* R627 — minimap viewport rect stacks brightness(1.15)
+                       onto the existing hover drop-shadow + zoom>1.5
+                       drop-shadow filters. Banked R582/R583 stacked-
+                       filter pattern at the minimap chrome scope.
+                       Drop-shadow paints the cyan/teal halo; brightness
+                       lifts the underlying stroke +15% — both effects
+                       fire together on hover (legendAccent 99 alpha)
+                       or zoom>1.5 (legendAccent 80 alpha) and ease at
+                       the same 200ms cadence per the existing
+                       transition list.
+
+                       Extends the minimap-viewport hover signature to
+                       include the brightness axis alongside the
+                       existing R332 stroke-width/opacity lifts +
+                       drop-shadow glow. The cyan viewport indicator
+                       now reads ~15% brighter on hover, distinguishing
+                       it from sibling minimap chrome at quick glance. */
                     filter: hoveredMinimap
-                      ? `drop-shadow(0 0 2px ${pal.legendAccent}99)`
+                      ? `drop-shadow(0 0 2px ${pal.legendAccent}99) brightness(1.15)`
                       : view.zoom > 1.5
-                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80)`
+                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80) brightness(1.15)`
                         : undefined,
                     transition: smoothView
                       ? 'x 280ms ease-out, y 280ms ease-out, width 280ms ease-out, height 280ms ease-out, stroke-width 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out'
