@@ -9344,9 +9344,56 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         preserveAspectRatio="xMidYMid meet"
                         data-node-avatar={session.alias}
                         data-node-avatar-hovered={isAvatarHovered ? 'true' : 'false'}
+                        data-node-avatar-rotate={isAvatarHovered ? '3' : '0'}
                         style={{
+                          /* R600 milestone — node vendor avatar gains
+                             hover-rotate-3 via Tailwind v4 individual
+                             `rotate` CSS property. 6th anchor in hover-
+                             rotate idiom (R350 reset / R547 pill × /
+                             R549 brand logo / R576 fullscreen / R599
+                             runtime badge / R600 node avatar).
+
+                             Same +3° "wobble awake" tilt as R576
+                             fullscreen + R599 runtime badge — the
+                             vendor logo (Claude/OpenAI/etc.) at the
+                             center of every node gently tilts under
+                             cursor. Most visible per-node element gains
+                             a rotation signal on top of R501's
+                             brightness lift.
+
+                             transform-origin pinned to the node center
+                             (pos.x, pos.y) so the logo rotates around
+                             its own visual centre, not the <image>
+                             element's default bbox top-left.
+
+                             Per-node hover signature now 11 axes:
+                               R26  group translateY -2px
+                               R217 stroke tint
+                               R142 drop-shadow boost
+                               R427 alias letter-spacing
+                               R428 sub-text letter-spacing
+                               R429 body opacity 0.94 → 1.0
+                               R430 hub-spoke α+
+                               R435 hub-spoke sw+
+                               R438 status-ring sw +0.5
+                               R584 status-ring brightness(1.15)
+                               R600 avatar rotate 0 → 3deg  ← this round
+
+                             Hover-rotate idiom family (6 anchors):
+                               R350 chrome reset icon       -8°
+                               R547 chip pill × close       (rotate)
+                               R549 brand 书生 logo         (rotate)
+                               R576 chrome fullscreen icon  +3°
+                               R599 node runtime badge      +3°
+                               R600 node vendor avatar      +3°  ← milestone
+
+                             transition list extends 'rotate 200ms
+                             ease-out' alongside the existing 'filter
+                             200ms ease-out' — both axes ride one beat. */
+                          rotate: isAvatarHovered ? '3deg' : '0deg',
+                          transformOrigin: `${pos.x}px ${pos.y}px`,
                           filter: isAvatarHovered ? 'brightness(1.15)' : undefined,
-                          transition: 'filter 200ms ease-out',
+                          transition: 'filter 200ms ease-out, rotate 200ms ease-out',
                         }}
                       />
                     );
