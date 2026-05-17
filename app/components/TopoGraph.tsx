@@ -11597,6 +11597,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               const isPinned = pinnedStatus === row.key;
               const isRowHovered = hoveredStatus === row.key;
               const isLifted = isRowHovered || isPinned;
+              /* Round 562 / Loop — inspection-overrides-encoding family
+                 5th anchor at the legend-swatch scope. When operator
+                 hovers a NODE ALIAS on the canvas, the legend swatch
+                 that matches that node's status tier lifts r + drop-
+                 shadow (R197 + R537 axes) — telegraphing "your
+                 inspected node is in this status group".
+                 Mirror of R486 minimap-dot inspection-override at the
+                 legend-swatch scope.
+                 Family progression (5 anchors):
+                   R484  recent-row timestamp on alias hover
+                   R485  edge particle opacity on alias hover
+                   R486  minimap dot opacity to 1.0 on alias hover
+                   R561  group-label opacity-1 + ants-gate refinement
+                   R562  legend-swatch r+glow on member-alias-matching ← this round
+                 Restraint: ONLY swatch lifts, NOT label/fill/ls/fw
+                 axes. Direct row-hover gets full treatment; inspection
+                 signal gets swatch-only lift — distinct "lighter"
+                 visual register matching R561's ants-gate approach
+                 (indirect inspection ≠ direct attention). */
+              const hoveredSession = hoveredAlias
+                ? (onlineNodes.find(s => s.alias === hoveredAlias) ?? offlineNodes.find(s => s.alias === hoveredAlias))
+                : null;
+              const hoveredAliasRowKey: 'working' | 'idle' | 'offline' | null = !hoveredSession ? null
+                : hoveredSession.status === 'working' ? 'working'
+                : offlineNodes.includes(hoveredSession) ? 'offline'
+                : 'idle';
+              const isMemberAliasMatching = hoveredAliasRowKey === row.key;
+              const isSwatchLifted = isLifted || isMemberAliasMatching;
               return (
                 <g
                   key={row.key}
@@ -11756,11 +11784,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     r="6"
                     fill={row.fill}
                     data-legend-swatch={row.key}
-                    data-legend-swatch-state={isPinned ? 'pinned' : isRowHovered ? 'hover' : 'idle'}
-                    data-legend-swatch-glow={(isRowHovered || isPinned) ? 'true' : 'false'}
+                    data-legend-swatch-state={isPinned ? 'pinned' : isRowHovered ? 'hover' : isMemberAliasMatching ? 'member-alias-matching' : 'idle'}
+                    data-legend-swatch-glow={isSwatchLifted ? 'true' : 'false'}
+                    data-legend-swatch-member-alias-matching={isMemberAliasMatching ? 'true' : 'false'}
                     style={{
-                      r: isRowHovered || isPinned ? '7px' : '6px',
-                      filter: (isRowHovered || isPinned)
+                      /* R562: swatch lifts on direct row hover, pin, OR
+                         member-alias-matching (operator inspecting a node
+                         whose status matches this row's tier). Pure paint
+                         + geometry axes — label/fill/ls/fw stay tied to
+                         direct row-hover semantics. */
+                      r: isSwatchLifted ? '7px' : '6px',
+                      filter: isSwatchLifted
                         ? `drop-shadow(0 0 3px ${row.fill}99)`
                         : undefined,
                       transition: 'r 150ms ease-out, filter 150ms ease-out',
