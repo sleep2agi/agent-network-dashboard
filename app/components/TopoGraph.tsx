@@ -4659,11 +4659,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       breakdown. Multi-tier groups (e.g. `alpha · 3
                       2w 1i`) render unchanged — those pips genuinely
                       add breakdown info that the total doesn't carry. */}
+                  {/* Round 458 / Loop — Hero D #147 finishing polish on top of
+                      N站牛/codex preview.125 (Option C: top-left label fontSize
+                      13→9 + opacity 0.55 rest / 1 hover+pin, count tspan 11→8).
+                      That ship left the 3 status pips at fontSize=11 — visibly
+                      DOMINATING the now-9px parent label they trail. Result on
+                      a 5-member cluster: `alpha · 5 3w 2i` renders inside-out
+                      as "tiny name + tiny count + BIG bright pips" rather than
+                      a coherent right-tail of metadata. R458 scales the 3 pips
+                      to fontSize=8 (matches count tspan) and tightens dx 8/4/4
+                      → 6/3/3 (gutter ratio 0.73/0.36 glyph-widths @ 11px ≈
+                      0.75/0.38 glyph-widths @ 8px — same visual rhythm at the
+                      smaller scale). The whole group-label bottom-right strip
+                      now reads as a unified 9/8/8/8 typographic ladder:
+                        name (parent <text>)     fontSize 9   fw 700/800
+                        · count    (1st tspan)   fontSize 8   fw 500/600
+                        Nw         (2nd tspan)   fontSize 8   fw 600
+                        Ni         (3rd tspan)   fontSize 8   fw 600
+                        No         (4th tspan)   fontSize 8   fw 600
+                      Closes Vincent /goal 5401 ("太大太丑") at the pip-strip
+                      tier; with codex preview.125 the spec is fully realized.
+                      Geometry-only attribute changes — bbox tightens slightly
+                      (8px chars vs 11px chars stay inside the original 240px
+                      hitbox max) so topo-overlap-test invariants hold.
+                      tabular-nums + anet-fade-in + theme-eased fill 200ms
+                      preserved on every tspan. */}
                   {box.statuses.working > 0 && box.statuses.working !== box.count && (
                     <tspan
-                      dx="8"
+                      dx="6"
                       fill={isLight ? '#059669' : '#22c55e'}
-                      fontSize="11"
+                      fontSize="8"
                       fontWeight="600"
                       className="anet-fade-in"
                       data-group-pip="working"
@@ -4672,9 +4697,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   )}
                   {box.statuses.idle > 0 && box.statuses.idle !== box.count && (
                     <tspan
-                      dx="4"
+                      dx="3"
                       fill={isLight ? '#0d9488' : '#2dd4bf'}
-                      fontSize="11"
+                      fontSize="8"
                       fontWeight="600"
                       className="anet-fade-in"
                       data-group-pip="idle"
@@ -4683,9 +4708,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   )}
                   {box.statuses.offline > 0 && box.statuses.offline !== box.count && (
                     <tspan
-                      dx="4"
+                      dx="3"
                       fill={isLight ? '#94a3b8' : '#6b7280'}
-                      fontSize="11"
+                      fontSize="8"
                       fontWeight="600"
                       className="anet-fade-in"
                       data-group-pip="offline"
