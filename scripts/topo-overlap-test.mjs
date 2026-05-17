@@ -59,6 +59,37 @@ async function check(layout) {
   }, { timeout: 30000 }).catch(() => {});
   await page.waitForTimeout(800);
 
+  // Round 463 / Loop: zombie-build guard — consumes R462's
+  // svg[data-dashboard-version] surface (preview.130+). Before
+  // reporting collision metrics, verify the dash is actually
+  // serving the build that matches package.json. This catches
+  // the dash-zombie-port-3000 failure mode (next-server cached
+  // chunks from earlier preview) that bit R441 + R460 — those
+  // rounds reported false-positive overlap-test green because
+  // probes ran against stale code. Test scripts shipping before
+  // R462 don't have the attr; we tolerate its absence (older
+  // dash) but fail hard on mismatch. The `expected` value comes
+  // from this script's CWD package.json — co-located with the
+  // working tree → it reflects whatever version was bumped this
+  // round.
+  const expected = JSON.parse(readFileSync('/home/vansin/agent-network-dashboard/package.json', 'utf8')).version;
+  const live = await page.evaluate(() => {
+    const svg = document.querySelector('svg[viewBox="0 0 1000 680"]');
+    return svg ? svg.getAttribute('data-dashboard-version') : null;
+  });
+  if (live && live !== expected) {
+    console.error(`❌ [${layout}] STALE BUILD — dash serves ${live} but package.json says ${expected}.`);
+    console.error(`   Likely cause: zombie next-server (pkill -9 + restart). See feedback_dash_zombie_port_3000.md.`);
+    await ctx.close();
+    return { stale: true, live, expected };
+  }
+  if (!live) {
+    // R462 attr not present — dash is on an older build than the
+    // R462 surface ships in. Don't fail; just warn so the loop
+    // operator notices. Real overlap metrics still run.
+    console.warn(`⚠️  [${layout}] data-dashboard-version absent (dash pre-R462? expected ${expected}). Skipping zombie-guard.`);
+  }
+
   const data = await page.evaluate(() => {
     const svg = document.querySelector('svg[viewBox="0 0 1000 680"]');
     // node status rings: stroke-width 3 (online) / 1.5 (offline), centred on the node
@@ -159,6 +190,16 @@ const all = [];
 all.push(await check('grid'));
 all.push(await check('ring'));
 await browser.close();
-const pass = all.every(Boolean);
+// R463: any non-boolean return is a sentinel (e.g. { stale: true }
+// from the zombie-build guard). Treat as a hard fail — collision
+// metrics from a stale build are meaningless, and reporting them
+// as green would re-create the R441/R460 false-positive that hit
+// us before the data-dashboard-version surface existed.
+const stale = all.find(r => r && typeof r === 'object' && r.stale);
+if (stale) {
+  console.error(`\n❌ STALE BUILD — dash served ${stale.live}, expected ${stale.expected}. Restart dash + retry.`);
+  process.exit(2);
+}
+const pass = all.every(r => r === true);
 console.log(pass ? '\n✅ ZERO OVERLAP' : '\n❌ OVERLAP DETECTED');
 process.exit(pass ? 0 : 1);
