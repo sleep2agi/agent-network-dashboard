@@ -2531,7 +2531,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       Hover-letter-spacing family extension (12 anchors
                       now): R344/R345/R347/R420/R427/R431/R432/R433/
                       R434/R517/R518 + R539 (this round). */}
-                  <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-working-chip-digit>{workingCount}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-working-chip-unit> working</span>
+                  <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-working-chip-digit>{workingCount}</span><span className="opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide" data-working-chip-unit> working</span>
                 </span>
                 <span
                   // Round 201 / Loop: online chip — mirror of the working
@@ -2604,7 +2604,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   {/* R362 sibling — online-chip digit gains font-semibold. */}
                   {/* R539 sibling — online chip digit. Same idiom as
                       working chip above (group-hover:tracking-wide). */}
-                  <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-online-chip-digit>{onlineNodes.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-online-chip-unit> online</span>
+                  <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-online-chip-digit>{onlineNodes.length}</span><span className="opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide" data-online-chip-unit> online</span>
                 </span>
               </>
             );
@@ -2926,7 +2926,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   to R333/R335-R341/R362/R369/R389/R410. data-filter-
                   value attr surfaces the value span for tests.
                   4-pill replace family — status / group / vendor / edge. */}
-              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span><span className="font-semibold" data-filter-value>{pinnedStatus}</span><span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide" data-filter-prefix>filter: </span><span className="font-semibold" data-filter-value>{pinnedStatus}</span><span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear ${pinnedStatus} filter`}
@@ -3026,7 +3026,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               }}
             >
               {/* R412: see status pill above — filter value fw=600 data tier. */}
-              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span><span className="font-semibold" data-filter-value>{pinnedGroup}</span><span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide" data-filter-prefix>filter: </span><span className="font-semibold" data-filter-value>{pinnedGroup}</span><span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear group filter ${pinnedGroup}`}
@@ -3135,7 +3135,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               }}
             >
               {/* R412: see status pill above — filter value fw=600 data tier. */}
-              <span><span className="hidden sm:inline opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-filter-prefix>filter: </span><span className="font-semibold" data-filter-value>{pinnedVendor}</span><span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
+              <span><span className="hidden sm:inline opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide" data-filter-prefix>filter: </span><span className="font-semibold" data-filter-value>{pinnedVendor}</span><span className="opacity-70 tabular-nums transition-opacity duration-200 group-hover:opacity-100" data-filter-pill-count> · {matchCount}</span></span>
               <button
                 type="button"
                 aria-label={`Clear vendor filter ${pinnedVendor}`}
@@ -3769,7 +3769,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         since the glyph (R369 fw=600) stays at full
                         opacity. R333 :{count} format preserved. */}
                     <span
-                      className="text-gray-400 tabular-nums opacity-70 transition-opacity duration-200 group-hover:opacity-100"
+                      className="text-gray-400 tabular-nums opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide"
                       data-vendor-letter-count-suffix
                     >:{v.count}</span>
                   </span>
@@ -3921,7 +3921,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 {/* R362 sibling — active-links chip digit gains font-semibold. */}
                 {/* R539 sibling — active-links chip digit. Same idiom
                     as working + online above. */}
-                <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-active-links-chip-digit>{flowLinks.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
+                <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-active-links-chip-digit>{flowLinks.length}</span><span className="opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
                 {rel ? (() => {
                   // Round 161 / Loop: extend R160's recency-pip
                   // vocabulary up one scope — from per-flow row to
