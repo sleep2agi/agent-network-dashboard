@@ -2623,6 +2623,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedStatus(null)}
+              /* Round 543 / Loop — status filter pill gains always-on
+                 tier-color drop-shadow when rendered. Pre-R543 the
+                 pill carried bg-tint + tier-color text + border but
+                 no outer paint extent — it sat as a flat tinted chip
+                 in the chip row. R543 adds an outer glow at the
+                 pill's text color so the pill radiates a soft tier-
+                 colored halo signaling "this filter is active." Pin
+                 pill only renders when pinnedStatus is set (the JSX
+                 gate above), so the drop-shadow appearing reinforces
+                 the visual "active pin" state.
+                 Sibling pattern: R477 legend pin-ring also paints a
+                 pin-gated tier-color drop-shadow. Pin pill follows
+                 the same "pin-gated paint glow" semantics but at the
+                 chip-row scope vs the panel-row scope. The chip-row
+                 tier-color glow trio (R537/R541/R542 hover-gated)
+                 plus R543 (pin-gated, this round) closes the chip-
+                 row paint-glow family across BOTH gate types
+                 (hover for transient affordance, pin for sticky
+                 active-state visual).
+                 Hue: explicit tier color (extracted from the
+                 existing `color` ternary). 0x99 alpha (~60%) +
+                 3px blur. Stays inside the same color hierarchy
+                 as the pill's own text/border (currentColor).
+                 R543 status pill scope only — R543's pattern can
+                 future-extend to group/vendor/edge filter pills
+                 (3 more variants at lines 2683/2755/2824). Out of
+                 scope to keep R543 single-pill. */
               style={{
                 background: pinnedStatus === 'working' ? (isLight ? '#05966914' : '#22c55e1f')
                           : pinnedStatus === 'idle'    ? (isLight ? '#0d948814' : '#2dd4bf1f')
@@ -2632,6 +2659,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           : (isLight ? '#475569' : '#9ca3af'),
                 borderColor: 'currentColor',
                 cursor: 'pointer',
+                filter: `drop-shadow(0 0 3px ${
+                  pinnedStatus === 'working' ? (isLight ? '#047857' : '#86efac')
+                  : pinnedStatus === 'idle'  ? (isLight ? '#0f766e' : '#5eead4')
+                  : (isLight ? '#475569' : '#9ca3af')
+                }99)`,
               }}
             >
               {/* Round 412 / Loop: filter pin pill VALUE picks up the
