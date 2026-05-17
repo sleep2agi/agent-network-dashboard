@@ -8952,14 +8952,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-chat-target-ring
                       data-chat-target-active={isChat ? 'true' : 'false'}
                       data-chat-target-breath={!reducedMotion && isChat ? 'on' : 'off'}
+                      /* R630 — chat-target ring gains a SECOND breath axis:
+                         stroke-width. Pre-R630 R120 added a single opacity
+                         breath (0.72↔0.95 light / 0.82↔1.0 cyber) over 3s
+                         to say "active session here". R630 stacks a stroke-
+                         width breath 2.5↔2.75 over the same 3s cadence, in
+                         lockstep with the opacity peak — the ring "swells"
+                         as it brightens, then settles as it dims.
+                         Subtle (+10 % sw amplitude, identical to R243
+                         active-pulse r-breath +14 → +22 magnitude ratio
+                         on the active-pulse ring). 呼吸感 reads doubly —
+                         opacity + geometry breathe together as one
+                         organic gesture, not just an alpha modulation.
+                         R51 sentinel safety: SW range [2.5, 2.75] stays
+                         clear of the reserved {1.5, 3} sentinels inside
+                         g[data-node]; topo-overlap-test invariants hold.
+                         Gated to `!reducedMotion && isChat` like the
+                         existing opacity breath, so reduced-motion users
+                         and non-chat-target nodes see no extra motion.
+                         data-chat-target-ring-sw-breath attr exposes the
+                         new gate for tests. */
+                      data-chat-target-ring-sw-breath={!reducedMotion && isChat ? 'on' : 'off'}
                     >
                       {!reducedMotion && isChat && (
-                        <animate
-                          attributeName="opacity"
-                          values={isLight ? '0.72;0.95;0.72' : '0.82;1;0.82'}
-                          dur="3s"
-                          repeatCount="indefinite"
-                        />
+                        <>
+                          <animate
+                            attributeName="opacity"
+                            values={isLight ? '0.72;0.95;0.72' : '0.82;1;0.82'}
+                            dur="3s"
+                            repeatCount="indefinite"
+                          />
+                          <animate
+                            attributeName="stroke-width"
+                            values="2.5;2.75;2.5"
+                            dur="3s"
+                            repeatCount="indefinite"
+                          />
+                        </>
                       )}
                     </circle>
                   );
