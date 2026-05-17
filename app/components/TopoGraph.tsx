@@ -10275,21 +10275,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   textAnchor="end"
                   fontSize="10"
                   fontFamily="monospace"
-                  // Round 349 / Loop: editorial letter-spacing 0.2 on the
-                  // recent-signal panel header count. Sits one tier below
-                  // the R301 panel title letterSpacing="0.3" so the panel
-                  // header reads as a 2-step hierarchy (title 0.3 / count
-                  // 0.2). Sibling change on the legend panel count below
-                  // closes the panel-pair editorial symmetry. Joins the
-                  // R285 / R289 / R301 / R302 / R304 / R325 editorial-
-                  // letterspacing tier at the panel-summary scope. The
-                  // R162 freshness fill, R225 tabular-nums, R311 fw=600,
-                  // R336 unit-tspan opacity-0.7 split all preserved —
-                  // the tier propagates to all descendant tspans via
-                  // SVG inheritance. data-recent-panel-count-letter-
-                  // spacing exposes the value for tests.
-                  letterSpacing="0.2"
-                  data-recent-panel-count-letter-spacing="0.2"
+                  /* Round 566 / Loop — recent-panel-count gains hover-
+                     state letter-spacing tween (0.2 → 0.4 on hovered-
+                     Panel === 'recent'). Pairs with R424 fw 600→700
+                     on the same gate. Count now has 2-axis hover
+                     signature (fw + ls), matching the panel title's
+                     R345 ls + R482 fw lift pattern at the panel-
+                     header data-tspan scope. R349 editorial 0.2
+                     baseline preserved at rest — only hover lifts.
+                     Sibling treatment on the legend-panel count
+                     below closes the panel-pair symmetry. */
+                  letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.2'}
+                  data-recent-panel-count-letter-spacing={hoveredPanel === 'recent' ? '0.4' : '0.2'}
+                  style={{ transition: 'letter-spacing 200ms ease-out' }}
                 >
                   {/* Round 225 / Loop: tabular-nums on the panel-header
                       flow-count tspan. The "{N} flows" string lives in
@@ -11626,11 +11624,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // title 0.3. Pairs with the recent-signal panel count
               // letter-spacing above so the two corner panels' header
               // typography stays editorially symmetric.
-              letterSpacing="0.2"
+              /* Round 566 / Loop — legend panel-count gains hover-state
+                 letter-spacing tween (0.2 → 0.4 on hoveredPanel ===
+                 'legend'). Pairs with existing R310 fw 600→700 on the
+                 same gate — count now has 2-axis hover signature (fw
+                 + ls), matching the panel title's R345 ls + R482 fw
+                 lift pattern at the panel-header data-tspan scope.
+                 Hover-letter-spacing family extension (R566 = 2 sibling
+                 anchors at recent + legend panel-count). */
+              letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.2'}
               data-legend-panel-count
-              data-legend-panel-count-letter-spacing="0.2"
+              data-legend-panel-count-letter-spacing={hoveredPanel === 'legend' ? '0.4' : '0.2'}
               style={{
-                transition: 'fill 200ms ease-out, font-weight 200ms ease-out',
+                transition: 'fill 200ms ease-out, font-weight 200ms ease-out, letter-spacing 200ms ease-out',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >{sessions.length}<tspan opacity="0.7" data-legend-panel-count-unit> node{sessions.length === 1 ? '' : 's'}</tspan></text>
