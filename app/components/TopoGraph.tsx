@@ -9090,7 +9090,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      the easing. data-node-halo-hovered exposes the
                      gate; data-node-halo-resolved-opacity exposes
                      the four-state resolved value for tests. */
-                  const isHaloHovered = !reducedMotion && hoveredAlias === session.alias;
+                  /* R623 — extend isHaloHovered gate to include
+                     chatAlias === session.alias. Single conceptual
+                     change cascades the halo's 4-state opacity tiers
+                     (online/offline × hover/rest) to also fire on
+                     chat-target. Per the R440 family doc, halo opacity
+                     lifts on hover:
+                       online cyber  0.65 → 0.80
+                       online light  0.85 → 1.00
+                       offline cyber 0.30 → 0.45
+                       offline light 0.50 → 0.60
+                     Now chat-target also triggers each lift.
+
+                     9th anchor in chat-target-gated brightness family
+                     (R615 ring + R618 card + R616 alias + R617 sub +
+                     R619 avatar + R620 badge + R621 status ring +
+                     R622 hub-spoke + R623 node halo). The atmospheric
+                     halo behind the chat partner reads brighter,
+                     giving the locked-in node a stronger "lit up at
+                     the boundary" presence. */
+                  const isHaloHovered = !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias);
                   /* Round 456 / Loop: light-theme offline node halo
                      rest opacity 0.45 → 0.50. Stale-state legibility
                      lift family extension (10th anchor) at the per-
