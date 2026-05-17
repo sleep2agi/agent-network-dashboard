@@ -11532,11 +11532,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           data-recent-row-freshness-radius={(isRowHovered || isRowPinned) ? 2.5 : 2.0}
                           data-recent-row-freshness-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
                           data-recent-row-freshness-glow={alpha > 0.7 ? 'true' : 'false'}
+                          data-recent-row-freshness-brightness={alpha > 0.7 ? '1.15' : '1'}
                           style={{
                             pointerEvents: 'none',
                             r: `${(isRowHovered || isRowPinned) ? 2.5 : 2.0}px`,
+                            /* R606 — recent-row freshness pip stacks
+                               brightness(1.15) onto R478's freshness-gated
+                               drop-shadow. Same alpha > 0.7 gate so both
+                               effects activate together when the signal
+                               is "live" (~30s window per R10 freshness
+                               ramp) and ease off in lockstep as data
+                               ages past ~45s.
+
+                               Pip 4-axis freshness/hover signature now:
+                                 R10   opacity tracks alpha (freshness)
+                                 R447  r 2.0 → 2.5 (hover/pin)
+                                 R478  drop-shadow on alpha > 0.7
+                                 R606  brightness(1.15) on alpha > 0.7  ← this round
+
+                               R478 + R606 share one filter chain on the
+                               same gate — banked R582/R583 stacked-filter
+                               pattern at the recent-row pip scope. The
+                               fresh signal reads ~15% brighter + glows
+                               cyan; the stale signal sits at flat
+                               legendAccent fill with no filter.
+
+                               Hover brightness is freshness-gated here
+                               (vs hover-gated elsewhere) — matches the
+                               "this signal is live" semantic that R478
+                               established. data-recent-row-freshness-
+                               brightness attr exposes the gate for tests. */
                             filter: alpha > 0.7
-                              ? `drop-shadow(0 0 3px ${pal.legendAccent}80)`
+                              ? `drop-shadow(0 0 3px ${pal.legendAccent}80) brightness(1.15)`
                               : undefined,
                             transition: 'opacity 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                           } as React.CSSProperties}
