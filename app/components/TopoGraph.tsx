@@ -7226,6 +7226,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-edge-badge-opacity-hover="1"
                         data-edge-badge-opacity-active="1"
                         data-edge-badge-glow={(isHoveredEdge || isPinned) ? 'hover' : isHot ? 'hot' : 'false'}
+                        data-edge-badge-brightness={(isHoveredEdge || isPinned || isHot) ? '1.15' : '1'}
                         /* Round 534 / Loop — extends edge-badge drop-shadow
                            coverage from hot-only (R480 amber) to also fire
                            on hover/pin with a cyan accent glow. Pre-R534
@@ -7262,10 +7263,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            (not g[data-node] ancestor); filter is paint-
                            only; bbox unchanged. */
                         style={{
+                          /* R603 — edge-badge CIRCLE stacks brightness(1.15)
+                             onto the R534/R480 drop-shadow filter on hover/
+                             pin/hot. 5th hover axis on the badge ring
+                             (after R164 r, R394 sw, R395 opacity, R534
+                             filter drop-shadow → R603 filter brightness).
+
+                             Brings the CIRCLE's brightness coverage to
+                             parity with the DIGIT's R570 brightness:
+                             both elements (ring + text) now brighten
+                             together on the same 3-state gate
+                             (hover/pin/hot). The whole edge-badge reads
+                             as one coherent "lit up under attention"
+                             unit at the brightness axis.
+
+                             Banked R564/R570 stacked-filter pattern:
+                             `drop-shadow(...) brightness(1.15)` chains
+                             the SVG drop-shadow halo + brightness lift
+                             in one CSS filter chain on the same element.
+
+                             Per-element brightness family extension —
+                             edge-badge circle joins as a stacked-filter
+                             anchor. Hot-only state gets amber drop-shadow
+                             + brightness; hover/pin gets cyan/teal drop-
+                             shadow + brightness; rest gets neither.
+
+                             transition list already includes 'filter
+                             200ms ease-out' (R534 cadence). No
+                             transition change needed. */
                           filter: (isHoveredEdge || isPinned)
-                            ? `drop-shadow(0 0 3px ${pal.legendAccent}99)`
+                            ? `drop-shadow(0 0 3px ${pal.legendAccent}99) brightness(1.15)`
                             : isHot
-                              ? `drop-shadow(0 0 3px ${hotStroke}80)`
+                              ? `drop-shadow(0 0 3px ${hotStroke}80) brightness(1.15)`
                               : undefined,
                           transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                         }}
