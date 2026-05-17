@@ -7099,6 +7099,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-hub-highlight-breath={breathActive ? 'true' : 'false'}
                   data-topo-hub-highlight-recede={hubRecede ? 'true' : 'false'}
                   data-topo-hub-highlight-hovered={!reducedMotion && hoveredHub ? 'true' : 'false'}
+                  data-topo-hub-highlight-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
                   /* Round 510 / Loop — R509 follow-on: theme-toggle fill
                      ease. Pre-R510 the hub-highlight transition spec only
                      listed `opacity 300ms ease-out`. When R509 introduced
@@ -7117,11 +7118,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      the new hub-hover radius lift (5.5 → 6) eases
                      under the same fill cadence. SVG attr r="5.5"
                      above provides SSR fallback; inline style.r
-                     wins the cascade for the dynamic value. */
+                     wins the cascade for the dynamic value.
+                     R532: filter drop-shadow glow on hub-hover —
+                     sibling to R476 hub-digit drop-shadow at the
+                     same gate (hoveredHub && !reducedMotion). Two
+                     adjacent hub focal elements (digit + highlight
+                     disc) now BOTH glow on hub-hover, reading as
+                     one unified focal cluster. Emerald palette
+                     matches R476:
+                       light: drop-shadow(0 0 2px rgba(16,185,129,0.6))   emerald-500
+                       cyber: drop-shadow(0 0 3px rgba(52,211,153,0.6))   emerald-400
+                     filter is paint-only (bbox unchanged); SMIL
+                     animate on opacity continues independently
+                     (animateAttr='opacity' vs CSS-property filter
+                     — non-conflicting). transition list extends to
+                     'filter 200ms ease-out' alongside fill/r.
+                     Drop-shadow visual-polish family extension
+                     (8 anchors): R476 hub-digit / R477 legend pin-
+                     ring / R478 recent freshness / hot edge / group
+                     label / zoom-state / node alias + R532 hub-
+                     highlight (this round). data-topo-hub-highlight-
+                     glow attr exposes the gate state. */
                   style={{
                     pointerEvents: 'none',
                     r: `${highlightR}px`,
-                    transition: 'opacity 300ms ease-out, fill 200ms ease-out, r 200ms ease-out',
+                    filter: !reducedMotion && hoveredHub
+                      ? (isLight
+                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6))'
+                          : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6))')
+                      : undefined,
+                    transition: 'opacity 300ms ease-out, fill 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                   } as React.CSSProperties}
                 >
               {/* Round 497 / Loop — idle-state breath (呼吸感 theme pivot
