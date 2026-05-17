@@ -2263,7 +2263,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       at the chip-count scope. Sibling edits on the
                       online + active-links chip digits below. data-
                       working-chip-digit attr exposes the digit span. */}
-                  <span className="font-semibold transition-[font-weight] duration-200 group-hover:font-bold" data-working-chip-digit>{workingCount}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-working-chip-unit> working</span>
+                  {/* Round 539 / Loop — chip-row digit gains group-hover:
+                      tracking-wide alongside the existing R362 group-
+                      hover:font-bold. Pre-R539 the chip digit lifted
+                      only on the font-weight axis (600 → 700 on chip
+                      hover); R539 adds the kerning axis (tracking
+                      normal → tracking-wide ≈ 0.025em ≈ 0.3px on a 12px
+                      digit) so hover lifts BOTH typography axes
+                      together — same idiom R420/R517 establish at the
+                      chrome zoom-level (letter-spacing + fontWeight
+                      hover delta) and R531/R530 mirror at the panel
+                      label scope. transition-[font-weight] extends to
+                      transition-[font-weight,letter-spacing] for the
+                      smooth dual-axis tween.
+                      Sibling treatment across the 3 chip-row digits
+                      (working / online / active-links) — single concept
+                      replicated at 3 surfaces by replace_all.
+                      Hover-letter-spacing family extension (12 anchors
+                      now): R344/R345/R347/R420/R427/R431/R432/R433/
+                      R434/R517/R518 + R539 (this round). */}
+                  <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-working-chip-digit>{workingCount}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-working-chip-unit> working</span>
                 </span>
                 <span
                   // Round 201 / Loop: online chip — mirror of the working
@@ -2334,7 +2353,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 >
                   {/* R337 sibling — online chip unit demotion. */}
                   {/* R362 sibling — online-chip digit gains font-semibold. */}
-                  <span className="font-semibold transition-[font-weight] duration-200 group-hover:font-bold" data-online-chip-digit>{onlineNodes.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-online-chip-unit> online</span>
+                  {/* R539 sibling — online chip digit. Same idiom as
+                      working chip above (group-hover:tracking-wide). */}
+                  <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-online-chip-digit>{onlineNodes.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-online-chip-unit> online</span>
                 </span>
               </>
             );
@@ -3405,7 +3426,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     chip-internal-hierarchy arc. data-active-links-
                     chip-unit exposes the unit span for tests. */}
                 {/* R362 sibling — active-links chip digit gains font-semibold. */}
-                <span className="font-semibold transition-[font-weight] duration-200 group-hover:font-bold" data-active-links-chip-digit>{flowLinks.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
+                {/* R539 sibling — active-links chip digit. Same idiom
+                    as working + online above. */}
+                <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-active-links-chip-digit>{flowLinks.length}</span><span className="opacity-70 transition-opacity duration-200 group-hover:opacity-100" data-active-links-chip-unit> active link{flowLinks.length === 1 ? '' : 's'}</span>
                 {rel ? (() => {
                   // Round 161 / Loop: extend R160's recency-pip
                   // vocabulary up one scope — from per-flow row to
