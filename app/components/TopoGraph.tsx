@@ -5754,13 +5754,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // Mode='spline' + R245 ease-in-out keySplines all
               // preserved. data-topo-hub-halo-radius attr exposes
               // value for tests.
+              /* Round 451 / Loop: hub center halo radius lift on
+                 hoveredHub — r 20 → 22 (+2px, ~21% area). Adds another
+                 geometric axis to the hub-hover signature stack
+                 alongside R177 ring radius lift + R209 digit scale +
+                 R425 digit fw + R370 halo opacity + R386 highlight
+                 opacity + R441 core fill chroma. Pre-R451 the halo
+                 r stayed planted at R408's 20px while the rest of
+                 the hub structure responded to hover. R451 makes
+                 the halo breath outward on hover so the focal pulse
+                 intensifies under attention. SMIL `<animate>` on
+                 opacity continues independently (animateAttr=
+                 'opacity' vs CSS-property r — non-conflicting). R408
+                 base radius 20 preserved as rest; +2 hover delta
+                 keeps clearance from the R177 hub-hover-ring at
+                 r=17 hover (halo is BEHIND the ring, halo r=22 sits
+                 5px beyond the ring's hover-r=17, still well within
+                 the hub canvas envelope). data-topo-hub-halo-radius
+                 attr now reports the dynamic value. */
+              const isHaloHovered = !reducedMotion && hoveredHub;
+              const haloR = isHaloHovered ? 22 : 20;
               return (
                 <circle
-                  cx={cx} cy={cy} r="20"
+                  cx={cx} cy={cy}
                   fill={isLight ? '#d1fae5' : '#10b981'}
                   opacity={isLight ? 0.42 : 0.12}
                   data-hub-busyness={busy}
-                  data-topo-hub-halo-radius="20"
+                  data-topo-hub-halo-radius={haloR}
+                  data-topo-hub-halo-hovered={isHaloHovered ? 'true' : 'false'}
                   data-topo-hub-halo-trough={isLight ? troughLight : troughDark}
                   data-topo-hub-halo-peak={isLight ? peakLight : peakDark}
                   /* Round 253 / Loop: hub grounding halo fill transition
@@ -5769,8 +5790,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      animate on opacity continued running. CSS fill
                      transition is independent of the SMIL animate
                      (different attributes), so they compose without
-                     conflict. */
-                  style={{ transition: 'fill 200ms ease-out' }}
+                     conflict.
+                     R451: r as CSS property (R197/R198 idiom) so the
+                     hover-radius tween eases smoothly under the same
+                     200ms cadence as fill. */
+                  style={{
+                    r: `${haloR}px`,
+                    transition: 'fill 200ms ease-out, r 200ms ease-out',
+                  } as React.CSSProperties}
                 >
                   {/* Round 244 / Loop: hub grounding halo breath gets
                       ease-in-out keySplines, matching the active-node
