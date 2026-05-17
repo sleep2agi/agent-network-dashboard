@@ -7940,6 +7940,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-hub-halo-radius={haloR}
                   data-topo-hub-halo-hovered={isHaloHovered ? 'true' : 'false'}
                   data-topo-hub-halo-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
+                  data-topo-hub-halo-halo-layers={!reducedMotion && hoveredHub ? '2' : '0'}
                   data-topo-hub-halo-trough={isLight ? troughLight : troughDark}
                   data-topo-hub-halo-peak={isLight ? peakLight : peakDark}
                   /* Round 253 / Loop: hub grounding halo fill transition
@@ -7996,12 +7997,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      the OUTERMOST so a slight chromatic lift reads as
                      the focal cluster intensifying its ambient glow
                      outward. */
+                  /* Round 651 / Loop — hub-halo drop-shadow gains a
+                     SECOND outer layer at 4px blur + 0.15 alpha
+                     (half R536's inner 0.3). Extends multi-layer halo
+                     family (R642-R650) to the 10th anchor — 2nd hub-
+                     cluster anchor (after R650 hub digit). The hub
+                     halo is the OUTERMOST concentric hub element
+                     (r=20-22) so the outer layer adds 4px blur at
+                     half alpha — same 2x stride + 50% falloff as
+                     R643 status ring (also 2+4 stride). Same emerald
+                     tint across both layers; chromatic identity
+                     preserved. Hub-cluster surfaces now have parity
+                     halo coverage: digit (R650) + halo (R651) both
+                     2-layer on hub-hover.
+                     data-topo-hub-halo-halo-layers attr exposes the
+                     gate. */
                   style={{
                     r: `${haloR}px`,
                     filter: !reducedMotion && hoveredHub
                       ? (isLight
-                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.3)) brightness(1.15)'
-                          : 'drop-shadow(0 0 2px rgba(52, 211, 153, 0.3)) brightness(1.15)')
+                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.3)) drop-shadow(0 0 4px rgba(16, 185, 129, 0.15)) brightness(1.15)'
+                          : 'drop-shadow(0 0 2px rgba(52, 211, 153, 0.3)) drop-shadow(0 0 4px rgba(52, 211, 153, 0.15)) brightness(1.15)')
                       : undefined,
                     transition: 'fill 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                   } as React.CSSProperties}
