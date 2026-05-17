@@ -4347,8 +4347,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // style below (1 / 0.28 based on filter pin state).
                 // data-group-fade-delay exposes the computed delay for
                 // test probes.
-                className="transition-opacity anet-fade-in"
+                /* Round 470 / Loop — sync the R8 out-of-focus dim
+                   transition cadence from Tailwind's `transition-
+                   opacity` default (150ms ease-in-out) to 200ms
+                   ease-out to match the rest of the cluster's
+                   motion vocabulary. Hero D #147 stack established
+                   200ms ease-out across every cluster axis:
+                     parent text   (codex p.125)
+                     parent rect   (R461 xywh + R464 rx + R248 paint)
+                     hitbox rect   (R459 fill+opacity + R460 x+width
+                                    + R465 rx)
+                   The wrapper <g>'s opacity flip (1 → 0.28 when
+                   another group is active) was the LAST surface
+                   still at 150ms — when the user hovers a group
+                   label, out-of-focus groups dimmed 50ms faster
+                   than the focused group's tint brightened, a
+                   small but perceivable rate-desync. R470 lifts
+                   the wrapper to 200ms ease-out. duration-200 +
+                   ease-out are Tailwind v4 utility classes; the
+                   anet-fade-in mount-once keyframe stays in the
+                   className for first-paint stagger (R173). */
+                className="transition-opacity duration-200 ease-out anet-fade-in"
                 data-group-fade-delay={Math.min(boxIdx, 8) * 60}
+                data-group-fade-transition="200ms"
                 // R63: drop the blanket pointerEvents:'none' that
                 // previously sat here. Chrome's SVG impl doesn't let a
                 // child override a parent's `none` even though the spec
