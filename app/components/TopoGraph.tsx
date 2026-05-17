@@ -7508,12 +7508,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      Drop-shadow visual-polish family extension (12
                      anchors). preview.50 milestone round. data-topo-
                      hub-halo-glow attr exposes the gate state. */
+                  data-topo-hub-halo-brightness={!reducedMotion && hoveredHub ? '1.15' : '1'}
+                  /* Round 577 — hub-halo joins per-element brightness
+                     family at 15th anchor. Stacks brightness(1.15)
+                     onto R536's hub-hover drop-shadow — closes the
+                     hub-cluster focal brightness coverage at 3
+                     concentric elements:
+                       hub digit       (R575)
+                       hub-highlight   (R574)
+                       hub-halo        (R577)  ← this round
+                     All 3 hub focal elements now lift through stacked
+                     drop-shadow + brightness on hub-hover. Halo is
+                     the OUTERMOST so a slight chromatic lift reads as
+                     the focal cluster intensifying its ambient glow
+                     outward. */
                   style={{
                     r: `${haloR}px`,
                     filter: !reducedMotion && hoveredHub
                       ? (isLight
-                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.3))'
-                          : 'drop-shadow(0 0 2px rgba(52, 211, 153, 0.3))')
+                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.3)) brightness(1.15)'
+                          : 'drop-shadow(0 0 2px rgba(52, 211, 153, 0.3)) brightness(1.15)')
                       : undefined,
                     transition: 'fill 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                   } as React.CSSProperties}
