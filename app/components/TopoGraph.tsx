@@ -10994,11 +10994,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              Same drop-shadow + brightness filter chain
                              (no separate color for chat — same R564
                              pattern, just expanded gate). */
+                          /* Round 645 / Loop — alias text gains a SECOND
+                             drop-shadow layer at 4px blur + 0x40 alpha
+                             (half the R500 inner-layer 0x80 alpha).
+                             Mirrors R642/R643/R644 multi-layer halo
+                             pattern from the per-node identity rings
+                             to the per-node identity TEXT — extends
+                             the chromatic-identity 2-layer halo family
+                             from rings to glyphs.
+                             Inner layer (R500): 2px blur, 0x80 alpha,
+                               status.text tint — sharp identity glow
+                             Outer layer (R645): 4px blur, 0x40 alpha,
+                               same status.text tint — soft ambient
+                               falloff
+                             Same 2x-blur stride + 0.5x alpha falloff
+                             as R643/R644 (small identity surface). On
+                             hover or chat-target, the alias glyph
+                             radiates a near + far layered glow in the
+                             node's status color — completing the
+                             chromatic-identity multi-layer halo family
+                             across BOTH rings (R642-R644) and TEXT
+                             (R645). transition list (R500 'filter 200ms
+                             ease-out') already covers the new layered
+                             filter; no transition change needed.
+                             data-node-alias-halo-layers attr exposes
+                             the 2-layer state for tests. */
                           filter: !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias)
-                            ? `drop-shadow(0 0 2px ${status.text}80) brightness(1.15)`
+                            ? `drop-shadow(0 0 2px ${status.text}80) drop-shadow(0 0 4px ${status.text}40) brightness(1.15)`
                             : undefined,
                         }}
                         data-node-alias-brightness={!reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias) ? '1.15' : '1'}
+                        data-node-alias-halo-layers={!reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias) ? '2' : '0'}
                       >
                         {truncate(session.alias, fullMax)}
                       </text>
