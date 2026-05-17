@@ -1968,7 +1968,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               anchors.
               data-topo-section-title-hover-tracking attr surfaces
               the landing tracking class for tests. */}
-          <h2 className="text-lg text-white font-semibold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter">Command mesh</h2>
+          {/* Round 556 / Loop — H2 "Command mesh" gains a 2nd
+              editorial-emphasis axis: group-hover:font-bold paired
+              with R554's group-hover:tracking-tighter. Both lifts
+              fire on the same R554 wrapper's `group` flag (hover
+              anywhere in the title cluster → BOTH H2 axes intensify
+              simultaneously).
+              H2 hover signature post-R556 (2 typographic axes
+              intensify together):
+                rest    font-semibold 600 + tracking-tight   -0.025em
+                hover   font-bold      700 + tracking-tighter -0.05em
+              Editorial emphasis through TWO axes — heavier AND
+              tighter on hover. Mirrors the conventional "designed-
+              headline emphasis" idiom (heavier + tighter = more
+              authoritative; the eye reads both axes as intensifying
+              the same semantic).
+              Hover-fw family extension (6 anchors now):
+                R416  chip-row count digit       (chip group-hover)
+                R420  chrome zoom-level          (hover)
+                R425  hub-center digit           (hub hover)
+                R520  +N more flows footer       (recent panel hover)
+                R521  chrome nodeSize S/M/L      (inactive hover)
+                R556  title-block H2             (cluster group-hover) ← this round
+              Transition list extends to include 'font-weight 200ms
+              ease-out' alongside the existing 'letter-spacing'
+              200ms cadence. data-topo-section-title-hover-fw attr
+              surfaces the landing weight for tests. */}
+          <h2 className="text-lg text-white font-semibold group-hover:font-bold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing,font-weight] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter" data-topo-section-title-hover-fw="700">Command mesh</h2>
           </div>
         </div>
         {/* Round 328 / Loop: chip-row strip wrapper gap 2 → 2.5
