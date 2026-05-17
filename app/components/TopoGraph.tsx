@@ -4267,7 +4267,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   y={box.y}
                   width={box.w}
                   height={box.h}
-                  rx="14"
+                  /* Round 464 / Loop: group-box rx 14 → 16 on isPinned.
+                     Geometric softening at the corner radius — locked
+                     groups read with subtly rounder shoulders than
+                     hovered/idle. +2px reads as a calm \"settled in\"
+                     posture (subtler than a fill or stroke bump but
+                     unmistakable across the whole cluster boundary).
+                     Pin signature on the group-box rect now spans 7
+                     axes:
+                       R63   text fill brighten
+                       R142  drop-shadow filter
+                       R432  text letter-spacing 0→0.5
+                       R444  count tspan fw 500→600
+                       R457  parent text fw 700→800
+                       codex p.125  text opacity 0.55→1
+                       R464  corner rx 14→16  (this round)
+                     transition list (R461) already covers x/y/width/
+                     height 200ms ease-out; appended `rx 200ms ease-
+                     out` so the rounding eases alongside the geometry
+                     axes. SVG2 CSS animation on rx: Chrome 95+ /
+                     Safari 16+ / FF 70+ (same matrix as x/y/w/h).
+                     data-group-box-rx exposes the resolved value. */
+                  rx={isPinned ? '16' : '14'}
+                  data-group-box-rx={isPinned ? '16' : '14'}
                   fill={isLight ? '#0f172a' : '#a5b4fc'}
                   // R68: 3-tier opacity + stroke ladder.
                   //   pinned   → fill 0.08 / 0.13, stroke 3 px (locked)
@@ -4362,7 +4384,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        Hero D #147 motion-coherence at the FULL cluster
                        container tier (not just the label tint).
                        data-group-box-geom-transition attr exposed. */
-                    transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out, filter 200ms ease-out, fill 200ms ease-out, x 200ms ease-out, y 200ms ease-out, width 200ms ease-out, height 200ms ease-out',
+                    transition: 'stroke 200ms ease-out, stroke-width 200ms ease-out, fill-opacity 200ms ease-out, filter 200ms ease-out, fill 200ms ease-out, x 200ms ease-out, y 200ms ease-out, width 200ms ease-out, height 200ms ease-out, rx 200ms ease-out',
                     pointerEvents: 'none',
                     // CSS var consumed by `.anet-topo-groupbox-live`
                     // (line 877 of globals.css). React's CSSProperties

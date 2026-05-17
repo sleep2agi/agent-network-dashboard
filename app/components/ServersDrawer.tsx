@@ -43,6 +43,9 @@ interface ServerCard {
    *  data points for 5-min). Optional — older hubs don't report. */
   cpu_history?: number[];
   mem_history?: number[];
+  /** v0.10.2 RFC-014 — disk usage 5-min rolling history. Optional;
+   *  older agent-node (< 2.4.1-preview.0) doesn't ship it. */
+  disk_history?: number[];
   /** Hero 2 v0.10.0: per-server agent rollup. Optional — older hubs
    *  send only aggregate agent_count. */
   agents?: ServerAgent[];
@@ -359,6 +362,20 @@ export function ServersDrawer() {
                       <div className="space-y-0.5">
                         <div className="text-[9px] text-[var(--fg-muted)] font-mono">RAM · 5-min</div>
                         <Sparkline values={s.mem_history} tint="#06b6d4" label="MEM" />
+                      </div>
+                    )}
+                    {/* v0.10.2 RFC-014 §7 close gate #3 — disk usage
+                       5-min curve. Amber tint matches the disk bar
+                       tier convention (DISK > CPU/Mem in alert-
+                       priority hierarchy since disk-full is a hard
+                       failure mode). Render only when agent-node
+                       2.4.1-preview.0+ has shipped disk_history;
+                       backward-compat handles older agents silently
+                       (no sparkline, no broken state). */}
+                    {s.disk_history && s.disk_history.length >= 2 && (
+                      <div className="space-y-0.5">
+                        <div className="text-[9px] text-[var(--fg-muted)] font-mono">DISK · 5-min</div>
+                        <Sparkline values={s.disk_history} tint="#f59e0b" label="DISK" />
                       </div>
                     )}
                     <div className="pt-1">
