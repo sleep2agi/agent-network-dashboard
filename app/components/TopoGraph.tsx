@@ -9465,12 +9465,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                             under the same R320 fill cadence. data-
                             recent-row-count-pinned attr exposes the
                             pin gate for tests. */}
+                      {/* Round 498 / Loop — hot-count subtle pulse. Pre-
+                          R498 the hot row count signaled via color (R127
+                          amber fill) + weight (R320 fw-700) + (R445 pin
+                          lift) but stayed visually motionless. R498 adds
+                          a 3s opacity breath (0.85↔1.0) on the digit when
+                          isHot && !reducedMotion — gentle "alive" signal
+                          on the lane carrying ≥ 10 messages, drawing
+                          glance without becoming noisy. Sibling of R497
+                          hub-idle-breath in the 呼吸感 theme arc; same
+                          0.85↔1.0 amplitude. Class adds an animation-
+                          only paint axis; no layout / bbox change. R29
+                          blanket also catches `animation-duration` for
+                          reducedMotion users, but the component-side
+                          gate makes the intent explicit and avoids
+                          a node tree thrash for those users (className
+                          stays absent rather than present-but-paused). */}
                       <tspan
                         fill={isHot ? hotStroke : undefined}
                         fontWeight={(isHot || isRowPinned) ? '700' : '600'}
+                        className={isHot && !reducedMotion ? 'anet-recent-hot-pulse' : undefined}
                         data-recent-row-count
                         data-recent-row-count-pinned={isRowPinned ? 'true' : 'false'}
                         data-recent-row-count-font-weight={(isHot || isRowPinned) ? '700' : '600'}
+                        data-recent-row-count-hot-pulse={isHot && !reducedMotion ? 'true' : 'false'}
                         {...(isHot ? { 'data-recent-row-count-hot': 'true' } : {})}
                         style={{
                           transition: 'fill 300ms ease-out, font-weight 200ms ease-out',

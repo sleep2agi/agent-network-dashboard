@@ -863,6 +863,29 @@ body {
   transform-box: fill-box;
 }
 
+/* Round 498 — recent-signal row hot-count subtle pulse (信息密度 +
+   呼吸感 themes). When a row's edge count crosses the hot threshold
+   (≥ 10), the existing R127/R320/R445 amber-fill + fw-700 typography
+   already calls attention; R498 adds a slow 3s opacity breath (0.85 ↔
+   1.0) on the digit so the hot tspans gently pulse — at-a-glance scan
+   of the panel reads "high-traffic lane right here" with motion in
+   addition to color+weight. 3s cycle is deliberate: faster (1-2s)
+   would compete with the working-status halo cadence; slower (5s+)
+   would lose the "alive" signal. Amplitude 15% (matches R497 hub-
+   highlight breath idiom).
+   prefers-reduced-motion handled by the R29 blanket override
+   (animation-duration: 0.001ms !important) — no per-class guard
+   needed. The component-side gate (`!reducedMotion && isHot`)
+   ensures the className is only applied when both conditions hold,
+   so even without the blanket the no-motion preference is respected. */
+@keyframes anet-recent-hot-pulse-kf {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1;    }
+}
+.anet-recent-hot-pulse {
+  animation: anet-recent-hot-pulse-kf 3s ease-in-out infinite;
+}
+
 /* Round 36 — current-step ring pulse on TaskDrawer timeline. Halo gently
    breathes around the active step's dot so users can spot "task is here". */
 @keyframes anet-current-step-pulse-kf {
