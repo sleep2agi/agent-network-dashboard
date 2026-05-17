@@ -2112,9 +2112,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // to R355 filter pin pill inner-span hover-brighten.
                   // Hover-brighten family extends from filter pills to
                   // chip-row chips at the inner-span scope.
+                  // Round 494 / Loop — chip-row working chip joins the
+                  // active:scale-95 press-feedback family (R492 Ring/Grid +
+                  // R493 chrome-strip rest). Gated on the clickable branch
+                  // (workingCount > 0) — when the chip is a placeholder
+                  // at count=0, scale-95 stays off to match the existing
+                  // R398 hover-lift conditional. Composes with hover:-
+                  // translate-y-px for the same lift-and-compress
+                  // tactile signature R493 brought to reset/fullscreen.
                   className={`group tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     workingCount > 0
-                      ? 'bg-green-500/10 text-green-300 border-green-500/20 hover:bg-green-500/15 hover:border-green-500/30 hover:-translate-y-px'
+                      ? 'bg-green-500/10 text-green-300 border-green-500/20 hover:bg-green-500/15 hover:border-green-500/30 hover:-translate-y-px active:scale-95'
                       : 'bg-green-500/10 text-green-300 border-green-500/20'
                   }`}
                   data-chip-hover-lift={workingCount > 0 ? 'true' : 'false'}
@@ -2214,9 +2222,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      same digit-jitter physics on count crossings). */
                   // R398: hover translate-y lift on clickable variant — see working chip above.
                   // R414: `group` parent + inner unit span group-hover-brighten — see working chip above.
+                  // R494 sibling — online chip joins the active:scale-95 press
+                  // family (gated on onlineNodes.length > 0 clickable branch,
+                  // same conditional pattern as the working chip above).
                   className={`group tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     onlineNodes.length > 0
-                      ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:-translate-y-px'
+                      ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:-translate-y-px active:scale-95'
                       : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
                   }`}
                   data-chip-hover-lift={onlineNodes.length > 0 ? 'true' : 'false'}
