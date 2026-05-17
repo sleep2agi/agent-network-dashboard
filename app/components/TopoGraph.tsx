@@ -9060,6 +9060,35 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          filter; stacked syntax preserves the url(#topo-
                          glow) on cyber. Same pattern banked at R582
                          visible-path + R583 particle + R584 status-ring. */
+                      /* Round 642 / Loop — chat-target ring gains a
+                         SECOND drop-shadow layer at wider blur + lower
+                         alpha for a multi-layer halo (near + far).
+                         Pre-R642 R637 stacked one drop-shadow at 3px
+                         blur + 0x40 alpha + status.primary tint —
+                         a single soft halo. R642 adds an outer
+                         drop-shadow at 6px blur + 0x20 alpha (same
+                         hue) so the chat-target ring radiates two
+                         layered halos: a tighter near-halo + a
+                         softer far-halo. The chat partner now reads
+                         as "glowing outward in layers" — same Apple-
+                         style soft-shadow vocabulary used in iOS
+                         focus indicators.
+                         Combined filter chain (banked R582/R583
+                         stacked-filter pattern, 3-deep):
+                           light: drop-shadow(0 0 3px ...40)
+                                  drop-shadow(0 0 6px ...20)
+                                  brightness(1.15)
+                           cyber: ... (same 2 drop-shadows) +
+                                  url(#topo-glow) brightness(1.15)
+                         The 2x-blur outer halo is ~2x softer (40%→
+                         20% alpha) so the eye reads it as ambient
+                         rather than a second discrete ring.
+                         R51 sentinel safety: filter is paint-only,
+                         no bbox change. transition list (R242 already
+                         covers filter 200ms) eases the layered glow
+                         on status flip together.
+                         data-chat-target-ring-halo-layers attr
+                         exposes the multi-layer fact for tests. */
                       /* Round 637 / Loop — chat-target ring filter
                          gains a status-tinted drop-shadow halo.
                          Pre-R637 the filter was either `brightness(1.15)`
@@ -9105,12 +9134,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          ring-halo-color attr exposes the resolved
                          color for tests. */
                       data-chat-target-ring-halo-color={isChat ? status.primary : 'none'}
+                      data-chat-target-ring-halo-layers={isChat ? '2' : '0'}
                       style={{
                         pointerEvents: 'none',
                         filter: isChat
                           ? (isLight
-                              ? `drop-shadow(0 0 3px ${status.primary}40) brightness(1.15)`
-                              : `drop-shadow(0 0 3px ${status.primary}40) url(#topo-glow) brightness(1.15)`)
+                              ? `drop-shadow(0 0 3px ${status.primary}40) drop-shadow(0 0 6px ${status.primary}20) brightness(1.15)`
+                              : `drop-shadow(0 0 3px ${status.primary}40) drop-shadow(0 0 6px ${status.primary}20) url(#topo-glow) brightness(1.15)`)
                           : undefined,
                         transition: 'opacity 200ms ease-out, stroke 200ms ease-out, filter 200ms ease-out',
                       } as React.CSSProperties}
