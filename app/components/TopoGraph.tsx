@@ -3747,6 +3747,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              'true' / 'false' string values (consistent with R466/R467
              boolean attrs). */
           data-topo-prefers-reduced-motion={reducedMotion ? 'true' : 'false'}
+          /* Round 515 / Loop — 16th canvas state attr. Surfaces the
+             fullscreen-mode state directly on root SVG so external
+             consumers don't have to traverse the chrome strip's
+             `data-topo-chrome-fullscreen-active` button attr (which
+             measures the BUTTON state, not the canvas state — they
+             agree, but reading from the root is semantically cleaner
+             for canvas-state probes).
+             Composed from existing isFullscreen React state (R103
+             fullscreen toggle).
+             Use cases:
+               - Playwright: assert canvas mode in one attr read
+                 (paired with R471 data-topo-layout for ring/grid +
+                 R487 data-topo-zoom for zoom level + R513 reduced-
+                 motion for a11y mode = 4-axis canvas-mode probe)
+               - External CSS: `[data-topo-fullscreen="true"]` to
+                 apply fullscreen-only paint adjustments outside the
+                 React tree (e.g. body-level scrollbar hide)
+             'true' / 'false' string values (consistent with R466/
+             R467/R513 boolean attrs). */
+          data-topo-fullscreen={isFullscreen ? 'true' : 'false'}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
