@@ -3708,6 +3708,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              tier.)
              13th attr in the canvas state surface set after R502.
              Composed from 4 existing state vars — no new state. */
+          /* Round 512 / Loop — 14th canvas state attr. groupBoxes.length
+             surfaces the count of cluster boxes currently rendered in
+             grid layout (always 0 in ring). Paired with R502 categorical
+             density tier + R469 fleet numerics for a complete cluster-
+             cardinality surface:
+               R469  data-topo-online-count       node-count
+               R502  data-topo-fleet-density-tier categorical
+               R512  data-topo-cluster-count      cluster-count  ← this round
+             Use cases:
+               - Playwright: assert orphan-band existence by
+                 `cluster-count === N + 1` vs prefix-only `=== N`
+               - external CSS: `[data-topo-cluster-count='1']` to apply
+                 single-cluster grid-specific layout adjustments
+               - future polish gates: cluster-count > N could trigger
+                 dense-grid mode
+             Composed from existing `groupBoxes.length` — no new state.
+             Always renders (0 in ring layout, N in grid), so tests can
+             rely on attribute presence + value. */
+          data-topo-cluster-count={groupBoxes.length}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
