@@ -13850,6 +13850,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  data-topo-chrome-zoom-level-color attr exposes the
                  resolved color string for tests. */
               data-topo-chrome-zoom-level-color={hoveredZoomLevel ? 'headline' : 'text'}
+              /* R593 — chrome zoom-level readout gains filter
+                 brightness(1.15) on hover. 32nd anchor in per-element
+                 brightness family. FIRST HTML-element brightness
+                 anchor outside the SVG canvas (the readout is an
+                 HTML <span>, not SVG).
+
+                 Closes the chrome zoom-level readout's hover signature
+                 at 4 AXES:
+                   R347  letter-spacing  0    → 0.5px
+                   R420  fontWeight      500  → 600
+                   R517  color           legendText → legendHeadline
+                   R593  brightness      1    → 1.15  ← this round
+
+                 The chrome strip's only data display now has full
+                 4-axis hover signature — color brightens to headline
+                 tier, glyph thickens, kerning spreads, AND brightness
+                 lifts another +15% on top of the color swap.
+
+                 Triple-paint multiplicative interaction:
+                   color (legendHeadline) × brightness(1.15) — the
+                   headline tier reads dramatically brighter than a
+                   plain color swap.
+
+                 Transition list extends with 'filter 200ms ease-out'
+                 matching the existing 200ms cadence across all 4 axes
+                 — motion-coherent state-flip.
+
+                 data-topo-chrome-zoom-level-brightness attr exposes
+                 the gate for tests. */
+              data-topo-chrome-zoom-level-brightness={hoveredZoomLevel ? '1.15' : '1'}
               onMouseEnter={() => setHoveredZoomLevel(true)}
               onMouseLeave={() => setHoveredZoomLevel(false)}
               style={{
@@ -13857,6 +13887,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 borderColor: pal.containerBorder,
                 minWidth: 46,
                 display: 'inline-block',
+                filter: hoveredZoomLevel ? 'brightness(1.15)' : undefined,
                 // R347: letter-spacing hover tween — extends R344/R345
                 // hover-letter-spacing family into the chrome strip.
                 letterSpacing: hoveredZoomLevel ? '0.5px' : '0',
@@ -13886,7 +13917,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    on theme flip while siblings eased. Sibling treatment
                    to the nodeSize + zoom wrapper transitions added this
                    round. */
-                transition: 'color 200ms ease-out, border-color 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out',
+                transition: 'color 200ms ease-out, border-color 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
               }}
               title="Current zoom level"
             >
