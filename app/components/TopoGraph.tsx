@@ -10593,6 +10593,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        for tests. */
                     <g
                       data-runtime-badge-glow={isNodeActive ? 'true' : 'false'}
+                      data-runtime-badge-halo-layers={isNodeActive ? '2' : '0'}
                       data-runtime-badge-brightness={isNodeActive ? '1.15' : '1'}
                       data-runtime-badge-rotate={isNodeActive ? '3' : '0'}
                       style={{
@@ -10654,8 +10655,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
                            Same R208/R443/R559 150ms cadence preserved
                            via the existing transition. */
+                        /* Round 656 / Loop — runtime badge filter gains a
+                           SECOND outer drop-shadow at 4px blur + 0x4c
+                           alpha (half R559 inner 0x99). 15th anchor in
+                           multi-layer halo family — first per-node badge
+                           anchor.
+                           Inner R559: 2px + 0x99 alpha (~60%), rt.color
+                                       tint (vendor runtime palette)
+                           Outer R656: 4px + 0x4c alpha (~30%), same tint
+                           Same R642-R655 0.5x falloff vocabulary + 2x
+                           blur stride (2 → 4). The badge at r ~ 7-8
+                           sits at innermost-ring scale; 2+4 stride
+                           matches R643/R644/R645 small-element scope.
+                           rt.color tint (per-runtime hue: claude orange
+                           / cli-default cyan / etc.) preserved across
+                           both layers — chromatic identity uniform. */
                         filter: isNodeActive
-                          ? `drop-shadow(0 0 2px ${rt.color}99) brightness(1.15)`
+                          ? `drop-shadow(0 0 2px ${rt.color}99) drop-shadow(0 0 4px ${rt.color}4c) brightness(1.15)`
                           : undefined,
                         transition: 'filter 150ms ease-out, rotate 150ms ease-out',
                       }}
