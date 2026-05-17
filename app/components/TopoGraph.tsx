@@ -8257,6 +8257,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    so the glow eases under the same cadence as the
                    scale + fw + fill axes. */
                 data-topo-hub-working-count-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
+                data-topo-hub-working-count-halo-layers={!reducedMotion && hoveredHub ? '2' : '0'}
                 /* Round 507 / Loop — focal recede. When ANY non-hub
                    canvas surface is hovered (a node / an edge / a
                    group label / a legend row / a vendor chip), the
@@ -8343,10 +8344,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      Hub-cluster focal cluster (digit + highlight) now
                      has UNIFIED 5-axis hub-hover signature reading as
                      one tightly-coupled motion-coherent lift. */
+                  /* Round 650 / Loop · MILESTONE — hub digit drop-shadow
+                     gains a SECOND outer layer. Extends multi-layer
+                     halo family (R642-R649) to the 9th anchor — first
+                     hub-cluster anchor. The focal canvas digit now
+                     radiates a near + far emerald glow on hub-hover.
+                     light branch:
+                       inner R476 2px + rgba(16,185,129,0.6) emerald-600
+                       outer R650 4px + rgba(16,185,129,0.3) ← this round
+                     cyber branch:
+                       inner R476 3px + rgba(52,211,153,0.6) emerald-400
+                       outer R650 6px + rgba(52,211,153,0.3) ← this round
+                     Outer alpha = half inner (0.6 → 0.3 = 50%). Light
+                     uses 2+4 stride (smaller scale per existing R476
+                     light blur); cyber uses 3+6 stride matching the
+                     family panel-tier vocabulary. Same chromatic
+                     emerald tint preserved across both layers.
+                     Multi-layer halo family (9 anchors at R650):
+                       chat-target ring (R637+R642): 3+6
+                       endpoint ring    (R639+R644): 2+4
+                       status ring      (R638+R643): 2+4
+                       alias text       (R500+R645): 2+4
+                       edge-badge ring  (R534/R480+R646): 3+6
+                       freshness pip    (R478+R647): 3+6
+                       group label      (R479+R648): 3+6
+                       legend pin-ring  (R477+R649): 3+6
+                       hub digit        (R476+R650): 2+4 light / 3+6 cyber  ← this
+                     First hub-cluster anchor in the family — the focal
+                     control-plane digit now matches the per-node + per-
+                     edge + panel-tier halo grammar.
+                     transition list already covers 'filter 200ms ease-
+                     out' (R476 cadence). Reduced-motion gate preserved.
+                     data-topo-hub-working-count-halo-layers attr
+                     exposes the gate state for tests. */
                   filter: !reducedMotion && hoveredHub
                     ? (isLight
-                        ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6)) brightness(1.15)'
-                        : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6)) brightness(1.15)')
+                        ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6)) drop-shadow(0 0 4px rgba(16, 185, 129, 0.3)) brightness(1.15)'
+                        : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6)) drop-shadow(0 0 6px rgba(52, 211, 153, 0.3)) brightness(1.15)')
                     : undefined,
                   letterSpacing: !reducedMotion && hoveredHub ? '0.3px' : '0px',
                   /* R425: font-weight 200ms appended so the hover fw
