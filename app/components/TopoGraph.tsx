@@ -6303,15 +6303,45 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 /* Round 253 / Loop: append fill 200ms to the hub
                    digit transition list — theme toggle (cyber #ecfdf5
                    ↔ light #d1fae5) was the last hub-area snap. */
+                /* Round 476 / Loop — hub working-count digit gains a
+                   filter: drop-shadow glow on hub-hover. Stacks with
+                   the existing 4-axis hub-hover gesture stack on this
+                   element:
+                     R209  transform: scale(1.08)    geometry
+                     R425  fontWeight 700 → 800      typography
+                     R253  fill ease-out             chroma (theme)
+                     R213  opacity gate              fade (count cross)
+                     R476  filter drop-shadow glow   paint (this round)
+                   The glow uses the cyber emerald-400 (#34d399) /
+                   light emerald-500 (#10b981) hue family so the
+                   chroma stays inside the hub-area palette. Subtle
+                   2-3 px blur radius at 0.6 opacity — visible but
+                   not loud, reads as "the focal digit lit up under
+                   attention".
+                   Reduced-motion users skip the filter via the
+                   !reducedMotion gate (R29 a11y blanket).
+                   Filter is a paint-only attribute — bbox stays
+                   the same, R51 overlap-test invariants hold.
+                   transition list extends to 'filter 200ms ease-out'
+                   so the glow eases under the same cadence as the
+                   scale + fw + fill axes. */
+                data-topo-hub-working-count-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
                 style={{
                   pointerEvents: 'none',
                   transform: !reducedMotion && hoveredHub ? 'scale(1.08)' : 'scale(1)',
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
+                  filter: !reducedMotion && hoveredHub
+                    ? (isLight
+                        ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6))'
+                        : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6))')
+                    : undefined,
                   /* R425: font-weight 200ms appended so the hover fw
                      bump 700 → 800 eases under the same cadence as
-                     R209 scale + R253 fill + R213 opacity. */
-                  transition: 'transform 200ms ease-out, opacity 300ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out',
+                     R209 scale + R253 fill + R213 opacity.
+                     R476: filter 200ms appended so the new drop-
+                     shadow glow eases at the same cadence. */
+                  transition: 'transform 200ms ease-out, opacity 300ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
