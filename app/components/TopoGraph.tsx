@@ -12179,10 +12179,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        unchanged; R55 fill brighten unchanged — only
                        the timing axis shifts. */
                     data-legend-row-label-transition="200ms"
+                    /* Round 569 / Loop — extends R568's panel-row drop-
+                       shadow pattern to the SIBLING legend-row label.
+                       Symmetric closure of the panel-row drop-shadow
+                       across both panel surfaces (recent + legend).
+                       Pre-R569 the legend-row label had 3 hover/pin
+                       axes (R55 fill + R433 ls 3-tier + R531 fw); R569
+                       adds the 4th paint axis to match R568 recent-
+                       row text exactly.
+                       Two-tier paint-axis cascade now SYMMETRIC across
+                       both side panels:
+                         recent panel  title (R550) + row text (R568)
+                         legend panel  title (R550-sibling) + label (R569) ← this round
+                       Each panel has glow at BOTH chrome tiers (title
+                       active + row hover/pin). The 4-axis row signature
+                       (fill + ls + fw + glow) is now identical at both
+                       panel-row text scopes — completes the panel-row
+                       text-treatment parity.
+                       Hue/blur/cadence: same as R568 (pal.legendAccent
+                       + hex alpha 80, 2px blur, 200ms ease-out). Gate
+                       matches R531/R433 (hoveredStatus === row.key ||
+                       isPinned) — single boolean drives all 4 axes
+                       together for motion-coherent state-flip.
+                       Drop-shadow family extends to 18 anchors total
+                       (R568 was 17; R569 = 18).
+                       data-legend-row-label-glow attr added for tests. */
+                    data-legend-row-label-glow={(hoveredStatus === row.key || isPinned) ? 'true' : 'false'}
                     style={{
-                      transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out',
+                      transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
                       letterSpacing: isPinned ? '0.5px' :
                                      hoveredStatus === row.key ? '0.25px' : '0px',
+                      filter: (hoveredStatus === row.key || isPinned)
+                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80)`
+                        : undefined,
                     }}
                   >{row.label}</text>
                   {/* R95: live count anchored to the right edge of the
