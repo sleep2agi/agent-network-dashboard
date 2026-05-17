@@ -6688,11 +6688,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      gate; data-node-halo-resolved-opacity exposes
                      the four-state resolved value for tests. */
                   const isHaloHovered = !reducedMotion && hoveredAlias === session.alias;
+                  /* Round 456 / Loop: light-theme offline node halo
+                     rest opacity 0.45 → 0.50. Stale-state legibility
+                     lift family extension (10th anchor) at the per-
+                     node halo light-theme scope:
+                       R317 subordinate-text gray-500 → gray-400
+                       R358 freshness floor 0.25 → 0.30
+                       R372 minimap offline-dot 0.5 → 0.6
+                       R404 hub-halo cyber trough 0.08 → 0.10
+                       R405 hub-halo light trough 0.32 → 0.34
+                       R406 edge freshness floor 0.35 → 0.40
+                       R407 node halo offline opacity
+                            cyber 0.25 → 0.30
+                            light 0.4  → 0.45
+                       R419 hub-spoke idle 0.45 → 0.50
+                       R452 dense alias rest 0.9 → 0.95
+                       R456 node halo offline LIGHT 0.45 → 0.50  ← this round
+                     Pre-R456 light-theme offline halo at 0.45 sat at
+                     the upper end of "near-floor" but read as soft-
+                     focus on the lighter canvas; +0.05 (~11 % opacity
+                     gain) lifts it to 0.50 — the midpoint between
+                     R407 rest 0.45 and R440 hover 0.60 — closing the
+                     gap so offline halos read more confidently as
+                     present-but-stale anchors. Cyber theme stays at
+                     R407's 0.30 (cyber backdrop is dark; the cyber
+                     offline halo against #080814 contains a stronger
+                     contrast envelope than light, so doesn't need
+                     the same lift). R440 hover 0.45→0.60 light + R12
+                     status.halo color + R407 transition list all
+                     preserved. */
                   const haloOpacity = (() => {
                     if (isOnline) {
                       return isLight ? (isHaloHovered ? 1   : 0.85) : (isHaloHovered ? 0.80 : 0.65);
                     }
-                    return isLight ? (isHaloHovered ? 0.60 : 0.45) : (isHaloHovered ? 0.45 : 0.30);
+                    return isLight ? (isHaloHovered ? 0.60 : 0.50) : (isHaloHovered ? 0.45 : 0.30);
                   })();
                   return (
                 <circle
