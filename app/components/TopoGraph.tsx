@@ -3483,6 +3483,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             (hoveredAlias || hoveredHub || hoveredEdgeKey || hoveredGroupLabel ||
              hoveredStatus || hoveredVendor) ? 'true' : 'false'
           }
+          /* Round 467 / Loop — pin-aggregate sibling to R466 hover-
+             aggregate. Exposes `data-topo-any-pinned` reflecting
+             whether ANY sticky inspection mode is active. Composed
+             from the 4 pinned state vars:
+               pinnedStatus    (legend row click → status filter)
+               pinnedGroup     (group label click → cluster lock)
+               pinnedVendor    (vendor chip click → vendor filter)
+               pinnedEdgeKey   (edge click → edge focus)
+             Together with R466 the root svg now carries a 2-bit
+             inspection-mode surface:
+               data-topo-any-hover  — transient (mouse hover)
+               data-topo-any-pinned — sticky (click-to-lock)
+             Useful for:
+               - Playwright tests: one-line query for either mode
+               - external CSS hooks: render a persistent "filter
+                 active" badge when pinned, distinct from the
+                 transient hover dim
+               - Esc-handler tests: assert all 4 pins clear after
+                 the universal-cancel Escape press (R62/R63/R88/
+                 R116 — single Esc collapses every pin)
+             Read-only computed disjunction; no new state, zero
+             re-render cost beyond the React pin-flip updates. */
+          data-topo-any-pinned={
+            (pinnedStatus || pinnedGroup || pinnedVendor || pinnedEdgeKey) ? 'true' : 'false'
+          }
           /* Round 462 / Loop — surface DASHBOARD_VERSION on the root SVG
              element as `data-dashboard-version`. Directly closes the
              feedback_dash_zombie_port_3000.md memory rule: "verify ships
