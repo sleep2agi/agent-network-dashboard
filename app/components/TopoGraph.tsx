@@ -11452,7 +11452,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                               : 1}
                       data-recent-row-tint={link.key}
                       data-recent-row-tint-transition="200ms"
-                      style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out' }}
+                      data-recent-row-tint-brightness={isRowActive ? '1.15' : '1'}
+                      /* R611 — recent-row tint rect brightness on
+                         hover/pin. Sibling to R610 group-label tint
+                         rect — closes panel-row tint rect brightness
+                         parity across both panel scopes:
+                           R610  group label tint rect (pin/hover-label)
+                           R611  recent-row tint rect (hover/pin row)  ← this round
+
+                         Same banked R582/R583 stacked-filter pattern
+                         (here plain brightness — no drop-shadow stack
+                         since the tint rect doesn't carry one). The
+                         pal.legendAccent cyan/teal fill (0.18-0.22 pin
+                         / 0.10-0.14 hover alpha) lifts +15% — small
+                         but perceivable lift that ties the row tint
+                         paint axis to its fill/opacity response on
+                         row inspection.
+
+                         Pin/hover-gated brightness family at panel tier
+                         now 6 anchors:
+                           R571  group label text       (pin)
+                           R587  group cluster box      (pin/hover)
+                           R607  legend pin-ring        (pin)
+                           R609  legend flow-arrow      (panel-hover)
+                           R610  group label tint rect  (pin/hover-label)
+                           R611  recent-row tint rect   (hover/pin row)  ← this round
+
+                         transition list extends with 'filter 200ms
+                         ease-out' alongside the existing 200ms
+                         fill/opacity cadence. */
+                      style={{
+                        filter: isRowActive ? 'brightness(1.15)' : undefined,
+                        transition: 'fill 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
+                      }}
                     />
                     {/* Round 160 / Loop: recency pip. Canvas flow edges
                         fade by freshness (R10: full intensity ≤30s →
