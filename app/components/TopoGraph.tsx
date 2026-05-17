@@ -11609,12 +11609,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         R320 recent-row count fw=600 (left neighbour) /
                         R321 recent-row timestamp / R322 panel hot
                         count (this round). */}
+                  {/* Round 634 / Loop — panel header hot-count tspan
+                      joins the hot-pulse family at the panel-aggregate
+                      tier. R498 originated the per-row digit breath;
+                      R632/R633 extended to the canvas-edge digit + circle.
+                      R634 brings the panel-header AGGREGATE counter
+                      ("N hot" displayed on the recent-signal panel
+                      header's right edge) into the same 3s ease-in-out
+                      opacity breath when hotFlowCount > 0.
+                      Pre-R634 the aggregate counter signalled hot via
+                      fill (amber hotStroke) + weight (fw=700) but stayed
+                      visually motionless even when the canvas + panel
+                      rows it summarises were breathing. R634 closes that
+                      panel-aggregate↔detail motion parity — the user's
+                      eye now catches a coherent hot gesture from the
+                      panel header all the way down to the canvas badge.
+                      ClassName composition: 'anet-fade-in' (mount fade-
+                      in) + 'anet-recent-hot-pulse' (continuous breath).
+                      The fade-in runs once on first mount; the breath
+                      runs forever while the gate holds. CSS animations
+                      compose on a single element by combining keyframe
+                      tracks — opacity breath wins for steady-state since
+                      anet-fade-in is one-shot and settles to opacity=1.
+                      Component-side `!reducedMotion` gate keeps the
+                      className absent for no-motion preference even
+                      when hotFlowCount > 0.
+                      Hot-pulse family ledger (4 anchors):
+                        R498  panel-row count digit  (opacity)
+                        R632  edge-badge digit       (opacity)
+                        R633  edge-badge circle      (stroke-width)
+                        R634  panel header hot-count (opacity) ← this round
+                      data-recent-panel-hot-pulse attr exposes the new
+                      gate axis for tests. */}
                   <tspan
                     fill={hotStroke}
                     fontWeight="700"
                     data-recent-panel-hot-count={hotFlowCount}
                     data-recent-panel-hot-visible={hotFlowCount > 0 ? 'true' : 'false'}
-                    className="anet-fade-in"
+                    data-recent-panel-hot-pulse={hotFlowCount > 0 && !reducedMotion ? 'on' : 'off'}
+                    className={hotFlowCount > 0 && !reducedMotion
+                      ? 'anet-fade-in anet-recent-hot-pulse'
+                      : 'anet-fade-in'}
                     opacity={hotFlowCount > 0 ? 1 : 0}
                     style={{
                       transition: 'opacity 300ms ease-out',
