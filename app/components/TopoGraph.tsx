@@ -5965,20 +5965,51 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      advances the "信息密度" axis by encoding
                      category-distinction into a single typography
                      channel without adding visual chrome. */
+                  /* Round 571 / Loop — group-label parent text joins the
+                     per-element brightness consistency family (R501/
+                     R558/R564/R567/R570) at uniform +15%. 8th anchor.
+                     Stacks brightness(1.15) onto the existing R479/R538
+                     drop-shadow filter — same R564/R570 stacked filter
+                     pattern (drop-shadow + brightness in one CSS chain).
+                     Pre-R571 the group-label parent text lifted in 5
+                     axes on hover/pin (fill + ls 3-tier + fw on pin +
+                     drop-shadow + opacity) but the glyph chromatically
+                     stayed at flat fill brightness. R571 adds the
+                     brightness axis to the glyph itself for cross-
+                     element consistency with the rest of the per-
+                     element brightness family.
+                     Filter chain on isPinned: `drop-shadow(0 0 3px
+                     ${pal.legendAccent}80) brightness(1.15)`.
+                     On isHovered (weaker tier):                `drop-
+                     shadow(0 0 3px ${pal.legendAccent}4d) brightness(1.15)`.
+                     Rest:                                       undefined.
+                     Per-element brightness family — 8 anchors at +15%:
+                       R501  vendor.logo image
+                       R558  vendor monogram
+                       R558  prefix-group fallback
+                       R564  alias text (stacked w/ DS)
+                       R567  node sub-text
+                       R570  edge-badge digit
+                       R571  group-label parent text  ← this round
+                     transition list already includes 'filter 200ms ease-
+                     out' from R479 — no change needed. R432 ls + R457
+                     fw + R479 drop-shadow + R551 orphan opacity all
+                     preserved. */
                   style={{
                     transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                     letterSpacing: isPinned ? '0.5px' :
                                    isHovered ? '0.25px' : '0px',
                     fontStyle: box.isOrphan ? 'italic' : undefined,
                     filter: isPinned
-                      ? `drop-shadow(0 0 3px ${pal.legendAccent}80)`
+                      ? `drop-shadow(0 0 3px ${pal.legendAccent}80) brightness(1.15)`
                       : isHovered
-                        ? `drop-shadow(0 0 3px ${pal.legendAccent}4d)`
+                        ? `drop-shadow(0 0 3px ${pal.legendAccent}4d) brightness(1.15)`
                         : undefined,
                   }}
                   data-group-label={box.key}
                   data-group-label-pinned={isPinned ? 'true' : 'false'}
                   data-group-label-orphan={box.isOrphan ? 'true' : 'false'}
+                  data-group-label-brightness={(isPinned || isHovered) ? '1.15' : '1'}
                 >
                   {box.key}
                   {/* Round 19 / Loop: member-count chip. Inline tspan stays
