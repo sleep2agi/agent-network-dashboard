@@ -4420,7 +4420,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                             : hoveredGroupLabel === box.key ? (isLight ? 0.09 : 0.13)
                             : 1}
                     data-group-label-tinted={pinnedGroup === box.key ? 'pinned' : hoveredGroupLabel === box.key ? 'hover' : 'none'}
-                    style={{ transition: 'fill 150ms ease-out, opacity 150ms ease-out' }}
+                    /* Round 459 / Loop — cadence-sync follow-on to codex
+                       preview.125 (Hero D #147). Codex's parent <text>
+                       transition list now reads:
+                         'fill 200ms, letter-spacing 200ms,
+                          font-weight 200ms, opacity 200ms'
+                       — 200ms ease-out across every axis. The label
+                       hitbox tint rect underneath was still at 150ms
+                       (legacy R107 cadence), so the tint snapped in
+                       50ms ahead of the parent label brightening —
+                       a small but perceivable mistimed cascade when
+                       hovering or clicking to pin a cluster. R459
+                       lifts both axes to 200ms to lock the tint
+                       under the label as one motion-coherent state
+                       flip. Hover/pin/unpin all feel as a single
+                       unified ease rather than "tint pops, label
+                       follows". data-group-label-tint-transition
+                       attr exposes the timing for tests. */
+                    data-group-label-tint-transition="200ms"
+                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out' }}
                   />
                 {/* Round 218 / Loop: group label gains a letter-spacing
                     transition on pin — the text subtly spaces out
