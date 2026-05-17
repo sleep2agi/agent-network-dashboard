@@ -8782,12 +8782,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  cluster brightness at 4 concentric elements (digit
                  R575 + highlight R574 + halo R577 + hover-ring R579). */
               data-topo-hub-hover-ring-brightness={!reducedMotion && hoveredHub ? '1.15' : '1'}
+              data-topo-hub-hover-ring-halo-layers={!reducedMotion && hoveredHub ? '2' : '0'}
               style={{
                 pointerEvents: 'none',
+                /* Round 653 / Loop — hub-hover-ring drop-shadow gains a
+                   SECOND outer layer at 6px blur + 0.25 alpha (half R535's
+                   inner 0.5). 12th anchor in multi-layer halo family
+                   (4th hub-cluster anchor after R650 digit + R651 halo +
+                   R652 highlight). The hover-ring is the BOUNDARY between
+                   hub focal cluster and surrounding canvas — adding a
+                   2nd layer extends the visual halo grammar outward
+                   without crossing into the node ring.
+                   3+6 stride matches R650 cyber stride (same scale tier
+                   r=14-17). Same emerald tint across both layers;
+                   chromatic identity preserved. Outer alpha = half
+                   inner (0.5 → 0.25, 50%). */
                 filter: !reducedMotion && hoveredHub
                   ? (isLight
-                      ? 'drop-shadow(0 0 3px rgba(16, 185, 129, 0.5)) brightness(1.15)'
-                      : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.5)) brightness(1.15)')
+                      ? 'drop-shadow(0 0 3px rgba(16, 185, 129, 0.5)) drop-shadow(0 0 6px rgba(16, 185, 129, 0.25)) brightness(1.15)'
+                      : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.5)) drop-shadow(0 0 6px rgba(52, 211, 153, 0.25)) brightness(1.15)')
                   : undefined,
                 transition: 'opacity 180ms ease-out, r 180ms ease-out, stroke 200ms ease-out, filter 200ms ease-out',
               }}
