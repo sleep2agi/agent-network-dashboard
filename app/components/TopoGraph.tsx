@@ -2910,11 +2910,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={`${link.from} → ${link.to} (${link.count} msg${link.count === 1 ? '' : 's'}${isHot ? ', hot lane · ≥ 10' : ''}) — click to clear`}
               onClick={() => setPinnedEdgeKey(null)}
+              /* Round 546 / Loop — CLOSES pin-active filter-pill drop-
+                 shadow sub-family at the 4th and final pill variant
+                 (edge pill). R543 (status) + R544 (group) + R545
+                 (vendor) covered the first three; R546 closes at
+                 edge.
+                 Pin-active tier-color paint glow sub-family CLOSED
+                 (4 anchors):
+                   R477  legend pin-ring  (panel-row, row.fill)
+                   R543  status pill      (chip-row, tier-color text)
+                   R544  group pill       (chip-row, legendAccent)
+                   R545  vendor pill      (chip-row, vendorColor)
+                   R546  edge pill        (chip-row, pal.flowEdge)
+                       ← this round, family CLOSED
+                 All 4 filter pin pills now radiate paint glow in the
+                 same hue family as their text/border on render —
+                 pin-active visual signal uniform across the chip-row
+                 pill family.
+                 pal.flowEdge is theme-driven (dynamic); color-mix
+                 syntax safe-defaults regardless of resolved format
+                 (banked R541/R544/R545 pattern). 60% alpha + 3px blur
+                 — same intensity as R543/R544/R545 for consistent
+                 cross-pill visual signal. */
               style={{
                 background: isLight ? `${pal.flowEdge}14` : `${pal.flowEdge}1f`,
                 color: pal.flowEdge,
                 borderColor: 'currentColor',
                 cursor: 'pointer',
+                filter: `drop-shadow(0 0 3px color-mix(in srgb, ${pal.flowEdge} 60%, transparent))`,
               }}
             >
               {/* R412: filter pin pill value (edge variant) picks up fw=600.
