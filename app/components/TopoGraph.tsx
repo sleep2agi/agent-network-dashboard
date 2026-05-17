@@ -10622,7 +10622,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      below closes the panel-pair symmetry. */
                   letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.2'}
                   data-recent-panel-count-letter-spacing={hoveredPanel === 'recent' ? '0.4' : '0.2'}
-                  style={{ transition: 'letter-spacing 200ms ease-out' }}
+                  data-recent-panel-count-brightness={hoveredPanel === 'recent' ? '1.15' : '1'}
+                  style={{
+                    /* R589 — recent-signal panel count <text> root gains
+                       brightness(1.15) on hoveredPanel === 'recent'.
+                       28th anchor in per-element brightness family.
+                       Sibling to R588 at the legend panel; closes
+                       panel-pair brightness symmetry at the header-
+                       count scope.
+
+                       Panel-pair title↔count brightness parity now
+                       complete:
+                         legend  title  pinnedStatus gate    (R571 family)
+                         legend  count  hoveredPanel gate    (R588)
+                         recent  title  activeEdgeKey gate   (R571 family)
+                         recent  count  hoveredPanel gate    (R589)  ← this round
+
+                       All 4 panel-header text elements respond on the
+                       brightness axis — full symmetric closure.
+
+                       Recent-signal panel count hover signature now
+                       3 axes (mirrors R588 legend count closure):
+                         R311/R424  fontWeight 600 → 700
+                         R349/R566  letter-spacing 0.2 → 0.4
+                         R589       brightness 1 → 1.15  ← this round
+
+                       Filter applied at <text> root (the parent here);
+                       the nested fw-changing tspan inherits the lift
+                       via SVG inheritance — unlike applying to tspan
+                       directly, which is unreliable cross-browser.
+
+                       The R162 freshness-tinted fill (cyan/teal alpha
+                       1.0 → 0.30 by ageSec) gets the +15% multiplied
+                       in — fresh data (alpha=1) reads dramatically
+                       brighter on hover; stale data (alpha=0.30) gets
+                       a proportionally smaller absolute lift. Hover
+                       brightness is freshness-amplifying at this
+                       surface — coherent with the panel's "freshness
+                       is the primary signal" semantic. */
+                    filter: hoveredPanel === 'recent' ? 'brightness(1.15)' : undefined,
+                    transition: 'letter-spacing 200ms ease-out, filter 200ms ease-out',
+                  }}
                 >
                   {/* Round 225 / Loop: tabular-nums on the panel-header
                       flow-count tspan. The "{N} flows" string lives in
