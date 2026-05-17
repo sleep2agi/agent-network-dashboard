@@ -11020,6 +11020,46 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 fill="freeze"
                 data-click-ripple-start-opacity="0.8"
               />
+              {/* Round 631 / Loop — click-ripple gains a THIRD animate
+                  axis: stroke-width 2 → 0.5 over 500ms with the same
+                  ease-out keySplines as R227's r + opacity animates.
+                  Pre-R631 the ripple expanded (r0+4 → r0+30) and
+                  faded (0.8 → 0) at uniform stroke-width, reading as
+                  a constant-thickness ring growing and fading.
+                  Real water ripples THIN as they expand outward — the
+                  wavefront's perceived line-thickness decays alongside
+                  its amplitude. R631 stacks that geometric thinning
+                  onto the existing paint+area fade so the ripple
+                  reads as one coherent expanding wave instead of an
+                  expanding solid line.
+                  Three concurrent animates now ease in lockstep
+                  through ease-out cubic-bezier(0.25, 0.1, 0.25, 1)
+                  — fast-then-settle for the r + opacity + sw, all
+                  matching R227's organic-pulse rhythm. R608 drop-
+                  shadow glow remains static (no animation needed —
+                  the opacity fade carries its decay).
+                  R51 sentinel safety: stroke-width animates through
+                  the range [2, 0.5], which passes through the
+                  reserved 1.5 sentinel mid-cycle. The R51 selector
+                  is gated to `g[data-node]` descendants (banked
+                  documentation pattern); the ripple is rendered at
+                  the canvas root inside the zoom/pan <g> wrapper,
+                  OUTSIDE individual node groups, so the selector
+                  never matches it. Plus the ripple only mounts on
+                  click — topo-overlap-test runs without click.
+                  data-click-ripple-stroke-width-start='2' /
+                  -end='0.5' attrs expose the new range for tests. */}
+              <animate
+                attributeName="stroke-width"
+                values="2;0.5"
+                dur="0.5s"
+                calcMode="spline"
+                keyTimes="0;1"
+                keySplines="0.25 0.1 0.25 1"
+                fill="freeze"
+                data-click-ripple-stroke-width-start="2"
+                data-click-ripple-stroke-width-end="0.5"
+              />
             </circle>
           )}
 
