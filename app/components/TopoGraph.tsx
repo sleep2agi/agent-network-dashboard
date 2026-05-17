@@ -11014,6 +11014,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               spacing as typographic intent. Stays well inside the
               bottom-left corner; opacity 0.4 unchanged so the
               watermark stays a watermark. */}
+          {/* Round 519 / Loop — 呼吸感 family 3rd anchor. Pre-R519 the
+              breath family had 2 anchors (R497 hub idle digit + R498
+              recent-row hot pulse). Both signal active state — the
+              digit when canvas is idle (no work pending), the recent
+              row when fresh signal arrives. R519 adds a SLOW ambient
+              breath to the brand watermark — present always, not gated
+              on activity state. The watermark IS the canvas-corner
+              register that says "the canvas is alive even when nothing
+              is happening"; a 6s opacity pulse around its 0.4 mean
+              (±0.08 swing → 0.32 ↔ 0.48) reads as ambient liveness
+              rather than foreground signal.
+              Why 6s (not R497's 4s): the breath family now spans
+              activity registers (R497 4s — idle-focal: present and
+              waiting; R498 ~3s — hot signal: just arrived) and now
+              ambient register (R519 6s — corner watermark: always-on
+              background). Slower cadence keeps the watermark in the
+              background; ~10 pct slower than R497 keeps it out of
+              phase so the two anchors never beat together visibly.
+              Gate: !reducedMotion. Inside the prefers-reduced-motion
+              media query, SMIL animate isn't covered by globals.css
+              R29 (which only kills CSS animation property), so we
+              gate at JSX level — when reducedMotion is true the
+              <animate> child isn't mounted and opacity stays at the
+              static 0.4. data-topo-brand-watermark-breath attr
+              exposes the gate state for tests.
+              呼吸感 family extension (3 anchors): R497 hub idle / R498
+              recent-row hot / R519 brand watermark ambient. */}
           <text
             x="16" y="672"
             fontSize="11" fontFamily="monospace" fontWeight="600"
@@ -11021,8 +11048,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             fill={pal.legendText}
             opacity="0.4"
             data-topo-brand-watermark
+            data-topo-brand-watermark-breath={reducedMotion ? 'false' : 'true'}
             style={{ pointerEvents: 'none', transition: 'fill 200ms ease-out' }}
-          >sleep2agi</text>
+          >sleep2agi{!reducedMotion && (
+            <animate attributeName="opacity" values="0.32;0.48;0.32" dur="6s" repeatCount="indefinite" />
+          )}</text>
           {/* v0.10.0 Hero 3 Wave 1 / RFC §3.I (Vincent 5215 + 通信龙
               lead-autonomy Q4 dual-anchor minimal): canvas top-left
               crescent moon brand mark, visible ONLY when the
