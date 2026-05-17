@@ -12742,7 +12742,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                             : 1}
                     data-legend-row-tinted={isPinned ? 'pinned' : hoveredStatus === row.key ? 'hover' : 'none'}
                     data-legend-row-tint-transition="200ms"
-                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out' }}
+                    data-legend-row-tint-brightness={(hoveredStatus === row.key || isPinned) ? '1.15' : '1'}
+                    /* R612 — legend-row tint rect brightness on hover/
+                       pin. Sibling to R610 group-label tint + R611
+                       recent-row tint — closes the PANEL-ROW TINT RECT
+                       BRIGHTNESS TRIO at full parity:
+                         R610  group label tint rect (pin/hover-label)
+                         R611  recent-row tint rect  (hover/pin row)
+                         R612  legend-row tint rect  (hover/pin row)  ← this round
+
+                       All 3 panel-row tint rects (group / recent /
+                       legend) now lift +15% brightness alongside their
+                       fill/opacity response under inspection.
+
+                       Note: row.fill here is the TIER COLOR (green for
+                       working / teal for idle / slate for offline)
+                       rather than the cyan pal.legendAccent used by
+                       group + recent panels. Each tier brightens its
+                       OWN hue by +15% — the row reads as "this status
+                       lit up" with the row's status-identifying color
+                       intensified. Per-tier brightness lift carries
+                       semantic information at the legend scope.
+
+                       Pin/hover-gated brightness family at panel tier
+                       now 7 anchors (R571/R587/R607/R609/R610/R611/
+                       R612). transition list extends with 'filter
+                       200ms ease-out' alongside fill/opacity. */
+                    style={{
+                      filter: (hoveredStatus === row.key || isPinned)
+                        ? 'brightness(1.15)'
+                        : undefined,
+                      transition: 'fill 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
+                    }}
                   />
                   {/* Round 197 / Loop: swatch dot scales r 5.5 → 7 when its
                       row is hovered or pinned. Pre-R197 the swatch was a
