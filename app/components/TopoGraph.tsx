@@ -3176,6 +3176,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     // for older browsers the chip falls back to its idle
                     // transparent bg (graceful degradation — the canvas-
                     // dim effect still fires regardless).
+                    /* Round 541 / Loop — vendor letter chip gains drop-
+                       shadow glow on hover/pin using its OWN vendor
+                       identity color (v.color). Sibling to R537 legend-
+                       swatch tier-color glow at the chip-row scope.
+                       Pre-R541 the vendor chip lifted on multiple
+                       axes (R354 inner-glyph scale-1.1, R202 bg color-
+                       mix tint, R180 box-shadow pin-mirror inset, R401
+                       hover-translate-y -1px, R496 active:scale-95
+                       press) but no paint-axis glow extending past
+                       the chip's bbox. R541 adds the outer glow at
+                       the paint axis so the vendor chip's identity
+                       color radiates beyond the chip on attention —
+                       same idiom as legend swatch tier-color glow.
+                       2-tier alpha ladder (mirrors R538 group-label):
+                         pin (committed)   v.color 99 (~60%)
+                         hover (preview)   v.color 66 (~40%)
+                         rest              none
+                       Pin is brighter to distinguish locked vs preview
+                       at the paint axis. The R180 inset box-shadow
+                       (pin-mirror) and R541 outer drop-shadow compose
+                       at pin — inside chrome reads as "this is pinned"
+                       (inset white double-ring), outside paint reads
+                       as "vendor identity is locked" (vendor-colour
+                       outer glow). Hover gets only the outer glow.
+                       3px blur tuned to read as soft chip-halo without
+                       overwhelming adjacent chips in the chip row.
+                       filter property is in the .anet-topo-chip-focus
+                       class transition list (R524 banked fix), so the
+                       filter eases at 200ms naturally.
+                       Drop-shadow visual-polish family — R541 adds
+                       chip-row tier-color paint glow as another anchor
+                       in the same family pattern R537 established.
+                       data-vendor-glow attr ('pin' | 'hover' | 'false')
+                       exposes the gate state for tests. */
+                    data-vendor-glow={isPinned ? 'pin' : hoveredVendor === v.initial ? 'hover' : 'false'}
                     style={{
                       cursor: 'pointer',
                       backgroundColor: (hoveredVendor === v.initial && !isPinned)
@@ -3184,7 +3219,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       boxShadow: isPinned
                         ? `inset 0 0 0 1px ${v.color}, inset 0 0 0 2px rgba(255,255,255,0.45)`
                         : undefined,
-                      transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out',
+                      filter: isPinned
+                        ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 60%, transparent))`
+                        : hoveredVendor === v.initial
+                          ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 40%, transparent))`
+                          : undefined,
+                      transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, filter 200ms ease-out',
                     }}
                     onMouseEnter={() => setHoveredVendor(v.initial)}
                     onMouseLeave={() => setHoveredVendor(prev => prev === v.initial ? null : prev)}
