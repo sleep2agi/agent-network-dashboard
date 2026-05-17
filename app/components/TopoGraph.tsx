@@ -2725,11 +2725,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedGroup(null)}
+              /* Round 544 / Loop — extends R543 pin-active filter-pill
+                 drop-shadow pattern to the GROUP pill (2nd of 4 pill
+                 variants). Pre-R544 the group pill carried bg-tint +
+                 pal.legendAccent text/border but no outer paint glow.
+                 R544 adds the matching cyan-accent drop-shadow so the
+                 group pin pill radiates the same paint glow as R543
+                 status pill — pin-active visual signal at chip-row
+                 scope.
+                 Hue: pal.legendAccent (cyber #67e8f9 cyan-300 /
+                 light #0d9488 teal-600). Uses color-mix() syntax
+                 because pal.legendAccent may resolve to hex; same
+                 syntax works for both hex and hsl sources (banked
+                 R541 lesson). 60% alpha + 3px blur — same intensity
+                 as R543 status pill so the pin-active visual signal
+                 reads with matching brightness across pill variants.
+                 Pin-active tier-color paint glow sub-family
+                 (CLOSED progressively):
+                   R477  legend pin-ring  (panel-row, row.fill)
+                   R543  status pill      (chip-row, tier-color)
+                   R544  group pill       (chip-row, legendAccent)
+                       ← this round
+                 Out of scope: vendor pill (line ~2755) + edge pill
+                 (line ~2824) — can future-extend in subsequent
+                 rounds (R545/R546). Both use the same R543 idiom:
+                 always-on drop-shadow when rendered, color from the
+                 pill's existing text color. */
               style={{
                 background: isLight ? '#67e8f914' : '#67e8f91f',
                 color: pal.legendAccent,
                 borderColor: 'currentColor',
                 cursor: 'pointer',
+                filter: `drop-shadow(0 0 3px color-mix(in srgb, ${pal.legendAccent} 60%, transparent))`,
               }}
             >
               {/* R412: see status pill above — filter value fw=600 data tier. */}
