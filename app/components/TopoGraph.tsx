@@ -7370,6 +7370,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-edge-badge-opacity-hover="1"
                         data-edge-badge-opacity-active="1"
                         data-edge-badge-glow={(isHoveredEdge || isPinned || isEndpointHoveredEdge) ? 'hover' : isHot ? 'hot' : 'false'}
+                        data-edge-badge-halo-layers={((isHoveredEdge || isPinned || isEndpointHoveredEdge) || isHot) ? '2' : '0'}
                         data-edge-badge-brightness={(isHoveredEdge || isPinned || isHot || isEndpointHoveredEdge) ? '1.15' : '1'}
                         data-edge-badge-endpoint-active={isEndpointHoveredEdge ? 'true' : 'false'}
                         /* Round 633 / Loop — edge-badge CIRCLE joins the
@@ -7495,10 +7496,44 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              extension). The drop-shadow halo uses the
                              cyan/teal pal.legendAccent — same colour as
                              the existing hover/pin branch. */
+                          /* Round 646 / Loop — edge-badge CIRCLE filter
+                             gains a SECOND drop-shadow layer at 6px blur
+                             with halved alpha. Mirrors R642/R643/R644/R645
+                             multi-layer halo pattern from the per-node
+                             identity surfaces to the per-edge identity
+                             badge. The badge ring now radiates a near +
+                             far layered glow on hover/pin/endpoint OR on
+                             hot-only state — both branches stack 2
+                             drop-shadows ahead of brightness.
+                             Hover/pin/endpoint branch (cyan):
+                               R534: inner 3px + 0x99 alpha (~60%)
+                               R646: outer 6px + 0x50 alpha (~31%)
+                             Hot-only branch (amber):
+                               R480: inner 3px + 0x80 alpha (~50%)
+                               R646: outer 6px + 0x40 alpha (25%)
+                             Outer alpha = ~half inner alpha — matches
+                             R642/R643/R644 0.5x falloff vocabulary. 2x
+                             blur stride (3→6) matches R642 chat-target
+                             ring outer stride (the badge ring at
+                             r=9-10.5 sits at a similar small-scale tier
+                             as identity rings).
+                             Both layers share the same tint per branch
+                             (legendAccent or hotStroke), so chromatic
+                             identity preserved. R51 sentinel safety:
+                             badge is edge-internal (not g[data-node]
+                             descendant); filter paint-only, no bbox
+                             change. transition list already covers
+                             'filter 200ms ease-out'.
+                             Multi-layer halo family extends from rings
+                             (R642-R644) + text (R645) to edge-badge
+                             (R646) — first per-edge surface in the
+                             family.
+                             data-edge-badge-halo-layers attr exposes
+                             the new 2-layer state for tests. */
                           filter: (isHoveredEdge || isPinned || isEndpointHoveredEdge)
-                            ? `drop-shadow(0 0 3px ${pal.legendAccent}99) brightness(1.15)`
+                            ? `drop-shadow(0 0 3px ${pal.legendAccent}99) drop-shadow(0 0 6px ${pal.legendAccent}50) brightness(1.15)`
                             : isHot
-                              ? `drop-shadow(0 0 3px ${hotStroke}80) brightness(1.15)`
+                              ? `drop-shadow(0 0 3px ${hotStroke}80) drop-shadow(0 0 6px ${hotStroke}40) brightness(1.15)`
                               : undefined,
                           transition: 'r 180ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, fill 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                         }}
