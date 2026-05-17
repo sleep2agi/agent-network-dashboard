@@ -4638,8 +4638,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-hub-spoke-stroke-width={spokeStrokeWidth}
                   data-topo-hub-spoke-stroke-width-active="2.25"
                   data-topo-hub-spoke-linecap="round"
+                  /* Round 533 / Loop — extends drop-shadow visual-polish
+                     family to a 9th anchor: hub spokes gain filter:drop-
+                     shadow glow on hub-hover. Subtle 1.5px cyan/teal blur
+                     applied across ALL spokes simultaneously when the
+                     user hovers the hub — the network mesh visually
+                     "lights up" in response to focal attention. Sibling
+                     to R476 hub-digit + R532 hub-highlight glow at the
+                     same gate (hoveredHub && !reducedMotion); together
+                     the three anchors (digit + highlight disc + spokes)
+                     form a unified focal-cluster glow that signals
+                     "you're focused on the hub" across geometry,
+                     paint, and mesh-extent axes.
+                     Theme-aware glow palette matches the spoke stroke
+                     family:
+                       light: rgba(13, 148, 136, 0.4)   teal-600
+                       cyber: rgba(34, 211, 238, 0.4)   cyan-400
+                     0.4 alpha keeps the glow subtle across N spokes
+                     (30+ at peak fleet sizes) — loud bloom across many
+                     edges would compete with the focal cluster itself.
+                     1.5px blur is conservative; tuned so each spoke
+                     gains a faint outer halo rather than a wide bloom.
+                     filter is paint-only; bbox unchanged; existing
+                     R241 transition list extends to 'filter 250ms
+                     ease-out' matching the spoke transition cadence
+                     (250ms, distinct from the 200ms hub-cluster
+                     cadence — spokes ease slightly slower since they
+                     respond to per-alias state, not just hub state).
+                     data-topo-hub-spoke-glow attr exposes the gate
+                     state for tests. */
+                  data-topo-hub-spoke-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
                   style={{
-                    transition: 'stroke 250ms ease-out, stroke-width 250ms ease-out, opacity 250ms ease-out',
+                    transition: 'stroke 250ms ease-out, stroke-width 250ms ease-out, opacity 250ms ease-out, filter 250ms ease-out',
+                    filter: !reducedMotion && hoveredHub
+                      ? (isLight
+                          ? 'drop-shadow(0 0 1.5px rgba(13, 148, 136, 0.4))'
+                          : 'drop-shadow(0 0 1.5px rgba(34, 211, 238, 0.4))')
+                      : undefined,
                     ...(isActiveSpoke ? {} : {
                       animationDelay: `${-(idx * 0.25)}s`,
                       // CSS var consumed by `.anet-topo-spoke-flow`
