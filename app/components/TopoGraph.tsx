@@ -6877,6 +6877,35 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   (hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
                    hoveredStatus || hoveredVendor) && !hoveredHub ? 'true' : 'false'
                 }
+                /* Round 527 / Loop — focal-amplify family extension to a
+                   2nd anchor. R511 introduced focal-amplify at the hub-
+                   highlight disc (base opacity 0.95 → 1.0 on hover); R527
+                   extends to the hub-center workingCount digit with a
+                   letter-spacing tween 0 → 0.3px on hub-hover.
+                   Composes with existing 3-axis hub-hover signature on
+                   this element:
+                     R209  transform scale(1.08)        geometry
+                     R425  fontWeight 700 → 800         typography weight
+                     R476  filter drop-shadow glow      paint
+                     R527  letter-spacing 0 → 0.3px     typography kerning ← this round
+                   tabular-nums (R225) preserved — each digit cell keeps
+                   fixed width; the inter-digit advance grows by 0.3px
+                   per gap. Single-digit counts (1-9) show no kerning
+                   effect; multi-digit counts (10+) show the spread as
+                   info-density signaling. Sibling to R427/R431/R432/
+                   R433/R434 (hover-letter-spacing family at panel-text
+                   scope) — R527 brings the same idiom to the canvas's
+                   most-read scalar.
+                   Reduced-motion gate matches R209 scale, R425 fw, R476
+                   filter — !reducedMotion gates the lift; reducedMotion
+                   users see static digit baseline regardless of hover.
+                   Focal-amplify family extension (2 anchors): R511 hub-
+                   highlight opacity / R527 hub-digit letter-spacing.
+                   transition list extends to include `letter-spacing
+                   200ms ease-out`, matching the cadence of the other
+                   hub-hover axes. data-topo-hub-working-count-letter-
+                   spacing attr exposes the resolved value for tests. */
+                data-topo-hub-working-count-letter-spacing={!reducedMotion && hoveredHub ? '0.3px' : '0px'}
                 style={{
                   pointerEvents: 'none',
                   transform: !reducedMotion && hoveredHub ? 'scale(1.08)' : 'scale(1)',
@@ -6891,14 +6920,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6))'
                         : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6))')
                     : undefined,
+                  letterSpacing: !reducedMotion && hoveredHub ? '0.3px' : '0px',
                   /* R425: font-weight 200ms appended so the hover fw
                      bump 700 → 800 eases under the same cadence as
                      R209 scale + R253 fill + R213 opacity.
                      R476: filter 200ms appended so the new drop-
                      shadow glow eases at the same cadence.
                      R507: opacity 300ms (existing in list) covers
-                     the new focal-recede fade. */
-                  transition: 'transform 200ms ease-out, opacity 300ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
+                     the new focal-recede fade.
+                     R527: letter-spacing 200ms appended so the new
+                     hover-kerning bump eases at the same cadence
+                     as the other axes. */
+                  transition: 'transform 200ms ease-out, opacity 300ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out, letter-spacing 200ms ease-out',
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
