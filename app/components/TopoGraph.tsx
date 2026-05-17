@@ -5270,12 +5270,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      data-topo-hub-spoke-glow attr exposes the gate
                      state for tests. */
                   data-topo-hub-spoke-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
+                  /* Round 580 (65-round milestone) — hub-spokes complete
+                     the hub-cluster brightness coverage at 5/5 concentric
+                     elements. Stacks brightness(1.15) onto R533's drop-
+                     shadow — same R564/R570/R571/R572/R573/R574/R575/
+                     R577/R578/R579 stacked-filter pattern.
+                     Hub-cluster brightness now FULLY CLOSED:
+                       hub digit       (R575)  innermost typo
+                       hub-highlight   (R574)  middle disc
+                       hub-hover-ring  (R579)  outer ring boundary
+                       hub-halo        (R577)  outermost atmosphere
+                       hub-spokes      (R580)  mesh radial lines ← this round
+                     5 concentric elements + N mesh radial lines all lift
+                     uniformly through stacked drop-shadow + brightness on
+                     hub-hover. The hub focal cluster now responds as ONE
+                     unified motion-coherent paint pulse from center
+                     outward through every layer. */
+                  data-topo-hub-spoke-brightness={!reducedMotion && hoveredHub ? '1.15' : '1'}
                   style={{
                     transition: 'stroke 250ms ease-out, stroke-width 250ms ease-out, opacity 250ms ease-out, filter 250ms ease-out',
                     filter: !reducedMotion && hoveredHub
                       ? (isLight
-                          ? 'drop-shadow(0 0 1.5px rgba(13, 148, 136, 0.4))'
-                          : 'drop-shadow(0 0 1.5px rgba(34, 211, 238, 0.4))')
+                          ? 'drop-shadow(0 0 1.5px rgba(13, 148, 136, 0.4)) brightness(1.15)'
+                          : 'drop-shadow(0 0 1.5px rgba(34, 211, 238, 0.4)) brightness(1.15)')
                       : undefined,
                     ...(isActiveSpoke ? {} : {
                       animationDelay: `${-(idx * 0.25)}s`,
