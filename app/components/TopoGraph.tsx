@@ -1777,11 +1777,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               ONLY brand surface that's a candidate for hover affordance,
               since it sits in the chrome-band where the cursor
               naturally passes during normal use. */}
+          {/* Round 549 / Loop — extends R548 (hover:scale-105) with a
+              subtle hover:rotate-6 rotation. Pairs scale + rotate on
+              the brand mark, same idiom as R547 added to the pill ×
+              close buttons (scale-110 + rotate-12) but at gentler
+              amounts: 105% vs 110% scale and 6° vs 12° rotation —
+              brand marks want restraint vs interactive close buttons.
+
+              The crescent-moon shape (curved cutout via mask) reads
+              visually distinct as it rotates — the asymmetric cutout
+              swings into a fresh angle, telegraphing "this brand mark
+              is alive without being loud". The 6° landing lands the
+              moon's cusp pointing slightly NE rather than straight up,
+              a small but legible reveal of the shape's geometry.
+
+              Tailwind 4 emits BOTH `scale: 1.05` AND `rotate: 6deg`
+              as INDIVIDUAL CSS properties (not a combined transform
+              string — see R547 banked pattern). The className keeps
+              transition-transform so both axes ease at the same 200ms
+              cadence; transform-gpu hint stays so the compositor
+              promotes both axes to GPU layers.
+
+              data-topo-brand-logo-hover-rotate attr surfaces the
+              landing rotation for tests. Pair with R548's
+              data-topo-brand-logo-hover-scale attr — both attrs
+              advertise the dual-axis hover signature. */}
           <svg
             width="40" height="40" viewBox="0 0 32 32" aria-hidden
-            className="shrink-0 transition-transform duration-200 ease-out hover:scale-105 transform-gpu"
+            className="shrink-0 transition-transform duration-200 ease-out hover:scale-105 hover:rotate-6 transform-gpu"
             data-topo-brand-logo
             data-topo-brand-logo-hover-scale="1.05"
+            data-topo-brand-logo-hover-rotate="6deg"
             style={{
               color: isLight ? '#0d9488' : '#67e8f9',
               cursor: 'default',
