@@ -8074,6 +8074,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           R211 fill 300ms + R305 letter-spacing 200ms
                           transition list preserved; only the
                           conditional gets a middle case. */}
+                      {/* Round 500 / Loop — milestone round, opens
+                          per-node alias drop-shadow polish. Extends the
+                          R476-R481 drop-shadow visual-polish family to a
+                          7th anchor: hovered alias text gains a soft
+                          status-coloured text-glow. Pre-R500 hover on
+                          a node triggered card-lift (R26 translateY) +
+                          card-stroke (R242 tint) + alias letter-spacing
+                          (R427 0.3px tier) but the alias TEXT itself had
+                          no paint-axis cue beyond fill (R211). R500 adds
+                          a drop-shadow on the text glyph itself, so the
+                          identity glyph itself lights up under attention
+                          — matching the R476 idiom (hub-digit emerald
+                          glow on hover) at the per-node identity scope.
+                          2px blur radius at 50% alpha — subtler than the
+                          R476 hub-digit (3px at 60%) because the alias
+                          text is smaller and more numerous (1 per node)
+                          so an aggressive glow would multiply into
+                          visual noise. Status-coloured (status.text) so
+                          the glow inherits the node's working/idle/
+                          offline palette — green/cyan/gray respectively.
+                          Drop-shadow visual-polish family — 7 anchors:
+                            R476 hub digit          hover-gated emerald
+                            R477 legend pin-ring    pin-gated   row.fill
+                            R478 recent-row pip     fresh-gated cyan
+                            R479 group-label text   pin-gated   cyan
+                            R480 hot-lane edge      hot-gated   amber
+                            R481 zoom-state minimap zoom-gated  cyan
+                            R500 node alias text    hover-gated status.text ← this round
+                          Filter is paint-only; bbox unchanged; overlap-
+                          test invariants hold (R51 selector gated to
+                          g[data-node] descendants with strokeWidth
+                          sentinels; text element doesn't carry stroke).
+                          transition list extends to include 'filter
+                          200ms ease-out' alongside the existing fill
+                          300ms + letter-spacing 200ms tweens.
+                          data-node-alias-glow attr surfaces the hover
+                          gate for tests. */}
                       <text
                         x="0" y="1" textAnchor="middle"
                         fill={status.text}
@@ -8081,11 +8118,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-node-alias-text={session.alias}
                         data-node-alias-chat-target={chatAlias === session.alias ? 'true' : 'false'}
                         data-node-alias-hovered={hoveredAlias === session.alias ? 'true' : 'false'}
+                        data-node-alias-glow={!reducedMotion && hoveredAlias === session.alias ? 'true' : 'false'}
                         style={{
-                          transition: 'fill 300ms ease-out, letter-spacing 200ms ease-out',
+                          transition: 'fill 300ms ease-out, letter-spacing 200ms ease-out, filter 200ms ease-out',
                           letterSpacing:
                             chatAlias    === session.alias ? '0.5px' :
                             hoveredAlias === session.alias ? '0.3px' : '0px',
+                          filter: !reducedMotion && hoveredAlias === session.alias
+                            ? `drop-shadow(0 0 2px ${status.text}80)`
+                            : undefined,
                         }}
                       >
                         {truncate(session.alias, fullMax)}
