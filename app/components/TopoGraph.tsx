@@ -2824,11 +2824,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear vendor filter'}
               onClick={() => setPinnedVendor(null)}
+              /* Round 545 / Loop — extends pin-active filter-pill drop-
+                 shadow pattern to VENDOR pill (3rd of 4 pill variants
+                 after R543 status + R544 group). vendorColor is HSL
+                 format (banked R541 lesson — vendorDist.color sources
+                 from mono.text in vendorIdentity.ts, which is `hsl(...)`),
+                 so the filter uses color-mix() syntax — same as R544.
+                 60% alpha + 3px blur, matching R543/R544 intensity for
+                 consistent pin-active visual signal across all pill
+                 variants.
+                 Pin-active tier-color paint glow sub-family (progressive
+                 extension, 1 pill variant remaining):
+                   R477  legend pin-ring  (panel-row, row.fill, hex+alpha)
+                   R543  status pill      (chip-row, tier-color, hex+alpha)
+                   R544  group pill       (chip-row, legendAccent, color-mix)
+                   R545  vendor pill      (chip-row, vendorColor, color-mix)
+                       ← this round
+                 Out of scope: edge pill (line ~2824 pre-R545, now ~2900+).
+                 Final 1/4 pill remaining for a future round closes the
+                 sub-family. */
               style={{
                 background: `${vendorColor}1f`,
                 color: vendorColor,
                 borderColor: 'currentColor',
                 cursor: 'pointer',
+                filter: `drop-shadow(0 0 3px color-mix(in srgb, ${vendorColor} 60%, transparent))`,
               }}
             >
               {/* R412: see status pill above — filter value fw=600 data tier. */}
