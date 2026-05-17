@@ -9060,12 +9060,57 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          filter; stacked syntax preserves the url(#topo-
                          glow) on cyber. Same pattern banked at R582
                          visible-path + R583 particle + R584 status-ring. */
+                      /* Round 637 / Loop — chat-target ring filter
+                         gains a status-tinted drop-shadow halo.
+                         Pre-R637 the filter was either `brightness(1.15)`
+                         (light) or `url(#topo-glow) brightness(1.15)`
+                         (cyber): a uniform halo colour (cyan on cyber,
+                         no halo on light) regardless of which status
+                         tier the chat partner sits in. The ring's
+                         STROKE colour already shifts with status
+                         (R242 status.primary easing: green/teal/slate),
+                         but its GLOW was decoupled from that identity.
+                         R637 closes that — the drop-shadow now uses
+                         status.primary at 0x40 alpha so the halo
+                         colour matches the stroke colour AND eases
+                         smoothly on status flip via the existing
+                         `filter 200ms ease-out` transition (R242).
+                         Stacked filter chain on cyber:
+                           drop-shadow(... status.primary 40%)
+                           url(#topo-glow)
+                           brightness(1.15)
+                         and on light (no glow filter):
+                           drop-shadow(... status.primary 40%)
+                           brightness(1.15)
+                         A working chat partner now reads as a GREEN-
+                         haloed ring, idle as TEAL-haloed, offline as
+                         SLATE-haloed — chat target identity becomes
+                         fully chromatic at glance (stroke + halo
+                         match), reinforcing "this is your chat
+                         partner, and its status is X".
+                         3px blur stays subtle (R478 freshness pip
+                         scale), 40% alpha (0x40) softer than
+                         R533/R536's hub-cluster 0.4-0.6 halos —
+                         appropriate since the chat-target ring is
+                         the OUTERMOST per-node identifier and the
+                         halo should read as a confident-but-quiet
+                         ambient glow rather than a loud rim.
+                         R51 sentinel safety: filter is paint-only,
+                         no bbox change. topo-overlap-test gated to
+                         g[data-node] descendant <circle stroke-
+                         width="1.5"|"3">; this ring's sw=2.5 and the
+                         filter doesn't affect overlap reads.
+                         transition list already includes 'filter
+                         200ms ease-out' (R242). data-chat-target-
+                         ring-halo-color attr exposes the resolved
+                         color for tests. */
+                      data-chat-target-ring-halo-color={isChat ? status.primary : 'none'}
                       style={{
                         pointerEvents: 'none',
                         filter: isChat
                           ? (isLight
-                              ? 'brightness(1.15)'
-                              : 'url(#topo-glow) brightness(1.15)')
+                              ? `drop-shadow(0 0 3px ${status.primary}40) brightness(1.15)`
+                              : `drop-shadow(0 0 3px ${status.primary}40) url(#topo-glow) brightness(1.15)`)
                           : undefined,
                         transition: 'opacity 200ms ease-out, stroke 200ms ease-out, filter 200ms ease-out',
                       } as React.CSSProperties}
