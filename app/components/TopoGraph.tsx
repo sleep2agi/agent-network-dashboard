@@ -7978,6 +7978,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-hub-highlight-recede={hubRecede ? 'true' : 'false'}
                   data-topo-hub-highlight-hovered={!reducedMotion && hoveredHub ? 'true' : 'false'}
                   data-topo-hub-highlight-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
+                  /* Round 574 — hub-highlight joins per-element brightness
+                     family at 13th anchor. Stacks brightness(1.15) onto
+                     R532's drop-shadow filter — same R564/R570/R571/R572/
+                     R573 pattern (drop-shadow + brightness in one filter
+                     chain). Hub idle disc now has 3 active hub-hover
+                     axes: R511 opacity 0.95 → 1.0 + R529 r 5.5 → 6 +
+                     R574 brightness(1.15). data-topo-hub-highlight-
+                     brightness attr surfaces the lift. */
+                  data-topo-hub-highlight-brightness={!reducedMotion && hoveredHub ? '1.15' : '1'}
                   /* Round 510 / Loop — R509 follow-on: theme-toggle fill
                      ease. Pre-R510 the hub-highlight transition spec only
                      listed `opacity 300ms ease-out`. When R509 introduced
@@ -8022,8 +8031,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     r: `${highlightR}px`,
                     filter: !reducedMotion && hoveredHub
                       ? (isLight
-                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6))'
-                          : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6))')
+                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.6)) brightness(1.15)'
+                          : 'drop-shadow(0 0 3px rgba(52, 211, 153, 0.6)) brightness(1.15)')
                       : undefined,
                     transition: 'opacity 300ms ease-out, fill 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                   } as React.CSSProperties}
