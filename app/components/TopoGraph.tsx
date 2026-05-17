@@ -9140,8 +9140,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-node-status-ring={status.label}
                       data-node-status-ring-hovered={isRingHovered ? 'true' : 'false'}
                       data-node-status-ring-stroke-width={ringStrokeWidth}
+                      data-node-status-ring-brightness={isRingHovered ? '1.15' : '1'}
                       style={{
-                        transition: 'fill 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out',
+                        /* R584 — status ring gets brightness(1.15) on
+                           hover. 23rd anchor in per-element brightness
+                           family. Stacks with url(#topo-glow) on
+                           cyber+online to preserve the SVG glow filter;
+                           plain brightness on light or cyber+offline.
+                           Same R582/R583 stacked-filter pattern: inline
+                           style.filter overrides the attribute filter,
+                           stacked syntax preserves the glow on hover.
+
+                           Per-node hover signature now 10 layers (added
+                           to the R438 stack):
+                             R26  group translateY -2px
+                             R217 stroke tint
+                             R142 drop-shadow boost
+                             R427 alias letter-spacing
+                             R428 sub-text letter-spacing
+                             R429 body opacity 0.94 → 1.0
+                             R430 hub-spoke α+
+                             R435 hub-spoke sw+
+                             R438 status-ring sw +0.5
+                             R584 status-ring brightness(1.15)  ← this round
+
+                           Per-element brightness family: 23 anchors.
+                           Stacked-filter sub-pattern: 17 anchors. */
+                        filter: isRingHovered
+                          ? (isLight
+                              ? 'brightness(1.15)'
+                              : (isOnline
+                                  ? 'url(#topo-glow) brightness(1.15)'
+                                  : 'brightness(1.15)'))
+                          : undefined,
+                        transition: 'fill 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, filter 300ms ease-out',
                       }}
                     />
                   );
