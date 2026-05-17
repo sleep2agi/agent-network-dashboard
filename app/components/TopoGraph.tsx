@@ -6198,16 +6198,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     letterSpacing: isPinned ? '0.5px' :
                                    isHovered ? '0.25px' : '0px',
                     fontStyle: box.isOrphan ? 'italic' : undefined,
+                    /* Round 648 / Loop — group-label drop-shadow gains a
+                       SECOND outer layer at 6px blur + halved alpha.
+                       Extends multi-layer halo family (R642-R647) from
+                       per-node + per-edge + freshness-pip to group
+                       cluster label — 2nd panel-tier anchor.
+                       Pin branch:   inner 3px+0x80 → outer 6px+0x40
+                       Hover branch: inner 3px+0x4d → outer 6px+0x26
+                       Outer alpha = ~half inner (0x80→0x40, 0x4d→0x26 = 38/77)
+                       Both branches use pal.legendAccent tint; same
+                       0.5x falloff vocabulary + 2x blur stride.
+                       Group label is a panel-row-tier glyph; uses 3px+
+                       6px stride matching the panel-tier R647 pip and
+                       per-edge R646 badge. Pin branch already pre-R648
+                       at stronger alpha; outer layer makes the locked-
+                       in pin gesture radiate further.
+                       data-group-label-halo-layers attr exposes the
+                       gate state for tests. */
                     filter: isPinned
-                      ? `drop-shadow(0 0 3px ${pal.legendAccent}80) brightness(1.15)`
+                      ? `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) brightness(1.15)`
                       : isHovered
-                        ? `drop-shadow(0 0 3px ${pal.legendAccent}4d) brightness(1.15)`
+                        ? `drop-shadow(0 0 3px ${pal.legendAccent}4d) drop-shadow(0 0 6px ${pal.legendAccent}26) brightness(1.15)`
                         : undefined,
                   }}
                   data-group-label={box.key}
                   data-group-label-pinned={isPinned ? 'true' : 'false'}
                   data-group-label-orphan={box.isOrphan ? 'true' : 'false'}
                   data-group-label-brightness={(isPinned || isHovered) ? '1.15' : '1'}
+                  data-group-label-halo-layers={(isPinned || isHovered) ? '2' : '0'}
                 >
                   {box.key}
                   {/* Round 19 / Loop: member-count chip. Inline tspan stays
