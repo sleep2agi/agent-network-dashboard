@@ -11298,6 +11298,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               (hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
                hoveredStatus || hoveredVendor) && !hoveredHub ? 'true' : 'false'
             }
+            data-topo-brand-canvas-mark-breath={reducedMotion ? 'false' : 'true'}
             style={{ pointerEvents: 'none', transition: 'opacity 300ms ease-out, fill 200ms ease-out' }}
           >
             <defs>
@@ -11307,11 +11308,44 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 <circle cx="17.5" cy="13" r="10" fill="black" />
               </mask>
             </defs>
+            {/* Round 528 / Loop — 呼吸感 family 4th anchor. Symmetric
+                polish to R519 watermark ambient breath. The brand
+                crescent at canvas top-left is the second decorative
+                canvas brand surface; pre-R528 it stayed at the static
+                composed opacity (wrapper 0.35 × no inner anim = flat).
+                Post-R528 the inner <rect>'s fill-opacity breathes
+                0.8 ↔ 1.0 on a 7s cycle, composing multiplicatively
+                with the wrapper's recede gate:
+                  normal visible: 0.35 × (0.8-1.0) = 0.280-0.350
+                  recede visible: 0.245 × (0.8-1.0) = 0.196-0.245
+                  invisible:      0 × any            = 0
+                7s cadence intentionally OUT OF PHASE with R519
+                watermark's 6s — the two ambient anchors never beat
+                together visibly when both visible. R497 hub idle
+                breath (4s) is the loudest; R498 recent-row hot pulse
+                (~3s) is the most-active; R519 watermark (6s) +
+                R528 crescent (7s) are the quietest ambient pair.
+                呼吸感 family extension (4 anchors):
+                  R497  hub idle digit       4s  active-idle register
+                  R498  recent-row hot pulse 3s  active-fresh register
+                  R519  watermark ambient    6s  ambient (always-on)
+                  R528  crescent ambient     7s  ambient (quiet-only) ← this round
+                SMIL <animate> on fill-opacity (not parent opacity) so
+                the wrapper's React-controlled gate compositions stay
+                intact. Gated on !reducedMotion at JSX level —
+                reducedMotion users see the inner rect at default
+                fill-opacity=1.0 (no SMIL mounted, wrapper's static
+                composed opacity wins). data-topo-brand-canvas-mark-
+                breath attr exposes the gate state. */}
             <rect
               x="16" y="16" width="28" height="28"
               fill={pal.legendText}
               mask="url(#s2a-canvas-corner-mask)"
-            />
+            >
+              {!reducedMotion && (
+                <animate attributeName="fill-opacity" values="0.8;1;0.8" dur="7s" repeatCount="indefinite" />
+              )}
+            </rect>
           </g>
         </svg>
 
