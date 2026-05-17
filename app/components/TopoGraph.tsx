@@ -6556,7 +6556,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-edge-flow-rail-linecap="round"
                   data-edge-flow-rail-stroke-width={(isHoveredEdge || isEndpointHoveredEdge) ? 1.5 : 1}
                   data-edge-flow-rail-lifted={(isHoveredEdge || isEndpointHoveredEdge) ? 'true' : 'false'}
-                  style={{ transition: 'opacity 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out' }}
+                  /* Round 581 — flow-rail joins per-element brightness
+                     family at 20th anchor. Adds brightness(1.15) on
+                     edge hover or endpoint hover. Joins R437 sw-lift
+                     paint pattern at the dashed-underline tier — when
+                     an edge is in focus, the rail's stroke widens
+                     (R437) AND brightens (R581) together, reading
+                     as a coherent rail-lift gesture under the flow.
+                     transition list extends to include 'filter 300ms
+                     ease-out' matching the R245/R437 cadence on this
+                     surface. */
+                  data-edge-flow-rail-brightness={(isHoveredEdge || isEndpointHoveredEdge) ? '1.15' : '1'}
+                  style={{
+                    transition: 'opacity 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, filter 300ms ease-out',
+                    filter: (isHoveredEdge || isEndpointHoveredEdge)
+                      ? 'brightness(1.15)'
+                      : undefined,
+                  }}
                 />
                 {!reducedMotion && (
                   /* Round 103 / Loop: phase-stagger the particles so
