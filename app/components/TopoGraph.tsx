@@ -1725,7 +1725,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             width) = 166px total title-block width vs 168px pre-R298 —
             no measurable layout shift, just a deliberate tighter
             grouping. */}
-        <div className="flex items-center gap-2.5">
+        {/* Round 554 / Loop — title-block wrapper picks up `group` so
+            the H2 below can subscribe to `group-hover:tracking-tighter`.
+            Pairs with R548/R549 brand-logo hover gestures: cursor
+            sweeping anywhere across the title cluster fires the brand
+            logo's scale-105 + rotate-6 + breath ↔ AND tightens the
+            H2's tracking from -0.025em → -0.05em.
+            Makes the title-block read as one coherent hover cluster —
+            brand mark provides the loud gesture (scale + rotate), H2
+            provides the subtle editorial gesture (kerning tighten).
+            data-topo-section-titleblock-group attr surfaces the gate
+            for tests. */}
+        <div className="group flex items-center gap-2.5" data-topo-section-titleblock-group>
           {/* Round 297 / Loop: brand-logo color picks up the 200ms ease-
               out transition. Pre-R297 the moon glyph had theme-
               conditional color (cyber #67e8f9 cyan ↔ light #0d9488
@@ -1895,7 +1906,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               cumulatively legible across 12 characters. font-semibold
               (600) stays — tracking-tight does the heavy lifting for
               the editorial register. */}
-          <h2 className="text-lg text-white font-semibold leading-tight tracking-tight" data-topo-section-title>Command mesh</h2>
+          {/* Round 554 / Loop — H2 "Command mesh" gains group-hover-
+              gated tracking-tighter via the wrapper's R554 `group`
+              flag. Pre-R554 the H2 was fully static (R286 tracking-
+              tight only at rest). R554 adds an editorial-tighten
+              gesture: when cursor sweeps anywhere across the title
+              cluster (brand logo OR title text), the headline tightens
+              from -0.025em → -0.05em.
+              Inverts the typical hover-letter-spacing direction:
+                small labels (chip counts, panel titles, edge digits)
+                  SPREAD on hover    → "data telegraphing"
+                large headlines (h2 Command mesh)
+                  TIGHTEN on hover   → "editorial emphasis"
+              Both directions are coherent design language — small
+              data wants spacing for legibility; large headlines want
+              tightening for designed-headline polish. Same idiom as
+              the conventional editorial pairing of "wide kicker +
+              tight headline" R285/R286 set up (kicker spreads 0.1em
+              tracking-widest; headline tightens -0.025em tracking-
+              tight) — R554 deepens that pairing's tighten side at
+              the hover-state tier.
+              At text-lg (18px) the shift is -0.45px → -0.9px per
+              gap (~5.4px total tightening across "Command mesh" 12
+              chars). Subtle but legible when the cursor sweeps in.
+              transition-[letter-spacing] duration-200 ease-out
+              matches the 200ms hover-ls cadence used at R344/R345/
+              R347/R351/R420/R427/R431/R432/R434/R527/R539 family
+              anchors.
+              data-topo-section-title-hover-tracking attr surfaces
+              the landing tracking class for tests. */}
+          <h2 className="text-lg text-white font-semibold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter">Command mesh</h2>
           </div>
         </div>
         {/* Round 328 / Loop: chip-row strip wrapper gap 2 → 2.5
