@@ -8919,6 +8919,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       />
                     );
                   }
+                  /* Round 558 / Loop — closes the per-node avatar hover-
+                     affordance arc by extending R501's brightness lift
+                     (image-branch only) to the TWO remaining avatar
+                     variants: vendor monogram + prefix-group hue-hashed
+                     initial fallback. Pre-R558 only the vendor.logo
+                     image branch lifted on hover; the other two
+                     variants stayed paint-static under attention.
+
+                     Per-node avatar hover-brightness family (3 anchors,
+                     all gated on !reducedMotion && hoveredAlias matches):
+                       R501  vendor.logo image          filter on <image>
+                       R558  vendor monogram            filter on wrapping <g>
+                       R558  prefix-group fallback      filter on wrapping <g>
+
+                     Implementation: each fallback branch returns a
+                     fragment with <circle> + <text> as siblings.
+                     Wrapping them in a single <g> with the filter
+                     centralizes the paint axis. Same brightness(1.15)
+                     value as R501 for cross-branch consistency. Same
+                     transition cadence (filter 200ms ease-out).
+
+                     data-node-avatar-monogram-hovered + -fallback-
+                     hovered attrs surface the gates for tests. */
+                  const isAvatarFallbackHovered = !reducedMotion && hoveredAlias === session.alias;
                   if (vendor.id !== 'unknown') {
                     // Known model house, logo asset not in public/vendors/
                     // yet — vendor-tinted monogram stands in.
@@ -8938,7 +8962,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        where less visual weight signals "we don't know
                        what this is" appropriately. */
                     return (
-                      <>
+                      <g
+                        data-node-avatar-monogram={session.alias}
+                        data-node-avatar-monogram-hovered={isAvatarFallbackHovered ? 'true' : 'false'}
+                        style={{
+                          filter: isAvatarFallbackHovered ? 'brightness(1.15)' : undefined,
+                          transition: 'filter 200ms ease-out',
+                        }}
+                      >
                         <circle cx={pos.x} cy={pos.y} r={ar} fill={vendor.mono.bg} stroke={vendor.mono.ring} strokeWidth="1.5" />
                         {/* Round 284 / Loop: known-vendor monogram letter
                             swaps fontFamily monospace → system sans-serif.
@@ -8970,14 +9001,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         >
                           {vendor.initial}
                         </text>
-                      </>
+                      </g>
                     );
                   }
                   // Round 106 (issue #83): hue keyed to the prefix group,
                   // not the full alias — every 通信* node shares one color.
                   const c = aliasAvatarColors(groupKeys[session.alias] || session.alias);
                   return (
-                    <>
+                    <g
+                      data-node-avatar-fallback={session.alias}
+                      data-node-avatar-fallback-hovered={isAvatarFallbackHovered ? 'true' : 'false'}
+                      style={{
+                        filter: isAvatarFallbackHovered ? 'brightness(1.15)' : undefined,
+                        transition: 'filter 200ms ease-out',
+                      }}
+                    >
                       <circle cx={pos.x} cy={pos.y} r={ar} fill={c.bg} stroke={c.ring} strokeWidth="1" />
                       <text
                         x={pos.x}
@@ -8991,7 +9029,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       >
                         {aliasInitial(session.alias)}
                       </text>
-                    </>
+                    </g>
                   );
                 })()}
                 {/* Issue #96: runtime badge — small corner glyph marking the
