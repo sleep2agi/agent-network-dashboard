@@ -9701,6 +9701,53 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-node-status-ring-hovered={isRingHovered ? 'true' : 'false'}
                       data-node-status-ring-stroke-width={ringStrokeWidth}
                       data-node-status-ring-brightness={isRingHovered ? '1.15' : '1'}
+                      /* Round 638 / Loop — status ring filter gains a
+                         status-tinted drop-shadow halo on isRingHovered.
+                         Sibling pattern to R637 (chat-target ring at
+                         r+14 outer surface); R638 applies the same
+                         chromatic identity to the per-node status ring
+                         at r=radius (the INNERMOST identifying ring).
+                         Pre-R638 the status ring's hover filter was
+                         brightness-only (light) or `url(#topo-glow)
+                         brightness` (cyber+online) — the halo on cyber
+                         stayed cyan (the standard glow filter) regard-
+                         less of which status tier (green/teal/slate)
+                         the stroke painted. R638 stacks a status-tinted
+                         drop-shadow at the FRONT of the filter chain:
+                         `drop-shadow(0 0 2px ${status.primary}40)` so
+                         the halo color matches the stroke color.
+                         Now the ring's status identity reads chromatic-
+                         ally at BOTH the stroke AND the halo:
+                           working → green stroke + green halo on hover
+                           idle    → teal  stroke + teal  halo on hover
+                           offline → slate stroke + slate halo on hover
+                         2px blur is tighter than R637's 3px because the
+                         status ring sits at r=radius (much smaller than
+                         R637's r=radius+14) and a wider blur would bleed
+                         into the avatar surface inside.
+                         0x40 alpha (~25 %) — matches R637's halo
+                         strength so both rings present the same chromat-
+                         ic halo intensity vocabulary.
+                         R51 sentinel safety: filter is paint-only, no
+                         bbox change. ringStrokeWidth still produces the
+                         sentinel values (1.5 offline / 3 online) which
+                         the overlap-test selector reads — filter
+                         affects neither the attribute nor the bbox.
+                         transition list already includes 'filter 300ms
+                         ease-out' (R584) so the halo COLOR easing on
+                         status flip composes with the existing R167
+                         stroke colour ease at the same cadence.
+                         R621 extended isRingHovered to also fire on
+                         chatAlias === session.alias — so chat-target
+                         nodes will also see the status-tinted halo on
+                         their status ring without further changes.
+                         Chromatic identity completion family at the
+                         per-node identity surface (sibling to R637):
+                           R637  chat-target ring (r+14, OUTERMOST)
+                           R638  status ring      (r=radius, INNERMOST) ← this
+                         data-node-status-ring-halo-color attr exposes
+                         the resolved color for tests. */
+                      data-node-status-ring-halo-color={isRingHovered ? status.primary : 'none'}
                       style={{
                         /* R584 — status ring gets brightness(1.15) on
                            hover. 23rd anchor in per-element brightness
@@ -9725,13 +9772,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              R584 status-ring brightness(1.15)  ← this round
 
                            Per-element brightness family: 23 anchors.
-                           Stacked-filter sub-pattern: 17 anchors. */
+                           Stacked-filter sub-pattern: 17 anchors.
+
+                           R638 prepends `drop-shadow(0 0 2px
+                           ${status.primary}40)` to the stack so the halo
+                           color matches the stroke color (status.primary)
+                           — completes the chromatic identity at the
+                           innermost per-node identity surface. */
                         filter: isRingHovered
                           ? (isLight
-                              ? 'brightness(1.15)'
+                              ? `drop-shadow(0 0 2px ${status.primary}40) brightness(1.15)`
                               : (isOnline
-                                  ? 'url(#topo-glow) brightness(1.15)'
-                                  : 'brightness(1.15)'))
+                                  ? `drop-shadow(0 0 2px ${status.primary}40) url(#topo-glow) brightness(1.15)`
+                                  : `drop-shadow(0 0 2px ${status.primary}40) brightness(1.15)`))
                           : undefined,
                         transition: 'fill 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, filter 300ms ease-out',
                       }}
