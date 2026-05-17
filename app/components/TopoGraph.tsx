@@ -9401,6 +9401,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-node-avatar-hovered={isAvatarHovered ? 'true' : 'false'}
                         data-node-avatar-rotate={isAvatarHovered ? '3' : '0'}
                         data-node-avatar-scale={isAvatarHovered ? '1.05' : '1'}
+                        data-node-avatar-drop-shadow={isAvatarHovered ? `0 0 4px ${pal.legendAccent}99` : 'none'}
                         style={{
                           /* R600 milestone — node vendor avatar gains
                              hover-rotate-3 via Tailwind v4 individual
@@ -9464,7 +9465,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              CSS transform). Scale only fires on hover. */
                           scale: isAvatarHovered ? '1.05' : '1',
                           transformOrigin: `${pos.x}px ${pos.y}px`,
-                          filter: isAvatarHovered ? 'brightness(1.15)' : undefined,
+                          /* R605 — per-node avatar gains drop-shadow on
+                             hover, stacked with R501 brightness(1.15).
+                             4th hover axis on the avatar (brightness +
+                             rotate + scale + drop-shadow), bringing
+                             avatar coverage closer to brand 书生 logo's
+                             5-axis signature (only missing R553 always-
+                             on breath, which would be visually noisy
+                             across 30 nodes).
+
+                             Color: pal.legendAccent at 0x99 alpha (~60%)
+                             — cyan/teal accent matches the edge-tier
+                             vocabulary (R534 edge-badge hover-glow,
+                             R478 recent-row pip glow, R479 group-label
+                             glow). The avatar joins the "lit by accent
+                             on attention" family at the per-node tier.
+
+                             4px blur radius reads tight on the avatar's
+                             14-28px footprint — smaller than R604 brand
+                             logo's 8px (40×40 footprint) for size
+                             proportionality.
+
+                             Same R582/R583 stacked-filter pattern.
+                             transition list already includes 'filter
+                             200ms ease-out' from R501; no transition
+                             change needed.
+
+                             Per-node avatar hover signature now 4 axes:
+                               R501/R558  brightness 1   → 1.15
+                               R600/R601  rotate     0   → 3deg
+                               R602       scale      1   → 1.05
+                               R605       drop-shadow → pal.legendAccent  ← this round */
+                          filter: isAvatarHovered
+                            ? `drop-shadow(0 0 4px ${pal.legendAccent}99) brightness(1.15)`
+                            : undefined,
                           transition: 'filter 200ms ease-out, rotate 200ms ease-out, scale 200ms ease-out',
                         }}
                       />
@@ -9518,6 +9552,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-node-avatar-monogram-hovered={isAvatarFallbackHovered ? 'true' : 'false'}
                         data-node-avatar-monogram-rotate={isAvatarFallbackHovered ? '3' : '0'}
                         data-node-avatar-monogram-scale={isAvatarFallbackHovered ? '1.05' : '1'}
+                        data-node-avatar-monogram-drop-shadow={isAvatarFallbackHovered ? `0 0 4px ${pal.legendAccent}99` : 'none'}
                         style={{
                           /* R601 — vendor-monogram fallback gains hover-
                              rotate-3 mirroring R600's image-branch
@@ -9540,7 +9575,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              prefix-group fallback completes 3/3 below). */
                           scale: isAvatarFallbackHovered ? '1.05' : '1',
                           transformOrigin: `${pos.x}px ${pos.y}px`,
-                          filter: isAvatarFallbackHovered ? 'brightness(1.15)' : undefined,
+                          /* R605 sibling — monogram fallback gains
+                             stacked drop-shadow + brightness filter
+                             on hover, mirroring the image branch above. */
+                          filter: isAvatarFallbackHovered
+                            ? `drop-shadow(0 0 4px ${pal.legendAccent}99) brightness(1.15)`
+                            : undefined,
                           transition: 'filter 200ms ease-out, rotate 200ms ease-out, scale 200ms ease-out',
                         }}
                       >
@@ -9587,6 +9627,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-node-avatar-fallback-hovered={isAvatarFallbackHovered ? 'true' : 'false'}
                       data-node-avatar-fallback-rotate={isAvatarFallbackHovered ? '3' : '0'}
                       data-node-avatar-fallback-scale={isAvatarFallbackHovered ? '1.05' : '1'}
+                      data-node-avatar-fallback-drop-shadow={isAvatarFallbackHovered ? `0 0 4px ${pal.legendAccent}99` : 'none'}
                       style={{
                         /* R601 — prefix-group hue-hashed initial fallback
                            gains hover-rotate-3 closing per-node avatar
@@ -9608,7 +9649,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            rotate-3deg + brightness-1.15 hover signature). */
                         scale: isAvatarFallbackHovered ? '1.05' : '1',
                         transformOrigin: `${pos.x}px ${pos.y}px`,
-                        filter: isAvatarFallbackHovered ? 'brightness(1.15)' : undefined,
+                        /* R605 sibling — prefix-group hue-hashed fallback
+                           gains stacked drop-shadow + brightness filter
+                           on hover. Closes per-node avatar drop-shadow
+                           coverage at 3/3 branches (image + monogram +
+                           fallback all share the same stacked filter). */
+                        filter: isAvatarFallbackHovered
+                          ? `drop-shadow(0 0 4px ${pal.legendAccent}99) brightness(1.15)`
+                          : undefined,
                         transition: 'filter 200ms ease-out, rotate 200ms ease-out, scale 200ms ease-out',
                       }}
                     >
