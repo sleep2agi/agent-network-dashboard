@@ -10628,10 +10628,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-minimap-viewport-smooth={smoothView ? 'true' : 'false'}
                   data-topo-minimap-viewport-hover={hoveredMinimap ? 'true' : 'false'}
                   data-topo-minimap-viewport-linejoin="round"
+                  /* Round 481 / Loop — 6th anchor in the drop-shadow
+                     visual-polish family. New gate type: ZOOM STATE.
+                     When current canvas zoom > 1.5x (50% above the
+                     default 1.0 baseline), the minimap viewport rect
+                     gains a soft cyan halo signaling "you're zoomed
+                     in beyond default". The minimap viewport already
+                     shrinks as you zoom in (rectW = VIEWBOX_W /
+                     view.zoom * sx, so at zoom=2 it halves) — the
+                     glow tells you the wayfinding marker is now
+                     scaled-down rather than at canvas-default size.
+                     Drop-shadow family — 6 gate types covered:
+                       R476  hub digit       hover-gated
+                       R477  legend pin-ring pin-gated
+                       R478  freshness pip   freshness-gated
+                       R479  group label     pin-gated
+                       R480  edge badge      hot-lane-gated
+                       R481  minimap         zoom-gated      ← this round
+                     6 distinct semantic gates (user interaction
+                     transient/sticky × 2, data freshness, data
+                     volume, canvas zoom state). Each anchor uses
+                     hue family appropriate to its semantic context.
+                     Hue: pal.legendAccent at 0x80 alpha — matches
+                     the existing R107 tint family and R478/R479
+                     cyan-tone choices. 2-px blur reads as subtle
+                     (the minimap viewport is small, ~120×82 px).
+                     Filter is paint-only — bbox unchanged. transition
+                     list extends to include 'filter 200ms ease-out'
+                     so the glow eases when zoom crosses 1.5x. */
+                  data-topo-minimap-viewport-glow={view.zoom > 1.5 ? 'true' : 'false'}
                   style={{
+                    filter: view.zoom > 1.5
+                      ? `drop-shadow(0 0 2px ${pal.legendAccent}80)`
+                      : undefined,
                     transition: smoothView
-                      ? 'x 280ms ease-out, y 280ms ease-out, width 280ms ease-out, height 280ms ease-out, stroke-width 200ms ease-out, opacity 200ms ease-out'
-                      : 'stroke-width 200ms ease-out, opacity 200ms ease-out',
+                      ? 'x 280ms ease-out, y 280ms ease-out, width 280ms ease-out, height 280ms ease-out, stroke-width 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out'
+                      : 'stroke-width 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                   } as React.CSSProperties}
                 />
               </svg>
