@@ -9578,6 +9578,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-edge-endpoint-ring-stroke-width={isEndpoint ? 2.4 : 1.6}
                       data-edge-endpoint-ring-radius={endpointR}
                       data-edge-endpoint-ring-brightness={isEndpoint ? '1.15' : '1'}
+                      /* Round 639 / Loop — endpoint emphasis ring filter
+                         gains a stroke-tinted drop-shadow halo on
+                         isEndpoint. Sibling to R637 (chat-target ring,
+                         status.primary stroke) + R638 (status ring,
+                         status.primary stroke). R639 applies the same
+                         chromatic-identity pattern to the third per-node
+                         ring whose stroke colour is non-trivial:
+                         `pal.flowEdge` (cyber cyan ↔ light emerald).
+                         Pre-R639 the endpoint ring's hover filter was
+                         plain `brightness(1.15)` — no chromatic halo
+                         to telegraph "this is an edge endpoint" on the
+                         paint axis. The brightness lift made the cyan
+                         stroke read brighter but the surface lacked
+                         the ambient glow that R637 + R638 added to
+                         their respective ring tiers.
+                         R639 prepends `drop-shadow(0 0 2px
+                         ${pal.flowEdge}40)` so:
+                           cyber endpoint → cyan halo around cyan stroke
+                           light endpoint → emerald halo around emerald stroke
+                         halo always matches the existing stroke color
+                         since `pal.flowEdge` is the only colour source.
+                         2px blur matches R638's status-ring halo (both
+                         rings sit at small radii: status at r=radius,
+                         endpoint at r=radius+7-8); R637's 3px is for
+                         the outermost r+14 chat-target ring.
+                         0x40 alpha (~25 %) matches R637 + R638 so all
+                         three identity rings present a uniform halo
+                         intensity vocabulary.
+                         R51 sentinel safety: ring strokeWidth oscillates
+                         between 1.6 (rest) and 2.4 (hover) — neither
+                         matches reserved {1.5, 3}. Filter is paint-only,
+                         no bbox change. transition list already includes
+                         'filter 180ms ease-out'.
+                         Chromatic identity completion family at the per-
+                         node ring surface (3 anchors now):
+                           R637  chat-target ring   (status.primary, r+14)
+                           R638  status ring        (status.primary, r=radius)
+                           R639  endpoint ring      (pal.flowEdge, r+7→r+8) ← this
+                         data-edge-endpoint-ring-halo-color attr exposes
+                         the resolved halo color for tests. */
+                      data-edge-endpoint-ring-halo-color={isEndpoint ? pal.flowEdge : 'none'}
                       style={{
                         pointerEvents: 'none',
                         r: `${endpointR}px`,
@@ -9606,8 +9647,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            the endpoint ring has no rest-time filter
                            attribute. Inline style.filter undefined at
                            rest (no flicker; opacity=0 already hides
-                           the ring). */
-                        filter: isEndpoint ? 'brightness(1.15)' : undefined,
+                           the ring).
+
+                           R639 prepends `drop-shadow(0 0 2px
+                           ${pal.flowEdge}40)` to the filter chain so
+                           the halo color matches the stroke color —
+                           completes the chromatic identity at the
+                           endpoint-ring surface (3rd anchor in
+                           chromatic-identity family). */
+                        filter: isEndpoint
+                          ? `drop-shadow(0 0 2px ${pal.flowEdge}40) brightness(1.15)`
+                          : undefined,
                         transition: 'opacity 180ms ease-out, stroke-width 180ms ease-out, r 180ms ease-out, filter 180ms ease-out',
                       } as React.CSSProperties}
                     />
