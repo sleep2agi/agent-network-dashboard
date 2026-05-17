@@ -10081,11 +10081,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-node-label-card-elevation={
                           !reducedMotion && hoveredAlias === session.alias ? 'hover' : 'idle'
                         }
+                        data-node-label-card-brightness={!reducedMotion && hoveredAlias === session.alias ? '1.15' : '1'}
                         style={{
+                          /* R613 — per-node label card stacks brightness
+                             (1.15) onto R142's hover drop-shadow. Same
+                             banked R582/R583 stacked-filter pattern.
+                             4th paint axis on the card's hover signature:
+                               R217  stroke tint   → pal.legendAccent
+                               R211  fill ease     200ms
+                               R142  drop-shadow   rest → hover (deeper)
+                               R613  brightness    1   → 1.15  ← this round
+
+                             The card's bg fill (pal.labelBox.fill: dark
+                             navy on cyber / white on light) lifts +15%
+                             alongside the existing drop-shadow
+                             elevation — cyber theme reads as "card lit
+                             warmer under attention" since the dark fill
+                             gains visible luminance from the +15%
+                             multiplication. Light theme bg is already
+                             near-white so brightness barely shifts the
+                             rect, but the cyan-tinted stroke (R217)
+                             still lifts visibly through the brightness
+                             filter.
+
+                             Drop-shadow exists at BOTH rest + hover
+                             tiers (R142); brightness only stacks on
+                             the hover tier. Rest stays at plain DS.
+
+                             Existing 'filter 220ms ease-out' transition
+                             covers brightness at the same cadence. */
                           filter: !reducedMotion && hoveredAlias === session.alias
                             ? (isLight
-                                ? 'drop-shadow(0 3px 8px rgba(15,23,42,0.20))'
-                                : 'drop-shadow(0 4px 12px rgba(0,0,0,0.60))')
+                                ? 'drop-shadow(0 3px 8px rgba(15,23,42,0.20)) brightness(1.15)'
+                                : 'drop-shadow(0 4px 12px rgba(0,0,0,0.60)) brightness(1.15)')
                             : (isLight
                                 ? 'drop-shadow(0 1px 2px rgba(15,23,42,0.08))'
                                 : 'drop-shadow(0 1px 2px rgba(0,0,0,0.30))'),
