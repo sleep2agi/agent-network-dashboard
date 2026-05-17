@@ -9858,6 +9858,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       + pointerEvents:none all preserved. data-legend-
                       pin-ring-stroke-width attr exposes the value for
                       tests. */}
+                  {/* Round 477 / Loop — legend pin-ring gains a filter:
+                     drop-shadow glow on isPinned. Extends R476's
+                     drop-shadow idiom from hub-digit (focal scope)
+                     to the legend-row pin-ring (sibling pin-state
+                     surface). When a status row is pinned, the
+                     concentric ring around the swatch now lights
+                     up with a colour-matched halo using row.fill,
+                     reinforcing "this filter is locked" via a
+                     glow layer above the R402 sw bump + R181
+                     opacity fade-in.
+                     Hue: row.fill at 0.55 alpha — picks up each
+                     status tier's signature colour (working green /
+                     idle teal / offline slate). 3px blur stays
+                     subtle but unmistakable when the row is locked.
+                     Reduced-motion users skip the filter via R29
+                     a11y blanket (transition-duration → 0.001ms
+                     so the glow appears/disappears instantly with
+                     pin toggle).
+                     Filter is paint-only — bbox unchanged, R51
+                     overlap-test gated to g[data-node] descendants
+                     so this legend-internal ring is invisible to
+                     the probe anyway. Transition list extends to
+                     include 'filter 200ms ease-out' so the glow
+                     eases under the same cadence as opacity. */}
                   <circle
                     cx="16" cy={row.y0} r="8"
                     fill="none"
@@ -9867,9 +9891,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-legend-pin-ring={row.key}
                     data-legend-pin-ring-pinned={isPinned ? 'true' : 'false'}
                     data-legend-pin-ring-stroke-width="1.75"
+                    data-legend-pin-ring-glow={isPinned ? 'true' : 'false'}
                     style={{
                       pointerEvents: 'none',
-                      transition: 'opacity 150ms ease-out',
+                      filter: isPinned
+                        ? `drop-shadow(0 0 3px ${row.fill}88)`
+                        : undefined,
+                      transition: 'opacity 150ms ease-out, filter 200ms ease-out',
                     }}
                   />
                   {/* Round 219 / Loop: legend row text gains the same
