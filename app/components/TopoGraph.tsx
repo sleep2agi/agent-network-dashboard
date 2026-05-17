@@ -759,27 +759,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         else runs.push({ key: gk, members: [s] });
       }
 
-      // Pass 1 — assign each run to a band: a multi-member group owns its
-      // rows (left-aligned, so its bounding box is a tidy rect); contiguous
-      // singletons pack into shared rows (centred). Collect total row count.
-      type Band = { members: Session[]; startRow: number; centred: boolean; isGroup: boolean };
+      // Pass 1 — assign each run to a band.
+      //
+      // v0.10.4 #150 (Vincent /goal 5453): "不是一起的落单的怎么散落在中间了".
+      // Pre-#150 algo interleaved singletons between real groups as
+      // centred bands, so orphan nodes appeared scattered in the middle
+      // between cluster boxes. Vincent screenshot called this out as
+      // "layout 算法一点都不好". Fix: bundle ALL singletons into ONE
+      // band at the bottom of the grid + render an "其他" cluster box
+      // around them. Multi-member prefix groups still go first in
+      // alias order (existing #83/#111 behaviour). Net effect:
+      //   row 0..N-1: real prefix groups (left-aligned, own cluster box)
+      //   row N..M:   single "其他" band collecting all orphans
+      //               (left-aligned, single cluster box at bottom)
+      // No orphans → no orphan band → behaviour identical to pre-#150
+      // for fleets where every node has a prefix-group match.
+      type Band = { members: Session[]; startRow: number; centred: boolean; isGroup: boolean; isOrphan?: boolean };
       const bands: Band[] = [];
       let row = 0;
-      let i = 0;
-      while (i < runs.length) {
-        if (runs[i].members.length >= 2) {
-          bands.push({ members: runs[i].members, startRow: row, centred: false, isGroup: true });
-          row += Math.ceil(runs[i].members.length / cols);
-          i++;
+      const orphanMembers: Session[] = [];
+      for (const run of runs) {
+        if (run.members.length >= 2) {
+          bands.push({ members: run.members, startRow: row, centred: false, isGroup: true });
+          row += Math.ceil(run.members.length / cols);
         } else {
-          const singles: Session[] = [];
-          while (i < runs.length && runs[i].members.length < 2) {
-            singles.push(runs[i].members[0]);
-            i++;
-          }
-          bands.push({ members: singles, startRow: row, centred: true, isGroup: false });
-          row += Math.ceil(singles.length / cols);
+          // single-member run → collect for the bottom orphan band
+          orphanMembers.push(...run.members);
         }
+      }
+      if (orphanMembers.length > 0) {
+        bands.push({ members: orphanMembers, startRow: row, centred: false, isGroup: true, isOrphan: true });
+        row += Math.ceil(orphanMembers.length / cols);
       }
       const totalRows = Math.max(1, row);
       // #112: the group label sits in a band ABOVE the topmost node, so the
@@ -852,8 +862,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             else if (isOn) i++;
             else o++;
           }
+          // v0.10.4 #150 — orphan band (singletons bundled at bottom)
+          // renders with a "其他" cluster box; the box-key drives the
+          // R63 label render + R86 hover-pin keying + #99 tooltip
+          // member listing, so all the existing group-box machinery
+          // applies uniformly to the orphan bucket too.
           return {
-            key: band.members.length ? groupKeys[band.members[0].alias] : '',
+            key: band.isOrphan
+              ? '其他'
+              : band.members.length
+                ? groupKeys[band.members[0].alias]
+                : '',
             count: band.members.length,
             statuses: { working: w, idle: i, offline: o },
             x: minX - GROUP_PAD,
@@ -10573,12 +10592,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          stale ones. data-topo-minimap-dot-opacity
                          attr (R392) reflects the resolved hover-
                          state value for tests. */
+                      /* Round 486 / Loop — 3rd anchor in the
+                         inspection-overrides-encoding pattern. Sibling
+                         to R484 (recent-row timestamp) + R485 (edge
+                         particle). When the operator hovers a node
+                         alias on the main canvas, the matching
+                         minimap dot lifts to opacity=1.0 regardless
+                         of the binary online/offline encoding —
+                         cross-reference cue between canvas focal
+                         and the minimap wayfinding overlay.
+                         Pre-R486 an offline node's minimap dot stayed
+                         at 0.6 even when the operator was inspecting
+                         it via canvas hover; R486 makes the
+                         inspection signal jump the minimap dot to
+                         full presence so the spatial reference is
+                         unambiguous.
+                         Encoding survives: data-topo-minimap-dot-
+                         online preserves the online/offline binary,
+                         data-topo-minimap-dot-opacity-rest preserves
+                         the would-be opacity. Only the LIVE painted
+                         opacity flips on inspection.
+                         inspection-overrides-encoding family — 3
+                         anchors now:
+                           R484 recent-row timestamp
+                           R485 edge particle
+                           R486 minimap dot   ← this round
+                         data-topo-minimap-dot-lifted attr exposes
+                         the override gate. */
                       r={isOn ? 1.9 : 1.2}
                       fill={st.primary}
-                      opacity={isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6}
+                      opacity={hoveredAlias === s.alias ? 1 : (isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6)}
                       data-topo-minimap-dot={s.alias}
                       data-topo-minimap-dot-online={isOn ? 'true' : 'false'}
-                      data-topo-minimap-dot-opacity={isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6}
+                      data-topo-minimap-dot-opacity={hoveredAlias === s.alias ? 1 : (isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6)}
+                      data-topo-minimap-dot-opacity-rest={isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6}
+                      data-topo-minimap-dot-lifted={hoveredAlias === s.alias ? 'true' : 'false'}
                       data-topo-minimap-dot-radius={isOn ? 1.9 : 1.2}
                       style={{
                         transition: 'opacity 200ms ease-out, fill 200ms ease-out, r 200ms ease-out',
