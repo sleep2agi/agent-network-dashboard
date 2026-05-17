@@ -10553,12 +10553,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 gpu hint promotes the svg to its own compositor layer
                 for crisper edges during the scale tween. Closes the
                 chrome-strip per-icon hover-affordance arc. */}
+            {/* R455 — fullscreen ENTER + EXIT icons pick up the same
+                group-hover:[stroke-width:2.8] family lift as the
+                zoom +/− icons (R454) and chrome reset icon (R453).
+                Chrome icon hover sw lift family now 6 anchors —
+                R208/R443 runtime badge + R453/R454-zoom-out/zoom-in
+                + R455 fullscreen (this round). transition-[transform,
+                stroke-width] expands existing transition-transform
+                so the sw lift eases under R352 scale-110 cadence. */}
             {isFullscreen ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-transform duration-200 ease-out group-hover:scale-110 transform-gpu" data-topo-chrome-fullscreen-icon="exit">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-[transform,stroke-width] duration-200 ease-out group-hover:scale-110 group-hover:[stroke-width:2.8] transform-gpu" data-topo-chrome-fullscreen-icon="exit">
                 <path d="M8 3v4a1 1 0 0 1-1 1H3M21 8h-4a1 1 0 0 1-1-1V3M3 16h4a1 1 0 0 1 1 1v4M16 21v-4a1 1 0 0 1 1-1h4" />
               </svg>
             ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-transform duration-200 ease-out group-hover:scale-110 transform-gpu" data-topo-chrome-fullscreen-icon="enter">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-[transform,stroke-width] duration-200 ease-out group-hover:scale-110 group-hover:[stroke-width:2.8] transform-gpu" data-topo-chrome-fullscreen-icon="enter">
                 <path d="M3 8V5a2 2 0 0 1 2-2h3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M21 16v3a2 2 0 0 1-2 2h-3" />
               </svg>
             )}
