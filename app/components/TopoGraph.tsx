@@ -14146,14 +14146,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            R486 minimap dot   ← this round
                          data-topo-minimap-dot-lifted attr exposes
                          the override gate. */
+                      /* Round 628 / Loop — extend the R486 inspection
+                         lift to chatAlias. 13th anchor in chat-target-
+                         gated brightness family. When the operator
+                         opens a chat with a node, its minimap dot
+                         lifts to opacity=1.0 same way hover does, so
+                         the chat-target's spatial position on the
+                         minimap is unambiguous while typing in the
+                         popover (which obscures the main canvas).
+                         Single-line gate union: hoveredAlias OR
+                         chatAlias. Encoding still survives via
+                         data-topo-minimap-dot-online +
+                         data-topo-minimap-dot-opacity-rest.
+                         chat-target-gated family anchors so far:
+                           R615 chat-target ring filter
+                           R616 alias-text filter
+                           R617 sub-text filter
+                           R618 label card stroke + filter
+                           R619 avatar (image + fallback)
+                           R620 runtime badge
+                           R621 ring hover
+                           R622 spoke hover
+                           R623 halo hover
+                           R624 incident edge
+                           R625 recent-row tint
+                           R626 group cluster
+                           R628 minimap dot ← this round (13th) */
                       r={isOn ? 1.9 : 1.2}
                       fill={st.primary}
-                      opacity={hoveredAlias === s.alias ? 1 : (isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6)}
+                      opacity={(hoveredAlias === s.alias || chatAlias === s.alias) ? 1 : (isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6)}
                       data-topo-minimap-dot={s.alias}
                       data-topo-minimap-dot-online={isOn ? 'true' : 'false'}
-                      data-topo-minimap-dot-opacity={hoveredAlias === s.alias ? 1 : (isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6)}
+                      data-topo-minimap-dot-opacity={(hoveredAlias === s.alias || chatAlias === s.alias) ? 1 : (isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6)}
                       data-topo-minimap-dot-opacity-rest={isOn ? (hoveredMinimap ? 1 : 0.95) : 0.6}
-                      data-topo-minimap-dot-lifted={hoveredAlias === s.alias ? 'true' : 'false'}
+                      data-topo-minimap-dot-lifted={(hoveredAlias === s.alias || chatAlias === s.alias) ? 'true' : 'false'}
+                      data-topo-minimap-dot-lifted-chat={chatAlias === s.alias ? 'true' : 'false'}
                       data-topo-minimap-dot-radius={isOn ? 1.9 : 1.2}
                       style={{
                         transition: 'opacity 200ms ease-out, fill 200ms ease-out, r 200ms ease-out',
