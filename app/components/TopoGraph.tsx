@@ -6695,6 +6695,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-hub-busyness={busy}
                   data-topo-hub-halo-radius={haloR}
                   data-topo-hub-halo-hovered={isHaloHovered ? 'true' : 'false'}
+                  data-topo-hub-halo-glow={!reducedMotion && hoveredHub ? 'true' : 'false'}
                   data-topo-hub-halo-trough={isLight ? troughLight : troughDark}
                   data-topo-hub-halo-peak={isLight ? peakLight : peakDark}
                   /* Round 253 / Loop: hub grounding halo fill transition
@@ -6706,10 +6707,45 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      conflict.
                      R451: r as CSS property (R197/R198 idiom) so the
                      hover-radius tween eases smoothly under the same
-                     200ms cadence as fill. */
+                     200ms cadence as fill.
+                     R536: extends hub-cluster glow QUARTET (R476 digit
+                     + R532 disc + R535 ring + R533 spokes) to a 5th
+                     tier — the halo gains drop-shadow at the outermost
+                     concentric ring on hub-hover. 2px blur + 0.3 alpha
+                     keeps the halo's glow subtle since (a) the halo is
+                     the LARGEST hub element (r=22 hover) and a heavier
+                     glow would bleed visibly past the ring tier into
+                     the spoke origin, and (b) the halo already SMIL-
+                     animates opacity (R84/R244 breath), so the visible
+                     glow pulses with the breath — an atmospheric
+                     "breathing glow" idiom rather than a static rim.
+                     Hub-cluster glow QUINTET (R476/R532/R533/R535/R536):
+                       digit (typo center)    3px emerald 0.6
+                       disc (r=5.5/6)         3px emerald 0.6
+                       ring (r=14/17)         3px emerald 0.5
+                       halo (r=20/22)         2px emerald 0.3  ← this round
+                       spokes (mesh)          1.5px cyan/teal 0.4
+                     Emerald palette continues through the focal-disc
+                     family (digit/disc/ring/halo); spokes break out
+                     into cyan/teal at the mesh tier. The 4-step alpha
+                     ladder 0.6→0.6→0.5→0.3 reads as the focal cluster
+                     fading outward — the OUTERMOST emerald glow is the
+                     softest, the focal digit is the brightest.
+                     filter is paint-only; SMIL animate on opacity
+                     continues independently (attribute vs CSS-property
+                     non-conflicting). transition list extends to
+                     'filter 200ms ease-out' alongside fill + r.
+                     Drop-shadow visual-polish family extension (12
+                     anchors). preview.50 milestone round. data-topo-
+                     hub-halo-glow attr exposes the gate state. */
                   style={{
                     r: `${haloR}px`,
-                    transition: 'fill 200ms ease-out, r 200ms ease-out',
+                    filter: !reducedMotion && hoveredHub
+                      ? (isLight
+                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.3))'
+                          : 'drop-shadow(0 0 2px rgba(52, 211, 153, 0.3))')
+                      : undefined,
+                    transition: 'fill 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                   } as React.CSSProperties}
                 >
                   {/* Round 244 / Loop: hub grounding halo breath gets
