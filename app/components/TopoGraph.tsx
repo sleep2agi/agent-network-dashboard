@@ -10919,7 +10919,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-legend-count-pinned={isPinned ? 'true' : 'false'}
                     data-legend-count-font-weight={isPinned ? '700' : '600'}
                     data-legend-count-fill={row.count > 0 && (hoveredStatus === row.key || isPinned) ? 'tier' : 'neutral'}
-                    style={{ pointerEvents: 'none', transition: 'opacity 150ms ease-out, fill 150ms ease-out, font-weight 150ms ease-out', fontVariantNumeric: 'tabular-nums' }}
+                    /* Round 518 / Loop — extends R433's 3-tier hover-
+                       letter-spacing tween from the legend-row LABEL
+                       (text at x=30) to the SIBLING legend-row COUNT
+                       digit (this text at x=215). Pre-R518 the row's
+                       label spread on hover/pin (R433: 0/0.25/0.5px)
+                       while the count digit at the row's right edge
+                       stayed dead-typographic — same row, two halves,
+                       asymmetric kerning gesture. R518 mirrors the
+                       3-tier scale at the count so the WHOLE row's
+                       typography reads as one unit under cursor: label
+                       + count spread together at matching values.
+                       Tabular-nums (R225) makes the kerning still
+                       visible on 2-digit counts — each digit cell
+                       keeps its fixed width, but the inter-digit
+                       advance grows. R518 also closes R475's panel-
+                       row TEXT cadence at the count surface — R475
+                       lifted the label text transitions to 200ms but
+                       the count was missed; R518 lifts opacity / fill
+                       / font-weight from 150 → 200ms AND adds the new
+                       letter-spacing axis at 200ms. One transition
+                       list, one cadence, one motion-coherent multi-
+                       axis hover/pin signature across the row.
+                       Hover-letter-spacing family extension (10
+                       anchors now): R344/R345/R347/R420/R427/R431/
+                       R432/R433/R517/R518. R518 closes the legend-
+                       row pair (label R433 + count R518). data-
+                       legend-count-letter-spacing attr exposes the
+                       resolved value for tests. */
+                    data-legend-count-letter-spacing={isPinned ? '0.5px' : hoveredStatus === row.key ? '0.25px' : '0px'}
+                    data-legend-count-transition="200ms"
+                    style={{
+                      pointerEvents: 'none',
+                      transition: 'opacity 200ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out, letter-spacing 200ms ease-out',
+                      fontVariantNumeric: 'tabular-nums',
+                      letterSpacing: isPinned ? '0.5px' :
+                                     hoveredStatus === row.key ? '0.25px' : '0px',
+                    }}
                   >{row.count}</text>
                 </g>
               );
