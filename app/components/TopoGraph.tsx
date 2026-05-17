@@ -10988,7 +10988,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    / fullscreen) preview their active state on hover.
                    Pure actions (zoom -/+, reset) stay white — they
                    aren't toggles, have no active state to preview. */
-                className={`px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
+                // Round 493 / Loop — extends R492 chrome-strip press-feedback
+                // family to nodeSize S/M/L buttons. Adds active:scale-95
+                // alongside the existing color-deepen (R196) + chrome-pop
+                // (R249). transition-transform + duration-200 + ease-out
+                // + transform-gpu added since this className previously had
+                // transition-colors only — without the transform transition,
+                // active:scale-95 would hard-cut. transform-gpu promotes the
+                // layer so scale doesn't trigger paint thrash.
+                className={`px-2 py-1 transition-colors transition-transform duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
                 style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
               >
                 {lbl}
@@ -11030,7 +11038,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // → white/10) so mouse-down has a tactile dim before the
               // R186 icon pop fires on release.
               // R352: `group` lets the inner svg respond via group-hover.
-              className="group px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
+              // R493 — zoom +/− buttons join the chrome-strip active:scale-95
+              // press-feedback family (R492 + nodeSize above). transition-
+              // transform + duration-200 + ease-out + transform-gpu added
+              // since the className had only transition-colors.
+              className="group px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors transition-transform duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom out"
               title="Zoom out (−)"
@@ -11170,7 +11182,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-topo-chrome-zoom-in-popping={chromePopping === 'zoom-in' ? 'true' : 'false'}
               // R196: press-state (mirror of zoom-out above).
               // R352: `group` lets the inner svg respond via group-hover.
-              className="group px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
+              // R493 — zoom +/− buttons join the chrome-strip active:scale-95
+              // press-feedback family (R492 + nodeSize above). transition-
+              // transform + duration-200 + ease-out + transform-gpu added
+              // since the className had only transition-colors.
+              className="group px-2 py-1 hover:bg-white/5 active:bg-white/10 transition-colors transition-transform duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
               style={{ color: pal.legendText }}
               aria-label="Zoom in"
               title="Zoom in (+)"
@@ -11222,7 +11238,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                Every standalone interactive HTML surface in TopoGraph
                now lifts on hover. data-topo-chrome-reset-hover-lift
                attr surfaces the lift for tests. */
-            className="p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 hover:-translate-y-px transition-colors transition-transform duration-200 ease-out transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
+            // R493 — reset button joins the chrome-strip active:scale-95
+            // press-feedback family. The button already has transition-
+            // transform + transform-gpu (R350 reset spin + R400 hover lift),
+            // so just appending active:scale-95 plugs straight in. Compound
+            // active state during press = hover-lift (-1px) + scale-95
+            // composes as translateY(-1px) scale(0.95) — lift-and-compress
+            // for tactile click feel.
+            className="p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 hover:-translate-y-px active:scale-95 transition-colors transition-transform duration-200 ease-out transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
             data-topo-chrome-reset-hover-lift="true"
             style={{ background: pal.legendBox.fill, borderColor: pal.containerBorder, color: pal.legendText }}
             aria-label="Reset view"
@@ -11315,7 +11338,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // fullscreen now all carry an icon-level hover gesture in
             // addition to the bg hover).
             // R400: hover translateY(-1px) lift — see reset button above for family doc.
-            className={`group p-1.5 rounded-md border hover:-translate-y-px transition-colors transition-transform duration-200 ease-out transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
+            // R493 — fullscreen joins active:scale-95 press family (same as
+            // reset above: lift-and-compress compound transform on press).
+            className={`group p-1.5 rounded-md border hover:-translate-y-px active:scale-95 transition-colors transition-transform duration-200 ease-out transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
                 ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 active:bg-cyan-500/25'
                 : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'
