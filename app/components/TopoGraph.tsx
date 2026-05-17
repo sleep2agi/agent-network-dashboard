@@ -9914,8 +9914,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        group-label R432, legend-row R433). R55 fill
                        150ms + R219 letter-spacing 150ms transition
                        untouched — additive conditional case. */
+                    /* Round 475 / Loop — final closure of the panel-row
+                       text scope cadence-sync. R473 lifted the legend-
+                       row TINT RECT to 200ms; R474 lifted the recent-
+                       row TEXT to 200ms; R475 closes the matching
+                       legend-row text desync — fill + letter-spacing
+                       both 150 → 200ms ease-out. After R475 the 3-tier
+                       panel-row cadence family is fully 200ms across
+                       BOTH rect and text at every panel-row scope
+                       (group-label / recent-row / legend-row). Hover/
+                       pin state-flip at any panel-row tier reads as
+                       one motion-coherent unit. data-legend-row-
+                       label-transition='200ms' attr exposed for tests.
+                       R433 3-tier letter-spacing values (0/0.25/0.5)
+                       unchanged; R55 fill brighten unchanged — only
+                       the timing axis shifts. */
+                    data-legend-row-label-transition="200ms"
                     style={{
-                      transition: 'fill 150ms ease-out, letter-spacing 150ms ease-out',
+                      transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out',
                       letterSpacing: isPinned ? '0.5px' :
                                      hoveredStatus === row.key ? '0.25px' : '0px',
                     }}
