@@ -9319,6 +9319,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       {' · '}
                       <tspan opacity="0.7" data-recent-row-content-tspan>{truncate(link.content, 8)}</tspan>
                     </text>
+                    {/* Round 484 / Loop — recent-row timestamp opacity
+                       lifts to 1.0 when isRowHovered || isRowPinned,
+                       regardless of freshness alpha. R191 origin
+                       decays tsAlpha along with the row's freshness;
+                       pre-R484 hovering/pinning the row left the
+                       timestamp dim — user inspecting stale data
+                       fought the freshness encoding. R484 lifts to
+                       1.0 on attention. Sibling to R472/R474 in the
+                       recent-row state-flip family. data-recent-row-
+                       ts-lifted attr exposes the gate; original
+                       data-recent-row-ts-alpha preserved as R191
+                       freshness reading. */}
                     {lastAt ? (
                       /* Round 321 / Loop: lastAt freshness timestamp picks
                          up fontVariantNumeric tabular-nums. The string
@@ -9342,9 +9354,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         fill={pal.legendText}
                         fontSize="8"
                         fontFamily="monospace"
-                        opacity={tsAlpha}
+                        opacity={(isRowHovered || isRowPinned) ? 1 : tsAlpha}
                         data-recent-row-ts={link.key}
                         data-recent-row-ts-alpha={tsAlpha.toFixed(2)}
+                        data-recent-row-ts-lifted={(isRowHovered || isRowPinned) ? 'true' : 'false'}
                         style={{
                           pointerEvents: 'none',
                           transition: 'opacity 200ms ease-out',
