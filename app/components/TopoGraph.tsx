@@ -4761,10 +4761,35 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   opacity={isPinned || isHovered ? 1 : 0.55}
                   data-group-label-hovered={isHovered && !isPinned ? 'true' : 'false'}
                   data-group-label-font-weight={isPinned ? '800' : '700'}
+                  /* Round 479 / Loop — extend drop-shadow visual-polish
+                     family to a 4th anchor: group-label parent text
+                     on isPinned. Continues the R476/R477/R478 arc:
+                       R476  hub digit           hover-gated     emerald
+                       R477  legend pin-ring     pin-gated       row.fill
+                       R478  recent-row pip      freshness-gated cyan
+                       R479  group-label text    pin-gated       cyan
+                     Hue: pal.legendAccent at 0x80 alpha (≈50%) — same
+                     accent family R107/R477 use for tint surfaces. 3px
+                     blur reads as a soft cyan halo around the locked
+                     cluster name. Stacks with the R432 letter-spacing
+                     spread + R457 fw lift + R63 fill brighten + R142
+                     drop-shadow on the parent rect — pin signature on
+                     group label scope now spans typography + chroma +
+                     paint + container-lift + text-glow.
+                     Filter is paint-only; bbox unchanged; overlap-test
+                     invariants hold (R51 selector gated to g[data-node]
+                     descendants, this label is invisible to the probe).
+                     transition list extends to include 'filter 200ms
+                     ease-out' alongside the existing fill/ls/fw/opacity
+                     200ms tweens. */
+                  data-group-label-glow={isPinned ? 'true' : 'false'}
                   style={{
-                    transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, opacity 200ms ease-out',
+                    transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                     letterSpacing: isPinned ? '0.5px' :
                                    isHovered ? '0.25px' : '0px',
+                    filter: isPinned
+                      ? `drop-shadow(0 0 3px ${pal.legendAccent}80)`
+                      : undefined,
                   }}
                   data-group-label={box.key}
                   data-group-label-pinned={isPinned ? 'true' : 'false'}
