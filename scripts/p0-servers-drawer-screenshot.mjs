@@ -35,6 +35,7 @@ await ctx.route('**/api/hub/servers*', (route) => {
           disk_total_gb: 500,
           cpu_history: [25, 28, 32, 30, 35, 38, 40, 36, 33, 30],
           mem_history: [50, 52, 55, 56, 58, 57, 59, 60, 58, 57],
+          disk_history: [40, 42, 43, 43, 44, 44, 44, 44, 44, 44],
           agents: [
             { alias: 'claude-1', runtime: 'claude-code-cli', status: 'working', progress: 0.42 },
             { alias: 'codex-1', runtime: 'codex-sdk', status: 'working', progress: 0.18 },
