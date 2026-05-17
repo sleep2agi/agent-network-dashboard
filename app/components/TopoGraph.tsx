@@ -9444,9 +9444,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       <g
                         data-node-avatar-monogram={session.alias}
                         data-node-avatar-monogram-hovered={isAvatarFallbackHovered ? 'true' : 'false'}
+                        data-node-avatar-monogram-rotate={isAvatarFallbackHovered ? '3' : '0'}
                         style={{
+                          /* R601 — vendor-monogram fallback gains hover-
+                             rotate-3 mirroring R600's image-branch
+                             closure. Per-node avatar rotate coverage
+                             now 2/3 (image R600, monogram R601 here;
+                             prefix-group fallback completes 3/3 below).
+                             Same R558 closure-of-arc semantics applied
+                             to the rotate axis — what brightness did
+                             for the avatar 3-branch arc (R501 image +
+                             R558 monogram + R558 fallback), rotate
+                             now does (R600 + R601 monogram + R601
+                             fallback).
+                             transform-origin pinned to node center
+                             (pos.x, pos.y) — same idiom as R600. */
+                          rotate: isAvatarFallbackHovered ? '3deg' : '0deg',
+                          transformOrigin: `${pos.x}px ${pos.y}px`,
                           filter: isAvatarFallbackHovered ? 'brightness(1.15)' : undefined,
-                          transition: 'filter 200ms ease-out',
+                          transition: 'filter 200ms ease-out, rotate 200ms ease-out',
                         }}
                       >
                         <circle cx={pos.x} cy={pos.y} r={ar} fill={vendor.mono.bg} stroke={vendor.mono.ring} strokeWidth="1.5" />
@@ -9490,9 +9506,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     <g
                       data-node-avatar-fallback={session.alias}
                       data-node-avatar-fallback-hovered={isAvatarFallbackHovered ? 'true' : 'false'}
+                      data-node-avatar-fallback-rotate={isAvatarFallbackHovered ? '3' : '0'}
                       style={{
+                        /* R601 — prefix-group hue-hashed initial fallback
+                           gains hover-rotate-3 closing per-node avatar
+                           rotate coverage at 3/3 branches (image R600 +
+                           monogram R601 + fallback R601 here).
+                           Same idiom across all 3 branches: rotate 3deg
+                           on hover, transform-origin pinned to node
+                           center, transition 'rotate 200ms ease-out'
+                           alongside the existing 'filter 200ms' filter
+                           transition from R558. Whatever the vendor-
+                           detection branch resolves to (image / monogram
+                           / hue-hashed initial), the user gets the same
+                           +3° wobble-awake gesture on alias hover. */
+                        rotate: isAvatarFallbackHovered ? '3deg' : '0deg',
+                        transformOrigin: `${pos.x}px ${pos.y}px`,
                         filter: isAvatarFallbackHovered ? 'brightness(1.15)' : undefined,
-                        transition: 'filter 200ms ease-out',
+                        transition: 'filter 200ms ease-out, rotate 200ms ease-out',
                       }}
                     >
                       <circle cx={pos.x} cy={pos.y} r={ar} fill={c.bg} stroke={c.ring} strokeWidth="1" />
