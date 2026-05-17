@@ -4474,12 +4474,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      contract that topo-overlap-test gates. Hitbox
                      rect width tightens to min(box.w-12, 160) to
                      track the narrower label render. */}
+                  {/* Round 465 / Loop — hitbox tint rect rx 4 → 5 on
+                     pinnedGroup match. Mirrors R464 (parent group-box
+                     rx 14 → 16 on isPinned) at the hitbox tier. The
+                     R460 hitbox carried fixed rx=4 since codex p.125
+                     pivoted it to the bottom-of-band position; the
+                     pin-state geometric softening was only on the BIG
+                     outer container, not the small hitbox underneath.
+                     R465 adds +1 px corner rounding on pin so the
+                     tint rect echoes the parent's locked posture at
+                     its own scale (8% relative bump matches R464's
+                     14→16 ≈ 14% scaled to the smaller rect).
+                     Transition list (R460 fill/opacity/x/width 200ms
+                     ease-out) extends to include `rx 200ms ease-out`
+                     so the rounding eases under the same cadence.
+                     SVG2 CSS animation on rx: Chrome 95+ / Safari
+                     16+ / FF 70+ (same matrix as x/y/w/h).
+                     data-group-label-tint-rx exposes the resolved
+                     value for tests. */}
                   <rect
                     x={box.x + 6}
                     y={box.y + 2}
                     width={Math.min(box.w - 12, 160)}
                     height={18}
-                    rx="4"
+                    rx={pinnedGroup === box.key ? '5' : '4'}
+                    data-group-label-tint-rx={pinnedGroup === box.key ? '5' : '4'}
                     fill={pinnedGroup === box.key || hoveredGroupLabel === box.key ? pal.legendAccent : 'transparent'}
                     opacity={pinnedGroup === box.key ? (isLight ? 0.16 : 0.20)
                             : hoveredGroupLabel === box.key ? (isLight ? 0.09 : 0.13)
@@ -4518,8 +4537,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        data-group-label-tint-geom-transition attr
                        exposes the geometry-axis presence for tests. */
                     data-group-label-tint-transition="200ms"
-                    data-group-label-tint-geom-transition="x,width"
-                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out, x 200ms ease-out, width 200ms ease-out' }}
+                    data-group-label-tint-geom-transition="x,width,rx"
+                    style={{ transition: 'fill 200ms ease-out, opacity 200ms ease-out, x 200ms ease-out, width 200ms ease-out, rx 200ms ease-out' }}
                   />
                 {/* Round 218 / Loop: group label gains a letter-spacing
                     transition on pin — the text subtly spaces out
