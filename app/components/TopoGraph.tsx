@@ -7544,6 +7544,43 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                            attr surfaces the lift for tests. */
                         data-edge-badge-text-brightness={(isHoveredEdge || isPinned || isHot || isEndpointHoveredEdge) ? '1.15' : '1'}
                         data-edge-badge-text-endpoint-active={isEndpointHoveredEdge ? 'true' : 'false'}
+                        /* Round 632 / Loop — canvas-side edge-badge digit
+                           picks up R498's `anet-recent-hot-pulse` className
+                           when isHot && !reducedMotion. The panel-row count
+                           digit (R498) already breathes 0.85 ↔ 1.0 over 3s
+                           on hot lanes (count ≥ 10); R632 extends that
+                           gesture to the canvas-edge badge digit — the
+                           per-edge equivalent surface that displays the
+                           same count.
+                           Both digit surfaces now pulse together on the
+                           SAME hot threshold, so a high-traffic lane
+                           reads as "alive" simultaneously in the panel
+                           AND on the canvas — 信息密度 consistency.
+                           Pre-R632 only paint (R127 amber fill) + weight
+                           (R426 fw 700→800) + spacing (R220 0→0.4)
+                           differentiated hot at the badge; the digit
+                           stayed visually motionless while its panel
+                           counterpart breathed. R632 closes that
+                           cross-surface motion parity.
+                           Same 3s ease-in-out cycle as R498 (sibling at
+                           the canvas-side surface). The pulse animates
+                           opacity at the <text> level; the existing R570/
+                           R629 inline filter (brightness) animates filter
+                           via CSS transition — different CSS properties,
+                           no conflict. R498's prefers-reduced-motion
+                           handling via the R29 blanket override applies
+                           automatically (animation-duration: 0.001ms
+                           !important). Component-side `!reducedMotion`
+                           gate also keeps the className absent for the
+                           no-motion preference, avoiding a node-tree
+                           thrash.
+                           Hot-pulse family now 2 anchors:
+                             R498  panel-row count digit  (recent-signal)
+                             R632  edge-badge digit       (canvas-edge) ← this
+                           data-edge-badge-text-hot-pulse attr exposes the
+                           new gate axis for tests. */
+                        className={isHot && !reducedMotion ? 'anet-recent-hot-pulse' : undefined}
+                        data-edge-badge-text-hot-pulse={isHot && !reducedMotion ? 'true' : 'false'}
                         style={{
                           pointerEvents: 'none',
                           fontVariantNumeric: 'tabular-nums',
