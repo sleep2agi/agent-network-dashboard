@@ -6867,9 +6867,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-topo-hub-highlight-opacity={resolvedOpacity}
                   data-topo-hub-highlight-breath={breathActive ? 'true' : 'false'}
                   data-topo-hub-highlight-recede={hubRecede ? 'true' : 'false'}
+                  /* Round 510 / Loop — R509 follow-on: theme-toggle fill
+                     ease. Pre-R510 the hub-highlight transition spec only
+                     listed `opacity 300ms ease-out`. When R509 introduced
+                     theme-conditional fill (#d1fae5 ↔ #10b981), the fill
+                     change SNAPPED on theme toggle because the transition
+                     list didn't include `fill`. R510 extends to `fill
+                     200ms ease-out` so theme cycles smoothly through the
+                     emerald palette. 200ms timing matches the R253 halo
+                     fill transition (line ~6500) — both hub-cluster
+                     theme transitions now share a cadence so the focal
+                     cluster (digit + highlight + halo) eases as a unit.
+                     R508's recede opacity transition unchanged (300ms);
+                     fill is independent. */
                   style={{
                     pointerEvents: 'none',
-                    transition: 'opacity 300ms ease-out',
+                    transition: 'opacity 300ms ease-out, fill 200ms ease-out',
                   }}
                 >
               {/* Round 497 / Loop — idle-state breath (呼吸感 theme pivot
