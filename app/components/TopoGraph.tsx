@@ -9689,7 +9689,48 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 200ms ease-out' alongside R345's ls + R55's fill
                 200ms. data-recent-panel-title-fw exposes the
                 resolved weight for tests. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out' }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'}>recent signal</text>
+            {/* Round 550 / Loop — drop-shadow visual-polish family
+                extends to a 14th anchor: the recent-panel header
+                title gains a soft pal.legendAccent glow when the
+                panel has an active row (activeEdgeKey). Pre-R550
+                the title's state-flip on active was 2-axis (R482
+                fw 700→800 + R345 ls 0.3→0.4 when panel-hovered);
+                R550 adds the paint axis so the title brightens
+                paint-wise alongside the typographic tightening when
+                a row inside its panel is locked.
+
+                Hue: pal.legendAccent + hex alpha '80' (~50%) — same
+                strength as R479 group-label pin-glow at the parent
+                panel-title scope. 2px blur reads soft; cyan accent
+                ties the title visually to the active row's pin
+                colour (cyber: cyan-300 / light: teal-600). Hex+alpha
+                concat safe — pal.legendAccent is '#67e8f9' (cyber)
+                or '#0d9488' (light), both 6-digit hex (banked R541:
+                hex sources use hex+alpha; only hsl/color()/dynamic
+                sources need color-mix).
+
+                Drop-shadow visual-polish family extension (14
+                anchors now):
+                  R476  hub digit          hover-gated emerald
+                  R477  legend pin-ring    pin-gated   row.fill
+                  R478  recent-row pip     freshness   cyan
+                  R479  group-label text   pin-gated   cyan
+                  R532-R536 hub-cluster glow QUINTET
+                  R537  legend swatch      hover/pin   row.fill
+                  R538  group-label hover-precedence
+                  R540  edge-badge text    pin-gated   cyan
+                  R543-R546 pin-active pill 4-variant arc
+                  R550  recent-panel title pin-gated   cyan  ← this round
+                  R550  legend-panel title pin-gated   cyan  ← sibling (next text below)
+
+                filter is paint-only; bbox unchanged; overlap-test
+                invariants hold. transition list extends to include
+                'filter 200ms ease-out' alongside R345 ls + R482 fw
+                + R55 fill 200ms — one motion-coherent 3-axis active-
+                state lift.
+                data-recent-panel-title-glow attr exposes the gate
+                state for tests. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: activeEdgeKey ? `drop-shadow(0 0 2px ${pal.legendAccent}80)` : undefined }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-glow={activeEdgeKey ? 'true' : 'false'}>recent signal</text>
             {/* R96: header count now matches what the rows show. Pre-R96
                 this read "X msgs" off the raw messages array, but the
                 rows below render DEDUPED flowLinks — so a fleet with 10
@@ -11028,7 +11069,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                data-legend-panel-title-fw + -active exposed for tests. */}
             {/* R345 sibling — legend panel title same hover letter-
                 spacing tween 0.3 → 0.4 on panel hover. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out' }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'}>legend</text>
+            {/* Round 550 sibling — legend-panel header title mirrors
+                the recent-panel title above: drop-shadow glow on
+                pin-gated active state (pinnedStatus). Same hue
+                (pal.legendAccent + hex alpha 80), same 2px blur,
+                same 200ms ease-out cadence. Family lifts to 15
+                anchors with this sibling (counted as R550-sibling
+                for accounting parity with R532-R536 hub-cluster
+                glow quintet pattern — two co-shipping anchors
+                under a single round number).
+                data-legend-panel-title-glow attr added. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: pinnedStatus ? `drop-shadow(0 0 2px ${pal.legendAccent}80)` : undefined }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-glow={pinnedStatus ? 'true' : 'false'}>legend</text>
             {/* Round 257 / Loop: legend panel header count picks up the
                 symmetric 13L/13R inner-padding pattern from the recent-
                 signal panel. Pre-R257 the legend header was 13px from
