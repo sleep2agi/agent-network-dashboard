@@ -10188,6 +10188,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       stays as is, so the rest-vs-hover delta still
                       reads clearly. data-recent-panel-more-font-weight
                       attr exposes the value for tests. */}
+                  {/* Round 520 / Loop — extends the `+N more flows` footer
+                      to a 5-axis hover signature by adding fontWeight
+                      500 → 600 on hover. Pre-R520 the footer carried 4
+                      hover axes:
+                        R195   fill           legendText → legendAccent
+                        R325   letter-spacing 0.2 → 0.3px (R344 tween)
+                        R325   opacity        0.55 → 0.85
+                        R133   underline      none → underline
+                      R368 had set fontWeight 500 statically as a sibling
+                      to R363/R364/R366 small-text fw lift family — but
+                      the footer's hover state didn't carry a fontWeight
+                      DELTA the way other interactive surfaces do (chip-
+                      row counts R416, chrome zoom-level R420, hub digit
+                      R425). R520 adds the missing weight axis: fw 500
+                      → 600 on hover, so the footer reads "thickening AND
+                      lighting up" under cursor — same idiom as the
+                      chrome zoom-level R420 / chip-row digit R416 hover-
+                      bold pattern, applied at the panel nav-action
+                      surface.
+                      data-recent-panel-more-font-weight attr value
+                      flips from '500' → '600' on hover (was static
+                      '500' pre-R520).
+                      Bonus closure — R475 panel-text cadence: pre-R520
+                      the footer's transition list had `opacity 150ms`
+                      while R475 unified panel-text transitions at
+                      200ms. R518 closed the same gap at legend-count.
+                      R520 closes the LAST panel-text 150ms holdout
+                      here AND adds the new font-weight 200ms axis. All
+                      4 transition properties (opacity / fill / letter-
+                      spacing / font-weight) now uniform 200ms at the
+                      footer — same cadence as legend-label / legend-
+                      count / recent-row alias / recent-row count /
+                      group-label. */}
                   <text
                     x="115" y="82"
                     textAnchor="middle"
@@ -10195,14 +10228,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     fontSize="9"
                     fontFamily="monospace"
                     fontStyle="italic"
-                    fontWeight="500"
+                    fontWeight={hoveredRecentMore ? '600' : '500'}
                     letterSpacing={hoveredRecentMore ? '0.3' : '0.2'}
                     opacity={hoveredRecentMore ? 0.85 : 0.55}
                     textDecoration={hoveredRecentMore ? 'underline' : 'none'}
                     data-recent-panel-more={moreCount}
                     data-recent-panel-more-hovered={hoveredRecentMore ? 'true' : 'false'}
-                    data-recent-panel-more-font-weight="500"
-                    style={{ transition: 'opacity 150ms ease-out, fill 200ms ease-out, letter-spacing 200ms ease-out' }}
+                    data-recent-panel-more-font-weight={hoveredRecentMore ? '600' : '500'}
+                    data-recent-panel-more-transition="200ms"
+                    style={{ transition: 'opacity 200ms ease-out, fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out' }}
                   >
                     {`+ ${moreCount}`}
                     <tspan opacity="0.7" data-recent-panel-more-unit>{` more flow${moreCount === 1 ? '' : 's'}`}</tspan>
