@@ -9672,6 +9672,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           alias > status hierarchy holds at the type
                           level. data-node-sub-text-font-weight attr
                           exposes the value for tests. */}
+                      {/* Round 567 / Loop — node sub-text joins the per-
+                          node hover-brightness consistency family. Pre-
+                          R567 sub-text had only fill brighten (R211) +
+                          ls 0→0.2 (R428); the alias text above lifted
+                          via R500 drop-shadow + R564 brightness(1.15)
+                          stacked. R567 adds brightness(1.15) to sub-
+                          text on the same isNodeActive gate so it
+                          chromatically lifts together with the alias.
+                          Per-node hover-brightness consistency family
+                          — 6 anchors at uniform +15%:
+                            R501  vendor.logo image          filter on <image>
+                            R558  vendor monogram            filter on <g>
+                            R558  prefix-group fallback      filter on <g>
+                            R564  alias text (stacked w/ DS) brightness(1.15)
+                            R567  node sub-text              brightness(1.15)  ← this round
+                            (+ R559 runtime badge drop-shadow tier-color glow)
+                          Now every per-node identity surface (3 avatar
+                          variants + alias + sub-text + badge) lifts
+                          together on node hover with consistent visual
+                          response.
+                          Pure paint axis; bbox unchanged. transition
+                          list extends to include 'filter 200ms ease-
+                          out' matching R428 ls cadence at this scope.
+                          data-node-sub-text-brightness attr exposes
+                          the lift for tests. */}
                       <text
                         x="0" y={subY} textAnchor="middle"
                         fill={status.primary}
@@ -9680,9 +9705,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         data-node-sub-text={session.alias}
                         data-node-sub-text-hovered={hoveredAlias === session.alias ? 'true' : 'false'}
                         data-node-sub-text-font-weight="500"
+                        data-node-sub-text-brightness={!reducedMotion && hoveredAlias === session.alias ? '1.15' : '1'}
                         style={{
-                          transition: 'fill 300ms ease-out, letter-spacing 200ms ease-out',
+                          transition: 'fill 300ms ease-out, letter-spacing 200ms ease-out, filter 200ms ease-out',
                           letterSpacing: hoveredAlias === session.alias ? '0.2px' : '0px',
+                          filter: !reducedMotion && hoveredAlias === session.alias
+                            ? 'brightness(1.15)'
+                            : undefined,
                         }}
                       >
                         {status.label}{isOnline && sseCountFor != null ? ` sse:${sseCountFor}` : ''}
