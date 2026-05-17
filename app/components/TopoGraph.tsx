@@ -1802,12 +1802,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               landing rotation for tests. Pair with R548's
               data-topo-brand-logo-hover-scale attr — both attrs
               advertise the dual-axis hover signature. */}
+          {/* Round 553 / Loop — title-block brand logo gains subtle
+              idle opacity breath (~0.92 ↔ 1, 5s ease-in-out cycle).
+              5th anchor in the 呼吸感 breath family, slotting into
+              the ascending cadence ladder between hub idle (4s) and
+              watermark (6s):
+                row hot       3s
+                hub idle      4s
+                brand logo    5s   ← this round
+                watermark     6s
+                crescent      7s
+              Composes cleanly with R548 hover:scale-105 + R549
+              hover:rotate-6 — opacity, scale, and rotate are
+              independent CSS properties; the moon keeps breathing
+              as it scales and rotates on hover. Layered effect
+              reads as "this brand mark is alive even before you
+              touch it, and lights up further on hover".
+              Reduced-motion gate: component-side `!reducedMotion`
+              toggles the className (canonical TopoGraph breath
+              pattern); R29 globals.css blanket provides a
+              defense-in-depth fallback (animation-duration →
+              0.001ms under prefers-reduced-motion: reduce).
+              data-topo-brand-logo-breath attr exposes the gate
+              state for tests. */}
           <svg
             width="40" height="40" viewBox="0 0 32 32" aria-hidden
-            className="shrink-0 transition-transform duration-200 ease-out hover:scale-105 hover:rotate-6 transform-gpu"
+            className={`shrink-0 transition-transform duration-200 ease-out hover:scale-105 hover:rotate-6 transform-gpu${!reducedMotion ? ' anet-topo-brand-logo-breath' : ''}`}
             data-topo-brand-logo
             data-topo-brand-logo-hover-scale="1.05"
             data-topo-brand-logo-hover-rotate="6deg"
+            data-topo-brand-logo-breath={!reducedMotion ? 'true' : 'false'}
             style={{
               color: isLight ? '#0d9488' : '#67e8f9',
               cursor: 'default',
