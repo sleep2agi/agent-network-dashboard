@@ -1186,6 +1186,45 @@ body {
               filter 200ms ease-out;
 }
 
+/* Round 697 — chrome strip segmented-control wrappers gain a wrapper-
+   level multi-layer halo when ANY inner button is hovered. Pre-R697
+   the 3 chrome wrappers (Layout / nodeSize / zoom) had only static
+   border + background — individual buttons inside halo via R674/R675/
+   R673/R668 but the parent wrapper stayed flat. R697 uses CSS `:has()`
+   to detect inner button hover and applies a 2-layer drop-shadow at
+   cyan-300 (#67e8f9) — compact-chrome tier (2+4 stride, 0.5/0.25 alpha).
+
+   When user hovers a child Ring/Grid/S/M/L/zoom button, the WRAPPER
+   itself echoes the inner-button halo outward in a soft glow — chrome
+   strip reads as one coherent "this control group is active" gesture
+   alongside the per-button cyan halo.
+
+   Cyan-300 hardcoded (vs theme-driven pal.legendAccent) since CSS
+   doesn't have a clean handle on the React-computed palette token at
+   this wrapper level. Cyan-300 ≈ light theme's pal.legendAccent
+   (#0d9488 teal-600) is bluish; the halo is hover-only + brief so the
+   slight cross-theme hue mismatch is acceptable.
+
+   transition: filter 200ms ease-out — matches the inner buttons'
+   200ms cadence so wrapper + buttons ease together on hover-in/out.
+
+   53rd anchor in multi-layer halo family — first wrapper-level
+   has-hover anchor. Closes chrome-strip "active control group"
+   signal at the parent scope alongside R667-R675 per-button anchors. */
+[data-topo-chrome-layout-trailer]:has(button:hover),
+[data-topo-chrome-fleet-group-trailer]:has(button:hover),
+[data-topo-chrome-zoom-wrapper]:has(button:hover) {
+  filter: drop-shadow(0 0 2px rgba(103, 232, 249, 0.5))
+          drop-shadow(0 0 4px rgba(103, 232, 249, 0.25));
+}
+[data-topo-chrome-layout-trailer],
+[data-topo-chrome-fleet-group-trailer],
+[data-topo-chrome-zoom-wrapper] {
+  transition: background-color 200ms ease-out,
+              border-color 200ms ease-out,
+              filter 200ms ease-out;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
