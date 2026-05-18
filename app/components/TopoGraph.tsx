@@ -3048,11 +3048,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           : (isLight ? '#475569' : '#9ca3af'),
                 borderColor: 'currentColor',
                 cursor: 'pointer',
+                /* R664 — status filter pin pill drop-shadow gains a 2nd
+                   outer layer at 6px + 0x4c alpha (half R543 inner 0x99).
+                   23rd anchor in multi-layer halo family — completes
+                   the chip-row tier with all 4 chip variants now multi-
+                   layer (filter-pills R661 + pressure-bar R662 + vendor
+                   R663 + status pin R664). Per-tier color (working /
+                   idle / offline emerald/teal/slate text shade) preserved
+                   across both layers. */
                 filter: `drop-shadow(0 0 3px ${
                   pinnedStatus === 'working' ? (isLight ? '#047857' : '#86efac')
                   : pinnedStatus === 'idle'  ? (isLight ? '#0f766e' : '#5eead4')
                   : (isLight ? '#475569' : '#9ca3af')
-                }99)`,
+                }99) drop-shadow(0 0 6px ${
+                  pinnedStatus === 'working' ? (isLight ? '#047857' : '#86efac')
+                  : pinnedStatus === 'idle'  ? (isLight ? '#0f766e' : '#5eead4')
+                  : (isLight ? '#475569' : '#9ca3af')
+                }4c)`,
               }}
             >
               {/* Round 412 / Loop: filter pin pill VALUE picks up the
