@@ -1148,6 +1148,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // the standalone chrome button pair (reset + fullscreen) at
   // brightness parity.
   const [hoveredFullscreen, setHoveredFullscreen] = useState(false);
+  // R673 — hover state for the chrome zoom-in / zoom-out buttons.
+  // Drives the multi-layer halo filter (pal.legendAccent 2+4 stride)
+  // that completes the chrome zoom-strip parity: zoom-out + zoom-level
+  // pill (R668) + zoom-in now all emit unified cyan halo on hover.
+  // Pre-R673 these buttons had only Tailwind `hover:brightness-[1.15]`
+  // (R596) — a single-axis paint lift. Sibling pattern to R594
+  // hoveredReset + R595 hoveredFullscreen.
+  const [hoveredZoomIn, setHoveredZoomIn] = useState(false);
+  const [hoveredZoomOut, setHoveredZoomOut] = useState(false);
   // R135: panel-wide hover-elevation. The recent-signal + legend
   // panels both already host clickable rows (R56/R116 recent rows,
   // R55/R61 legend rows) and a clickable footer (R133), so the
@@ -15634,9 +15643,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           >
             <button
               onClick={() => { popChrome('zoom-out'); zoomByDiscrete(1 / 1.2); }}
+              onMouseEnter={() => setHoveredZoomOut(true)}
+              onMouseLeave={() => setHoveredZoomOut(false)}
               data-topo-chrome-zoom-out
               data-topo-chrome-zoom-out-popping={chromePopping === 'zoom-out' ? 'true' : 'false'}
               data-topo-chrome-zoom-out-brightness-hover="1.15"
+              /* R673 — chrome zoom-out picks up multi-layer halo on
+                 hover, completing the chrome zoom-strip trio (zoom-out
+                 + zoom-level pill R668 + zoom-in below) at FULL halo
+                 parity. Pre-R673 the button had only Tailwind hover:
+                 brightness-[1.15] (R596) — a single-axis paint lift.
+                 Post-R673 inline filter on hoveredZoomOut state takes
+                 precedence over the Tailwind hover, applying 2-layer
+                 drop-shadow at pal.legendAccent tint with 2+4 stride
+                 (matches R667/R668 chrome-control siblings).
+                 32nd anchor in multi-layer halo family. */
+              data-topo-chrome-zoom-out-halo-layers={hoveredZoomOut ? '2' : '0'}
               // R196: press-state deepens bg one tier above hover (white/5
               // → white/10) so mouse-down has a tactile dim before the
               // R186 icon pop fires on release.
@@ -15665,7 +15687,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  data-topo-chrome-zoom-out-brightness-hover='1.15' attr
                  documents the hover value for tests. */
               className="group px-2 py-1 hover:bg-white/5 hover:brightness-[1.15] active:bg-white/10 [transition-property:color,background-color,transform,filter] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
-              style={{ color: pal.legendText }}
+              style={{
+                color: pal.legendText,
+                filter: hoveredZoomOut ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
+              }}
               aria-label="Zoom out"
               title="Zoom out (−)"
             >
@@ -15869,9 +15894,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             </span>
             <button
               onClick={() => { popChrome('zoom-in'); zoomByDiscrete(1.2); }}
+              onMouseEnter={() => setHoveredZoomIn(true)}
+              onMouseLeave={() => setHoveredZoomIn(false)}
               data-topo-chrome-zoom-in
               data-topo-chrome-zoom-in-popping={chromePopping === 'zoom-in' ? 'true' : 'false'}
               data-topo-chrome-zoom-in-brightness-hover="1.15"
+              /* R673 sibling — zoom-in mirrors zoom-out above. Together
+                 with R668 zoom-level pill, the chrome zoom-strip is
+                 FULLY halo-extended. */
+              data-topo-chrome-zoom-in-halo-layers={hoveredZoomIn ? '2' : '0'}
               // R196: press-state (mirror of zoom-out above).
               // R352: `group` lets the inner svg respond via group-hover.
               // R493 — zoom +/− buttons join the chrome-strip active:scale-95
@@ -15881,7 +15912,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               /* R596 sibling — zoom-in mirrors zoom-out above. 36th anchor
                  in per-element brightness family, 5th HTML. */
               className="group px-2 py-1 hover:bg-white/5 hover:brightness-[1.15] active:bg-white/10 [transition-property:color,background-color,transform,filter] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset"
-              style={{ color: pal.legendText }}
+              style={{
+                color: pal.legendText,
+                filter: hoveredZoomIn ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
+              }}
               aria-label="Zoom in"
               title="Zoom in (+)"
             >
