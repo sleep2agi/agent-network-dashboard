@@ -6835,11 +6835,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-edge-visible-endpoint-hovered={isEndpointHoveredEdge ? 'true' : 'false'}
                   data-edge-visible-stroke-width={renderWidth}
                   data-edge-visible-brightness={(isHoveredEdge || isEndpointHoveredEdge) ? '1.15' : '1'}
+                  /* R677 — edge visible PRIMARY path joins the multi-layer
+                     halo family. Pre-R677 the filter was brightness(1.15)
+                     (light) or url(#topo-glow) brightness(1.15) (cyber) —
+                     a single paint axis on hover (R582). Post-R677 prepends
+                     2-layer drop-shadow at pal.flowEdge tint with 2+4
+                     stride and alpha 80/40 so the edge stroke glows in
+                     its own flow-edge hue on inspection.
+
+                     Cyber stack: drop-shadow + drop-shadow + url(#topo-
+                     glow) + brightness — the SVG Gaussian glow is
+                     PRESERVED behind the new layered halos.
+                     Light stack: drop-shadow + drop-shadow + brightness
+                     — no SVG glow on light theme.
+
+                     Per-edge identity tier now FULLY halo-extended at
+                     all 3 anchors (closes the per-edge sub-family):
+                       R646 edge-badge CIRCLE  (3+6, pal.legendAccent/hotStroke)
+                       R672 edge-badge DIGIT   (2+4, pal.legendAccent/hotStroke)
+                       R677 edge visible PATH  (2+4, pal.flowEdge)  ← this round
+
+                     36th anchor in multi-layer halo family. The primary
+                     curve, the count badge, and the digit inside the
+                     badge all glow in lockstep when the edge surfaces
+                     under hover — full per-edge identity coherence. */
+                  data-edge-visible-halo-layers={(isHoveredEdge || isEndpointHoveredEdge) ? '2' : '0'}
                   style={{
                     pointerEvents: 'none',
                     transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out, stroke 300ms ease-out, filter 300ms ease-out',
                     filter: (isHoveredEdge || isEndpointHoveredEdge)
-                      ? (isLight ? 'brightness(1.15)' : 'url(#topo-glow) brightness(1.15)')
+                      ? (isLight
+                          ? `drop-shadow(0 0 2px ${pal.flowEdge}80) drop-shadow(0 0 4px ${pal.flowEdge}40) brightness(1.15)`
+                          : `drop-shadow(0 0 2px ${pal.flowEdge}80) drop-shadow(0 0 4px ${pal.flowEdge}40) url(#topo-glow) brightness(1.15)`)
                       : (isLight ? undefined : 'url(#topo-glow)'),
                   }}
                 />
