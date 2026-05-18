@@ -1157,6 +1157,35 @@ body {
               filter 200ms ease-out;
 }
 
+/* Round 685 — kicker "Network Topology" gains multi-layer halo via
+   the title-block wrapper's `:hover`, closing the title-block trio
+   at 3/3 paint-axis halo (logo R683 + H2 R684 + kicker R685). Pre-
+   R685 the kicker had only 2 hover axes (R555 tracking-spread +
+   color lift gray-500 → gray-400); the paint axis was untouched.
+   R685 adds 2-layer drop-shadow at 2 + 4px stride (2× blur stride
+   at kicker scale — text-xs = 12px, smaller than H2's 4+8 and
+   logo's 8+16). currentColor inherits the kicker's resolved fill
+   (gray-500 rest / gray-400 hover post-R555) so the halo paints
+   in the same hue as the text.
+   Selector targets the kicker via `data-topo-section-kicker` data-
+   attr (already present on the kicker div). Sibling rule + transition
+   pattern to R684 H2; both fire on the wrapper's :hover and ease at
+   200ms.
+   When the user hovers the title cluster, ALL 3 surfaces (logo +
+   H2 + kicker) glow simultaneously — cluster reads as one
+   coherent hover unit, paint axis CLOSED across all surfaces.
+   44th anchor in multi-layer halo family — completes title-block
+   trio 3/3. */
+[data-topo-section-titleblock-group]:hover [data-topo-section-kicker] {
+  filter: drop-shadow(0 0 2px currentColor)
+          drop-shadow(0 0 4px currentColor);
+}
+[data-topo-section-kicker] {
+  transition: letter-spacing 200ms ease-out,
+              color 200ms ease-out,
+              filter 200ms ease-out;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
