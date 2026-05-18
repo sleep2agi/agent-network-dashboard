@@ -2110,7 +2110,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               ease-out' alongside the existing 'letter-spacing'
               200ms cadence. data-topo-section-title-hover-fw attr
               surfaces the landing weight for tests. */}
-          <h2 className="text-lg text-white font-semibold group-hover:font-bold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing,font-weight] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter" data-topo-section-title-hover-fw="700">Command mesh</h2>
+          <h2 className="text-lg text-white font-semibold group-hover:font-bold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing,font-weight] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter" data-topo-section-title-hover-fw="700" data-topo-section-title-halo-layers="2">Command mesh</h2>
           </div>
         </div>
         {/* Round 328 / Loop: chip-row strip wrapper gap 2 → 2.5
