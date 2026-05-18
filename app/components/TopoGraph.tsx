@@ -3155,7 +3155,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 color: pal.legendAccent,
                 borderColor: 'currentColor',
                 cursor: 'pointer',
-                filter: `drop-shadow(0 0 3px color-mix(in srgb, ${pal.legendAccent} 60%, transparent))`,
+                filter: `drop-shadow(0 0 3px color-mix(in srgb, ${pal.legendAccent} 60%, transparent)) drop-shadow(0 0 6px color-mix(in srgb, ${pal.legendAccent} 30%, transparent))`,
               }}
             >
               {/* R412: see status pill above — filter value fw=600 data tier. */}
@@ -3264,7 +3264,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 color: vendorColor,
                 borderColor: 'currentColor',
                 cursor: 'pointer',
-                filter: `drop-shadow(0 0 3px color-mix(in srgb, ${vendorColor} 60%, transparent))`,
+                filter: `drop-shadow(0 0 3px color-mix(in srgb, ${vendorColor} 60%, transparent)) drop-shadow(0 0 6px color-mix(in srgb, ${vendorColor} 30%, transparent))`,
               }}
             >
               {/* R412: see status pill above — filter value fw=600 data tier. */}
@@ -3370,7 +3370,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 color: pal.flowEdge,
                 borderColor: 'currentColor',
                 cursor: 'pointer',
-                filter: `drop-shadow(0 0 3px color-mix(in srgb, ${pal.flowEdge} 60%, transparent))`,
+                filter: `drop-shadow(0 0 3px color-mix(in srgb, ${pal.flowEdge} 60%, transparent)) drop-shadow(0 0 6px color-mix(in srgb, ${pal.flowEdge} 30%, transparent))`,
               }}
             >
               {/* R412: filter pin pill value (edge variant) picks up fw=600.
