@@ -1122,6 +1122,41 @@ body {
           brightness(1.10);
 }
 
+/* Round 684 — title-block H2 "Command mesh" gains multi-layer halo
+   via the wrapper's `:hover` (sibling pattern to R683 brand logo —
+   both lift together when ANY surface in the title-block cluster
+   is hovered, including the brand logo, kicker, or H2 itself).
+   Pre-R684 the H2 had only 2 typographic hover axes (R554 tracking-
+   tighter + R556 font-bold) via group-hover Tailwind utilities; the
+   paint axis was untouched. R684 adds the multi-layer halo paint
+   axis to the H2's hover signature — same near + far layered glow
+   vocabulary the 42 other surfaces in the family share.
+   Stride: 4 + 8px (2× blur stride at h2 scale, text-lg = 18px —
+   smaller than brand logo's 8+16 since the H2 is text not graphic).
+   Tint: currentColor — inherits the H2's resolved fill color
+   (white on cyber, darker on light theme overrides).
+   No brightness multiply — H2 text-white is already near-peak
+   luminance on cyber; adding brightness would push past saturation.
+   The selector targets the H2 via its data-attr `data-topo-section-
+   title` nested under the title-block wrapper's group container
+   (`data-topo-section-titleblock-group`). Inline `transition-
+   [letter-spacing,font-weight]` on the H2 doesn't include filter,
+   so the halo would snap on. Add a transition rule here so the
+   halo eases under the same 200ms cadence as the existing 2 axes —
+   keeps the cluster's hover gesture motion-coherent.
+   43rd anchor in multi-layer halo family — sibling to R683 brand
+   logo, closing the title-block cluster's paint-axis halo at the
+   H2 element scope. */
+[data-topo-section-titleblock-group]:hover [data-topo-section-title] {
+  filter: drop-shadow(0 0 4px currentColor)
+          drop-shadow(0 0 8px currentColor);
+}
+[data-topo-section-title] {
+  transition: letter-spacing 200ms ease-out,
+              font-weight 200ms ease-out,
+              filter 200ms ease-out;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
