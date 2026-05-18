@@ -7042,15 +7042,38 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        Particle becomes the brightest paint element
                        along the edge during inspection. */
                     data-edge-particle-brightness={(isHoveredEdge || isEndpointHoveredEdge) ? '1.15' : '1'}
+                    /* R679 — flow particle joins the multi-layer halo
+                       family. Pre-R679 the filter was brightness(1.15)
+                       (light) or url(#topo-glow) brightness(1.15) (cyber)
+                       — single paint axis on hover (R583). Post-R679
+                       prepends 2-layer drop-shadow at pal.flowParticle
+                       tint (the particle's OWN fill color) with 2+4
+                       stride, alpha 80/40. The cyber stack preserves
+                       url(#topo-glow) behind the new layered halos.
+
+                       Per-edge ALL 5 SURFACES now multi-layer (closes
+                       the per-edge family across every paint element):
+                         R646 badge circle  (pal.legendAccent | hotStroke 3+6)
+                         R672 badge digit   (pal.legendAccent | hotStroke 2+4)
+                         R677 visible path  (pal.flowEdge 2+4)
+                         R678 flow-rail    (pal.flowPath 2+4 — dashed)
+                         R679 flow particle (pal.flowParticle 2+4)  ← this
+
+                       Visual effect: the moving particle now drags a
+                       small halo along its trajectory — like a comet
+                       trail tinted to the particle's hue. Coherent with
+                       R677/R678's static path/rail glows so all 5
+                       surfaces emit hue-matched halos in lockstep when
+                       the edge surfaces under inspection.
+
+                       38th anchor in multi-layer halo family. */
+                    data-edge-particle-halo-layers={(isHoveredEdge || isEndpointHoveredEdge) ? '2' : '0'}
                     style={{
                       transition: 'fill 200ms ease-out, opacity 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
-                      /* R583 — stack brightness(1.15) onto the existing
-                         url(#topo-glow) (cyber) or apply plain brightness
-                         (light). Inline style.filter overrides attribute
-                         filter; stacked syntax preserves the cyber glow
-                         on hover. Same R582 visible-path stack pattern. */
                       filter: (isHoveredEdge || isEndpointHoveredEdge)
-                        ? (isLight ? 'brightness(1.15)' : 'url(#topo-glow) brightness(1.15)')
+                        ? (isLight
+                            ? `drop-shadow(0 0 2px ${pal.flowParticle}80) drop-shadow(0 0 4px ${pal.flowParticle}40) brightness(1.15)`
+                            : `drop-shadow(0 0 2px ${pal.flowParticle}80) drop-shadow(0 0 4px ${pal.flowParticle}40) url(#topo-glow) brightness(1.15)`)
                         : undefined,
                     }}
                   >
