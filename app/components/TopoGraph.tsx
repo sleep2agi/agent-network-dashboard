@@ -2043,7 +2043,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               independent gesture vocabularies.
               data-topo-section-kicker-hover-tracking + -hover-color
               attrs expose the landing values for tests. */}
-          <div className="text-xs uppercase text-gray-500 group-hover:text-gray-400 tracking-widest group-hover:tracking-[0.13em] transition-[letter-spacing,color] duration-200 ease-out leading-tight font-medium" data-topo-section-kicker data-topo-section-kicker-hover-tracking="0.13em" data-topo-section-kicker-hover-color="text-gray-400">Network Topology</div>
+          <div className="text-xs uppercase text-gray-500 group-hover:text-gray-400 tracking-widest group-hover:tracking-[0.13em] transition-[letter-spacing,color] duration-200 ease-out leading-tight font-medium" data-topo-section-kicker data-topo-section-kicker-hover-tracking="0.13em" data-topo-section-kicker-hover-color="text-gray-400" data-topo-section-kicker-halo-layers="2">Network Topology</div>
           {/* Round 286 / Loop: title 'Command mesh' adopts tracking-tight
               (-0.025em) to complement R285 kicker tracking-widest. Wide
               eyebrow + tight headline is the conventional editorial
