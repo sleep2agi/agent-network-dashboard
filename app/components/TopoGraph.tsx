@@ -14048,8 +14048,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-legend-swatch-brightness={isSwatchLifted ? '1.15' : '1'}
                     style={{
                       r: isSwatchLifted ? '7px' : '6px',
+                      /* R665 — legend swatch drop-shadow gains a 2nd
+                         outer layer at 6px + 0x4c alpha (half R537 inner
+                         0x99). 24th anchor in multi-layer halo family.
+                         Same 3+6 stride + 50% falloff as R649 legend
+                         pin-ring. row.fill tier color (working green /
+                         idle teal / offline slate) preserved across
+                         both layers. */
                       filter: isSwatchLifted
-                        ? `drop-shadow(0 0 3px ${row.fill}99) brightness(1.15)`
+                        ? `drop-shadow(0 0 3px ${row.fill}99) drop-shadow(0 0 6px ${row.fill}4c) brightness(1.15)`
                         : undefined,
                       transition: 'r 150ms ease-out, filter 150ms ease-out',
                     } as React.CSSProperties}
@@ -14336,8 +14343,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
                       letterSpacing: isPinned ? '0.5px' :
                                      hoveredStatus === row.key ? '0.25px' : '0px',
+                      /* R665 sibling — legend-row label drop-shadow gains
+                         a 2nd outer layer at 4px + 0x40 alpha (half R589
+                         inner 0x80). Same 2+4 stride + 50% falloff as
+                         R659 recent-row text. pal.legendAccent tint
+                         preserved across both layers. */
                       filter: (hoveredStatus === row.key || isPinned)
-                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80) brightness(1.15)`
+                        ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)`
                         : undefined,
                     }}
                   >{row.label}</text>
@@ -14587,8 +14599,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
                    data-legend-flow-arrow-glow + -brightness attrs
                    expose the gate for tests. */
+                /* R665 sibling — legend flow-arrow drop-shadow gains a
+                   2nd outer layer at 6px + 0x40 alpha (half inner 0x80).
+                   Same 3+6 stride + 50% falloff. pal.flowEdge tint
+                   (cyber cyan / light emerald) preserved across both
+                   layers. */
                 filter: hoveredPanel === 'legend'
-                  ? `drop-shadow(0 0 3px ${pal.flowEdge}80) brightness(1.15)`
+                  ? `drop-shadow(0 0 3px ${pal.flowEdge}80) drop-shadow(0 0 6px ${pal.flowEdge}40) brightness(1.15)`
                   : undefined,
                 transition: 'stroke 200ms ease-out, filter 200ms ease-out',
               }}
