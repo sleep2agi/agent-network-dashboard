@@ -15436,7 +15436,34 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  background-color, border-color, color (used for SVG
                  currentColor inside) all ease at 200ms alongside the
                  R254 wrapper + R247 panel treatments. */
-              style={{ bottom: 56, background: pal.legendBox.fill, borderColor: pal.containerBorder, cursor: 'crosshair', color: pal.legendAccent, transition: 'background-color 200ms ease-out, border-color 200ms ease-out, color 200ms ease-out' }}
+              /* R696 — minimap container joins the multi-layer halo
+                 family on hoveredMinimap. Pre-R696 the container had a
+                 static Tailwind shadow-lg shadow-black/30 box-shadow
+                 (vertical elevation) but no radial paint signal on
+                 hover. R696 adds 2-layer drop-shadow at pal.legendAccent
+                 tint (2+4 stride, alpha 80/40) — radial halo echoes the
+                 cyan-themed border outward in soft glow when the user
+                 hovers the minimap (the same gesture that drives the
+                 R655 viewport-rect halo inside).
+                 Compact-chrome tier stride (2+4) matches R667/R668
+                 chrome-button siblings — minimap (120×82) sits at the
+                 compact-chrome tier alongside reset/fullscreen buttons.
+                 transition list extends with 'filter 200ms ease-out'.
+                 52nd anchor in multi-layer halo family — first minimap-
+                 container anchor (the inner viewport-rect R655 was
+                 already in the family). data-topo-minimap-halo-layers
+                 attr exposes the gate. */
+              style={{
+                bottom: 56,
+                background: pal.legendBox.fill,
+                borderColor: pal.containerBorder,
+                cursor: 'crosshair',
+                color: pal.legendAccent,
+                filter: hoveredMinimap
+                  ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40)`
+                  : undefined,
+                transition: 'background-color 200ms ease-out, border-color 200ms ease-out, color 200ms ease-out, filter 200ms ease-out',
+              }}
               // R157: minimap a11y completion. Pre-R157 the element had
               // role="img" + aria-label but no tabIndex / onKeyDown — it
               // was clickable for mouse users (recenter to where you
@@ -15477,6 +15504,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               onBlur={() => setHoveredMinimap(false)}
               data-topo-minimap
               data-topo-minimap-hovered={hoveredMinimap ? 'true' : 'false'}
+              data-topo-minimap-container-halo-layers={hoveredMinimap ? '2' : '0'}
             >
               <svg width={MW} height={MH} viewBox={`0 0 ${MW} ${MH}`} style={{ display: 'block' }}>
                 {/* Round 198 / Loop: minimap dots gain smooth status
