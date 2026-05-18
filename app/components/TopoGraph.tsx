@@ -3814,11 +3814,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         : undefined,
                       /* R578 sibling — vendor chip stacks brightness(1.15)
                          onto R541 drop-shadow. Closes chip-row tier-color
-                         glow trio at consistent stacked-filter pattern. */
+                         glow trio at consistent stacked-filter pattern.
+                         R663 — extends both pin + hover branches with a
+                         2nd outer drop-shadow at 6px with halved color-
+                         mix opacity (60%→30%, 40%→20%). 22nd anchor in
+                         multi-layer halo family (1st vendor-chip anchor).
+                         Same R661 filter-pill stride + falloff. */
                       filter: isPinned
-                        ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 60%, transparent)) brightness(1.15)`
+                        ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 60%, transparent)) drop-shadow(0 0 6px color-mix(in srgb, ${v.color} 30%, transparent)) brightness(1.15)`
                         : hoveredVendor === v.initial
-                          ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 40%, transparent)) brightness(1.15)`
+                          ? `drop-shadow(0 0 3px color-mix(in srgb, ${v.color} 40%, transparent)) drop-shadow(0 0 6px color-mix(in srgb, ${v.color} 20%, transparent)) brightness(1.15)`
                           : undefined,
                       transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, filter 200ms ease-out',
                     }}
