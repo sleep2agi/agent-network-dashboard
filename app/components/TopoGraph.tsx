@@ -2617,11 +2617,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // timing. Empty-state combines with R139's clickable=
                   // false + tooltip-undefined: visual + interactive +
                   // affordance all say "this tier has nothing to act on".
+                  /* R687 — working chip joins the multi-layer halo family
+                     using its OWN per-tier color (green-400 #4ade80,
+                     matching the pinnedStatus boxShadow inset ring).
+                     Pre-R687 the chip had 4 hover axes (bg/border swap
+                     + R136 translate-y + scale-95 press) but no paint-
+                     axis halo. R687 adds 2-layer drop-shadow at 2+4
+                     stride, alpha 80/40 — gated on hoveredStatus ===
+                     'working' && workingCount > 0 (the existing
+                     hoveredStatus state plus empty-state guard).
+                     Sibling extension to R686 active-links chip; pairs
+                     with online chip below to close the chip-row left-
+                     side trio (working + online + active-links) at
+                     halo-axis parity. */
+                  data-working-chip-halo-layers={hoveredStatus === 'working' && workingCount > 0 ? '2' : '0'}
                   style={{
                     cursor: workingCount > 0 ? 'pointer' : undefined,
                     opacity: workingCount === 0 ? 0.5 : 1,
                     boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out',
+                    filter: hoveredStatus === 'working' && workingCount > 0
+                      ? 'drop-shadow(0 0 2px #4ade8080) drop-shadow(0 0 4px #4ade8040)'
+                      : undefined,
+                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                   }}
                   onMouseEnter={() => { if (workingCount > 0) setHoveredStatus('working'); }}
                   onMouseLeave={() => setHoveredStatus(prev => prev === 'working' ? null : prev)}
@@ -2726,11 +2743,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // the new R201 hover tint eases (mirror of working chip).
                   // R205: empty-tier recede — opacity 0.5 when onlineNodes
                   // is empty (mirror of working chip above).
+                  /* R687 sibling — online chip mirrors working chip above.
+                     Per-tier tint cyan-300 #67e8f9 (matches its pinnedStatus
+                     boxShadow inset ring). Gated on (hoveredStatus ===
+                     'working' || hoveredStatus === 'idle') && onlineNodes
+                     > 0 — matches the onMouseEnter routing logic (online
+                     count includes BOTH working AND idle tiers, so either
+                     hover bucket triggers the chip's lift). 47th anchor
+                     in family. */
+                  data-online-chip-halo-layers={(hoveredStatus === 'working' || hoveredStatus === 'idle') && onlineNodes.length > 0 ? '2' : '0'}
                   style={{
                     cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
                     opacity: onlineNodes.length === 0 ? 0.5 : 1,
                     boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out',
+                    filter: (hoveredStatus === 'working' || hoveredStatus === 'idle') && onlineNodes.length > 0
+                      ? 'drop-shadow(0 0 2px #67e8f980) drop-shadow(0 0 4px #67e8f940)'
+                      : undefined,
+                    transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                   }}
                   onMouseEnter={() => {
                     // If a working filter would isolate nothing, route to idle.
