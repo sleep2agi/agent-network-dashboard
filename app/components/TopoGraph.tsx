@@ -5791,6 +5791,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-group-box-linejoin="round"
                   data-group-box-geom-transition="x,y,width,height"
                   data-group-box-brightness={(isPinned || isHovered) ? '1.15' : '1'}
+                  /* R682 — group cluster box joins the multi-layer halo
+                     family. Pre-R682 the filter chain was `url(#topo-
+                     groupbox-lift) brightness(1.15)` (R587) — the SVG
+                     filter primitive provides a vertical ELEVATION
+                     shadow (dy=3, blur=4) but no radial halo. R682
+                     prepends 2-layer drop-shadow at pal.legendAccent
+                     tint between the SVG lift and the brightness:
+                       url(#topo-groupbox-lift)        elevation
+                       drop-shadow(0 0 3px ${pal.legendAccent}80)  near halo
+                       drop-shadow(0 0 6px ${pal.legendAccent}40)  far halo
+                       brightness(1.15)                 paint lift
+
+                     Now the pinned cluster has a colored cyan aura
+                     around its rectangle ALONGSIDE its elevation
+                     shadow — coherent with R648 group LABEL TEXT's
+                     3+6 stride cyan halo. The cluster box and its
+                     label glow in lockstep when the group is locked
+                     in or hover-previewed.
+
+                     3+6 stride matches the panel-tier scale (cluster
+                     box is ~200×140px — wider than per-node surfaces);
+                     alpha 80/40 matches the family standard. SVG
+                     elevation filter PRECEDES the drop-shadows in the
+                     chain so it composes the shadow BEFORE the halo
+                     wraps around the rect — preserves the existing
+                     elevation reading.
+
+                     41st anchor in multi-layer halo family — first
+                     group-CLUSTER anchor. */
+                  data-group-box-halo-layers={(isPinned || isHovered) ? '2' : '0'}
                   // R85: ambient "marching ants" drift on the perimeter
                   // when this group has at least one working member, and
                   // neither pin nor hover is active (those treatments
@@ -5866,7 +5896,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        'filter 200ms ease-out' (R142 cadence). No
                        transition change needed. */
                     filter: (isPinned || isHovered)
-                      ? 'url(#topo-groupbox-lift) brightness(1.15)'
+                      ? `url(#topo-groupbox-lift) drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) brightness(1.15)`
                       : undefined,
                     /* Round 248 / Loop: append fill 200ms ease-out to
                        the existing R66 transition list. Pre-R248 the
