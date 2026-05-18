@@ -11865,6 +11865,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           rx attr exposes the resolved value for tests.
                           R348 drop-shadow + stroke + R387 opacity all
                           preserved. */}
+                      {/* R693 — hover-detail card backdrop rect joins the
+                          multi-layer halo family. Pre-R693 the rect had
+                          only a vertical elevation shadow (`drop-shadow(0
+                          4px 12px ...)`) — same vocabulary as the panel-
+                          pair rects. R693 prepends 2-layer drop-shadow at
+                          pal.legendAccent tint with 3+6 stride, alpha
+                          80/40 — radial halo echoes the existing cyan
+                          stroke outward in soft glow. Coherent with R660
+                          panel titles + R669 panel counts (same panel-
+                          tier scale + halo vocabulary).
+                          Final filter chain (panel-tier 4-layer):
+                            drop-shadow(0 0 3px ${pal.legendAccent}80)  near halo
+                            drop-shadow(0 0 6px ${pal.legendAccent}40)  far halo
+                            drop-shadow(0 4px 12px elevation rgba())    vertical lift
+                          The card only renders when hovered (gated on
+                          hoveredAlias === session.alias) — halo is
+                          transient, focused identity signal. 49th anchor
+                          in multi-layer halo family — first hover-detail
+                          card anchor.
+                          data-topo-hover-detail-halo-layers attr exposes
+                          the gate for tests. */}
                       <rect
                         x="0" y="0" width={detailW} height={detailH} rx="10"
                         fill={pal.labelBox.fill}
@@ -11872,7 +11893,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         opacity={isLight ? 0.98 : 0.97}
                         data-topo-hover-detail-opacity={isLight ? 0.98 : 0.97}
                         data-topo-hover-detail-rx="10"
-                        style={{ filter: isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.16))' : 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' }}
+                        data-topo-hover-detail-halo-layers="2"
+                        style={{
+                          filter: isLight
+                            ? `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) drop-shadow(0 4px 12px rgba(15,23,42,0.16))`
+                            : `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) drop-shadow(0 4px 12px rgba(0,0,0,0.6))`,
+                        }}
                       />
                       <text x="10" y="16" fontSize="9" fontFamily="monospace" fill={pal.legendAccent} fontWeight="700">
                         {v.id !== 'unknown' ? v.label : '—'}
