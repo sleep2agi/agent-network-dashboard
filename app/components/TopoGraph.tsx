@@ -11556,10 +11556,40 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       className="group-hover:-translate-y-[1.5px]"
                       data-node-dense-alias-text={session.alias}
                       data-node-dense-alias-text-opacity="0.95"
+                      /* R680 — dense plain-text alias (the >16-node
+                         fallback label) joins the multi-layer halo
+                         family. Pre-R680 the dense alias had only
+                         group-hover:-translate-y-[1.5px] on hover —
+                         a single geometry-axis lift, NO paint signal.
+                         Post-R680 adds 2-layer drop-shadow at status.
+                         primary tint (per-tier color: working green /
+                         idle teal / offline slate) with 2+4 stride,
+                         alpha 80/40 — sibling to R645 normal-mode
+                         alias text's per-tier halo treatment.
+
+                         Closes the dense-fallback alias hover signature
+                         parity with the normal-mode card label.
+                         hoveredAlias === session.alias is the standard
+                         alias-hover gate (used in many other surfaces).
+                         transition extends with 'filter 200ms ease-out'
+                         matching the existing 200ms cadence.
+
+                         The dense fallback is the busiest-fleet view
+                         (>16 nodes) where users see ONLY this label —
+                         so the halo gives that mode the same hover
+                         affordance as the normal card mode. Closes the
+                         dense-mode visual signature.
+
+                         39th anchor in multi-layer halo family — first
+                         dense-mode anchor. */
+                      data-node-dense-alias-text-halo-layers={hoveredAlias === session.alias ? '2' : '0'}
                       style={{
                         pointerEvents: 'none',
                         paintOrder: 'stroke',
-                        transition: 'transform 200ms ease-out, fill 300ms ease-out',
+                        filter: hoveredAlias === session.alias
+                          ? `drop-shadow(0 0 2px ${status.primary}80) drop-shadow(0 0 4px ${status.primary}40)`
+                          : undefined,
+                        transition: 'transform 200ms ease-out, fill 300ms ease-out, filter 200ms ease-out',
                       }}
                       stroke={pal.containerBg}
                       strokeWidth="3"
