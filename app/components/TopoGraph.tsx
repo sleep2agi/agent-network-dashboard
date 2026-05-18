@@ -8348,11 +8348,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      Same banked R582/R583 stacked-filter pattern.
                      transition list extends with 'filter 200ms ease-out'
                      alongside the existing fill 200ms cadence. */
+                  /* R681 — hub core circle joins the multi-layer halo
+                     family. Pre-R681 the filter was single-layer drop-
+                     shadow at 2px + 0.5 alpha (R536). Post-R681 adds a
+                     SECOND outer drop-shadow at 4px + 0.25 alpha (half
+                     the inner alpha, double the blur — matches the
+                     family's 0.5×-falloff + 2× blur stride vocabulary
+                     established by R642-R667).
+
+                     Hub core is the canvas's MOST CENTRAL focal point —
+                     elevating it to multi-layer halo gives the user's
+                     attention focal anchor the same near + far layered
+                     glow vocabulary that 38 other surfaces now share.
+
+                     Light: drop-shadow(0 0 2px emerald 0.5)
+                            drop-shadow(0 0 4px emerald 0.25)
+                            brightness(1.15)
+                     Cyber: drop-shadow(0 0 2px emerald-400 0.5)
+                            drop-shadow(0 0 4px emerald-400 0.25)
+                            brightness(1.15)
+
+                     Tints unchanged (emerald light / emerald-400 cyber)
+                     for visual continuity with R536. Only the outer
+                     ambient layer is new. 40th anchor in family —
+                     first hub-CORE anchor (R650-R653 + R654 + R651
+                     all targeted hub-related ELEMENTS around the core,
+                     not the core disc itself).
+
+                     data-topo-hub-core-halo-layers attr exposes the
+                     gate for tests. */
+                  data-topo-hub-core-halo-layers={isCoreHovered ? '2' : '0'}
                   style={{
                     filter: isCoreHovered
                       ? (isLight
-                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.5)) brightness(1.15)'
-                          : 'drop-shadow(0 0 2px rgba(52, 211, 153, 0.5)) brightness(1.15)')
+                          ? 'drop-shadow(0 0 2px rgba(16, 185, 129, 0.5)) drop-shadow(0 0 4px rgba(16, 185, 129, 0.25)) brightness(1.15)'
+                          : 'drop-shadow(0 0 2px rgba(52, 211, 153, 0.5)) drop-shadow(0 0 4px rgba(52, 211, 153, 0.25)) brightness(1.15)')
                       : undefined,
                     transition: 'fill 200ms ease-out, filter 200ms ease-out',
                   }}
