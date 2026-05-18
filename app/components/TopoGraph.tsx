@@ -2626,16 +2626,21 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      stride, alpha 80/40 — gated on hoveredStatus ===
                      'working' && workingCount > 0 (the existing
                      hoveredStatus state plus empty-state guard).
-                     Sibling extension to R686 active-links chip; pairs
-                     with online chip below to close the chip-row left-
-                     side trio (working + online + active-links) at
-                     halo-axis parity. */
-                  data-working-chip-halo-layers={hoveredStatus === 'working' && workingCount > 0 ? '2' : '0'}
+                     R689 — extends gate to ALSO fire on pinnedStatus
+                     === 'working'. Pinned chips become "permanently
+                     lit" until unpinned, telegraphing the active
+                     filter state more strongly than the inset ring
+                     alone. Coherent with R664 status filter pin pill
+                     halo (which lights up the post-pin filter pill);
+                     R689 closes the symmetry by lighting the SOURCE
+                     chip too while pin holds. Sibling change on online
+                     chip below. */
+                  data-working-chip-halo-layers={(hoveredStatus === 'working' || pinnedStatus === 'working') && workingCount > 0 ? '2' : '0'}
                   style={{
                     cursor: workingCount > 0 ? 'pointer' : undefined,
                     opacity: workingCount === 0 ? 0.5 : 1,
                     boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-                    filter: hoveredStatus === 'working' && workingCount > 0
+                    filter: (hoveredStatus === 'working' || pinnedStatus === 'working') && workingCount > 0
                       ? 'drop-shadow(0 0 2px #4ade8080) drop-shadow(0 0 4px #4ade8040)'
                       : undefined,
                     transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
@@ -2749,14 +2754,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      'working' || hoveredStatus === 'idle') && onlineNodes
                      > 0 — matches the onMouseEnter routing logic (online
                      count includes BOTH working AND idle tiers, so either
-                     hover bucket triggers the chip's lift). 47th anchor
-                     in family. */
-                  data-online-chip-halo-layers={(hoveredStatus === 'working' || hoveredStatus === 'idle') && onlineNodes.length > 0 ? '2' : '0'}
+                     hover bucket triggers the chip's lift).
+                     R689 sibling — gate extended to ALSO fire on
+                     pinnedStatus === 'idle' (the online chip's pin
+                     target, per its onClick handler routing pin to
+                     'idle' when clicked). Mirrors the working chip's
+                     pin-gated extension above. */
+                  data-online-chip-halo-layers={((hoveredStatus === 'working' || hoveredStatus === 'idle') || pinnedStatus === 'idle') && onlineNodes.length > 0 ? '2' : '0'}
                   style={{
                     cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
                     opacity: onlineNodes.length === 0 ? 0.5 : 1,
                     boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
-                    filter: (hoveredStatus === 'working' || hoveredStatus === 'idle') && onlineNodes.length > 0
+                    filter: ((hoveredStatus === 'working' || hoveredStatus === 'idle') || pinnedStatus === 'idle') && onlineNodes.length > 0
                       ? 'drop-shadow(0 0 2px #67e8f980) drop-shadow(0 0 4px #67e8f940)'
                       : undefined,
                     transition: 'box-shadow 150ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
