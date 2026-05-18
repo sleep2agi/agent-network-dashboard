@@ -13511,6 +13511,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     data-recent-panel-more-font-weight={hoveredRecentMore ? '600' : '500'}
                     data-recent-panel-more-transition="200ms"
                     data-recent-panel-more-brightness={hoveredRecentMore ? '1.15' : '1'}
+                    /* R670 — +N more flows footer joins the multi-layer
+                       halo family. Pre-R670 the footer had brightness(1.15)
+                       only (R592). R670 extends to 2-layer drop-shadow at
+                       pal.legendAccent tint with 2+4 stride — matches
+                       R667/R668 chrome-control + R669 panel-count siblings.
+                       Hover signature now closes at 7 axes (densest on
+                       any topology surface):
+                         R195  fill           legendText → legendAccent
+                         R325  letter-spacing 0.2 → 0.3
+                         R325  opacity        0.55 → 0.85
+                         R133  underline      none → underline
+                         R520  fontWeight     500 → 600
+                         R592  brightness     1 → 1.15
+                         R670  multi-layer halo 0 → 2  ← this round
+                       The footer is the recent-signal panel's primary
+                       nav affordance into /messages — 7 hover axes give
+                       it the strongest "click-me" signal in the canvas.
+                       29th anchor in multi-layer halo family. */
+                    data-recent-panel-more-halo-layers={hoveredRecentMore ? '2' : '0'}
                     style={{
                       /* R592 — +N more flows footer gains filter
                          brightness(1.15) on hover. 31st anchor in
@@ -13542,7 +13561,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          Existing transition list extends with 'filter
                          200ms ease-out' matching the existing 200ms
                          cadence across all 5 other axes. */
-                      filter: hoveredRecentMore ? 'brightness(1.15)' : undefined,
+                      filter: hoveredRecentMore ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
                       transition: 'opacity 200ms ease-out, fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
                     }}
                   >
