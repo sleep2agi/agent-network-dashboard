@@ -4011,14 +4011,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                          matching the existing 200ms transform cadence.
                          35th anchor in multi-layer halo family — first
                          per-vendor anchor. */
-                      data-vendor-letter-glyph-halo-layers={hoveredVendor === v.initial ? '2' : '0'}
+                      /* R690 — extends R676 halo gate from hover-only to
+                         (hover || pin). When a vendor is pinned, the inner
+                         letter glyph now glows persistently in its brand
+                         hue alongside the outer chip (R663, already pin-
+                         aware via isPinned ? ... : hover). Closes pin-
+                         gesture symmetry across vendor chip's nested
+                         layers — sibling to R689 (working/online chip
+                         pin-gated halo). The transform scale(1.1) lift
+                         stays hover-only — it's a transient gesture
+                         affordance, not a persistent identity signal. */
+                      data-vendor-letter-glyph-halo-layers={(hoveredVendor === v.initial || isPinned) ? '2' : '0'}
                       style={{
                         color: v.color,
                         display: 'inline-block',
                         fontWeight: 600,
                         transform: hoveredVendor === v.initial ? 'scale(1.1)' : 'scale(1)',
                         transformOrigin: 'center',
-                        filter: hoveredVendor === v.initial ? `drop-shadow(0 0 2px ${v.color}80) drop-shadow(0 0 4px ${v.color}40) brightness(1.15)` : undefined,
+                        filter: (hoveredVendor === v.initial || isPinned) ? `drop-shadow(0 0 2px ${v.color}80) drop-shadow(0 0 4px ${v.color}40) brightness(1.15)` : undefined,
                         transition: 'transform 200ms ease-out, filter 200ms ease-out',
                       }}
                     >{v.initial}</span>
@@ -4060,9 +4070,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     <span
                       className="text-gray-400 tabular-nums opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide"
                       data-vendor-letter-count-suffix
-                      data-vendor-letter-count-suffix-halo-layers={hoveredVendor === v.initial ? '2' : '0'}
+                      /* R690 sibling — count suffix halo gate extends from
+                         hover-only to (hover || pin). Closes vendor chip
+                         3/3 nested layers at pin-symmetry — outer (R663)
+                         + letter (R690 just above) + count (R690 here)
+                         all persistently glow when vendor is pinned. */
+                      data-vendor-letter-count-suffix-halo-layers={(hoveredVendor === v.initial || isPinned) ? '2' : '0'}
                       style={{
-                        filter: hoveredVendor === v.initial
+                        filter: (hoveredVendor === v.initial || isPinned)
                           ? `drop-shadow(0 0 2px ${v.color}80) drop-shadow(0 0 4px ${v.color}40)`
                           : undefined,
                         transition: 'filter 200ms ease-out',
