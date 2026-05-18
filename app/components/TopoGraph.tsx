@@ -11328,6 +11328,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         }
                         data-node-label-card-chat-target={chatAlias === session.alias ? 'true' : 'false'}
                         data-node-label-card-brightness={!reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias) ? '1.15' : '1'}
+                        data-node-label-card-halo-layers={!reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias) ? '2' : '0'}
                         style={{
                           /* R613 — per-node label card stacks brightness
                              (1.15) onto R142's hover drop-shadow. Same
@@ -11388,10 +11389,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                                R618 card (lift + tint + glow + brightness)
                                R616 alias text (brighter)
                                R617 sub-text (brighter) */
+                          /* R694 — per-node label card backdrop joins the
+                             multi-layer halo family on the hover/chat
+                             branch. Pre-R694 hover/chat filter chain was
+                             `drop-shadow(0 Ypx Nblur elevation) brightness
+                             (1.15)` — vertical elevation + paint lift,
+                             no radial halo. R694 prepends 2-layer radial
+                             drop-shadow at pal.legendAccent tint with
+                             3+6 stride and alpha 80/40 — radial halo
+                             echoes the R217 hover-stroke (pal.legendAccent)
+                             outward in soft glow. Sibling pattern to R693
+                             hover-detail card (same panel-tier 3+6
+                             stride, same pal.legendAccent tint).
+                             Rest branch unchanged — only the hover/chat
+                             branch gets the radial halo so the rest state
+                             stays at minimal ground shadow.
+                             Full hover/chat filter chain (5-layer):
+                               drop-shadow(0 0 3px ${pal.legendAccent}80)  near radial
+                               drop-shadow(0 0 6px ${pal.legendAccent}40)  far radial
+                               drop-shadow(0 3-4px Nblur elevation)        vertical lift
+                               brightness(1.15)                            paint lift
+                             50th anchor in multi-layer halo family —
+                             first per-node-card anchor. data-node-label-
+                             card-halo-layers attr exposes the gate. */
                           filter: !reducedMotion && (hoveredAlias === session.alias || chatAlias === session.alias)
                             ? (isLight
-                                ? 'drop-shadow(0 3px 8px rgba(15,23,42,0.20)) brightness(1.15)'
-                                : 'drop-shadow(0 4px 12px rgba(0,0,0,0.60)) brightness(1.15)')
+                                ? `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) drop-shadow(0 3px 8px rgba(15,23,42,0.20)) brightness(1.15)`
+                                : `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) drop-shadow(0 4px 12px rgba(0,0,0,0.60)) brightness(1.15)`)
                             : (isLight
                                 ? 'drop-shadow(0 1px 2px rgba(15,23,42,0.08))'
                                 : 'drop-shadow(0 1px 2px rgba(0,0,0,0.30))'),
