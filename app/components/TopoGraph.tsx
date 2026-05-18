@@ -1929,12 +1929,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                Existing inline transition already covers 'filter 200ms
                ease-out' (R557 cadence) — both brightness AND drop-
                shadow ease at the same beat. */
-            className={`shrink-0 transition-[transform,filter] duration-200 ease-out hover:scale-105 hover:rotate-6 hover:brightness-110 hover:drop-shadow-[0_0_8px_currentColor] transform-gpu${!reducedMotion ? ' anet-topo-brand-logo-breath' : ''}`}
+            /* R683 — replaced Tailwind `hover:brightness-110 hover:drop-
+               shadow-[0_0_8px_currentColor]` with the new `.anet-topo-
+               brand-logo-mark` CSS class (defined in globals.css) which
+               applies a MULTI-LAYER filter on :hover — near 8px + far
+               16px drop-shadow at currentColor + brightness(1.10). This
+               brings the brand mark into the multi-layer halo family
+               using the same near + far layered glow vocabulary that
+               41 other surfaces share. Tailwind utility composition for
+               multi-drop-shadow doesn't stack cleanly (R659 detour),
+               so a custom CSS class wins over the cascade.
+               Transform classes (hover:scale-105, hover:rotate-6) +
+               breath className preserved unchanged. */
+            className={`anet-topo-brand-logo-mark shrink-0 transition-[transform,filter] duration-200 ease-out hover:scale-105 hover:rotate-6 transform-gpu${!reducedMotion ? ' anet-topo-brand-logo-breath' : ''}`}
             data-topo-brand-logo
             data-topo-brand-logo-hover-scale="1.05"
             data-topo-brand-logo-hover-rotate="6deg"
             data-topo-brand-logo-hover-brightness="1.1"
-            data-topo-brand-logo-hover-drop-shadow="0_0_8px_currentColor"
+            data-topo-brand-logo-hover-drop-shadow="0_0_8px_currentColor;0_0_16px_currentColor"
+            data-topo-brand-logo-halo-layers="2"
             data-topo-brand-logo-breath={!reducedMotion ? 'true' : 'false'}
             style={{
               color: isLight ? '#0d9488' : '#67e8f9',

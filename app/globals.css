@@ -1100,6 +1100,28 @@ body {
   animation: anet-topo-brand-logo-breath-kf 5s ease-in-out infinite;
 }
 
+/* Round 683 — brand 书生 logo extends single-layer drop-shadow hover
+   (R604, Tailwind `hover:drop-shadow-[0_0_8px_currentColor]`) to the
+   multi-layer halo family vocabulary: near 8px + far 16px (2× blur
+   stride) at currentColor (inherits inline style.color = teal #0d9488
+   / cyan #67e8f9), stacked with brightness(1.10). Matches R642-R667
+   0.5×-falloff convention by using currentColor for both layers —
+   the same hue at native alpha layers up because drop-shadow alpha
+   accumulates additively when stacked.
+   Pure CSS `:hover` so no new React state needed; the SVG element
+   listens via its own pseudo-class. Inline transition list already
+   covers `filter 200ms ease-out` (R557) so the multi-layer halo eases
+   under the same cadence. Tailwind v4 utility composition for multi-
+   drop-shadow doesn't work cleanly (per R659 detour note), so dropping
+   the utility classes (`hover:brightness-110`, `hover:drop-shadow-[...]`)
+   in favor of an explicit CSS rule that wins over the cascade.
+   42nd anchor in multi-layer halo family — first brand-mark anchor. */
+.anet-topo-brand-logo-mark:hover {
+  filter: drop-shadow(0 0 8px currentColor)
+          drop-shadow(0 0 16px currentColor)
+          brightness(1.10);
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
