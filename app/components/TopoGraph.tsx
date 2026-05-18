@@ -15714,6 +15714,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  data-topo-chrome-zoom-level-brightness attr exposes
                  the gate for tests. */
               data-topo-chrome-zoom-level-brightness={hoveredZoomLevel ? '1.15' : '1'}
+              /* R668 — chrome zoom-level readout joins the multi-layer
+                 halo family. 27th anchor in the family, 2nd chrome-
+                 control anchor (sibling to R667 reset/fullscreen). Pre-
+                 R668 the readout had brightness(1.15) only on hover —
+                 a single-axis paint lift. R668 extends to the same
+                 2-layer 0.5×-falloff vocabulary the chrome buttons use
+                 so the percent readout glows with the same near + far
+                 cyan halo as its siblings — chrome strip now has
+                 unified halo language across zoom + reset + fullscreen.
+                 Tint: pal.legendAccent (matches R667). Stride: 2+4
+                 (matches R667 chrome-control stride). The chrome strip
+                 is now the first FULLY halo-extended scope —
+                 every interactive element halos coherently.
+                 data-topo-chrome-zoom-level-halo-layers attr surfaces
+                 the gate for tests. */
+              data-topo-chrome-zoom-level-halo-layers={hoveredZoomLevel ? '2' : '0'}
               onMouseEnter={() => setHoveredZoomLevel(true)}
               onMouseLeave={() => setHoveredZoomLevel(false)}
               style={{
@@ -15721,7 +15737,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 borderColor: pal.containerBorder,
                 minWidth: 46,
                 display: 'inline-block',
-                filter: hoveredZoomLevel ? 'brightness(1.15)' : undefined,
+                filter: hoveredZoomLevel ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
                 // R347: letter-spacing hover tween — extends R344/R345
                 // hover-letter-spacing family into the chrome strip.
                 letterSpacing: hoveredZoomLevel ? '0.5px' : '0',
