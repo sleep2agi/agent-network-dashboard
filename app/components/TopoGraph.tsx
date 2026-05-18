@@ -6839,6 +6839,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                agent and these are its conversation partners" gesture. */
             const isEndpointHoveredEdge = (!!hoveredAlias && (link.from === hoveredAlias || link.to === hoveredAlias))
                                        || (!!chatAlias    && (link.from === chatAlias    || link.to === chatAlias));
+            /* R692 — hoist pinnedEdgeKey check from inside the badge IIFE
+               (line ~7409) to the outer edge map closure so the visible
+               path (R677), flow-rail (R678), and particle (R679) filter
+               gates can also fire on pin state. Pre-R692 only the badge
+               + digit halo'd when an edge was pinned (R646/R672 included
+               isPinned); the visible path/rail/particle stayed hover-only.
+               Post-R692 ALL 5 per-edge surfaces respond to pin. Sibling
+               to R689 (working/online chip pin-gated halo) + R690 (vendor
+               chip nested pin-gated halo) — pin-gesture symmetry now
+               spans the per-edge tier. */
+            const isEdgePinned = pinnedEdgeKey === link.key;
             const renderWidth = isHoveredEdge ? Math.min(width * 1.4, 10)
                               : isEndpointHoveredEdge ? Math.min(width * 1.15, 8)
                               : width;
@@ -6995,11 +7006,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      curve, the count badge, and the digit inside the
                      badge all glow in lockstep when the edge surfaces
                      under hover — full per-edge identity coherence. */
-                  data-edge-visible-halo-layers={(isHoveredEdge || isEndpointHoveredEdge) ? '2' : '0'}
+                  data-edge-visible-halo-layers={(isHoveredEdge || isEndpointHoveredEdge || isEdgePinned) ? '2' : '0'}
                   style={{
                     pointerEvents: 'none',
                     transition: 'opacity 300ms ease-out, stroke-width 300ms ease-out, stroke 300ms ease-out, filter 300ms ease-out',
-                    filter: (isHoveredEdge || isEndpointHoveredEdge)
+                    filter: (isHoveredEdge || isEndpointHoveredEdge || isEdgePinned)
                       ? (isLight
                           ? `drop-shadow(0 0 2px ${pal.flowEdge}80) drop-shadow(0 0 4px ${pal.flowEdge}40) brightness(1.15)`
                           : `drop-shadow(0 0 2px ${pal.flowEdge}80) drop-shadow(0 0 4px ${pal.flowEdge}40) url(#topo-glow) brightness(1.15)`)
@@ -7088,10 +7099,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        R646 badge circle  R672 badge digit
                        R677 visible path  R678 flow-rail  ← this round
                      37th anchor in multi-layer halo family. */
-                  data-edge-flow-rail-halo-layers={(isHoveredEdge || isEndpointHoveredEdge) ? '2' : '0'}
+                  data-edge-flow-rail-halo-layers={(isHoveredEdge || isEndpointHoveredEdge || isEdgePinned) ? '2' : '0'}
                   style={{
                     transition: 'opacity 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, filter 300ms ease-out',
-                    filter: (isHoveredEdge || isEndpointHoveredEdge)
+                    filter: (isHoveredEdge || isEndpointHoveredEdge || isEdgePinned)
                       ? `drop-shadow(0 0 2px ${pal.flowPath}80) drop-shadow(0 0 4px ${pal.flowPath}40) brightness(1.15)`
                       : undefined,
                   }}
@@ -7203,10 +7214,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        the edge surfaces under inspection.
 
                        38th anchor in multi-layer halo family. */
-                    data-edge-particle-halo-layers={(isHoveredEdge || isEndpointHoveredEdge) ? '2' : '0'}
+                    data-edge-particle-halo-layers={(isHoveredEdge || isEndpointHoveredEdge || isEdgePinned) ? '2' : '0'}
                     style={{
                       transition: 'fill 200ms ease-out, opacity 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
-                      filter: (isHoveredEdge || isEndpointHoveredEdge)
+                      filter: (isHoveredEdge || isEndpointHoveredEdge || isEdgePinned)
                         ? (isLight
                             ? `drop-shadow(0 0 2px ${pal.flowParticle}80) drop-shadow(0 0 4px ${pal.flowParticle}40) brightness(1.15)`
                             : `drop-shadow(0 0 2px ${pal.flowParticle}80) drop-shadow(0 0 4px ${pal.flowParticle}40) url(#topo-glow) brightness(1.15)`)
