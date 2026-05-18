@@ -2860,7 +2860,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        brightness + R542 drop-shadow value across both
                        gate sources — uniform visual response, distinct
                        semantic gates. */
-                    filter: isSegLit ? `brightness(1.2) drop-shadow(0 0 2px ${color}99)` : undefined,
+                    /* R662 — pressure-bar segment drop-shadow gains a
+                       2nd outer layer at 4px + 0x4c alpha (half R542
+                       inner 0x99). Family extension to chip-bar tier;
+                       same 2+4 stride + 50% falloff as R643-R645/R648
+                       /R659. ${color} per-tier (working green / idle
+                       teal / offline slate) preserved across both
+                       layers. */
+                    filter: isSegLit ? `brightness(1.2) drop-shadow(0 0 2px ${color}99) drop-shadow(0 0 4px ${color}4c)` : undefined,
                     transition: 'width 220ms ease-out, box-shadow 150ms ease-out, filter 150ms ease-out',
                   }}
                   onClick={(e) => {
