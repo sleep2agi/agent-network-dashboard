@@ -3945,13 +3945,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       data-vendor-letter-glyph={v.initial}
                       data-vendor-letter-glyph-hover={hoveredVendor === v.initial ? 'true' : 'false'}
                       data-vendor-letter-glyph-font-weight="600"
+                      /* R676 — vendor letter glyph joins the multi-layer
+                         halo family using its OWN per-vendor color (v.color)
+                         as tint. Pre-R676 the glyph had transform: scale(1.1)
+                         on hover (R354) — a single geometry axis lift. Post-
+                         R676 adds 2-layer drop-shadow at v.color tint with
+                         2+4 stride and alpha 80/40 — sibling to R671 legend-
+                         row count's per-tier row.fill pattern. The glyph now
+                         glows in its OWN brand hue under hover, carrying
+                         per-vendor semantic information at the chip-row
+                         scope (parity with the per-tier semantic at the
+                         legend scope).
+                         transition list extends with 'filter 200ms ease-out'
+                         matching the existing 200ms transform cadence.
+                         35th anchor in multi-layer halo family — first
+                         per-vendor anchor. */
+                      data-vendor-letter-glyph-halo-layers={hoveredVendor === v.initial ? '2' : '0'}
                       style={{
                         color: v.color,
                         display: 'inline-block',
                         fontWeight: 600,
                         transform: hoveredVendor === v.initial ? 'scale(1.1)' : 'scale(1)',
                         transformOrigin: 'center',
-                        transition: 'transform 200ms ease-out',
+                        filter: hoveredVendor === v.initial ? `drop-shadow(0 0 2px ${v.color}80) drop-shadow(0 0 4px ${v.color}40) brightness(1.15)` : undefined,
+                        transition: 'transform 200ms ease-out, filter 200ms ease-out',
                       }}
                     >{v.initial}</span>
                     {/* Round 333 / Loop: vendor count suffix `:{N}` joins
