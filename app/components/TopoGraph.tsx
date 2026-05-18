@@ -1166,6 +1166,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // same 2+4 stride at pal.legendAccent tint as R667/R668 chrome-
   // control siblings.
   const [hoveredLayout, setHoveredLayout] = useState<'ring' | 'grid' | null>(null);
+  // R675 — hover state for the chrome nodeSize S/M/L segmented trio.
+  // Value-typed (single state covers all three buttons) drives the
+  // multi-layer halo filter completing the chrome strip's nodeSize
+  // segmented-control group. Pre-R675 the trio had only Tailwind
+  // hover:brightness-[1.15] (R598). Post-R675 inline filter applies
+  // the same 2+4 stride at pal.legendAccent tint as R667/R668/R673/
+  // R674 chrome-control siblings. With R675 the chrome strip is
+  // FULLY halo-extended at every interactive control (Ring/Grid +
+  // S/M/L + zoom-in/-out + zoom-level + reset + fullscreen).
+  const [hoveredNodeSize, setHoveredNodeSize] = useState<'S' | 'M' | 'L' | null>(null);
   // R135: panel-wide hover-elevation. The recent-signal + legend
   // panels both already host clickable rows (R56/R116 recent rows,
   // R55/R61 legend rows) and a clickable footer (R133), so the
@@ -15533,10 +15543,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               <button
                 key={lbl}
                 onClick={() => { popChrome(popKey); pickNodeScale(v); }}
+                onMouseEnter={() => setHoveredNodeSize(lbl)}
+                onMouseLeave={() => setHoveredNodeSize((prev) => prev === lbl ? null : prev)}
                 aria-pressed={nodeScale === v}
                 data-topo-chrome-nodesize={lbl}
                 data-topo-chrome-nodesize-active={nodeScale === v ? 'true' : 'false'}
                 data-topo-chrome-nodesize-popping={chromePopping === popKey ? 'true' : 'false'}
+                /* R675 — nodeSize S/M/L join multi-layer halo family.
+                   Sibling pattern to R674 Layout ring/grid — same value-
+                   typed gate (hoveredNodeSize: 'S'|'M'|'L'|null) with
+                   leave-guard preserving sibling hover across the 3-
+                   button divider. Inline filter overrides the Tailwind
+                   hover:brightness-[1.15] (R598) with 2-layer drop-
+                   shadow at pal.legendAccent tint, 2+4 stride. */
+                data-topo-chrome-nodesize-halo-layers={hoveredNodeSize === lbl ? '2' : '0'}
                 title={`Node size: ${lbl === 'S' ? 'small' : lbl === 'M' ? 'medium' : 'large'}`}
                 // Round 179 / Loop: nodeSize S/M/L active-button hover
                 // variant closes the inconsistency with R163 layout
@@ -15636,7 +15656,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 className={`px-2 py-1 [transition-property:color,background-color,transform,font-weight,filter] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:brightness-[1.15] ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
                 data-topo-chrome-nodesize-hover-preview-fw={nodeScale === v ? null : '500'}
                 data-topo-chrome-nodesize-brightness-hover="1.15"
-                style={{ color: nodeScale === v ? undefined : pal.legendText, borderColor: pal.containerBorder }}
+                style={{
+                  color: nodeScale === v ? undefined : pal.legendText,
+                  borderColor: pal.containerBorder,
+                  filter: hoveredNodeSize === lbl ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
+                }}
               >
                 {lbl}
               </button>
