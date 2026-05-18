@@ -15865,11 +15865,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                / color / border / transform / filter) now ride one
                200ms ease-out beat. */
             data-topo-chrome-reset-brightness={hoveredReset ? '1.15' : '1'}
+            data-topo-chrome-reset-halo-layers={hoveredReset ? '2' : '0'}
             style={{
               background: pal.legendBox.fill,
               borderColor: pal.containerBorder,
               color: pal.legendText,
-              filter: hoveredReset ? 'brightness(1.15)' : undefined,
+              /* R667 — chrome reset button gains 2-layer drop-shadow halo
+                 on hover. Pre-R667 had only brightness(1.15) — no halo.
+                 R667 introduces stroke-tinted halo at 2+4 stride, alpha
+                 0x80 → 0x40 (50% falloff), pal.legendAccent tint (cyan/
+                 teal). First chrome-control anchor in multi-layer halo
+                 family. */
+              filter: hoveredReset ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
               transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out, filter 200ms ease-out',
             }}
             aria-label="Reset view"
@@ -15977,6 +15984,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             data-topo-chrome-fullscreen-popping={chromePopping === 'fullscreen' ? 'true' : 'false'}
             data-topo-chrome-fullscreen-hover={hoveredFullscreen ? 'true' : 'false'}
             data-topo-chrome-fullscreen-brightness={hoveredFullscreen ? '1.15' : '1'}
+            data-topo-chrome-fullscreen-halo-layers={hoveredFullscreen ? '2' : '0'}
             // R196: fullscreen also picks up press-state — active variant
             // deepens cyan-500/20 → cyan-500/25 on press; non-active
             // deepens white/5 → white/10.
@@ -16036,7 +16044,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               ...(isFullscreen
                 ? {}
                 : { background: pal.legendBox.fill, color: pal.legendText }),
-              filter: hoveredFullscreen ? 'brightness(1.15)' : undefined,
+              /* R667 sibling — fullscreen chrome button gains 2-layer
+                 drop-shadow halo on hover, same R667 reset pattern. */
+              filter: hoveredFullscreen ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
               transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out, filter 200ms ease-out',
             }}
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
