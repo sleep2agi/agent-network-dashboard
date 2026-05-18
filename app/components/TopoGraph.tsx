@@ -4132,13 +4132,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 data-active-links-flow-count={flowLinks.length}
                 data-active-links-clickable={isInteractive ? 'true' : 'false'}
                 data-active-links-empty={isInteractive ? 'false' : 'true'}
+                /* R686 — active-links chip joins the multi-layer halo
+                   family. Pre-R686 the chip had ~4 hover axes (bg/text/
+                   border swap to cyan + translate-y-px lift) but no
+                   paint-axis halo. R686 adds 2-layer drop-shadow at
+                   pal.legendAccent tint with 2+4 stride, alpha 80/40 —
+                   gated on hoveredActiveLinks (the state already exists
+                   for the canvas-edge brighten gesture). Coherent with
+                   R661 filter-pill chips (3+6) at the slightly tighter
+                   2+4 stride matching the chip-row's smaller-chip tier.
+                   transition list extends with 'filter 200ms ease-out'
+                   so the halo eases under the same cadence as the
+                   existing color/bg/border tweens.
+                   45th anchor in multi-layer halo family — first active-
+                   links-chip anchor (the dashboard's primary live-
+                   traffic indicator). */
+                data-active-links-chip-halo-layers={hoveredActiveLinks && isInteractive ? '2' : '0'}
                 title={tooltip}
                 role={isInteractive ? 'link' : undefined}
                 tabIndex={isInteractive ? 0 : undefined}
                 style={{
                   cursor: isInteractive ? 'pointer' : undefined,
                   opacity: isInteractive ? 1 : 0.5,
-                  transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out',
+                  filter: hoveredActiveLinks && isInteractive
+                    ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40)`
+                    : undefined,
+                  transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
                 }}
                 onMouseEnter={() => { if (isInteractive) setHoveredActiveLinks(true); }}
                 onMouseLeave={() => setHoveredActiveLinks(false)}
