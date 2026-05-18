@@ -12280,14 +12280,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    per-node label card chrome — now applied at the
                    panel scope so the whole panel (background + chrome
                    + shadow) eases as one unit through theme switches. */
+                /* R695 — recent-signal panel rect joins the multi-layer
+                   halo family on the hoveredPanel === 'recent' branch.
+                   Pre-R695 the filter chain was elevation-only drop-
+                   shadow, deepening on panel hover (R135 + R247).
+                   R695 prepends 2-layer radial drop-shadow at pal.
+                   legendAccent (3+6 stride, alpha 80/40) — radial halo
+                   echoes the R423 hover-stroke (which switches to pal.
+                   legendAccent on panel hover) outward in soft glow.
+                   Sibling pattern to R693 hover-detail card + R694
+                   per-node label card (same panel-tier 3+6 stride at
+                   pal.legendAccent tint). Sibling change on legend
+                   panel rect below to close panel-pair halo symmetry.
+                   Rest branch unchanged — only the hover branch gets
+                   the radial halo. 51st anchor in family. */
                 filter: hoveredPanel === 'recent'
-                  ? (isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.14))'
-                             : 'drop-shadow(0 4px 12px rgba(0,0,0,0.65))')
+                  ? (isLight ? `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) drop-shadow(0 4px 12px rgba(15,23,42,0.14))`
+                             : `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) drop-shadow(0 4px 12px rgba(0,0,0,0.65))`)
                   : (isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))'
                              : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))'),
                 transition: 'filter 200ms ease-out, fill 200ms ease-out, stroke 200ms ease-out, opacity 200ms ease-out',
               }}
               data-topo-panel-elevation="recent"
+              data-topo-panel-recent-halo-layers={hoveredPanel === 'recent' ? '2' : '0'}
             />
             {/* Round 266 / Loop: panel title fill picks up theme-toggle
                 transition. Pre-R266 the title "recent signal" had
@@ -14069,14 +14084,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // stay symmetric. Geometry-safe (paint-only).
               opacity={hoveredPanel === 'legend' ? (isLight ? 1 : 0.97) : (isLight ? 0.97 : 0.92)}
               style={{
+                /* R695 sibling — legend panel rect mirrors recent panel
+                   above. Same 4-layer panel-tier composition on hover,
+                   same pal.legendAccent 3+6 radial halo prefix. Closes
+                   panel-pair backdrop halo symmetry (recent + legend). */
                 filter: hoveredPanel === 'legend'
-                  ? (isLight ? 'drop-shadow(0 4px 12px rgba(15,23,42,0.14))'
-                             : 'drop-shadow(0 4px 12px rgba(0,0,0,0.65))')
+                  ? (isLight ? `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) drop-shadow(0 4px 12px rgba(15,23,42,0.14))`
+                             : `drop-shadow(0 0 3px ${pal.legendAccent}80) drop-shadow(0 0 6px ${pal.legendAccent}40) drop-shadow(0 4px 12px rgba(0,0,0,0.65))`)
                   : (isLight ? 'drop-shadow(0 2px 6px rgba(15,23,42,0.08))'
                              : 'drop-shadow(0 2px 6px rgba(0,0,0,0.45))'),
                 transition: 'filter 200ms ease-out, fill 200ms ease-out, stroke 200ms ease-out, opacity 200ms ease-out',
               }}
               data-topo-panel-elevation="legend"
+              data-topo-panel-legend-halo-layers={hoveredPanel === 'legend' ? '2' : '0'}
             />
             {/* R106 / Loop: panel header — symmetric with the recent-
                 signal panel's "recent signal · N flows" (R96). Same
