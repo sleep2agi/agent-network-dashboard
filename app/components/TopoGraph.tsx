@@ -1157,6 +1157,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // hoveredReset + R595 hoveredFullscreen.
   const [hoveredZoomIn, setHoveredZoomIn] = useState(false);
   const [hoveredZoomOut, setHoveredZoomOut] = useState(false);
+  // R674 — hover state for the chrome Layout ring|grid toggle pair.
+  // Value-typed (single state covers both buttons) drives the multi-
+  // layer halo filter completing the chrome toggle-controls family
+  // (after R673 zoom-in/-out paired-sibling round). Pre-R674 the Ring/
+  // Grid buttons had only Tailwind hover:brightness-[1.15] (R597) —
+  // a single-axis paint lift. Post-R674 inline filter applies the
+  // same 2+4 stride at pal.legendAccent tint as R667/R668 chrome-
+  // control siblings.
+  const [hoveredLayout, setHoveredLayout] = useState<'ring' | 'grid' | null>(null);
   // R135: panel-wide hover-elevation. The recent-signal + legend
   // panels both already host clickable rows (R56/R116 recent rows,
   // R55/R61 legend rows) and a clickable footer (R133), so the
@@ -2193,11 +2202,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           >
             <button
               onClick={() => { popChrome('layout-ring'); if (layout !== 'ring') toggleLayout(); }}
+              onMouseEnter={() => setHoveredLayout('ring')}
+              onMouseLeave={() => setHoveredLayout((prev) => prev === 'ring' ? null : prev)}
               aria-pressed={layout === 'ring'}
               title="Ring layout (l to toggle)"
               data-topo-chrome-layout="ring"
               data-topo-chrome-layout-active={layout === 'ring' ? 'true' : 'false'}
               data-topo-chrome-layout-ring-popping={chromePopping === 'layout-ring' ? 'true' : 'false'}
+              /* R674 — Ring button joins multi-layer halo family.
+                 Inline filter overrides the Tailwind hover:brightness-
+                 [1.15] (R597) with 2-layer drop-shadow at pal.legendAccent
+                 tint, 2+4 stride. Sibling pattern to R673 zoom-in/-out. */
+              data-topo-chrome-layout-ring-halo-layers={hoveredLayout === 'ring' ? '2' : '0'}
               // Round 196 / Loop: add active: (pressed) state for tactile
               // click feedback — bridges mouse-down → R186/R184/R192 pop-on-
               // release. Selected variant deepens to cyan-500/25 (one tier
@@ -2316,17 +2332,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  R557 banked pattern: when an element has both
                  inline transition AND new transition-driven axis,
                  extend the INLINE list — not the className. */
-              style={{ transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease, filter 150ms ease' }}
+              style={{
+                transition: 'background-color 150ms ease, color 150ms ease, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease, filter 150ms ease',
+                filter: hoveredLayout === 'ring' ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
+              }}
             >
               Ring
             </button>
             <button
               onClick={() => { popChrome('layout-grid'); if (layout !== 'grid') toggleLayout(); }}
+              onMouseEnter={() => setHoveredLayout('grid')}
+              onMouseLeave={() => setHoveredLayout((prev) => prev === 'grid' ? null : prev)}
               aria-pressed={layout === 'grid'}
               title="Grid layout (l to toggle)"
               data-topo-chrome-layout="grid"
               data-topo-chrome-layout-active={layout === 'grid' ? 'true' : 'false'}
               data-topo-chrome-layout-grid-popping={chromePopping === 'layout-grid' ? 'true' : 'false'}
+              /* R674 sibling — Grid button mirrors Ring above. Together
+                 they close the Layout segmented-control halo coverage. */
+              data-topo-chrome-layout-grid-halo-layers={hoveredLayout === 'grid' ? '2' : '0'}
               // Round 196 / Loop: R163 layout-toggle Grid variant picks up
               // press-state — same tier pattern as Ring above.
               // Round 249 / Loop: chrome-pop on click — same as Ring.
@@ -2360,7 +2384,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  R597 sibling — Grid button mirrors Ring above:
                  hover:brightness-[1.15] + filter 150ms ease in
                  the inline transition list. */
-              style={{ borderColor: pal.containerBorder, transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease, filter 150ms ease' }}
+              style={{
+                borderColor: pal.containerBorder,
+                transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease, filter 150ms ease',
+                filter: hoveredLayout === 'grid' ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
+              }}
             >
               Grid
             </button>
