@@ -2222,6 +2222,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             aria-label="Topology layout"
             data-topo-chrome-layout-trailer
             data-topo-chrome-layout-radius="rounded-lg"
+            /* R697 — wrapper-level multi-layer halo on inner button hover
+               (via CSS :has() in globals.css). 53rd anchor in family. */
+            data-topo-chrome-wrapper-halo-family="layout"
           >
             <button
               onClick={() => { popChrome('layout-ring'); if (layout !== 'ring') toggleLayout(); }}
@@ -15946,6 +15949,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             role="group"
             aria-label="Node size"
             data-topo-chrome-fleet-group-trailer
+            /* R697 sibling — wrapper-level has-hover halo (see globals.css). */
+            data-topo-chrome-wrapper-halo-family="nodesize"
           >
             {([['S', 0.7], ['M', 0.84], ['L', 1]] as const).map(([lbl, v], idx) => {
               const popKey = `size-${lbl}` as 'size-S' | 'size-M' | 'size-L';
@@ -16102,6 +16107,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             }}
             data-topo-chrome-view-group-leader
             data-topo-chrome-zoom-wrapper
+            /* R697 sibling — wrapper-level has-hover halo (see globals.css). */
+            data-topo-chrome-wrapper-halo-family="zoom"
           >
             <button
               onClick={() => { popChrome('zoom-out'); zoomByDiscrete(1 / 1.2); }}
