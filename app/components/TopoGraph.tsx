@@ -6928,10 +6928,35 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      ease-out' matching the R245/R437 cadence on this
                      surface. */
                   data-edge-flow-rail-brightness={(isHoveredEdge || isEndpointHoveredEdge) ? '1.15' : '1'}
+                  /* R678 — edge flow-rail (dashed underline) joins the
+                     multi-layer halo family. Pre-R678 the rail had only
+                     brightness(1.15) on hover (R581) — single paint axis.
+                     Post-R678 prepends 2-layer drop-shadow at pal.flowPath
+                     tint (the rail's OWN stroke color, different from
+                     visible-path's pal.flowEdge) with 2+4 stride, alpha
+                     80/40. Same chrome-family vocabulary as R677 visible
+                     path.
+
+                     Because the rail is dashed (strokeDasharray="2 12"),
+                     the drop-shadow paints only where the visible dashes
+                     are — creating a glow-stones-along-path effect:
+                     each 2px dash halos individually. Adds a pleasing
+                     "guide-rail lit-up" gesture on edge inspection.
+
+                     Edge stroke pair now FULLY halo-extended at both
+                     paint layers:
+                       R677 visible primary path (pal.flowEdge 2+4)
+                       R678 flow-rail underline (pal.flowPath 2+4) ← this
+
+                     Per-edge ALL surfaces now multi-layer:
+                       R646 badge circle  R672 badge digit
+                       R677 visible path  R678 flow-rail  ← this round
+                     37th anchor in multi-layer halo family. */
+                  data-edge-flow-rail-halo-layers={(isHoveredEdge || isEndpointHoveredEdge) ? '2' : '0'}
                   style={{
                     transition: 'opacity 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, filter 300ms ease-out',
                     filter: (isHoveredEdge || isEndpointHoveredEdge)
-                      ? 'brightness(1.15)'
+                      ? `drop-shadow(0 0 2px ${pal.flowPath}80) drop-shadow(0 0 4px ${pal.flowPath}40) brightness(1.15)`
                       : undefined,
                   }}
                 />
