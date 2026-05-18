@@ -11748,11 +11748,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
                          39th anchor in multi-layer halo family — first
                          dense-mode anchor. */
-                      data-node-dense-alias-text-halo-layers={hoveredAlias === session.alias ? '2' : '0'}
+                      /* R691 — extends R680 halo gate from hover-only to
+                         (hover || chat-target). The dense fallback is the
+                         busiest-fleet view (>16 nodes) where users see
+                         ONLY this label — when the user opens a chat
+                         with one of the dense-mode nodes, the alias label
+                         should glow to identify the chat partner among
+                         the many similarly-rendered siblings. Pre-R691
+                         the dense label stayed dim even when chatAlias
+                         matched; post-R691 it lights up in per-tier
+                         status.primary on the same gate as R645 normal-
+                         mode alias text (R616 chat-target-gated brightness
+                         family). Closes dense-mode + chat-target signal-
+                         ing parity at the per-node label scope. */
+                      data-node-dense-alias-text-halo-layers={(hoveredAlias === session.alias || chatAlias === session.alias) ? '2' : '0'}
                       style={{
                         pointerEvents: 'none',
                         paintOrder: 'stroke',
-                        filter: hoveredAlias === session.alias
+                        filter: (hoveredAlias === session.alias || chatAlias === session.alias)
                           ? `drop-shadow(0 0 2px ${status.primary}80) drop-shadow(0 0 4px ${status.primary}40)`
                           : undefined,
                         transition: 'transform 200ms ease-out, fill 300ms ease-out, filter 200ms ease-out',
