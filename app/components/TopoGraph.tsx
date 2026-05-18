@@ -9135,7 +9135,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   // ring as a node footprint.
                   strokeWidth="2"
                   className="opacity-0 group-hover:opacity-70 transition-opacity duration-200"
-                  style={{ pointerEvents: 'none' }}
+                  /* Round 666 / Loop — per-node hover ring (r=radius+12)
+                     gains a stroke-tinted drop-shadow halo on
+                     `hoveredAlias === session.alias`. Pre-R666 this
+                     ring only fired the Tailwind opacity-0/group-
+                     hover:opacity-70 fade — no paint axis. R666
+                     introduces multi-layer halo (R642 family pattern)
+                     at this surface: status.primary tint at 2+4 stride
+                     with 50% falloff (0x80→0x40). 25th anchor in the
+                     multi-layer halo family.
+                     hoveredAlias React-state gate composes with the
+                     Tailwind group-hover gate — both fire at the same
+                     user input but on independent rules. transition
+                     list extended via inline style to include 'filter
+                     200ms ease-out' alongside the Tailwind opacity
+                     duration-200. R51 sentinel safe: strokeWidth=2
+                     is not in the reserved {1.5, 3} set. */
+                  data-node-hover-ring={session.alias}
+                  data-node-hover-ring-halo-layers={hoveredAlias === session.alias ? '2' : '0'}
+                  style={{
+                    pointerEvents: 'none',
+                    filter: hoveredAlias === session.alias
+                      ? `drop-shadow(0 0 2px ${status.primary}80) drop-shadow(0 0 4px ${status.primary}40)`
+                      : undefined,
+                    transition: 'filter 200ms ease-out',
+                  }}
                 />
                 {/* Round 11 / Loop: chat-focus ring — when the ChatPopover is
                     open targeting this node, anchor a persistent ring around
