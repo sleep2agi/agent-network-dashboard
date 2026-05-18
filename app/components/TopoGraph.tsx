@@ -14603,10 +14603,31 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        its OWN filter — R590 supplies that.
                        data-legend-count-brightness attr exposes gate. */
                     data-legend-count-brightness={(hoveredStatus === row.key || isPinned) ? '1.15' : '1'}
+                    /* R671 — legend-row COUNT joins the multi-layer halo
+                       family. Pre-R671 the count had brightness(1.15) only
+                       on hover/pin (R590) — explicitly plain because the
+                       count already had a 4-axis lift (opacity / fill / fw
+                       / ls). R671 extends to 2-layer drop-shadow using
+                       row.fill (PER-TIER color: working emerald / idle
+                       teal / offline slate) at 3+6 stride with alpha 99/4c
+                       — same convention as R665 legend swatch (also
+                       row.fill tint). Per-tier brightness now compounds
+                       per-tier halo at the count surface — the count
+                       reads as "this status tier lit up" with its OWN
+                       hue intensified AND a near-far hue glow.
+
+                       Legend-row tier now FULLY halo-extended (sibling
+                       closure with R665):
+                         R665 swatch       (row.fill 3+6 alpha 99/4c)
+                         R665 row label    (pal.legendAccent 2+4 alpha 80/40)
+                         R671 row count    (row.fill 3+6 alpha 99/4c)  ← this round
+
+                       30th anchor in multi-layer halo family. */
+                    data-legend-count-halo-layers={(hoveredStatus === row.key || isPinned) ? '2' : '0'}
                     style={{
                       pointerEvents: 'none',
                       filter: (hoveredStatus === row.key || isPinned)
-                        ? 'brightness(1.15)'
+                        ? `drop-shadow(0 0 3px ${row.fill}99) drop-shadow(0 0 6px ${row.fill}4c) brightness(1.15)`
                         : undefined,
                       transition: 'opacity 200ms ease-out, fill 200ms ease-out, font-weight 200ms ease-out, letter-spacing 200ms ease-out, filter 200ms ease-out',
                       fontVariantNumeric: 'tabular-nums',
