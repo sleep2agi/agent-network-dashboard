@@ -4034,9 +4034,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         tier-vs-glyph differentiation persists on hover
                         since the glyph (R369 fw=600) stays at full
                         opacity. R333 :{count} format preserved. */}
+                    {/* R688 — vendor count suffix `:N` joins the multi-
+                        layer halo family using the SAME per-vendor v.color
+                        tint as the inner letter glyph (R676) and the
+                        outer chip (R663). Pre-R688 the suffix had only
+                        2 group-hover axes (opacity 0.7→1 + tracking-wide);
+                        the paint-axis halo was missing. R688 closes
+                        vendor letter chip 3/3 (outer R663 + letter R676 +
+                        count R688) — all three nested elements glow in
+                        the SAME vendor brand hue under hover for full
+                        chip-level color identity coherence.
+                        Stride: 2+4 (text scale, same as R676 letter).
+                        Alpha 80/40, gated on hoveredVendor === v.initial.
+                        transition list extends with 'filter 200ms ease-out'.
+                        48th anchor in family. */}
                     <span
                       className="text-gray-400 tabular-nums opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide"
                       data-vendor-letter-count-suffix
+                      data-vendor-letter-count-suffix-halo-layers={hoveredVendor === v.initial ? '2' : '0'}
+                      style={{
+                        filter: hoveredVendor === v.initial
+                          ? `drop-shadow(0 0 2px ${v.color}80) drop-shadow(0 0 4px ${v.color}40)`
+                          : undefined,
+                        transition: 'filter 200ms ease-out',
+                      }}
                     >:{v.count}</span>
                   </span>
                 );
