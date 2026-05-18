@@ -7783,11 +7783,45 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                              CIRCLE + TEXT brightness coverage in lockstep
                              (the R603/R570 parity arc the ring and digit
                              established for the 3-state gate). */
-                          filter: (isHoveredEdge || isPinned || isHot || isEndpointHoveredEdge)
-                            ? 'brightness(1.15)'
-                            : undefined,
+                          /* R672 — edge-badge DIGIT joins the multi-layer
+                             halo family in lockstep with R646 edge-badge
+                             CIRCLE. Pre-R672 the digit had brightness(1.15)
+                             only on a unified 4-condition gate (hover/pin/
+                             hot/endpoint). R672 splits into the same TWO-
+                             branch pattern as R646 — cyan for non-hot
+                             (pal.legendAccent), amber for hot (hotStroke).
+                             Stride 2+4 (text scale, matches R645 alias
+                             text); alpha 80/40 matches the family. The
+                             badge circle (R646) + digit (R672) now emit
+                             multi-layer halo in lockstep when the edge
+                             surfaces under attention — full per-edge
+                             identity badge halo closure.
+                             Hover/pin/endpoint branch (cyan):
+                               R672 digit: 2px + 4px, alpha 80/40
+                               R646 circle: 3px + 6px, alpha 99/50
+                             Hot-only branch (amber):
+                               R672 digit: 2px + 4px, alpha 80/40
+                               R646 circle: 3px + 6px, alpha 80/40
+                             Hot-only branch precedes the unified hover
+                             branch in the chain so when the edge is BOTH
+                             hot AND hovered, the cyan halo wins (matches
+                             R646 chain order — hover priority over hot
+                             since hover is user intent).
+                             Multi-layer halo family — 31st anchor, 2nd
+                             per-edge surface after R646 circle. */
+                          filter: (isHoveredEdge || isPinned || isEndpointHoveredEdge)
+                            ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)`
+                            : isHot
+                              ? `drop-shadow(0 0 2px ${hotStroke}80) drop-shadow(0 0 4px ${hotStroke}40) brightness(1.15)`
+                              : undefined,
                           transition: 'letter-spacing 300ms ease-out, font-weight 300ms ease-out, filter 300ms ease-out',
                         }}
+                        data-edge-badge-digit-halo-layers={(isHoveredEdge || isPinned || isEndpointHoveredEdge || isHot) ? '2' : '0'}
+                        data-edge-badge-digit-halo-branch={
+                          (isHoveredEdge || isPinned || isEndpointHoveredEdge) ? 'cyan'
+                          : isHot ? 'amber'
+                          : 'none'
+                        }
                       >{link.count}</text>
                     </g>
                   );
