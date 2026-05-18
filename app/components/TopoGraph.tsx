@@ -12030,6 +12030,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.2'}
                   data-recent-panel-count-letter-spacing={hoveredPanel === 'recent' ? '0.4' : '0.2'}
                   data-recent-panel-count-brightness={hoveredPanel === 'recent' ? '1.15' : '1'}
+                  /* R669 — recent-panel count joins the multi-layer halo
+                     family. Pre-R669 the count had brightness(1.15) only
+                     on hoveredPanel === 'recent' (R589). R669 extends to
+                     2-layer drop-shadow at pal.legendAccent tint with the
+                     same 2+4 stride as R667/R668 chrome-control siblings,
+                     so the count text emits a near + far cyan halo on
+                     hover alongside the existing 3-axis lift (fw + ls +
+                     brightness). Sibling change at legend-panel count
+                     below — symmetric panel-pair closure under the multi-
+                     layer halo family. 28th anchor in family. */
+                  data-recent-panel-count-halo-layers={hoveredPanel === 'recent' ? '2' : '0'}
                   style={{
                     /* R589 — recent-signal panel count <text> root gains
                        brightness(1.15) on hoveredPanel === 'recent'.
@@ -12067,7 +12078,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                        brightness is freshness-amplifying at this
                        surface — coherent with the panel's "freshness
                        is the primary signal" semantic. */
-                    filter: hoveredPanel === 'recent' ? 'brightness(1.15)' : undefined,
+                    filter: hoveredPanel === 'recent' ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
                     transition: 'letter-spacing 200ms ease-out, filter 200ms ease-out',
                   }}
                 >
@@ -13742,6 +13753,15 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-legend-panel-count
               data-legend-panel-count-letter-spacing={hoveredPanel === 'legend' ? '0.4' : '0.2'}
               data-legend-panel-count-brightness={hoveredPanel === 'legend' ? '1.15' : '1'}
+              /* R669 sibling — legend-panel count joins the multi-layer
+                 halo family symmetrically with the recent-panel count
+                 above. Pre-R669 the count had brightness(1.15) only
+                 (R588). R669 extends to 2-layer drop-shadow at pal.
+                 legendAccent tint with 2+4 stride. Panel-pair count
+                 halo parity now complete — both panel COUNT texts emit
+                 cyan halo on hover alongside the existing 3-axis lift
+                 (fw + ls + brightness). */
+              data-legend-panel-count-halo-layers={hoveredPanel === 'legend' ? '2' : '0'}
               style={{
                 /* R588 — legend panel count gains brightness(1.15) on
                    panel hover. 27th anchor in per-element brightness
@@ -13764,7 +13784,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    nested tspan — SVG filter on tspan is unreliable
                    cross-browser; the parent <text> takes the filter
                    and inherits to children). */
-                filter: hoveredPanel === 'legend' ? 'brightness(1.15)' : undefined,
+                filter: hoveredPanel === 'legend' ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
                 transition: 'fill 200ms ease-out, font-weight 200ms ease-out, letter-spacing 200ms ease-out, filter 200ms ease-out',
                 fontVariantNumeric: 'tabular-nums',
               }}
