@@ -4883,6 +4883,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             "19": ["nodeSize wrapper"],
             "21": ["reset button"],
             "23": ["zoom wrapper"],
+            "25": ["fullscreen button"],
           })}
           /* Round 716 / Loop — companion to R710 rolodex catalog: surface
              the 5 DUAL-AXIS surfaces (R711/R712/R713×2/R714/R715) as a
@@ -4967,7 +4968,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           data-topo-respiratory-patterns={JSON.stringify([
             { name: "title-block",       cadences: [5, 6, 10, 11], anchors: ["brand logo", "kicker", "H2 section title", "title-block envelope"], shape: "trio-with-envelope" },
             { name: "panel-pair",        cadences: [8],            anchors: ["recent title", "legend title"],                                       shape: "parity" },
-            { name: "chrome-strip",      cadences: [9, 17, 19, 21, 23], anchors: ["zoom-level readout", "Layout wrapper", "nodeSize wrapper", "reset button", "zoom wrapper"], shape: "tiered-with-quartet" },
+            { name: "chrome-strip",      cadences: [9, 17, 19, 21, 23, 25], anchors: ["zoom-level readout", "Layout wrapper", "nodeSize wrapper", "reset button", "zoom wrapper", "fullscreen button"], shape: "tiered-with-quintet" },
             { name: "canvas-brand-pair", cadences: [6, 7, 13, 15], anchors: ["watermark text", "crescent inner", "crescent wrapper envelope", "watermark wrapper envelope"], shape: "coprime-nested-pair" },
             { name: "background",        cadences: [3, 4],         anchors: ["row hot", "hub idle"],                                                  shape: "baseline-pair" },
           ])}
@@ -17210,12 +17211,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // R400: hover translateY(-1px) lift — see reset button above for family doc.
             // R493 — fullscreen joins active:scale-95 press family (same as
             // reset above: lift-and-compress compound transform on press).
-            className={`group p-1.5 rounded-md border hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
+            className={`anet-topo-chrome-fullscreen-breath group p-1.5 rounded-md border hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
                 ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25'
                 : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'
             }${chromePopping === 'fullscreen' ? ' anet-chrome-pop' : ''}`}
             data-topo-chrome-fullscreen-hover-lift="true"
+            /* Round 719 / Loop — fullscreen button joins the respiratory
+               family at 25 s. Closes the atomic-control DUO (reset 21 s +
+               fullscreen 25 s) — both standalone chrome buttons now
+               breathe at parity 7% alpha range with coprime cadences.
+               6th anchor on chrome-strip pattern, shape advances to
+               "tiered-with-quintet". Hover-gate via existing
+               data-topo-chrome-fullscreen-hover attr — sibling leaf-
+               element gate pattern to R703 zoom-level and R718 reset.
+               See globals.css R719 block for cadence rationale. */
+            data-topo-chrome-fullscreen-breath="25s"
             /* R595 — chrome fullscreen button gains filter brightness(1.15)
                on hoveredFullscreen. 34th anchor in per-element brightness
                family, 3rd HTML-element anchor (R593 zoom-level + R594

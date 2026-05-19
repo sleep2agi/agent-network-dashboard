@@ -1616,6 +1616,49 @@ body {
   .anet-topo-chrome-reset-breath { animation: none; }
 }
 
+/* Round 719 — chrome fullscreen button joins the respiratory family at
+   25 s. 6th anchor on the chrome-strip pattern, extending the shape
+   from "tiered-with-quartet" → "tiered-with-quintet". Sibling to R718
+   reset (21 s) — closes the ATOMIC-CONTROL DUO: both standalone
+   chrome buttons (reset + fullscreen, the only non-segmented chrome
+   buttons in the family per R400 doc) now breathe at parity alpha
+   range with coprime cadences.
+
+   Chrome-strip pattern post-R719:
+     R703  zoom-level readout    9 s   (data tier)
+     R707  Layout    wrapper    17 s   (control wrapper tier)
+     R708  nodeSize  wrapper    19 s   (control wrapper tier)
+     R718  reset     button     21 s   (atomic control tier)
+     R709  zoom      wrapper    23 s   (control wrapper tier)
+     R719  fullscreen button    25 s   (atomic control tier) ← this round
+
+   25 = 5² — coprime with every other rolodex cadence (no factor 5
+   anywhere). Fills the 17/19/21/23/25 odd-number ladder perfectly
+   and becomes the new slowest cadence on the rolodex (prior slowest:
+   23 s zoom wrapper). The chrome strip now spans a 16 s arc from
+   9 → 25, with its two atomic-control members at 21 s and 25 s
+   bracketing the wrapper trio (17/19/23) — atomic controls breathe
+   slower than wrappers, matching their role as terminal commits
+   (reset wipes state; fullscreen flips viewport mode).
+
+   Same 7% alpha (0.93 ↔ 1) as R718 reset — atomic-control tier
+   parity. The duo reads as a matched pair at rest. Hover gate via
+   data-topo-chrome-fullscreen-hover (R703 leaf-element pattern,
+   sibling to R718 reset's gate). */
+@keyframes anet-topo-chrome-fullscreen-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.93; }
+}
+.anet-topo-chrome-fullscreen-breath {
+  animation: anet-topo-chrome-fullscreen-breath-kf 25s ease-in-out infinite;
+}
+.anet-topo-chrome-fullscreen-breath[data-topo-chrome-fullscreen-hover="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-fullscreen-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
