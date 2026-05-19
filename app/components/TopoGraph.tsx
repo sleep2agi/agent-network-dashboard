@@ -16372,12 +16372,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 + minWidth 46 stay (R225 family), the existing R264
                 color/border transitions stay, the R186 chrome-pop
                 class still toggles on zoom-click. */}
+            {/* Round 703 / Loop — chrome zoom-level readout gains at-rest
+                breathing fade. Sits between the 8 s panel titles and the
+                10 s H2 in the respiratory rolodex — the chrome strip's
+                only data display now has a "this readout is alive even
+                when zoom is steady" signal at rest. 9 s reads as a slow,
+                informational rhythm — slower than panel titles (8 s, more
+                editorial) but faster than the H2 (10 s, anchor). Tighter
+                alpha range (0.85 ↔ 1, ~15%) than the kicker (0.78 ↔ 1)
+                — readout carries tabular numeric data so it shouldn't
+                drift too far from full opacity.
+
+                Hover gate via CSS `[data-topo-chrome-zoom-level-hover=
+                "true"]` rule — when hovered, animation: none, and the
+                existing 4-axis hover lift (R347 ls + R420 fw + R517
+                color + R593 brightness + R668 halo) takes precedence
+                without competing alpha breath underneath.
+
+                Cadence rolodex (10 anchors now, 7-tier ladder):
+                  3 s row hot · 4 s hub idle · 5 s brand logo
+                  6 s watermark · 6 s kicker · 7 s crescent
+                  8 s recent title · 8 s legend title
+                  9 s zoom-level readout ← this round
+                  10 s H2
+
+                Pure opacity → bbox stable → topo-overlap-test untouched.
+                prefers-reduced-motion: reduce neutralizes inside the CSS
+                class. data-topo-chrome-zoom-level-breath attr surfaces
+                the cadence for tests. */}
             <span
-              className={`px-2 py-1 tabular-nums font-medium border-x text-center${
+              className={`anet-topo-chrome-zoom-level-breath px-2 py-1 tabular-nums font-medium border-x text-center${
                 chromePopping === 'zoom-in' || chromePopping === 'zoom-out'
                   ? ' anet-chrome-pop' : ''
               }`}
               data-topo-chrome-zoom-level
+              data-topo-chrome-zoom-level-breath="9s"
               data-topo-chrome-zoom-level-popping={
                 chromePopping === 'zoom-in' || chromePopping === 'zoom-out'
                   ? 'true' : 'false'

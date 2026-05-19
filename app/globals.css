@@ -1314,6 +1314,29 @@ body {
   .anet-topo-section-title-breath { animation: none; }
 }
 
+/* Round 703 — chrome zoom-level readout at-rest breath. 9 s cadence sits
+   between the 8 s panel titles and the 10 s H2 in the respiratory
+   rolodex. Tighter alpha range (0.85 ↔ 1, ~15%) than the kicker —
+   readout carries tabular numeric data, so it shouldn't drift too far
+   from full opacity. Hover gate via the data attribute: when
+   data-topo-chrome-zoom-level-hover="true", animation: none, and the
+   existing R347 ls + R420 fw + R517 color + R593 brightness + R668
+   halo 4-axis lift takes precedence cleanly. prefers-reduced-motion:
+   reduce neutralizes, sibling to R699/R702 guards. */
+@keyframes anet-topo-chrome-zoom-level-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.85; }
+}
+.anet-topo-chrome-zoom-level-breath {
+  animation: anet-topo-chrome-zoom-level-breath-kf 9s ease-in-out infinite;
+}
+.anet-topo-chrome-zoom-level-breath[data-topo-chrome-zoom-level-hover="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-zoom-level-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
