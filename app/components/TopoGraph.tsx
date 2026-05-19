@@ -5001,6 +5001,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             { name: "canvas-brand-pair", cadences: [6, 7, 13, 15], anchors: ["watermark text", "crescent inner", "crescent wrapper envelope", "watermark wrapper envelope"], shape: "coprime-nested-pair" },
             { name: "background",        cadences: [3, 4],         anchors: ["row hot", "hub idle"],                                                  shape: "baseline-pair" },
             { name: "triple-axis-pair",  cadences: [6],            anchors: ["kicker", "watermark text"],                                              shape: "6s-triple-pair" },
+            /* Round 726 / Loop — companion to "triple-axis-pair" (R724).
+               R725 added H2 as a 3rd triple-axis surface at 10 s, proving
+               the tier is multi-cadence rather than 6 s-locked. R724's
+               pair pattern still captures the 6 s subset; R726 adds the
+               TIER-LEVEL pattern containing all 3 triple-axis members
+               across both cadences. Pattern axis now has BOTH grain
+               sizes — pair (6s subset) and tier (full set):
+                 triple-axis-pair  cadences [6]      anchors [kicker, watermark text]
+                 triple-axis-tier  cadences [6, 10]  anchors [kicker, watermark text, H2 section title]
+               Pair anchors ⊂ Tier anchors; pair cadences ⊂ tier cadences.
+               The R726 test verifies this strict subset relationship
+               at runtime. Future triple-axis surfaces append HERE (the
+               tier) and conditionally to the pair (only if at 6 s). */
+            { name: "triple-axis-tier",  cadences: [6, 10],        anchors: ["kicker", "watermark text", "H2 section title"],                          shape: "tier-multi-cadence" },
           ])}
           /* Round 720 / Loop — 4TH orthogonal meta-doc catalog: tiers.
              Joins R710 (cadences) + R716 (axes) + R717 (patterns) to
