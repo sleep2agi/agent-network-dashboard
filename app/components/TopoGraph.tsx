@@ -12443,7 +12443,37 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 panels now have brightness in their active signature
                 at BOTH chrome tiers (title + row text), completing
                 the panel paint-axis cascade. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: activeEdgeKey ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-glow={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-brightness={activeEdgeKey ? '1.15' : '1'}>recent signal</text>
+            {/* Round 700 / Loop (milestone) — recent panel title gains
+                at-rest SVG opacity breath, paired with R699 kicker breath.
+                The respiratory rolodex (each surface a distinct cadence,
+                cleanly factored):
+                  row hot                3 s   (recent-row hot pip)
+                  hub idle               4 s
+                  brand logo             5 s
+                  watermark              6 s   (canvas bottom-left text)
+                  kicker eyebrow         6 s   (R699 — Network Topology)
+                  recent panel title     8 s   (R700 — this round)
+                  crescent moon          7 s
+                The new 8 s tier sits between watermark/kicker (6 s) and
+                hub idle (4 s) at the slow end — recent panel title is a
+                section-grade label, so a calm, longer breath fits its
+                "section is alive" semantics. The pinned-state filter
+                glow (activeEdgeKey true) takes precedence: when a row
+                inside the panel is pinned, the breath GATES OFF and the
+                R550 glow + R482 fw-800 + R345 ls-0.4 active triplet
+                holds steady. So the breath only registers at rest —
+                same pattern as R699 kicker (group-hover overrides).
+
+                Implementation: conditional SVG `<animate>` child element,
+                same pattern as the R519 brand watermark breath at 6 s
+                (line ~15320). `<animate>` is paint-only (opacity);
+                bounding box stays fixed; topo-overlap-test untouched.
+                reducedMotion gate already standard across the family —
+                guard inline. data-recent-panel-title-breath attr
+                surfaces the gate state for tests. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: activeEdgeKey ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-glow={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-brightness={activeEdgeKey ? '1.15' : '1'} data-recent-panel-title-breath={!reducedMotion && !activeEdgeKey ? '8s' : 'off'}>recent signal{!reducedMotion && !activeEdgeKey && (
+              <animate attributeName="opacity" values="0.78;1;0.78" dur="8s" repeatCount="indefinite" />
+            )}</text>
             {/* R96: header count now matches what the rows show. Pre-R96
                 this read "X msgs" off the raw messages array, but the
                 rows below render DEDUPED flowLinks — so a fleet with 10
