@@ -5304,7 +5304,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             /* R742 — entrance family +1 member: title-block joins
                canvas root as 2nd one-shot-mount surface. Staggered
                choreography: canvas 0-600ms, title-block 200-700ms. */
-            { mode: "one-shot-mount",  family: "entrance", members: 2,  examples: ["canvas root", "title-block"] },
+            /* R743 — entrance family +1 → 3 members: chrome strip joins
+               canvas root + title-block, completing the entrance trio.
+               3-stage cascade: 0-600 / 200-700 / 400-900 ms. */
+            { mode: "one-shot-mount",  family: "entrance", members: 3,  examples: ["canvas root", "title-block", "chrome strip"] },
           ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
@@ -16909,7 +16912,22 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             for the overlap-test (chrome is HTML overlay on top of
             the SVG, not part of the viewBox 1000x680 surface; ring
             r=325 / grid gx0 layout untouched). */}
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 text-xs select-none" data-topo-chrome>
+        {/* Round 743 / Loop — chrome strip joins entrance family as 3rd
+           one-shot-mount member, completing the entrance TRIO. Three-
+           stage cascading "settle in" wave:
+             R740 canvas       0   → 600 ms   scale 0.99→1, opacity 0.8→1
+             R742 title-block  200 → 700 ms   translateY -4→0, opacity 0.7→1
+             R743 chrome strip 400 → 900 ms   translateX 8→0, opacity 0.7→1
+           Each stage starts 200 ms after the prior — the canvas
+           arrives, the heading writes in, then the chrome strip slides
+           in from the right edge. translateX (not translateY) because
+           the chrome strip lives at the right edge — sliding in from
+           its own edge reads as "docking into place".
+           Chrome strip wrapper is plain HTML with no existing
+           animation, so a simple single-animation class suffices (no
+           compound needed, unlike R742's title-block). Gated by
+           reducedMotion at JSX level. See globals.css R743 block. */}
+        <div className={`absolute bottom-4 right-4 flex items-center gap-2 text-xs select-none${reducedMotion ? '' : ' anet-topo-chrome-strip-entrance'}`} data-topo-chrome data-topo-chrome-entrance={reducedMotion ? 'false' : 'true'}>
           {/* #113: node size — S / M / L segmented control (Vincent 4727).
               R154: stable data-* hooks for tests + focus-visible ring so
               keyboard navigation lands somewhere visible against the
