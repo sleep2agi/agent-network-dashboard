@@ -1285,9 +1285,35 @@ body {
    prefers-reduced-motion: reduce → animation: none (kicker freezes at
    resting alpha = 1, sibling to other R29-family motion guards).
    ───────────────────────────────────────────────────────────────────── */
+/* Round 699 + R714 — kicker "Network Topology" dual-axis breath.
+   R699 introduced 6s opacity breath (0.78 ↔ 1, ~22%); R714 adds a
+   SECOND axis in the same @keyframes: a transform scale (0.995 ↔ 1,
+   ~0.5%). Two axes share cadence (6s) so they breathe IN PHASE —
+   the dimmest moment is also the smallest moment, mirroring the
+   R711 H2 dual-axis at the title-block's eyebrow tier.
+
+   Why scale 0.5%: the kicker is the section's secondary text (eyebrow
+   above the H2 headline). Its alpha range is wider (22% vs H2's 12%)
+   so a slightly wider scale range (0.5% vs H2's 0.3%) keeps the
+   axes proportionally weighted. Still sub-pixel at xs font-size
+   (~12 px text height → 0.06px swing) — imperceptible per-frame,
+   accumulates as "the eyebrow gently pulses with the breath".
+
+   Mirrors R711 H2 pattern (HTML text dual-axis: opacity + CSS
+   transform scale) — both title-block text tiers now have dual-axis
+   breath, closing title-block dual-axis symmetry across kicker and
+   H2. Brand-logo (the 3rd title-block trio member) still single-axis
+   since it already has its own 5-axis hover signature (R548/R549/R553/
+   R557/R604) plus 5s breath; further axes would oversubscribe the
+   brand mark. Pattern budget: title-block trio members get dual-axis
+   if their hover signature is sparse, single-axis if rich.
+
+   transform-origin defaults to center — kicker scales around its own
+   midpoint, no glyph drift. paint-only → flex parent stable → topo-
+   overlap-test untouched. prefers-reduced-motion: reduce neutralizes. */
 @keyframes anet-topo-kicker-breath-kf {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.78; }
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%      { opacity: 0.78; transform: scale(0.995); }
 }
 .anet-topo-kicker-breath {
   animation: anet-topo-kicker-breath-kf 6s ease-in-out infinite;
