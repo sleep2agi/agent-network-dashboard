@@ -1226,6 +1226,42 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
+   Round 698 — vendor-distribution chip-row outer wrapper joins the
+   R697 wrapper-level :has() halo family. Pre-R698 only the chrome-strip
+   wrappers (Layout/nodeSize/zoom) echoed inner-button hover at the
+   parent scope; the vendor-distribution wrapper stayed flat even though
+   its inner vendor letter chips already halo'd per-element (R676/R688/
+   R690).
+
+   R697 used `:has(button:hover)` because chrome wrappers contain real
+   <button> children. The vendor letter chips are `<span role="button">`
+   (clickable spans, not buttons — preserves inline-baseline alignment
+   with the title text). The :has() selector variant `[role="button"]:hover`
+   extends R697's wrapper-level vocabulary from real-button children
+   to ARIA-button children — same gesture, broader applicability.
+
+   Cyan-300 (#67e8f9) at 2+4 stride, 0.5/0.25 alpha — matches R697
+   cadence exactly. Transition matches the per-chip 200ms hover cascade.
+   When user hovers any A:N / O:N / 书:N / ?:N chip, the outer chip-row
+   wrapper echoes the per-chip halo outward — reads as "this vendor-
+   distribution control group is active" alongside the existing R676
+   vendor letter glyph halo + R688 count suffix halo.
+
+   54th anchor in multi-layer halo family — 2nd wrapper-level :has()
+   anchor. First :has() rule targeting [role="button"] (vs <button>)
+   children. Closes vendor-chip-row "active control group" signal at
+   the parent scope. */
+[data-topo-chrome-vendor-distribution-wrapper]:has([role="button"]:hover) {
+  filter: drop-shadow(0 0 2px rgba(103, 232, 249, 0.5))
+          drop-shadow(0 0 4px rgba(103, 232, 249, 0.25));
+}
+[data-topo-chrome-vendor-distribution-wrapper] {
+  transition: background-color 200ms ease-out,
+              border-color 200ms ease-out,
+              filter 200ms ease-out;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
    Rounds 19~27 accumulated a lot of small animations: Tasks row 0fr↔1fr
