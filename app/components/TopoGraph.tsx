@@ -5192,6 +5192,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                The R733 test handles this by relaxing the canonical-format
                regex to `[^·]+( · [^·]+)+` (≥2 parts). */
             { surface: "hub-highlight disc",      selector: "[data-topo-hub-highlight]",      accessible_name: "hub · network center · idle indicator" },
+            /* R735 — canvas scan beam ambient animation gains a11y <title>.
+               First non-static (animated) titled surface; 3-part canonical
+               form with cadence as state context. */
+            { surface: "canvas scan beam",        selector: "[data-topo-canvas-scan-beam]",  accessible_name: "canvas scan beam · ambient sweep · 30s cycle" },
           ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
@@ -5386,6 +5390,42 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
           {/* panel backdrop stays fixed — panning never reveals empty canvas */}
           <rect width="1000" height="680" fill="url(#topo-panel)" />
+
+          {/* Round 735 / Loop — SVG scan beam: ambient living-system
+             signal sweeping the canvas every 30 s. Pivot round: first
+             new VISIBLE animation outside the breath / a11y / meta-doc
+             threads since R720. Pure paint:
+               - 1 px tall horizontal cyan stripe
+               - y animates -2 → 680 over 30 s (full canvas sweep)
+               - opacity 0 → 0.08 → 0.08 → 0 at keyTimes 0/0.05/0.95/1
+               - pointer-events: none, no business logic touch
+             Renders directly after the panel backdrop and BEFORE all
+             nodes/panels — sits in the background layer; nodes paint
+             over it. The overlap-test selectors (g[data-node],
+             g[data-group], specific panel translate prefixes) don't
+             match this <rect>, so the zero-overlap invariant stays
+             green by selector exclusion.
+             Gated by !reducedMotion at JSX level — when the user
+             prefers reduced motion the <animate> children don't
+             mount; opacity stays at the static "0" baseline, beam
+             remains invisible. data-topo-canvas-scan-beam attr
+             exposes the mount state for tests. */}
+          <rect
+            x="0" y="-2" width="1000" height="1"
+            fill={pal.legendAccent}
+            opacity="0"
+            data-topo-canvas-scan-beam
+            data-topo-canvas-scan-beam-active={!reducedMotion ? 'true' : 'false'}
+            style={{ pointerEvents: 'none' }}
+          >
+            {!reducedMotion && (
+              <animate attributeName="y" values="-2;680;-2" dur="30s" repeatCount="indefinite" />
+            )}
+            {!reducedMotion && (
+              <animate attributeName="opacity" values="0;0.08;0.08;0" keyTimes="0;0.05;0.95;1" dur="30s" repeatCount="indefinite" />
+            )}
+            <title>canvas scan beam · ambient sweep · 30s cycle</title>
+          </rect>
 
           {/* Round 103 (issue #81): everything inside this <g> zooms + pans
               together. transform order = translate then scale.
