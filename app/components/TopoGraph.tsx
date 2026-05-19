@@ -2043,7 +2043,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               independent gesture vocabularies.
               data-topo-section-kicker-hover-tracking + -hover-color
               attrs expose the landing values for tests. */}
-          <div className="text-xs uppercase text-gray-500 group-hover:text-gray-400 tracking-widest group-hover:tracking-[0.13em] transition-[letter-spacing,color] duration-200 ease-out leading-tight font-medium" data-topo-section-kicker data-topo-section-kicker-hover-tracking="0.13em" data-topo-section-kicker-hover-color="text-gray-400" data-topo-section-kicker-halo-layers="2">Network Topology</div>
+          {/* Round 699 / Loop: kicker gains a slow at-rest breathing
+              fade — opacity 0.78 ↔ 1 at 6s ease-in-out infinite, via
+              `.anet-topo-kicker-breath` (globals.css). Pre-R699 the
+              kicker sat at a fixed alpha; the H2 below has a live
+              breathing pulse cycle (`anet-current-step-pulse-kf` family
+              cousins exist) but the kicker eyebrow itself was static.
+              R699 adds a 6s respiration — visible but never agitating.
+              When hovered, the group-hover:text-gray-400 (R685 halo +
+              R555 tracking-expand) takes over, so the breath only
+              registers at rest. prefers-reduced-motion neutralizes the
+              keyframe (animation: none) inside the CSS class.
+
+              Geometry-safe: pure opacity animation, no transform / size /
+              filter blur change → bounding box stable → topo-overlap-test
+              unaffected at both grid + ring. First respiratory anchor
+              on the title-block — sibling to the chip-row gesture grammar
+              (R697/R698 wrapper halos) but operating on a different
+              axis (rest-state aliveness vs hover gesture).
+
+              data-topo-section-kicker-breath="6s" attr surfaces the
+              cadence for tests. */}
+          <div className="anet-topo-kicker-breath text-xs uppercase text-gray-500 group-hover:text-gray-400 tracking-widest group-hover:tracking-[0.13em] transition-[letter-spacing,color] duration-200 ease-out leading-tight font-medium" data-topo-section-kicker data-topo-section-kicker-hover-tracking="0.13em" data-topo-section-kicker-hover-color="text-gray-400" data-topo-section-kicker-halo-layers="2" data-topo-section-kicker-breath="6s">Network Topology</div>
           {/* Round 286 / Loop: title 'Command mesh' adopts tracking-tight
               (-0.025em) to complement R285 kicker tracking-widest. Wide
               eyebrow + tight headline is the conventional editorial

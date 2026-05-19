@@ -1262,6 +1262,41 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
+   Round 699 — kicker "Network Topology" at-rest breathing fade.
+
+   The H2 below ("Command mesh") already had its hover halo via the R684
+   descendant rule; the kicker eyebrow above had R685 hover halo + R555
+   tracking-expand, but at REST it sat at a fixed alpha — static, no
+   sign of life. R699 adds a slow respiratory cycle (opacity 0.78 ↔ 1
+   at 6 s ease-in-out infinite) on `.anet-topo-kicker-breath`.
+
+   6 s is deliberately ~3× slower than the sidebar brand-pulse (1.6 s)
+   and the recent-hot pulse (3 s) — kicker isn't signaling urgency, just
+   "this section is alive". Group-hover overrides via R555/R685 take
+   precedence the moment user enters the title-block, so the breath
+   never competes with the gesture vocabulary.
+
+   Pure opacity: no transform / no filter blur / no size change → text
+   bounding box stable → topo-overlap-test grid + ring untouched. Pairs
+   sequentially with `anet-brand-pulse-kf` (1.6 s, brand status) and
+   `anet-recent-hot-pulse-kf` (3 s, recent-signal heat) as the third
+   distinct respiratory rhythm in the topo canvas.
+
+   prefers-reduced-motion: reduce → animation: none (kicker freezes at
+   resting alpha = 1, sibling to other R29-family motion guards).
+   ───────────────────────────────────────────────────────────────────── */
+@keyframes anet-topo-kicker-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.78; }
+}
+.anet-topo-kicker-breath {
+  animation: anet-topo-kicker-breath-kf 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-kicker-breath { animation: none; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
    Rounds 19~27 accumulated a lot of small animations: Tasks row 0fr↔1fr
