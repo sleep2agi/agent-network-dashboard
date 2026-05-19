@@ -3774,6 +3774,25 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             <span
               className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
               title="Hover to highlight; click to pin"
+              /* Round 698 — vendor-distribution chip-row outer wrapper
+                 joins the R697 wrapper-level :has() halo family. Pre-R698
+                 only the chrome-strip wrappers (Layout/nodeSize/zoom)
+                 echoed inner-button hover at the parent scope. R698
+                 extends the vocabulary to a NEW parent: the vendor
+                 distribution chip-row. When user hovers any inner
+                 vendor letter chip (A:N / O:N / 书:N / ?:N — all are
+                 `<span role="button">`), the outer wrapper itself
+                 halos in cyan-300 (2+4 stride, 0.5/0.25 alpha), matching
+                 R697's cadence. Reads as "this vendor-distribution
+                 control group is active" — same gesture R697 introduced
+                 at the chrome strip, now at the chip strip. 54th anchor
+                 in multi-layer halo family — 2nd wrapper-level :has()
+                 anchor. CSS rule lives in globals.css ~1228+ using
+                 :has([role="button"]:hover) instead of :has(button:hover)
+                 because vendor chips are role="button" spans (not real
+                 <button>). The selector variant extends R697's :has()
+                 vocabulary from real buttons to ARIA buttons. */
+              data-topo-chrome-vendor-distribution-wrapper="true"
             >
               {vendorDist.map(v => {
                 const isPinned = pinnedVendor === v.initial;
