@@ -4934,7 +4934,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             { anchor: "kicker",     cadence_s: 6,  axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale"] },
             { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale"] },
-            { anchor: "watermark",  cadence_s: 6,  axes: ["opacity", "letter-spacing"] },
+            { anchor: "watermark",  cadence_s: 6,  axes: ["opacity", "letter-spacing", "text-shadow"] },
             { anchor: "recent",     cadence_s: 8,  axes: ["opacity", "font-size"] },
             { anchor: "legend",     cadence_s: 8,  axes: ["opacity", "font-size"] },
           ])}
@@ -15759,6 +15759,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             opacity="0.4"
             data-topo-brand-watermark
             data-topo-brand-watermark-breath={reducedMotion ? 'false' : 'true'}
+            /* Round 722 / Loop — watermark promoted to 2ND triple-axis
+               surface. CSS text-shadow axis joins the SMIL opacity (R519)
+               + SMIL letter-spacing (R712) axes — all 3 at 6 s in phase.
+               Mirrors R721 kicker; together they form the "6 s triple-
+               axis pair", the first multi-member triple-axis structural
+               pattern in the family. Gated by reducedMotion at the JSX
+               level (sibling to the SMIL <animate> children below) so
+               the CSS animation has the same a11y guard. See globals.css
+               R722 block for glow tuning rationale. */
+            data-topo-brand-watermark-glow-breath={reducedMotion ? 'false' : '6s'}
+            className={reducedMotion ? undefined : 'anet-topo-brand-watermark-glow-breath'}
             style={{ pointerEvents: 'none', transition: 'fill 200ms ease-out' }}
           >sleep2agi{!reducedMotion && (
             <animate attributeName="opacity" values="0.32;0.48;0.32" dur="6s" repeatCount="indefinite" />

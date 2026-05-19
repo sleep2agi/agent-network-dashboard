@@ -1311,6 +1311,49 @@ body {
    transform-origin defaults to center — kicker scales around its own
    midpoint, no glyph drift. paint-only → flex parent stable → topo-
    overlap-test untouched. prefers-reduced-motion: reduce neutralizes. */
+/* Round 722 — watermark text becomes the 2ND TRIPLE-axis surface,
+   completing a "6 s triple-axis PAIR" with R721 kicker (both at the
+   fastest dual-axis cadence, both with sparse hover signatures, both
+   read-target text — symmetric structural mirror).
+
+   The watermark's prior axes:
+     R519 SMIL opacity         (6 s, 0.32 ↔ 0.48)
+     R712 SMIL letter-spacing  (6 s, 0.45 ↔ 0.55)
+   R722 adds a 3rd CSS-animated axis on the SAME `<text>` element:
+     R722 CSS text-shadow      (6 s, none ↔ 0 0 8 px rgba(34, 211, 238, 0.20))
+
+   The SMIL animations (opacity + letter-spacing) drive SVG attributes
+   in their own clock; the CSS animation drives `text-shadow` as a CSS
+   property. SVG <text> in modern browsers honours both vocabularies
+   on the same element — no conflict. The 6 s cadence shared across
+   all 3 axes keeps them in phase: at the dimmest+tightest moment the
+   glow appears; at the brightest+widest moment the glow is gone. One
+   coherent inhale-exhale.
+
+   Glow tuning vs kicker (R721):
+     kicker    blur 6 px, alpha 0.30
+     watermark blur 8 px, alpha 0.20
+   The watermark text sits at canvas bottom-left at fontSize 11 with
+   a base opacity of 0.4 (R282) — the glow needs more spread (8 vs 6)
+   to register at that low base opacity, but less alpha (0.20 vs 0.30)
+   to stay proportional to the wordmark's quieter visual register.
+
+   Gating: piggybacks on the existing R519 reducedMotion JSX gate
+   (the entire <animate> tree only mounts when !reducedMotion). When
+   reducedMotion is true the class is still applied but the @media
+   (prefers-reduced-motion: reduce) below neutralises the CSS
+   animation. Belt-and-suspenders. */
+@keyframes anet-topo-brand-watermark-glow-breath-kf {
+  0%, 100% { text-shadow: none; }
+  50%      { text-shadow: 0 0 8px rgba(34, 211, 238, 0.20); }
+}
+.anet-topo-brand-watermark-glow-breath {
+  animation: anet-topo-brand-watermark-glow-breath-kf 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-brand-watermark-glow-breath { animation: none; }
+}
+
 /* Round 721 — kicker becomes the family's first TRIPLE-axis breath
    surface. R699 opacity (6 s) + R714 transform-scale (6 s) joined by
    R721 text-shadow (6 s) — all 3 axes share the 6 s cadence in phase.
