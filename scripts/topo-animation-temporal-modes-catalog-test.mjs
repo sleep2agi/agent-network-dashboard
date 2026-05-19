@@ -129,12 +129,11 @@ const results = {
   one_shot_entrance_pair:          oneShot?.family === 'entrance',
   inf_rest_matches_rolodex_count:  infRest?.members === rolodexAnchorCount,
   inf_sweep_matches_trio_count:    infSweep?.members === scanBeamTrioAnchorCount,
-/* R742 — entrance family grew from 1 → 2 members (title-block joined
- * canvas root). The R741-time invariant `=== 1` is invalidated;
- * widen to `>= 1` (entrance family is at least one member) and add
- * a separate `oneShot_count_is_2` reflecting the post-R742 reality. */
+/* Entrance family has grown: R740 solo (1) → R742 pair (2) → R743
+ * trio (3). The cardinality assertion tracks the current snapshot;
+ * one_shot_count_at_least_1 is the stable invariant. */
   one_shot_count_at_least_1:       (oneShot?.members ?? 0) >= 1,
-  one_shot_count_is_2:              oneShot?.members === 2,
+  one_shot_count_is_3:              oneShot?.members === 3,
 };
 const ok = Object.values(results).every(Boolean);
 console.log(`${ok ? '✅' : '❌'} R741 animation temporal modes catalog (8th meta-doc — octagon, lifecycle dimension):`,

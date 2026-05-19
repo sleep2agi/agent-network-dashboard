@@ -1748,6 +1748,31 @@ body {
   .anet-topo-title-block-entrance { animation: none; }
 }
 
+/* Round 743 — chrome strip entrance, 3rd member of the entrance family,
+   completing the entrance TRIO. Three-stage cascade:
+     R740 canvas       0   → 600 ms   scale 0.99→1, opacity 0.8→1
+     R742 title-block  200 → 700 ms   translateY -4→0, opacity 0.7→1
+     R743 chrome strip 400 → 900 ms   translateX 8→0, opacity 0.7→1
+   Each stage offset +200 ms. translateX (not translateY) because the
+   chrome strip docks at the canvas right edge — sliding in from its
+   own edge reads as "docking into place".
+
+   The chrome strip wrapper div has no other animation, so a plain
+   single-animation class works here (no compound needed like R742's
+   title-block which collided with R706 envelope-breath). One-shot —
+   no `infinite`, runs once per mount. prefers-reduced-motion JSX gate
+   + CSS @media guard. */
+@keyframes anet-topo-chrome-strip-entrance-kf {
+  0%   { transform: translateX(8px); opacity: 0.7; }
+  100% { transform: translateX(0);   opacity: 1; }
+}
+.anet-topo-chrome-strip-entrance {
+  animation: anet-topo-chrome-strip-entrance-kf 500ms ease-out 400ms backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-strip-entrance { animation: none; }
+}
+
 /* Round 707 — chrome Layout wrapper at-rest breath at 17 s. Slowest tier
    among HTML chrome respiratory anchors (sibling to R703 zoom-level 9 s
    in the chrome strip's data tier; this 17 s lands in the chrome strip's
