@@ -5195,7 +5195,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             /* R735 — canvas scan beam ambient animation gains a11y <title>.
                First non-static (animated) titled surface; 3-part canonical
                form with cadence as state context. */
-            { surface: "canvas scan beam",        selector: "[data-topo-canvas-scan-beam]",  accessible_name: "canvas scan beam · ambient sweep · 30s cycle" },
+            { surface: "canvas scan beam",          selector: "[data-topo-canvas-scan-beam]",            accessible_name: "canvas scan beam · ambient sweep · 30s cycle" },
+            /* R736 — vertical scan beam companion to R735. Coprime
+               cadence (23s) with R735 (30s) — ambient crosshair drift. */
+            { surface: "canvas scan beam vertical", selector: "[data-topo-canvas-scan-beam-vertical]",   accessible_name: "canvas scan beam vertical · ambient sweep · 23s cycle" },
           ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
@@ -5425,6 +5428,44 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               <animate attributeName="opacity" values="0;0.08;0.08;0" keyTimes="0;0.05;0.95;1" dur="30s" repeatCount="indefinite" />
             )}
             <title>canvas scan beam · ambient sweep · 30s cycle</title>
+          </rect>
+
+          {/* Round 736 / Loop — vertical scan beam companion to R735.
+             Sweeps left→right at 23 s. The pair forms the "scan beam"
+             ambient family — both beams in background layer, both
+             subtle (max opacity 0.08), but at COPRIME cadences:
+               R735 horizontal beam   30 s   (top → bottom)
+               R736 vertical beam     23 s   (left → right) ← this round
+             gcd(23, 30) = 1 → the beams never phase-lock, so they
+             cross at different canvas points each cycle. Over time the
+             visual rhythm reads as "ambient crosshair drift", a
+             living-system signal that's never quite the same twice.
+
+             23 is prime → coprime with every other rolodex cadence
+             too (the breath family's prime ladder R703/R707/R708/
+             R718/R719: 9/17/19/21/23/25 — but R736 lives outside
+             the breath family in the ambient layer, so no actual
+             phase-lock concern with rolodex members).
+
+             Same z-order (background layer, before nodes), same
+             reducedMotion JSX gate, same overlap-test safety by
+             selector exclusion. Same canonical 3-part a11y title:
+             "<name> · <role> · <state>". */}
+          <rect
+            x="-2" y="0" width="1" height="680"
+            fill={pal.legendAccent}
+            opacity="0"
+            data-topo-canvas-scan-beam-vertical
+            data-topo-canvas-scan-beam-vertical-active={!reducedMotion ? 'true' : 'false'}
+            style={{ pointerEvents: 'none' }}
+          >
+            {!reducedMotion && (
+              <animate attributeName="x" values="-2;1000;-2" dur="23s" repeatCount="indefinite" />
+            )}
+            {!reducedMotion && (
+              <animate attributeName="opacity" values="0;0.08;0.08;0" keyTimes="0;0.05;0.95;1" dur="23s" repeatCount="indefinite" />
+            )}
+            <title>canvas scan beam vertical · ambient sweep · 23s cycle</title>
           </rect>
 
           {/* Round 103 (issue #81): everything inside this <g> zooms + pans
