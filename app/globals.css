@@ -1566,6 +1566,56 @@ body {
   .anet-topo-chrome-zoom-wrapper-breath { animation: none; }
 }
 
+/* Round 718 — chrome reset button joins the respiratory family at 21 s.
+   5th anchor on the chrome-strip pattern, extending it from
+   "tiered-with-trio" → "tiered-with-quartet". The chrome strip now
+   spans a data tier + a prime quartet across control surfaces:
+     R703  zoom-level readout   9 s   (data tier)
+     R707  Layout    wrapper   17 s   (control wrapper tier)
+     R708  nodeSize  wrapper   19 s   (control wrapper tier)
+     R718  reset     button    21 s   (atomic control tier) ← this round
+     R709  zoom      wrapper   23 s   (control wrapper tier)
+
+   21 is composite (3 × 7), the ONE composite in the prime quartet —
+   slots between the prime wrappers 19 and 23 to fill the 17/19/21/23
+   odd-number ladder. Coprime with all rolodex cadences (the rolodex
+   has no 3-multiples until 9 and no 7-multiples until 7 itself — but
+   neither 9 nor 7 share factors with 21's other co-tier mates 17/19/23).
+   Actually 21 IS divisible by 3 like 9 — gcd(21,9)=3 so 21 phase-locks
+   with 9 every 63 s. That's deliberate: the data tier (9 s) and the
+   atomic-control tier (21 s) RE-ALIGN every minute — a slow handshake
+   between "what the chrome reads" and "the reset action". Aesthetic
+   over arithmetic: a 1-per-minute alignment is sub-perceptible.
+
+   Atomic-control sub-tier rationale: the reset button is the only
+   STANDALONE atomic chrome button with a 5-axis hover signature
+   (R594 brightness + R400 hover-lift + R196 active-state + R350 icon
+   spin + R184 release pop). The 5 hover axes already give it a rich
+   interactive voice; a 6th REST axis at 7% alpha (slightly looser than
+   the 6% wrappers, to compensate for the smaller icon-button surface)
+   marks it as "alive" at rest without competing with the hover axes.
+
+   Hover gate via data-attr (R703 pattern, not R707/R708/R709 :has()
+   pattern). The button itself exposes data-topo-chrome-reset-hover —
+   already plumbed for the R350 icon-rotate cue and R594 brightness —
+   so the breath gates off naturally on its own hover state. Sibling
+   gate pattern to R703 zoom-level (the only other chrome anchor at
+   the leaf-element tier; both gate via their own hover data-attr
+   rather than parent :has()). */
+@keyframes anet-topo-chrome-reset-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.93; }
+}
+.anet-topo-chrome-reset-breath {
+  animation: anet-topo-chrome-reset-breath-kf 21s ease-in-out infinite;
+}
+.anet-topo-chrome-reset-breath[data-topo-chrome-reset-hover="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-reset-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 

@@ -71,7 +71,7 @@ const validShape = Array.isArray(patterns)
       && typeof p.name === 'string' && p.name.length > 0
       && Array.isArray(p.cadences) && p.cadences.length > 0 && p.cadences.every(c => typeof c === 'number' && c > 0)
       && Array.isArray(p.anchors) && p.anchors.length > 0 && p.anchors.every(a => typeof a === 'string' && a.length > 0)
-      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'coprime-nested-pair', 'baseline-pair'].includes(p.shape))
+      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'tiered-with-quartet', 'coprime-nested-pair', 'baseline-pair'].includes(p.shape))
   : false;
 
 const totalAnchorCount = Array.isArray(patterns)
