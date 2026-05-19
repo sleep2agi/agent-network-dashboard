@@ -15390,14 +15390,53 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               foregrounded.
               Focal-recede family extension (3 anchors): R507 hub
               digit / R508 hub-highlight / R525 brand watermark. */}
+          {/* Round 704 / Loop — brand watermark WRAPPER gains an envelope
+              breath at 15 s — the slowest tier in the respiratory rolodex.
+              The inner "sleep2agi" text already breathes at 6 s (R519);
+              the crescent moon at 7 s; this round adds an outer wrapper
+              envelope at 15 s so the brand area has a layered respiratory
+              effect — fast inner breaths nested inside a slow outer one.
+              At wrapper trough (opacity 0.85) × inner text trough (0.32)
+              → effective 0.272; at both peaks → 0.48. Soft envelope.
+
+              Cadence: 15 s — slowest tier yet, sits at the top of the
+              rolodex above the 10 s H2. Heaviest visual register
+              (the only fixed-position corner watermark) deserves the
+              slowest cadence — "calmest signal of life at the canvas's
+              quietest corner". Tighter alpha range (0.85 ↔ 1, ~15%)
+              matching R703 zoom-level — tabular/decorative surfaces
+              shouldn't drift too far from full opacity.
+
+              Hover gate via CSS:
+                [data-topo-brand-watermark-recede="true"] { animation: none }
+              When user hovers a node/edge/group on the canvas, the
+              wrapper's focal-recede (R525) drops opacity attr to 0.7;
+              CSS animation gate-off lets that attr take effect cleanly,
+              no breath underneath. Pattern sibling to R703 zoom-level
+              data-attr selector gate. prefers-reduced-motion: reduce
+              also neutralizes, joining the R699/R702/R703 a11y guard
+              family.
+
+              Rolodex (11 anchors now, 9-tier ladder):
+                3 s row hot · 4 s hub idle · 5 s brand logo
+                6 s watermark text · 6 s kicker · 7 s crescent
+                8 s recent title · 8 s legend title
+                9 s zoom-level readout
+                10 s H2
+                15 s watermark wrapper envelope ← this round
+
+              data-topo-brand-watermark-envelope-breath attr surfaces
+              the cadence for tests. */}
           <g
             opacity={(hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
                       hoveredStatus || hoveredVendor) && !hoveredHub ? 0.7 : 1}
+            className="anet-topo-brand-watermark-envelope-breath"
             data-topo-brand-watermark-wrapper
             data-topo-brand-watermark-recede={
               (hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
                hoveredStatus || hoveredVendor) && !hoveredHub ? 'true' : 'false'
             }
+            data-topo-brand-watermark-envelope-breath="15s"
             style={{ pointerEvents: 'none', transition: 'opacity 300ms ease-out' }}
           >
           <text
