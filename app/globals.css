@@ -1303,12 +1303,34 @@ body {
    looking flickery. Slowest in the trio — 10 s reads as calm anchoring,
    not anxious. prefers-reduced-motion: reduce → animation: none,
    sibling to the R699 kicker guard. */
+/* Round 702 + R711 — H2 "Command mesh" dual-axis breath. R702 introduced
+   the 10s opacity breath (0.88 ↔ 1, ~12%); R711 adds a SECOND axis in
+   the same @keyframes: a transform scale (0.997 ↔ 1, ~0.3%). The two
+   axes share cadence (10s) so they breathe in PHASE — the dimmest moment
+   is also the smallest moment, like a single coherent inhale-exhale.
+
+   Why scale 0.3%: the H2 is the section's primary text identity; scale
+   changes affect glyph rasterization at sub-pixel level. 0.3% range
+   keeps the visible change at fraction of a pixel for a 40-px-tall text,
+   imperceptible per-frame but cumulatively reads as "the title gently
+   pulses with the breath", reinforcing the opacity dimming without
+   adding new gesture. Scale doesn't affect layout flow (CSS transform
+   is paint-only) — flex parent stays stable, overlap test safe.
+
+   First DUAL-AXIS breath anchor in the 呼吸感 family — establishes that
+   future anchors can layer multiple animation properties on a single
+   keyframe block for "deeper aliveness" on a single surface, without
+   needing a second class or animation. Pattern budget: prefer single-
+   axis on most anchors (visual hierarchy) and reserve dual-axis for
+   primary identity surfaces (H2 here = first primary-identity dual). */
 @keyframes anet-topo-section-title-breath-kf {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.88; }
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%      { opacity: 0.88; transform: scale(0.997); }
 }
 .anet-topo-section-title-breath {
   animation: anet-topo-section-title-breath-kf 10s ease-in-out infinite;
+  /* transform-origin defaults to 50% 50% which is what we want — the H2
+     scales around its own center, no glyph drift. */
 }
 @media (prefers-reduced-motion: reduce) {
   .anet-topo-section-title-breath { animation: none; }
