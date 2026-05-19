@@ -107,7 +107,10 @@ const zlInTripleCatalog = !!zlTripleEntry
 const textShadowAnchors = Array.isArray(dualAxisCatalog)
   ? dualAxisCatalog.filter(e => Array.isArray(e.axes) && e.axes.includes('text-shadow')).map(e => e.anchor).sort()
   : [];
-const textShadowOnFour = JSON.stringify(textShadowAnchors) === JSON.stringify(['H2', 'kicker', 'watermark', 'zoom-level']);
+/* R728 added recent + legend to the text-shadow set (now 6 total).
+ * R727's specific claim was "zoom-level is in the text-shadow set" —
+ * widen the cardinality assertion. */
+const zoomLevelInTextShadowSet = textShadowAnchors.includes('zoom-level');
 
 const sixSecondAnchors = Array.isArray(tripleAxisCatalog)
   ? tripleAxisCatalog.filter(e => e.cadence_s === 6).map(e => e.anchor).sort()
@@ -115,7 +118,9 @@ const sixSecondAnchors = Array.isArray(tripleAxisCatalog)
 const sixSecondPairIntact = JSON.stringify(sixSecondAnchors) === JSON.stringify(['kicker', 'watermark']);
 
 const tierEntry = Array.isArray(patterns) ? patterns.find(p => p.name === 'triple-axis-tier') : null;
-const tierCadences = tierEntry && JSON.stringify(tierEntry.cadences) === JSON.stringify([6, 9, 10]);
+/* R728 extended tier cadences to [6, 8, 9, 10]. R727's claim was that
+ * 9 is in the tier — widen to "9 ∈ tier.cadences". */
+const tierIncludes9 = tierEntry && Array.isArray(tierEntry.cadences) && tierEntry.cadences.includes(9);
 
 const results = {
   zoom_level_present:               !!runtimeState,
@@ -127,11 +132,11 @@ const results = {
   css_hover_gate_kept:              cssHoverGate,
   css_reduced_motion_guard:         cssReducedMotion,
   r716_zoom_level_three_axes:       zlTripleInR716,
-  r723_four_entries:                Array.isArray(tripleAxisCatalog) && tripleAxisCatalog.length === 4,
+  r723_at_least_four_entries:       Array.isArray(tripleAxisCatalog) && tripleAxisCatalog.length >= 4,
   r723_zoom_level_entry:            zlInTripleCatalog,
-  text_shadow_on_four_surfaces:     textShadowOnFour,
+  zoom_level_in_text_shadow_set:    zoomLevelInTextShadowSet,
   six_second_pair_still_intact:     sixSecondPairIntact,
-  r726_tier_cadences_6_9_10:        !!tierCadences,
+  r726_tier_includes_9s:            !!tierIncludes9,
 };
 const ok = Object.values(results).every(Boolean);
 console.log(`${ok ? '✅' : '❌'} R727 zoom-level triple-axis breath (4th triple-axis surface, 1st chrome data-tier @ 9s):`,

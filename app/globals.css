@@ -1311,6 +1311,57 @@ body {
    transform-origin defaults to center — kicker scales around its own
    midpoint, no glyph drift. paint-only → flex parent stable → topo-
    overlap-test untouched. prefers-reduced-motion: reduce neutralizes. */
+/* Round 728 — recent + legend panel titles join the triple-axis tier
+   at 8 s, forming the "8 s triple-axis PAIR" (mirror to R724's 6 s pair).
+   Both panel titles already share R700/R701 SMIL opacity (8 s) +
+   R713 SMIL font-size (8 s) — R728 adds a 3rd CSS-animated axis:
+   text-shadow glow at the same 8 s cadence in phase.
+
+   Same hybrid SMIL + CSS pattern as R722 watermark: SMIL drives SVG
+   attributes (opacity, font-size); CSS drives the text-shadow CSS
+   property on the same <text> element. Modern browsers honour both
+   vocabularies side-by-side without conflict.
+
+   Multi-cadence triple-axis tier post-R728 (6 members across 4 cadences):
+     6 s   kicker + watermark         (R721/R722, "6 s pair")
+     8 s   recent + legend titles     (R728, "8 s pair") ← this round
+     9 s   zoom-level readout         (R727)
+     10 s  H2 section title           (R725)
+
+   Pattern structural mirror: R724's 6 s pair (title-block + canvas-
+   brand tiers) finds its sibling in R728's 8 s pair (panel-title tier).
+   Both pairs use parity-shape (members at same cadence). Adds new
+   R717 pattern entry `triple-axis-pair-8s` (shape `8s-triple-pair`)
+   to formalize the structural mirror.
+
+   Glow tuning vs prior 4 triple-axis members:
+     R721 kicker      blur 6 px, alpha 0.30 @ 6 s   (title-block, sharp)
+     R722 watermark   blur 8 px, alpha 0.20 @ 6 s   (canvas-brand, quiet)
+     R725 H2          blur 8 px, alpha 0.22 @ 10 s  (title-block, mellow)
+     R727 zoom-level  blur 5 px, alpha 0.25 @ 9 s   (data tier, sharp pill)
+     R728 panel-pair  blur 7 px, alpha 0.23 @ 8 s   (panel-title) ← this round
+   Mid-range blur (7 px) — between zoom-level (5 px pill) and H2 (8 px
+   heading); alpha 0.23 — between H2 (0.22 mellow) and zoom-level (0.25)
+   to position the panel-title glow as a "calm-medium" register that
+   matches the panel titles' weight in the visual hierarchy (heading-
+   weight but smaller fontSize than H2).
+
+   Gating: piggybacks on the existing JSX gates (R700: !reducedMotion &&
+   !activeEdgeKey; R701: !reducedMotion && !pinnedStatus). The CSS class
+   is applied conditionally; when ungated, both SMIL animates and CSS
+   animation coexist. prefers-reduced-motion @media guard provides
+   belt-and-suspenders. */
+@keyframes anet-topo-panel-title-glow-breath-kf {
+  0%, 100% { text-shadow: none; }
+  50%      { text-shadow: 0 0 7px rgba(34, 211, 238, 0.23); }
+}
+.anet-topo-panel-title-glow-breath {
+  animation: anet-topo-panel-title-glow-breath-kf 8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-panel-title-glow-breath { animation: none; }
+}
+
 /* Round 722 — watermark text becomes the 2ND TRIPLE-axis surface,
    completing a "6 s triple-axis PAIR" with R721 kicker (both at the
    fastest dual-axis cadence, both with sparse hover signatures, both

@@ -4935,8 +4935,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "watermark",  cadence_s: 6,  axes: ["opacity", "letter-spacing", "text-shadow"] },
-            { anchor: "recent",     cadence_s: 8,  axes: ["opacity", "font-size"] },
-            { anchor: "legend",     cadence_s: 8,  axes: ["opacity", "font-size"] },
+            { anchor: "recent",     cadence_s: 8,  axes: ["opacity", "font-size", "text-shadow"] },
+            { anchor: "legend",     cadence_s: 8,  axes: ["opacity", "font-size", "text-shadow"] },
           ])}
           /* Round 717 / Loop — 3rd META catalog, completing the breath
              family's self-describing meta-documentation triangle. R710
@@ -5001,6 +5001,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             { name: "canvas-brand-pair", cadences: [6, 7, 13, 15], anchors: ["watermark text", "crescent inner", "crescent wrapper envelope", "watermark wrapper envelope"], shape: "coprime-nested-pair" },
             { name: "background",        cadences: [3, 4],         anchors: ["row hot", "hub idle"],                                                  shape: "baseline-pair" },
             { name: "triple-axis-pair",  cadences: [6],            anchors: ["kicker", "watermark text"],                                              shape: "6s-triple-pair" },
+            /* Round 728 / Loop — 8 s triple-axis pair (recent + legend
+               panel titles). Mirror to R724's 6 s pair: both pairs are
+               parity-shape (members at same cadence) and serve as
+               structural mirrors at different cadences. */
+            { name: "triple-axis-pair-8s", cadences: [8],          anchors: ["recent title", "legend title"],                                            shape: "8s-triple-pair" },
             /* Round 726 / Loop — companion to "triple-axis-pair" (R724).
                R725 added H2 as a 3rd triple-axis surface at 10 s, proving
                the tier is multi-cadence rather than 6 s-locked. R724's
@@ -5014,7 +5019,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                The R726 test verifies this strict subset relationship
                at runtime. Future triple-axis surfaces append HERE (the
                tier) and conditionally to the pair (only if at 6 s). */
-            { name: "triple-axis-tier",  cadences: [6, 9, 10],     anchors: ["kicker", "watermark text", "zoom-level readout", "H2 section title"],    shape: "tier-multi-cadence" },
+            { name: "triple-axis-tier",  cadences: [6, 8, 9, 10],  anchors: ["kicker", "watermark text", "recent title", "legend title", "zoom-level readout", "H2 section title"], shape: "tier-multi-cadence" },
           ])}
           /* Round 720 / Loop — 4TH orthogonal meta-doc catalog: tiers.
              Joins R710 (cadences) + R716 (axes) + R717 (patterns) to
@@ -5091,6 +5096,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           data-topo-respiratory-triple-axis-surfaces={JSON.stringify([
             { anchor: "kicker",     cadence_s: 6,  axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "watermark",  cadence_s: 6,  axes: ["opacity", "letter-spacing",  "text-shadow"] },
+            { anchor: "recent",     cadence_s: 8,  axes: ["opacity", "font-size",       "text-shadow"] },
+            { anchor: "legend",     cadence_s: 8,  axes: ["opacity", "font-size",       "text-shadow"] },
             { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale", "text-shadow"] },
           ])}
@@ -12877,7 +12884,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 pattern, applied at the dual-axis tier).
                 data-recent-panel-title-breath-axis-2 attr exposes the
                 gate for tests. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: activeEdgeKey ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-glow={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-brightness={activeEdgeKey ? '1.15' : '1'} data-recent-panel-title-breath={!reducedMotion && !activeEdgeKey ? '8s' : 'off'} data-recent-panel-title-breath-axis-2={!reducedMotion && !activeEdgeKey ? 'font-size' : 'off'}>recent signal{!reducedMotion && !activeEdgeKey && (
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: activeEdgeKey ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-glow={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-brightness={activeEdgeKey ? '1.15' : '1'} data-recent-panel-title-breath={!reducedMotion && !activeEdgeKey ? '8s' : 'off'} data-recent-panel-title-breath-axis-2={!reducedMotion && !activeEdgeKey ? 'font-size' : 'off'} data-recent-panel-title-breath-axis-3={!reducedMotion && !activeEdgeKey ? 'text-shadow' : 'off'} className={!reducedMotion && !activeEdgeKey ? 'anet-topo-panel-title-glow-breath' : undefined}>recent signal{!reducedMotion && !activeEdgeKey && (
               <animate attributeName="opacity" values="0.78;1;0.78" dur="8s" repeatCount="indefinite" />
             )}{!reducedMotion && !activeEdgeKey && (
               <animate attributeName="font-size" values="11.96;12.04;11.96" dur="8s" repeatCount="indefinite" />
@@ -14660,7 +14667,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 same 11.96 ↔ 12.04 range, same opacity-axis siblings —
                 panels breathe both opacity AND font-size IN PHASE,
                 phase-locked across the pair via shared cadence. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: pinnedStatus ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-glow={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-brightness={pinnedStatus ? '1.15' : '1'} data-legend-panel-title-breath={!reducedMotion && !pinnedStatus ? '8s' : 'off'} data-legend-panel-title-breath-axis-2={!reducedMotion && !pinnedStatus ? 'font-size' : 'off'}>legend{!reducedMotion && !pinnedStatus && (
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: pinnedStatus ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-glow={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-brightness={pinnedStatus ? '1.15' : '1'} data-legend-panel-title-breath={!reducedMotion && !pinnedStatus ? '8s' : 'off'} data-legend-panel-title-breath-axis-2={!reducedMotion && !pinnedStatus ? 'font-size' : 'off'} data-legend-panel-title-breath-axis-3={!reducedMotion && !pinnedStatus ? 'text-shadow' : 'off'} className={!reducedMotion && !pinnedStatus ? 'anet-topo-panel-title-glow-breath' : undefined}>legend{!reducedMotion && !pinnedStatus && (
               <animate attributeName="opacity" values="0.78;1;0.78" dur="8s" repeatCount="indefinite" />
             )}{!reducedMotion && !pinnedStatus && (
               <animate attributeName="font-size" values="11.96;12.04;11.96" dur="8s" repeatCount="indefinite" />
