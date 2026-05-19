@@ -5187,6 +5187,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             tiers_count:         7,
             triple_axis_pairs:   2,
             triple_axis_solos:   2,
+            /* Round 738 / Loop — cross-family awareness fields.
+               R737 made R717 patterns catalog cross-family for the
+               first time (8 breath + 1 ambient = 9 entries). R738
+               surfaces that split as queryable stats:
+                 breath_patterns       8 entries (R717 minus scan-beam-pair)
+                 ambient_patterns      1 entry  (just scan-beam-pair today)
+                 pattern_families      2 (breath ∪ ambient)
+                 scan_beam_pairs       1 (R735 + R736 = 1 pair instance)
+                 ambient_cadences      2 (23 + 30 — the scan-beam coprime pair)
+               Cross-check invariant (R738 test):
+                 breath_patterns + ambient_patterns === patterns_count
+                 pattern_families === |distinct families in R717 entries|
+                 scan_beam_pairs maps to (R717 entries named "scan-beam-*").length
+               Each new field is derivable from existing catalogs but
+               surfaced here for tooling that wants a single stats
+               snapshot of the cross-family layer. */
+            breath_patterns:     8,
+            ambient_patterns:    1,
+            pattern_families:    2,
+            scan_beam_pairs:     1,
+            ambient_cadences:    2,
           })}
           /* Round 732 / Loop — 7TH orthogonal meta-doc catalog: a11y
              titles. R730/R731 added SVG <title> children to 5 decorative
