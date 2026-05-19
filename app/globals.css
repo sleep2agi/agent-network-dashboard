@@ -1371,9 +1371,39 @@ body {
    existing R347 ls + R420 fw + R517 color + R593 brightness + R668
    halo 4-axis lift takes precedence cleanly. prefers-reduced-motion:
    reduce neutralizes, sibling to R699/R702 guards. */
+/* Round 703 + R715 — chrome zoom-level readout dual-axis breath.
+   R703 introduced 9s opacity breath (0.85 ↔ 1, ~15%); R715 adds a
+   SECOND axis in the same @keyframes: a transform scale (0.996 ↔ 1,
+   ~0.4%). Two axes share cadence (9s) so they breathe IN PHASE —
+   dimmest = smallest, mirroring R711 H2 / R714 kicker pattern at the
+   CHROME DATA TIER (vs title-block primary text tier).
+
+   Why scale 0.4% on zoom-level (vs H2's 0.3%, kicker's 0.5%): zoom-
+   level's alpha range is between H2 (12%) and kicker (22%) at 15%
+   — scale axis interpolated to 0.4% keeps the three dual-axis HTML
+   text surfaces co-proportioned. Sub-pixel at xs font-size → ~0.04px
+   swing at ~10px text height; imperceptible per-frame, accumulates
+   as "the readout pulses with the breath".
+
+   Pattern budget extension — chrome data tier dual-axis:
+     R699+R714  kicker            6s   eyebrow tier
+     R703+R715  zoom-level        9s   chrome data tier  ← this round
+     R702+R711  H2                10s  primary headline tier
+   The 6/9/10 s cadences and the kicker/zoom-level/H2 scale ratios
+   (0.5/0.4/0.3 %) form a tier-graded ladder: faster cadence + larger
+   scale on secondary-tier text; slower cadence + smaller scale on
+   primary-tier text. Each tier has its own "tempo + amplitude"
+   coupled signature — kicker pulses quickly-and-noticeably, H2
+   pulses slowly-and-subtly, zoom-level sits between.
+
+   Hover gate via `[data-topo-chrome-zoom-level-hover="true"]` →
+   animation: none, so R347/R420/R517/R593 hover axes take precedence
+   without animation underneath. transform-origin defaults to center
+   — pill scales around its own midpoint. prefers-reduced-motion:
+   reduce also neutralizes. */
 @keyframes anet-topo-chrome-zoom-level-breath-kf {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.85; }
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(0.996); }
 }
 .anet-topo-chrome-zoom-level-breath {
   animation: anet-topo-chrome-zoom-level-breath-kf 9s ease-in-out infinite;
