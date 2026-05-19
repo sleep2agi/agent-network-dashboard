@@ -2310,13 +2310,59 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               inner buttons' bg-cyan-500/15 tints; no layout shift.
               R268 border-color + 200ms transition + R329 mr-0.5 +
               data-topo-chrome-layout-trailer all preserved. */}
+          {/* Round 707 / Loop — chrome Layout wrapper joins the
+              respiratory family at 17 s. Extends chrome strip from
+              single-anchor (R703 zoom-level 9 s, the chrome's only
+              data display) to a 2-anchor chrome respiratory voice:
+                9 s   zoom-level readout       (R703 — data tier)
+                17 s  Layout wrapper envelope  (R707 — control tier)
+              The two chrome anchors occupy DISTINCT functional tiers
+              (data display vs control group), so distinct cadences
+              read as different roles rather than competing rhythms.
+
+              17 s is prime → coprime with every other cadence in
+              the rolodex (3/4/5/6/7/8/9/10/11/13/15). Never phase-
+              locks with any other anchor. New slowest tier among the
+              HTML chrome respiratory anchors (zoom-level was 9 s;
+              the slower 13 s and 15 s tiers are SVG-based on the
+              canvas-brand-pair envelopes).
+
+              Tighter alpha range (0.94 ↔ 1, ~6%) — tightest yet,
+              looser than the chrome zoom-level (9 s at 15%) but
+              tighter than the title-block envelope (11 s at 8%).
+              The chrome Layout buttons are interactive controls
+              with active-state cyan tint; even ~10% dimming on the
+              inner active button color would feel jarring. 6% =
+              "barely-perceptible aliveness" on a control group.
+
+              Hover gate via CSS `:has(button:hover)` — when user
+              hovers any inner Ring/Grid button, the wrapper's R697
+              halo (cyan filter) takes precedence visually; pause the
+              breath simultaneously via `:has(button:hover)` →
+              animation: none so the halo reads crisp without
+              underlying alpha drift. Sibling pattern to R703 hover
+              data-attr gate and R704/R705 recede gates — third
+              gate-off mechanism in the family vocabulary.
+
+              Rolodex now 14 anchors, 12-tier ladder:
+                3 s row hot · 4 s hub idle · 5 s brand logo
+                6 s watermark text · 6 s kicker · 7 s crescent inner
+                8 s recent title · 8 s legend title
+                9 s zoom-level readout · 10 s H2
+                11 s title-block envelope · 13 s crescent wrapper envelope
+                15 s watermark wrapper envelope
+                17 s Layout wrapper ← this round
+
+              data-topo-chrome-layout-trailer-breath attr surfaces
+              the cadence for tests. */}
           <div
-            className="mr-0.5 inline-flex rounded-lg border overflow-hidden"
+            className="anet-topo-chrome-layout-trailer-breath mr-0.5 inline-flex rounded-lg border overflow-hidden"
             style={{ borderColor: pal.containerBorder, transition: 'border-color 200ms ease-out' }}
             role="group"
             aria-label="Topology layout"
             data-topo-chrome-layout-trailer
             data-topo-chrome-layout-radius="rounded-lg"
+            data-topo-chrome-layout-trailer-breath="17s"
             /* R697 — wrapper-level multi-layer halo on inner button hover
                (via CSS :has() in globals.css). 53rd anchor in family. */
             data-topo-chrome-wrapper-halo-family="layout"
