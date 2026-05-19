@@ -108,7 +108,7 @@ const validShape = Array.isArray(catalog) && catalog.every(e =>
 const canonicalFormat = (s) => typeof s === 'string' && /^[^·]+( · [^·]+)+$/.test(s);
 const allCanonical = Array.isArray(catalog) && catalog.every(e => canonicalFormat(e.accessible_name));
 
-const expectedSurfaces = ['canvas scan beam', 'canvas scan beam vertical', 'canvas-corner crescent', 'hub-highlight disc', 'legend panel title', 'recent panel title', 'title-block brand logo', 'watermark text'];
+const expectedSurfaces = ['canvas scan beam', 'canvas scan beam diagonal', 'canvas scan beam vertical', 'canvas-corner crescent', 'hub-highlight disc', 'legend panel title', 'recent panel title', 'title-block brand logo', 'watermark text'];
 const actualSurfaces = Array.isArray(catalog) ? catalog.map(e => e.surface).sort() : [];
 const surfacesMatch = JSON.stringify(actualSurfaces) === JSON.stringify(expectedSurfaces);
 
@@ -118,7 +118,7 @@ const results = {
   attr_present:                       !!result.catalogAttr,
   json_parses:                        catalog !== null,
   is_array:                           Array.isArray(catalog),
-  has_8_entries:                      Array.isArray(catalog) && catalog.length === 8,
+  has_9_entries:                      Array.isArray(catalog) && catalog.length === 9,
   shape_valid:                        validShape,
   all_accessible_names_canonical:     allCanonical,
   surfaces_match_expected_set:        surfacesMatch,
