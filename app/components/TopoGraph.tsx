@@ -4881,6 +4881,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             "15": ["watermark wrapper envelope"],
             "17": ["Layout wrapper"],
             "19": ["nodeSize wrapper"],
+            "21": ["reset button"],
             "23": ["zoom wrapper"],
           })}
           /* Round 716 / Loop — companion to R710 rolodex catalog: surface
@@ -4966,7 +4967,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           data-topo-respiratory-patterns={JSON.stringify([
             { name: "title-block",       cadences: [5, 6, 10, 11], anchors: ["brand logo", "kicker", "H2 section title", "title-block envelope"], shape: "trio-with-envelope" },
             { name: "panel-pair",        cadences: [8],            anchors: ["recent title", "legend title"],                                       shape: "parity" },
-            { name: "chrome-strip",      cadences: [9, 17, 19, 23], anchors: ["zoom-level readout", "Layout wrapper", "nodeSize wrapper", "zoom wrapper"], shape: "tiered-with-trio" },
+            { name: "chrome-strip",      cadences: [9, 17, 19, 21, 23], anchors: ["zoom-level readout", "Layout wrapper", "nodeSize wrapper", "reset button", "zoom wrapper"], shape: "tiered-with-quartet" },
             { name: "canvas-brand-pair", cadences: [6, 7, 13, 15], anchors: ["watermark text", "crescent inner", "crescent wrapper envelope", "watermark wrapper envelope"], shape: "coprime-nested-pair" },
             { name: "background",        cadences: [3, 4],         anchors: ["row hot", "hub idle"],                                                  shape: "baseline-pair" },
           ])}
@@ -17024,8 +17025,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // active state during press = hover-lift (-1px) + scale-95
             // composes as translateY(-1px) scale(0.95) — lift-and-compress
             // for tactile click feel.
-            className="p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
+            className="anet-topo-chrome-reset-breath p-1.5 rounded-md border hover:bg-white/5 active:bg-white/10 hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
             data-topo-chrome-reset-hover-lift="true"
+            /* Round 718 / Loop — reset button joins the respiratory
+               family at 21 s as the 5th anchor on the chrome-strip
+               pattern. Extends "tiered-with-trio" → "tiered-with-
+               quartet"; first ATOMIC chrome button to breathe (the
+               other 4 chrome anchors are either segmented-control
+               wrappers or a data readout). Hover gate piggybacks on
+               the existing data-topo-chrome-reset-hover attr — same
+               leaf-element gate pattern as R703 zoom-level readout.
+               See globals.css R718 block for cadence rationale. */
+            data-topo-chrome-reset-breath="21s"
             /* R594 — chrome reset button gains filter brightness(1.15)
                on hoveredReset. 33rd anchor in per-element brightness
                family, 2nd HTML-element anchor (R593 zoom-level was
