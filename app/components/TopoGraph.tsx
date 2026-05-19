@@ -4594,7 +4594,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         <svg
           ref={svgRef}
           viewBox="0 0 1000 680"
-          className="w-full h-auto block"
+          /* Round 740 / Loop — one-time canvas entrance animation.
+             SVG scales 0.99 → 1 and opacity 0.8 → 1 over 600ms with
+             ease-out on FIRST PAINT only (CSS keyframes animation
+             runs once per mount, no `infinite` repeat). Pure visible
+             entrance polish — distinct from breath, ambient, meta,
+             and a11y threads. The class is conditional on
+             !reducedMotion so users who prefer reduced motion see
+             the canvas at its final state immediately. After 600ms
+             the canvas sits at scale(1) opacity(1); subsequent
+             paints don't replay. See globals.css R740 block. */
+          className={`w-full h-auto block${reducedMotion ? '' : ' anet-topo-canvas-entrance'}`}
+          data-topo-canvas-entrance={reducedMotion ? 'false' : 'true'}
           preserveAspectRatio="xMidYMid meet"
           aria-roledescription="agent network topology"
           aria-label={(() => {

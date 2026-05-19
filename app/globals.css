@@ -1311,6 +1311,39 @@ body {
    transform-origin defaults to center — kicker scales around its own
    midpoint, no glyph drift. paint-only → flex parent stable → topo-
    overlap-test untouched. prefers-reduced-motion: reduce neutralizes. */
+/* Round 740 — one-time canvas entrance animation. Plays on FIRST PAINT
+   only, then the canvas sits at scale(1) opacity(1) for the rest of
+   the session. Distinct from all prior animation families:
+     - breath family (R699+) is rest-axis infinite
+     - ambient family (R735+) is sweep-axis infinite
+     - R740 entrance is ONE-SHOT (no `infinite` keyword) — plays once
+   Subsequent re-mounts (route changes, etc.) replay the animation —
+   intended as a "the canvas just arrived" signal to the user.
+
+   Animation: 0% scale(0.99) opacity(0.8) → 100% scale(1) opacity(1)
+   over 600ms with ease-out timing. Subtle: the scale change is only
+   1% (0.99 → 1.00); opacity ramps from 0.8 to 1.0. Reads as "settling
+   in" — the canvas zooms in slightly while fading in.
+
+   transform-origin defaults to 50% 50% (canvas center), so the scale
+   ripple comes from the middle outward.
+
+   prefers-reduced-motion guard: when reduced motion is preferred, the
+   class isn't applied (JSX-level gate in TopoGraph.tsx), so the CSS
+   animation never runs. Belt-and-suspenders @media block below
+   neutralises if the class somehow ends up applied. */
+@keyframes anet-topo-canvas-entrance-kf {
+  0%   { transform: scale(0.99); opacity: 0.8; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+.anet-topo-canvas-entrance {
+  animation: anet-topo-canvas-entrance-kf 600ms ease-out;
+  transform-origin: 50% 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-canvas-entrance { animation: none; }
+}
+
 /* Round 728 — recent + legend panel titles join the triple-axis tier
    at 8 s, forming the "8 s triple-axis PAIR" (mirror to R724's 6 s pair).
    Both panel titles already share R700/R701 SMIL opacity (8 s) +
