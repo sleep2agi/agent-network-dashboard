@@ -71,7 +71,7 @@ const validShape = Array.isArray(patterns)
       && typeof p.name === 'string' && p.name.length > 0
       && Array.isArray(p.cadences) && p.cadences.length > 0 && p.cadences.every(c => typeof c === 'number' && c > 0)
       && Array.isArray(p.anchors) && p.anchors.length > 0 && p.anchors.every(a => typeof a === 'string' && a.length > 0)
-      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'tiered-with-quartet', 'tiered-with-quintet', 'coprime-nested-pair', 'baseline-pair'].includes(p.shape))
+      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'tiered-with-quartet', 'tiered-with-quintet', 'coprime-nested-pair', 'baseline-pair', '6s-triple-pair'].includes(p.shape))
   : false;
 
 const totalAnchorCount = Array.isArray(patterns)
@@ -86,16 +86,16 @@ const patternsCadences = Array.isArray(patterns)
 const allPatternCadencesInRolodex = [...patternsCadences].every(c => rolodexCadences.has(c));
 
 const patternNames = Array.isArray(patterns) ? patterns.map(p => p.name).sort() : [];
-const expectedNames = ['background', 'canvas-brand-pair', 'chrome-strip', 'panel-pair', 'title-block'];
+const expectedNames = ['background', 'canvas-brand-pair', 'chrome-strip', 'panel-pair', 'title-block', 'triple-axis-pair'];
 
 const results = {
   attr_present:                  !!runtimeAttrs.patterns,
   json_parses:                   patterns !== null && parseError === null,
   is_array:                      Array.isArray(patterns),
-  has_5_entries:                 Array.isArray(patterns) && patterns.length === 5,
+  has_6_entries:                 Array.isArray(patterns) && patterns.length === 6,
   pattern_names_match:           JSON.stringify(patternNames) === JSON.stringify(expectedNames),
   shape_and_taxonomy_valid:      validShape,
-  total_anchors_count:           totalAnchorCount >= 14 && totalAnchorCount <= 18, // pattern membership can have overlap counting
+  total_anchors_count:           totalAnchorCount >= 14 && totalAnchorCount <= 20, // R724 +2 anchors (kicker + watermark text counted again under triple-axis-pair pattern)
   all_cadences_in_rolodex:       allPatternCadencesInRolodex,
 };
 const ok = Object.values(results).every(Boolean);
