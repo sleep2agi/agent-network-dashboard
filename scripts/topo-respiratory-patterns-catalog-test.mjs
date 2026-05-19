@@ -71,7 +71,7 @@ const validShape = Array.isArray(patterns)
       && typeof p.name === 'string' && p.name.length > 0
       && Array.isArray(p.cadences) && p.cadences.length > 0 && p.cadences.every(c => typeof c === 'number' && c > 0)
       && Array.isArray(p.anchors) && p.anchors.length > 0 && p.anchors.every(a => typeof a === 'string' && a.length > 0)
-      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'tiered-with-quartet', 'tiered-with-quintet', 'coprime-nested-pair', 'baseline-pair', '6s-triple-pair', '8s-triple-pair', 'tier-multi-cadence', 'coprime-crosshair'].includes(p.shape))
+      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'tiered-with-quartet', 'tiered-with-quintet', 'coprime-nested-pair', 'baseline-pair', '6s-triple-pair', '8s-triple-pair', 'tier-multi-cadence', 'coprime-crosshair', 'coprime-trio'].includes(p.shape))
   : false;
 
 const totalAnchorCount = Array.isArray(patterns)
@@ -84,7 +84,7 @@ const totalAnchorCount = Array.isArray(patterns)
  * 23/30); the breath rolodex doesn't cover 30 (no breath anchor at
  * 30s — rolodex max is 25 for R719 fullscreen). Exclude cross-family
  * entries from the rolodex cross-check via name allowlist. */
-const ambientFamilyPatternNames = new Set(['scan-beam-pair']);
+const ambientFamilyPatternNames = new Set(['scan-beam-pair', 'scan-beam-trio']);
 const rolodexCadences = rolodex ? new Set(Object.keys(rolodex).map(Number)) : new Set();
 const breathPatternCadences = Array.isArray(patterns)
   ? new Set(patterns.filter(p => !ambientFamilyPatternNames.has(p.name)).flatMap(p => p.cadences))
@@ -92,16 +92,16 @@ const breathPatternCadences = Array.isArray(patterns)
 const allPatternCadencesInRolodex = [...breathPatternCadences].every(c => rolodexCadences.has(c));
 
 const patternNames = Array.isArray(patterns) ? patterns.map(p => p.name).sort() : [];
-const expectedNames = ['background', 'canvas-brand-pair', 'chrome-strip', 'panel-pair', 'scan-beam-pair', 'title-block', 'triple-axis-pair', 'triple-axis-pair-8s', 'triple-axis-tier'];
+const expectedNames = ['background', 'canvas-brand-pair', 'chrome-strip', 'panel-pair', 'scan-beam-pair', 'scan-beam-trio', 'title-block', 'triple-axis-pair', 'triple-axis-pair-8s', 'triple-axis-tier'];
 
 const results = {
   attr_present:                       !!runtimeAttrs.patterns,
   json_parses:                        patterns !== null && parseError === null,
   is_array:                           Array.isArray(patterns),
-  has_9_entries:                      Array.isArray(patterns) && patterns.length === 9,
+  has_10_entries:                     Array.isArray(patterns) && patterns.length === 10,
   pattern_names_match:                JSON.stringify(patternNames) === JSON.stringify(expectedNames),
   shape_and_taxonomy_valid:           validShape,
-  total_anchors_count:                totalAnchorCount >= 14 && totalAnchorCount <= 34, // R737 +2 anchors (scan beam horizontal + vertical) added to the ambient family pattern entry
+  total_anchors_count:                totalAnchorCount >= 14 && totalAnchorCount <= 38, // R739 +3 anchors (scan-beam-trio adds 3 anchors)
   breath_cadences_in_rolodex:         allPatternCadencesInRolodex,
 };
 const ok = Object.values(results).every(Boolean);

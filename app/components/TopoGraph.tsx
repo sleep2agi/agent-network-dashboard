@@ -5057,6 +5057,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                scoped). R737 test verifies anchor presence in the
                catalog regardless of the naming convention. */
             { name: "scan-beam-pair",    cadences: [23, 30],       anchors: ["scan beam horizontal", "scan beam vertical"],                              shape: "coprime-crosshair" },
+            /* R739 — scan-beam-trio supersets the pair with the new
+               diagonal beam. cadences [19, 23, 30] are pairwise
+               coprime (19 prime, 23 prime, gcd(23,30)=1). Shape
+               "coprime-trio": all 3 cadences mutually coprime,
+               3 sweep directions (horizontal, vertical, diagonal). */
+            { name: "scan-beam-trio",    cadences: [19, 23, 30],   anchors: ["scan beam horizontal", "scan beam vertical", "scan beam diagonal"],     shape: "coprime-trio" },
           ])}
           /* Round 720 / Loop — 4TH orthogonal meta-doc catalog: tiers.
              Joins R710 (cadences) + R716 (axes) + R717 (patterns) to
@@ -5183,31 +5189,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                cross-family `scan-beam-pair` entry. triple_axis_pairs
                and triple_axis_solos stay unchanged (the new pattern
                isn't triple-axis). */
-            patterns_count:      9,
+            /* R739 — patterns_count bumped 9 → 10 to admit the new
+               cross-family `scan-beam-trio` entry. ambient family
+               grows: ambient_patterns 1 → 2 (pair + trio coexist),
+               ambient_cadences 2 → 3 (added 19s for diagonal beam),
+               scan_beam_pairs stays 1 (pair pattern unchanged). */
+            patterns_count:      10,
             tiers_count:         7,
             triple_axis_pairs:   2,
             triple_axis_solos:   2,
-            /* Round 738 / Loop — cross-family awareness fields.
-               R737 made R717 patterns catalog cross-family for the
-               first time (8 breath + 1 ambient = 9 entries). R738
-               surfaces that split as queryable stats:
-                 breath_patterns       8 entries (R717 minus scan-beam-pair)
-                 ambient_patterns      1 entry  (just scan-beam-pair today)
-                 pattern_families      2 (breath ∪ ambient)
-                 scan_beam_pairs       1 (R735 + R736 = 1 pair instance)
-                 ambient_cadences      2 (23 + 30 — the scan-beam coprime pair)
-               Cross-check invariant (R738 test):
-                 breath_patterns + ambient_patterns === patterns_count
-                 pattern_families === |distinct families in R717 entries|
-                 scan_beam_pairs maps to (R717 entries named "scan-beam-*").length
-               Each new field is derivable from existing catalogs but
-               surfaced here for tooling that wants a single stats
-               snapshot of the cross-family layer. */
             breath_patterns:     8,
-            ambient_patterns:    1,
+            ambient_patterns:    2,
             pattern_families:    2,
             scan_beam_pairs:     1,
-            ambient_cadences:    2,
+            ambient_cadences:    3,
           })}
           /* Round 732 / Loop — 7TH orthogonal meta-doc catalog: a11y
              titles. R730/R731 added SVG <title> children to 5 decorative
@@ -5245,6 +5240,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             /* R736 — vertical scan beam companion to R735. Coprime
                cadence (23s) with R735 (30s) — ambient crosshair drift. */
             { surface: "canvas scan beam vertical", selector: "[data-topo-canvas-scan-beam-vertical]",   accessible_name: "canvas scan beam vertical · ambient sweep · 23s cycle" },
+            /* R739 — diagonal scan beam, completes ambient trio. */
+            { surface: "canvas scan beam diagonal", selector: "[data-topo-canvas-scan-beam-diagonal]",   accessible_name: "canvas scan beam diagonal · ambient sweep · 19s cycle" },
           ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
@@ -5513,6 +5510,50 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             )}
             <title>canvas scan beam vertical · ambient sweep · 23s cycle</title>
           </rect>
+
+          {/* Round 739 / Loop — diagonal scan beam, 3rd member of the
+             ambient scan beam family. Sweeps a short 45° line segment
+             from upper-left → lower-right across the canvas every 19s.
+             Coprime with both existing beams: gcd(19, 23) = 1 and
+             gcd(19, 30) = 1 (19 is prime, never shares factors).
+             The 3-element family now spans:
+               R735 horizontal beam   30 s   (top → bottom)
+               R736 vertical beam     23 s   (left → right)
+               R739 diagonal beam     19 s   (NW → SE) ← this round
+             19 < 23 < 30 → cadence ladder ascending with the
+             dimensionality (1D horizontal/vertical → 2D diagonal); the
+             diagonal as the fastest fits — it has 2× the displacement
+             distance (sqrt(2) factor) so faster cadence keeps the
+             perceived sweep velocity comparable across all 3 beams.
+
+             Geometry: <line> with 4 synchronized SMIL <animate>
+             children on x1/y1/x2/y2 endpoints. The line is ~100 px
+             long (sqrt(70² + 70²)) and stays at constant 45° angle
+             throughout the sweep. Starts off-canvas at (-100, -100)
+             → (-30, -30), ends off-canvas at (1100, 780) → (1170, 850).
+             Same opacity ramp pattern as R735/R736 (max 0.06 — slightly
+             dimmer than the orthogonal pair because the diagonal
+             traverses the full diagonal of the canvas rather than
+             one orthogonal axis, so per-pixel exposure is higher).
+
+             Same z-order rules (background layer, before nodes),
+             same reducedMotion JSX gate, same overlap-test safety
+             by selector exclusion. Same canonical 3-part a11y title. */}
+          <line
+            x1="-100" y1="-100" x2="-30" y2="-30"
+            stroke={pal.legendAccent} strokeWidth="1"
+            opacity="0"
+            data-topo-canvas-scan-beam-diagonal
+            data-topo-canvas-scan-beam-diagonal-active={!reducedMotion ? 'true' : 'false'}
+            style={{ pointerEvents: 'none' }}
+          >
+            {!reducedMotion && (<animate attributeName="x1" values="-100;1100;-100" dur="19s" repeatCount="indefinite" />)}
+            {!reducedMotion && (<animate attributeName="y1" values="-100;780;-100"  dur="19s" repeatCount="indefinite" />)}
+            {!reducedMotion && (<animate attributeName="x2" values="-30;1170;-30"   dur="19s" repeatCount="indefinite" />)}
+            {!reducedMotion && (<animate attributeName="y2" values="-30;850;-30"    dur="19s" repeatCount="indefinite" />)}
+            {!reducedMotion && (<animate attributeName="opacity" values="0;0.06;0.06;0" keyTimes="0;0.05;0.95;1" dur="19s" repeatCount="indefinite" />)}
+            <title>canvas scan beam diagonal · ambient sweep · 19s cycle</title>
+          </line>
 
           {/* Round 103 (issue #81): everything inside this <g> zooms + pans
               together. transform order = translate then scale.
