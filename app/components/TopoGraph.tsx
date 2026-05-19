@@ -5174,6 +5174,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             { surface: "legend panel title",      selector: "[data-legend-panel-title]",      accessible_name: "legend · status / vendor / runtime swatch panel" },
             { surface: "title-block brand logo",  selector: "[data-topo-brand-logo]",         accessible_name: "sleep2agi · brand logo" },
             { surface: "canvas-corner crescent",  selector: "[data-topo-brand-canvas-mark]",  accessible_name: "sleep2agi · canvas-corner brand mark" },
+            /* R733 — hub-highlight added; first non-brand a11y surface.
+               Note the 3-part accessible_name: "<name> · <role> · <state>".
+               The R732 canonical-format regex matches /^[^·]+ · [^·]+$/
+               (exactly 2 parts) — R733 hub uses an extended 3-part form.
+               The R733 test handles this by relaxing the canonical-format
+               regex to `[^·]+( · [^·]+)+` (≥2 parts). */
+            { surface: "hub-highlight disc",      selector: "[data-topo-hub-highlight]",      accessible_name: "hub · network center · idle indicator" },
           ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
@@ -9552,6 +9559,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     transition: 'opacity 300ms ease-out, fill 200ms ease-out, r 200ms ease-out, filter 200ms ease-out',
                   } as React.CSSProperties}
                 >
+              {/* Round 733 / Loop — SVG <title> a11y child for the hub-
+                  highlight disc, the most prominent focal element on
+                  the canvas (network center). Sibling treatment to R730/
+                  R731 brand-surface a11y sweep. The hub-highlight is
+                  visibility-gated (only shows when workingCount === 0)
+                  but its <title> stays in DOM regardless — screen
+                  readers can identify it at all times. Canonical
+                  format "<name> · <role>": "hub" is the network-center
+                  name; "network center · idle indicator" is the role
+                  expanded to reflect both spatial and state semantics. */}<title>hub · network center · idle indicator</title>
               {/* Round 497 / Loop — idle-state breath (呼吸感 theme pivot
                   from the R492-R496 press-family arc). Pre-R497 the hub
                   idle highlight read as a static dim disc — present but
