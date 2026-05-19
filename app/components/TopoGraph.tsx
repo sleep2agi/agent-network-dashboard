@@ -5254,6 +5254,44 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             /* R739 — diagonal scan beam, completes ambient trio. */
             { surface: "canvas scan beam diagonal", selector: "[data-topo-canvas-scan-beam-diagonal]",   accessible_name: "canvas scan beam diagonal · ambient sweep · 19s cycle" },
           ])}
+          /* Round 741 / Loop — 8TH orthogonal meta-doc catalog:
+             animation temporal modes. The introspection layer goes
+             from heptagon → OCTAGON. Distinct from prior 7 catalogs
+             (rolodex / dual-axis / patterns / tiers / triple-axis /
+             stats / a11y-titles): R741 documents WHEN animations run
+             (lifecycle / temporal mode) rather than HOW (axes /
+             cadences / shapes). Orthogonal to all prior dimensions.
+
+             Three temporal modes established by R735–R740:
+
+               infinite-rest    breath family (R699+)
+                                 - rest-axis animation, runs forever
+                                 - members: opacity/scale/text-shadow
+                                   pulses on kicker, watermark, H2,
+                                   recent/legend titles, zoom-level,
+                                   chrome wrappers, etc.
+
+               infinite-sweep   ambient family (R735+)
+                                 - sweep-axis animation, runs forever
+                                 - members: scan beams (horizontal /
+                                   vertical / diagonal)
+
+               one-shot-mount   entrance family (R740)
+                                 - mount-axis animation, plays once
+                                   on first paint
+                                 - members: canvas root (scale 0.99→1
+                                   + opacity 0.8→1 over 600 ms)
+
+             Each entry has {mode, family, members, examples}. The
+             members count is a snapshot at R741 time; future rounds
+             update as new surfaces join. examples is a small sample
+             (≤3 per mode) — not the full list (that's in the per-
+             family catalogs already). */
+          data-topo-animation-temporal-modes={JSON.stringify([
+            { mode: "infinite-rest",   family: "breath",   members: 18, examples: ["kicker", "watermark text", "H2 section title"] },
+            { mode: "infinite-sweep",  family: "ambient",  members: 3,  examples: ["scan beam horizontal", "scan beam vertical", "scan beam diagonal"] },
+            { mode: "one-shot-mount",  family: "entrance", members: 1,  examples: ["canvas root"] },
+          ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
