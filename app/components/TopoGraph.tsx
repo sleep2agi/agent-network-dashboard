@@ -15593,6 +15593,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             style={{ pointerEvents: 'none', transition: 'fill 200ms ease-out' }}
           >sleep2agi{!reducedMotion && (
             <animate attributeName="opacity" values="0.32;0.48;0.32" dur="6s" repeatCount="indefinite" />
+          )}{!reducedMotion && (
+            /* Round 712 / Loop — watermark gains a SECOND breath axis,
+               mirroring R711's dual-axis innovation on a different
+               primary-identity surface. R519 already breathes opacity
+               on the watermark at 6 s (0.32 ↔ 0.48); R712 adds an SVG
+               <animate> for letter-spacing at the same 6 s cadence
+               (0.45 ↔ 0.55, oscillating around the R289 static 0.5
+               baseline). Two axes share cadence → IN PHASE breath:
+               at the dimmest moment the text is also at its tightest
+               kerning; at the brightest moment, widest kerning. Like
+               a single coherent inhale-exhale, mirroring the H2 dual-
+               axis (R711) but with letter-spacing instead of scale
+               since SVG <text> letter-spacing is a more natural
+               2nd-axis for a typographic wordmark.
+
+               Why ±0.05 units: at fontSize 11 monospace, 0.05 unit ≈
+               half a pixel of widening across 8 inter-glyph gaps =
+               ~4px total text-width swing. Wide enough to be felt
+               as "the wordmark breathes" but well within the empty
+               bottom-left corner — no overlap test risk (the corner
+               is intentionally empty per R282 placement).
+
+               Pattern budget extension: R711 H2 = dual-axis on HTML
+               text; R712 watermark = dual-axis on SVG text. Two
+               primary-identity surfaces, two media (HTML/SVG), one
+               coherent "primary-identity surfaces get dual-axis"
+               rule. R710 rolodex catalog stable — R712 adds axis
+               to existing 6s anchor; catalog tracks cadences not
+               axes. */
+            <animate attributeName="letter-spacing" values="0.45;0.55;0.45" dur="6s" repeatCount="indefinite" />
           )}</text>
           </g>
           {/* v0.10.0 Hero 3 Wave 1 / RFC §3.I (Vincent 5215 + 通信龙
