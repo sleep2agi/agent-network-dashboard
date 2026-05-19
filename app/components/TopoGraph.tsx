@@ -4927,6 +4927,49 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             { anchor: "recent",     cadence_s: 8,  axes: ["opacity", "font-size"] },
             { anchor: "legend",     cadence_s: 8,  axes: ["opacity", "font-size"] },
           ])}
+          /* Round 717 / Loop — 3rd META catalog, completing the breath
+             family's self-describing meta-documentation triangle. R710
+             catalogs cadences (cadence → anchors); R716 catalogs axes
+             (per dual-axis surface); R717 catalogs PATTERNS (5 mature
+             structural respiratory patterns with their cadence shapes).
+
+             Together these 3 attrs let any consumer reconstruct the
+             FULL breath family graph in 3 attr reads — one for each
+             axis of family organization:
+               R710  WHAT cadences exist + WHO breathes at each
+               R716  WHICH surfaces breathe on multiple axes
+               R717  HOW the cadences cluster into structural patterns
+             3 orthogonal axes of family-shape introspection.
+
+             Pattern catalog:
+               title-block       trio + envelope (5/6/10s + 11s wrapper)
+               panel-pair        parity (8s × 2)
+               chrome strip      data + control-trio (9s + 17/19/23s)
+               canvas-brand-pair coprime nested envelopes (6/7s × 13/15s)
+               background        baseline single-anchor pair (3s + 4s)
+             5 patterns / 16 anchors / 14 cadence tiers — these are the
+             same numbers as R710 (sum of anchors per pattern = 16, sum
+             of unique cadences per pattern = 14).
+
+             Each pattern entry: {name, cadences, anchors, shape}. The
+             `shape` field is a one-word taxonomy:
+               "trio-with-envelope"   3 inner + 1 outer wrapper
+               "parity"                same cadence on two siblings
+               "tiered-with-trio"      single anchor + N-cadence trio
+               "coprime-nested-pair"   each member has wrapper + inner
+               "baseline-pair"         two single-anchor cadences
+
+             Inline JSON.stringify on each render — invariant string,
+             no DOM thrash. R710/R716 unchanged (each catalog is
+             orthogonal). Future rounds: when adding a new structural
+             pattern, append to this list as the doc step. */
+          data-topo-respiratory-patterns={JSON.stringify([
+            { name: "title-block",       cadences: [5, 6, 10, 11], anchors: ["brand logo", "kicker", "H2 section title", "title-block envelope"], shape: "trio-with-envelope" },
+            { name: "panel-pair",        cadences: [8],            anchors: ["recent title", "legend title"],                                       shape: "parity" },
+            { name: "chrome-strip",      cadences: [9, 17, 19, 23], anchors: ["zoom-level readout", "Layout wrapper", "nodeSize wrapper", "zoom wrapper"], shape: "tiered-with-trio" },
+            { name: "canvas-brand-pair", cadences: [6, 7, 13, 15], anchors: ["watermark text", "crescent inner", "crescent wrapper envelope", "watermark wrapper envelope"], shape: "coprime-nested-pair" },
+            { name: "background",        cadences: [3, 4],         anchors: ["row hot", "hub idle"],                                                  shape: "baseline-pair" },
+          ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
