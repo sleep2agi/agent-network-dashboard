@@ -102,10 +102,13 @@ const validShape = Array.isArray(catalog) && catalog.every(e =>
   && typeof e?.accessible_name === 'string' && e.accessible_name.length > 0
 );
 
-const canonicalFormat = (s) => typeof s === 'string' && /^[^·]+ · [^·]+$/.test(s);
+/* R733 relaxed canonical-format from "exactly 2 parts" to ">=2 parts"
+ * to admit the new hub-highlight entry's 3-part name ("hub · network
+ * center · idle indicator"). All earlier entries still match. */
+const canonicalFormat = (s) => typeof s === 'string' && /^[^·]+( · [^·]+)+$/.test(s);
 const allCanonical = Array.isArray(catalog) && catalog.every(e => canonicalFormat(e.accessible_name));
 
-const expectedSurfaces = ['canvas-corner crescent', 'legend panel title', 'recent panel title', 'title-block brand logo', 'watermark text'];
+const expectedSurfaces = ['canvas-corner crescent', 'hub-highlight disc', 'legend panel title', 'recent panel title', 'title-block brand logo', 'watermark text'];
 const actualSurfaces = Array.isArray(catalog) ? catalog.map(e => e.surface).sort() : [];
 const surfacesMatch = JSON.stringify(actualSurfaces) === JSON.stringify(expectedSurfaces);
 
@@ -115,7 +118,7 @@ const results = {
   attr_present:                       !!result.catalogAttr,
   json_parses:                        catalog !== null,
   is_array:                           Array.isArray(catalog),
-  has_5_entries:                      Array.isArray(catalog) && catalog.length === 5,
+  has_6_entries:                      Array.isArray(catalog) && catalog.length === 6,
   shape_valid:                        validShape,
   all_accessible_names_canonical:     allCanonical,
   surfaces_match_expected_set:        surfacesMatch,
