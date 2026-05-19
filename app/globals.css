@@ -1415,6 +1415,38 @@ body {
   .anet-topo-title-block-envelope-breath { animation: none; }
 }
 
+/* Round 707 — chrome Layout wrapper at-rest breath at 17 s. Slowest tier
+   among HTML chrome respiratory anchors (sibling to R703 zoom-level 9 s
+   in the chrome strip's data tier; this 17 s lands in the chrome strip's
+   control tier). 17 is prime → coprime with every other cadence in the
+   rolodex (3/4/5/6/7/8/9/10/11/13/15). Never phase-locks with any other
+   anchor.
+
+   Tightest alpha range yet (0.94 ↔ 1, ~6%) — the Layout buttons are
+   interactive controls with active-state cyan tint; even ~10% dimming
+   on the inner button color would feel jarring. 6% = "barely-perceptible
+   aliveness" on a control group.
+
+   Hover gate via :has() selector — when user hovers any inner Ring/Grid
+   button, the R697 wrapper-level halo (cyan filter) takes precedence;
+   animation: none on hover pauses the breath so the halo reads crisp
+   without underlying alpha drift. Third gate-off mechanism in the family
+   vocabulary, sibling to R703 hover data-attr gate + R704/R705 recede
+   gates. */
+@keyframes anet-topo-chrome-layout-trailer-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.94; }
+}
+.anet-topo-chrome-layout-trailer-breath {
+  animation: anet-topo-chrome-layout-trailer-breath-kf 17s ease-in-out infinite;
+}
+.anet-topo-chrome-layout-trailer-breath:has(button:hover) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-layout-trailer-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
