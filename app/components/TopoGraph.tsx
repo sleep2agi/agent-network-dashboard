@@ -1810,7 +1810,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
             data-topo-section-titleblock-envelope-breath attr surfaces
             the cadence for tests. */}
-        <div className="anet-topo-title-block-envelope-breath group flex items-center gap-2.5" data-topo-section-titleblock-group data-topo-section-titleblock-envelope-breath="11s">
+        {/* Round 742 / Loop — title-block joins entrance family as 2nd
+           one-shot-mount member. Staggered after R740 canvas entrance:
+           canvas plays 0-600ms; title-block delayed 200ms then plays
+           200-700ms for 500ms ease-out. The 100ms gap between canvas
+           settle (600ms) and title-block settle (700ms) creates a
+           perceived "shake out" — canvas arrives, then the heading
+           writes itself into place. Slide from translateY(-4px) +
+           opacity 0.7 → translateY(0) opacity 1.
+
+           Gated by reducedMotion at JSX level (sibling pattern to R740).
+           See globals.css R742 block for cadence rationale. */}
+        <div className={`anet-topo-title-block-envelope-breath${reducedMotion ? '' : ' anet-topo-title-block-entrance'} group flex items-center gap-2.5`} data-topo-section-titleblock-group data-topo-section-titleblock-envelope-breath="11s" data-topo-section-titleblock-entrance={reducedMotion ? 'false' : 'true'}>
           {/* Round 297 / Loop: brand-logo color picks up the 200ms ease-
               out transition. Pre-R297 the moon glyph had theme-
               conditional color (cyber #67e8f9 cyan ↔ light #0d9488
@@ -5290,7 +5301,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           data-topo-animation-temporal-modes={JSON.stringify([
             { mode: "infinite-rest",   family: "breath",   members: 18, examples: ["kicker", "watermark text", "H2 section title"] },
             { mode: "infinite-sweep",  family: "ambient",  members: 3,  examples: ["scan beam horizontal", "scan beam vertical", "scan beam diagonal"] },
-            { mode: "one-shot-mount",  family: "entrance", members: 1,  examples: ["canvas root"] },
+            /* R742 — entrance family +1 member: title-block joins
+               canvas root as 2nd one-shot-mount surface. Staggered
+               choreography: canvas 0-600ms, title-block 200-700ms. */
+            { mode: "one-shot-mount",  family: "entrance", members: 2,  examples: ["canvas root", "title-block"] },
           ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];

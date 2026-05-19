@@ -1717,6 +1717,37 @@ body {
   .anet-topo-title-block-envelope-breath { animation: none; }
 }
 
+/* Round 742 — title-block entrance, 2nd member of the entrance family.
+   Staggered choreography with R740 canvas entrance:
+     R740 canvas        0   → 600 ms   (scale 0.99 → 1, opacity 0.8 → 1)
+     R742 title-block   200 → 700 ms   (translateY -4px → 0, opacity 0.7 → 1)
+   The 100ms gap (600 → 700 ms) between canvas settle and title-block
+   settle creates a perceived "shake out" — canvas arrives, then the
+   heading writes itself into place. Both done by ~700 ms.
+
+   CSS cascade detail: when an element has BOTH .anet-topo-title-block-
+   envelope-breath (R706, infinite 11s breath) AND .anet-topo-title-
+   block-entrance (R742, one-shot 500ms), the `animation` property
+   doesn't merge — only one wins. So R742 declares a COMPOUND animation
+   listing BOTH (entrance first as one-shot, breath second as the
+   ongoing infinite). Placed AFTER the R706 envelope-breath block in
+   source order so cascade gives R742 the win when both classes are
+   applied. When ONLY envelope-breath is applied (reducedMotion strips
+   the entrance class via JSX), R706 rule takes over with just the
+   breath animation. */
+@keyframes anet-topo-title-block-entrance-kf {
+  0%   { transform: translateY(-4px); opacity: 0.7; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+.anet-topo-title-block-entrance {
+  animation:
+    anet-topo-title-block-entrance-kf 500ms ease-out 200ms backwards,
+    anet-topo-title-block-envelope-breath-kf 11s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-title-block-entrance { animation: none; }
+}
+
 /* Round 707 — chrome Layout wrapper at-rest breath at 17 s. Slowest tier
    among HTML chrome respiratory anchors (sibling to R703 zoom-level 9 s
    in the chrome strip's data tier; this 17 s lands in the chrome strip's
