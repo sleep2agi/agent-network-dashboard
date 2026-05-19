@@ -16239,8 +16239,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               hierarchy: 'segmented control container' (rounded-lg)
               vs 'standalone button' (rounded-md). Pure paint change,
               no layout shift. */}
+          {/* Round 708 / Loop — chrome nodeSize wrapper joins the
+              respiratory family at 19 s, mirror to R707 Layout wrapper.
+              Closes 2 of the 3 chrome wrappers (Layout 17s / nodeSize
+              19s); zoom wrapper still single-voiced. Coprime ladder
+              forms across the chrome wrapper trio:
+                R707  Layout    wrapper  17 s
+                R708  nodeSize  wrapper  19 s   ← this round
+                future zoom    wrapper  23 s ?
+              All primes coprime with all other rolodex cadences and
+              with each other.
+
+              Pattern parallel to canvas-brand-pair (R704/R705) coprime
+              envelope-per-member: chrome strip control wrappers each
+              get their own prime cadence. Unlike canvas-brand-pair
+              (which had ONE inner element per envelope), chrome
+              wrappers have MULTIPLE inner buttons (Ring/Grid for
+              Layout, S/M/L for nodeSize) — wrappers signal "control
+              group is alive"; inner buttons signal their own R674/R675
+              hover-halo when interacted.
+
+              Same alpha (0.94 ↔ 1, ~6%) + same :has(button:hover)
+              gate as R707 — consistent control-tier rationale across
+              the chrome wrapper trio. Coprime cadence selection gives
+              the chrome strip its own distinct rhythm-of-control. */}
           <div
-            className="flex items-center rounded-lg border overflow-hidden"
+            className="anet-topo-chrome-fleet-group-trailer-breath flex items-center rounded-lg border overflow-hidden"
             data-topo-chrome-nodesize-radius="rounded-lg"
             style={{
               background: pal.legendBox.fill,
@@ -16250,6 +16274,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             role="group"
             aria-label="Node size"
             data-topo-chrome-fleet-group-trailer
+            data-topo-chrome-fleet-group-trailer-breath="19s"
             /* R697 sibling — wrapper-level has-hover halo (see globals.css). */
             data-topo-chrome-wrapper-halo-family="nodesize"
           >
