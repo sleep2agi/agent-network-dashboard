@@ -87,15 +87,21 @@ const kickerTripleAxes = !!kickerEntry
   && kickerEntry.axes.length === 3
   && JSON.stringify(kickerEntry.axes) === JSON.stringify(['opacity', 'transform-scale', 'text-shadow']);
 
+/* R722 added watermark as the 2nd triple-axis surface, so the
+ * "exclusive to kicker" invariants from R721's first-mover round
+ * no longer hold. R723 widens these to "kicker is a member of the
+ * triple-axis set" — the property R721 actually established (kicker
+ * IS triple-axis with text-shadow), without the exclusivity claim
+ * that R722 retired. */
 const tripleAxisSurfaces = Array.isArray(catalog)
   ? catalog.filter(e => Array.isArray(e.axes) && e.axes.length === 3)
   : [];
-const onlyKickerTriple = tripleAxisSurfaces.length === 1 && tripleAxisSurfaces[0]?.anchor === 'kicker';
+const kickerIsTripleAxisMember = tripleAxisSurfaces.some(e => e.anchor === 'kicker');
 
 const textShadowSurfaces = Array.isArray(catalog)
   ? catalog.filter(e => Array.isArray(e.axes) && e.axes.includes('text-shadow'))
   : [];
-const textShadowKickerExclusive = textShadowSurfaces.length === 1 && textShadowSurfaces[0]?.anchor === 'kicker';
+const kickerHasTextShadow = textShadowSurfaces.some(e => e.anchor === 'kicker');
 
 const results = {
   kicker_present:                   !!runtimeState,
@@ -107,8 +113,8 @@ const results = {
   css_class_binds_6s:               cssClassBound6s,
   css_reduced_motion_guard:         cssReducedMotion,
   catalog_kicker_three_axes:        kickerTripleAxes,
-  only_kicker_is_triple_axis:       onlyKickerTriple,
-  text_shadow_exclusive_to_kicker:  textShadowKickerExclusive,
+  kicker_is_triple_axis_member:     kickerIsTripleAxisMember,
+  kicker_has_text_shadow_axis:      kickerHasTextShadow,
 };
 const ok = Object.values(results).every(Boolean);
 console.log(`${ok ? '✅' : '❌'} R721 kicker triple-axis breath (first 3-axis surface: opacity + transform-scale + text-shadow @ 6s):`,

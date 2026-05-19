@@ -5024,6 +5024,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             { name: "canvas-brand",     anchors: ["watermark text", "watermark wrapper envelope", "crescent inner", "crescent wrapper envelope"] },
             { name: "background",       anchors: ["row hot", "hub idle"] },
           ])}
+          /* Round 723 / Loop — 5TH orthogonal meta-doc catalog: triple-
+             axis surfaces. R721 made kicker the first triple-axis
+             surface; R722 made watermark the second. R723 surfaces
+             the triple-axis TIER as a first-class catalog rather
+             than leaving it implicit in R716's dual-axis-surfaces
+             (where these entries appear with axes.length === 3 — a
+             back-compat semi-overload of the catalog's name).
+
+             Meta-doc surfaces post-R723 (pentagon):
+               R710  data-topo-respiratory-rolodex             — cadence axis
+               R716  data-topo-respiratory-dual-axis-surfaces  — axis axis
+               R717  data-topo-respiratory-patterns            — pattern axis
+               R720  data-topo-respiratory-tiers               — tier axis
+               R723  data-topo-respiratory-triple-axis-surfaces — multi-axis axis ← this round
+
+             Entries are a STRICT SUBSET of R716's entries — every
+             triple-axis surface here also appears in R716 with the
+             same anchor + cadence + axes (consumers querying R716
+             by anchor still work; R723 is the dedicated index for
+             "give me only the >=3-axis surfaces"). When future
+             surfaces gain a 3rd axis, they append to both catalogs.
+
+             Structural pattern note: both current triple-axis members
+             sit at the SAME 6 s cadence and share text-shadow as the
+             3rd axis — the "6 s triple-axis PAIR". A future R7?? can
+             elevate this to a named entry in the R717 patterns catalog
+             (`triple-axis-pair`, `6s-triple-pair` shape) if a 3rd
+             triple-axis surface arrives at a different cadence and
+             requires the pattern to be the discriminator. */
+          data-topo-respiratory-triple-axis-surfaces={JSON.stringify([
+            { anchor: "kicker",    cadence_s: 6, axes: ["opacity", "transform-scale", "text-shadow"] },
+            { anchor: "watermark", cadence_s: 6, axes: ["opacity", "letter-spacing",  "text-shadow"] },
+          ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
