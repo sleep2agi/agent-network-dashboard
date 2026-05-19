@@ -1447,6 +1447,26 @@ body {
   .anet-topo-chrome-layout-trailer-breath { animation: none; }
 }
 
+/* Round 708 — chrome nodeSize wrapper at-rest breath at 19 s. Sibling
+   to R707 Layout 17 s — both chrome control-tier wrappers carry the
+   same alpha range (6%) + the same :has(button:hover) gate. Two coprime
+   prime cadences (17, 19) form a chrome-control respiratory pair,
+   pattern-parallel to canvas-brand-pair (R704/R705) coprime envelope
+   pair. */
+@keyframes anet-topo-chrome-fleet-group-trailer-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.94; }
+}
+.anet-topo-chrome-fleet-group-trailer-breath {
+  animation: anet-topo-chrome-fleet-group-trailer-breath-kf 19s ease-in-out infinite;
+}
+.anet-topo-chrome-fleet-group-trailer-breath:has(button:hover) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-fleet-group-trailer-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
