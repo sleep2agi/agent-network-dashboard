@@ -12648,8 +12648,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 reducedMotion gate already standard across the family —
                 guard inline. data-recent-panel-title-breath attr
                 surfaces the gate state for tests. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: activeEdgeKey ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-glow={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-brightness={activeEdgeKey ? '1.15' : '1'} data-recent-panel-title-breath={!reducedMotion && !activeEdgeKey ? '8s' : 'off'}>recent signal{!reducedMotion && !activeEdgeKey && (
+            {/* Round 713 / Loop — recent-panel-title gains 2nd breath axis
+                (font-size 11.96 ↔ 12.04 ↔ 11.96 at the same 8 s cadence).
+                Mirror to R711 H2 dual-axis + R712 watermark dual-axis,
+                extending the "primary-identity surfaces get dual-axis"
+                rule to the panel-pair primary section header tier.
+                ~0.7% size oscillation (0.08 unit out of 12 base) —
+                glyph rasterization shifts at sub-pixel level, perceived
+                as "the title gently breathes in size with the breath"
+                without competing with the existing hover letter-spacing
+                tween (R301/R345 0.3 → 0.4).
+                Bbox stable in panel: ~0.32 px width swing at fontSize
+                12 across ~13 chars; well within the panel's 210 px
+                width, no overlap risk. Sibling change to legend-panel-
+                title below closes panel-pair dual-axis symmetry under
+                the primary-identity dual-axis rule (R701 closure
+                pattern, applied at the dual-axis tier).
+                data-recent-panel-title-breath-axis-2 attr exposes the
+                gate for tests. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={activeEdgeKey ? '800' : '700'} letterSpacing={hoveredPanel === 'recent' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: activeEdgeKey ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-recent-panel-title data-recent-panel-title-fw={activeEdgeKey ? '800' : '700'} data-recent-panel-title-active={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-glow={activeEdgeKey ? 'true' : 'false'} data-recent-panel-title-brightness={activeEdgeKey ? '1.15' : '1'} data-recent-panel-title-breath={!reducedMotion && !activeEdgeKey ? '8s' : 'off'} data-recent-panel-title-breath-axis-2={!reducedMotion && !activeEdgeKey ? 'font-size' : 'off'}>recent signal{!reducedMotion && !activeEdgeKey && (
               <animate attributeName="opacity" values="0.78;1;0.78" dur="8s" repeatCount="indefinite" />
+            )}{!reducedMotion && !activeEdgeKey && (
+              <animate attributeName="font-size" values="11.96;12.04;11.96" dur="8s" repeatCount="indefinite" />
             )}</text>
             {/* R96: header count now matches what the rows show. Pre-R96
                 this read "X msgs" off the raw messages array, but the
@@ -14423,8 +14443,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 opacity → bbox stable → topo-overlap-test untouched.
                 data-legend-panel-title-breath attr exposes the gate
                 state for tests. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: pinnedStatus ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-glow={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-brightness={pinnedStatus ? '1.15' : '1'} data-legend-panel-title-breath={!reducedMotion && !pinnedStatus ? '8s' : 'off'}>legend{!reducedMotion && !pinnedStatus && (
+            {/* Round 713 sibling — legend-panel-title gains 2nd breath
+                axis (font-size), closing panel-pair dual-axis symmetry
+                paired with recent-panel-title above. Same 8 s cadence,
+                same 11.96 ↔ 12.04 range, same opacity-axis siblings —
+                panels breathe both opacity AND font-size IN PHASE,
+                phase-locked across the pair via shared cadence. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: pinnedStatus ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-glow={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-brightness={pinnedStatus ? '1.15' : '1'} data-legend-panel-title-breath={!reducedMotion && !pinnedStatus ? '8s' : 'off'} data-legend-panel-title-breath-axis-2={!reducedMotion && !pinnedStatus ? 'font-size' : 'off'}>legend{!reducedMotion && !pinnedStatus && (
               <animate attributeName="opacity" values="0.78;1;0.78" dur="8s" repeatCount="indefinite" />
+            )}{!reducedMotion && !pinnedStatus && (
+              <animate attributeName="font-size" values="11.96;12.04;11.96" dur="8s" repeatCount="indefinite" />
             )}</text>
             {/* Round 257 / Loop: legend panel header count picks up the
                 symmetric 13L/13R inner-padding pattern from the recent-
