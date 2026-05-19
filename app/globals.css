@@ -1467,6 +1467,27 @@ body {
   .anet-topo-chrome-fleet-group-trailer-breath { animation: none; }
 }
 
+/* Round 709 — chrome zoom wrapper at-rest breath at 23 s. Closes the
+   chrome control trio (R707 Layout 17s + R708 nodeSize 19s + R709 zoom
+   23s) with three adjacent prime coprime cadences. 23s slowest in the
+   chrome trio — reads as "calm anchor for the viewport-control cluster"
+   since zoom is the most functional of the 3 wrappers (its inner buttons
+   compound viewport math). Same alpha (6%) + :has(button:hover) gate
+   as siblings. */
+@keyframes anet-topo-chrome-zoom-wrapper-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.94; }
+}
+.anet-topo-chrome-zoom-wrapper-breath {
+  animation: anet-topo-chrome-zoom-wrapper-breath-kf 23s ease-in-out infinite;
+}
+.anet-topo-chrome-zoom-wrapper-breath:has(button:hover) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-zoom-wrapper-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 

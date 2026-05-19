@@ -16423,8 +16423,32 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           {/* R376 sibling — zoom wrapper rounded-md → rounded-lg.
               Closes the chrome-strip segmented-control corner radius
               cascade (Layout R375 + nodeSize R376 + zoom R376). */}
+          {/* Round 709 / Loop — chrome zoom wrapper joins the
+              respiratory family at 23 s, closing the chrome control
+              trio with three adjacent-prime coprime cadences:
+                R707  Layout    wrapper  17 s
+                R708  nodeSize  wrapper  19 s
+                R709  zoom      wrapper  23 s   ← this round
+              All three primes coprime with each other and with every
+              other rolodex cadence (3/4/5/6/7/8/9/10/11/13/15) — no
+              phase locks across the entire 16-anchor family.
+
+              23s is the slowest cadence yet in the rolodex, intentional
+              for zoom: among the 3 chrome control wrappers, zoom is the
+              MOST functional (its inner buttons drive viewport math
+              that compounds across panning/scaling state) — slower
+              cadence reads as "calm anchor for the viewport-control
+              cluster". The cadence-by-role choice mirrors the H2 anchor
+              (10s) being slowest in the title-block trio.
+
+              Same alpha (0.94 ↔ 1, ~6%) + same :has(button:hover) gate
+              as R707/R708 — consistent control-tier rationale across
+              the chrome wrapper trio. Together the 17/19/23 prime
+              triple gives the chrome strip its own "control orchestra"
+              independent from data tier 9s (R703) and from all other
+              respiratory regions. */}
           <div
-            className="ml-1.5 flex items-center rounded-lg border overflow-hidden"
+            className="anet-topo-chrome-zoom-wrapper-breath ml-1.5 flex items-center rounded-lg border overflow-hidden"
             data-topo-chrome-zoom-wrapper-radius="rounded-lg"
             style={{
               background: pal.legendBox.fill,
@@ -16433,6 +16457,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             }}
             data-topo-chrome-view-group-leader
             data-topo-chrome-zoom-wrapper
+            data-topo-chrome-zoom-wrapper-breath="23s"
             /* R697 sibling — wrapper-level has-hover halo (see globals.css). */
             data-topo-chrome-wrapper-halo-family="zoom"
           >
