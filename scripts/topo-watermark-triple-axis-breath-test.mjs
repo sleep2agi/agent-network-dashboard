@@ -96,10 +96,15 @@ const tripleAxisSurfaces = Array.isArray(catalog)
   ? catalog.filter(e => Array.isArray(e.axes) && e.axes.length === 3)
   : [];
 const tripleAxisAnchorsSorted = tripleAxisSurfaces.map(e => e.anchor).sort();
+/* R725 added H2 as a 3rd triple-axis surface at 10 s — the "6 s pair"
+ * subset still exists (kicker + watermark @ 6 s), but the catalog
+ * has 3 total entries now. Widen the assertion to verify the 6 s
+ * pair SUBSET is intact rather than asserting it's the whole set. */
+const sixSecondMembers = tripleAxisSurfaces.filter(e => e.cadence_s === 6);
+const sixSecondAnchorsSorted = sixSecondMembers.map(e => e.anchor).sort();
 const triple6sPair =
-  tripleAxisSurfaces.length === 2
-  && JSON.stringify(tripleAxisAnchorsSorted) === JSON.stringify(['kicker', 'watermark'])
-  && tripleAxisSurfaces.every(e => e.cadence_s === 6);
+  sixSecondMembers.length === 2
+  && JSON.stringify(sixSecondAnchorsSorted) === JSON.stringify(['kicker', 'watermark']);
 
 const results = {
   watermark_present:               !!runtimeState,

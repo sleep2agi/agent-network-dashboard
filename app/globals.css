@@ -1423,9 +1423,41 @@ body {
    needing a second class or animation. Pattern budget: prefer single-
    axis on most anchors (visual hierarchy) and reserve dual-axis for
    primary identity surfaces (H2 here = first primary-identity dual). */
+/* Round 725 — H2 section title becomes the 3RD triple-axis surface,
+   FIRST triple-axis member at a NON-6 s cadence (10 s). Establishes
+   that the triple-axis TIER is multi-cadence rather than 6 s-locked —
+   the R724 `triple-axis-pair` pattern stays valid for kicker+watermark
+   at 6 s; H2 joins the triple-axis TIER as a solo 10 s member.
+
+   H2's prior dual-axis (R702 opacity + R711 transform-scale @ 10 s)
+   gains a 3rd CSS-animated axis: text-shadow glow at 10 s in phase.
+   Reads as a slow inhale glow on the section heading — calmer than
+   the 6 s pair (kicker/watermark) because H2's slower cadence keeps
+   the glow appearance interval at 5 s (vs 3 s for the 6 s tier).
+
+   Glow tuning vs kicker (R721) and watermark (R722):
+     kicker     blur 6 px, alpha 0.30 @ 6 s
+     watermark  blur 8 px, alpha 0.20 @ 6 s
+     H2         blur 8 px, alpha 0.22 @ 10 s    ← this round
+   H2 sits between the two at alpha; its larger fontSize (section
+   heading, much bigger than kicker/watermark) needs a wider blur
+   (8 px to match watermark) but a slightly higher alpha than
+   watermark (0.22 vs 0.20) because at H2's slower 10 s cadence the
+   glow gets a longer dwell time at peak — proportionally tighter
+   alpha would feel under-emphasised vs the 6 s pair's snappier peaks.
+
+   The triple-axis tier now has 3 members across 2 cadences:
+     6 s  kicker + watermark  (R724 "triple-axis-pair" pattern)
+     10 s H2                  (solo)
+   R725 doesn't add a new R717 pattern entry — H2 is a solo, not
+   a pair. R723 catalog (triple-axis-surfaces) extends to 3 entries.
+
+   prefers-reduced-motion guard already in place on the existing
+   R702 H2 breath class; this round's text-shadow axis joins the
+   same animation rule and is neutralised by the same @media block. */
 @keyframes anet-topo-section-title-breath-kf {
-  0%, 100% { opacity: 1;    transform: scale(1); }
-  50%      { opacity: 0.88; transform: scale(0.997); }
+  0%, 100% { opacity: 1;    transform: scale(1);     text-shadow: none; }
+  50%      { opacity: 0.88; transform: scale(0.997); text-shadow: 0 0 8px rgba(34, 211, 238, 0.22); }
 }
 .anet-topo-section-title-breath {
   animation: anet-topo-section-title-breath-kf 10s ease-in-out infinite;

@@ -4933,7 +4933,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           data-topo-respiratory-dual-axis-surfaces={JSON.stringify([
             { anchor: "kicker",     cadence_s: 6,  axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale"] },
-            { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale"] },
+            { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "watermark",  cadence_s: 6,  axes: ["opacity", "letter-spacing", "text-shadow"] },
             { anchor: "recent",     cadence_s: 8,  axes: ["opacity", "font-size"] },
             { anchor: "legend",     cadence_s: 8,  axes: ["opacity", "font-size"] },
@@ -5075,8 +5075,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              triple-axis surface arrives at a different cadence and
              requires the pattern to be the discriminator. */
           data-topo-respiratory-triple-axis-surfaces={JSON.stringify([
-            { anchor: "kicker",    cadence_s: 6, axes: ["opacity", "transform-scale", "text-shadow"] },
-            { anchor: "watermark", cadence_s: 6, axes: ["opacity", "letter-spacing",  "text-shadow"] },
+            { anchor: "kicker",    cadence_s: 6,  axes: ["opacity", "transform-scale", "text-shadow"] },
+            { anchor: "watermark", cadence_s: 6,  axes: ["opacity", "letter-spacing",  "text-shadow"] },
+            { anchor: "H2",        cadence_s: 10, axes: ["opacity", "transform-scale", "text-shadow"] },
           ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];

@@ -77,11 +77,22 @@ const pairEntry = Array.isArray(patterns) ? patterns.find(p => p.name === 'tripl
 const titleBlockEntry = Array.isArray(patterns) ? patterns.find(p => p.name === 'title-block') : null;
 const canvasBrandPairEntry = Array.isArray(patterns) ? patterns.find(p => p.name === 'canvas-brand-pair') : null;
 
+/* R725 extended R723 to 3 entries (H2 added at 10 s). The strict
+ * equality between R723's anchor set and the R717 pair anchors no
+ * longer holds — R723 is the full triple-axis SUPERSET now, the
+ * pair is a subset. Widen the cross-check: every pair anchor must
+ * exist in R723 (mapping watermark → watermark text), AND R723's
+ * 6 s subset (members with cadence_s === 6) must equal the pair. */
 const r723AnchorsNormalised = Array.isArray(triple)
-  ? triple.map(e => e.anchor === 'watermark' ? 'watermark text' : e.anchor).sort()
+  ? triple.map(e => e.anchor === 'watermark' ? 'watermark text' : e.anchor)
+  : [];
+const r723SixSecAnchorsNormalised = Array.isArray(triple)
+  ? triple.filter(e => e.cadence_s === 6).map(e => e.anchor === 'watermark' ? 'watermark text' : e.anchor).sort()
   : [];
 const pairAnchorsSorted = pairEntry?.anchors ? [...pairEntry.anchors].sort() : [];
-const crossCheckR723 = JSON.stringify(r723AnchorsNormalised) === JSON.stringify(pairAnchorsSorted);
+const pairSubsetOfR723 = Array.isArray(pairEntry?.anchors)
+  && pairEntry.anchors.every(a => r723AnchorsNormalised.includes(a));
+const r723SixSecondSubsetEqualsPair = JSON.stringify(r723SixSecAnchorsNormalised) === JSON.stringify(pairAnchorsSorted);
 
 const results = {
   patterns_has_6_entries:          Array.isArray(patterns) && patterns.length === 6,
@@ -89,7 +100,8 @@ const results = {
   pair_cadences_is_6:              JSON.stringify(pairEntry?.cadences) === JSON.stringify([6]),
   pair_shape_correct:              pairEntry?.shape === '6s-triple-pair',
   pair_anchors_correct:            JSON.stringify(pairEntry?.anchors) === JSON.stringify(['kicker', 'watermark text']),
-  cross_check_with_r723:           crossCheckR723,
+  pair_is_subset_of_r723:          pairSubsetOfR723,
+  r723_6s_subset_equals_pair:      r723SixSecondSubsetEqualsPair,
   kicker_also_in_title_block:      Array.isArray(titleBlockEntry?.anchors) && titleBlockEntry.anchors.includes('kicker'),
   watermark_also_in_canvas_brand:  Array.isArray(canvasBrandPairEntry?.anchors) && canvasBrandPairEntry.anchors.includes('watermark text'),
 };

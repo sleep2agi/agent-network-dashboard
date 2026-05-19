@@ -86,7 +86,17 @@ const validShape = Array.isArray(triple)
 const anchors = Array.isArray(triple) ? triple.map(e => e.anchor).sort() : [];
 const allOpacityFirst = Array.isArray(triple) ? triple.every(e => e.axes[0] === 'opacity') : false;
 const allTextShadowThird = Array.isArray(triple) ? triple.every(e => e.axes[2] === 'text-shadow') : false;
-const allCadence6 = Array.isArray(triple) ? triple.every(e => e.cadence_s === 6) : false;
+/* R725 added H2 at 10 s as the 3rd triple-axis surface — the tier
+ * is now multi-cadence rather than 6 s-locked. The 6 s pair (kicker
+ * + watermark) SUBSET still exists; the all-6 s invariant is retired
+ * in favour of "every cadence ∈ rolodex" + "6 s pair intact". */
+const cadencesInRolodex = Array.isArray(triple)
+  ? triple.every(e => [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 21, 23, 25].includes(e.cadence_s))
+  : false;
+const sixSecondAnchors = Array.isArray(triple)
+  ? triple.filter(e => e.cadence_s === 6).map(e => e.anchor).sort()
+  : [];
+const sixSecondPairIntact = JSON.stringify(sixSecondAnchors) === JSON.stringify(['kicker', 'watermark']);
 
 const r716ByAnchor = new Map(Array.isArray(dualAxis)
   ? dualAxis.map(e => [e.anchor, e])
@@ -100,12 +110,13 @@ const results = {
   attr_present:                 !!runtimeAttrs.triple,
   json_parses:                  triple !== null && parseError === null,
   is_array:                     Array.isArray(triple),
-  has_2_entries:                Array.isArray(triple) && triple.length === 2,
+  has_3_entries:                Array.isArray(triple) && triple.length === 3,
   shape_valid_three_axes:       validShape,
-  anchors_match_expected:       JSON.stringify(anchors) === JSON.stringify(['kicker', 'watermark']),
+  anchors_match_expected:       JSON.stringify(anchors) === JSON.stringify(['H2', 'kicker', 'watermark']),
   all_opacity_first:            allOpacityFirst,
   all_text_shadow_third:        allTextShadowThird,
-  all_cadence_6s:               allCadence6,
+  all_cadences_in_rolodex:      cadencesInRolodex,
+  six_second_pair_intact:       sixSecondPairIntact,
   back_compat_subset_of_r716:   backCompatStrict,
 };
 const ok = Object.values(results).every(Boolean);
