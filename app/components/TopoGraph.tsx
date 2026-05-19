@@ -2005,6 +2005,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               transition: 'color 200ms ease-out, transform 200ms ease-out, filter 200ms ease-out',
             }}
           >
+            {/* Round 731 / Loop — SVG <title> a11y child for the title-
+               block brand logo. Sibling treatment to R730 watermark/
+               panel-title a11y sweep. Brand logo is always-visible
+               (title-block top-of-canvas); screen readers now identify
+               it as the brand mark. */}<title>sleep2agi · brand logo</title>
             <mask id="s2a-titleblock-moon-mask">
               <rect width="32" height="32" fill="black" />
               <circle cx="16" cy="16" r="13" fill="white" />
@@ -16053,6 +16058,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             data-topo-brand-canvas-mark-envelope-breath="13s"
             style={{ pointerEvents: 'none', transition: 'opacity 300ms ease-out, fill 200ms ease-out' }}
           >
+            {/* Round 731 / Loop — SVG <title> a11y child for the canvas-
+               corner crescent brand mark. Visible only when no recent
+               panel renders (flowLinks.length === 0); screen readers
+               can navigate to it via accessibility tree at all times
+               since the <title> child stays in the DOM regardless of
+               opacity gate. Sibling treatment to R730 watermark a11y. */}<title>sleep2agi · canvas-corner brand mark</title>
             <defs>
               <mask id="s2a-canvas-corner-mask">
                 <rect x="0" y="0" width="28" height="28" fill="black" />
