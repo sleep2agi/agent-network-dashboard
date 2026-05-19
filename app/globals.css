@@ -1507,9 +1507,43 @@ body {
    without animation underneath. transform-origin defaults to center
    — pill scales around its own midpoint. prefers-reduced-motion:
    reduce also neutralizes. */
+/* Round 727 — zoom-level readout becomes the 4TH triple-axis surface and
+   FIRST chrome-tier (data-tier) member to join the multi-cadence triple-
+   axis tier. R703 opacity (9 s) + R715 transform-scale (9 s) joined by
+   R727 text-shadow (9 s) — all 3 axes share the 9 s cadence in phase.
+
+   Multi-cadence triple-axis tier post-R727 (4 members across 3 cadences):
+     6 s   kicker + watermark      (title-block + canvas-brand tiers)
+     9 s   zoom-level readout      (data tier) ← this round
+     10 s  H2 section title        (title-block tier)
+   Pattern budget extension: prior triple-axis members were all read-target
+   text in primary-identity tiers (title-block + canvas-brand). R727 extends
+   to the DATA tier — a chrome readout, not pure text. Justified because:
+     - zoom-level's hover sig (R703 data-attr gate) is sparse: only the
+       hover-tracking attr; no rich tactile axes
+     - the surface is a single-tone monospace digit pill — visually quiet
+       enough that a glow pulse remains subordinate to node halos
+     - the chrome strip's "data tier" sub-role becomes a structural mirror
+       of the title-block tier in the triple-axis context
+
+   Glow tuning vs prior 3 triple-axis members:
+     R721 kicker      blur 6 px, alpha 0.30 @ 6 s   (title-block)
+     R722 watermark   blur 8 px, alpha 0.20 @ 6 s   (canvas-brand)
+     R725 H2          blur 8 px, alpha 0.22 @ 10 s  (title-block)
+     R727 zoom-level  blur 5 px, alpha 0.25 @ 9 s   (data tier) ← this round
+   Smaller blur (5 px) for the smaller pill surface; mid-range alpha
+   (0.25) between kicker (sharp+bright at 0.30) and H2 (medium at 0.22).
+   At 9 s the glow appearance interval is ~4.5 s on each half — between
+   the 3 s 6 s-pair peak and the 5 s H2 peak, matching the cadence
+   interpolation.
+
+   Hover gate preserved: the existing R703 [data-topo-chrome-zoom-level-
+   hover="true"] selector still gates the entire animation off when user
+   interacts — R727's text-shadow is part of the same @keyframes block
+   so it gets gated together. */
 @keyframes anet-topo-chrome-zoom-level-breath-kf {
-  0%, 100% { opacity: 1;    transform: scale(1); }
-  50%      { opacity: 0.85; transform: scale(0.996); }
+  0%, 100% { opacity: 1;    transform: scale(1);     text-shadow: none; }
+  50%      { opacity: 0.85; transform: scale(0.996); text-shadow: 0 0 5px rgba(34, 211, 238, 0.25); }
 }
 .anet-topo-chrome-zoom-level-breath {
   animation: anet-topo-chrome-zoom-level-breath-kf 9s ease-in-out infinite;

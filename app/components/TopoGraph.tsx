@@ -4932,7 +4932,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              surfaces (3+ axes) append in the same shape. */
           data-topo-respiratory-dual-axis-surfaces={JSON.stringify([
             { anchor: "kicker",     cadence_s: 6,  axes: ["opacity", "transform-scale", "text-shadow"] },
-            { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale"] },
+            { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "watermark",  cadence_s: 6,  axes: ["opacity", "letter-spacing", "text-shadow"] },
             { anchor: "recent",     cadence_s: 8,  axes: ["opacity", "font-size"] },
@@ -5014,7 +5014,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                The R726 test verifies this strict subset relationship
                at runtime. Future triple-axis surfaces append HERE (the
                tier) and conditionally to the pair (only if at 6 s). */
-            { name: "triple-axis-tier",  cadences: [6, 10],        anchors: ["kicker", "watermark text", "H2 section title"],                          shape: "tier-multi-cadence" },
+            { name: "triple-axis-tier",  cadences: [6, 9, 10],     anchors: ["kicker", "watermark text", "zoom-level readout", "H2 section title"],    shape: "tier-multi-cadence" },
           ])}
           /* Round 720 / Loop — 4TH orthogonal meta-doc catalog: tiers.
              Joins R710 (cadences) + R716 (axes) + R717 (patterns) to
@@ -5089,9 +5089,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              triple-axis surface arrives at a different cadence and
              requires the pattern to be the discriminator. */
           data-topo-respiratory-triple-axis-surfaces={JSON.stringify([
-            { anchor: "kicker",    cadence_s: 6,  axes: ["opacity", "transform-scale", "text-shadow"] },
-            { anchor: "watermark", cadence_s: 6,  axes: ["opacity", "letter-spacing",  "text-shadow"] },
-            { anchor: "H2",        cadence_s: 10, axes: ["opacity", "transform-scale", "text-shadow"] },
+            { anchor: "kicker",     cadence_s: 6,  axes: ["opacity", "transform-scale", "text-shadow"] },
+            { anchor: "watermark",  cadence_s: 6,  axes: ["opacity", "letter-spacing",  "text-shadow"] },
+            { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale", "text-shadow"] },
+            { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale", "text-shadow"] },
           ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];

@@ -107,7 +107,11 @@ const h2InTripleCatalog = !!h2TripleEntry
 const textShadowAnchors = Array.isArray(dualAxisCatalog)
   ? dualAxisCatalog.filter(e => Array.isArray(e.axes) && e.axes.includes('text-shadow')).map(e => e.anchor).sort()
   : [];
-const textShadowOnThree = JSON.stringify(textShadowAnchors) === JSON.stringify(['H2', 'kicker', 'watermark']);
+/* R727 added zoom-level as the 4th text-shadow surface — H2 is still
+ * a member of the text-shadow set, which is what this assertion ought
+ * to verify (the R725-specific invariant); widen to "H2 ∈ text-shadow
+ * set" rather than "set == [H2, kicker, watermark]". */
+const h2HasTextShadow = textShadowAnchors.includes('H2');
 
 const sixSecondAnchors = Array.isArray(tripleAxisCatalog)
   ? tripleAxisCatalog.filter(e => e.cadence_s === 6).map(e => e.anchor).sort()
@@ -123,9 +127,9 @@ const results = {
   css_class_binds_10s:              cssClassBound10s,
   css_reduced_motion_guard:         cssReducedMotion,
   r716_h2_three_axes:               h2TripleAxes_inR716,
-  r723_three_entries:               Array.isArray(tripleAxisCatalog) && tripleAxisCatalog.length === 3,
+  r723_at_least_three_entries:      Array.isArray(tripleAxisCatalog) && tripleAxisCatalog.length >= 3,
   r723_h2_entry:                    h2InTripleCatalog,
-  text_shadow_on_three_surfaces:    textShadowOnThree,
+  h2_has_text_shadow_axis:          h2HasTextShadow,
   six_second_pair_still_intact:     sixSecondPairIntact,
 };
 const ok = Object.values(results).every(Boolean);
