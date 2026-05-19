@@ -1364,6 +1364,37 @@ body {
   .anet-topo-brand-watermark-envelope-breath { animation: none; }
 }
 
+/* Round 705 — canvas crescent wrapper envelope breath at 13 s. Mirror
+   to R704 watermark wrapper, closing canvas-brand-pair envelope
+   symmetry. Cadence 13 s coprime with R704 (15 s) so the two never
+   beat together when both visible. Tighter alpha range (0.30 ↔ 0.35,
+   ~14%) deliberately hugs the existing inline 0.35 baseline — preserves
+   the visible-state intent while adding nested respiration.
+
+   Two gate-off rules instead of one (R704 had a single recede gate):
+   - visible="false" → animation: none, so inline opacity={0} holds when
+     the recent panel is shown (crescent must be invisible).
+   - recede="true"   → animation: none, so inline opacity={0.245} holds
+     when canvas attention is elsewhere.
+   Either gate flips → CSS releases control to inline opacity attr.
+   prefers-reduced-motion: reduce also neutralizes. */
+@keyframes anet-topo-brand-canvas-mark-envelope-breath-kf {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.30; }
+}
+.anet-topo-brand-canvas-mark-envelope-breath {
+  animation: anet-topo-brand-canvas-mark-envelope-breath-kf 13s ease-in-out infinite;
+}
+.anet-topo-brand-canvas-mark-envelope-breath[data-topo-brand-canvas-mark-visible="false"] {
+  animation: none;
+}
+.anet-topo-brand-canvas-mark-envelope-breath[data-topo-brand-canvas-mark-recede="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-brand-canvas-mark-envelope-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 

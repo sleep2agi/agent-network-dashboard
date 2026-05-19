@@ -15515,11 +15515,53 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               shifts elsewhere.
               data-topo-brand-canvas-mark-recede attr exposes the
               gate state for tests. */}
+          {/* Round 705 / Loop — canvas crescent moon wrapper joins R704
+              nested-envelope respiration pattern, closing the canvas-
+              brand-pair envelope symmetry. Pattern mirror:
+                R704  watermark wrapper envelope  15 s   (sibling)
+                R705  crescent wrapper envelope   13 s   (this round)
+              Two cadences coprime (13 and 15) — never beat together
+              when both visible. Coprime selection is the canvas-brand-
+              pair version of the "panel-pair both at 8 s parity" choice
+              (R700/R701): there the two pair members share cadence
+              because they're typographic twins; here the two are
+              visually distinct (text vs glyph) so coprime gives them
+              independent voices.
+
+              Multiplicative chain (when visible + not recede):
+                outer (CSS animation, 13 s): opacity 0.30 ↔ 0.35
+                inner (SVG animate, 7 s):    fill-opacity 0.8 ↔ 1.0
+                effective range:             0.24 ↔ 0.35
+              Pre-R705 outer was static 0.35 → 0.28 ↔ 0.35 range.
+              Post-R705 the outer ALSO breathes → slightly wider 0.24 ↔
+              0.35 range. Nested respiration on the crescent now matches
+              the R704 watermark nested respiration.
+
+              Alpha range deliberately HUGS the existing 0.35 baseline
+              (0.30 ↔ 0.35, ~14% range) — to NOT clobber the wrapper's
+              composed opacity math. Animation overrides inline opacity
+              when running, so the alpha tracks the existing visible
+              baseline. When the visibility or recede gates flip
+              (data-attr "false" or "true"), CSS animation: none
+              releases control back to the inline opacity attr (0 when
+              invisible, 0.245 when recede). Same gate strategy as R704.
+
+              Rolodex (12 anchors, 10-tier ladder):
+                3 s row hot · 4 s hub idle · 5 s brand logo
+                6 s watermark text · 6 s kicker · 7 s crescent inner
+                8 s recent title · 8 s legend title
+                9 s zoom-level readout · 10 s H2
+                13 s crescent wrapper envelope ← this round
+                15 s watermark wrapper envelope
+
+              data-topo-brand-canvas-mark-envelope-breath attr surfaces
+              the cadence for tests. */}
           <g
             opacity={(flowLinks.length === 0 ? 0.35 : 0) * (
               (hoveredAlias || hoveredEdgeKey || hoveredGroupLabel ||
                hoveredStatus || hoveredVendor) && !hoveredHub ? 0.7 : 1
             )}
+            className="anet-topo-brand-canvas-mark-envelope-breath"
             data-topo-brand-canvas-mark
             data-topo-brand-canvas-mark-visible={flowLinks.length === 0 ? 'true' : 'false'}
             data-topo-brand-canvas-mark-recede={
@@ -15527,6 +15569,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                hoveredStatus || hoveredVendor) && !hoveredHub ? 'true' : 'false'
             }
             data-topo-brand-canvas-mark-breath={reducedMotion ? 'false' : 'true'}
+            data-topo-brand-canvas-mark-envelope-breath="13s"
             style={{ pointerEvents: 'none', transition: 'opacity 300ms ease-out, fill 200ms ease-out' }}
           >
             <defs>
