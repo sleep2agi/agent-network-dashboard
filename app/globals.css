@@ -1337,6 +1337,33 @@ body {
   .anet-topo-chrome-zoom-level-breath { animation: none; }
 }
 
+/* Round 704 — brand watermark WRAPPER envelope breath at 15 s — slowest
+   tier in the respiratory rolodex. Inner "sleep2agi" text already
+   breathes at 6 s (R519); this adds an outer wrapper envelope so the
+   brand area has nested respiration (fast inner / slow outer). 0.85 ↔ 1
+   alpha range (~15%) matches the R703 tabular/decorative surface band
+   — heavy visual register shouldn't drift too far from full opacity.
+
+   Focal-recede gate via data-attr selector — when the wrapper's
+   data-topo-brand-watermark-recede attr flips to "true" (user is
+   hovering a node/edge/group on the canvas), animation: none gates
+   off so the R525 inline opacity={0.7} attr takes effect cleanly.
+   Pattern sibling to R703 zoom-level data-attr selector gate.
+   prefers-reduced-motion: reduce also neutralizes. */
+@keyframes anet-topo-brand-watermark-envelope-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.85; }
+}
+.anet-topo-brand-watermark-envelope-breath {
+  animation: anet-topo-brand-watermark-envelope-breath-kf 15s ease-in-out infinite;
+}
+.anet-topo-brand-watermark-envelope-breath[data-topo-brand-watermark-recede="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-brand-watermark-envelope-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
