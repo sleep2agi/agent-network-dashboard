@@ -4609,6 +4609,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             parts.push(`${flows} active link${flows === 1 ? '' : 's'}`);
             return `Agent network topology — ${parts.join(' · ')}. Tab to navigate nodes, double-click canvas to reset view.`;
           })()}
+          /* Round 734 / Loop — aria-describedby points at the <desc>
+             child added below. The existing aria-label (R7/R469) is
+             DYNAMIC — encodes live counts. The <desc> is STABLE —
+             encodes the structural vocabulary of the canvas. Together
+             they form the WAI-ARIA name + description pair: SR
+             announces the accessible name (label) first, then
+             optionally reads the description on follow-up. Distinct
+             a11y mechanism from R730-R733's <title> a11y children
+             (which are accessible NAMES on individual decorative
+             elements; this is a DESCRIPTION on the root canvas). */
+          aria-describedby="anet-topo-canvas-desc"
           data-topo-canvas-aria
           /* Round 469 / Loop — fleet-split numeric attrs on the root
              svg. The aria-label already encodes online/working/offline
@@ -5284,6 +5295,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           }}
           style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
         >
+          {/* Round 734 / Loop — SVG <desc> stable structural description
+             targeted by aria-describedby on the root <svg>. Complements
+             the dynamic aria-label (R7/R469 live-state counts) with
+             stable structural vocabulary. WAI-ARIA name + description
+             pair: SR reads aria-label first (current state), then
+             optionally reads this desc on follow-up for structural
+             context. Distinct mechanism from R730-R733 SVG <title>
+             children (those are NAMES on decorative elements; this is
+             a DESCRIPTION on the canvas root). */}
+          <desc id="anet-topo-canvas-desc">{'Live agent network topology canvas. Hub at center surrounded by per-agent node circles arranged in a ring (or grid prefix-cluster layout). Flow links between nodes animate during inter-agent activity. Recent-signal panel top-left, legend top-right, chrome strip bottom-right. Tab to focus nodes, double-click empty canvas to reset zoom and pan, l to toggle ring/grid layout.'}</desc>
           <defs>
             <linearGradient id="topo-panel" x1="0" x2="1" y1="0" y2="1">
               <stop offset="0%"   stopColor={pal.panelStops[0]} />
