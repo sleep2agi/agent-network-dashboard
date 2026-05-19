@@ -4974,12 +4974,33 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              no DOM thrash. R710/R716 unchanged (each catalog is
              orthogonal). Future rounds: when adding a new structural
              pattern, append to this list as the doc step. */
+          /* Round 724 / Loop — 6TH pattern entry added: `triple-axis-pair`.
+             R721 made kicker the first triple-axis surface; R722 made
+             watermark the second; R723 surfaced the triple-axis tier
+             as its own catalog. R724 promotes the "6 s triple-axis
+             pair" observation to a NAMED pattern in R717, completing
+             the family's pattern-axis documentation of this structural
+             motif (both 6 s, both with text-shadow, both sparse-hover
+             read-target text).
+
+             Anchors overlap with prior patterns: kicker is also in
+             "title-block" (cadences 5/6/10/11), watermark text is
+             also in "canvas-brand-pair" (cadences 6/7/13/15). That
+             non-exclusivity is INTENDED — patterns slice the family
+             by STRUCTURAL SHAPE, not partition by tier. The "triple-
+             axis-pair" pattern is orthogonal to the other 5: it
+             groups by AXIS COUNT + CADENCE COINCIDENCE rather than
+             by spatial role.
+
+             Cross-check (R724 test): the anchors here must equal
+             R723's triple-axis-surfaces anchor set. */
           data-topo-respiratory-patterns={JSON.stringify([
             { name: "title-block",       cadences: [5, 6, 10, 11], anchors: ["brand logo", "kicker", "H2 section title", "title-block envelope"], shape: "trio-with-envelope" },
             { name: "panel-pair",        cadences: [8],            anchors: ["recent title", "legend title"],                                       shape: "parity" },
             { name: "chrome-strip",      cadences: [9, 17, 19, 21, 23, 25], anchors: ["zoom-level readout", "Layout wrapper", "nodeSize wrapper", "reset button", "zoom wrapper", "fullscreen button"], shape: "tiered-with-quintet" },
             { name: "canvas-brand-pair", cadences: [6, 7, 13, 15], anchors: ["watermark text", "crescent inner", "crescent wrapper envelope", "watermark wrapper envelope"], shape: "coprime-nested-pair" },
             { name: "background",        cadences: [3, 4],         anchors: ["row hot", "hub idle"],                                                  shape: "baseline-pair" },
+            { name: "triple-axis-pair",  cadences: [6],            anchors: ["kicker", "watermark text"],                                              shape: "6s-triple-pair" },
           ])}
           /* Round 720 / Loop — 4TH orthogonal meta-doc catalog: tiers.
              Joins R710 (cadences) + R716 (axes) + R717 (patterns) to
