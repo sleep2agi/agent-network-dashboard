@@ -5152,6 +5152,29 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             triple_axis_pairs:   2,
             triple_axis_solos:   2,
           })}
+          /* Round 732 / Loop — 7TH orthogonal meta-doc catalog: a11y
+             titles. R730/R731 added SVG <title> children to 5 decorative
+             SVG elements; R732 surfaces that coverage as a queryable
+             catalog. Pentagon (R723) → Hexagon (R729) → HEPTAGON.
+
+             Distinct from the 6 respiratory meta-docs (R710/R716/R717/
+             R720/R723/R729): those document the BREATH family by
+             various axes; R732 documents the A11Y sub-family by
+             accessible-name mapping. Same introspection-as-data
+             philosophy, different family.
+
+             R732 test cross-validates each entry: the surface key
+             selector finds an element, and the element has a direct
+             <title> child whose textContent equals the catalog's
+             accessible_name. Future a11y additions append here
+             alongside the actual <title> child. */
+          data-topo-a11y-titles={JSON.stringify([
+            { surface: "watermark text",          selector: "[data-topo-brand-watermark]",   accessible_name: "sleep2agi · brand watermark" },
+            { surface: "recent panel title",      selector: "[data-recent-panel-title]",      accessible_name: "recent signal · activity panel title" },
+            { surface: "legend panel title",      selector: "[data-legend-panel-title]",      accessible_name: "legend · status / vendor / runtime swatch panel" },
+            { surface: "title-block brand logo",  selector: "[data-topo-brand-logo]",         accessible_name: "sleep2agi · brand logo" },
+            { surface: "canvas-corner crescent",  selector: "[data-topo-brand-canvas-mark]",  accessible_name: "sleep2agi · canvas-corner brand mark" },
+          ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
