@@ -5101,6 +5101,52 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale", "text-shadow"] },
           ])}
+          /* Round 729 / Loop — 6TH orthogonal meta-doc catalog: aggregate
+             stats. R710 (cadences) + R716 (axes) + R717 (patterns) +
+             R720 (tiers) + R723 (triple-axis) + R729 (stats). The
+             introspection layer goes from pentagon → HEXAGON.
+
+             Prior 5 catalogs are STRUCTURAL (list anchors by some axis).
+             R729 is the aggregate stats — totals + ranges derivable
+             from the others but explicit here as a queryable surface
+             for tooling (debug overlays, family-size sanity checks).
+
+             Stats post-R728 (frozen at this round's snapshot):
+               total_anchors:          18  (rolodex flat count)
+               cadences:               16  (R710 keys)
+               cadence_range_s:        { min: 3, max: 25 }    span 22 s
+               cadence_arc_s:          22  (max - min)
+               axis_counts:            { single: 12, dual: 0, triple: 6 }
+               patterns_count:         8   (R717 entries)
+               tiers_count:            7   (R720 entries)
+               triple_axis_pairs:      2   (6 s + 8 s pairs in R717)
+               triple_axis_solos:      2   (zoom-level + H2 in R717 tier)
+
+             axis_counts.dual === 0 is intentionally surfaced: R725-R728
+             promoted all prior dual-axis members to triple-axis. The
+             dual-axis tier being empty is a structural milestone, not
+             a documentation bug. R716's name stays "dual-axis-surfaces"
+             for back-compat (consumers querying by anchor still work);
+             the axis-count semantic is now reflected in this stats
+             catalog.
+
+             Cross-checks at runtime (R729 test):
+               total_anchors === Σ rolodex anchor counts
+               axis_counts.triple === R723 entries length
+               patterns_count === R717 length
+               tiers_count === R720 length
+               cadence_range matches rolodex keys */
+          data-topo-respiratory-axis-count-stats={JSON.stringify({
+            total_anchors:       18,
+            cadences:            16,
+            cadence_range_s:     { min: 3, max: 25 },
+            cadence_arc_s:       22,
+            axis_counts:         { single: 12, dual: 0, triple: 6 },
+            patterns_count:      8,
+            tiers_count:         7,
+            triple_axis_pairs:   2,
+            triple_axis_solos:   2,
+          })}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
