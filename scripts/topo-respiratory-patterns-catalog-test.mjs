@@ -71,32 +71,38 @@ const validShape = Array.isArray(patterns)
       && typeof p.name === 'string' && p.name.length > 0
       && Array.isArray(p.cadences) && p.cadences.length > 0 && p.cadences.every(c => typeof c === 'number' && c > 0)
       && Array.isArray(p.anchors) && p.anchors.length > 0 && p.anchors.every(a => typeof a === 'string' && a.length > 0)
-      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'tiered-with-quartet', 'tiered-with-quintet', 'coprime-nested-pair', 'baseline-pair', '6s-triple-pair', '8s-triple-pair', 'tier-multi-cadence'].includes(p.shape))
+      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'tiered-with-quartet', 'tiered-with-quintet', 'coprime-nested-pair', 'baseline-pair', '6s-triple-pair', '8s-triple-pair', 'tier-multi-cadence', 'coprime-crosshair'].includes(p.shape))
   : false;
 
 const totalAnchorCount = Array.isArray(patterns)
   ? patterns.reduce((acc, p) => acc + (Array.isArray(p.anchors) ? p.anchors.length : 0), 0)
   : 0;
 
-// Cross-check: every cadence in R717 patterns must appear in R710 rolodex
+/* Cross-check: every cadence in BREATH-family patterns must appear
+ * in R710 rolodex. R737 introduced the first cross-family pattern
+ * entry (`scan-beam-pair` lives in the ambient family with cadences
+ * 23/30); the breath rolodex doesn't cover 30 (no breath anchor at
+ * 30s — rolodex max is 25 for R719 fullscreen). Exclude cross-family
+ * entries from the rolodex cross-check via name allowlist. */
+const ambientFamilyPatternNames = new Set(['scan-beam-pair']);
 const rolodexCadences = rolodex ? new Set(Object.keys(rolodex).map(Number)) : new Set();
-const patternsCadences = Array.isArray(patterns)
-  ? new Set(patterns.flatMap(p => p.cadences))
+const breathPatternCadences = Array.isArray(patterns)
+  ? new Set(patterns.filter(p => !ambientFamilyPatternNames.has(p.name)).flatMap(p => p.cadences))
   : new Set();
-const allPatternCadencesInRolodex = [...patternsCadences].every(c => rolodexCadences.has(c));
+const allPatternCadencesInRolodex = [...breathPatternCadences].every(c => rolodexCadences.has(c));
 
 const patternNames = Array.isArray(patterns) ? patterns.map(p => p.name).sort() : [];
-const expectedNames = ['background', 'canvas-brand-pair', 'chrome-strip', 'panel-pair', 'title-block', 'triple-axis-pair', 'triple-axis-pair-8s', 'triple-axis-tier'];
+const expectedNames = ['background', 'canvas-brand-pair', 'chrome-strip', 'panel-pair', 'scan-beam-pair', 'title-block', 'triple-axis-pair', 'triple-axis-pair-8s', 'triple-axis-tier'];
 
 const results = {
-  attr_present:                  !!runtimeAttrs.patterns,
-  json_parses:                   patterns !== null && parseError === null,
-  is_array:                      Array.isArray(patterns),
-  has_8_entries:                 Array.isArray(patterns) && patterns.length === 8,
-  pattern_names_match:           JSON.stringify(patternNames) === JSON.stringify(expectedNames),
-  shape_and_taxonomy_valid:      validShape,
-  total_anchors_count:           totalAnchorCount >= 14 && totalAnchorCount <= 32, // R728 added 8s pair (+2) + extended tier (+2 entries → 6 total) — all of pair/tier members counted again
-  all_cadences_in_rolodex:       allPatternCadencesInRolodex,
+  attr_present:                       !!runtimeAttrs.patterns,
+  json_parses:                        patterns !== null && parseError === null,
+  is_array:                           Array.isArray(patterns),
+  has_9_entries:                      Array.isArray(patterns) && patterns.length === 9,
+  pattern_names_match:                JSON.stringify(patternNames) === JSON.stringify(expectedNames),
+  shape_and_taxonomy_valid:           validShape,
+  total_anchors_count:                totalAnchorCount >= 14 && totalAnchorCount <= 34, // R737 +2 anchors (scan beam horizontal + vertical) added to the ambient family pattern entry
+  breath_cadences_in_rolodex:         allPatternCadencesInRolodex,
 };
 const ok = Object.values(results).every(Boolean);
 console.log(`${ok ? '✅' : '❌'} R717 patterns catalog attr (3rd meta-doc — breath family triangle complete):`,

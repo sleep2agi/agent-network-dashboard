@@ -5036,6 +5036,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                at runtime. Future triple-axis surfaces append HERE (the
                tier) and conditionally to the pair (only if at 6 s). */
             { name: "triple-axis-tier",  cadences: [6, 8, 9, 10],  anchors: ["kicker", "watermark text", "recent title", "legend title", "zoom-level readout", "H2 section title"], shape: "tier-multi-cadence" },
+            /* Round 737 / Loop — 9TH pattern entry formalizes the
+               R735/R736 scan beam ambient pair. CROSS-FAMILY entry:
+               prior 8 patterns are all in the respiratory (breath)
+               family; this one lives in the AMBIENT family but uses
+               the same R717 "pattern axis" introspection vocabulary.
+
+               Cadences [23, 30] are coprime (gcd = 1) — the beams
+               never phase-lock; over time the visual rhythm reads as
+               "ambient crosshair drift". Shape "coprime-crosshair":
+                 - "coprime" captures the cadence pair property
+                 - "crosshair" captures the spatial geometry
+                   (orthogonal sweep directions intersecting at moving
+                   canvas points each cycle)
+
+               Anchors use the SVG element data-attr names rather
+               than rolodex anchor keys (the breath family's pattern
+               entries use rolodex names; ambient family pattern
+               entries use element names since rolodex is breath-
+               scoped). R737 test verifies anchor presence in the
+               catalog regardless of the naming convention. */
+            { name: "scan-beam-pair",    cadences: [23, 30],       anchors: ["scan beam horizontal", "scan beam vertical"],                              shape: "coprime-crosshair" },
           ])}
           /* Round 720 / Loop — 4TH orthogonal meta-doc catalog: tiers.
              Joins R710 (cadences) + R716 (axes) + R717 (patterns) to
@@ -5158,7 +5179,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             cadence_range_s:     { min: 3, max: 25 },
             cadence_arc_s:       22,
             axis_counts:         { single: 12, dual: 0, triple: 6 },
-            patterns_count:      8,
+            /* R737 — patterns_count bumped 8 → 9 to admit the new
+               cross-family `scan-beam-pair` entry. triple_axis_pairs
+               and triple_axis_solos stay unchanged (the new pattern
+               isn't triple-axis). */
+            patterns_count:      9,
             tiers_count:         7,
             triple_axis_pairs:   2,
             triple_axis_solos:   2,
