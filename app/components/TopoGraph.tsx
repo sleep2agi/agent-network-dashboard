@@ -1770,7 +1770,47 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             provides the subtle editorial gesture (kerning tighten).
             data-topo-section-titleblock-group attr surfaces the gate
             for tests. */}
-        <div className="group flex items-center gap-2.5" data-topo-section-titleblock-group>
+        {/* Round 706 / Loop — title-block wrapper joins the nested-
+            envelope respiration pattern, mirroring the canvas-brand-
+            pair (R704/R705) at the title-block scope. Closes the
+            ENVELOPE SYMMETRY across the topo canvas's two structural
+            text regions:
+              canvas-brand-pair: 13s × 15s envelopes (R705 + R704)
+              title-block:       11s envelope        (R706 — this round)
+            11s coprime with all 3 inner trio cadences (5, 6, 10) — no
+            common factor with any → no phase lock with inner anchors,
+            so the outer envelope always offsets gently against the
+            inner breaths. Triply-nested respiration: 3 inner anchors
+            (brand-logo 5s + kicker 6s + H2 10s) inside an outer
+            wrapper envelope (11s).
+
+            Tighter alpha range than canvas-brand-pair envelopes
+            (0.92 ↔ 1, ~8%) — title-block carries the section's
+            primary text identity; even subtle dimming on the H2 +
+            kicker headline would feel uncomfortable. 8% range reads
+            as "barely-perceptible aliveness", not flicker.
+
+            Implementation: HTML wrapper, so CSS animation works
+            directly on the parent <div>. No inline opacity to clobber.
+            Group-hover Tailwind utilities on descendants are unaffected
+            — wrapper opacity stays continuous; only descendants
+            (brand-logo/kicker/H2) get group-hover state changes via
+            their own classes. prefers-reduced-motion: reduce
+            neutralizes inside .anet-topo-title-block-envelope-breath
+            CSS class, sibling to R699/R702/R703/R704/R705 a11y guards.
+
+            Rolodex now 13 anchors, 11-tier ladder:
+              3s row hot · 4s hub idle · 5s brand logo
+              6s watermark text · 6s kicker · 7s crescent inner
+              8s recent title · 8s legend title
+              9s zoom-level readout · 10s H2
+              11s title-block envelope ← this round
+              13s crescent wrapper envelope
+              15s watermark wrapper envelope
+
+            data-topo-section-titleblock-envelope-breath attr surfaces
+            the cadence for tests. */}
+        <div className="anet-topo-title-block-envelope-breath group flex items-center gap-2.5" data-topo-section-titleblock-group data-topo-section-titleblock-envelope-breath="11s">
           {/* Round 297 / Loop: brand-logo color picks up the 200ms ease-
               out transition. Pre-R297 the moon glyph had theme-
               conditional color (cyber #67e8f9 cyan ↔ light #0d9488
