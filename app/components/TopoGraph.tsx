@@ -14219,7 +14219,36 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             {/* Round 573 sibling — legend panel-title 12th anchor.
                 Same stacked filter pattern at the legend-panel-title
                 scope. Both panel titles now lift in lockstep. */}
-            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: pinnedStatus ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-glow={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-brightness={pinnedStatus ? '1.15' : '1'}>legend</text>
+            {/* Round 701 / Loop — legend panel title at-rest SVG opacity
+                breath, sibling to R700 recent-panel-title breath. Closes
+                the panel-pair breath symmetry: both panel titles now
+                breathe at 8 s rest-state opacity 0.78 ↔ 1, gated off
+                when the panel is in its pinned-active state (R483 fw +
+                R345 ls + R550 glow take precedence). Recent: gates on
+                activeEdgeKey; legend: gates on pinnedStatus. Same shape
+                as R695 panel-pair backdrop halo (recent + legend
+                paired) but operating on the rest axis.
+
+                Cadence rolodex (each surface a distinct rhythm):
+                  3 s row hot · 4 s hub idle · 5 s brand logo
+                  6 s watermark · 6 s kicker (R699) · 7 s crescent
+                  8 s recent panel title (R700)
+                  8 s legend panel title (R701) ← this round
+                Recent + legend SHARE the 8 s cadence intentionally —
+                they're a typographic pair (matching font-weight/size/
+                letter-spacing), so cadence parity reads as "the panel-
+                pair breathes together". They never get desynced visually
+                because the SVG `<animate>` elements share the same
+                document time origin.
+
+                Implementation: conditional SVG <animate> child element,
+                identical pattern to R700 + R519 watermark. Paint-only
+                opacity → bbox stable → topo-overlap-test untouched.
+                data-legend-panel-title-breath attr exposes the gate
+                state for tests. */}
+            <text x="13" y="21" fill={pal.legendHeadline} fontSize="12" fontFamily="monospace" fontWeight={pinnedStatus ? '800' : '700'} letterSpacing={hoveredPanel === 'legend' ? '0.4' : '0.3'} style={{ transition: 'fill 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out', filter: pinnedStatus ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined }} data-legend-panel-title data-legend-panel-title-fw={pinnedStatus ? '800' : '700'} data-legend-panel-title-active={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-glow={pinnedStatus ? 'true' : 'false'} data-legend-panel-title-brightness={pinnedStatus ? '1.15' : '1'} data-legend-panel-title-breath={!reducedMotion && !pinnedStatus ? '8s' : 'off'}>legend{!reducedMotion && !pinnedStatus && (
+              <animate attributeName="opacity" values="0.78;1;0.78" dur="8s" repeatCount="indefinite" />
+            )}</text>
             {/* Round 257 / Loop: legend panel header count picks up the
                 symmetric 13L/13R inner-padding pattern from the recent-
                 signal panel. Pre-R257 the legend header was 13px from
