@@ -71,7 +71,7 @@ const validShape = Array.isArray(patterns)
       && typeof p.name === 'string' && p.name.length > 0
       && Array.isArray(p.cadences) && p.cadences.length > 0 && p.cadences.every(c => typeof c === 'number' && c > 0)
       && Array.isArray(p.anchors) && p.anchors.length > 0 && p.anchors.every(a => typeof a === 'string' && a.length > 0)
-      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'tiered-with-quartet', 'tiered-with-quintet', 'coprime-nested-pair', 'baseline-pair', '6s-triple-pair', 'tier-multi-cadence'].includes(p.shape))
+      && typeof p.shape === 'string' && ['trio-with-envelope', 'parity', 'tiered-with-trio', 'tiered-with-quartet', 'tiered-with-quintet', 'coprime-nested-pair', 'baseline-pair', '6s-triple-pair', '8s-triple-pair', 'tier-multi-cadence'].includes(p.shape))
   : false;
 
 const totalAnchorCount = Array.isArray(patterns)
@@ -86,16 +86,16 @@ const patternsCadences = Array.isArray(patterns)
 const allPatternCadencesInRolodex = [...patternsCadences].every(c => rolodexCadences.has(c));
 
 const patternNames = Array.isArray(patterns) ? patterns.map(p => p.name).sort() : [];
-const expectedNames = ['background', 'canvas-brand-pair', 'chrome-strip', 'panel-pair', 'title-block', 'triple-axis-pair', 'triple-axis-tier'];
+const expectedNames = ['background', 'canvas-brand-pair', 'chrome-strip', 'panel-pair', 'title-block', 'triple-axis-pair', 'triple-axis-pair-8s', 'triple-axis-tier'];
 
 const results = {
   attr_present:                  !!runtimeAttrs.patterns,
   json_parses:                   patterns !== null && parseError === null,
   is_array:                      Array.isArray(patterns),
-  has_7_entries:                 Array.isArray(patterns) && patterns.length === 7,
+  has_8_entries:                 Array.isArray(patterns) && patterns.length === 8,
   pattern_names_match:           JSON.stringify(patternNames) === JSON.stringify(expectedNames),
   shape_and_taxonomy_valid:      validShape,
-  total_anchors_count:           totalAnchorCount >= 14 && totalAnchorCount <= 24, // R724 +2 anchors, R726 +3 anchors (kicker + watermark text + H2 each counted again under triple-axis pair/tier patterns)
+  total_anchors_count:           totalAnchorCount >= 14 && totalAnchorCount <= 32, // R728 added 8s pair (+2) + extended tier (+2 entries → 6 total) — all of pair/tier members counted again
   all_cadences_in_rolodex:       allPatternCadencesInRolodex,
 };
 const ok = Object.values(results).every(Boolean);

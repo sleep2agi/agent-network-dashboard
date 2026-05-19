@@ -75,9 +75,9 @@ const pairEntry = Array.isArray(patterns) ? patterns.find(p => p.name === 'tripl
 const tierEntry = Array.isArray(patterns) ? patterns.find(p => p.name === 'triple-axis-tier') : null;
 
 const tierAnchorsCorrect = tierEntry
-  && JSON.stringify(tierEntry.anchors) === JSON.stringify(['kicker', 'watermark text', 'zoom-level readout', 'H2 section title']);
+  && JSON.stringify(tierEntry.anchors) === JSON.stringify(['kicker', 'watermark text', 'recent title', 'legend title', 'zoom-level readout', 'H2 section title']);
 const tierCadencesCorrect = tierEntry
-  && JSON.stringify(tierEntry.cadences) === JSON.stringify([6, 9, 10]);
+  && JSON.stringify(tierEntry.cadences) === JSON.stringify([6, 8, 9, 10]);
 const tierShapeCorrect = tierEntry?.shape === 'tier-multi-cadence';
 
 const pairAnchorsSubsetOfTier = Array.isArray(pairEntry?.anchors) && Array.isArray(tierEntry?.anchors)
@@ -90,6 +90,8 @@ const r723AnchorsNormalisedSorted = Array.isArray(triple)
       if (e.anchor === 'watermark')  return 'watermark text';
       if (e.anchor === 'H2')         return 'H2 section title';
       if (e.anchor === 'zoom-level') return 'zoom-level readout';
+      if (e.anchor === 'recent')     return 'recent title';
+      if (e.anchor === 'legend')     return 'legend title';
       return e.anchor;
     }).sort()
   : [];
@@ -97,9 +99,9 @@ const tierAnchorsSorted = tierEntry?.anchors ? [...tierEntry.anchors].sort() : [
 const tierEqualsR723 = JSON.stringify(tierAnchorsSorted) === JSON.stringify(r723AnchorsNormalisedSorted);
 
 const results = {
-  patterns_has_7_entries:           Array.isArray(patterns) && patterns.length === 7,
+  patterns_has_8_entries:           Array.isArray(patterns) && patterns.length === 8,
   tier_entry_exists:                !!tierEntry,
-  tier_cadences_6_9_10:             !!tierCadencesCorrect,
+  tier_cadences_6_8_9_10:           !!tierCadencesCorrect,
   tier_shape_correct:               tierShapeCorrect,
   tier_anchors_correct:             !!tierAnchorsCorrect,
   pair_anchors_subset_of_tier:      pairAnchorsSubsetOfTier,
