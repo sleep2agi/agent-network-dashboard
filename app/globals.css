@@ -1311,9 +1311,40 @@ body {
    transform-origin defaults to center — kicker scales around its own
    midpoint, no glyph drift. paint-only → flex parent stable → topo-
    overlap-test untouched. prefers-reduced-motion: reduce neutralizes. */
+/* Round 721 — kicker becomes the family's first TRIPLE-axis breath
+   surface. R699 opacity (6 s) + R714 transform-scale (6 s) joined by
+   R721 text-shadow (6 s) — all 3 axes share the 6 s cadence in phase.
+
+   At rest peak (0%, 100%) the kicker reads as a static title;
+   at mid-breath (50%) it dims (0.78), retracts (scale 0.995), AND
+   emits a soft cyan glow (text-shadow 0 0 6px rgba(34, 211, 238, 0.30)).
+   The glow appears OUT-OF-PHASE with the dim — as the text shrinks
+   slightly it gains a subtle aura. Reads as an "inhale glow": a small
+   visible payoff at the bottom of the breath cycle.
+
+   Why kicker first (vs other dual-axis surfaces):
+     - kicker has the SPARSEST hover signature in the family — being
+       below H2 (the page heading), it's read-target text, not an
+       interactive surface. The breath family's "if hover sig sparse,
+       dual-axis; if hover sig rich, single-axis" budget rule extends
+       naturally to "if hover sig SPARSE, can go triple-axis".
+     - 6 s is the fastest dual-axis cadence in the rolodex — at fast
+       cadence the 3rd axis (a glow appear+disappear cycle every 3 s
+       on each half) registers as ambient rhythm, not a distraction.
+
+   text-shadow chosen over letter-spacing or font-size because:
+     - text-shadow doesn't reflow text (no horizontal motion)
+     - glow against the dark canvas reads clearly without competing
+       with the opacity dim
+     - cyan tint at 30% alpha + 6 px blur is below the brightness
+       threshold of any node halo (R674/R675 nodes use 0.5+ alpha)
+
+   Composition note: the R29 prefers-reduced-motion guard already
+   neutralizes the entire 6 s animation; no separate text-shadow
+   reduced-motion logic needed. */
 @keyframes anet-topo-kicker-breath-kf {
-  0%, 100% { opacity: 1;    transform: scale(1); }
-  50%      { opacity: 0.78; transform: scale(0.995); }
+  0%, 100% { opacity: 1;    transform: scale(1);     text-shadow: none; }
+  50%      { opacity: 0.78; transform: scale(0.995); text-shadow: 0 0 6px rgba(34, 211, 238, 0.30); }
 }
 .anet-topo-kicker-breath {
   animation: anet-topo-kicker-breath-kf 6s ease-in-out infinite;
