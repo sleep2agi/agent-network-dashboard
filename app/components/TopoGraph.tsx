@@ -4883,6 +4883,50 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             "19": ["nodeSize wrapper"],
             "23": ["zoom wrapper"],
           })}
+          /* Round 716 / Loop — companion to R710 rolodex catalog: surface
+             the 5 DUAL-AXIS surfaces (R711/R712/R713×2/R714/R715) as a
+             second JSON catalog directly on the root SVG. R710 tracks
+             which cadences host which anchors; R716 tracks which anchors
+             also carry a 2nd animation property (multi-axis breath),
+             closing the breath family's meta-documentation thread.
+
+             Format: JSON array of {anchor, cadence_s, axes} entries.
+             `axes` lists the animation property names in order:
+                ["opacity", "transform-scale"]      — CSS/HTML dual
+                ["opacity", "letter-spacing"]       — SVG text wordmark dual
+                ["opacity", "font-size"]            — SVG text header dual
+
+             5 dual-axis surfaces / 6 underlying elements (panel-pair
+             counts as 2):
+                R699 + R714  kicker      6s   opacity + transform-scale
+                R703 + R715  zoom-level  9s   opacity + transform-scale
+                R702 + R711  H2         10s   opacity + transform-scale
+                R519 + R712  watermark   6s   opacity + letter-spacing
+                R700 + R713  recent     8s   opacity + font-size
+                R701 + R713  legend     8s   opacity + font-size
+
+             Inline JSON.stringify on each render — small cost, identical
+             string. React skips identical-string attribute writes; no
+             DOM thrash.
+
+             Use cases:
+               - Playwright: snapshot which surfaces are dual-axis in
+                 ONE attr read (assert against expected list without
+                 enumerating per-element axis attrs)
+               - External CSS: substring match like
+                 [data-topo-respiratory-dual-axis-surfaces*='"kicker"']
+               - Dev tools / docs generators: combine with R710 to
+                 produce full breath-family map (cadences + axes)
+               - Future rounds: when adding a new dual-axis to an
+                 existing breath anchor, append to this list */
+          data-topo-respiratory-dual-axis-surfaces={JSON.stringify([
+            { anchor: "kicker",     cadence_s: 6,  axes: ["opacity", "transform-scale"] },
+            { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale"] },
+            { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale"] },
+            { anchor: "watermark",  cadence_s: 6,  axes: ["opacity", "letter-spacing"] },
+            { anchor: "recent",     cadence_s: 8,  axes: ["opacity", "font-size"] },
+            { anchor: "legend",     cadence_s: 8,  axes: ["opacity", "font-size"] },
+          ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
