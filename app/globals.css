@@ -1296,6 +1296,24 @@ body {
   .anet-topo-kicker-breath { animation: none; }
 }
 
+/* Round 702 — H2 "Command mesh" at-rest breathing fade, completing the
+   title-block respiratory trio (brand-logo 5 s / kicker 6 s / H2 10 s).
+   Tighter alpha range (0.88 ↔ 1, ~12%) vs the kicker (0.78 ↔ 1, ~22%):
+   H2 carries more visual weight, so a gentler breath keeps it from
+   looking flickery. Slowest in the trio — 10 s reads as calm anchoring,
+   not anxious. prefers-reduced-motion: reduce → animation: none,
+   sibling to the R699 kicker guard. */
+@keyframes anet-topo-section-title-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.88; }
+}
+.anet-topo-section-title-breath {
+  animation: anet-topo-section-title-breath-kf 10s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-section-title-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 

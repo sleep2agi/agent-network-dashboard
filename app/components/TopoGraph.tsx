@@ -2131,7 +2131,41 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               ease-out' alongside the existing 'letter-spacing'
               200ms cadence. data-topo-section-title-hover-fw attr
               surfaces the landing weight for tests. */}
-          <h2 className="text-lg text-white font-semibold group-hover:font-bold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing,font-weight] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter" data-topo-section-title-hover-fw="700" data-topo-section-title-halo-layers="2">Command mesh</h2>
+          {/* Round 702 / Loop — H2 "Command mesh" gains at-rest breathing
+              fade, completing the title-block respiratory trio:
+                R553  brand-logo  5 s
+                R699  kicker      6 s
+                R702  H2          10 s   ← this round (slowest in trio)
+              The H2 is the heaviest visual element in the title-block;
+              a slower 10 s respiration reads as "calm, steady, anchoring".
+              Tighter alpha range (0.88 ↔ 1, ~12%) than the kicker
+              (0.78 ↔ 1, ~22%) — H2 carries more visual weight, so a
+              gentler breath keeps it from looking flickery. Faster
+              cadence would feel anxious on heavy text.
+
+              The title-block trio now reads as a layered chord: the
+              small brand mark at 5 s, the tertiary eyebrow at 6 s, the
+              main headline at 10 s. Three independent rhythms phase-
+              drift, so the title-block never settles into a static
+              snapshot — there's always something subtly shifting.
+
+              Group-hover takes precedence via the existing
+              group-hover:font-bold + group-hover:tracking-tighter
+              transitions; R684 CSS descendant halo lights up on hover
+              too. So the breath only registers at rest, identical to
+              the R699 kicker pattern.
+
+              Geometry-safe: pure opacity animation, no transform / size
+              / filter blur change → bounding box stable → topo-overlap-
+              test grid + ring unaffected. New 10 s tier extends the
+              respiratory rolodex (3/4/5/6/6/7/8/8/10).
+
+              prefers-reduced-motion: reduce → animation: none
+              (handled in the .anet-topo-section-title-breath CSS class,
+              sibling to R699 .anet-topo-kicker-breath guard).
+              data-topo-section-title-breath="10s" attr surfaces the
+              cadence for tests. */}
+          <h2 className="anet-topo-section-title-breath text-lg text-white font-semibold group-hover:font-bold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing,font-weight] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter" data-topo-section-title-hover-fw="700" data-topo-section-title-halo-layers="2" data-topo-section-title-breath="10s">Command mesh</h2>
           </div>
         </div>
         {/* Round 328 / Loop: chip-row strip wrapper gap 2 → 2.5
