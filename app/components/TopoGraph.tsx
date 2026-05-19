@@ -4921,8 +4921,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  produce full breath-family map (cadences + axes)
                - Future rounds: when adding a new dual-axis to an
                  existing breath anchor, append to this list */
+          /* Round 721 / Loop — kicker entry promoted from dual-axis to
+             TRIPLE-axis. R699 opacity + R714 transform-scale joined
+             by R721 text-shadow at the same 6 s cadence. The catalog
+             attribute name stays "dual-axis-surfaces" for back-compat
+             (consumers querying `*='"kicker"'` continue to work) but
+             the axes array now lists 3 entries. R721 widens the test
+             to allow axes.length 2..3 and to recognise "text-shadow"
+             alongside the prior 2nd-axis taxonomy. Future polysemic
+             surfaces (3+ axes) append in the same shape. */
           data-topo-respiratory-dual-axis-surfaces={JSON.stringify([
-            { anchor: "kicker",     cadence_s: 6,  axes: ["opacity", "transform-scale"] },
+            { anchor: "kicker",     cadence_s: 6,  axes: ["opacity", "transform-scale", "text-shadow"] },
             { anchor: "zoom-level", cadence_s: 9,  axes: ["opacity", "transform-scale"] },
             { anchor: "H2",         cadence_s: 10, axes: ["opacity", "transform-scale"] },
             { anchor: "watermark",  cadence_s: 6,  axes: ["opacity", "letter-spacing"] },
