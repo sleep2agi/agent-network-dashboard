@@ -4972,6 +4972,49 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             { name: "canvas-brand-pair", cadences: [6, 7, 13, 15], anchors: ["watermark text", "crescent inner", "crescent wrapper envelope", "watermark wrapper envelope"], shape: "coprime-nested-pair" },
             { name: "background",        cadences: [3, 4],         anchors: ["row hot", "hub idle"],                                                  shape: "baseline-pair" },
           ])}
+          /* Round 720 / Loop — 4TH orthogonal meta-doc catalog: tiers.
+             Joins R710 (cadences) + R716 (axes) + R717 (patterns) to
+             form a 4-axis introspection quadrilateral over the breath
+             family:
+
+               R710  data-topo-respiratory-rolodex             — cadence axis
+               R716  data-topo-respiratory-dual-axis-surfaces  — axis axis
+               R717  data-topo-respiratory-patterns            — pattern axis
+               R720  data-topo-respiratory-tiers               — tier axis ← this round
+
+             Patterns (R717) group anchors by STRUCTURAL SHAPE; tiers
+             (R720) group anchors by FUNCTIONAL ROLE. The two slicings
+             are orthogonal:
+               - chrome-strip pattern spans 3 tiers (data + control-wrapper + atomic-control)
+               - title-block pattern is exactly 1 tier
+               - canvas-brand-pair pattern is exactly 1 tier
+             A given anchor belongs to exactly 1 tier (tiers are
+             mutually exclusive), so the catalog is a partition of the
+             18-anchor family into 7 buckets:
+
+               data            (1)  zoom-level readout
+               control-wrapper (3)  Layout / nodeSize / zoom wrappers
+               atomic-control  (2)  reset / fullscreen buttons
+               title-block     (4)  brand logo, kicker, H2, envelope
+               panel-title     (2)  recent / legend titles
+               canvas-brand    (4)  watermark text, crescent inner, two envelopes
+               background      (2)  row hot, hub idle
+
+             Cross-check at runtime: sum of tier anchor counts must
+             equal the flat anchor count in the rolodex (R710); each
+             tier-listed anchor must appear in the rolodex.
+
+             Inline JSON.stringify — invariant string, no DOM thrash.
+             R710/R716/R717 unchanged. */
+          data-topo-respiratory-tiers={JSON.stringify([
+            { name: "data",             anchors: ["zoom-level readout"] },
+            { name: "control-wrapper",  anchors: ["Layout wrapper", "nodeSize wrapper", "zoom wrapper"] },
+            { name: "atomic-control",   anchors: ["reset button", "fullscreen button"] },
+            { name: "title-block",      anchors: ["brand logo", "kicker", "H2 section title", "title-block envelope"] },
+            { name: "panel-title",      anchors: ["recent title", "legend title"] },
+            { name: "canvas-brand",     anchors: ["watermark text", "watermark wrapper envelope", "crescent inner", "crescent wrapper envelope"] },
+            { name: "background",       anchors: ["row hot", "hub idle"] },
+          ])}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
