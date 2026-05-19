@@ -89,7 +89,9 @@ try {
   parseError = String(e);
 }
 
-const expectedKeys = ['total_anchors', 'cadences', 'cadence_range_s', 'cadence_arc_s', 'axis_counts', 'patterns_count', 'tiers_count', 'triple_axis_pairs', 'triple_axis_solos'];
+const expectedKeys = ['total_anchors', 'cadences', 'cadence_range_s', 'cadence_arc_s', 'axis_counts', 'patterns_count', 'tiers_count', 'triple_axis_pairs', 'triple_axis_solos',
+  /* R738 cross-family awareness fields */
+  'breath_patterns', 'ambient_patterns', 'pattern_families', 'scan_beam_pairs', 'ambient_cadences'];
 const hasAllKeys = stats && expectedKeys.every(k => k in stats);
 
 const rolodexAnchorCount = rolodex && typeof rolodex === 'object'
@@ -102,6 +104,20 @@ const rolodexCadenceMax = rolodex ? Math.max(...Object.keys(rolodex).map(Number)
 const r717TriplePairCount = Array.isArray(patterns)
   ? patterns.filter(p => typeof p?.name === 'string' && p.name.startsWith('triple-axis-pair')).length
   : -1;
+
+/* R738 — cross-family aware derivations from R717 patterns. The
+ * scan-beam-pair entry is the only ambient-family pattern today;
+ * everything else is breath. */
+const ambientPatternNames = new Set(['scan-beam-pair']);
+const breathPatternCount = Array.isArray(patterns)
+  ? patterns.filter(p => !ambientPatternNames.has(p?.name)).length : -1;
+const ambientPatternCount = Array.isArray(patterns)
+  ? patterns.filter(p => ambientPatternNames.has(p?.name)).length : -1;
+const scanBeamPairCount = Array.isArray(patterns)
+  ? patterns.filter(p => typeof p?.name === 'string' && p.name.startsWith('scan-beam-pair')).length : -1;
+const ambientPatterns = Array.isArray(patterns)
+  ? patterns.filter(p => ambientPatternNames.has(p?.name)) : [];
+const distinctAmbientCadences = new Set(ambientPatterns.flatMap(p => Array.isArray(p?.cadences) ? p.cadences : []));
 
 const axisCountSum = stats?.axis_counts
   ? (stats.axis_counts.single ?? 0) + (stats.axis_counts.dual ?? 0) + (stats.axis_counts.triple ?? 0)
@@ -122,6 +138,13 @@ const results = {
   tiers_count_matches_r720:      stats?.tiers_count === (Array.isArray(tiers) ? tiers.length : -1),
   triple_axis_pairs_matches:     stats?.triple_axis_pairs === r717TriplePairCount,
   dual_axis_tier_empty:          stats?.axis_counts?.dual === 0,
+  /* R738 cross-family invariants */
+  breath_patterns_match_r717:    stats?.breath_patterns === breathPatternCount,
+  ambient_patterns_match_r717:   stats?.ambient_patterns === ambientPatternCount,
+  breath_plus_ambient_eq_total:  (stats?.breath_patterns ?? -1) + (stats?.ambient_patterns ?? -2) === stats?.patterns_count,
+  pattern_families_eq_2:         stats?.pattern_families === 2,
+  scan_beam_pairs_match_r717:    stats?.scan_beam_pairs === scanBeamPairCount,
+  ambient_cadences_match_r717:   stats?.ambient_cadences === distinctAmbientCadences.size,
 };
 const ok = Object.values(results).every(Boolean);
 console.log(`${ok ? '✅' : '❌'} R729 axis-count stats catalog (6th meta-doc — breath family hexagon):`,
