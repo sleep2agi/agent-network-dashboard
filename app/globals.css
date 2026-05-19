@@ -1395,6 +1395,26 @@ body {
   .anet-topo-brand-canvas-mark-envelope-breath { animation: none; }
 }
 
+/* Round 706 — title-block wrapper envelope breath at 11s. Mirrors the
+   canvas-brand-pair nested-envelope pattern (R704/R705) at the title-
+   block scope. 11s coprime with all 3 inner trio cadences (5, 6, 10) —
+   no common factor → no phase lock with inner anchors. Tighter alpha
+   range (0.92 ↔ 1, ~8%) than canvas-brand-pair envelopes because the
+   title-block carries primary text identity; even subtle dimming on
+   the H2 + kicker headline reads as flicker if too aggressive. 8%
+   range = "barely-perceptible aliveness". prefers-reduced-motion:
+   reduce neutralizes. */
+@keyframes anet-topo-title-block-envelope-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.92; }
+}
+.anet-topo-title-block-envelope-breath {
+  animation: anet-topo-title-block-envelope-breath-kf 11s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-title-block-envelope-breath { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Round 29 — prefers-reduced-motion a11y sweep
 
