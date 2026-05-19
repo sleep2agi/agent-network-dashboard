@@ -4826,6 +4826,63 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  enough to push grid bottom past viewBox, can trigger
                  a 'compact' mode automatically */
           data-topo-grid-content-bottom={gridContentBottom}
+          /* Round 710 / Loop (milestone) — 18th canvas state attr.
+             Surfaces the 呼吸感 (breath) family's full cadence rolodex
+             as a JSON catalog directly on the root SVG. Pre-R710 the
+             16 individual breath anchors each had their own data attrs
+             (data-topo-section-title-breath="10s", data-recent-panel-
+             title-breath="8s", ...) but tests / dev probes had to
+             enumerate per-element attrs to reconstruct the family
+             map. R710 closes the breath family vocabulary AS DATA —
+             one attr read, full catalog.
+
+             Format: JSON object — KEYS are cadence in seconds (string-
+             coded for JSON), VALUES are arrays of anchor names. Anchors
+             at the same cadence share a key entry (e.g.
+             "6": ["watermark text","kicker"] — both at 6s).
+
+             Cadence catalog as of R710 (5 mature respiratory patterns):
+               title-block trio + envelope        5/6/10/11 s
+               panel-pair parity                  8 s (× 2)
+               chrome data + control-trio         9 + 17/19/23 s
+               canvas-brand-pair coprime nested   6/7 × 13/15 s
+               background baseline                3/4 s
+             16 anchors / 14-tier ladder.
+
+             Inline JSON.stringify on each render — small cost, identical
+             string. The rolodex is invariant across props/state so the
+             attr value never changes; React's attribute-write skip on
+             identical strings means no DOM thrash.
+
+             Use cases:
+               - Playwright: snapshot the breath family in ONE attr read
+                 (assert against expected catalog without enumerating
+                 per-element attrs)
+               - External CSS hooks (rare but possible): substring match
+                 like [data-topo-respiratory-rolodex*='"23"']
+               - Dev tools / docs generators: parse the catalog to
+                 produce a visual map of the family
+               - Future rounds: when adding a new breath anchor, this
+                 attr's update is the documentation step
+
+             R710 = milestone closure on the breath family vocabulary
+             as a single-attr DOM-surface contract. */
+          data-topo-respiratory-rolodex={JSON.stringify({
+            "3":  ["row hot"],
+            "4":  ["hub idle"],
+            "5":  ["brand logo"],
+            "6":  ["watermark text", "kicker"],
+            "7":  ["crescent inner"],
+            "8":  ["recent title", "legend title"],
+            "9":  ["zoom-level readout"],
+            "10": ["H2 section title"],
+            "11": ["title-block envelope"],
+            "13": ["crescent wrapper envelope"],
+            "15": ["watermark wrapper envelope"],
+            "17": ["Layout wrapper"],
+            "19": ["nodeSize wrapper"],
+            "23": ["zoom wrapper"],
+          })}
           data-topo-pinned-aspect={(() => {
             const aspects: string[] = [];
             if (pinnedStatus) aspects.push('status');
