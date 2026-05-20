@@ -1,4 +1,5 @@
 import { requireDashboardAuth, getV3UserToken } from '@/app/lib/dashboard-auth';
+import { dedupeByHostname, parseHubTime, type HubServerRow } from '@/app/lib/serverDedupe';
 
 const HUB_URL = process.env.COMMHUB_URL || 'http://127.0.0.1:9200';
 
@@ -32,35 +33,8 @@ async function hubHeaders(): Promise<Record<string, string>> {
  *      field in 0.8.1-preview.5.
  */
 
-interface HubServerRow {
-  hostname: string;
-  ip?: string | null;
-  agent_count?: number;
-  cpu_load_1min?: number | null;
-  cpu_cores?: number | null;
-  mem_used_gb?: number | null;
-  mem_total_gb?: number | null;
-  mem_avail_gb?: number | null;
-  disk_used_gb?: number | null;
-  disk_total_gb?: number | null;
-  cpu_history?: number[];
-  mem_history?: number[];
-  agents?: unknown[];
-  last_seen?: string | null;
-  status?: 'online' | 'offline';
-  note?: string;
-}
-
 function freshnessStatus(lastSeen: string | null | undefined): 'online' | 'offline' {
-  if (!lastSeen) return 'offline';
-  // commhub-server@0.8.1-preview.5 reports last_seen in "YYYY-MM-DD
-  // HH:MM:SS" (space-separated, no timezone). Treat as UTC so all
-  // clients agree regardless of their local zone. If a later hub
-  // upgrade switches to ISO 8601 with explicit timezone, Date.parse
-  // will accept either format and the +'Z' suffix is harmless.
-  const iso = lastSeen.includes('T') ? lastSeen : lastSeen.replace(' ', 'T');
-  const withTz = /[zZ]|[+-]\d{2}:?\d{2}$/.test(iso) ? iso : iso + 'Z';
-  const t = Date.parse(withTz);
+  const t = parseHubTime(lastSeen);
   if (Number.isNaN(t)) return 'offline';
   // 90s freshness window — wider than the agent-node 30s report
   // cadence to absorb network latency + clock drift between client
@@ -117,7 +91,7 @@ export async function GET() {
         ? raw.servers
         : [];
     return Response.json({
-      servers: rows.map(normalizeServer),
+      servers: dedupeByHostname(rows).map(normalizeServer),
       unavailable: raw?.unavailable === true,
     });
   } catch (e: unknown) {
