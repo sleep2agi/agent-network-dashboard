@@ -1026,7 +1026,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   const vendorDist = useMemo(() => {
     const tally = new Map<string, { initial: string; count: number; color: string }>();
     for (const s of [...onlineNodes, ...offlineNodes]) {
-      const v = vendorForModel(s.model);
+      const v = vendorForModel(s.model, s.runtime);
       const key = v.id === 'unknown' ? '?' : v.initial;
       const cur = tally.get(key);
       if (cur) cur.count++;
@@ -3506,7 +3506,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // unknowns folded to '?').
             const matchAliases = [...onlineNodes, ...offlineNodes]
               .filter(s => {
-                const v = vendorForModel(s.model);
+                const v = vendorForModel(s.model, s.runtime);
                 return (v.id === 'unknown' ? '?' : v.initial) === pinnedVendor;
               })
               .map(s => s.alias);
@@ -3776,7 +3776,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 if (gk !== pinnedGroup) return false;
               }
               if (pinnedVendor) {
-                const v = vendorForModel(s.model);
+                const v = vendorForModel(s.model, s.runtime);
                 const initial = v.id === 'unknown' ? '?' : v.initial;
                 if (initial !== pinnedVendor) return false;
               }
@@ -3974,7 +3974,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // UI shows "A:3" should hover-explain which 3.
                 const aliases = [...onlineNodes, ...offlineNodes]
                   .filter(s => {
-                    const vid = vendorForModel(s.model);
+                    const vid = vendorForModel(s.model, s.runtime);
                     return (vid.id === 'unknown' ? '?' : vid.initial) === v.initial;
                   })
                   .map(s => s.alias);
@@ -10105,7 +10105,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   opacity: hoveredEdgeEndpoints && !hoveredEdgeEndpoints.has(session.alias) && chatAlias !== session.alias
                     ? 0.28
                     : activeVendor && chatAlias !== session.alias && (() => {
-                        const v = vendorForModel(session.model);
+                        const v = vendorForModel(session.model, session.runtime);
                         const initial = v.id === 'unknown' ? '?' : v.initial;
                         return initial !== activeVendor;
                       })()
@@ -11370,7 +11370,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 {(() => {
                   const ar = Math.round((isOnline ? 14 : 10) * nodeScale);
                   const size = radius * 2;
-                  const vendor = vendorForModel(session.model);
+                  const vendor = vendorForModel(session.model, session.runtime);
                   const internByAlias = /书生|书小生|intern/i.test(session.alias);
 
                   if (isIntern || internByAlias || vendor.logo) {
@@ -12624,7 +12624,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     gate as showFullLabel; dense fleets already have
                     too much per-node chrome competing. */}
                 {!reducedMotion && hoveredAlias === session.alias && !denseLayout && (() => {
-                  const v = vendorForModel(session.model);
+                  const v = vendorForModel(session.model, session.runtime);
                   const rt = runtimeIdentity(session.runtime);
                   const flipLeft = pos.x > VIEWBOX_W * 0.65;
                   const detailW = 192;

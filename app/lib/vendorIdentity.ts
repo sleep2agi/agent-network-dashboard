@@ -33,70 +33,93 @@ const UNKNOWN_VENDOR: VendorIdentity = {
   logo: null,
 };
 
+// Vendor identities, named so both the model-prefix rules and the
+// runtime fallback map below can reference the same object.
+const INTERN_VENDOR: VendorIdentity = {
+  id: 'intern',
+  label: '书生 · 上海 AI 实验室',
+  mono: { bg: 'hsl(28 38% 24%)', ring: 'hsl(32 45% 52%)', text: 'hsl(34 60% 82%)' },
+  initial: '书',
+  // #79 shipped this asset — reuse it as the 书生 vendor logo.
+  logo: '/intern_avatar.png',
+};
+const MINIMAX_VENDOR: VendorIdentity = {
+  id: 'minimax',
+  label: 'MiniMax',
+  mono: { bg: 'hsl(18 50% 26%)', ring: 'hsl(18 65% 52%)', text: 'hsl(20 80% 82%)' },
+  initial: 'M',
+  // P0 (Vincent 5222) custom-designed vendor badge — NOT a copy of
+  // the MiniMax trademark; geometric min/max zigzag in their warm-
+  // red palette. Replaces plain-letter "M" fallback.
+  logo: '/vendors/minimax.svg',
+};
+const ANTHROPIC_VENDOR: VendorIdentity = {
+  id: 'anthropic',
+  label: 'Anthropic',
+  mono: { bg: 'hsl(16 32% 26%)', ring: 'hsl(16 48% 54%)', text: 'hsl(18 60% 84%)' },
+  initial: 'A',
+  // P0 (Vincent 5222) custom-designed vendor badge — NOT a copy of
+  // the Anthropic trademark; 4-pointed sparkle in their warm-orange
+  // palette evokes AI/Claude without imitating the official mark.
+  // Real Anthropic logo still pending Vincent-direct asset OK.
+  logo: '/vendors/claude.svg',
+};
+const OPENAI_VENDOR: VendorIdentity = {
+  id: 'openai',
+  label: 'OpenAI',
+  mono: { bg: 'hsl(165 26% 22%)', ring: 'hsl(165 40% 44%)', text: 'hsl(165 45% 80%)' },
+  initial: 'O',
+  // P0 (Vincent 5222) custom-designed vendor badge — NOT a copy of
+  // the OpenAI trademark; hexagonal frame + center dot in their
+  // teal palette evokes geometric AI lattice without imitating the
+  // knot. Real OpenAI logo still pending Vincent-direct asset OK.
+  logo: '/vendors/openai.svg',
+};
+
 // Ordered prefix rules — first match wins. `test` runs against a lowercased
 // model id. Keep the most specific prefixes first.
 const VENDOR_RULES: Array<{ test: (m: string) => boolean; vendor: VendorIdentity }> = [
-  {
-    test: (m) => m.startsWith('intern'),
-    vendor: {
-      id: 'intern',
-      label: '书生 · 上海 AI 实验室',
-      mono: { bg: 'hsl(28 38% 24%)', ring: 'hsl(32 45% 52%)', text: 'hsl(34 60% 82%)' },
-      initial: '书',
-      // #79 shipped this asset — reuse it as the 书生 vendor logo.
-      logo: '/intern_avatar.png',
-    },
-  },
-  {
-    test: (m) => m.startsWith('minimax'),
-    vendor: {
-      id: 'minimax',
-      label: 'MiniMax',
-      mono: { bg: 'hsl(18 50% 26%)', ring: 'hsl(18 65% 52%)', text: 'hsl(20 80% 82%)' },
-      initial: 'M',
-      // P0 (Vincent 5222) custom-designed vendor badge — NOT a copy of
-      // the MiniMax trademark; geometric min/max zigzag in their warm-
-      // red palette. Replaces plain-letter "M" fallback.
-      logo: '/vendors/minimax.svg',
-    },
-  },
-  {
-    test: (m) => m.startsWith('claude'),
-    vendor: {
-      id: 'anthropic',
-      label: 'Anthropic',
-      mono: { bg: 'hsl(16 32% 26%)', ring: 'hsl(16 48% 54%)', text: 'hsl(18 60% 84%)' },
-      initial: 'A',
-      // P0 (Vincent 5222) custom-designed vendor badge — NOT a copy of
-      // the Anthropic trademark; 4-pointed sparkle in their warm-orange
-      // palette evokes AI/Claude without imitating the official mark.
-      // Real Anthropic logo still pending Vincent-direct asset OK.
-      logo: '/vendors/claude.svg',
-    },
-  },
+  { test: (m) => m.startsWith('intern'), vendor: INTERN_VENDOR },
+  { test: (m) => m.startsWith('minimax'), vendor: MINIMAX_VENDOR },
+  { test: (m) => m.startsWith('claude'), vendor: ANTHROPIC_VENDOR },
   {
     test: (m) => m.startsWith('gpt') || m.startsWith('codex') || m.startsWith('o1') || m.startsWith('o3') || m.startsWith('o4'),
-    vendor: {
-      id: 'openai',
-      label: 'OpenAI',
-      mono: { bg: 'hsl(165 26% 22%)', ring: 'hsl(165 40% 44%)', text: 'hsl(165 45% 80%)' },
-      initial: 'O',
-      // P0 (Vincent 5222) custom-designed vendor badge — NOT a copy of
-      // the OpenAI trademark; hexagonal frame + center dot in their
-      // teal palette evokes geometric AI lattice without imitating the
-      // knot. Real OpenAI logo still pending Vincent-direct asset OK.
-      logo: '/vendors/openai.svg',
-    },
+    vendor: OPENAI_VENDOR,
   },
 ];
 
-/** Resolve a model id to its vendor identity. `null` / unmatched → UNKNOWN. */
-export function vendorForModel(model: string | null | undefined): VendorIdentity {
-  if (!model) return UNKNOWN_VENDOR;
-  const m = model.toLowerCase();
-  for (const rule of VENDOR_RULES) {
-    if (rule.test(m)) return rule.vendor;
+/* Runtime → vendor fallback. Used only when the `model` field can't
+ * resolve a vendor (null or unmatched).
+ *
+ * Why this exists: live hub /api/status probe (2026-05-21) showed 62%
+ * of sessions report `model: null` — including ALL claude-code-cli
+ * nodes — so the avatar fell back to the dark "unknown vendor"
+ * monogram for most of the fleet. The `runtime` field, by contrast,
+ * is reliably populated. A claude-code-cli / claude-agent-sdk node is
+ * an Anthropic shell; codex-sdk is OpenAI's. Deriving the vendor from
+ * runtime when the model is silent lights up the vendor logo for the
+ * whole fleet instead of leaving it grey. The model still wins when
+ * present — runtime is strictly the fallback. */
+const RUNTIME_VENDOR: Record<string, VendorIdentity> = {
+  'claude-code-cli': ANTHROPIC_VENDOR,
+  'claude-agent-sdk': ANTHROPIC_VENDOR,
+  'codex-sdk': OPENAI_VENDOR,
+};
+
+/** Resolve a node's vendor identity. Model id wins; when the model is
+ *  null or unmatched, fall back to the execution runtime. Both silent
+ *  → UNKNOWN. */
+export function vendorForModel(
+  model: string | null | undefined,
+  runtime?: string | null | undefined,
+): VendorIdentity {
+  if (model) {
+    const m = model.toLowerCase();
+    for (const rule of VENDOR_RULES) {
+      if (rule.test(m)) return rule.vendor;
+    }
   }
+  if (runtime && RUNTIME_VENDOR[runtime]) return RUNTIME_VENDOR[runtime];
   return UNKNOWN_VENDOR;
 }
 
@@ -146,7 +169,7 @@ export function runtimeIdentity(runtime: string | null | undefined): RuntimeIden
 /** Compact one-line identity for hover / detail surfaces:
  *  "Anthropic · claude-opus-4 · Claude Code CLI". Pieces with no data drop. */
 export function identityLine(model: string | null | undefined, runtime: string | null | undefined): string {
-  const v = vendorForModel(model);
+  const v = vendorForModel(model, runtime);
   const r = runtimeIdentity(runtime);
   const parts: string[] = [];
   if (v.id !== 'unknown') parts.push(v.label);
