@@ -1058,6 +1058,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           members: [...orphans].sort((a, b) => a.alias.localeCompare(b.alias)),
         });
       }
+      // Vincent feedback: stack lanes longest-team-first — sort by member
+      // count DESCENDING so the swimlane steps down long → short. A stable
+      // secondary sort by key keeps equal-length lanes from jittering
+      // between renders.
+      lanes.sort((a, b) => b.members.length - a.members.length || a.key.localeCompare(b.key));
 
       // each lane = a wide box; its members in a single row inside it.
       const laneStep = LANE_H + LANE_GAP;
@@ -1158,12 +1163,20 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           }
         : null;
 
+      // Vincent feedback: restore the agent↔agent message flow-links in
+      // tree/swimlane. iter4 (a6689b6) suppressed them as "杂线"; Vincent
+      // now explicitly wants them back — same buildFlowLinks the ring/grid
+      // layouts use, drawn against the swimlane node positions.
+      const links = buildFlowLinks(messages, positions);
+      const active = new Set<string>();
+      links.forEach(link => { active.add(link.from); active.add(link.to); });
+
       return {
         onlineNodes: online,
         offlineNodes: offline,
         nodePositions: positions,
-        flowLinks: [],
-        activeAliases: new Set<string>(),
+        flowLinks: links,
+        activeAliases: active,
         groupKeys,
         groupBoxes: teamGroupBoxes,
         gridContentBottom,
