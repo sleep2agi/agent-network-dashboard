@@ -1022,118 +1022,150 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         return { key, lead, deputy, members: others };
       });
 
-      // ---- build an abstract tree of layout-nodes ----------------------
-      // Each TNode is either a real session (has alias) or a synthetic
-      // bucket label (总指挥 placeholder / 未分组). Leaf widths drive a
-      // tidy bottom-up layout: a parent is centred over its children.
-      type TNode = {
-        alias: string | null;          // null = synthetic
-        label: string;                 // shown for synthetic nodes
-        children: TNode[];
-        x: number; y: number;          // filled in below
-        depth: number;
-      };
-      const mkNode = (alias: string | null, label: string): TNode =>
-        ({ alias, label, children: [], x: 0, y: 0, depth: 0 });
+      // ---- box-based org layout (Vincent #170 feedback) ----------------
+      // Each team is a rectangular BOX (reusing the grid-mode cluster-box
+      // visual via groupBoxes); its members pack into a compact ~√n grid
+      // INSIDE the box rather than one wide row — an 8-person team is a
+      // ~3×3 block, not a 1×8 strip. Boxes sit side-by-side at layer 2;
+      // 副指挥 (layer 1) centre over their contiguous box-run; the root
+      // (layer 0) centres over the 副指挥. Keeps the whole chart compact
+      // and screenshot-friendly even at dozens of nodes.
+      const nodeR = Math.round(26 * nodeScale);
+      const cellW = Math.max(108, 2 * nodeR + 56);  // member grid cell — fits a label card
+      const cellH = Math.max(96, 2 * nodeR + 48);   // + label drop room below the node
+      const BOX_PAD = 16;                            // box inner padding
+      const BOX_LABEL = 26;                          // box top label band
+      const BOX_GAP = 48;                            // gap between sibling boxes
+      const ROW = Math.max(156, 2 * nodeR + 100);    // layer vertical gap
+      const TOP = 130;                               // y of layer-0 root (clears corner panels)
+      const LEFT = 70;
 
-      // root: the single 总指挥, else a synthetic "指挥中心" root.
-      let root: TNode;
-      let synthRoot = false;
-      if (commanders.length === 1) {
-        root = mkNode(commanders[0].alias, commanders[0].alias);
-      } else {
-        synthRoot = true;
-        root = mkNode(null, '指挥中心');
-        // extra 总指挥 nodes (if >1) hang directly under the synthetic root
-        for (const c of commanders) root.children.push(mkNode(c.alias, c.alias));
+      // a "box unit" = a team (or the 未分组 bucket) drawn as a grid box.
+      type BoxUnit = {
+        key: string; isOrphan: boolean;
+        members: Session[];                          // grid order: lead, deputy, …
+        cols: number; rows: number; w: number; h: number;
+        x: number; y: number;                        // top-left, filled below
+      };
+      const mkBox = (key: string, isOrphan: boolean, members: Session[]): BoxUnit => {
+        const n = Math.max(1, members.length);
+        const cols = Math.ceil(Math.sqrt(n));
+        const rows = Math.ceil(n / cols);
+        return {
+          key, isOrphan, members, cols, rows,
+          w: cols * cellW + 2 * BOX_PAD,
+          h: rows * cellH + 2 * BOX_PAD + BOX_LABEL,
+          x: 0, y: 0,
+        };
+      };
+      const boxes: BoxUnit[] = teamTrees.map(tt =>
+        mkBox(tt.key, false, [tt.lead, ...(tt.deputy ? [tt.deputy] : []), ...tt.members]));
+      // orphan bucket — every underivable agent in its own 未分组 box so
+      // none are ever dropped from the chart.
+      if (orphans.length > 0) {
+        boxes.push(mkBox('未分组', true,
+          [...orphans].sort((a, b) => a.alias.localeCompare(b.alias))));
       }
 
-      // layer-1 anchors: 副指挥 nodes. If none, teams report straight to
-      // the root. Teams are distributed round-robin across 副指挥 so the
-      // tree stays balanced.
-      const layer1: TNode[] = deputyCommanders.map(s => mkNode(s.alias, s.alias));
-      for (const n of layer1) root.children.push(n);
+      // lay boxes left-to-right at layer-2 y; all share the same top edge.
+      const layer2Y = TOP + 2 * ROW;
+      let cursorX = LEFT;
+      for (const b of boxes) {
+        b.x = cursorX;
+        b.y = layer2Y;
+        cursorX += b.w + BOX_GAP;
+      }
+      // member positions — compact grid inside each box.
+      for (const b of boxes) {
+        b.members.forEach((s, i) => {
+          const col = i % b.cols;
+          const row = Math.floor(i / b.cols);
+          positions[s.alias] = {
+            x: b.x + BOX_PAD + (col + 0.5) * cellW,
+            y: b.y + BOX_LABEL + BOX_PAD + (row + 0.5) * cellH,
+          };
+        });
+      }
+      const boxCentreX = (b: BoxUnit) => b.x + b.w / 2;
 
-      // a parent for each team-lead: a 副指挥 if any, else the root.
-      const teamParents: TNode[] = layer1.length > 0 ? layer1 : [root];
-      teamTrees.forEach((tt, i) => {
-        const parent = teamParents[i % teamParents.length];
-        const leadNode = mkNode(tt.lead.alias, tt.lead.alias);
-        if (tt.deputy) leadNode.children.push(mkNode(tt.deputy.alias, tt.deputy.alias));
-        for (const m of tt.members) leadNode.children.push(mkNode(m.alias, m.alias));
-        parent.children.push(leadNode);
+      // layer 1: 副指挥, each centred over a contiguous run of boxes.
+      const layer1Y = TOP + ROW;
+      const depNodes: { alias: string; x: number; y: number }[] = [];
+      const depPer = deputyCommanders.length > 0
+        ? Math.ceil(Math.max(boxes.length, 1) / deputyCommanders.length)
+        : 0;
+      deputyCommanders.forEach((s, di) => {
+        const run = boxes.slice(di * depPer, di * depPer + depPer);
+        const xs = run.length ? run.map(boxCentreX)
+                              : [LEFT + di * (cellW + BOX_GAP) + cellW / 2];
+        const x = (Math.min(...xs) + Math.max(...xs)) / 2;
+        depNodes.push({ alias: s.alias, x, y: layer1Y });
+        positions[s.alias] = { x, y: layer1Y };
       });
 
-      // orphan bucket: a 未分组 synthetic node under the root, every
-      // underivable agent hanging beneath it so none are ever dropped.
-      if (orphans.length > 0) {
-        const bucket = mkNode(null, '未分组');
-        for (const o of [...orphans].sort((a, b) => a.alias.localeCompare(b.alias))) {
-          bucket.children.push(mkNode(o.alias, o.alias));
-        }
-        root.children.push(bucket);
+      // layer 0: root — single 总指挥, else a synthetic 指挥中心.
+      const anchorXs = depNodes.length > 0 ? depNodes.map(d => d.x)
+                      : boxes.length > 0 ? boxes.map(boxCentreX)
+                      : [LEFT + cellW / 2];
+      const rootX = (Math.min(...anchorXs) + Math.max(...anchorXs)) / 2;
+      let synthRoot = false;
+      if (commanders.length === 1) {
+        positions[commanders[0].alias] = { x: rootX, y: TOP };
+      } else {
+        synthRoot = true;
+        // any 总指挥 (0, or >1) spread along layer 0 beside the synth anchor
+        commanders.forEach((c, ci) => {
+          positions[c.alias] = {
+            x: rootX + (ci - (commanders.length - 1) / 2) * (cellW + 28),
+            y: TOP,
+          };
+        });
       }
 
-      // ---- tidy layout: bottom-up subtree width, top-down placement ----
-      // Horizontal slot per leaf; a parent sits centred over its children.
-      // Generous gaps keep node rings + 100px label cards clear of each
-      // other (overlap-test hard constraint).
-      const nodeR = Math.round(26 * nodeScale);
-      const COL = Math.max(118, 2 * nodeR + 64);   // horizontal slot width
-      const ROW = Math.max(132, 2 * nodeR + 84);   // vertical layer gap
-      const TOP = nodeR + 96;                       // y of layer-0 root
-      const LEFT = 90;                              // left margin
-
-      // assign each node its depth (layer index)
-      const fixDepth = (n: TNode, d: number) => { n.depth = d; n.children.forEach(c => fixDepth(c, d + 1)); };
-      fixDepth(root, 0);
-
-      // leaf-order x assignment
-      let leafCursor = 0;
-      const place = (n: TNode): number => {
-        n.y = TOP + n.depth * ROW;
-        if (n.children.length === 0) {
-          n.x = LEFT + (leafCursor + 0.5) * COL;
-          leafCursor++;
-          return n.x;
-        }
-        const childXs = n.children.map(place);
-        n.x = (childXs[0] + childXs[childXs.length - 1]) / 2;
-        return n.x;
-      };
-      place(root);
-
-      // collect positions for real (session-backed) nodes only
-      const treeNodeList: TNode[] = [];
-      const walk = (n: TNode) => { treeNodeList.push(n); n.children.forEach(walk); };
-      walk(root);
-      for (const n of treeNodeList) {
-        if (n.alias) positions[n.alias] = { x: n.x, y: n.y };
-      }
-
-      // elbow connectors: parent → each child, drawn behind the nodes.
-      // Right-angle: drop from parent bottom, horizontal at mid-y, drop
-      // into child top.
+      // elbow connectors: root → 副指挥 → team-box top edge (render draws
+      // the right-angle path behind the nodes).
       const connectors: TreeConnectorLine[] = [];
-      for (const n of treeNodeList) {
-        for (const c of n.children) {
-          connectors.push({ x1: n.x, y1: n.y, x2: c.x, y2: c.y });
-        }
+      for (const d of depNodes) {
+        connectors.push({ x1: rootX, y1: TOP, x2: d.x, y2: d.y });
       }
-      // synthetic-node "boxes" — surface 总指挥/未分组 placeholder labels
-      // as group-box-shaped entries so the render branch can draw a small
-      // labelled chip without colliding with real nodes.
-      const synthBoxes = treeNodeList
-        .filter(n => !n.alias)
-        .map(n => ({ x: n.x, y: n.y, label: n.label }));
+      boxes.forEach((b, bi) => {
+        let px = rootX, py = TOP;
+        if (depNodes.length > 0) {
+          const di = Math.min(depNodes.length - 1, Math.floor(bi / Math.max(depPer, 1)));
+          px = depNodes[di].x; py = depNodes[di].y;
+        }
+        connectors.push({ x1: px, y1: py, x2: boxCentreX(b), y2: b.y });
+      });
+
+      // synthetic root label (only when there is no single 总指挥)
+      const synthBoxes = synthRoot ? [{ x: rootX, y: TOP, label: '指挥中心' }] : [];
+
+      // team boxes surfaced as groupBoxes — reuses the grid-mode cluster
+      // box render + per-box working/idle/offline pip strip.
+      const teamGroupBoxes = boxes.map(b => {
+        let w = 0, i = 0, o = 0;
+        for (const s of b.members) {
+          const isOn = s.status !== 'offline' || !!sseCount(s);
+          if (s.status === 'working') w++;
+          else if (isOn) i++;
+          else o++;
+        }
+        return {
+          key: b.key, isOrphan: b.isOrphan, count: b.members.length,
+          statuses: { working: w, idle: i, offline: o },
+          x: b.x, y: b.y, w: b.w, h: b.h,
+        };
+      });
 
       const links = buildFlowLinks(messages, positions);
       const active = new Set<string>();
       links.forEach(link => { active.add(link.from); active.add(link.to); });
 
-      // content bottom for auto-fit (deepest layer + label drop + buffer)
-      const maxDepth = treeNodeList.reduce((m, n) => Math.max(m, n.depth), 0);
-      const gridContentBottom = TOP + maxDepth * ROW + nodeR + 60;
+      // content bottom for auto-fit zoom (tallest box bottom + buffer)
+      const treeBottom = boxes.length
+        ? layer2Y + Math.max(...boxes.map(b => b.h))
+        : TOP + ROW;
+      const gridContentBottom = treeBottom + 48;
 
       return {
         onlineNodes: online,
@@ -1142,9 +1174,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         flowLinks: links,
         activeAliases: active,
         groupKeys,
-        // tree has no rectangular group boxes; synthetic labels ride the
-        // treeConnectors payload instead.
-        groupBoxes: [] as { key: string; isOrphan?: boolean; count: number; statuses: { working: number; idle: number; offline: number }; x: number; y: number; w: number; h: number }[],
+        groupBoxes: teamGroupBoxes,
         gridContentBottom,
         treeConnectors: { lines: connectors, synthLabels: synthBoxes, synthRoot } as TreeLayout,
       };
