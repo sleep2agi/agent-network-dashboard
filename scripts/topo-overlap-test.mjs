@@ -14,15 +14,26 @@ const TOKEN = JSON.parse(readFileSync('/home/vansin/.anet/config.json', 'utf8'))
 mkdirSync('/tmp/anet-issue-112', { recursive: true });
 const browser = await chromium.launch({ headless: true });
 
-// ~30 nodes: 4 prefix groups + a workdir group + singletons
+// ~30 nodes: 4 prefix groups + a workdir group + singletons.
+// #170 tree-view MVP — the fleet now also carries `runtime` so the org-
+// chart layout can derive team leads (claude-code-cli) and deputies
+// (codex-sdk). The first node in each prefix group is the cli lead, the
+// second is the codex deputy; the rest are plain members. ring/grid
+// ignore `runtime` so their overlap geometry is unchanged.
+const lead = (a) => ({ alias: a, runtime: 'claude-code-cli' });
+const dep = (a) => ({ alias: a, runtime: 'codex-sdk' });
+const mem = (a) => ({ alias: a, runtime: 'claude-agent-sdk' });
 const FLEET = [
-  ...['A站内容', 'A站评测', 'A站数据', 'A站设计', 'A站运营', 'A站工程'].map(a => ({ alias: a })),
-  ...['B站产品', 'B站工程', 'B站测试', 'B站运维', 'B站运营'].map(a => ({ alias: a })),
-  ...['P站产品', 'P站工程', 'P站测试', 'P站运维'].map(a => ({ alias: a })),
-  ...['通信龙', '通信牛', '通信马', '通信SDK马'].map(a => ({ alias: a })),
-  ...['srv-a', 'srv-b', 'srv-c'].map(a => ({ alias: a, project_dir: '/home/v/agent-orchestra' })),
-  ...['群星马', '书生1号', '微信马', '飞书马', '独立节点', '研究员1号', '研究员2号', '游侠马'].map(a => ({ alias: a })),
-];
+  // commander roots — exercise the layer-0 / layer-1 derivation
+  lead('总指挥'), lead('副指挥A'), lead('副指挥B'),
+  [lead, dep, mem, mem, mem, mem].map((f, i) => f(['A站内容', 'A站评测', 'A站数据', 'A站设计', 'A站运营', 'A站工程'][i])),
+  [lead, dep, mem, mem, mem].map((f, i) => f(['B站产品', 'B站工程', 'B站测试', 'B站运维', 'B站运营'][i])),
+  [lead, dep, mem, mem].map((f, i) => f(['P站产品', 'P站工程', 'P站测试', 'P站运维'][i])),
+  [lead, dep, mem, mem].map((f, i) => f(['通信龙', '通信牛', '通信马', '通信SDK马'][i])),
+  ['srv-a', 'srv-b', 'srv-c'].map(a => ({ alias: a, runtime: 'http-api', project_dir: '/home/v/agent-orchestra' })),
+  // orphan singletons — collected into the 未分组 bucket in tree mode
+  ['群星马', '书生1号', '微信马', '飞书马', '独立节点', '研究员1号', '研究员2号', '游侠马'].map(a => mem(a)),
+].flat();
 
 const overlaps1D = (a0, a1, b0, b1, tol) => a0 < b1 - tol && b0 < a1 - tol;
 
@@ -46,6 +57,7 @@ async function check(layout) {
     const sessions = FLEET.map((f, i) => ({
       alias: f.alias, status: i % 5 === 0 ? 'working' : 'idle', network_id: nid,
       project_dir: f.project_dir ?? null,
+      runtime: f.runtime ?? null,
       created_at: '2026-05-15T00:00:00Z', updated_at: '2026-05-15T00:00:00Z', last_seen_at: new Date().toISOString(),
     }));
     await route.fulfill({ response: r, json: { ...b, sessions } });
@@ -189,6 +201,8 @@ async function check(layout) {
 const all = [];
 all.push(await check('grid'));
 all.push(await check('ring'));
+// #170 tree-view MVP — the org-chart layout must be zero-overlap too.
+all.push(await check('tree'));
 await browser.close();
 // R463: any non-boolean return is a sentinel (e.g. { stale: true }
 // from the zombie-build guard). Treat as a hard fail — collision
