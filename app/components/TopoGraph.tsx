@@ -1067,13 +1067,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           [...orphans].sort((a, b) => a.alias.localeCompare(b.alias))));
       }
 
-      // lay boxes left-to-right at layer-2 y; all share the same top edge.
+      // lay boxes into a 2D wrapped grid (Vincent iter 3: team boxes need
+      // not sit in one long row — wrap into rows so the chart stays
+      // compact / screenshot-friendly even with many teams).
       const layer2Y = TOP + 2 * ROW;
-      let cursorX = LEFT;
+      const BOX_ROW_GAP = 40;                        // vertical gap between box rows
+      const ROW_W_TARGET = 1240;                     // wrap once a row would exceed this
+      let rowX = LEFT, rowY = layer2Y, rowMaxH = 0, rowCount = 0;
+      let lastRowBottom = layer2Y;
       for (const b of boxes) {
-        b.x = cursorX;
-        b.y = layer2Y;
-        cursorX += b.w + BOX_GAP;
+        if (rowCount > 0 && rowX + b.w > LEFT + ROW_W_TARGET) {
+          rowY += rowMaxH + BOX_ROW_GAP;             // wrap to next box row
+          rowX = LEFT; rowMaxH = 0; rowCount = 0;
+        }
+        b.x = rowX; b.y = rowY;
+        rowX += b.w + BOX_GAP;
+        rowMaxH = Math.max(rowMaxH, b.h);
+        rowCount++;
+        lastRowBottom = rowY + rowMaxH;
       }
       // member positions — compact grid inside each box.
       for (const b of boxes) {
@@ -1584,7 +1595,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // {zoom,x,y} persists to localStorage (same sticky pattern as brand flag).
   const VIEWBOX_W = 1000;
   const VIEWBOX_H = 680;
-  const ZOOM_MIN = 0.5;
+  // tree mode can render a tall multi-row org chart — it needs a lower
+  // zoom-out floor than ring/grid so the whole tree can fit (Vincent iter
+  // 3: "缩放最多 50%" couldn't shrink the tree enough).
+  const ZOOM_MIN = layout === 'tree' ? 0.3 : 0.5;
   const ZOOM_MAX = 4;
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
