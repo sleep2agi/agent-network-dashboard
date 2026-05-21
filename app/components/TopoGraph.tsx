@@ -1024,180 +1024,130 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         return { key, lead, deputy, members: others };
       });
 
-      // ---- box-based org layout (Vincent #170 feedback) ----------------
-      // Each team is a rectangular BOX (reusing the grid-mode cluster-box
-      // visual via groupBoxes); its members pack into a compact ~√n grid
-      // INSIDE the box rather than one wide row — an 8-person team is a
-      // ~3×3 block, not a 1×8 strip. Boxes sit side-by-side at layer 2;
-      // 副指挥 (layer 1) centre over their contiguous box-run; the root
-      // (layer 0) centres over the 副指挥. Keeps the whole chart compact
-      // and screenshot-friendly even at dozens of nodes.
+      // ---- swimlane org layout (Vincent dispatch: "一行一个团队,成员
+      // 不换行,最左边放总指挥和副指挥") ------------------------------------
+      // Each team is ONE horizontal lane — a wide box whose members sit in
+      // a single NON-WRAPPING row. Lanes stack top-to-bottom (one team per
+      // row). The command layer (总指挥 + 副指挥) is pinned in its own box
+      // down the left edge. Reverses the iter1–3 2D box-grid; the iter5
+      // treeContentBox auto-fit still scales + centres the whole chart.
       const nodeR = Math.round(26 * nodeScale);
-      const cellW = Math.max(108, 2 * nodeR + 56);  // member grid cell — fits a label card
-      const cellH = Math.max(96, 2 * nodeR + 48);   // + label drop room below the node
-      const BOX_PAD = 16;                            // box inner padding
+      const cellW = Math.max(118, 2 * nodeR + 66);   // member slot — node + dense label
       const BOX_LABEL = 26;                          // box top label band
-      const BOX_GAP = 48;                            // gap between sibling boxes
-      // iter5 (Vincent UX — tree presentation): the two header layers
-      // (总指挥 / 副指挥) hold single small nodes; the iter-2 ROW=116 gap
-      // gave them ~362px of pure header before the first team box. HEAD_ROW
-      // tightens those two layer gaps — still clears node radius + label
-      // drop + connector elbow (needs >72px; 88 leaves a safe margin) but
-      // trims header bloat so the box-layout auto-fit lands at a larger
-      // zoom. The team-box rows below keep their own spacing untouched.
-      const HEAD_ROW = Math.max(88, nodeR + 62);     // header layer gap (iter5)
-      const TOP = 130;                               // y of layer-0 root (clears corner panels)
-      const LEFT = 70;
+      const LANE_BODY = Math.max(82, 2 * nodeR + 36);// member-row band height
+      const LANE_H = BOX_LABEL + LANE_BODY;          // full lane box height
+      const LANE_GAP = 16;                           // vertical gap between lanes
+      const BOX_PAD = 14;                            // lane inner side padding
+      const CMD_W = Math.max(150, 2 * nodeR + 100);  // command column width
+      const CMD_GAP = 44;                            // gap: command column → lanes
+      const CMD_SLOT = Math.max(116, 2 * nodeR + 64);// command node vertical pitch
+      const TOP = 92;
+      const LEFT = 44;
+      const laneX0 = LEFT + CMD_W + CMD_GAP;         // x where team lanes start
 
-      // a "box unit" = a team (or the 未分组 bucket) drawn as a grid box.
-      type BoxUnit = {
-        key: string; isOrphan: boolean;
-        members: Session[];                          // grid order: lead, deputy, …
-        cols: number; rows: number; w: number; h: number;
-        x: number; y: number;                        // top-left, filled below
-      };
-      const mkBox = (key: string, isOrphan: boolean, members: Session[]): BoxUnit => {
-        const n = Math.max(1, members.length);
-        const cols = Math.ceil(Math.sqrt(n));
-        const rows = Math.ceil(n / cols);
-        return {
-          key, isOrphan, members, cols, rows,
-          w: cols * cellW + 2 * BOX_PAD,
-          h: rows * cellH + 2 * BOX_PAD + BOX_LABEL,
-          x: 0, y: 0,
-        };
-      };
-      const boxes: BoxUnit[] = teamTrees.map(tt =>
-        mkBox(tt.key, false, [tt.lead, ...(tt.deputy ? [tt.deputy] : []), ...tt.members]));
-      // orphan bucket — every underivable agent in its own 未分组 box so
-      // none are ever dropped from the chart.
+      // ordered lanes: one per team (teamTrees is already alias-sorted) +
+      // a trailing 未分组 lane collecting every orphan so none are dropped.
+      type Lane = { key: string; isOrphan: boolean; members: Session[] };
+      const lanes: Lane[] = teamTrees.map(tt => ({
+        key: tt.key, isOrphan: false,
+        members: [tt.lead, ...(tt.deputy ? [tt.deputy] : []), ...tt.members],
+      }));
       if (orphans.length > 0) {
-        boxes.push(mkBox('未分组', true,
-          [...orphans].sort((a, b) => a.alias.localeCompare(b.alias))));
+        lanes.push({
+          key: '未分组', isOrphan: true,
+          members: [...orphans].sort((a, b) => a.alias.localeCompare(b.alias)),
+        });
       }
 
-      // lay boxes into a 2D wrapped grid (Vincent iter 3: team boxes need
-      // not sit in one long row — wrap into rows so the chart stays
-      // compact / screenshot-friendly even with many teams).
-      const layer2Y = TOP + 2 * HEAD_ROW;
-      const BOX_ROW_GAP = 40;                        // vertical gap between box rows
-      const ROW_W_TARGET = 1240;                     // wrap once a row would exceed this
-      let rowX = LEFT, rowY = layer2Y, rowMaxH = 0, rowCount = 0;
-      let lastRowBottom = layer2Y;
-      for (const b of boxes) {
-        if (rowCount > 0 && rowX + b.w > LEFT + ROW_W_TARGET) {
-          rowY += rowMaxH + BOX_ROW_GAP;             // wrap to next box row
-          rowX = LEFT; rowMaxH = 0; rowCount = 0;
-        }
-        b.x = rowX; b.y = rowY;
-        rowX += b.w + BOX_GAP;
-        rowMaxH = Math.max(rowMaxH, b.h);
-        rowCount++;
-        lastRowBottom = rowY + rowMaxH;
-      }
-      // member positions — compact grid inside each box.
-      for (const b of boxes) {
-        b.members.forEach((s, i) => {
-          const col = i % b.cols;
-          const row = Math.floor(i / b.cols);
+      // each lane = a wide box; its members in a single row inside it.
+      const laneStep = LANE_H + LANE_GAP;
+      const laneBoxes = lanes.map((lane, i) => {
+        const y = TOP + i * laneStep;
+        const w = 2 * BOX_PAD + Math.max(1, lane.members.length) * cellW;
+        lane.members.forEach((s, j) => {
           positions[s.alias] = {
-            x: b.x + BOX_PAD + (col + 0.5) * cellW,
-            y: b.y + BOX_LABEL + BOX_PAD + (row + 0.5) * cellH,
+            x: laneX0 + BOX_PAD + (j + 0.5) * cellW,
+            y: y + BOX_LABEL + LANE_BODY / 2,
           };
         });
-      }
-      const boxCentreX = (b: BoxUnit) => b.x + b.w / 2;
-
-      // layer 1: 副指挥, each centred over a contiguous run of boxes.
-      const layer1Y = TOP + HEAD_ROW;
-      const depNodes: { alias: string; x: number; y: number }[] = [];
-      const depPer = deputyCommanders.length > 0
-        ? Math.ceil(Math.max(boxes.length, 1) / deputyCommanders.length)
-        : 0;
-      deputyCommanders.forEach((s, di) => {
-        const run = boxes.slice(di * depPer, di * depPer + depPer);
-        const xs = run.length ? run.map(boxCentreX)
-                              : [LEFT + di * (cellW + BOX_GAP) + cellW / 2];
-        const x = (Math.min(...xs) + Math.max(...xs)) / 2;
-        depNodes.push({ alias: s.alias, x, y: layer1Y });
-        positions[s.alias] = { x, y: layer1Y };
+        return { lane, x: laneX0, y, w, h: LANE_H };
       });
+      const laneBlockH = lanes.length ? lanes.length * laneStep - LANE_GAP : LANE_H;
+      const laneBlockBottom = TOP + laneBlockH;
 
-      // layer 0: root — single 总指挥, else a synthetic 指挥中心.
-      const anchorXs = depNodes.length > 0 ? depNodes.map(d => d.x)
-                      : boxes.length > 0 ? boxes.map(boxCentreX)
-                      : [LEFT + cellW / 2];
-      const rootX = (Math.min(...anchorXs) + Math.max(...anchorXs)) / 2;
-      let synthRoot = false;
-      if (commanders.length === 1) {
-        positions[commanders[0].alias] = { x: rootX, y: TOP };
-      } else {
-        synthRoot = true;
-        // any 总指挥 (0, or >1) spread along layer 0 beside the synth anchor
-        commanders.forEach((c, ci) => {
-          positions[c.alias] = {
-            x: rootX + (ci - (commanders.length - 1) / 2) * (cellW + 28),
-            y: TOP,
+      // command column — 总指挥 + 副指挥 stacked in a compact box pinned to
+      // the far left, vertically centred against the lane block.
+      const cmdMembers: Session[] = [...commanders, ...deputyCommanders];
+      const cmdX = LEFT + CMD_W / 2;
+      const cmdH = cmdMembers.length > 0 ? BOX_LABEL + cmdMembers.length * CMD_SLOT : 0;
+      const cmdBox = cmdMembers.length > 0
+        ? { x: LEFT, y: TOP + Math.max(0, (laneBlockH - cmdH) / 2), w: CMD_W, h: cmdH }
+        : null;
+      if (cmdBox) {
+        cmdMembers.forEach((s, i) => {
+          positions[s.alias] = {
+            x: cmdX,
+            y: cmdBox.y + BOX_LABEL + (i + 0.5) * CMD_SLOT,
           };
         });
       }
 
-      // elbow connectors: root → 副指挥 → team-box top edge (render draws
-      // the right-angle path behind the nodes).
+      // org link: a light connector from the command column to each lane.
       const connectors: TreeConnectorLine[] = [];
-      for (const d of depNodes) {
-        connectors.push({ x1: rootX, y1: TOP, x2: d.x, y2: d.y });
-      }
-      boxes.forEach((b, bi) => {
-        let px = rootX, py = TOP;
-        if (depNodes.length > 0) {
-          const di = Math.min(depNodes.length - 1, Math.floor(bi / Math.max(depPer, 1)));
-          px = depNodes[di].x; py = depNodes[di].y;
+      if (cmdBox) {
+        const cmdRight = cmdBox.x + cmdBox.w;
+        const cmdMidY = cmdBox.y + cmdBox.h / 2;
+        for (const lb of laneBoxes) {
+          connectors.push({ x1: cmdRight, y1: cmdMidY, x2: lb.x, y2: lb.y + LANE_H / 2 });
         }
-        connectors.push({ x1: px, y1: py, x2: boxCentreX(b), y2: b.y });
-      });
+      }
 
-      // synthetic root label (only when there is no single 总指挥)
-      const synthBoxes = synthRoot ? [{ x: rootX, y: TOP, label: '指挥中心' }] : [];
+      // swimlane has no synthetic root chip — the command box (labelled
+      // 指挥中心 when there is no single 总指挥) is the command layer.
+      const synthRoot = false;
+      const synthBoxes: { x: number; y: number; label: string }[] = [];
 
-      // team boxes surfaced as groupBoxes — reuses the grid-mode cluster
+      // lanes + command column surfaced as groupBoxes — reuses the cluster
       // box render + per-box working/idle/offline pip strip.
-      const teamGroupBoxes = boxes.map(b => {
+      const tally = (members: Session[]) => {
         let w = 0, i = 0, o = 0;
-        for (const s of b.members) {
+        for (const s of members) {
           const isOn = s.status !== 'offline' || !!sseCount(s);
           if (s.status === 'working') w++;
           else if (isOn) i++;
           else o++;
         }
-        return {
-          key: b.key, isOrphan: b.isOrphan, count: b.members.length,
-          statuses: { working: w, idle: i, offline: o },
-          x: b.x, y: b.y, w: b.w, h: b.h,
-        };
-      });
+        return { working: w, idle: i, offline: o };
+      };
+      const teamGroupBoxes = [
+        ...(cmdBox ? [{
+          key: commanders.length === 1 ? commanders[0].alias : '指挥中心',
+          isOrphan: false, count: cmdMembers.length,
+          statuses: tally(cmdMembers),
+          x: cmdBox.x, y: cmdBox.y, w: cmdBox.w, h: cmdBox.h,
+        }] : []),
+        ...laneBoxes.map(lb => ({
+          key: lb.lane.key, isOrphan: lb.lane.isOrphan,
+          count: lb.lane.members.length,
+          statuses: tally(lb.lane.members),
+          x: lb.x, y: lb.y, w: lb.w, h: lb.h,
+        })),
+      ];
 
-      // tree mode is a clean org chart (Vincent iter 4): message flow-links
-      // between nodes in different team boxes tangle as long curves across
-      // the hierarchy and bury the structure. Suppress them in tree — the
-      // right-angle report connectors (treeConnectors) carry the org lines.
-
-      // content bottom for auto-fit zoom — bottom of the LAST box row.
-      // Boxes wrap into multiple rows (iter 3), so this must track the
-      // wrapped lastRowBottom, not layer2Y + tallest-box.
-      const treeBottom = boxes.length ? lastRowBottom : TOP + HEAD_ROW;
+      // content bottom for auto-fit — bottom of the lowest box.
+      const treeBottom = Math.max(
+        laneBlockBottom,
+        cmdBox ? cmdBox.y + cmdBox.h : TOP + LANE_H,
+      );
       const gridContentBottom = treeBottom + 48;
 
-      // iter5 (Vincent UX): full content bounding box over every team box
-      // + every node. The auto-fit effect uses this to scale the org chart
-      // to fit BOTH viewBox dimensions AND centre it. Pre-iter5 auto-fit
-      // only fit height and left-anchored the chart (LEFT=70), so the tree
-      // hugged the top-left corner with dead canvas down the right side.
+      // iter5 (Vincent UX): full content bounding box → the auto-fit effect
+      // scales the chart to fit BOTH viewBox dimensions AND centres it.
       const treeBX: number[] = [], treeBY: number[] = [];
-      for (const b of boxes) { treeBX.push(b.x, b.x + b.w); treeBY.push(b.y, b.y + b.h); }
+      for (const gb of teamGroupBoxes) { treeBX.push(gb.x, gb.x + gb.w); treeBY.push(gb.y, gb.y + gb.h); }
       for (const a of Object.keys(positions)) { treeBX.push(positions[a].x); treeBY.push(positions[a].y); }
       // TREE_M pads the raw box/node extent so node radii + label drops
-      // (root/副指挥 sit above the boxes) never clip at the fitted edge.
+      // never clip at the fitted edge.
       const TREE_M = 52;
       const treeContentBox: { x: number; y: number; w: number; h: number } | null = treeBX.length
         ? {
