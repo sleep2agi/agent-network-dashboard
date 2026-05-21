@@ -85,6 +85,23 @@ interface Point {
   y: number;
 }
 
+/** #170 tree-view MVP — payload for the org-chart layout. `lines` are the
+ *  parent→child elbow connectors (raw endpoints; the render branch draws
+ *  the right-angle path). `synthLabels` are placeholder chips for the
+ *  synthetic nodes (指挥中心 root / 未分组 bucket) that have no backing
+ *  session. Empty in ring/grid layouts. */
+interface TreeConnectorLine {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+interface TreeLayout {
+  lines: TreeConnectorLine[];
+  synthLabels: { x: number; y: number; label: string }[];
+  synthRoot: boolean;
+}
+
 interface FlowLink {
   key: string;
   from: string;
@@ -607,11 +624,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // grid arranges nodes in an N×M grid (better for 30+ nodes). Persisted to
   // localStorage like the zoom/pan view state. Declared above nodePositions
   // since that useMemo branches on it.
-  const [layout, setLayout] = useState<'ring' | 'grid'>('ring');
+  const [layout, setLayout] = useState<'ring' | 'grid' | 'tree'>('ring');
   useEffect(() => {
     try {
       const saved = localStorage.getItem('anet-topo-layout');
-      if (saved === 'grid' || saved === 'ring') {
+      if (saved === 'grid' || saved === 'ring' || saved === 'tree') {
         setLayout(saved);
       } else if (sessions.length >= 20) {
         // v0.10.0 Hero 3 Wave 1 §3.D — auto-grid for dense fleets.
@@ -650,11 +667,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // R168's smoothView arming but on a different visual axis
   // (opacity, not transform).
   const [layoutSwitching, setLayoutSwitching] = useState(false);
+  // #170 tree-view MVP — layout is now 3-way (ring | grid | tree).
+  // selectLayout sets a specific mode (used by the chrome segmented
+  // control's 3 buttons); toggleLayout cycles ring → grid → tree → ring
+  // (used by the `l` keyboard shortcut). Both arm the R170 crossfade-
+  // blink so the node teleport between layouts reads as a soft swap.
+  const LAYOUT_CYCLE: ('ring' | 'grid' | 'tree')[] = ['ring', 'grid', 'tree'];
+  const selectLayout = (next: 'ring' | 'grid' | 'tree') => {
+    setLayoutSwitching(true);
+    setTimeout(() => setLayoutSwitching(false), 400);
+    setLayout(prev => {
+      if (prev === next) return prev;
+      try { localStorage.setItem('anet-topo-layout', next); } catch {}
+      return next;
+    });
+  };
   const toggleLayout = () => {
     setLayoutSwitching(true);
     setTimeout(() => setLayoutSwitching(false), 400);
     setLayout(prev => {
-      const next = prev === 'ring' ? 'grid' : 'ring';
+      const next = LAYOUT_CYCLE[(LAYOUT_CYCLE.indexOf(prev) + 1) % LAYOUT_CYCLE.length];
       try { localStorage.setItem('anet-topo-layout', next); } catch {}
       return next;
     });
@@ -718,6 +750,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     groupKeys,
     groupBoxes,
     gridContentBottom,
+    treeConnectors,
   } = useMemo(() => {
     const sseCount = (s: { alias: string; network_id?: string }) =>
       (s.network_id ? sseSessions[`${s.network_id}:${s.alias}`] : undefined) ?? sseSessions[s.alias];
@@ -922,6 +955,198 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         groupKeys,
         groupBoxes,
         gridContentBottom,
+        treeConnectors: { lines: [], synthLabels: [], synthRoot: false } as TreeLayout,
+      };
+    }
+
+    if (layout === 'tree') {
+      // #170 tree-view MVP — classic top-down org chart, derived purely
+      // from alias + runtime (zero-config; org.json override is the
+      // RFC-017 formal version, out of scope here).
+      //
+      //   layer 0  总指挥        ── synthetic root if none / multiple
+      //   layer 1  副指挥        ── report to 总指挥
+      //   layer 2  team leads   ── one per computeGroups() team
+      //                            + a 未分组 bucket for orphans
+      //   layer 3  deputy + members hanging under their team lead
+      //
+      // The classifier per team: LEAD = runtime claude-code-cli OR alias
+      // contains 负责人; DEPUTY = runtime codex-sdk (or runtime string
+      // containing "codex"); everyone else = members.
+      const all = [...online, ...offline];
+      const groupKeys = computeGroups(all);
+      const isCommander = (a: string) => a.includes('总指挥');
+      const isDeputyCmdr = (a: string) => a.includes('副指挥');
+      const runtimeOf = (s: Session) => (s.runtime || '').toLowerCase();
+      const isCodexRt = (s: Session) => runtimeOf(s).includes('codex');
+      const isCliRt = (s: Session) => runtimeOf(s) === 'claude-code-cli';
+
+      // commanders are roots, never team members
+      const commanders = all.filter(s => isCommander(s.alias));
+      const deputyCommanders = all.filter(s => isDeputyCmdr(s.alias) && !isCommander(s.alias));
+      const rankAliases = new Set([...commanders, ...deputyCommanders].map(s => s.alias));
+
+      // teams = computeGroups components, minus the commander aliases.
+      // A "real" team is a group key shared by ≥2 non-commander members.
+      const teamMembers: Record<string, Session[]> = {};
+      const orphans: Session[] = [];
+      for (const s of all) {
+        if (rankAliases.has(s.alias)) continue;
+        const gk = groupKeys[s.alias] ?? s.alias;
+        (teamMembers[gk] ||= []).push(s);
+      }
+      const realTeams: { key: string; members: Session[] }[] = [];
+      for (const [key, members] of Object.entries(teamMembers)) {
+        if (members.length >= 2) realTeams.push({ key, members });
+        else orphans.push(...members);
+      }
+      realTeams.sort((a, b) => a.key.localeCompare(b.key));
+
+      // within a team: pick the LEAD (claude-code-cli runtime, or 负责人
+      // in the alias forces it), then DEPUTY (codex runtime), rest = members.
+      type TeamTree = { key: string; lead: Session; deputy: Session | null; members: Session[] };
+      const pickLead = (members: Session[]): Session => {
+        const forced = members.find(s => s.alias.includes('负责人'));
+        if (forced) return forced;
+        const cli = members.find(s => isCliRt(s));
+        if (cli) return cli;
+        return [...members].sort((a, b) => a.alias.localeCompare(b.alias))[0];
+      };
+      const teamTrees: TeamTree[] = realTeams.map(({ key, members }) => {
+        const lead = pickLead(members);
+        const rest = members.filter(s => s.alias !== lead.alias);
+        const deputy = rest.find(s => isCodexRt(s)) ?? null;
+        const others = rest
+          .filter(s => !deputy || s.alias !== deputy.alias)
+          .sort((a, b) => a.alias.localeCompare(b.alias));
+        return { key, lead, deputy, members: others };
+      });
+
+      // ---- build an abstract tree of layout-nodes ----------------------
+      // Each TNode is either a real session (has alias) or a synthetic
+      // bucket label (总指挥 placeholder / 未分组). Leaf widths drive a
+      // tidy bottom-up layout: a parent is centred over its children.
+      type TNode = {
+        alias: string | null;          // null = synthetic
+        label: string;                 // shown for synthetic nodes
+        children: TNode[];
+        x: number; y: number;          // filled in below
+        depth: number;
+      };
+      const mkNode = (alias: string | null, label: string): TNode =>
+        ({ alias, label, children: [], x: 0, y: 0, depth: 0 });
+
+      // root: the single 总指挥, else a synthetic "指挥中心" root.
+      let root: TNode;
+      let synthRoot = false;
+      if (commanders.length === 1) {
+        root = mkNode(commanders[0].alias, commanders[0].alias);
+      } else {
+        synthRoot = true;
+        root = mkNode(null, '指挥中心');
+        // extra 总指挥 nodes (if >1) hang directly under the synthetic root
+        for (const c of commanders) root.children.push(mkNode(c.alias, c.alias));
+      }
+
+      // layer-1 anchors: 副指挥 nodes. If none, teams report straight to
+      // the root. Teams are distributed round-robin across 副指挥 so the
+      // tree stays balanced.
+      const layer1: TNode[] = deputyCommanders.map(s => mkNode(s.alias, s.alias));
+      for (const n of layer1) root.children.push(n);
+
+      // a parent for each team-lead: a 副指挥 if any, else the root.
+      const teamParents: TNode[] = layer1.length > 0 ? layer1 : [root];
+      teamTrees.forEach((tt, i) => {
+        const parent = teamParents[i % teamParents.length];
+        const leadNode = mkNode(tt.lead.alias, tt.lead.alias);
+        if (tt.deputy) leadNode.children.push(mkNode(tt.deputy.alias, tt.deputy.alias));
+        for (const m of tt.members) leadNode.children.push(mkNode(m.alias, m.alias));
+        parent.children.push(leadNode);
+      });
+
+      // orphan bucket: a 未分组 synthetic node under the root, every
+      // underivable agent hanging beneath it so none are ever dropped.
+      if (orphans.length > 0) {
+        const bucket = mkNode(null, '未分组');
+        for (const o of [...orphans].sort((a, b) => a.alias.localeCompare(b.alias))) {
+          bucket.children.push(mkNode(o.alias, o.alias));
+        }
+        root.children.push(bucket);
+      }
+
+      // ---- tidy layout: bottom-up subtree width, top-down placement ----
+      // Horizontal slot per leaf; a parent sits centred over its children.
+      // Generous gaps keep node rings + 100px label cards clear of each
+      // other (overlap-test hard constraint).
+      const nodeR = Math.round(26 * nodeScale);
+      const COL = Math.max(118, 2 * nodeR + 64);   // horizontal slot width
+      const ROW = Math.max(132, 2 * nodeR + 84);   // vertical layer gap
+      const TOP = nodeR + 96;                       // y of layer-0 root
+      const LEFT = 90;                              // left margin
+
+      // assign each node its depth (layer index)
+      const fixDepth = (n: TNode, d: number) => { n.depth = d; n.children.forEach(c => fixDepth(c, d + 1)); };
+      fixDepth(root, 0);
+
+      // leaf-order x assignment
+      let leafCursor = 0;
+      const place = (n: TNode): number => {
+        n.y = TOP + n.depth * ROW;
+        if (n.children.length === 0) {
+          n.x = LEFT + (leafCursor + 0.5) * COL;
+          leafCursor++;
+          return n.x;
+        }
+        const childXs = n.children.map(place);
+        n.x = (childXs[0] + childXs[childXs.length - 1]) / 2;
+        return n.x;
+      };
+      place(root);
+
+      // collect positions for real (session-backed) nodes only
+      const treeNodeList: TNode[] = [];
+      const walk = (n: TNode) => { treeNodeList.push(n); n.children.forEach(walk); };
+      walk(root);
+      for (const n of treeNodeList) {
+        if (n.alias) positions[n.alias] = { x: n.x, y: n.y };
+      }
+
+      // elbow connectors: parent → each child, drawn behind the nodes.
+      // Right-angle: drop from parent bottom, horizontal at mid-y, drop
+      // into child top.
+      const connectors: TreeConnectorLine[] = [];
+      for (const n of treeNodeList) {
+        for (const c of n.children) {
+          connectors.push({ x1: n.x, y1: n.y, x2: c.x, y2: c.y });
+        }
+      }
+      // synthetic-node "boxes" — surface 总指挥/未分组 placeholder labels
+      // as group-box-shaped entries so the render branch can draw a small
+      // labelled chip without colliding with real nodes.
+      const synthBoxes = treeNodeList
+        .filter(n => !n.alias)
+        .map(n => ({ x: n.x, y: n.y, label: n.label }));
+
+      const links = buildFlowLinks(messages, positions);
+      const active = new Set<string>();
+      links.forEach(link => { active.add(link.from); active.add(link.to); });
+
+      // content bottom for auto-fit (deepest layer + label drop + buffer)
+      const maxDepth = treeNodeList.reduce((m, n) => Math.max(m, n.depth), 0);
+      const gridContentBottom = TOP + maxDepth * ROW + nodeR + 60;
+
+      return {
+        onlineNodes: online,
+        offlineNodes: offline,
+        nodePositions: positions,
+        flowLinks: links,
+        activeAliases: active,
+        groupKeys,
+        // tree has no rectangular group boxes; synthetic labels ride the
+        // treeConnectors payload instead.
+        groupBoxes: [] as { key: string; isOrphan?: boolean; count: number; statuses: { working: number; idle: number; offline: number }; x: number; y: number; w: number; h: number }[],
+        gridContentBottom,
+        treeConnectors: { lines: connectors, synthLabels: synthBoxes, synthRoot } as TreeLayout,
       };
     }
 
@@ -1006,6 +1231,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       groupBoxes: [] as { key: string; isOrphan?: boolean; count: number; statuses: { working: number; idle: number; offline: number }; x: number; y: number; w: number; h: number }[],
       // ring fits within VIEWBOX_H by construction (offlineRadius=325 + centre at y=330)
       gridContentBottom: 0,
+      treeConnectors: { lines: [], synthLabels: [], synthRoot: false } as TreeLayout,
     };
   }, [messages, sessions, sseSessions, layout, nodeScale]);
 
@@ -1175,7 +1401,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // a single-axis paint lift. Post-R674 inline filter applies the
   // same 2+4 stride at pal.legendAccent tint as R667/R668 chrome-
   // control siblings.
-  const [hoveredLayout, setHoveredLayout] = useState<'ring' | 'grid' | null>(null);
+  const [hoveredLayout, setHoveredLayout] = useState<'ring' | 'grid' | 'tree' | null>(null);
   // R675 — hover state for the chrome nodeSize S/M/L segmented trio.
   // Value-typed (single state covers all three buttons) drives the
   // multi-layer halo filter completing the chrome strip's nodeSize
@@ -1368,7 +1594,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // keeps its own R184 rotation animation (different gesture, semantic).
   // Node-size S/M/L keep their R171 layoutSwitching crossfade (already
   // gestural). Type union grows but the helper signature stays one-arg.
-  type ChromePop = 'zoom-in' | 'zoom-out' | 'layout-ring' | 'layout-grid' | 'fullscreen' | 'size-S' | 'size-M' | 'size-L';
+  type ChromePop = 'zoom-in' | 'zoom-out' | 'layout-ring' | 'layout-grid' | 'layout-tree' | 'fullscreen' | 'size-S' | 'size-M' | 'size-L';
   const [chromePopping, setChromePopping] = useState<ChromePop | null>(null);
   const popChrome = (which: ChromePop) => {
     setChromePopping(which);
@@ -1442,7 +1668,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       autoFitDoneRef.current = true;
       return;
     }
-    if (layout !== 'grid' || sessions.length === 0 || !gridContentBottom) return;
+    if ((layout !== 'grid' && layout !== 'tree') || sessions.length === 0 || !gridContentBottom) return;
     if (gridContentBottom <= VIEWBOX_H) {
       autoFitDoneRef.current = true; // no overflow → no fit needed
       return;
@@ -2394,11 +2620,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             data-topo-chrome-wrapper-halo-family="layout"
           >
             <button
-              onClick={() => { popChrome('layout-ring'); if (layout !== 'ring') toggleLayout(); }}
+              onClick={() => { popChrome('layout-ring'); selectLayout('ring'); }}
               onMouseEnter={() => setHoveredLayout('ring')}
               onMouseLeave={() => setHoveredLayout((prev) => prev === 'ring' ? null : prev)}
               aria-pressed={layout === 'ring'}
-              title="Ring layout (l to toggle)"
+              title="Ring layout (l to cycle)"
               data-topo-chrome-layout="ring"
               data-topo-chrome-layout-active={layout === 'ring' ? 'true' : 'false'}
               data-topo-chrome-layout-ring-popping={chromePopping === 'layout-ring' ? 'true' : 'false'}
@@ -2533,11 +2759,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               Ring
             </button>
             <button
-              onClick={() => { popChrome('layout-grid'); if (layout !== 'grid') toggleLayout(); }}
+              onClick={() => { popChrome('layout-grid'); selectLayout('grid'); }}
               onMouseEnter={() => setHoveredLayout('grid')}
               onMouseLeave={() => setHoveredLayout((prev) => prev === 'grid' ? null : prev)}
               aria-pressed={layout === 'grid'}
-              title="Grid layout (l to toggle)"
+              title="Grid layout (l to cycle)"
               data-topo-chrome-layout="grid"
               data-topo-chrome-layout-active={layout === 'grid' ? 'true' : 'false'}
               data-topo-chrome-layout-grid-popping={chromePopping === 'layout-grid' ? 'true' : 'false'}
@@ -2584,6 +2810,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               }}
             >
               Grid
+            </button>
+            {/* #170 tree-view MVP — third segment in the layout control.
+               Org-chart view: 总指挥/副指挥 root → teams → members.
+               Mirrors the Grid button's border-l divider + active/
+               inactive paint vocabulary; the heavier R-series polish
+               (halo layers, hover-fw preview attrs) is deferred to the
+               RFC-017 formal version. */}
+            <button
+              onClick={() => { popChrome('layout-tree'); selectLayout('tree'); }}
+              onMouseEnter={() => setHoveredLayout('tree')}
+              onMouseLeave={() => setHoveredLayout((prev) => prev === 'tree' ? null : prev)}
+              aria-pressed={layout === 'tree'}
+              title="Tree layout — org chart (l to cycle)"
+              data-topo-chrome-layout="tree"
+              data-topo-chrome-layout-active={layout === 'tree' ? 'true' : 'false'}
+              data-topo-chrome-layout-tree-popping={chromePopping === 'layout-tree' ? 'true' : 'false'}
+              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide hover:brightness-[1.15] active:scale-95 transform-gpu ${layout === 'tree' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-tree' ? ' anet-chrome-pop' : ''}`}
+              style={{
+                borderColor: pal.containerBorder,
+                transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease, filter 150ms ease',
+                filter: hoveredLayout === 'tree' ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
+              }}
+            >
+              Tree
             </button>
           </div>
           {/* R79: working + online count chips become hover affordances —
@@ -6399,6 +6649,70 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               );
             });
           })()}
+
+          {/* #170 tree-view MVP — org-chart elbow connectors. Tree layout
+              only (treeConnectors.lines is empty in ring/grid). Rendered
+              here, behind the nodes + labels, as right-angle polylines:
+              vertical drop from the parent, horizontal at the mid-y, then
+              vertical into the child. pointer-events off so they never
+              intercept a node click. The synthetic-node chips (指挥中心
+              root / 未分组 bucket) render here too — they have no backing
+              session so the node-map below skips them. */}
+          {layout === 'tree' && treeConnectors.lines.map((ln, i) => {
+            const midY = (ln.y1 + ln.y2) / 2;
+            // drop from just below the parent ring to just above the child
+            // ring — keeps the connector clear of the avatars themselves.
+            const startY = ln.y1;
+            const endY = ln.y2;
+            const d = `M ${ln.x1} ${startY} L ${ln.x1} ${midY} L ${ln.x2} ${midY} L ${ln.x2} ${endY}`;
+            return (
+              <path
+                key={`tree-conn-${i}`}
+                d={d}
+                fill="none"
+                stroke={pal.containerBorder}
+                strokeWidth={1.5}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                opacity={0.55}
+                style={{ pointerEvents: 'none' }}
+              />
+            );
+          })}
+          {layout === 'tree' && treeConnectors.synthLabels.map((s, i) => {
+            // synthetic node chip: a small pill with a centred label, drawn
+            // at the synthetic node's slot. No status ring → never counted
+            // by the node↔node overlap test; sized to clear neighbours.
+            const chipW = Math.max(58, s.label.length * 13 + 20);
+            const chipH = 26;
+            return (
+              <g key={`tree-synth-${i}`} style={{ pointerEvents: 'none' }} data-topo-tree-synth={s.label}>
+                <rect
+                  x={s.x - chipW / 2}
+                  y={s.y - chipH / 2}
+                  width={chipW}
+                  height={chipH}
+                  rx={13}
+                  fill={pal.containerBg}
+                  stroke={pal.containerBorder}
+                  strokeWidth={1.25}
+                  strokeDasharray="3 3"
+                  opacity={0.92}
+                />
+                <text
+                  x={s.x}
+                  y={s.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={12}
+                  fontWeight={600}
+                  fill={pal.legendAccent}
+                >
+                  {s.label}
+                </text>
+              </g>
+            );
+          })}
 
           {/* #111: prefix-group boundary boxes (Vincent 4722). Grid layout
               only — groupBoxes is empty in ring mode. Rendered behind the
