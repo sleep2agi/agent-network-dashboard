@@ -1168,22 +1168,23 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         };
       });
 
-      const links = buildFlowLinks(messages, positions);
-      const active = new Set<string>();
-      links.forEach(link => { active.add(link.from); active.add(link.to); });
+      // tree mode is a clean org chart (Vincent iter 4): message flow-links
+      // between nodes in different team boxes tangle as long curves across
+      // the hierarchy and bury the structure. Suppress them in tree — the
+      // right-angle report connectors (treeConnectors) carry the org lines.
 
-      // content bottom for auto-fit zoom (tallest box bottom + buffer)
-      const treeBottom = boxes.length
-        ? layer2Y + Math.max(...boxes.map(b => b.h))
-        : TOP + ROW;
+      // content bottom for auto-fit zoom — bottom of the LAST box row.
+      // Boxes wrap into multiple rows (iter 3), so this must track the
+      // wrapped lastRowBottom, not layer2Y + tallest-box.
+      const treeBottom = boxes.length ? lastRowBottom : TOP + ROW;
       const gridContentBottom = treeBottom + 48;
 
       return {
         onlineNodes: online,
         offlineNodes: offline,
         nodePositions: positions,
-        flowLinks: links,
-        activeAliases: active,
+        flowLinks: [],
+        activeAliases: new Set<string>(),
         groupKeys,
         groupBoxes: teamGroupBoxes,
         gridContentBottom,
