@@ -1036,7 +1036,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       const BOX_PAD = 16;                            // box inner padding
       const BOX_LABEL = 26;                          // box top label band
       const BOX_GAP = 48;                            // gap between sibling boxes
-      const ROW = Math.max(156, 2 * nodeR + 100);    // layer vertical gap
+      const ROW = Math.max(116, 2 * nodeR + 72);     // layer vertical gap — tightened (iter 2): root/副指挥 are single nodes, ~116px clears label + connector elbow
       const TOP = 130;                               // y of layer-0 root (clears corner panels)
       const LEFT = 70;
 
