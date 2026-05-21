@@ -1010,6 +1010,16 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   }, [messages, sessions, sseSessions, layout, nodeScale]);
 
   const workingCount = onlineNodes.filter(s => s.status === 'working').length;
+  // Round 744 / Loop: legend header node-count. The legend panel's header
+  // ("N nodes") must equal the sum of its own three status rows
+  // (working + idle + offline). Those rows break down onlineNodes +
+  // offlineNodes — the nodes actually DRAWN on the canvas. Pre-R744 the
+  // header rendered sessions.length, which also counts #112 aged-out GHOST
+  // nodes (offline + not seen recently, deliberately not rendered). With
+  // ghosts present the header (e.g. 81) exceeded its own row sum (e.g. 51)
+  // by the ghost count — the panel disagreed with its own breakdown. Count
+  // the drawn nodes so header ≡ working + idle + offline.
+  const drawnNodeCount = onlineNodes.length + offlineNodes.length;
   // Round 6 / Loop: vendor distribution for the header chip — at a glance
   // "what's in the fleet" (A:5 M:2 O:8 书:12 …) without opening a node.
   // Sorted by count desc; "unknown" vendors collapse into a "?" bucket.
@@ -15141,7 +15151,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 transition: 'fill 200ms ease-out, font-weight 200ms ease-out, letter-spacing 200ms ease-out, filter 200ms ease-out',
                 fontVariantNumeric: 'tabular-nums',
               }}
-            >{sessions.length}<tspan opacity="0.7" data-legend-panel-count-unit> node{sessions.length === 1 ? '' : 's'}</tspan></text>
+            >{drawnNodeCount}<tspan opacity="0.7" data-legend-panel-count-unit> node{drawnNodeCount === 1 ? '' : 's'}</tspan></text>
             {(() => {
               const idleCount = onlineNodes.length - workingCount;
               // R106: rows shift +8 px (was y0=24, 48, 72 → 32, 56, 80)
