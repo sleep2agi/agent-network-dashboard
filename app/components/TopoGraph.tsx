@@ -751,6 +751,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     groupBoxes,
     gridContentBottom,
     treeConnectors,
+    treeContentBox,
   } = useMemo(() => {
     const sseCount = (s: { alias: string; network_id?: string }) =>
       (s.network_id ? sseSessions[`${s.network_id}:${s.alias}`] : undefined) ?? sseSessions[s.alias];
@@ -956,6 +957,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         groupBoxes,
         gridContentBottom,
         treeConnectors: { lines: [], synthLabels: [], synthRoot: false } as TreeLayout,
+        treeContentBox: null as { x: number; y: number; w: number; h: number } | null,
       };
     }
 
@@ -1036,7 +1038,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       const BOX_PAD = 16;                            // box inner padding
       const BOX_LABEL = 26;                          // box top label band
       const BOX_GAP = 48;                            // gap between sibling boxes
-      const ROW = Math.max(116, 2 * nodeR + 72);     // layer vertical gap — tightened (iter 2): root/副指挥 are single nodes, ~116px clears label + connector elbow
+      // iter5 (Vincent UX — tree presentation): the two header layers
+      // (总指挥 / 副指挥) hold single small nodes; the iter-2 ROW=116 gap
+      // gave them ~362px of pure header before the first team box. HEAD_ROW
+      // tightens those two layer gaps — still clears node radius + label
+      // drop + connector elbow (needs >72px; 88 leaves a safe margin) but
+      // trims header bloat so the box-layout auto-fit lands at a larger
+      // zoom. The team-box rows below keep their own spacing untouched.
+      const HEAD_ROW = Math.max(88, nodeR + 62);     // header layer gap (iter5)
       const TOP = 130;                               // y of layer-0 root (clears corner panels)
       const LEFT = 70;
 
@@ -1070,7 +1079,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // lay boxes into a 2D wrapped grid (Vincent iter 3: team boxes need
       // not sit in one long row — wrap into rows so the chart stays
       // compact / screenshot-friendly even with many teams).
-      const layer2Y = TOP + 2 * ROW;
+      const layer2Y = TOP + 2 * HEAD_ROW;
       const BOX_ROW_GAP = 40;                        // vertical gap between box rows
       const ROW_W_TARGET = 1240;                     // wrap once a row would exceed this
       let rowX = LEFT, rowY = layer2Y, rowMaxH = 0, rowCount = 0;
@@ -1100,7 +1109,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       const boxCentreX = (b: BoxUnit) => b.x + b.w / 2;
 
       // layer 1: 副指挥, each centred over a contiguous run of boxes.
-      const layer1Y = TOP + ROW;
+      const layer1Y = TOP + HEAD_ROW;
       const depNodes: { alias: string; x: number; y: number }[] = [];
       const depPer = deputyCommanders.length > 0
         ? Math.ceil(Math.max(boxes.length, 1) / deputyCommanders.length)
@@ -1176,8 +1185,28 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // content bottom for auto-fit zoom — bottom of the LAST box row.
       // Boxes wrap into multiple rows (iter 3), so this must track the
       // wrapped lastRowBottom, not layer2Y + tallest-box.
-      const treeBottom = boxes.length ? lastRowBottom : TOP + ROW;
+      const treeBottom = boxes.length ? lastRowBottom : TOP + HEAD_ROW;
       const gridContentBottom = treeBottom + 48;
+
+      // iter5 (Vincent UX): full content bounding box over every team box
+      // + every node. The auto-fit effect uses this to scale the org chart
+      // to fit BOTH viewBox dimensions AND centre it. Pre-iter5 auto-fit
+      // only fit height and left-anchored the chart (LEFT=70), so the tree
+      // hugged the top-left corner with dead canvas down the right side.
+      const treeBX: number[] = [], treeBY: number[] = [];
+      for (const b of boxes) { treeBX.push(b.x, b.x + b.w); treeBY.push(b.y, b.y + b.h); }
+      for (const a of Object.keys(positions)) { treeBX.push(positions[a].x); treeBY.push(positions[a].y); }
+      // TREE_M pads the raw box/node extent so node radii + label drops
+      // (root/副指挥 sit above the boxes) never clip at the fitted edge.
+      const TREE_M = 52;
+      const treeContentBox: { x: number; y: number; w: number; h: number } | null = treeBX.length
+        ? {
+            x: Math.min(...treeBX) - TREE_M,
+            y: Math.min(...treeBY) - TREE_M,
+            w: Math.max(...treeBX) - Math.min(...treeBX) + 2 * TREE_M,
+            h: Math.max(...treeBY) - Math.min(...treeBY) + 2 * TREE_M,
+          }
+        : null;
 
       return {
         onlineNodes: online,
@@ -1189,6 +1218,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         groupBoxes: teamGroupBoxes,
         gridContentBottom,
         treeConnectors: { lines: connectors, synthLabels: synthBoxes, synthRoot } as TreeLayout,
+        treeContentBox,
       };
     }
 
@@ -1274,6 +1304,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // ring fits within VIEWBOX_H by construction (offlineRadius=325 + centre at y=330)
       gridContentBottom: 0,
       treeConnectors: { lines: [], synthLabels: [], synthRoot: false } as TreeLayout,
+      treeContentBox: null as { x: number; y: number; w: number; h: number } | null,
     };
   }, [messages, sessions, sseSessions, layout, nodeScale]);
 
@@ -1713,7 +1744,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       autoFitDoneRef.current = true;
       return;
     }
-    if ((layout !== 'grid' && layout !== 'tree') || sessions.length === 0 || !gridContentBottom) return;
+    if (sessions.length === 0) return;
+    // iter5 (Vincent UX): tree auto-fit scales the org chart to fit BOTH
+    // viewBox dimensions and CENTRES it. Pre-iter5 the shared grid path
+    // only fit height and left-anchored the chart, so the tree hugged the
+    // top-left corner with dead canvas down the right side.
+    if (layout === 'tree') {
+      if (!treeContentBox) return;
+      const b = treeContentBox;
+      if (b.w <= 0 || b.h <= 0) { autoFitDoneRef.current = true; return; }
+      const pad = 24;
+      const z = Math.max(ZOOM_MIN, Math.min(
+        1, (VIEWBOX_W - 2 * pad) / b.w, (VIEWBOX_H - 2 * pad) / b.h));
+      setView({
+        zoom: z,
+        x: VIEWBOX_W / 2 - (b.x + b.w / 2) * z,
+        y: VIEWBOX_H / 2 - (b.y + b.h / 2) * z,
+      });
+      autoFitDoneRef.current = true;
+      return;
+    }
+    if (layout !== 'grid' || !gridContentBottom) return;
     if (gridContentBottom <= VIEWBOX_H) {
       autoFitDoneRef.current = true; // no overflow → no fit needed
       return;
@@ -1721,7 +1772,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     const fitZoom = Math.max(ZOOM_MIN, Math.min(1, VIEWBOX_H / gridContentBottom));
     setView({ zoom: fitZoom, x: 0, y: 0 });
     autoFitDoneRef.current = true;
-  }, [layout, sessions.length, gridContentBottom, hadPersistedViewOnMount]);
+  }, [layout, sessions.length, gridContentBottom, treeContentBox, hadPersistedViewOnMount]);
 
   // persist view
   useEffect(() => {
@@ -1865,13 +1916,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // when the operator invokes fit-to-content via the hub click (R52),
   // chrome button, `f` key, or palette command.
   const fitView = useCallback(() => {
+    setSmoothView(true);
+    setTimeout(() => setSmoothView(false), 350);
+    // iter5: tree fits-and-centres via its content bbox (sister to the
+    // auto-fit effect); grid/ring keep the height-only fit-to-content.
+    if (layout === 'tree' && treeContentBox && treeContentBox.w > 0 && treeContentBox.h > 0) {
+      const b = treeContentBox;
+      const pad = 24;
+      const z = Math.max(ZOOM_MIN, Math.min(
+        1, (VIEWBOX_W - 2 * pad) / b.w, (VIEWBOX_H - 2 * pad) / b.h));
+      setView({
+        zoom: z,
+        x: VIEWBOX_W / 2 - (b.x + b.w / 2) * z,
+        y: VIEWBOX_H / 2 - (b.y + b.h / 2) * z,
+      });
+      return;
+    }
     const zoom = !gridContentBottom || gridContentBottom <= VIEWBOX_H
       ? 1
       : Math.max(ZOOM_MIN, Math.min(1, VIEWBOX_H / gridContentBottom));
-    setSmoothView(true);
-    setTimeout(() => setSmoothView(false), 350);
     setView({ zoom, x: 0, y: 0 });
-  }, [gridContentBottom]);
+  }, [gridContentBottom, layout, treeContentBox]);
 
   // R74: listen for layout + view palette commands. Sister to R69's
   // pin listener — palette dispatches a CustomEvent, the reducer here
