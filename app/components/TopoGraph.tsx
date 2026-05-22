@@ -1057,6 +1057,39 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // secondary sort by key keeps equal-length lanes from jittering
       // between renders.
       lanes.sort((a, b) => b.members.length - a.members.length || a.key.localeCompare(b.key));
+      // Vincent 5923 (#181): keep related team lanes adjacent. Two teams
+      // are "related" when one's key is a substring of the other's
+      // (设计 ⊂ 海报设计师). Union-find over lane keys → substring-relation
+      // components; each component is emitted contiguously, anchored at its
+      // largest lane's size-sorted slot (lanes within a component stay
+      // size-desc). Unrelated teams keep their size order — this only stops
+      // a related pair from being split apart by an unrelated team.
+      {
+        const lp = lanes.map((_, i) => i);
+        const lfind = (i: number): number => {
+          while (lp[i] !== i) { lp[i] = lp[lp[i]]; i = lp[i]; }
+          return i;
+        };
+        for (let i = 0; i < lanes.length; i++) {
+          for (let j = i + 1; j < lanes.length; j++) {
+            const a = lanes[i].key, b = lanes[j].key;
+            if (a.length >= 2 && b.length >= 2 && (a.includes(b) || b.includes(a))) {
+              lp[lfind(i)] = lfind(j);
+            }
+          }
+        }
+        const seenRoot = new Set<number>();
+        const clustered: Lane[] = [];
+        for (let i = 0; i < lanes.length; i++) {
+          const root = lfind(i);
+          if (seenRoot.has(root)) continue;
+          seenRoot.add(root);
+          for (let j = i; j < lanes.length; j++) {
+            if (lfind(j) === root) clustered.push(lanes[j]);
+          }
+        }
+        lanes.splice(0, lanes.length, ...clustered);
+      }
 
       // each lane = a wide box; its members in a single row inside it.
       const laneStep = LANE_H + LANE_GAP;
