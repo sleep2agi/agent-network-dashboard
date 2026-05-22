@@ -508,11 +508,21 @@ function commonPrefix(a: string, b: string): string {
   return a.slice(0, i);
 }
 
-/** #83 + #111: group nodes that share a ≥2-char alias prefix OR a project_dir
- *  ("either criterion → same group", Vincent 4724). Union-find over the
- *  sessions; the component label prefers the shared project_dir's basename,
- *  else the common alias prefix. Returns alias → groupKey. */
-function computeGroups(sessions: { alias: string; project_dir?: string | null }[]): Record<string, string> {
+/** #83 + #111: group nodes by shared ≥2-char alias prefix. Union-find over
+ *  the sessions; the component label is the common alias prefix. Returns
+ *  alias → groupKey.
+ *
+ *  #172/#174 short-term fix: grouping is alias-prefix ONLY. The earlier
+ *  project_dir co-union (Vincent 4724) was dropped — live /api/status
+ *  data showed it actively wrong: 视频测试马 reported project_dir
+ *  `/Users/vansin/intern-aip`, the same dir as the unrelated standalone
+ *  nodes 知识马 / 群星马, so union-find transitively bridged 知识马 /
+ *  群星马 into the 视频 team. project_dir data quality is also poor
+ *  (corrupted nested paths like `VideoNode/~/code/VideoNode/~/…`).
+ *  alias prefix is the reliable signal; prefix-less nodes correctly
+ *  fall out as singletons → the 未分组 bucket. The real fix is a
+ *  first-class node.team field — tracked as #175. */
+function computeGroups(sessions: { alias: string }[]): Record<string, string> {
   const n = sessions.length;
   const parent = sessions.map((_, i) => i);
   const find = (i: number): number => {
@@ -524,16 +534,6 @@ function computeGroups(sessions: { alias: string; project_dir?: string | null }[
     if (ra !== rb) parent[ra] = rb;
   };
 
-  // union by shared project_dir
-  const byDir: Record<string, number[]> = {};
-  sessions.forEach((s, i) => {
-    const d = s.project_dir?.trim();
-    if (d) (byDir[d] ||= []).push(i);
-  });
-  for (const idxs of Object.values(byDir)) {
-    for (let k = 1; k < idxs.length; k++) union(idxs[0], idxs[k]);
-  }
-
   // union by shared ≥2-char alias prefix — sort, link adjacent pairs
   const order = sessions.map((_, i) => i).sort((a, b) => sessions[a].alias.localeCompare(sessions[b].alias));
   for (let k = 0; k + 1 < order.length; k++) {
@@ -542,7 +542,7 @@ function computeGroups(sessions: { alias: string; project_dir?: string | null }[
     }
   }
 
-  // label each connected component
+  // label each connected component with the common alias prefix
   const comps: Record<number, number[]> = {};
   for (let i = 0; i < n; i++) (comps[find(i)] ||= []).push(i);
   const keys: Record<string, string> = {};
@@ -551,14 +551,8 @@ function computeGroups(sessions: { alias: string; project_dir?: string | null }[
     if (members.length === 1) {
       label = sessions[members[0]].alias;
     } else {
-      const dirs = new Set(members.map(i => sessions[i].project_dir?.trim()).filter(Boolean) as string[]);
-      if (dirs.size === 1) {
-        const d = [...dirs][0];
-        label = d.split('/').filter(Boolean).pop() || d;
-      } else {
-        label = members.map(i => sessions[i].alias).reduce((a, b) => commonPrefix(a, b));
-        if (label.length < 2) label = sessions[members[0]].alias;
-      }
+      label = members.map(i => sessions[i].alias).reduce((a, b) => commonPrefix(a, b));
+      if (label.length < 2) label = sessions[members[0]].alias;
     }
     for (const i of members) keys[sessions[i].alias] = label;
   }
