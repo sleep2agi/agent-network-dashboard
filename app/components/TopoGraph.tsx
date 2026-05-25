@@ -72,6 +72,19 @@ interface MessageFlow {
   created_at: string;
 }
 
+interface TaskFlow {
+  from_name?: string | null;
+  from_alias?: string | null;
+  to_name?: string | null;
+  to_alias?: string | null;
+  content?: string | null;
+  status?: string | null;
+  created_at?: string | null;
+  delivered_at?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+}
+
 interface TopoGraphProps {
   sessions: Session[];
   sseSessions: Record<string, number>;
@@ -559,39 +572,63 @@ function computeGroups(sessions: { alias: string }[]): Record<string, string> {
   return keys;
 }
 
-function buildFlowLinks(messages: MessageFlow[], positions: Record<string, Point>) {
+function buildFlowLinks(messages: MessageFlow[], tasks: TaskFlow[], positions: Record<string, Point>) {
   const links = new Map<string, FlowLink>();
 
-  messages.forEach(message => {
-    if (
-      !positions[message.from_alias] ||
-      !positions[message.to_alias] ||
-      message.from_alias === message.to_alias
-    ) {
+  const commandAlias = Object.keys(positions).find(a => a.includes('副指挥'))
+    ?? Object.keys(positions).find(a => a.includes('总指挥'))
+    ?? null;
+
+  const resolveAlias = (alias: string | null | undefined) => {
+    const clean = (alias || '').trim();
+    if (!clean) return null;
+    if (positions[clean]) return clean;
+    if ((clean === 'api' || clean === 'admin') && commandAlias) return commandAlias;
+    return clean;
+  };
+
+  const addLink = (fromRaw: string | null | undefined, toRaw: string | null | undefined, content: string, createdAt: string) => {
+    const from = resolveAlias(fromRaw);
+    const to = resolveAlias(toRaw);
+    if (!from || !to || !positions[from] || !positions[to] || from === to) {
       return;
     }
 
-    const key = `${message.from_alias}->${message.to_alias}`;
+    const key = `${from}->${to}`;
     const current = links.get(key);
 
     // Keep the most-recent timestamp per pair so the render can fade
     // dormant edges (Round 10 freshness fade).
-    const incoming = message.created_at || '';
+    const incoming = createdAt || '';
     const last_at = !current
       ? incoming
       : (incoming > current.last_at ? incoming : current.last_at);
 
     links.set(key, {
       key,
-      from: message.from_alias,
-      to: message.to_alias,
+      from,
+      to,
       count: (current?.count || 0) + 1,
-      content: current?.content || message.content,
+      content: current?.content || content,
       last_at,
     });
+  };
+
+  messages.forEach(message => {
+    addLink(message.from_alias, message.to_alias, message.content, message.created_at);
   });
 
-  return [...links.values()].slice(0, 18);
+  tasks.forEach(task => {
+    const from = task.from_alias ?? task.from_name;
+    const to = task.to_alias ?? task.to_name;
+    const when = task.completed_at || task.started_at || task.delivered_at || task.created_at || '';
+    const label = task.content || (task.status ? `task:${task.status}` : 'task');
+    addLink(from, to, label, when);
+  });
+
+  return [...links.values()]
+    .sort((a, b) => (b.last_at || '').localeCompare(a.last_at || ''))
+    .slice(0, 18);
 }
 
 export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProps) {
@@ -614,6 +651,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // wants to leave: "show me the rest of the flows" → /messages.
   const router = useRouter();
   const [messages, setMessages] = useState<MessageFlow[]>([]);
+  const [tasks, setTasks] = useState<TaskFlow[]>([]);
   // Issue #87: ring | grid layout toggle. Ring is the tiered-radial default;
   // grid arranges nodes in an N×M grid (better for 30+ nodes). Persisted to
   // localStorage like the zoom/pan view state. Declared above nodePositions
@@ -718,20 +756,24 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   };
 
   useEffect(() => {
-    const fetchMessages = async () => {
+    const fetchFlows = async () => {
       try {
-        const res = await fetch('/api/hub/messages?limit=50');
-        if (res.status === 401) {
+        const [messageRes, taskRes] = await Promise.all([
+          fetch('/api/hub/messages?limit=50'),
+          fetch('/api/hub/tasks?limit=100'),
+        ]);
+        if (messageRes.status === 401 || taskRes.status === 401) {
           window.location.assign('/login');
           return;
         }
 
-        const data = await res.json();
-        setMessages(data.messages || []);
+        const [messageData, taskData] = await Promise.all([messageRes.json(), taskRes.json()]);
+        setMessages(messageData.messages || []);
+        setTasks(taskData.tasks || []);
       } catch {}
     };
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 5000);
+    fetchFlows();
+    const interval = setInterval(fetchFlows, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -880,7 +922,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         });
       }
 
-      const links = buildFlowLinks(messages, positions);
+      const links = buildFlowLinks(messages, tasks, positions);
       const active = new Set<string>();
       links.forEach(link => { active.add(link.from); active.add(link.to); });
       // #111: one bounding box per multi-member group (Vincent 4722). Each
@@ -1194,7 +1236,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // tree/swimlane. iter4 (a6689b6) suppressed them as "杂线"; Vincent
       // now explicitly wants them back — same buildFlowLinks the ring/grid
       // layouts use, drawn against the swimlane node positions.
-      const links = buildFlowLinks(messages, positions);
+      const links = buildFlowLinks(messages, tasks, positions);
       const active = new Set<string>();
       links.forEach(link => { active.add(link.from); active.add(link.to); });
 
@@ -1271,7 +1313,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       positions[s.alias] = polarPoint(index, Math.max(offline.length, 1), offlineR, offlineRotation);
     });
 
-    const links = buildFlowLinks(messages, positions);
+    const links = buildFlowLinks(messages, tasks, positions);
     const active = new Set<string>();
     links.forEach(link => {
       active.add(link.from);
@@ -1296,7 +1338,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       treeConnectors: { lines: [], synthLabels: [], synthRoot: false } as TreeLayout,
       treeContentBox: null as { x: number; y: number; w: number; h: number } | null,
     };
-  }, [messages, sessions, sseSessions, layout, nodeScale]);
+  }, [messages, tasks, sessions, sseSessions, layout, nodeScale]);
 
   const workingCount = onlineNodes.filter(s => s.status === 'working').length;
   // Round 744 / Loop: legend header node-count. The legend panel's header
