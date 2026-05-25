@@ -15,6 +15,57 @@ interface ChatTask {
   created_at: string;
 }
 
+function extractAttachmentPreviews(text: string): string[] {
+  const urls: string[] = [];
+  for (const line of (text || '').split('\n')) {
+    const match = line.match(/^\s*-\s*预览:\s*(\S+)\s*$/);
+    if (match?.[1]) urls.push(match[1]);
+  }
+  return Array.from(new Set(urls));
+}
+
+function AttachmentPreviews({ text }: { text: string }) {
+  const urls = extractAttachmentPreviews(text);
+  if (urls.length === 0) return null;
+  return (
+    <div className="mt-2 grid grid-cols-2 gap-2">
+      {urls.map((url) => (
+        <a key={url} href={url} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-lg border border-cyan-500/20 bg-black/20">
+          <img
+            src={url}
+            alt="Dashboard attachment preview"
+            className="h-28 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            loading="lazy"
+          />
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function LocalImagePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const [url, setUrl] = useState('');
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+
+  return (
+    <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-cyan-500/25 bg-black/20">
+      {url && <img src={url} alt={file.name} className="h-full w-full object-cover" />}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs text-white hover:bg-red-500"
+        aria-label={`Remove ${file.name}`}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
 const STATUS_STEPS = ['created', 'delivered', 'running', 'replied'];
 const STATUS_COLORS: Record<string, string> = {
   created: 'bg-gray-400', delivered: 'bg-blue-400', running: 'bg-green-400',
@@ -237,7 +288,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
       const res = await fetch('/api/hub/upload', { method: 'POST', body: form });
       const data = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
       if (!res.ok || !data.ok) throw new Error(data.error || data.detail || `upload failed: ${file.name}`);
-      uploaded.push({ name: file.name, path: data.path, url: data.url });
+      uploaded.push({ type: 'image', name: file.name, path: data.path, url: data.url, mime: data.mime, size: data.size });
     }
     return uploaded;
   };
@@ -302,7 +353,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
       const res = await fetch('/api/hub/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alias: sendTo, task: taskContent, priority }),
+        body: JSON.stringify({ alias: sendTo, task: taskContent, priority, attachments: uploaded }),
       });
       const data = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
       if (data.ok && data.message_id) {
@@ -419,6 +470,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                   </div>
                   <div className="text-[13px] text-[var(--fg)]">
                     <MarkdownContent text={m.content} />
+                    <AttachmentPreviews text={m.content} />
                   </div>
                   <div className="flex items-center justify-between mt-1.5 gap-3">
                     <StatusBar status={m.status} />
@@ -440,6 +492,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                     </div>
                     <div className="text-[13px] text-[var(--fg)]">
                       <MarkdownContent text={m.result} />
+                      <AttachmentPreviews text={m.result} />
                     </div>
                   </div>
                 </div>
@@ -522,19 +575,13 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
             </button>
           </div>
           {attachedFiles.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-2 flex flex-wrap gap-2">
               {attachedFiles.map((file, index) => (
-                <span key={`${file.name}-${index}`} className="inline-flex items-center gap-1.5 max-w-[160px] px-2 py-1 rounded-lg border border-cyan-500/20 bg-cyan-500/8 text-[10px] text-cyan-200">
-                  <span className="truncate">{file.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
-                    className="text-cyan-300 hover:text-white"
-                    aria-label={`Remove ${file.name}`}
-                  >
-                    ×
-                  </button>
-                </span>
+                <LocalImagePreview
+                  key={`${file.name}-${file.size}-${index}`}
+                  file={file}
+                  onRemove={() => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                />
               ))}
             </div>
           )}

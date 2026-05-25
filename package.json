@@ -1,13 +1,13 @@
 {
   "name": "@sleep2agi/agent-network-dashboard",
-  "version": "0.5.3-preview.267",
-  "description": "Agent Network Dashboard \u2014 Web UI for managing AI Agent networks",
+  "version": "0.5.4",
+  "description": "Agent Network Dashboard — Web UI for managing AI Agent networks",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prepublishOnly": "[ -f .next/BUILD_ID ] || (echo 'prepublishOnly: .next/BUILD_ID missing \u2014 run npm run build first (see commit 05c1ebf body for R224 chunk-500 root cause)' >&2 && exit 1)"
+    "prepublishOnly": "[ -f .next/BUILD_ID ] || (echo 'prepublishOnly: .next/BUILD_ID missing — run npm run build first (see commit 05c1ebf body for R224 chunk-500 root cause)' >&2 && exit 1)"
   },
   "bin": {
     "agent-network-dashboard": "./bin/start.js"
