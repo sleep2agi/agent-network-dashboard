@@ -13,6 +13,31 @@ interface ChatTask {
   content: string;
   result: string;
   created_at: string;
+  completed_at?: string;
+}
+
+type ChatEvent =
+  | { kind: 'task'; task: ChatTask; at: string }
+  | { kind: 'reply'; task: ChatTask; at: string };
+
+function eventTime(value?: string) {
+  if (!value) return 0;
+  return new Date(value.replace(' ', 'T') + (value.includes('T') ? '' : 'Z')).getTime() || 0;
+}
+
+function formatTimestamp(value?: string) {
+  if (!value) return '--';
+  const d = new Date(value.replace(' ', 'T') + (value.includes('T') ? '' : 'Z'));
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function quotePreview(text: string, max = 140) {
+  const compact = (text || '')
+    .replace(/\[Dashboard 附件[\s\S]*$/m, '[附件]')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return compact.length > max ? `${compact.slice(0, max)}…` : compact;
 }
 
 function extractAttachmentPreviews(text: string): string[] {
@@ -433,6 +458,19 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
     el.style.height = Math.min(el.scrollHeight, 150) + 'px';
   };
 
+  const chatEvents: ChatEvent[] = messages
+    .flatMap((task): ChatEvent[] => {
+      const events: ChatEvent[] = [{ kind: 'task', task, at: task.created_at }];
+      if (task.result) events.push({ kind: 'reply', task, at: task.completed_at || task.created_at });
+      return events;
+    })
+    .sort((a, b) => {
+      const delta = eventTime(a.at) - eventTime(b.at);
+      if (delta !== 0) return delta;
+      if (a.task.task_id !== b.task.task_id) return a.task.task_id.localeCompare(b.task.task_id);
+      return a.kind === 'task' ? -1 : 1;
+    });
+
   // Inline mode: just the chat content, no panel chrome
   const chatContent = (
     <>
@@ -451,7 +489,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
             </div>
           )}
 
-          {messages.map((m) => {
+          {chatEvents.map((event) => {
+            const m = event.task;
             // Distinguish task source so users can tell when a peer agent
             // forwarded a task vs when they themselves sent it from Dashboard.
             const fromUser = !m.from_name || m.from_name === 'Dashboard' || m.from_name === 'api' || m.from_name === 'hub';
@@ -459,8 +498,38 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
             const senderBadge = fromUser
               ? null
               : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-[9px] text-purple-300 font-medium">↳ {m.from_name}</span>;
+            if (event.kind === 'reply') {
+              return (
+                <div key={`${m.task_id}:reply`} className="flex justify-start">
+                  <div className="max-w-[92%] sm:max-w-[85%] bg-green-500/8 border border-green-500/15 rounded-2xl rounded-bl-md px-3 py-2.5 sm:px-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {m.to_name && <AliasAvatar alias={m.to_name} size={14} />}
+                        <span className="text-[10px] text-[var(--fg)] font-medium truncate">{m.to_name}</span>
+                        <span className="text-[9px] text-green-300/70">replied</span>
+                      </div>
+                      <span className="shrink-0 rounded-md bg-black/20 px-1.5 py-0.5 text-[9px] text-[var(--fg-dim)]" title={event.at}>
+                        {timeAgo(event.at)} · {formatTimestamp(event.at)}
+                      </span>
+                    </div>
+                    <div className="mb-2 rounded-lg border-l-2 border-cyan-400/40 bg-black/20 px-2.5 py-1.5">
+                      <div className="text-[9px] text-cyan-300/80">
+                        引用 {senderLabel} 的任务 · {formatTimestamp(m.created_at)}
+                      </div>
+                      <div className="mt-0.5 max-h-10 overflow-hidden text-[11px] leading-5 text-[var(--fg-muted)]">
+                        {quotePreview(m.content) || 'No content'}
+                      </div>
+                    </div>
+                    <div className="text-[13px] text-[var(--fg)]">
+                      <MarkdownContent text={m.result} />
+                      <AttachmentPreviews text={m.result} />
+                    </div>
+                  </div>
+                </div>
+              );
+            }
             return (
-            <div key={m.task_id} className="space-y-2">
+            <div key={`${m.task_id}:task`} className="space-y-2">
               {/* Outgoing task — labeled with origin so peer-forwarded tasks are obvious */}
               <div className="flex justify-end">
                 <div className="max-w-[92%] sm:max-w-[85%] bg-cyan-500/8 border border-cyan-500/15 rounded-2xl rounded-br-md px-3 py-2.5 sm:px-4 shadow-sm">
@@ -476,27 +545,13 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                     <StatusBar status={m.status} />
                     <div className="flex items-center gap-2 shrink-0">
                       {senderBadge}
-                      <span className="text-[9px] text-[var(--fg-dim)]">{timeAgo(m.created_at)}</span>
+                      <span className="rounded-md bg-black/15 px-1.5 py-0.5 text-[9px] text-[var(--fg-dim)]" title={m.created_at}>
+                        {timeAgo(m.created_at)} · {formatTimestamp(m.created_at)}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Incoming reply */}
-              {m.result && (
-                <div className="flex justify-start">
-                  <div className="max-w-[92%] sm:max-w-[85%] bg-green-500/8 border border-green-500/15 rounded-2xl rounded-bl-md px-3 py-2.5 sm:px-4 shadow-sm">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      {m.to_name && <AliasAvatar alias={m.to_name} size={14} />}
-                      <span className="text-[10px] text-[var(--fg)] font-medium">{m.to_name}</span>
-                    </div>
-                    <div className="text-[13px] text-[var(--fg)]">
-                      <MarkdownContent text={m.result} />
-                      <AttachmentPreviews text={m.result} />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Typing indicator when running */}
               {m.status === 'running' && !m.result && (
