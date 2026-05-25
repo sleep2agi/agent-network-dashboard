@@ -655,7 +655,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40 lg:hidden anet-fade-in" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-[100dvh] w-full lg:w-[500px] bg-[var(--bg)] border-l border-[var(--border)] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
+      <div className="fixed top-0 right-0 h-[100dvh] w-full lg:w-[640px] xl:w-[760px] 2xl:w-[860px] bg-[var(--bg)] border-l border-[var(--border)] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
           <div className="flex items-center gap-3">
