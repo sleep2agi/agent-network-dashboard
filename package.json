@@ -7,6 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "app:android:init": "npx cap add android",
+    "app:android:sync": "npx cap sync android",
+    "app:android:open": "npx cap open android",
+    "app:ios:init": "npx cap add ios",
+    "app:ios:sync": "npx cap sync ios",
+    "app:ios:open": "npx cap open ios",
+    "app:desktop": "electron apps/desktop/electron/main.cjs",
+    "app:desktop:pack": "electron-builder --config electron-builder.json",
     "prepublishOnly": "[ -f .next/BUILD_ID ] || (echo 'prepublishOnly: .next/BUILD_ID missing — run npm run build first (see commit 05c1ebf body for R224 chunk-500 root cause)' >&2 && exit 1)"
   },
   "bin": {
@@ -26,6 +34,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@capacitor/core": "^7.4.4",
     "next": "16.2.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -34,12 +43,17 @@
     "swr": "^2.4.1"
   },
   "devDependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
+    "electron": "^39.2.6",
+    "electron-builder": "^26.0.12",
     "eslint-config-next": "16.2.3",
     "tailwindcss": "^4",
     "typescript": "^5"
