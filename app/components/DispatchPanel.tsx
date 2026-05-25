@@ -73,7 +73,7 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-40 anet-fade-in" onClick={onClose} />
-      <div className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-[5%] bg-[#0a0a1a] border border-[#2a2a4a] rounded-2xl z-50 flex flex-col shadow-2xl shadow-black/70 overflow-hidden anet-fade-in">
+      <div className="fixed inset-x-3 inset-y-3 max-h-[calc(100dvh-1.5rem)] lg:inset-x-[15%] lg:inset-y-[5%] lg:max-h-none bg-[#0a0a1a] border border-[#2a2a4a] rounded-2xl z-50 flex flex-col shadow-2xl shadow-black/70 overflow-hidden anet-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2a4a] bg-[#0d0d1a]">
           <div>
