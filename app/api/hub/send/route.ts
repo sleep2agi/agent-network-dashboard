@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   if (authFailure) return authFailure;
 
   try {
-    const { alias, task, priority } = await req.json();
+    const { alias, task, priority, attachments } = await req.json();
 
     // Get user's network_id for proper network scoping
     let networkId: string | undefined;
@@ -33,7 +33,16 @@ export async function POST(req: Request) {
         jsonrpc: '2.0',
         id: Date.now(),
         method: 'tools/call',
-        params: { name: 'send_task', arguments: { alias, task, priority: priority || 'normal', ...(networkId ? { network_id: networkId } : {}) } },
+        params: {
+          name: 'send_task',
+          arguments: {
+            alias,
+            task,
+            priority: priority || 'normal',
+            ...(Array.isArray(attachments) && attachments.length ? { meta: { attachments } } : {}),
+            ...(networkId ? { network_id: networkId } : {}),
+          },
+        },
       }),
     });
     const raw = await res.text();
