@@ -26,7 +26,7 @@ export function CommandCenter({ tabs, activeTab, onOpenTab, onCloseTab, onSetAct
       <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed top-0 right-0 h-full w-full lg:w-[500px] bg-[#0a0a1a] border-l border-[#2a2a4a] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
+      <div className="fixed top-0 right-0 h-[100dvh] w-full lg:w-[500px] bg-[#0a0a1a] border-l border-[#2a2a4a] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
         {/* Tab bar */}
         <div className="flex items-center border-b border-[#2a2a4a] bg-[#0d0d1a] overflow-x-auto">
           <div className="flex-1 flex min-w-0">

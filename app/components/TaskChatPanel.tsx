@@ -437,7 +437,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   const chatContent = (
     <>
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 space-y-3 sm:space-y-4">
           {!historyLoaded && (
             <div className="flex justify-center py-8">
               <div className="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
@@ -463,7 +463,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
             <div key={m.task_id} className="space-y-2">
               {/* Outgoing task — labeled with origin so peer-forwarded tasks are obvious */}
               <div className="flex justify-end">
-                <div className="max-w-[85%] bg-cyan-500/8 border border-cyan-500/15 rounded-2xl rounded-br-md px-4 py-2.5 shadow-sm">
+                <div className="max-w-[92%] sm:max-w-[85%] bg-cyan-500/8 border border-cyan-500/15 rounded-2xl rounded-br-md px-3 py-2.5 sm:px-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-[10px] font-medium ${fromUser ? 'text-cyan-400' : 'text-purple-300'}`}>{senderLabel}</span>
                     {!fromUser && <span className="text-[9px] text-[var(--fg-dim)]">forwarded to {m.to_name}</span>}
@@ -472,7 +472,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                     <MarkdownContent text={m.content} />
                     <AttachmentPreviews text={m.content} />
                   </div>
-                  <div className="flex items-center justify-between mt-1.5 gap-3">
+                  <div className="flex flex-wrap items-center justify-between mt-1.5 gap-2 sm:gap-3">
                     <StatusBar status={m.status} />
                     <div className="flex items-center gap-2 shrink-0">
                       {senderBadge}
@@ -485,7 +485,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
               {/* Incoming reply */}
               {m.result && (
                 <div className="flex justify-start">
-                  <div className="max-w-[85%] bg-green-500/8 border border-green-500/15 rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm">
+                  <div className="max-w-[92%] sm:max-w-[85%] bg-green-500/8 border border-green-500/15 rounded-2xl rounded-bl-md px-3 py-2.5 sm:px-4 shadow-sm">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       {m.to_name && <AliasAvatar alias={m.to_name} size={14} />}
                       <span className="text-[10px] text-[var(--fg)] font-medium">{m.to_name}</span>
@@ -517,7 +517,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
         </div>
 
         {/* Input area */}
-        <div className="border-t border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-3">
+        <div className="border-t border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-4">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               {/* @ mention dropdown */}
@@ -540,7 +540,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                 onPaste={handlePaste}
                 placeholder={`Message ${alias}...`}
                 rows={1}
-                className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-2.5 pr-24 text-sm text-[var(--fg)] placeholder-[var(--fg-dim)] focus:border-cyan-500/40 focus:outline-none resize-none transition-colors"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-3 py-2.5 pr-24 text-base sm:px-4 sm:text-sm text-[var(--fg)] placeholder-[var(--fg-dim)] focus:border-cyan-500/40 focus:outline-none resize-none transition-colors"
               />
               <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
                 <label className="p-1 text-[var(--fg-dim)] hover:text-cyan-300 cursor-pointer rounded hover:bg-cyan-500/10" title="Attach image">
@@ -585,7 +585,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
               ))}
             </div>
           )}
-          <div className="flex justify-between text-[9px] text-[var(--fg-dim)] mt-1.5">
+          <div className="hidden sm:flex justify-between text-[9px] text-[var(--fg-dim)] mt-1.5">
             <span>{input.includes('@') ? `Sending to: ${targetAlias}` : `Type @ to mention another node`}</span>
             <span>Enter to send · paste image</span>
           </div>
@@ -600,7 +600,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40 lg:hidden anet-fade-in" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-full w-full lg:w-[500px] bg-[var(--bg)] border-l border-[var(--border)] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
+      <div className="fixed top-0 right-0 h-[100dvh] w-full lg:w-[500px] bg-[var(--bg)] border-l border-[var(--border)] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
           <div className="flex items-center gap-3">
