@@ -18,11 +18,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-[100dvh]">
+    <div className="flex min-h-[100dvh] max-w-full overflow-x-hidden">
       <Sidebar />
-      <main className="flex-1 min-w-0 flex flex-col">
+      <main className="flex-1 min-w-0 max-w-full overflow-x-hidden flex flex-col">
         <HealthBanner />
-        <div className="flex-1 min-w-0 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
+        <div className="flex-1 min-w-0 max-w-full overflow-x-hidden pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
       </main>
       <MobileNav />
       <CommandPalette />

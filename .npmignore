@@ -1,26 +1,14 @@
-# Only exclude dev/test files — keep .next build output
-node_modules/
-.git/
-.env*
-.playwright/
-tests/
-*.test.*
-CLAUDE.md
-.claude/
+android/
+ios/
+dist/
+docs/
+apps/
+scripts/
 .anet/
-
-# Build artifacts that should NEVER ship to npm consumers
-# (a previous 0.4.3-preview.0 publish got stuck for 12 min because
-#  .next/dev/ was 419MB of dev-mode artifacts; .next/cache is
-#  redundant once a fresh build runs)
-.next/dev/
-.next/cache/
-tsconfig.tsbuildinfo
-*.log
-*.tgz
-.vercel/
-
-# Local audit artifacts
-docs/light-theme-audit-*.md
+.claude/
+node_modules/
 test-results/
 playwright-report/
+*.tgz
+*.log
+*.tsbuildinfo
