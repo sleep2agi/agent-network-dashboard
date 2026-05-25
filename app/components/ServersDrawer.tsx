@@ -195,27 +195,27 @@ function AgentList({ agents }: { agents?: ServerAgent[] }) {
   );
 }
 
-export function ServersDrawer() {
-  const [open, setOpen] = useState(false);
-  /** v0.10.0 Hero 1+2 — per-server expanded state for detail card
-   *  (sparklines + disk bar + agent rollup). Stored as a Set of
-   *  hostnames; persists in localStorage so the user's last selection
-   *  survives reload. Independent of the drawer's open/close state. */
+function useServers(enabled = true) {
+  const { data, error } = useSWR<ServersResponse>(
+    enabled ? '/api/hub/servers' : null,
+    fetcher,
+    { refreshInterval: 5000, dedupingInterval: 3000 },
+  );
+  const servers = data?.servers ?? [];
+  const unavailable = data?.unavailable === true;
+  const onlineCount = servers.filter(s => s.status === 'online').length;
+  const loading = enabled && !data && !error;
+  return { data, error, servers, unavailable, onlineCount, loading };
+}
+
+export function ServersPanel({ enabled = true, className = '' }: { enabled?: boolean; className?: string }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  // Drawer state is per-user-machine — persist like the other dashboard
-  // sticky toggles (`anet-topo-layout`, `anet-topo-view`, etc.).
   useEffect(() => {
-    try { if (localStorage.getItem('anet-servers-drawer') === '1') setOpen(true); } catch {}
     try {
       const raw = localStorage.getItem('anet-servers-drawer-expanded');
       if (raw) setExpanded(new Set(JSON.parse(raw)));
     } catch {}
   }, []);
-  const toggle = () => setOpen(prev => {
-    const next = !prev;
-    try { localStorage.setItem('anet-servers-drawer', next ? '1' : '0'); } catch {}
-    return next;
-  });
   const toggleExpanded = (hostname: string) => setExpanded(prev => {
     const next = new Set(prev);
     if (next.has(hostname)) next.delete(hostname); else next.add(hostname);
@@ -223,19 +223,165 @@ export function ServersDrawer() {
     return next;
   });
 
+  const { data, error, servers, unavailable, loading } = useServers(enabled);
+
+  return (
+    <div className={`min-h-0 overflow-y-auto px-2 py-2 space-y-2 ${className}`} data-servers-body>
+      {loading && (
+        <div className="text-[10px] text-[var(--fg-muted)] font-mono text-center py-4">
+          loading servers…
+        </div>
+      )}
+      {error && !data && (
+        <div className="rounded-md border px-2.5 py-2 text-[10px] font-mono"
+          style={{ background: 'rgb(239 68 68 / 0.06)', borderColor: 'rgb(239 68 68 / 0.25)', color: '#ef4444' }}>
+          hub unreachable · retrying every 5s
+        </div>
+      )}
+      {unavailable && (
+        <div className="text-[10px] text-[var(--fg-muted)] font-mono text-center py-3 leading-relaxed">
+          host telemetry not available<br/>
+          <span className="text-[var(--fg-dim)]">upgrade commhub-server ≥ 0.8.1-preview.2</span>
+        </div>
+      )}
+      {!loading && !error && !unavailable && servers.length === 0 && (
+        <div className="text-[10px] text-[var(--fg-muted)] font-mono text-center py-4">
+          no servers reporting yet
+        </div>
+      )}
+      {servers.map(s => {
+        const offline = s.status === 'offline';
+        const cpuPct = s.cpu_load_1min != null && s.cpu_cores > 0 ? (s.cpu_load_1min / s.cpu_cores) * 100 : null;
+        const memPct = s.mem_used_gb != null && s.mem_total_gb != null && s.mem_total_gb > 0 ? (s.mem_used_gb / s.mem_total_gb) * 100 : null;
+        const diskPct = s.disk_used_gb != null && s.disk_total_gb != null && s.disk_total_gb > 0 ? (s.disk_used_gb / s.disk_total_gb) * 100 : null;
+        const isExpanded = expanded.has(s.hostname);
+        return (
+          <div
+            key={s.hostname}
+            className="rounded-lg border px-2.5 py-2 space-y-1.5"
+            style={{
+              background: 'var(--bg)',
+              borderColor: 'var(--border)',
+              opacity: offline ? 0.55 : 1,
+            }}
+            data-server-card={s.hostname}
+            data-server-expanded={isExpanded ? 'true' : 'false'}
+            title={s.ip ? `${s.hostname} · ${s.ip}` : s.hostname}
+          >
+            {/* v0.10.0 Hero 1+2: header row — click toggles expanded
+                detail view (sparklines + disk + agent rollup). */}
+            <button
+              type="button"
+              onClick={() => toggleExpanded(s.hostname)}
+              aria-expanded={isExpanded}
+              className="w-full flex items-center justify-between gap-2 text-left"
+              data-server-card-toggle={s.hostname}
+            >
+              <div className="min-w-0 flex items-center gap-1.5">
+                {/* Hero 1 health badge — worst-of CPU/Mem/Disk */}
+                {!offline && <HealthBadge cpu={cpuPct} mem={memPct} disk={diskPct} />}
+                <span className="font-mono text-[12px] font-semibold truncate" style={{ color: 'var(--fg)' }}>{s.hostname}</span>
+                {s.note && <span className="text-[9px] text-[var(--fg-dim)]">({s.note})</span>}
+              </div>
+              <span className="flex items-center gap-1 shrink-0">
+                <span className="text-[10px] text-[var(--fg-muted)] font-mono tabular-nums">
+                  {s.agent_count}&nbsp;agent{s.agent_count === 1 ? '' : 's'}
+                </span>
+                {/* Chevron — rotates 90° on expanded */}
+                <svg
+                  width="10" height="10" viewBox="0 0 10 10"
+                  style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }}
+                  aria-hidden
+                >
+                  <path d="M3 1.5L7 5L3 8.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </button>
+            {!offline && cpuPct != null && (
+              <Bar pct={cpuPct} label={`CPU ${s.cpu_load_1min!.toFixed(2)}/${s.cpu_cores}`} />
+            )}
+            {!offline && memPct != null && (
+              <Bar pct={memPct} label={`RAM ${s.mem_used_gb!.toFixed(1)}/${s.mem_total_gb!.toFixed(1)}G`} />
+            )}
+            {offline && (
+              <div className="text-[10px] text-[var(--fg-dim)] font-mono italic">CPU n/a · RAM n/a · offline</div>
+            )}
+            {/* v0.10.0 Hero 1+2: expanded detail — disk bar +
+                5-min sparklines + agent rollup. Visible only when
+                the user clicks the card. Renders gracefully when
+                upstream hub hasn't shipped optional fields. */}
+            {isExpanded && !offline && (
+              <div className="pt-1 mt-1 border-t space-y-1.5" style={{ borderColor: 'var(--border)' }}>
+                {diskPct != null ? (
+                  <Bar pct={diskPct} label={`DISK ${s.disk_used_gb!.toFixed(1)}/${s.disk_total_gb!.toFixed(1)}G`} />
+                ) : (
+                  /* #157 sibling fix — same misleading version-pin copy
+                     dropped at the disk-metric placeholder. Same
+                     rationale as the agent-rollup copy above. */
+                  <div className="text-[9px] text-[var(--fg-dim)] font-mono italic" data-server-disk-missing="true">disk metric not reported by hub</div>
+                )}
+                {s.cpu_history && s.cpu_history.length >= 2 && (
+                  <div className="space-y-0.5">
+                    <div className="text-[9px] text-[var(--fg-muted)] font-mono">CPU · 5-min</div>
+                    <Sparkline values={s.cpu_history} tint="#10b981" label="CPU" />
+                  </div>
+                )}
+                {s.mem_history && s.mem_history.length >= 2 && (
+                  <div className="space-y-0.5">
+                    <div className="text-[9px] text-[var(--fg-muted)] font-mono">RAM · 5-min</div>
+                    <Sparkline values={s.mem_history} tint="#06b6d4" label="MEM" />
+                  </div>
+                )}
+                {/* v0.10.2 RFC-014 §7 close gate #3 — disk usage
+                   5-min curve. Amber tint matches the disk bar
+                   tier convention (DISK > CPU/Mem in alert-
+                   priority hierarchy since disk-full is a hard
+                   failure mode). Render only when agent-node
+                   2.4.1-preview.0+ has shipped disk_history;
+                   backward-compat handles older agents silently
+                   (no sparkline, no broken state). */}
+                {s.disk_history && s.disk_history.length >= 2 && (
+                  <div className="space-y-0.5">
+                    <div className="text-[9px] text-[var(--fg-muted)] font-mono">DISK · 5-min</div>
+                    <Sparkline values={s.disk_history} tint="#f59e0b" label="DISK" />
+                  </div>
+                )}
+                <div className="pt-1">
+                  <div className="text-[9px] text-[var(--fg-muted)] font-mono mb-0.5">agents</div>
+                  <AgentList agents={s.agents} />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {servers.length > 0 && (
+        <div className="pt-1 text-[9px] text-[var(--fg-dim)] font-mono text-center">
+          live · refreshing every 5s
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ServersDrawer() {
+  const [open, setOpen] = useState(false);
+  // Drawer state is per-user-machine — persist like the other dashboard
+  // sticky toggles (`anet-topo-layout`, `anet-topo-view`, etc.).
+  useEffect(() => {
+    try { if (localStorage.getItem('anet-servers-drawer') === '1') setOpen(true); } catch {}
+  }, []);
+  const toggle = () => setOpen(prev => {
+    const next = !prev;
+    try { localStorage.setItem('anet-servers-drawer', next ? '1' : '0'); } catch {}
+    return next;
+  });
+
   // Round 20 / #119 step 3 final delivery — real SWR fetch. 5s refresh
   // matches the other live drawers (HealthBanner, Sidebar) so an operator
   // sees host telemetry update in roughly the same beat as session state.
   // Only poll while expanded — collapsed icon strip doesn't need fresh data.
-  const { data, error } = useSWR<ServersResponse>(
-    open ? '/api/hub/servers' : null,
-    fetcher,
-    { refreshInterval: 5000, dedupingInterval: 3000 },
-  );
-  const servers = data?.servers ?? [];
-  const unavailable = data?.unavailable === true;
-  const onlineCount = servers.filter(s => s.status === 'online').length;
-  const loading = open && !data && !error;
+  const { servers, onlineCount } = useServers(open);
 
   return (
     <aside
@@ -271,141 +417,7 @@ export function ServersDrawer() {
       </button>
 
       {open && (
-        <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-2" data-servers-body>
-          {loading && (
-            <div className="text-[10px] text-[var(--fg-muted)] font-mono text-center py-4">
-              loading servers…
-            </div>
-          )}
-          {error && !data && (
-            <div className="rounded-md border px-2.5 py-2 text-[10px] font-mono"
-              style={{ background: 'rgb(239 68 68 / 0.06)', borderColor: 'rgb(239 68 68 / 0.25)', color: '#ef4444' }}>
-              hub unreachable · retrying every 5s
-            </div>
-          )}
-          {unavailable && (
-            <div className="text-[10px] text-[var(--fg-muted)] font-mono text-center py-3 leading-relaxed">
-              host telemetry not available<br/>
-              <span className="text-[var(--fg-dim)]">upgrade commhub-server ≥ 0.8.1-preview.2</span>
-            </div>
-          )}
-          {!loading && !error && !unavailable && servers.length === 0 && (
-            <div className="text-[10px] text-[var(--fg-muted)] font-mono text-center py-4">
-              no servers reporting yet
-            </div>
-          )}
-          {servers.map(s => {
-            const offline = s.status === 'offline';
-            const cpuPct = s.cpu_load_1min != null && s.cpu_cores > 0 ? (s.cpu_load_1min / s.cpu_cores) * 100 : null;
-            const memPct = s.mem_used_gb != null && s.mem_total_gb != null && s.mem_total_gb > 0 ? (s.mem_used_gb / s.mem_total_gb) * 100 : null;
-            const diskPct = s.disk_used_gb != null && s.disk_total_gb != null && s.disk_total_gb > 0 ? (s.disk_used_gb / s.disk_total_gb) * 100 : null;
-            const isExpanded = expanded.has(s.hostname);
-            return (
-              <div
-                key={s.hostname}
-                className="rounded-lg border px-2.5 py-2 space-y-1.5"
-                style={{
-                  background: 'var(--bg)',
-                  borderColor: 'var(--border)',
-                  opacity: offline ? 0.55 : 1,
-                }}
-                data-server-card={s.hostname}
-                data-server-expanded={isExpanded ? 'true' : 'false'}
-                title={s.ip ? `${s.hostname} · ${s.ip}` : s.hostname}
-              >
-                {/* v0.10.0 Hero 1+2: header row — click toggles expanded
-                    detail view (sparklines + disk + agent rollup). */}
-                <button
-                  type="button"
-                  onClick={() => toggleExpanded(s.hostname)}
-                  aria-expanded={isExpanded}
-                  className="w-full flex items-center justify-between gap-2 text-left"
-                  data-server-card-toggle={s.hostname}
-                >
-                  <div className="min-w-0 flex items-center gap-1.5">
-                    {/* Hero 1 health badge — worst-of CPU/Mem/Disk */}
-                    {!offline && <HealthBadge cpu={cpuPct} mem={memPct} disk={diskPct} />}
-                    <span className="font-mono text-[12px] font-semibold truncate" style={{ color: 'var(--fg)' }}>{s.hostname}</span>
-                    {s.note && <span className="text-[9px] text-[var(--fg-dim)]">({s.note})</span>}
-                  </div>
-                  <span className="flex items-center gap-1 shrink-0">
-                    <span className="text-[10px] text-[var(--fg-muted)] font-mono tabular-nums">
-                      {s.agent_count}&nbsp;agent{s.agent_count === 1 ? '' : 's'}
-                    </span>
-                    {/* Chevron — rotates 90° on expanded */}
-                    <svg
-                      width="10" height="10" viewBox="0 0 10 10"
-                      style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }}
-                      aria-hidden
-                    >
-                      <path d="M3 1.5L7 5L3 8.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                </button>
-                {!offline && cpuPct != null && (
-                  <Bar pct={cpuPct} label={`CPU ${s.cpu_load_1min!.toFixed(2)}/${s.cpu_cores}`} />
-                )}
-                {!offline && memPct != null && (
-                  <Bar pct={memPct} label={`RAM ${s.mem_used_gb!.toFixed(1)}/${s.mem_total_gb!.toFixed(1)}G`} />
-                )}
-                {offline && (
-                  <div className="text-[10px] text-[var(--fg-dim)] font-mono italic">CPU n/a · RAM n/a · offline</div>
-                )}
-                {/* v0.10.0 Hero 1+2: expanded detail — disk bar +
-                    5-min sparklines + agent rollup. Visible only when
-                    the user clicks the card. Renders gracefully when
-                    upstream hub hasn't shipped optional fields. */}
-                {isExpanded && !offline && (
-                  <div className="pt-1 mt-1 border-t space-y-1.5" style={{ borderColor: 'var(--border)' }}>
-                    {diskPct != null ? (
-                      <Bar pct={diskPct} label={`DISK ${s.disk_used_gb!.toFixed(1)}/${s.disk_total_gb!.toFixed(1)}G`} />
-                    ) : (
-                      /* #157 sibling fix — same misleading version-pin copy
-                         dropped at the disk-metric placeholder. Same
-                         rationale as the agent-rollup copy above. */
-                      <div className="text-[9px] text-[var(--fg-dim)] font-mono italic" data-server-disk-missing="true">disk metric not reported by hub</div>
-                    )}
-                    {s.cpu_history && s.cpu_history.length >= 2 && (
-                      <div className="space-y-0.5">
-                        <div className="text-[9px] text-[var(--fg-muted)] font-mono">CPU · 5-min</div>
-                        <Sparkline values={s.cpu_history} tint="#10b981" label="CPU" />
-                      </div>
-                    )}
-                    {s.mem_history && s.mem_history.length >= 2 && (
-                      <div className="space-y-0.5">
-                        <div className="text-[9px] text-[var(--fg-muted)] font-mono">RAM · 5-min</div>
-                        <Sparkline values={s.mem_history} tint="#06b6d4" label="MEM" />
-                      </div>
-                    )}
-                    {/* v0.10.2 RFC-014 §7 close gate #3 — disk usage
-                       5-min curve. Amber tint matches the disk bar
-                       tier convention (DISK > CPU/Mem in alert-
-                       priority hierarchy since disk-full is a hard
-                       failure mode). Render only when agent-node
-                       2.4.1-preview.0+ has shipped disk_history;
-                       backward-compat handles older agents silently
-                       (no sparkline, no broken state). */}
-                    {s.disk_history && s.disk_history.length >= 2 && (
-                      <div className="space-y-0.5">
-                        <div className="text-[9px] text-[var(--fg-muted)] font-mono">DISK · 5-min</div>
-                        <Sparkline values={s.disk_history} tint="#f59e0b" label="DISK" />
-                      </div>
-                    )}
-                    <div className="pt-1">
-                      <div className="text-[9px] text-[var(--fg-muted)] font-mono mb-0.5">agents</div>
-                      <AgentList agents={s.agents} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {servers.length > 0 && (
-            <div className="pt-1 text-[9px] text-[var(--fg-dim)] font-mono text-center">
-              live · refreshing every 5s
-            </div>
-          )}
-        </div>
+        <ServersPanel enabled={open} className="flex-1" />
       )}
     </aside>
   );
