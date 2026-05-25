@@ -3,9 +3,9 @@ const { spawn } = require("child_process");
 const path = require("path");
 
 const port = process.env.PORT || "3000";
-// Bind address: HOSTNAME (next start convention) or HOST. Default 127.0.0.1
-// for safety; LAN access via --hostname 0.0.0.0 / HOSTNAME=0.0.0.0.
-const hostname = process.env.HOSTNAME || process.env.HOST || "127.0.0.1";
+// HOST is the dashboard/anet-facing override. HOSTNAME is often set by the OS
+// to the machine name, so only use it when HOST is not provided.
+const hostname = process.env.HOST || process.env.HOSTNAME || "127.0.0.1";
 const dir = path.join(__dirname, "..");
 
 console.log(`[dashboard] Starting on ${hostname}:${port}...`);
