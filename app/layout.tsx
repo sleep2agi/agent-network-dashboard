@@ -13,6 +13,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Agent Network Dashboard",
   description: "Real-time monitoring dashboard for Agent Network nodes via CommHub",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Agent Network",
+  },
   icons: { icon: '/favicon.svg' },
   openGraph: {
     title: "Agent Network Dashboard",
