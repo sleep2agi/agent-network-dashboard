@@ -1,6 +1,6 @@
 const { app, BrowserWindow, shell } = require('electron');
 
-const dashboardUrl = process.env.ANET_DASHBOARD_URL || 'https://dm.vansin.top:3000';
+const dashboardUrl = process.env.ANET_DASHBOARD_URL || 'http://dm.vansin.top:3000';
 
 function createWindow() {
   const win = new BrowserWindow({

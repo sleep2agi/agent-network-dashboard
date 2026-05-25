@@ -6,7 +6,7 @@ This repo ships three thin wrappers around the existing Dashboard web UI:
 - iOS/Android: Capacitor WebView shell pointed at a Dashboard URL.
 - macOS/desktop: Electron shell pointed at the same Dashboard URL.
 
-The default URL is `https://dm.vansin.top:3000`. Override it with:
+The default URL is `http://dm.vansin.top:3000`. Override it with:
 
 ```bash
 export ANET_DASHBOARD_URL="https://your-dashboard.example.com"
@@ -27,8 +27,8 @@ Open the HTTPS Dashboard from a phone and use "Add to Home Screen".
 
 ```bash
 npm install
-ANET_DASHBOARD_URL=https://dm.vansin.top:3000 npm run app:ios:init
-ANET_DASHBOARD_URL=https://dm.vansin.top:3000 npm run app:ios:sync
+ANET_DASHBOARD_URL=http://dm.vansin.top:3000 npm run app:ios:init
+ANET_DASHBOARD_URL=http://dm.vansin.top:3000 npm run app:ios:sync
 npm run app:ios:open
 ```
 
@@ -38,8 +38,8 @@ Requires Xcode on macOS.
 
 ```bash
 npm install
-ANET_DASHBOARD_URL=https://dm.vansin.top:3000 npm run app:android:init
-ANET_DASHBOARD_URL=https://dm.vansin.top:3000 npm run app:android:sync
+ANET_DASHBOARD_URL=http://dm.vansin.top:3000 npm run app:android:init
+ANET_DASHBOARD_URL=http://dm.vansin.top:3000 npm run app:android:sync
 npm run app:android:open
 ```
 
@@ -49,7 +49,7 @@ Requires Android Studio.
 
 ```bash
 npm install
-ANET_DASHBOARD_URL=https://dm.vansin.top:3000 npm run app:desktop
+ANET_DASHBOARD_URL=http://dm.vansin.top:3000 npm run app:desktop
 npm run app:desktop:pack
 ```
 

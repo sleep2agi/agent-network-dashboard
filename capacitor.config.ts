@@ -1,6 +1,6 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-const dashboardUrl = process.env.ANET_DASHBOARD_URL || 'https://dm.vansin.top:3000';
+const dashboardUrl = process.env.ANET_DASHBOARD_URL || 'http://dm.vansin.top:3000';
 
 const config: CapacitorConfig = {
   appId: 'ai.sleep2agi.agentnetwork.dashboard',
