@@ -47,7 +47,7 @@ export default function NodesPage() {
   const onlineCount = sessions.filter(s => sseFor(s)).length;
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       <div className="flex items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Nodes</h1>
         <span className="text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded-full border border-green-800/30">
@@ -150,7 +150,7 @@ export default function NodesPage() {
           />
         )
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid min-w-0 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(s => {
             const statusKey = s.online ? s.status : 'offline';
             const progress = typeof s.progress === 'number' ? s.progress : 0;
@@ -162,7 +162,7 @@ export default function NodesPage() {
                 tabIndex={0}
                 onClick={() => setChatAlias(s.alias)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setChatAlias(s.alias); } }}
-                className={`relative overflow-hidden rounded-xl border border-[#2a2a4a] bg-[#111128] p-4 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-60' : ''}`}
+                className={`relative min-w-0 max-w-full overflow-hidden rounded-xl border border-[#2a2a4a] bg-[#111128] p-4 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-60' : ''}`}
               >
                 {!s.online && (
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -184,7 +184,7 @@ export default function NodesPage() {
                       {(s.agent || '—')}<span className="text-gray-700 mx-1.5">·</span><span title={s.server || ''}>{shortServer(s.server)}</span>
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[10px] text-cyan-300/70">Tap to chat</span>
+                  <span className="hidden shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[10px] text-cyan-300/70 sm:inline">Tap to chat</span>
                 </div>
 
                 <div className="mt-3 rounded-lg border border-[#1a1a2a] bg-[#0a0a15] px-3 py-2 text-xs">
@@ -244,7 +244,7 @@ export default function NodesPage() {
                     </div>
                   </div>
                   <div className="col-span-2 truncate text-xs text-gray-400" title={s.server || ''}>
-                    {s.agent || '--'}<span className="text-gray-700 mx-1.5">·</span>{shortServer(s.server)}
+                    <span className="truncate">{s.agent || '--'}<span className="text-gray-700 mx-1.5">·</span>{shortServer(s.server)}</span>
                   </div>
                   <div className="col-span-4 truncate text-xs text-gray-500" title={s.task || ''}>{s.task || '--'}</div>
                   <div className="col-span-1 text-xs text-gray-500">{timeAgo(s.last_seen_at || s.updated_at)}</div>
