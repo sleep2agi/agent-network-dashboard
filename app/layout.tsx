@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppShell } from "./components/AppShell";
 import { NetworkProvider } from "./lib/network-context";
 import { ThemeProvider } from "./components/ThemeSwitcher";
+import { PwaInstaller } from "./components/PwaInstaller";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -57,6 +58,7 @@ export default function RootLayout({
       <body className="min-h-full" style={{ background: 'var(--bg)', color: 'var(--fg)' }}>
         <ThemeProvider>
           <NetworkProvider>
+            <PwaInstaller />
             <AppShell>{children}</AppShell>
           </NetworkProvider>
         </ThemeProvider>
