@@ -123,6 +123,7 @@ interface TaskChatPanelProps {
 export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskChatPanelProps) {
   const [messages, setMessages] = useState<ChatTask[]>([]);
   const [input, setInput] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [priority, setPriority] = useState('normal');
   const [sending, setSending] = useState(false);
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
@@ -228,8 +229,21 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
     return () => clearInterval(interval);
   }, [pollingIds]);
 
+  const uploadAttachments = async () => {
+    const uploaded = [];
+    for (const file of attachedFiles) {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/hub/upload', { method: 'POST', body: form });
+      const data = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
+      if (!res.ok || !data.ok) throw new Error(data.error || data.detail || `upload failed: ${file.name}`);
+      uploaded.push({ name: file.name, path: data.path, url: data.url });
+    }
+    return uploaded;
+  };
+
   const send = async () => {
-    if (!input.trim() || sending) return;
+    if ((!input.trim() && attachedFiles.length === 0) || sending) return;
     let taskContent = input.trim();
     let sendTo = targetAlias;
 
@@ -245,8 +259,13 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
 
     setSending(true);
     setInput('');
+    setAttachedFiles([]);
     setShowMentions(false);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
+
+    const pendingAttachmentText = attachedFiles.length > 0
+      ? `\n\n[Dashboard 附件待上传]\n${attachedFiles.map(f => `- 图片: ${f.name}`).join('\n')}`
+      : '';
 
     // Optimistic echo first so the user always sees their message in history
     // even if the network call fails or the server returns ok:false. Earlier
@@ -259,13 +278,27 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
       to_name: sendTo,
       status: 'created',
       priority,
-      content: taskContent,
+      content: `${taskContent}${pendingAttachmentText}`.trim(),
       result: '',
       created_at: new Date().toISOString(),
     };
     setMessages(prev => [...prev, optimistic]);
 
     try {
+      const uploaded = await uploadAttachments();
+      if (uploaded.length > 0) {
+        const attachmentText = [
+          '',
+          '',
+          '[Dashboard 附件]',
+          ...uploaded.map(f => `- 图片: ${f.path}`),
+          ...uploaded.map(f => `- 预览: ${f.url}`),
+        ].join('\n');
+        taskContent = `${taskContent}${attachmentText}`.trim();
+        setMessages(prev => prev.map(m =>
+          m.task_id === localTaskId ? { ...m, content: taskContent } : m,
+        ));
+      }
       const res = await fetch('/api/hub/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -316,6 +349,20 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
       }
     }
     setShowMentions(false);
+  };
+
+  const addImageFiles = (files: FileList | File[]) => {
+    const images = Array.from(files).filter(file => file.type.startsWith('image/'));
+    if (images.length === 0) return;
+    setAttachedFiles(prev => [...prev, ...images].slice(0, 6));
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = Array.from(e.clipboardData.files || []);
+    if (files.some(file => file.type.startsWith('image/'))) {
+      addImageFiles(files);
+      e.preventDefault();
+    }
   };
 
   const insertMention = (nodeName: string) => {
@@ -437,11 +484,24 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                 value={input}
                 onChange={e => { handleInputChange(e.target.value); autoResize(e.target); }}
                 onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
                 placeholder={`Message ${alias}...`}
                 rows={1}
-                className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-2.5 pr-16 text-sm text-[var(--fg)] placeholder-[var(--fg-dim)] focus:border-cyan-500/40 focus:outline-none resize-none transition-colors"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-2.5 pr-24 text-sm text-[var(--fg)] placeholder-[var(--fg-dim)] focus:border-cyan-500/40 focus:outline-none resize-none transition-colors"
               />
               <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
+                <label className="p-1 text-[var(--fg-dim)] hover:text-cyan-300 cursor-pointer rounded hover:bg-cyan-500/10" title="Attach image">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={e => { if (e.target.files) addImageFiles(e.target.files); e.currentTarget.value = ''; }}
+                  />
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6.5l-7.78 7.78a3 3 0 104.24 4.24l8.49-8.49a5 5 0 00-7.07-7.07L5.89 11.45a7 7 0 109.9 9.9l7.07-7.07" />
+                  </svg>
+                </label>
                 <select value={priority} onChange={e => setPriority(e.target.value)}
                   className="bg-transparent text-[9px] text-[var(--fg-dim)] focus:outline-none cursor-pointer">
                   <option value="normal">N</option>
@@ -450,7 +510,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                 </select>
               </div>
             </div>
-            <button onClick={send} disabled={sending || !input.trim()}
+            <button onClick={send} disabled={sending || (!input.trim() && attachedFiles.length === 0)}
               className="p-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-[var(--border)] disabled:text-[var(--fg-dim)] text-[var(--fg)] rounded-xl transition-all shrink-0 active:scale-95">
               {sending ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -461,9 +521,26 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
               )}
             </button>
           </div>
+          {attachedFiles.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {attachedFiles.map((file, index) => (
+                <span key={`${file.name}-${index}`} className="inline-flex items-center gap-1.5 max-w-[160px] px-2 py-1 rounded-lg border border-cyan-500/20 bg-cyan-500/8 text-[10px] text-cyan-200">
+                  <span className="truncate">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                    className="text-cyan-300 hover:text-white"
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
           <div className="flex justify-between text-[9px] text-[var(--fg-dim)] mt-1.5">
             <span>{input.includes('@') ? `Sending to: ${targetAlias}` : `Type @ to mention another node`}</span>
-            <span>Enter to send · Shift+Enter for newline</span>
+            <span>Enter to send · paste image</span>
           </div>
         </div>
     </>
