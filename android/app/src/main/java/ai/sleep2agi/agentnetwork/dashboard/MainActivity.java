@@ -14,6 +14,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -82,6 +83,10 @@ public class MainActivity extends Activity {
     }
 
     private void showSettings() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(Color.rgb(12, 16, 18));
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(36), dp(22), dp(22));
@@ -139,7 +144,8 @@ public class MainActivity extends Activity {
             root.addView(open, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(52)));
         }
 
-        setContentView(root);
+        scroll.addView(root, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
+        setContentView(scroll);
     }
 
     private TextView label(String text) {
@@ -160,6 +166,7 @@ public class MainActivity extends Activity {
         input.setHintTextColor(Color.rgb(130, 140, 140));
         input.setTextSize(16);
         input.setPadding(dp(12), 0, dp(12), 0);
+        input.setMinHeight(dp(52));
         input.setBackgroundColor(Color.rgb(25, 33, 38));
         input.setSelectAllOnFocus(false);
         return input;
