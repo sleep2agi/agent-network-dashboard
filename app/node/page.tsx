@@ -8,6 +8,7 @@ import { TaskChatPanel } from '../components/TaskChatPanel';
 import { timeAgo } from '../components/utils';
 import { AliasAvatar } from '../components/AliasAvatar';
 import { SESSION_STATUS_TEXT_CLASS } from '../lib/status';
+import { useChatUnread } from '../lib/chat-unread';
 
 interface SessionDetail {
   resume_id: string;
@@ -187,8 +188,10 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
   alias: string; session: any; sse: number; sendMsg: string; setSendMsg: (v: string) => void; sending: boolean; sendTask: () => void; sendError: string;
 }) {
   const [tab, setTab] = useState<'chat' | 'events' | 'info'>('chat');
+  const { hasUnread } = useChatUnread();
   const [events, setEvents] = useState<Array<{ id: number; event_type: string; from_status: string; to_status: string; detail: string; created_at: string }>>([]);
   const [eventsLoaded, setEventsLoaded] = useState(false);
+  const chatUnread = hasUnread(alias);
 
   useEffect(() => {
     if (tab === 'events' && !eventsLoaded) {
@@ -216,7 +219,12 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d={t.icon} />
             </svg>
-            <span>{t.label}</span>
+            <span className="relative inline-flex items-center gap-2">
+              {t.label}
+              {t.id === 'chat' && chatUnread && tab !== 'chat' && (
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" aria-label="Unread chat messages" />
+              )}
+            </span>
           </button>
         ))}
       </div>

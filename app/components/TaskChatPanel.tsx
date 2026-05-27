@@ -136,6 +136,8 @@ function StatusBar({ status }: { status: string }) {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useSSE } from '../lib/useSSE';
+import { useNetworkId } from '../lib/network-context';
+import { markChatRead } from '../lib/chat-unread';
 
 function MarkdownContent({ text }: { text: string }) {
   if (!text) return <span className="text-[var(--fg-dim)] italic">No content</span>;
@@ -197,6 +199,7 @@ interface TaskChatPanelProps {
 }
 
 export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskChatPanelProps) {
+  const { networkId } = useNetworkId();
   const [messages, setMessages] = useState<ChatTask[]>([]);
   const [input, setInput] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -222,6 +225,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
 
   // Reset target when alias changes
   useEffect(() => { setTargetAlias(alias); }, [alias]);
+
+  useEffect(() => {
+    if (!alias) return;
+    markChatRead(alias, networkId);
+  }, [alias, networkId]);
 
   // Load task history for this node
   const loadHistory = useCallback(async () => {

@@ -70,6 +70,15 @@ const OPENAI_VENDOR: VendorIdentity = {
   // badge. Vincent-authorized 2026-05-21 to use real vendor marks.
   logo: '/vendors/openai.svg',
 };
+const GROK_VENDOR: VendorIdentity = {
+  id: 'grok',
+  label: 'Grok Build',
+  mono: { bg: 'hsl(150 14% 16%)', ring: 'hsl(150 48% 42%)', text: 'hsl(150 54% 82%)' },
+  initial: 'G',
+  // Local Grok Build mark for network graph avatars; keeps grok-build-acp
+  // nodes out of the generic unknown-vendor fallback.
+  logo: '/vendors/grok.svg',
+};
 
 // Ordered prefix rules — first match wins. `test` runs against a lowercased
 // model id. Keep the most specific prefixes first.
@@ -77,6 +86,7 @@ const VENDOR_RULES: Array<{ test: (m: string) => boolean; vendor: VendorIdentity
   { test: (m) => m.startsWith('intern'), vendor: INTERN_VENDOR },
   { test: (m) => m.startsWith('minimax'), vendor: MINIMAX_VENDOR },
   { test: (m) => m.startsWith('claude'), vendor: ANTHROPIC_VENDOR },
+  { test: (m) => m.startsWith('grok') || m.startsWith('xai'), vendor: GROK_VENDOR },
   {
     test: (m) => m.startsWith('gpt') || m.startsWith('codex') || m.startsWith('o1') || m.startsWith('o3') || m.startsWith('o4'),
     vendor: OPENAI_VENDOR,
@@ -99,6 +109,9 @@ const RUNTIME_VENDOR: Record<string, VendorIdentity> = {
   'claude-code-cli': ANTHROPIC_VENDOR,
   'claude-agent-sdk': ANTHROPIC_VENDOR,
   'codex-sdk': OPENAI_VENDOR,
+  'grok-build-acp': GROK_VENDOR,
+  'grok-build': GROK_VENDOR,
+  grok: GROK_VENDOR,
 };
 
 /** Resolve a node's vendor identity. Model id wins; when the model is
@@ -114,11 +127,12 @@ export function vendorForModel(
       if (rule.test(m)) return rule.vendor;
     }
   }
-  if (runtime && RUNTIME_VENDOR[runtime]) return RUNTIME_VENDOR[runtime];
+  const rt = runtime?.toLowerCase();
+  if (rt && RUNTIME_VENDOR[rt]) return RUNTIME_VENDOR[rt];
   return UNKNOWN_VENDOR;
 }
 
-export type Runtime = 'claude-code-cli' | 'codex-sdk' | 'claude-agent-sdk' | 'http-api';
+export type Runtime = 'claude-code-cli' | 'codex-sdk' | 'claude-agent-sdk' | 'grok-build-acp' | 'http-api';
 
 export interface RuntimeIdentity {
   label: string;
@@ -147,6 +161,12 @@ const RUNTIME_MAP: Record<Runtime, RuntimeIdentity> = {
     iconPath: 'M4 7h16v10H4z M8 11h8 M8 14h5',
     color: '#34d399',
   },
+  // Grok Build ACP bridge
+  'grok-build-acp': {
+    label: 'Grok Build ACP',
+    iconPath: 'M12 3l2.1 6.2H21l-5.5 4 2.1 6.8L12 15.9 6.4 20l2.1-6.8L3 9.2h6.9L12 3z',
+    color: '#22c55e',
+  },
   // cloud / API — non-resident process
   'http-api': {
     label: 'HTTP API',
@@ -158,7 +178,7 @@ const RUNTIME_MAP: Record<Runtime, RuntimeIdentity> = {
 /** Resolve a server runtime string to badge identity. Unknown → null. */
 export function runtimeIdentity(runtime: string | null | undefined): RuntimeIdentity | null {
   if (!runtime) return null;
-  return RUNTIME_MAP[runtime as Runtime] ?? null;
+  return RUNTIME_MAP[runtime.toLowerCase() as Runtime] ?? null;
 }
 
 /** Compact one-line identity for hover / detail surfaces:
