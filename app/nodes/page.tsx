@@ -8,6 +8,7 @@ import { EmptyState, NodesEmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
 import type { Session } from '../components/types';
 import { SESSION_STATUS_CHIP_CLASS as STATUS_COLORS } from '../lib/status';
+import { useChatUnread } from '../lib/chat-unread';
 
 /** Round 81: shorten long server hostnames (Alibaba `iZ…oyZ` style)
  *  for table display. Returns the original string unchanged when ≤12
@@ -23,6 +24,7 @@ type SessionRow = Session & { online: boolean };
 export default function NodesPage() {
   const { sessions, isLoading: loading } = useSessions();
   const { health } = useHealth();
+  const { hasUnread } = useChatUnread();
   const sseMap = health?.sse_sessions || {};
   // SSE keys are `network_id:alias` since server v0.7+. Look up with the
   // composite key first, fall back to alias-only for legacy hubs.
@@ -154,6 +156,7 @@ export default function NodesPage() {
           {filtered.map(s => {
             const statusKey = s.online ? s.status : 'offline';
             const progress = typeof s.progress === 'number' ? s.progress : 0;
+            const unread = hasUnread(s.alias);
 
             return (
               <div
@@ -172,10 +175,14 @@ export default function NodesPage() {
                   </div>
                 )}
                 <div className="flex items-start gap-3">
-                  <AliasAvatar alias={s.alias} size={36} />
+                  <div className="relative shrink-0">
+                    <AliasAvatar alias={s.alias} size={36} />
+                    {unread && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#111128] bg-red-500" />}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-base font-semibold text-white">{s.alias}</span>
+                      {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                       <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] uppercase tracking-wide ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
                         {statusKey}
                       </span>
@@ -221,6 +228,7 @@ export default function NodesPage() {
           </div>
           {filtered.map(s => {
             const statusKey = s.online ? s.status : 'offline';
+            const unread = hasUnread(s.alias);
 
             return (
               <div
@@ -239,8 +247,12 @@ export default function NodesPage() {
                   </div>
                   <div className="col-span-2 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
-                      <AliasAvatar alias={s.alias} size={20} />
+                      <div className="relative shrink-0">
+                        <AliasAvatar alias={s.alias} size={20} />
+                        {unread && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border border-[#111128] bg-red-500" />}
+                      </div>
                       <span className="truncate text-sm font-medium text-white">{s.alias}</span>
+                      {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                     </div>
                   </div>
                   <div className="col-span-2 truncate text-xs text-gray-400" title={s.server || ''}>
@@ -251,9 +263,15 @@ export default function NodesPage() {
                 </div>
                 <div className="sm:hidden space-y-2">
                   <div className="flex items-center gap-2.5">
-                    <AliasAvatar alias={s.alias} size={28} />
+                    <div className="relative shrink-0">
+                      <AliasAvatar alias={s.alias} size={28} />
+                      {unread && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#111128] bg-red-500" />}
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-white">{s.alias}</div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="truncate text-sm font-medium text-white">{s.alias}</div>
+                        {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">New</span>}
+                      </div>
                       <div className="truncate text-[10px] text-gray-500">{s.agent || '—'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
                     </div>
                     <span className={`shrink-0 text-xs px-2 py-0.5 rounded-md border ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>

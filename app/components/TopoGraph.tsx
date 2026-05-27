@@ -9,6 +9,7 @@ import { ChatPopover } from './ChatPopover';
 import { vendorForModel, runtimeIdentity, identityLine } from '../lib/vendorIdentity';
 import { parseHubTime, relativeAgo } from '../lib/time';
 import { DASHBOARD_VERSION } from '../lib/version';
+import { useChatUnread } from '../lib/chat-unread';
 
 /** v0.10.0 Hero 1+2 / §3.F server-health hook — fetches the normalized
  *  /api/hub/servers payload (preview.370 unblocked real-data via the
@@ -632,6 +633,7 @@ function buildFlowLinks(messages: MessageFlow[], tasks: TaskFlow[], positions: R
 }
 
 export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProps) {
+  const { hasUnread } = useChatUnread();
   const theme = useTheme();
   const isLight = theme === 'light';
   const reducedMotion = useReducedMotion();
@@ -12372,6 +12374,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     </g>
                   );
                 })()}
+                {hasUnread(session.alias) && (
+                  <g pointerEvents="none" data-node-unread={session.alias}>
+                    <circle
+                      cx={pos.x + radius * 0.74}
+                      cy={pos.y - radius * 0.74}
+                      r={Math.max(5, radius * 0.22)}
+                      fill="#ef4444"
+                      stroke={pal.containerBg}
+                      strokeWidth="2"
+                    />
+                    <circle
+                      cx={pos.x + radius * 0.74}
+                      cy={pos.y - radius * 0.74}
+                      r={Math.max(8, radius * 0.34)}
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeOpacity="0.22"
+                      strokeWidth="1.5"
+                    />
+                  </g>
+                )}
                 {/* Round 294 / Loop: per-node "working" pulse dot retired.
                     The pulse was R24's per-node working indicator — a
                     small green circle at the top of each working node,
