@@ -1991,3 +1991,27 @@ body {
      but the smooth transition just snaps. Already handled via the
      blanket transition-duration override above. */
 }
+
+/* ────────────────────────────────────────────────────
+   #190 mobile polish — tap feel
+   ────────────────────────────────────────────────────
+   `touch-action: manipulation` removes the 300 ms tap-delay browsers
+   add to disambiguate double-tap-zoom, and (more importantly) keeps an
+   accidental double-tap on an interactive element from zooming the
+   page. Pinch-zoom on the rest of the page is unaffected. The hint is
+   a no-op on inputs without a touch driver, so zero desktop cost.
+
+   `-webkit-tap-highlight-color` swaps iOS Safari's default opaque grey
+   tap overlay for a faint themed shimmer (~18 % accent over transparent),
+   matching the cyber / light palettes via the `--accent` token. */
+@layer base {
+  button,
+  a,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  summary {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: color-mix(in oklab, var(--accent) 18%, transparent);
+  }
+}
