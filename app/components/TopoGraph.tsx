@@ -2059,8 +2059,18 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     }
   };
 
+  // #209 R27 (Vincent msg 545+547 — TopoGraph "中间太小，往左右扩"):
+  // drop the unique `max-w-6xl mx-auto` cap. Every other section on
+  // the Overview page (KPI cards, agent grid, Recent Activity, etc.)
+  // is full-width; only TopoGraph was self-limiting to 1152 px,
+  // leaving ~70 px slack on each side of the typical (~1290 px main
+  // area) viewport. Now matches the rest of the page — the inner SVG
+  // layout is already resize-aware (ring/grid/tree all re-fit on
+  // container width change), so widening the card naturally spreads
+  // the node cluster. Less is more: one fewer arbitrary constraint.
+  // Picked option A over a 1536 px cap (option B) per Vincent msg 547.
   return (
-    <section className="w-full max-w-6xl mx-auto mb-8">
+    <section className="w-full mb-8">
       {/* Round 299 / Loop: title block bottom margin mb-3 (12px) →
           mb-4 (16px). After R298 tightened the title-block internal
           gap (12→10px) packing brand-logo + kicker + h2 into a more
