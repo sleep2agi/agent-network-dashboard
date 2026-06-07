@@ -94,7 +94,7 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
               <input
                 type="text" value={filter} onChange={e => setFilter(e.target.value)}
                 placeholder="Filter agents..."
-                className="w-full bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
+                className="w-full bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-xs text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
               />
               <div className="flex items-center justify-between mt-2">
                 <button onClick={selectAll} className="text-[10px] text-cyan-400 hover:text-cyan-300">
@@ -126,7 +126,7 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
               <textarea
                 value={prompt} onChange={e => setPrompt(e.target.value)}
                 placeholder="Enter the task you want to dispatch..."
-                className="flex-1 min-h-[120px] bg-[#111128] border border-[#2a2a4a] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none resize-none"
+                className="flex-1 min-h-[120px] bg-[#111128] border border-[#2a2a4a] rounded-xl px-4 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none resize-none"
               />
 
               <div className="flex items-center gap-3 mt-4">

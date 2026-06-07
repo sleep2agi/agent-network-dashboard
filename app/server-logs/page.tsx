@@ -196,7 +196,7 @@ export default function ServerLogsPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="搜索关键字 (alias / task_id / error message)"
-          className="flex-1 min-w-[140px] basis-full sm:basis-0 px-3 py-1.5 text-xs bg-[#11111c] border border-[#2a2a4a] rounded text-gray-200 focus:outline-none focus:border-cyan-500/40"
+          className="flex-1 min-w-[140px] basis-full sm:basis-0 px-3 py-1.5 text-base sm:text-xs bg-[#11111c] border border-[#2a2a4a] rounded text-gray-200 focus:outline-none focus:border-cyan-500/40"
         />
         <span className="text-[10px] text-gray-600">
           {filtered.length} / {logs.length}
