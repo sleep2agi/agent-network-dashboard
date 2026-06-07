@@ -116,11 +116,19 @@ export function HealthBanner() {
             {cta.label} →
           </Link>
         )}
+        {/* R9 of #190 mobile polish: the inline `→` CTA and the `×`
+            dismiss were ~14px tap targets — below iOS 44px and worst
+            for the right-edge dismiss where a thumb-miss either does
+            nothing or fires the CTA next to it. The banner is
+            intentionally 28px tall (design comment above), so make the
+            tap area larger without making the banner taller: an
+            invisible `::before` pseudo-element extends the hit zone to
+            ~44×40px around each control. Visual size stays as is. */}
         {cta && (
           <Link
             href={cta.href}
             aria-label={cta.label}
-            className="sm:hidden text-[11px] font-medium opacity-90 hover:opacity-100"
+            className="sm:hidden text-[13px] font-medium opacity-90 hover:opacity-100 relative leading-none px-1.5 before:absolute before:inset-y-[-10px] before:inset-x-[-8px] before:content-['']"
           >
             →
           </Link>
@@ -131,7 +139,7 @@ export function HealthBanner() {
             try { sessionStorage.setItem('anet-hb-dismissed', '1'); } catch {}
           }}
           aria-label="Dismiss banner"
-          className="opacity-50 hover:opacity-100 leading-none px-1"
+          className="opacity-60 hover:opacity-100 leading-none px-1.5 text-base relative rounded-md hover:bg-white/5 before:absolute before:inset-y-[-10px] before:inset-x-[-8px] before:content-['']"
         >
           ×
         </button>
