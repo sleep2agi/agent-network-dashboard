@@ -191,7 +191,7 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
           // Chromium retargets the click to the header — the button never fires.
           onPointerDown={(e) => e.stopPropagation()}
           aria-label="Close chat"
-          className="text-[var(--fg-muted)] hover:text-[var(--fg)] p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] shrink-0"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-[var(--fg-muted)] hover:text-[var(--fg)] rounded-lg hover:bg-[var(--bg-elevated)] shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
