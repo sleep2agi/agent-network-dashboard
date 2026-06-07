@@ -166,7 +166,13 @@ export function Sidebar() {
           </div>
         )}
 
-        <div className="pb-20">
+        {/* #209 R26 (Vincent msg 540 screenshot — "设置页面没展示全"): the
+            absolute-bottom footer below stacks 3 rows (Quick search /
+            Sign out / collapse) ≈ 92-100px tall, but this spacer was
+            pb-20 (80px), so the last nav entry (Settings on /settings)
+            was being eaten by the footer overlay. Bump to pb-28 (112px)
+            to clear the actual footer height. */}
+        <div className="pb-28">
           {nav}
         </div>
 
