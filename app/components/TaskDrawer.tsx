@@ -88,7 +88,9 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
             <div className="text-sm font-semibold text-white">Task Detail</div>
             <div className="text-[10px] text-gray-500 mt-0.5">{taskId.slice(0, 16)}...</div>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white p-1.5 rounded-lg hover:bg-[#1a1a2a]">
+          {/* R16 of #190: same chat-panel close pattern — was ~32 px
+              tap target; lift to a uniform 44 x 44 hit zone. */}
+          <button onClick={onClose} aria-label="Close task drawer" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white rounded-lg hover:bg-[#1a1a2a]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>

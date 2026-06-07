@@ -680,7 +680,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
               <div className="text-[10px] text-[var(--fg-muted)]">{pollingIds.size > 0 ? 'Processing...' : 'Ready'}</div>
             </div>
           </div>
-          <button onClick={onClose} className="text-[var(--fg-muted)] hover:text-[var(--fg)] p-1.5 rounded-lg hover:bg-[var(--bg-elevated)]">
+          {/* R16 of #190: was p-1.5 + w-5 h-5 svg = ~32 px tap target.
+              The chat panel close is high-frequency on mobile (user
+              dismisses to scroll the underlying page); bump to a
+              uniform 44 x 44 hit zone via inline-flex + min-h/w. */}
+          <button onClick={onClose} aria-label="Close chat" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-[var(--fg-muted)] hover:text-[var(--fg)] rounded-lg hover:bg-[var(--bg-elevated)]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>

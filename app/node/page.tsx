@@ -307,7 +307,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
               <button
                 onClick={sendTask}
                 disabled={sending || !sendMsg.trim()}
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white text-xs rounded transition-colors"
+                className="inline-flex min-h-[44px] items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white text-xs rounded transition-colors"
               >
                 {sending ? '...' : 'Send'}
               </button>
