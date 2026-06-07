@@ -20,7 +20,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[100dvh] max-w-full overflow-x-hidden">
       <Sidebar />
-      <main className="flex-1 min-w-0 max-w-full overflow-x-hidden flex flex-col">
+      {/* R25 of #190: pair the existing bottom safe-area padding with a
+          top one so the HealthBanner clears the iOS status bar when
+          launched as an installed PWA (statusBarStyle: black-translucent
+          + viewportFit: cover, see app/layout.tsx). On non-PWA contexts
+          env(safe-area-inset-top) is 0, so this is a no-op for browser
+          tab visits. */}
+      <main className="flex-1 min-w-0 max-w-full overflow-x-hidden flex flex-col pt-[env(safe-area-inset-top)]">
         <HealthBanner />
         <div className="flex-1 min-w-0 max-w-full overflow-x-hidden pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
       </main>

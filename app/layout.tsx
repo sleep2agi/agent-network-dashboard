@@ -44,6 +44,13 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   themeColor: "#0a0a1a",
+  // R25 of #190: metadata.appleWebApp.statusBarStyle above is
+  // "black-translucent", which renders the iOS status bar as a
+  // transparent overlay above the page (rather than reserving its own
+  // strip). Without viewportFit: "cover" the resulting safe-area-inset
+  // env() values resolve to 0, so the HealthBanner gets occluded by
+  // the clock/battery row when the user opens the installed PWA.
+  viewportFit: "cover",
 };
 
 // Inline pre-paint script to apply persisted theme before React hydrates,
