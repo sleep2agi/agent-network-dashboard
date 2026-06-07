@@ -42,16 +42,26 @@ export function CommandCenter({ tabs, activeTab, onOpenTab, onCloseTab, onSetAct
               >
                 <div className={`w-2 h-2 rounded-full ${activeTab === alias ? 'bg-cyan-400' : 'bg-gray-600'}`} />
                 <span className="max-w-[80px] truncate">{alias}</span>
+                {/* R21 of #190 mobile a11y: nested close had no aria-label
+                    (screen-readers spoke just "button") and an ~8 px
+                    tap target (p-0.5 + text "×"). Both fixed; nested
+                    <button> inside <button> remains invalid HTML but
+                    is browser-tolerated and refactoring to role="tab"
+                    is out of scope for this round. */}
                 <button
                   onClick={e => { e.stopPropagation(); onCloseTab(alias); }}
-                  className="ml-1 text-gray-600 hover:text-gray-300 p-0.5"
+                  aria-label={`Close ${alias} chat tab`}
+                  className="ml-1 inline-flex h-7 w-7 items-center justify-center text-gray-600 hover:text-gray-300 rounded-md hover:bg-white/5"
                 >
                   ×
                 </button>
               </button>
             ))}
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white px-3 py-2.5 shrink-0 border-l border-[#2a2a4a]">
+          {/* R21 mobile a11y: outer command-center close was SVG-only
+              and screen-reader silent; also bumped to 44 x 44 hit zone
+              from 32 x ~36. */}
+          <button onClick={onClose} aria-label="Close command center" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white shrink-0 border-l border-[#2a2a4a]">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
