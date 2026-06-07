@@ -4,13 +4,9 @@ html,
 body {
   max-width: 100%;
   overflow-x: hidden;
-}
-
-* {
+}* {
   box-sizing: border-box;
-}
-
-/* ────────────────────────────────────────────────────
+}/* ────────────────────────────────────────────────────
    Design tokens — switch via [data-theme="..."] on <html>
    See ThemeProvider for runtime selection.
    ──────────────────────────────────────────────────── */
@@ -35,504 +31,50 @@ body {
   --scrollbar-hover: #3a3a5a;
   --code-bg:      #1a1a3a;
   color-scheme:   dark;
-}
-
-[data-theme="light"] {
-  --bg:           #f6f7f9;
-  --bg-secondary: #ffffff;
-  --bg-elevated:  #eef0f4;
-  --fg:           #0f1419;
-  --fg-muted:     #525a66;
-  --fg-dim:       #8a94a3;
-  --border:       #e3e6eb;
-  --border-hover: #c8cdd6;
-  --accent:       #009e7e;
-  --accent-fg:    #ffffff;
-  --success:      #059669;
-  --warning:      #d97706;
-  --danger:       #dc2626;
-  --info:         #0284c7;
-  --scrollbar:    #d4d8df;
-  --scrollbar-hover: #a1a8b5;
-  --code-bg:      #eef0f4;
-  color-scheme:   light;
-}
-
-[data-theme="mint"] {
-  --bg:           #f0fdf4;
-  --bg-secondary: #ffffff;
-  --bg-elevated:  #dcfce7;
-  --fg:           #052e16;
-  --fg-muted:     #166534;
-  --fg-dim:       #4ade80;
-  --border:       #bbf7d0;
-  --border-hover: #86efac;
-  --accent:       #16a34a;
-  --accent-fg:    #ffffff;
-  --success:      #16a34a;
-  --warning:      #ca8a04;
-  --danger:       #dc2626;
-  --info:         #0891b2;
-  --scrollbar:    #bbf7d0;
-  --scrollbar-hover: #86efac;
-  --code-bg:      #dcfce7;
-  color-scheme:   light;
-}
-
-[data-theme="sunset"] {
-  --bg:           #1a0f1f;
-  --bg-secondary: #2d1633;
-  --bg-elevated:  #3f1d47;
-  --fg:           #fde68a;
-  --fg-muted:     #fbbf24;
-  --fg-dim:       #b45309;
-  --border:       #581c87;
-  --border-hover: #7e22ce;
-  --accent:       #f97316;
-  --accent-fg:    #ffffff;
-  --success:      #84cc16;
-  --warning:      #facc15;
-  --danger:       #f43f5e;
-  --info:         #ec4899;
-  --scrollbar:    #581c87;
-  --scrollbar-hover: #7e22ce;
-  --code-bg:      #2d1633;
-  color-scheme:   dark;
-}
-
-@theme inline {
+}@theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--fg);
   --font-mono: var(--font-geist-mono);
-}
-
-html, body {
+}html,
+body {
   background: var(--bg);
   color: var(--fg);
-}
-
-body {
+}body {
   font-family: var(--font-mono), ui-monospace, monospace;
   transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-/* Smooth scrollbar — themed */
-.scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
-.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-thin::-webkit-scrollbar-thumb {
+}/* Smooth scrollbar — themed */
+.scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }.scrollbar-thin::-webkit-scrollbar-thumb {
   background: var(--scrollbar);
   border-radius: 4px;
-}
-.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
-
-/* Fade in animation */
+}.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }/* Fade in animation */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in {
+}.animate-fade-in {
   animation: fade-in 0.3s ease-out;
-}
-
-/* Mobile touch targets */
+}/* Mobile touch targets */
 @media (max-width: 640px) {
   select, input[type="text"], button {
     min-height: 44px;
   }
-}
-
-/* Safe area for notched devices */
+}/* Safe area for notched devices */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   body {
     padding-bottom: env(safe-area-inset-bottom);
   }
-}
-
-/* ────────────────────────────────────────────────────
-   Compatibility shims — gradually replace hard-coded
-   #0a0a1a / zinc-9xx / etc. in components with var()
-   over time. These rules let the existing components
-   pick up the active theme even before they are
-   migrated.
-   ──────────────────────────────────────────────────── */
-
-/* page-level dark backgrounds → use --bg */
-[data-theme="light"] .bg-\[\#050510\],
-[data-theme="light"] .bg-\[\#080814\],
-[data-theme="light"] .bg-\[\#0a0a14\],
-[data-theme="light"] .bg-\[\#0a0a15\],
-[data-theme="light"] .bg-\[\#0a0a1a\],
-[data-theme="light"] .bg-\[\#0d0d1a\],
-[data-theme="light"] .bg-\[\#11112a\],
-[data-theme="light"] .bg-\[\#11111c\],
-[data-theme="light"] .bg-\[\#161630\],
-[data-theme="light"] .bg-\[\#161640\],
-[data-theme="mint"] .bg-\[\#050510\],
-[data-theme="mint"] .bg-\[\#080814\],
-[data-theme="mint"] .bg-\[\#0a0a14\],
-[data-theme="mint"] .bg-\[\#0a0a15\],
-[data-theme="mint"] .bg-\[\#0a0a1a\],
-[data-theme="mint"] .bg-\[\#0d0d1a\],
-[data-theme="mint"] .bg-\[\#11112a\],
-[data-theme="mint"] .bg-\[\#11111c\],
-[data-theme="mint"] .bg-\[\#161630\],
-[data-theme="mint"] .bg-\[\#161640\] {
-  background-color: var(--bg) !important;
-}
-
-/* card / elevated backgrounds (incl. opacity variants) */
-[data-theme="light"] .bg-\[\#111128\],
-[data-theme="light"] .bg-\[\#111128\]\/80,
-[data-theme="light"] .bg-\[\#1a1a2a\],
-[data-theme="light"] .bg-\[\#1a1a3a\],
-[data-theme="mint"] .bg-\[\#111128\],
-[data-theme="mint"] .bg-\[\#111128\]\/80,
-[data-theme="mint"] .bg-\[\#1a1a2a\],
-[data-theme="mint"] .bg-\[\#1a1a3a\] {
-  background-color: var(--bg-secondary) !important;
-}
-
-/* hover / input field backgrounds */
-[data-theme="light"] .bg-\[\#2a2a4a\],
-[data-theme="mint"] .bg-\[\#2a2a4a\] {
-  background-color: var(--bg-elevated) !important;
-}
-
-/* hardcoded borders */
-[data-theme="light"] .border-\[\#111128\],
-[data-theme="light"] .border-\[\#1a1a2a\],
-[data-theme="light"] .border-\[\#2a2a4a\],
-[data-theme="light"] .border-\[\#3a3a5a\],
-[data-theme="mint"] .border-\[\#111128\],
-[data-theme="mint"] .border-\[\#1a1a2a\],
-[data-theme="mint"] .border-\[\#2a2a4a\],
-[data-theme="mint"] .border-\[\#3a3a5a\] {
-  border-color: var(--border) !important;
-}
-
-/* dark-tuned gradient buttons → flat brand color in light themes */
-[data-theme="light"] [class*="from-cyan-"][class*="to-blue-"],
-[data-theme="light"] [class*="from-cyan-"][class*="to-emerald-"],
-[data-theme="light"] [class*="from-emerald-"][class*="to-cyan-"],
-[data-theme="light"] [class*="from-blue-"][class*="to-cyan-"] {
-  background: var(--accent) !important;
-  color: var(--accent-fg) !important;
-}
-[data-theme="light"] [class*="from-cyan-"][class*="to-blue-"]:hover,
-[data-theme="light"] [class*="from-cyan-"][class*="to-emerald-"]:hover,
-[data-theme="light"] [class*="from-emerald-"][class*="to-cyan-"]:hover,
-[data-theme="light"] [class*="from-blue-"][class*="to-cyan-"]:hover {
-  background: #00b894 !important;
-  filter: brightness(1.05);
-}
-[data-theme="light"] .text-gray-100,
-[data-theme="light"] .text-gray-200,
-[data-theme="light"] .text-gray-300,
-[data-theme="light"] .text-gray-100\/90,
-[data-theme="mint"] .text-gray-100,
-[data-theme="mint"] .text-gray-200,
-[data-theme="mint"] .text-gray-300,
-[data-theme="mint"] .text-gray-100\/90 {
-  color: var(--fg) !important;
-}
-[data-theme="light"] .text-gray-400,
-[data-theme="light"] .text-gray-500,
-[data-theme="light"] .text-gray-600,
-[data-theme="light"] .placeholder-gray-600::placeholder,
-[data-theme="mint"] .text-gray-400,
-[data-theme="mint"] .text-gray-500,
-[data-theme="mint"] .text-gray-600,
-[data-theme="mint"] .placeholder-gray-600::placeholder {
-  color: var(--fg-muted) !important;
-}
-[data-theme="light"] .text-white,
-[data-theme="mint"] .text-white {
-  color: var(--fg) !important;
-}
-
-[data-theme="light"] .text-zinc-100,
-[data-theme="light"] .text-zinc-200,
-[data-theme="light"] .text-white,
-[data-theme="mint"] .text-zinc-100,
-[data-theme="mint"] .text-zinc-200,
-[data-theme="mint"] .text-white {
-  color: var(--fg) !important;
-}
-
-[data-theme="light"] .text-zinc-400,
-[data-theme="light"] .text-zinc-500,
-[data-theme="mint"] .text-zinc-400,
-[data-theme="mint"] .text-zinc-500 {
-  color: var(--fg-muted) !important;
-}
-
-[data-theme="light"] .bg-zinc-900,
-[data-theme="light"] .bg-zinc-950,
-[data-theme="light"] .bg-black,
-[data-theme="mint"] .bg-zinc-900,
-[data-theme="mint"] .bg-zinc-950,
-[data-theme="mint"] .bg-black {
-  background-color: var(--bg-secondary) !important;
-}
-
-[data-theme="light"] .bg-zinc-800,
-[data-theme="mint"] .bg-zinc-800 {
-  background-color: var(--bg-elevated) !important;
-}
-
-[data-theme="light"] .border-zinc-700,
-[data-theme="light"] .border-zinc-800,
-[data-theme="light"] .border-white\/10,
-[data-theme="light"] .border-white\/5,
-[data-theme="mint"] .border-zinc-700,
-[data-theme="mint"] .border-zinc-800,
-[data-theme="mint"] .border-white\/10,
-[data-theme="mint"] .border-white\/5 {
-  border-color: var(--border) !important;
-}
-
-/* Light theme: additional zinc shades + accent colors override */
-[data-theme="light"] .bg-zinc-700,
-[data-theme="light"] .bg-zinc-600,
-[data-theme="mint"] .bg-zinc-700,
-[data-theme="mint"] .bg-zinc-600 {
-  background-color: var(--bg-elevated) !important;
-}
-[data-theme="light"] .text-zinc-300,
-[data-theme="light"] .text-zinc-600,
-[data-theme="mint"] .text-zinc-300,
-[data-theme="mint"] .text-zinc-600 {
-  color: var(--fg-muted) !important;
-}
-[data-theme="light"] .text-zinc-700,
-[data-theme="light"] .text-zinc-800,
-[data-theme="mint"] .text-zinc-700,
-[data-theme="mint"] .text-zinc-800 {
-  color: var(--fg) !important;
-}
-
-/* Light theme: emerald / cyan / indigo accents → unified brand emerald */
-[data-theme="light"] .text-emerald-400,
-[data-theme="light"] .text-emerald-300,
-[data-theme="light"] .text-cyan-400,
-[data-theme="light"] .text-cyan-300,
-[data-theme="light"] .text-indigo-400 {
-  color: var(--accent) !important;
-}
-
-/* Light theme: every "-300/400" accent text color needs a darker mid-tone
-   variant. The default Tailwind `-300/-400` shades are designed for dark
-   backgrounds — putting them on white gives "barely visible" text (the
-   problem Vincent flagged: "浅色下很多字体看不见"). Map each family to its
-   `-700` equivalent so contrast against white card is ≥ AA. */
-[data-theme="light"] .text-green-400,
-[data-theme="light"] .text-green-300,
-[data-theme="mint"]  .text-green-400,
-[data-theme="mint"]  .text-green-300 { color: #047857 !important; }
-
-[data-theme="light"] .text-yellow-400,
-[data-theme="light"] .text-yellow-300,
-[data-theme="mint"]  .text-yellow-400,
-[data-theme="mint"]  .text-yellow-300 { color: #92400e !important; }
-
-[data-theme="light"] .text-amber-400,
-[data-theme="light"] .text-amber-300,
-[data-theme="mint"]  .text-amber-400,
-[data-theme="mint"]  .text-amber-300 { color: #92400e !important; }
-
-[data-theme="light"] .text-red-400,
-[data-theme="light"] .text-red-300,
-[data-theme="mint"]  .text-red-400,
-[data-theme="mint"]  .text-red-300 { color: #b91c1c !important; }
-
-[data-theme="light"] .text-purple-400,
-[data-theme="light"] .text-purple-300,
-[data-theme="mint"]  .text-purple-400,
-[data-theme="mint"]  .text-purple-300 { color: #6d28d9 !important; }
-
-[data-theme="light"] .text-orange-400,
-[data-theme="light"] .text-orange-300,
-[data-theme="mint"]  .text-orange-400,
-[data-theme="mint"]  .text-orange-300 { color: #c2410c !important; }
-
-[data-theme="light"] .text-blue-400,
-[data-theme="light"] .text-blue-300,
-[data-theme="mint"]  .text-blue-400,
-[data-theme="mint"]  .text-blue-300 { color: #1d4ed8 !important; }
-
-[data-theme="light"] .text-pink-400,
-[data-theme="light"] .text-pink-300,
-[data-theme="mint"]  .text-pink-400,
-[data-theme="mint"]  .text-pink-300 { color: #be185d !important; }
-
-[data-theme="light"] .text-violet-400,
-[data-theme="light"] .text-violet-300,
-[data-theme="mint"]  .text-violet-400,
-[data-theme="mint"]  .text-violet-300 { color: #6d28d9 !important; }
-
-[data-theme="light"] .text-teal-400,
-[data-theme="light"] .text-teal-300,
-[data-theme="mint"]  .text-teal-400,
-[data-theme="mint"]  .text-teal-300 { color: #0f766e !important; }
-
-/* Light theme: text-gray-700 (used in footers / muted body) is too pale
-   when sitting on slightly-grey page bg. Bump to fg-muted. */
-[data-theme="light"] .text-gray-700,
-[data-theme="mint"]  .text-gray-700 { color: var(--fg-muted) !important; }
-[data-theme="light"] .bg-emerald-500\/10,
-[data-theme="light"] .bg-emerald-500\/20,
-[data-theme="light"] .bg-cyan-500\/10,
-[data-theme="light"] .bg-cyan-500\/20 {
-  background-color: rgba(0, 158, 126, 0.08) !important;
-}
-[data-theme="light"] .border-emerald-500\/30,
-[data-theme="light"] .border-emerald-500\/40,
-[data-theme="light"] .border-cyan-500\/30 {
-  border-color: rgba(0, 158, 126, 0.32) !important;
-}
-
-/* Light theme: card-like containers get a subtle elevation shadow
-   (cards in dark mode lean on glow; in light mode they need a real shadow
-   to read as a layer rather than blending into the page background) */
-[data-theme="light"] .bg-zinc-900,
-[data-theme="light"] .bg-zinc-950,
-[data-theme="light"] .bg-\[\#0a0a1a\],
-[data-theme="light"] .bg-\[\#11112a\],
-[data-theme="light"] .bg-\[\#161640\] {
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 6px 18px -8px rgba(15, 23, 42, 0.08);
-}
-[data-theme="light"] .bg-zinc-800 {
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
-/* Light theme: kill any leftover ring / shadow-glow that was tuned for dark bg */
-[data-theme="light"] [class*="shadow-emerald"],
-[data-theme="light"] [class*="shadow-cyan"],
-[data-theme="light"] [class*="shadow-indigo"] {
-  --tw-shadow-color: rgba(0, 158, 126, 0.18);
-}
-
-/* Solid-color action buttons (bg-blue-600 / bg-cyan-600 / bg-green-600 / …)
-   stay dark navy in light themes because the gradient-button shim above only
-   matches `from-…-to-…` gradient buttons. Map every primary solid background
-   to the active accent so Broadcast / Send Task / Register / Change Password
-   etc. read as the brand color instead of black-on-white. */
-[data-theme="light"] .bg-blue-600,
-[data-theme="light"] .bg-blue-500,
-[data-theme="light"] .bg-cyan-600,
-[data-theme="light"] .bg-cyan-500,
-[data-theme="light"] .bg-emerald-600,
-[data-theme="light"] .bg-emerald-500,
-[data-theme="light"] .bg-green-600,
-[data-theme="light"] .bg-green-500,
-[data-theme="light"] .bg-indigo-600,
-[data-theme="light"] .bg-indigo-500,
-[data-theme="light"] .bg-purple-600,
-[data-theme="light"] .bg-purple-500,
-[data-theme="mint"] .bg-blue-600,
-[data-theme="mint"] .bg-blue-500,
-[data-theme="mint"] .bg-cyan-600,
-[data-theme="mint"] .bg-cyan-500,
-[data-theme="mint"] .bg-emerald-600,
-[data-theme="mint"] .bg-emerald-500,
-[data-theme="mint"] .bg-green-600,
-[data-theme="mint"] .bg-green-500,
-[data-theme="mint"] .bg-indigo-600,
-[data-theme="mint"] .bg-indigo-500,
-[data-theme="mint"] .bg-purple-600,
-[data-theme="mint"] .bg-purple-500 {
-  background-color: var(--accent) !important;
-  color: var(--accent-fg) !important;
-}
-[data-theme="light"] .hover\:bg-blue-500:hover,
-[data-theme="light"] .hover\:bg-cyan-500:hover,
-[data-theme="light"] .hover\:bg-emerald-500:hover,
-[data-theme="light"] .hover\:bg-green-500:hover,
-[data-theme="light"] .hover\:bg-indigo-500:hover,
-[data-theme="light"] .hover\:bg-purple-500:hover,
-[data-theme="mint"] .hover\:bg-blue-500:hover,
-[data-theme="mint"] .hover\:bg-cyan-500:hover,
-[data-theme="mint"] .hover\:bg-emerald-500:hover,
-[data-theme="mint"] .hover\:bg-green-500:hover,
-[data-theme="mint"] .hover\:bg-indigo-500:hover,
-[data-theme="mint"] .hover\:bg-purple-500:hover {
-  background-color: #00b894 !important;
-  filter: brightness(1.05);
-}
-
-/* Disabled state for the same family — keep contrast against the page bg
-   so disabled buttons don't read as "dark and active" in light mode */
-[data-theme="light"] .disabled\:bg-gray-800:disabled,
-[data-theme="light"] .disabled\:bg-zinc-800:disabled,
-[data-theme="mint"] .disabled\:bg-gray-800:disabled,
-[data-theme="mint"] .disabled\:bg-zinc-800:disabled {
-  background-color: var(--bg-elevated) !important;
-  color: var(--fg-muted) !important;
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   v0.4.3 light-theme polish — Phase 3 P0 fixes
-   ─────────────────────────────────────────────────────────────────── */
-
-/* P0-1: Sidebar gets its own surface in light themes (not page-colored).
-   In Cyber (dark) the sidebar already feels separate via depth; in
-   light/mint the page bg == sidebar bg so only the right border separates
-   them. Switch sidebar to bg-secondary (white) + a hairline shadow. */
-[data-theme="light"] aside[data-anet-sidebar="true"],
-[data-theme="mint"] aside[data-anet-sidebar="true"] {
-  background-color: var(--bg-secondary) !important;
-  /* Right edge: solid hairline border + a soft 16px halo so the sidebar
-     reads as a card hovering over the page, not "part of the page". */
-  box-shadow:
-    1px 0 0 var(--border),
-    8px 0 20px -10px rgba(15, 23, 42, 0.10),
-    0 0 0 1px rgba(15, 23, 42, 0.02);
-  border-right-color: transparent !important;
-}
-/* Also tint page bg slightly cooler so the white sidebar pops more */
-[data-theme="light"] {
-  --bg: #f3f5f8; /* was #f6f7f9 — bumped 3pt cooler for sidebar contrast */
-}
-
-/* P0-2: Active nav — collapse the 4-emerald stack (bg + border + text + ring)
-   to a single accent cue: 3px left bar + medium-weight text. Dark themes
-   keep the existing tinted-pill look. */
-[data-theme="light"] .anet-nav-active,
-[data-theme="mint"] .anet-nav-active {
-  /* 通信龙 final spec (Q1 + 3-piece lockdown): active nav = ONE cue.
-     4px left bar emerald, text in --fg (NOT emerald), NO bg tint.
-     Reads as a calm "current page" indicator without competing emerald
-     surfaces. (Earlier 0.4.3 had 3px + faint tint + emerald text.) */
-  background-color: transparent !important;
-  border-color: transparent !important;
-  border-left: 4px solid var(--accent) !important;
-  border-radius: 0 8px 8px 0 !important;
-  padding-left: calc(0.75rem - 4px) !important;
-  color: var(--fg) !important;
-  font-weight: 600;
-}
-[data-theme="light"] .anet-nav-active:hover,
-[data-theme="mint"] .anet-nav-active:hover {
-  background-color: var(--bg-elevated) !important;
-}
-/* When sidebar is collapsed (w-16, justify-center) the left bar would look
-   weird against a centered icon — switch to a left-bg accent instead. */
-[data-theme="light"] aside.w-16 .anet-nav-active,
-[data-theme="mint"] aside.w-16 .anet-nav-active {
+}/* When sidebar is collapsed (w-16 {
   border-radius: 8px !important;
   padding-left: 0 !important;
   border-left: 0 !important;
   background-color: var(--bg-elevated) !important;
   color: var(--accent) !important;
-}
-
-/* Q6: native <select> theming for light/mint.
-   Without this, dropdowns on Nodes / Messages / Logs / Settings render with
-   the OS default chrome (heavy chevron, off-spec font weight, no border
-   radius). We strip the native chrome with appearance-none, then paint our
-   own chevron via a background-image SVG. ~10 LOC. */
-[data-theme="light"] select,
-[data-theme="mint"] select {
+}/* Q6: native <select> theming for light/mint.
+   Without this,
+dropdowns on Nodes / Messages / Logs / Settings render with
+   the OS default chrome (heavy chevron,
+off-spec font weight,
+no border
+   radius). We strip the native chrome with appearance-none {
   -webkit-appearance: none !important;
   -moz-appearance: none !important;
   appearance: none !important;
@@ -543,159 +85,58 @@ body {
   padding-right: 2rem !important;
   background-color: var(--bg-secondary) !important;
   border-radius: 8px;
-}
-[data-theme="light"] select:focus,
-[data-theme="mint"] select:focus {
-  outline: 2px solid rgba(0, 158, 126, 0.2);
-  outline-offset: -1px;
-  border-color: var(--accent) !important;
-}
-/* Mint reuses the same chevron — color picker would need its own gray, but
+}/* Mint reuses the same chevron — color picker would need its own gray,
+but
    accent is similar enough that the default chevron color reads OK. */
 
 /* KPI stat cards in light mode: kill the gradient wash (which reads as
-   pale-mud on white), replace with a 2px top accent strip per color
-   family + real elevation shadow. Dark themes keep the gradient. */
-[data-theme="light"] .anet-stat-card,
-[data-theme="mint"] .anet-stat-card {
+   pale-mud on white) {
   border-top-width: 2px;
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -8px rgba(15, 23, 42, 0.08);
-}
-[data-theme="light"] .anet-stat-card:hover,
-[data-theme="mint"] .anet-stat-card:hover {
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06), 0 12px 24px -12px rgba(15, 23, 42, 0.16);
-}
-/* Top-strip colors per stat family */
-[data-theme="light"] .anet-stat-card[data-anet-stat-card="green"] { border-top-color: #10b981; }
-[data-theme="light"] .anet-stat-card[data-anet-stat-card="cyan"]  { border-top-color: var(--accent); }
-[data-theme="light"] .anet-stat-card[data-anet-stat-card="gray"]  { border-top-color: #94a3b8; }
-[data-theme="light"] .anet-stat-card[data-anet-stat-card="white"] { border-top-color: #3b82f6; }
-[data-theme="mint"]  .anet-stat-card[data-anet-stat-card="green"] { border-top-color: #16a34a; }
-[data-theme="mint"]  .anet-stat-card[data-anet-stat-card="cyan"]  { border-top-color: var(--accent); }
-[data-theme="mint"]  .anet-stat-card[data-anet-stat-card="gray"]  { border-top-color: #4ade80; }
-[data-theme="mint"]  .anet-stat-card[data-anet-stat-card="white"] { border-top-color: #0891b2; }
-/* Drop the gradient wash in light themes — looks like dust on white. */
-[data-theme="light"] .anet-stat-card > .pointer-events-none,
-[data-theme="mint"] .anet-stat-card > .pointer-events-none {
-  display: none;
-}
-
-/* Generic card hover elevation — every white card on light bg gets a
-   subtle lift on hover so clickability is obvious. */
-[data-theme="light"] .bg-\[\#111128\]:hover,
-[data-theme="mint"] .bg-\[\#111128\]:hover {
-  box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.12);
-}
-
-/* Task row hover bg (round 19) — dark hex would land on a white card and
-   look like a stripe. Re-map to a faint accent tint per theme. */
-[data-theme="light"] .anet-task-row:hover {
-  background-color: #f5f7fb !important;
-}
-[data-theme="mint"] .anet-task-row:hover {
-  background-color: #ecf6f1 !important;
-}
-[data-theme="sunset"] .anet-task-row:hover {
-  background-color: #fff4ec !important;
-}
-/* Open state — slightly stronger fill so users can see "this one is the
-   open row" while scrolling. */
-[data-theme="light"] .anet-task-row[aria-expanded="true"] {
-  background-color: #fafbfd !important;
-  box-shadow: 0 4px 14px -10px rgba(15, 23, 42, 0.14) !important;
-}
-[data-theme="mint"] .anet-task-row[aria-expanded="true"] {
-  background-color: #f3faf6 !important;
-}
-[data-theme="sunset"] .anet-task-row[aria-expanded="true"] {
-  background-color: #fff8f1 !important;
-}
-
-/* ─────────────────────────────────────────────────────────────────────
+}/* ─────────────────────────────────────────────────────────────────────
    Login surface (round 1 polish)
-   Restrained, minimal — first impression for new Agent Network users.
+   Restrained,
+minimal — first impression for new Agent Network users.
    ─────────────────────────────────────────────────────────────────── */
 .anet-login-bg {
   background:
     radial-gradient(circle at 50% 30%, rgba(34, 211, 238, 0.05), transparent 55%),
     radial-gradient(circle at 33% 75%, rgba(59, 130, 246, 0.045), transparent 55%);
-}
-[data-theme="light"] .anet-login-bg,
-[data-theme="mint"] .anet-login-bg {
-  background-image:
-    radial-gradient(circle at 50% 35%, rgba(0, 158, 126, 0.06), transparent 60%),
-    radial-gradient(circle, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
-  background-size: 100% 100%, 24px 24px;
-}
-[data-theme="light"] .anet-login-mark,
-[data-theme="mint"] .anet-login-mark {
-  background: var(--bg-secondary) !important;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px var(--border);
-}
-
-/* Health banner — sticky thin strip above content, with theme-aware
-   green/amber/red tints. Dark themes use the lower-opacity bg+border
-   that come from the component classes directly. Light/mint need
-   slightly more saturation so the tint reads on a white surface. */
-[data-theme="light"] .anet-health-banner.bg-emerald-500\/6,
-[data-theme="mint"] .anet-health-banner.bg-emerald-500\/6 {
+}/* Health banner — sticky thin strip above content {
   background-color: rgba(16, 185, 129, 0.08) !important;
   color: #047857 !important;
   border-color: rgba(16, 185, 129, 0.25) !important;
-}
-[data-theme="light"] .anet-health-banner.bg-amber-500\/8,
-[data-theme="mint"] .anet-health-banner.bg-amber-500\/8 {
-  background-color: rgba(245, 158, 11, 0.12) !important;
-  color: #92400e !important;
-  border-color: rgba(245, 158, 11, 0.30) !important;
-}
-[data-theme="light"] .anet-health-banner.bg-red-500\/8,
-[data-theme="mint"] .anet-health-banner.bg-red-500\/8 {
-  background-color: rgba(220, 38, 38, 0.10) !important;
-  color: #b91c1c !important;
-  border-color: rgba(220, 38, 38, 0.30) !important;
-}
-
-/* Sidebar brand "online" pulse — slow, restrained, NO glow.
-   1.6s opacity drift between 1.0 and 0.5; nothing scales, nothing blurs. */
+}/* Sidebar brand "online" pulse — slow,
+restrained,
+NO glow.
+   1.6s opacity drift between 1.0 and 0.5; nothing scales,
+nothing blurs. */
 @keyframes anet-brand-pulse-kf {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.4; }
-}
-.anet-brand-pulse {
+}.anet-brand-pulse {
   animation: anet-brand-pulse-kf 1.6s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .anet-brand-pulse { animation: none; }
-}
-
-/* Skeleton pulse — same 1.6s rhythm as the brand pulse but applied to a
+}/* Skeleton pulse — same 1.6s rhythm as the brand pulse but applied to a
    container so all bars inside breathe together. Drifts between full
    token value and 60% so light themes show a calm grey-to-bg-elevated
    fade and dark themes show a calm navy-to-elevated fade. */
 @keyframes anet-skeleton-kf {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.55; }
-}
-.anet-skeleton-pulse {
+}.anet-skeleton-pulse {
   animation: anet-skeleton-kf 1.6s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .anet-skeleton-pulse { animation: none; }
-}
-
-/* Skeleton bar fill — different per theme so it's visible against the
+}/* Skeleton bar fill — different per theme so it's visible against the
    card bg without being loud. Dark: lighter navy block on dark card.
    Light: mid-grey on white card (not too light or it disappears). */
 .anet-skeleton-bar {
   background-color: #1a1a2a;
-}
-[data-theme="light"] .anet-skeleton-bar,
-[data-theme="mint"] .anet-skeleton-bar {
-  background-color: #d4d8df;
-}
-
-/* Command palette modal surface — bumped depth so it sits clearly above
+}/* Command palette modal surface — bumped depth so it sits clearly above
    the page content in both themes. Light/mint: white shell with a real
    shadow (not the dark navy that the CSS shim would normally translate
    `bg-[#0d0d1a]` into). */
@@ -706,22 +147,11 @@ body {
   border: 1px solid currentColor;
   border-radius: 3px;
   opacity: 0.6;
-}
-[data-theme="light"] .anet-cmdk > div:not([aria-hidden]),
-[data-theme="mint"]  .anet-cmdk > div:not([aria-hidden]) {
-  background-color: var(--bg-secondary) !important;
-  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.18),
-              0 2px 6px -2px rgba(15, 23, 42, 0.10);
-}
-[data-theme="light"] .anet-cmdk-row.bg-cyan-500\/10,
-[data-theme="mint"]  .anet-cmdk-row.bg-cyan-500\/10 {
-  background-color: rgba(0, 158, 126, 0.08) !important;
-}
-
-/* Round 20 — matched-char highlight inside cmdk titles/hints. Inherits
+}/* Round 20 — matched-char highlight inside cmdk titles/hints. Inherits
    line color (`color`) instead of forcing one — keeps text readable on
    both inactive (gray) and active (cyan-300) rows. <mark> default is a
-   garish yellow block, which we override. */
+   garish yellow block,
+which we override. */
 .anet-cmdk-mark {
   background: transparent;
   color: inherit;
@@ -733,46 +163,23 @@ body {
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
   text-decoration-skip-ink: none;
-}
-/* Cyber: accent the matched glyph color so it pops on the dark bg. */
+}/* Cyber: accent the matched glyph color so it pops on the dark bg. */
 [data-theme="cyber"] .anet-cmdk-mark,
 :root:not([data-theme]) .anet-cmdk-mark {
   color: #22d3ee;
-}
-/* Light/mint: use the brand teal — undertone matches the active row. */
-[data-theme="light"] .anet-cmdk-mark,
-[data-theme="mint"]  .anet-cmdk-mark {
-  color: #0d9488;
-}
-[data-theme="sunset"] .anet-cmdk-mark {
-  color: #ea580c;
-}
-/* On the active (cyan-tinted) row, the title is already cyan-300 — use
-   white-with-underline so the highlight reads as emphasis, not redundancy. */
+}/* On the active (cyan-tinted) row,
+the title is already cyan-300 — use
+   white-with-underline so the highlight reads as emphasis,
+not redundancy. */
 .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark {
   color: #f0fdff;
-}
-[data-theme="light"] .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark,
-[data-theme="mint"]  .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark {
-  color: #064e3b;
-}
-
-/* Help overlay — same white-card-with-shadow treatment as cmdk on light */
-[data-theme="light"] .anet-help > div:not([aria-hidden]),
-[data-theme="mint"]  .anet-help > div:not([aria-hidden]) {
-  background-color: var(--bg-secondary) !important;
-  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.18),
-              0 2px 6px -2px rgba(15, 23, 42, 0.10);
-}
-
-/* Tasks tab strip horizontal scroll fade — gradient overlays at left/right
+}/* Tasks tab strip horizontal scroll fade — gradient overlays at left/right
    edges hint that there's more content when the row overflows. Only
    applied on <sm (where the strip actually scrolls). The wrapper is
    `position: relative` and the fades are absolute siblings. */
 .anet-tabstrip-wrap {
   position: relative;
-}
-.anet-tabstrip-wrap::before,
+}.anet-tabstrip-wrap::before,
 .anet-tabstrip-wrap::after {
   content: '';
   position: absolute;
@@ -781,13 +188,11 @@ body {
   width: 20px;
   pointer-events: none;
   z-index: 1;
-}
-.anet-tabstrip-wrap::before {
+}.anet-tabstrip-wrap::before {
   left: 0;
   background: linear-gradient(to right, #111128, transparent);
   border-radius: 8px 0 0 8px;
-}
-.anet-tabstrip-wrap::after {
+}.anet-tabstrip-wrap::after {
   right: 0;
   background: linear-gradient(to left, #111128, transparent);
   border-radius: 0 8px 8px 0;
@@ -796,68 +201,40 @@ body {
   /* sm: stops scrolling, hide the fades */
   .anet-tabstrip-wrap::before,
   .anet-tabstrip-wrap::after { display: none; }
-}
-[data-theme="light"] .anet-tabstrip-wrap::before,
-[data-theme="mint"]  .anet-tabstrip-wrap::before {
-  background: linear-gradient(to right, var(--bg-secondary), transparent);
-}
-[data-theme="light"] .anet-tabstrip-wrap::after,
-[data-theme="mint"]  .anet-tabstrip-wrap::after {
-  background: linear-gradient(to left, var(--bg-secondary), transparent);
-}
-
-/* P0-3 baseline: error / warning chip colors for light themes.
-   The component-level copy (replacing raw JSON with human text) is fixed
-   in the Logs / Server-Logs page components separately. */
-[data-theme="light"] .anet-error-chip,
-[data-theme="mint"] .anet-error-chip {
-  background-color: rgba(220, 38, 38, 0.06) !important;
-  color: #b91c1c !important;
-  border-color: rgba(220, 38, 38, 0.25) !important;
-}
-[data-theme="light"] .anet-warn-chip,
-[data-theme="mint"] .anet-warn-chip {
-  background-color: rgba(217, 119, 6, 0.08) !important;
-  color: #92400e !important;
-  border-color: rgba(217, 119, 6, 0.28) !important;
-}
-
-/* Round 30 — global drawer entrance keyframes so TaskDrawer, TaskChatPanel,
-   and any future right-side panel share one source. Previously the
+}/* Round 30 — global drawer entrance keyframes so TaskDrawer,
+TaskChatPanel,
+and any future right-side panel share one source. Previously the
    keyframe lived inside TaskChatPanel's <style jsx global>; if that
-   component never mounted, the keyframe was missing for TaskDrawer. */
+   component never mounted,
+the keyframe was missing for TaskDrawer. */
 @keyframes anet-slide-in {
   from { transform: translateX(100%); }
   to   { transform: translateX(0);    }
-}
-.animate-slide-in { animation: anet-slide-in 0.2s ease-out; }
+}.animate-slide-in { animation: anet-slide-in 0.2s ease-out; }
 
 @keyframes anet-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-.anet-fade-in { animation: anet-fade-in 0.15s ease-out; }
-
-/* Round 184 — chrome reset button click-spin. The reset button's
-   onClick triggers R168 smoothView crossfade on the canvas, but the
+}.anet-fade-in { animation: anet-fade-in 0.15s ease-out; }/* Round 184 — chrome reset button click-spin. The reset button's
+   onClick triggers R168 smoothView crossfade on the canvas,
+but the
    BUTTON itself had no visual feedback that the click registered. A
    single 360° rotation on the refresh-arrow icon (450ms ease-out) is
-   a quick "yes, I heard you" confirmation. Counter-clockwise (-360°)
+   a quick "yes,
+I heard you" confirmation. Counter-clockwise (-360°)
    reads as "rewind" / "undo" — natural for a reset gesture. Mirror
    to R52's hub click ripple at the chrome scope. */
 @keyframes anet-reset-spin {
   from { transform: rotate(0deg);     }
   to   { transform: rotate(-360deg); }
-}
-.anet-reset-spin {
+}.anet-reset-spin {
   animation: anet-reset-spin 0.45s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: center;
   transform-box: fill-box;
-}
-
-/* Round 186 — chrome zoom-in / zoom-out buttons get a brief icon pop
+}/* Round 186 — chrome zoom-in / zoom-out buttons get a brief icon pop
    on click. Same click-feel idiom R184 added for the reset button —
-   the canvas already smoothes via R168/R169 smoothView, but the
+   the canvas already smoothes via R168/R169 smoothView,
+but the
    chrome BUTTON itself needs its own confirmation. A quick scale
    up-then-back (1 → 1.18 → 1 over 220ms) reads as "tapped". Same
    transform-box: fill-box anchoring as R184 keeps the icon
@@ -866,16 +243,14 @@ body {
   0%   { transform: scale(1);    }
   50%  { transform: scale(1.18); }
   100% { transform: scale(1);    }
-}
-.anet-chrome-pop {
+}.anet-chrome-pop {
   animation: anet-chrome-pop 0.22s ease-out;
   transform-origin: center;
   transform-box: fill-box;
-}
-
-/* Round 498 — recent-signal row hot-count subtle pulse (信息密度 +
+}/* Round 498 — recent-signal row hot-count subtle pulse (信息密度 +
    呼吸感 themes). When a row's edge count crosses the hot threshold
-   (≥ 10), the existing R127/R320/R445 amber-fill + fw-700 typography
+   (≥ 10),
+the existing R127/R320/R445 amber-fill + fw-700 typography
    already calls attention; R498 adds a slow 3s opacity breath (0.85 ↔
    1.0) on the digit so the hot tspans gently pulse — at-a-glance scan
    of the panel reads "high-traffic lane right here" with motion in
@@ -887,37 +262,31 @@ body {
    (animation-duration: 0.001ms !important) — no per-class guard
    needed. The component-side gate (`!reducedMotion && isHot`)
    ensures the className is only applied when both conditions hold,
-   so even without the blanket the no-motion preference is respected. */
+so even without the blanket the no-motion preference is respected. */
 @keyframes anet-recent-hot-pulse-kf {
   0%, 100% { opacity: 0.85; }
   50%      { opacity: 1;    }
-}
-.anet-recent-hot-pulse {
+}.anet-recent-hot-pulse {
   animation: anet-recent-hot-pulse-kf 3s ease-in-out infinite;
-}
-
-/* Round 36 — current-step ring pulse on TaskDrawer timeline. Halo gently
+}/* Round 36 — current-step ring pulse on TaskDrawer timeline. Halo gently
    breathes around the active step's dot so users can spot "task is here". */
 @keyframes anet-current-step-pulse-kf {
   0%, 100% { transform: scale(1);   opacity: 0.6; }
   50%      { transform: scale(1.25); opacity: 0.0; }
-}
-.anet-current-step-pulse {
+}.anet-current-step-pulse {
   animation: anet-current-step-pulse-kf 1.6s ease-in-out infinite;
-}
-
-/* Round 45 — TopoGraph rotating radar sweep wedge. 6s slow rotation
+}/* Round 45 — TopoGraph rotating radar sweep wedge. 6s slow rotation
    gives the topology canvas a real "radar scan" feel without distracting
    from the agent nodes.
    R146: split shorthand into longhand so per-render inline style can
-   override animation-duration via --sweep-dur, joining the R145
+   override animation-duration via --sweep-dur,
+joining the R145
    --spoke-dur / R132 --march-dur pattern. Default 6s preserves R45's
    original cadence for any caller that forgets the var. */
 @keyframes anet-topo-sweep-kf {
   0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-.anet-topo-sweep {
+}.anet-topo-sweep {
   animation-name: anet-topo-sweep-kf;
   animation-duration: var(--sweep-dur, 6s);
   animation-timing-function: linear;
