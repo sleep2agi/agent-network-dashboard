@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import useSWR from 'swr';
 import { useNetworkId } from '../lib/network-context';
-import { ThemeSwitcher } from './ThemeSwitcher';
 
 const networkFetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : { networks: [] });
 
@@ -209,8 +208,7 @@ export function Sidebar() {
             </svg>
             {!collapsed && 'Sign out'}
           </button>
-          <div className={`flex items-center gap-2 ${collapsed ? 'flex-col px-0 py-2' : 'px-3 py-2 justify-between'}`}>
-            <ThemeSwitcher compact={collapsed} />
+          <div className={`flex items-center ${collapsed ? 'flex-col px-0 py-2' : 'px-3 py-2 justify-end'}`}>
             <button
               onClick={() => setCollapsed(!collapsed)}
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
