@@ -23,15 +23,18 @@ export default function SettingsPage() {
 
       {/* Section anchor nav (round 28) — jump to a group instead of scrolling
           through the whole page. Mirrors the section headers below; pages
-          with 7+ cards benefit from a visible table-of-contents. */}
-      <nav className="mb-8 flex flex-wrap gap-1 text-xs">
+          with 7+ cards benefit from a visible table-of-contents.
+          R3 of #190 mobile polish: matches the /admin chip treatment
+          (preview.3) — 44px tap-target + visible border so the chips read
+          as tappable rather than as inert headings on 375–390px. */}
+      <nav className="mb-8 flex flex-wrap gap-2 text-xs">
         {[
           { href: '#connection', label: 'Connection' },
           { href: '#account',    label: 'Account' },
           { href: '#resources',  label: 'Resources' },
         ].map(a => (
           <a key={a.href} href={a.href}
-            className="rounded-md px-2.5 py-1 text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+            className="inline-flex min-h-[44px] items-center rounded-md border border-[#2a2a4a] bg-[#0a0a15]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
             {a.label}
           </a>
         ))}
