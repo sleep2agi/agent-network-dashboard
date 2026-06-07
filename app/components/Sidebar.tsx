@@ -145,7 +145,7 @@ export function Sidebar() {
                   key={n.network_id}
                   onClick={() => { setNetworkId(n.network_id); setMobileOpen(false); }}
                   title={n.network_id}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xs transition-colors text-left ${
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 rounded-md text-xs transition-colors text-left ${
                     networkId === n.network_id
                       ? 'bg-cyan-500/10 text-cyan-300'
                       : 'text-gray-500 hover:text-gray-300 hover:bg-[#1a1a2a]'
@@ -180,7 +180,7 @@ export function Sidebar() {
             }}
             title={collapsed ? 'Quick search (⌘K)' : undefined}
             className={`w-full flex items-center text-[11px] text-gray-600 hover:text-gray-400 hover:bg-[#1a1a2a] transition-colors ${
-              collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2 px-5 py-2'
+              collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2 px-5 py-3 lg:py-2'
             }`}
             aria-label="Open command palette"
           >
