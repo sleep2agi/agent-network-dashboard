@@ -80,7 +80,10 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
             <h2 className="text-lg font-bold text-white">Dispatch Task</h2>
             <p className="text-xs text-gray-500 mt-0.5">Send a task to one or more agents</p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white p-1.5 rounded-lg hover:bg-[#1a1a2a]">
+          {/* R22 of #190: same SVG-only-no-aria-label pattern that R16
+              fixed on TaskChatPanel/TaskDrawer/ChatPopover; DispatchPanel
+              missed that pass. ~32 px hit zone + silent on screen-reader. */}
+          <button onClick={onClose} aria-label="Close dispatch panel" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white rounded-lg hover:bg-[#1a1a2a]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
