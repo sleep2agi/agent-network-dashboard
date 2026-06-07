@@ -190,7 +190,13 @@ export default function SettingsPage() {
             <div className="flex-1 h-px bg-[#2a2a4a]" />
           </div>
 
-        {/* API Tokens + Networks */}
+        {/* #209 (per Vincent 521/522): the low-frequency pages 通信龙
+            moved out of the sidebar (Messages, Audit Log, Server Logs)
+            need a discovery surface that isn't the primary nav — folded
+            into the Settings/Resources grid alongside Tokens + Networks
+            so the page tree stays the same (pages NOT deleted), the
+            sidebar stays at 6, and users still have a one-tap way to
+            reach them without remembering URLs or opening Cmd+K. */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link href="/settings/tokens" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
             <h2 className="text-sm font-semibold text-gray-300">API Tokens</h2>
@@ -201,6 +207,21 @@ export default function SettingsPage() {
             <h2 className="text-sm font-semibold text-gray-300">Networks</h2>
             <p className="text-xs text-gray-500 mt-2">Create, manage, and delete agent networks.</p>
             <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
+          </Link>
+          <Link href="/messages" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
+            <h2 className="text-sm font-semibold text-gray-300">Messages</h2>
+            <p className="text-xs text-gray-500 mt-2">Global timeline of CommHub messages across all agents.</p>
+            <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
+          </Link>
+          <Link href="/logs" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
+            <h2 className="text-sm font-semibold text-gray-300">Audit Log</h2>
+            <p className="text-xs text-gray-500 mt-2">Authentication, token rotations, and admin actions.</p>
+            <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
+          </Link>
+          <Link href="/server-logs" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
+            <h2 className="text-sm font-semibold text-gray-300">Server Logs</h2>
+            <p className="text-xs text-gray-500 mt-2">Live stdout / stderr from the CommHub server.</p>
+            <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
           </Link>
         </div>
         </div>
