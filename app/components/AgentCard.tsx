@@ -28,7 +28,7 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
     <Link
       href={`/node?alias=${encodeURIComponent(s.alias)}`}
       prefetch={false}
-      className={`anet-agent-card group relative block rounded-xl border p-4 transition-all duration-300 cursor-pointer hover:-translate-y-0.5 ${
+      className={`anet-agent-card group relative block rounded-xl border p-3 sm:p-4 transition-all duration-300 cursor-pointer hover:-translate-y-0.5 ${
         hasSse
           ? `bg-[#111128] border-[#2a2a4a] hover:border-cyan-500/30 hover:shadow-lg ${cfg.glow}`
           : 'bg-[#0d0d1a] border-[#1a1a2a] opacity-40'
@@ -36,8 +36,10 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
     >
       {/* Header: avatar + name + status. Avatar carries the alias→hue map
           shared with Messages/Nodes/Tasks/Overview; the live status dot
-          stays as a small pulse-capable indicator. */}
-      <div className="flex items-center justify-between mb-3">
+          stays as a small pulse-capable indicator. R5 of #190 mobile
+          polish: trim mb-3 → mb-2 sm:mb-3 so the card's vertical rhythm
+          tightens on narrow viewports. */}
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <AliasAvatar alias={s.alias} size={22} />
           <span className="font-semibold text-white truncate text-sm" title={s.alias}>{s.alias}</span>
@@ -48,8 +50,11 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
         </span>
       </div>
 
-      {/* Agent type badge */}
-      <div className="flex items-center gap-2 mb-3">
+      {/* Agent type badge — hidden below sm because the runtime
+          (`claude-code` / `codex`) repeats across nearly every card and
+          chews ~28px per card × 99 sessions on Overview mobile. The
+          agent type stays one tap away on /node detail. */}
+      <div className="hidden sm:flex items-center gap-2 mb-3">
         <span className="text-xs text-gray-600 bg-[#0a0a15] px-2 py-0.5 rounded border border-[#1a1a2a]">
           {s.agent || 'unknown'}
         </span>
@@ -58,18 +63,23 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
         )}
       </div>
 
-      {/* Task */}
+      {/* Task. Mobile: line-clamp-1 (one-liner) instead of two, and a
+          single-line padding (px-2 py-1) so the task strip is ~28px
+          rather than ~56px. The full task is still in the title
+          tooltip and on /node detail. */}
       {s.task ? (
-        <div className="text-xs text-gray-400 bg-[#0a0a15] rounded-lg px-3 py-2 border border-[#1a1a2a] line-clamp-2" title={s.task}>
+        <div className="text-xs text-gray-400 bg-[#0a0a15] rounded-lg px-2 sm:px-3 py-1 sm:py-2 border border-[#1a1a2a] line-clamp-1 sm:line-clamp-2" title={s.task}>
           {s.task}
         </div>
       ) : (
         <div className="text-xs text-gray-700 italic">No active task</div>
       )}
 
-      {/* Progress bar */}
+      {/* Progress bar — hidden below sm so an empty 0% bar doesn't
+          occupy 20px on every idle card. Visible from sm up where space
+          is no longer the constraint. */}
       {s.progress > 0 && (
-        <div className="mt-3">
+        <div className="hidden sm:block mt-3">
           <div className="flex justify-between text-[10px] mb-1">
             <span className="text-gray-600">Progress</span>
             <span className={cfg.text}>{s.progress}%</span>
