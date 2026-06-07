@@ -91,10 +91,12 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger */}
+      {/* Mobile hamburger — R13 of #190: was p-2.5 = ~40px tap target,
+          just below the iOS 44px guideline. Bump padding and add an
+          explicit min-w/min-h so it can never be miss-tapped. */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-3 z-50 lg:hidden bg-[#111128] border border-[#2a2a4a] rounded-lg p-2.5 text-gray-400 hover:text-white active:bg-[#1a1a3a]"
+        className="fixed top-3 left-3 z-50 lg:hidden bg-[#111128] border border-[#2a2a4a] rounded-lg p-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-gray-400 hover:text-white active:bg-[#1a1a3a]"
         aria-label="Toggle menu"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
