@@ -4,10 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatUptime, previewContent } from './components/utils';
 import { StatsBar } from './components/StatsBar';
-import { BroadcastBar } from './components/BroadcastBar';
 import { TopoGraph } from './components/TopoGraph';
 import { AgentCard } from './components/AgentCard';
-import { InboxPanel } from './components/InboxPanel';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { NodesEmptyState as EmptyState } from './components/EmptyState';
 import { AliasAvatar } from './components/AliasAvatar';
@@ -17,7 +15,6 @@ import { CommandCenter, useCommandCenter } from './components/CommandCenter';
 import { DispatchPanel } from './components/DispatchPanel';
 import { useSessions, useHealth, useAnetConfig, useTasks, useStats } from './lib/hooks';
 import { useSSE } from './lib/useSSE';
-import { InboxMessage } from './components/types';
 import { useSWRConfig } from 'swr';
 
 export default function Dashboard() {
@@ -40,7 +37,6 @@ export default function Dashboard() {
   const [showConfig, setShowConfig] = useState(false);
   const cmd = useCommandCenter();
   const [showDispatch, setShowDispatch] = useState(false);
-  const [inbox, setInbox] = useState<InboxMessage[]>([]);
   const [agentFilter, setAgentFilter] = useState<'all' | 'working' | 'idle' | 'offline'>('all');
   // #84: last node.renamed event — passed to TopoGraph so an open chat
   // popover follows the rename instead of pointing at a dead alias. `ts`
@@ -74,22 +70,6 @@ export default function Dashboard() {
       }
     },
   });
-
-  // Fetch inbox (not in SWR since it accumulates)
-  useEffect(() => {
-    const fetchInbox = () => {
-      fetch('/api/hub/inbox').then(r => r.json()).then(data => {
-        if (data.messages?.length) setInbox(prev => {
-          const ids = new Set(prev.map(m => m.id));
-          const newMsgs = data.messages.filter((m: { id: string }) => !ids.has(m.id));
-          return [...newMsgs, ...prev].slice(0, 100);
-        });
-      }).catch(() => {});
-    };
-    fetchInbox();
-    const interval = setInterval(fetchInbox, 10000);
-    return () => clearInterval(interval);
-  }, []);
 
   if (isLoading) return <LoadingSkeleton />;
 
@@ -328,8 +308,6 @@ export default function Dashboard() {
         ))}
       </section>
 
-      <BroadcastBar />
-
       {/* Recent Activity */}
       {tasks.length > 0 && (
         <section className="mb-6 bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
@@ -453,8 +431,6 @@ export default function Dashboard() {
           </>
         );
       })()}
-
-      <InboxPanel messages={inbox} />
 
       {/* Round 111 (issue #82): dropped the license badge — "trial (12d
           left)" read like a paywall countdown on an open-source dashboard
