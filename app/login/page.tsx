@@ -92,7 +92,7 @@ export default function LoginPage() {
           </label>
           <input id="username" type="text" value={username} onChange={e => setUsername(e.target.value)} autoFocus
             placeholder="Enter username"
-            className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all mb-4" />
+            className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-4 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all mb-4" />
 
           <label htmlFor="password" className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
             Password
@@ -100,13 +100,13 @@ export default function LoginPage() {
           <div className="relative">
             <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
               placeholder="Enter password"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-4 pr-11 py-3 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all" />
+              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-4 pr-11 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all" />
             <button
               type="button"
               onClick={() => setShowPassword(s => !s)}
               tabIndex={-1}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-600 hover:text-gray-300 transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center justify-center min-w-[44px] px-3 text-gray-600 hover:text-gray-300 transition-colors"
             >
               {showPassword ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
