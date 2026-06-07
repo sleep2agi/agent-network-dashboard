@@ -80,7 +80,7 @@ export default function TokensPage() {
           <div className="flex gap-2">
             <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
               placeholder="Token name (e.g. my-cli)"
-              className="flex-1 bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="flex-1 bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <button onClick={createToken} disabled={!newName.trim()}
               className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-800 text-white text-sm rounded-lg transition-colors">
               Create

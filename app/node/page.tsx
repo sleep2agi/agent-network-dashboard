@@ -302,7 +302,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
                 onChange={e => setSendMsg(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendTask()}
                 placeholder={`Send task to ${alias}...`}
-                className="flex-1 bg-[#0a0a15] border border-[#2a2a4a] rounded px-3 py-2 text-xs text-white placeholder-gray-600 focus:border-blue-500 focus:outline-none"
+                className="flex-1 bg-[#0a0a15] border border-[#2a2a4a] rounded px-3 py-2 text-base sm:text-xs text-white placeholder-gray-600 focus:border-blue-500 focus:outline-none"
               />
               <button
                 onClick={sendTask}

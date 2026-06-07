@@ -111,9 +111,9 @@ export default function NetworksPage() {
           <h2 className="text-sm font-semibold text-gray-300 mb-3">Create Network</h2>
           <div className="space-y-3">
             <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Network name"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <input type="text" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description (optional)"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <button onClick={createNetwork} disabled={!newName.trim()}
               className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-800 text-white text-sm rounded-lg transition-colors">
               Create
@@ -199,7 +199,7 @@ export default function NetworksPage() {
                         <div className="text-xs text-gray-500 mb-2">Invite</div>
                         <div className="flex gap-2">
                           <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
-                            className="bg-[#0a0a15] border border-[#2a2a4a] rounded px-2 py-1 text-xs text-white focus:outline-none">
+                            className="bg-[#0a0a15] border border-[#2a2a4a] rounded px-2 py-1 text-base sm:text-xs text-white focus:outline-none">
                             <option value="member">member</option>
                             <option value="admin">admin</option>
                             <option value="viewer">viewer</option>

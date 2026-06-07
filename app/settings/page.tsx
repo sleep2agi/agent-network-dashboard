@@ -212,9 +212,9 @@ export default function SettingsPage() {
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Change Password</h2>
           <div className="space-y-3">
             <input type="password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} placeholder="Current password"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="New password"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <button onClick={async () => {
               if (!oldPwd || !newPwd) return;
               const saved = sessionStorage.getItem('anet_v3_auth');
