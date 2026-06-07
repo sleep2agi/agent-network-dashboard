@@ -63,11 +63,6 @@ export function useStats() {
   return { stats: data?.ok ? data : null, error };
 }
 
-export function useLicense() {
-  const { data, error } = useSWR('/api/hub/license', fetcher, { refreshInterval: 60000 });
-  return { license: data?.ok ? data : null, error };
-}
-
 export function useMessages(limit = 100) {
   const { networkId } = useNetworkId();
   const { data, error, isLoading } = useSWR(
