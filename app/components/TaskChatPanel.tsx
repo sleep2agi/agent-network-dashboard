@@ -633,8 +633,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
                 </select>
               </div>
             </div>
-            <button onClick={send} disabled={sending || (!input.trim() && attachedFiles.length === 0)}
-              className="p-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-[var(--border)] disabled:text-[var(--fg-dim)] text-[var(--fg)] rounded-xl transition-all shrink-0 active:scale-95">
+            {/* R17 of #190: send button was p-2.5 + w-5 icon = ~40 x 40
+                hit zone, 4 px short of the iOS 44 px guideline on
+                the short axis. Bump to inline-flex + min-h/w 44. */}
+            <button onClick={send} aria-label="Send message" disabled={sending || (!input.trim() && attachedFiles.length === 0)}
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center bg-cyan-600 hover:bg-cyan-500 disabled:bg-[var(--border)] disabled:text-[var(--fg-dim)] text-[var(--fg)] rounded-xl transition-all shrink-0 active:scale-95">
               {sending ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
