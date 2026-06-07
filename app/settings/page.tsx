@@ -2,15 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAnetConfig, useHealth, useLicense } from '../lib/hooks';
+import { useAnetConfig, useHealth } from '../lib/hooks';
 import { DASHBOARD_VERSION } from '../lib/version';
 
 export default function SettingsPage() {
   const { config } = useAnetConfig();
   const { health } = useHealth();
-  const { license: licData } = useLicense();
-  const [licKey, setLicKey] = useState('');
-  const [licResult, setLicResult] = useState('');
   const [oldPwd, setOldPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [pwdResult, setPwdResult] = useState('');
@@ -133,79 +130,6 @@ export default function SettingsPage() {
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Account</div>
             <div className="flex-1 h-px bg-[#2a2a4a]" />
           </div>
-
-        {/* License */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
-            License
-            {licData?.license && (
-              <span
-                className={`inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full border ${
-                  licData.license.type === 'pro'
-                    ? 'text-green-300 bg-green-500/10 border-green-500/30'
-                    : licData.license.days_left <= 7
-                      ? 'text-red-300 bg-red-500/10 border-red-500/30'
-                      : 'text-amber-300 bg-amber-500/10 border-amber-500/30'
-                }`}
-              >
-                <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-current" />
-                {licData.license.type}{licData.license.days_left ? ` · ${licData.license.days_left}d left` : ''}
-              </span>
-            )}
-          </h2>
-          {licData?.license ? (
-            <div className="space-y-3 text-sm">
-              {/* Type + Days Left are summarized in the inline chip in the
-                  header. Surface "expiring soon" only when relevant. */}
-              {licData.license.days_left <= 7 && (
-                <div className={rowClass}>
-                  <span className="text-red-400 font-medium">⚠ Expiring soon</span>
-                  <span className="text-red-400">{licData.license.days_left} days left</span>
-                </div>
-              )}
-              <div className={rowClass}>
-                <span className="text-gray-500">Expires</span>
-                <span className={`text-gray-300 ${valueClass}`}>{licData.license.expires_at}</span>
-              </div>
-              {licData.limits && (
-                <>
-                  <div className={rowClass}>
-                    <span className="text-gray-500">Max Agents</span>
-                    <span className={`text-gray-300 ${valueClass}`}>{licData.limits.max_agents}</span>
-                  </div>
-                  <div className={rowClass}>
-                    <span className="text-gray-500">Max Networks</span>
-                    <span className={`text-gray-300 ${valueClass}`}>{licData.limits.max_networks}</span>
-                  </div>
-                  <div className={rowClass}>
-                    <span className="text-gray-500">Tasks/Day</span>
-                    <span className={`text-gray-300 ${valueClass}`}>{licData.limits.max_tasks_day}</span>
-                  </div>
-                </>
-              )}
-              <div className="pt-3 border-t border-[#2a2a4a]">
-                <div className="flex gap-2">
-                  <input type="text" value={licKey} onChange={e => setLicKey(e.target.value)}
-                    placeholder="anet-XXXX-XXXX-XXXX-XXXX"
-                    className="flex-1 bg-[#0a0a15] border border-[#2a2a4a] rounded px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none" />
-                  <button onClick={async () => {
-                    if (!licKey.trim()) return;
-                    const res = await fetch('/api/hub/license', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: licKey }) });
-                    const data = await res.json();
-                    setLicResult(data.ok ? `Activated: ${data.type}` : `Failed: ${data.error}`);
-                    if (data.ok) setLicKey('');
-                    setTimeout(() => setLicResult(''), 5000);
-                  }} className="px-3 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs rounded transition-colors">
-                    Activate
-                  </button>
-                </div>
-                {licResult && <div className={`mt-2 text-xs ${licResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{licResult}</div>}
-              </div>
-            </div>
-          ) : (
-            <div className="text-xs text-gray-600">License info not available</div>
-          )}
-        </section>
 
         {/* Change Password */}
         <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
