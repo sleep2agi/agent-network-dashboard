@@ -162,11 +162,15 @@ export default function LogsPage() {
       ) : logs.length === 0 ? (
         <EmptyState variant="logs" />
       ) : (
-        <div className="space-y-2">
+        /* R18 of #190 mobile polish: /logs was 28,791 px on 390 px
+           mobile; same dense-card pattern that R7/R8 hit on /nodes
+           and /tasks. Tighten card padding and inter-card gap on
+           mobile, sm:-gated so desktop stays comfortable. */
+        <div className="space-y-1 sm:space-y-2">
           {logs.map(log => {
             const userName = log.username || log.user_id;
             return (
-            <div key={log.id} className="relative bg-[#111128] border border-[#2a2a4a] rounded-lg pl-4 pr-4 py-3 hover:border-[#3a3a5a] transition-colors overflow-hidden">
+            <div key={log.id} className="relative bg-[#111128] border border-[#2a2a4a] rounded-lg pl-3 pr-3 py-2 sm:pl-4 sm:pr-4 sm:py-3 hover:border-[#3a3a5a] transition-colors overflow-hidden">
               {/* 2px left rail per action (round 33) — failed logins, token
                   rotations spike out of a wall of register/login rows. */}
               <span
