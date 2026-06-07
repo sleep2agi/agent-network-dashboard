@@ -76,15 +76,20 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Admin</h1>
 
-      {/* Section anchor nav — same pattern as Settings r28. */}
-      <nav className="mb-8 flex flex-wrap gap-1 text-xs">
+      {/* Section anchor nav — same pattern as Settings r28; R2 of #190 mobile
+          polish: idle chips were flat text-only with a ~24px tap height (below
+          the 44px iOS guideline), so on the 375–390px screenshot pass they
+          read as inert labels rather than tappable jumps. Wrapping each in a
+          visible bordered chip restores the affordance and lifts tap height
+          to ~44px without changing the desktop hierarchy. */}
+      <nav className="mb-8 flex flex-wrap gap-2 text-xs">
         {[
           { href: '#status',  label: 'Status' },
           { href: '#actions', label: 'Actions' },
           { href: '#users',   label: 'Users' },
         ].map(a => (
           <a key={a.href} href={a.href}
-            className="rounded-md px-2.5 py-1 text-gray-500 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+            className="inline-flex min-h-[44px] items-center rounded-md border border-[#2a2a4a] bg-[#0a0a15]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
             {a.label}
           </a>
         ))}
