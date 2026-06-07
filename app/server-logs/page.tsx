@@ -252,8 +252,15 @@ export default function ServerLogsPage() {
                   className="absolute left-0 top-0 bottom-0 w-0.5"
                   style={{ backgroundColor: LEVEL_STRIPE[l.level] }}
                 />
-                <span className="text-gray-600 shrink-0 w-[100px] text-[10px] tabular-nums">{shortTime(l.ts)}</span>
-                <span className={`shrink-0 px-1.5 rounded border text-[9px] uppercase ${LEVEL_BADGE[l.level]}`}>
+                {/* R4 of #190 mobile polish: the 100px timestamp column +
+                    32px LEVEL badge ate ~45% of a 375px row, squeezing log
+                    content into a 3-line wrap. Drop the ts column to 60px
+                    on mobile (HH:MM:SS still fits at 9px), restore 100px
+                    at sm. The 2px left rail (LEVEL_STRIPE) already
+                    encodes level visually for warn/error, so the LOG badge
+                    is redundant on mobile — hide it below sm. */}
+                <span className="text-gray-600 shrink-0 w-[60px] sm:w-[100px] text-[9px] sm:text-[10px] tabular-nums">{shortTime(l.ts)}</span>
+                <span className={`hidden sm:inline shrink-0 px-1.5 rounded border text-[9px] uppercase ${LEVEL_BADGE[l.level]}`}>
                   {l.level}
                 </span>
                 {/* Round 85: CommHub stamps each log line with a `[HH:MM:SS]`
