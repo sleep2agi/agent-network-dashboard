@@ -20,7 +20,17 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Agent Network",
   },
-  icons: { icon: '/favicon.svg' },
+  // R24 of #190: appleWebApp.capable above declares this is an iOS web
+  // app, but only `icon` was specified, leaving iOS Safari to fall back
+  // to a generic icon on Add-to-Home-Screen. iOS 15+ accepts SVG via
+  // `rel="apple-touch-icon" type="image/svg+xml"`; older iOS will fall
+  // back to the manifest icons (added R23) and then the generic. Reuse
+  // the existing sleep2agi-logo.svg — no new asset shipped.
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/sleep2agi-logo.svg', type: 'image/svg+xml' }],
+    shortcut: '/favicon.svg',
+  },
   openGraph: {
     title: "Agent Network Dashboard",
     description: "Real-time monitoring dashboard for Agent Network nodes",
