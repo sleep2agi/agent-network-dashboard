@@ -260,19 +260,26 @@ export default function MessagesPage() {
 
             return (
               <div key={message.id}>
+                {/* R6 of #190 mobile polish: gap divider was my-4 (=16px
+                    each side), and with multi-hour message lulls it
+                    fired several times per session, eating ~32px each.
+                    Halve it on mobile. */}
                 {gapExceeded && (
-                  <div className="my-4 flex items-center gap-3">
+                  <div className="my-2 sm:my-4 flex items-center gap-3">
                     <div className="h-px flex-1 bg-[#2a2a4a]" />
                     <div className="text-[11px] text-gray-600">{formatDividerLabel(message.created_at)}</div>
                     <div className="h-px flex-1 bg-[#2a2a4a]" />
                   </div>
                 )}
 
-                {/* Broadcasts span full width — no avatar gutter. */}
+                {/* Broadcasts span full width — no avatar gutter. R6 mobile:
+                    tighter padding + tighter header margin + snug leading
+                    on the content so each bubble is ~25-30% shorter at
+                    390px. Desktop unchanged from sm: up. */}
                 {variant === 'broadcast' ? (
-                  <div className={samePrev ? 'mt-1' : 'mt-3'}>
-                    <div className="rounded-2xl border border-purple-500/20 bg-purple-500/10 px-4 py-3 shadow-sm w-full">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <div className={samePrev ? 'mt-0.5 sm:mt-1' : 'mt-2 sm:mt-3'}>
+                    <div className="rounded-2xl border border-purple-500/20 bg-purple-500/10 px-3 py-2 sm:px-4 sm:py-3 shadow-sm w-full">
+                      <div className="mb-1 sm:mb-2 flex flex-wrap items-center gap-2">
                         <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
                           {message.type || 'unknown'}
                         </span>
@@ -285,24 +292,24 @@ export default function MessagesPage() {
                           long unbroken runs (URLs, ASCII rules like
                           `═══════════════`) wrap instead of pushing the
                           chat bubble past the mobile viewport. */}
-                      <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-relaxed text-gray-200">
+                      <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-snug sm:leading-relaxed text-gray-200">
                         {renderHighlighted(message.content, search)}
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className={`${samePrev ? 'mt-1' : 'mt-3'} flex gap-2 ${variant === 'outgoing' ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div className={`${samePrev ? 'mt-0.5 sm:mt-1' : 'mt-2 sm:mt-3'} flex gap-2 ${variant === 'outgoing' ? 'flex-row-reverse' : 'flex-row'}`}>
                     {/* Avatar gutter — fixed width keeps bubble columns aligned even on streaks */}
                     <div className="w-8 shrink-0 pt-1">
                       {!samePrev && <AliasAvatar alias={fromAlias} size={32} />}
                     </div>
-                    <div className={`min-w-0 max-w-3xl rounded-2xl border px-4 py-3 shadow-sm ${
+                    <div className={`min-w-0 max-w-3xl rounded-2xl border px-3 py-2 sm:px-4 sm:py-3 shadow-sm ${
                       variant === 'outgoing'
                         ? 'border-green-500/20 bg-green-500/10'
                         : 'border-blue-500/20 bg-blue-500/10'
                     }`}>
                       {!samePrev && (
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <div className="mb-1 sm:mb-2 flex flex-wrap items-center gap-2">
                           <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
                             {message.type || 'unknown'}
                           </span>
@@ -320,7 +327,7 @@ export default function MessagesPage() {
                           long unbroken runs (URLs, ASCII rules like
                           `═══════════════`) wrap instead of pushing the
                           chat bubble past the mobile viewport. */}
-                      <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-relaxed text-gray-200">
+                      <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-snug sm:leading-relaxed text-gray-200">
                         {renderHighlighted(message.content, search)}
                       </div>
 
