@@ -99,7 +99,7 @@ export default function NodesPage() {
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500/50 focus:outline-none"
+          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-blue-500/50 focus:outline-none"
         >
           <option value="">All</option>
           <option value="online">Online</option>

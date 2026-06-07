@@ -219,7 +219,7 @@ export default function AdminPage() {
           <select
             value={taskTarget}
             onChange={e => setTaskTarget(e.target.value)}
-            className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-500/50 focus:outline-none mb-3"
+            className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-cyan-500/50 focus:outline-none mb-3"
           >
             <option value="">Select target node...</option>
             {onlineNodes.map(s => (
