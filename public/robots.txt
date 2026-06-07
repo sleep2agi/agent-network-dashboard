@@ -1,0 +1,7 @@
+# The Agent Network Dashboard is an auth-gated operational console for
+# a team's CommHub deployment. There is no public-discovery value to
+# search engines crawling it, and any indexed URLs would still bounce
+# unauthenticated visitors at /login. Block politely across the board.
+
+User-agent: *
+Disallow: /
