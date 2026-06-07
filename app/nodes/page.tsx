@@ -215,7 +215,7 @@ export default function NodesPage() {
           })}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1 sm:space-y-2">
           {/* Round 94: AGENT + SERVER merged into one `agent · server`
               cell. Round mobile-command: node row itself opens chat, so
               the old Chat / Send Task action column is gone. */}
@@ -237,7 +237,7 @@ export default function NodesPage() {
                 tabIndex={0}
                 onClick={() => setChatAlias(s.alias)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setChatAlias(s.alias); } }}
-                className={`rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-3 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-50' : ''}`}
+                className={`rounded-lg border border-[#2a2a4a] bg-[#111128] px-3 py-2 sm:px-4 sm:py-3 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-50' : ''}`}
               >
                 <div className="hidden sm:grid sm:grid-cols-10 gap-2 items-center">
                   <div className="col-span-1">
@@ -261,7 +261,14 @@ export default function NodesPage() {
                   <div className="col-span-4 truncate text-xs text-gray-500" title={s.task || ''}>{s.task || '--'}</div>
                   <div className="col-span-1 text-xs text-gray-500">{timeAgo(s.last_seen_at || s.updated_at)}</div>
                 </div>
-                <div className="sm:hidden space-y-2">
+                {/* R7 of #190: mobile node row was ~340px tall × ~150
+                    rows = the 51k page. Wins this round, in priority
+                    order: (1) drop the per-row "Tap anywhere to chat"
+                    hint — useful once, redundant 149 times; the cyan
+                    border on hover/focus still teaches it. (2) tighten
+                    space-y-2 → space-y-1 so the avatar/task gap is
+                    4px tighter on every row. */}
+                <div className="sm:hidden space-y-1">
                   <div className="flex items-center gap-2.5">
                     <div className="relative shrink-0">
                       <AliasAvatar alias={s.alias} size={28} />
@@ -279,7 +286,6 @@ export default function NodesPage() {
                     </span>
                   </div>
                   {s.task && <div className="truncate text-xs text-gray-500">{s.task}</div>}
-                  <div className="text-[10px] text-cyan-300/70">Tap anywhere to chat</div>
                 </div>
               </div>
             );
