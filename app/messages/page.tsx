@@ -148,7 +148,7 @@ export default function MessagesPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search from/to/content or use from:alias"
-          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none w-full sm:w-72"
+          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none w-full sm:w-72"
         />
         <select
           value={filterType}

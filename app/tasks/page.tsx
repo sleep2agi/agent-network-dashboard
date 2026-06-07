@@ -180,7 +180,7 @@ function TasksContent() {
             value={filterFrom}
             onChange={e => setFilterFrom(e.target.value)}
             placeholder="any node"
-            className="w-28 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none"
+            className="w-28 bg-transparent text-base sm:text-sm text-white placeholder-gray-700 focus:outline-none"
           />
         </div>
         <div className="flex items-center gap-1.5 rounded-lg border border-[#2a2a4a] bg-[#111128] px-2.5 py-1.5 focus-within:border-blue-500/40">
@@ -190,7 +190,7 @@ function TasksContent() {
             value={filterTo}
             onChange={e => setFilterTo(e.target.value)}
             placeholder="any node"
-            className="w-28 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none"
+            className="w-28 bg-transparent text-base sm:text-sm text-white placeholder-gray-700 focus:outline-none"
           />
         </div>
         {(filterStatus || filterFrom || filterTo) && (

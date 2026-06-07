@@ -438,7 +438,7 @@ export function CommandPalette() {
             value={query}
             onChange={e => { setQuery(e.target.value); setSelected(0); }}
             placeholder="Type a command or search…"
-            className="flex-1 bg-transparent text-sm text-gray-200 placeholder-gray-600 focus:outline-none"
+            className="flex-1 bg-transparent text-base sm:text-sm text-gray-200 placeholder-gray-600 focus:outline-none"
           />
           <kbd className="text-[10px] text-gray-600 border border-[#2a2a4a] rounded px-1.5 py-0.5 font-mono">esc</kbd>
         </div>
