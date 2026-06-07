@@ -20,6 +20,15 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Agent Network",
   },
+  // R26 of #190: Next.js 16 renders `mobile-web-app-capable` (the modern
+  // standardized meta) but NOT the legacy `apple-mobile-web-app-capable`.
+  // iOS Safari < 16.4 only checks the apple-prefixed name; without it,
+  // the dashboard won't install as a web app on those iOS versions and
+  // the statusBarStyle + apple-touch-icon (R24) are silently ignored.
+  // Emit the legacy alias via metadata.other for back-compat.
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+  },
   // R24 of #190: appleWebApp.capable above declares this is an iOS web
   // app, but only `icon` was specified, leaving iOS Safari to fall back
   // to a generic icon on Add-to-Home-Screen. iOS 15+ accepts SVG via
