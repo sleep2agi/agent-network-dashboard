@@ -248,7 +248,7 @@ function TasksContent() {
             : 'Tasks will appear here when agents send them via CommHub.'}
         />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1 sm:space-y-2">
           {/* Table header */}
           <div className="hidden sm:grid sm:grid-cols-12 gap-2 px-4 py-2 text-xs text-gray-600 uppercase">
             <div className="col-span-1">Status</div>
@@ -264,7 +264,7 @@ function TasksContent() {
             return (
             <div
               key={t.task_id}
-              className={`anet-task-row group bg-[#111128] border rounded-lg px-4 py-3 transition-all duration-200 cursor-pointer ${
+              className={`anet-task-row group bg-[#111128] border rounded-lg px-3 py-2 sm:px-4 sm:py-3 transition-all duration-200 cursor-pointer ${
                 isOpen
                   ? 'border-[#3a3a5a] shadow-lg shadow-black/20'
                   : 'border-[#2a2a4a] hover:border-[#3a3a5a] hover:bg-[#15152e]'
@@ -311,8 +311,12 @@ function TasksContent() {
                 </div>
               </div>
 
-              {/* Mobile layout */}
-              <div className="sm:hidden space-y-2">
+              {/* Mobile layout — R8 of #190 mobile polish: 4-row stack
+                  → 3-row by inlining timeAgo onto the same row as the
+                  from→to alias header (it's already 4 small atoms, has
+                  room), plus space-y-2 → space-y-1 to trim ~4px per
+                  row × 200 tasks. */}
+              <div className="sm:hidden space-y-1">
                 <div className="flex items-center justify-between">
                   <span className={statusBadge(t.status)}>{t.status}</span>
                   <div className="flex items-center gap-2">
@@ -328,13 +332,13 @@ function TasksContent() {
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-300 min-w-0">
                   {t.from_name && <AliasAvatar alias={t.from_name} size={16} />}
-                  <span className="truncate max-w-[40%]">{t.from_name || '--'}</span>
+                  <span className="truncate max-w-[35%]">{t.from_name || '--'}</span>
                   <span className="text-gray-600">&rarr;</span>
                   {t.to_name && <AliasAvatar alias={t.to_name} size={16} />}
-                  <span className="truncate max-w-[40%]">{t.to_name || '--'}</span>
+                  <span className="truncate max-w-[35%]">{t.to_name || '--'}</span>
+                  <span className="ml-auto shrink-0 text-[10px] text-gray-600">{timeAgo(t.created_at)}</span>
                 </div>
                 <div className="text-xs text-gray-400 line-clamp-1" title={t.content}>{previewContent(t.content)}</div>
-                <div className="text-xs text-gray-600">{timeAgo(t.created_at)}</div>
               </div>
 
               {/* Expanded detail — always mounted; grid-rows 0fr↔1fr trick gives
