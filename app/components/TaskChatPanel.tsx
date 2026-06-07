@@ -483,7 +483,14 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   const chatContent = (
     <>
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 space-y-3 sm:space-y-4">
+        {/* R12 of #190 mobile polish: the chat scroll surface used
+            space-y-3 between task+reply pairs at mobile = 12 px, which
+            in a long thread (the panel's bread-and-butter use case)
+            adds up to a significant scroll length. Drop to space-y-2 at
+            mobile and the per-pair grouping (line 540) from space-y-2
+            to space-y-1.5 so messages read denser without losing the
+            speaker-turn rhythm. Desktop unchanged at sm: and up. */}
+        <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 space-y-2 sm:space-y-4">
           {!historyLoaded && (
             <div className="flex justify-center py-8">
               <div className="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
@@ -537,7 +544,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
               );
             }
             return (
-            <div key={`${m.task_id}:task`} className="space-y-2">
+            <div key={`${m.task_id}:task`} className="space-y-1.5 sm:space-y-2">
               {/* Outgoing task — labeled with origin so peer-forwarded tasks are obvious */}
               <div className="flex justify-end">
                 <div className="max-w-[92%] sm:max-w-[85%] bg-cyan-500/8 border border-cyan-500/15 rounded-2xl rounded-br-md px-3 py-2.5 sm:px-4 shadow-sm">
