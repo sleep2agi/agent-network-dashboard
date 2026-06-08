@@ -14,8 +14,11 @@
 export function LoadingSkeleton() {
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
-      {/* KPI top strip — 4 cards matching StatsBar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 anet-skeleton-pulse">
+      {/* KPI top strip — 4 cards matching StatsBar.
+          #209 R38: mb-8 → mb-4 sm:mb-8 to track the live StatsBar
+          wrapper after R29 mobile-tighten. Without this the skeleton
+          and the loaded page jump by 16 px on mobile when data arrives. */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 sm:mb-8 anet-skeleton-pulse">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="rounded-xl border border-[#2a2a4a] bg-[#111128] px-4 py-3">
             <Bar w="2.5rem" h="1.75rem" />
@@ -25,8 +28,10 @@ export function LoadingSkeleton() {
         ))}
       </div>
 
-      {/* Dispatch + UserBar row */}
-      <div className="flex items-center gap-3 mb-3 anet-skeleton-pulse">
+      {/* Dispatch + UserBar row.
+          #209 R38: mb-3 → mb-4 — live page uses mb-4 here, skeleton
+          was 4 px tighter and triggered a small jump on load. */}
+      <div className="flex items-center gap-3 mb-4 anet-skeleton-pulse">
         <Bar w="6rem" h="2.5rem" rounded="0.75rem" />
         <div className="flex-1 rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-2.5 flex items-center gap-3">
           <div className="w-8 h-8 rounded-full anet-skeleton-bar" />
@@ -37,8 +42,9 @@ export function LoadingSkeleton() {
         </div>
       </div>
 
-      {/* Config bar */}
-      <div className="mb-6 rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-3 anet-skeleton-pulse">
+      {/* Config bar.
+          #209 R38: mb-6 → mb-4 sm:mb-6 to track the R28 mobile tighten. */}
+      <div className="mb-4 sm:mb-6 rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-3 anet-skeleton-pulse">
         <Bar w="14rem" h="0.875rem" />
       </div>
 
@@ -53,8 +59,9 @@ export function LoadingSkeleton() {
         ))}
       </div>
 
-      {/* Nav rail 3 cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6 anet-skeleton-pulse">
+      {/* Nav rail 3 cards.
+          #209 R38: mb-6 → mb-4 sm:mb-6 to track the R28 mobile tighten. */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6 anet-skeleton-pulse">
         {[1, 2, 3].map(i => (
           <div key={i} className="rounded-xl border border-[#2a2a4a] bg-[#111128] px-3 py-2.5 flex items-center justify-center gap-2">
             <div className="w-4 h-4 rounded anet-skeleton-bar" />
@@ -63,14 +70,17 @@ export function LoadingSkeleton() {
         ))}
       </div>
 
-      {/* Broadcast bar */}
-      <div className="mb-6 flex gap-2 anet-skeleton-pulse">
-        <div className="flex-1 h-10 rounded-lg border border-[#2a2a4a] bg-[#111128]" />
-        <div className="w-28 h-10 rounded-lg anet-skeleton-bar" />
-      </div>
+      {/* #209 R38: Broadcast bar skeleton dropped — the live page
+          removed BroadcastBar in r70's "demote zero-data noise" pass
+          (it lives behind /admin now) so the skeleton was a phantom
+          row that did not exist in the loaded page. Caused a 56 px
+          downward shift on data arrival. */}
 
-      {/* Agent card grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 anet-skeleton-pulse">
+      {/* Agent card grid.
+          #209 R38: breakpoints synced with the live AgentCard grid
+          (R48 set lg:grid-cols-3 — skeleton was still on lg:grid-cols-2
+          which made cards rearrange under hydration on 1024-1279 px). */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 anet-skeleton-pulse">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="rounded-xl border border-[#2a2a4a] bg-[#111128] p-4">
             <div className="flex items-center gap-2 mb-3">
