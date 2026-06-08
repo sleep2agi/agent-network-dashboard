@@ -76,7 +76,9 @@ export default function LogsPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
-      <div className="flex items-center gap-4 mb-6">
+      {/* #209 R36: mobile vertical rhythm — same R28/R30/R31 pattern,
+          mb-6 → mb-4 sm:mb-6 here and on the action-filter strip below. */}
+      <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Audit Log</h1>
         {/* Round 87: dropped {logs.length} header chip — r43 added
             `All <count>` to the action-filter strip below, which
@@ -87,7 +89,7 @@ export default function LogsPage() {
           status tabs / Overview agent filter. Each chip carries its
           ACTION_STRIPE dot so the visual key matches the per-row left
           rail. Counts come from the currently loaded log set. */}
-      <div className="mb-6 flex flex-wrap items-center gap-1 anet-tabstrip-wrap overflow-x-auto sm:overflow-x-visible">
+      <div className="mb-4 sm:mb-6 flex flex-wrap items-center gap-1 anet-tabstrip-wrap overflow-x-auto sm:overflow-x-visible">
         {(() => {
           const counts: Record<string, number> = {};
           logs.forEach(l => { counts[l.action] = (counts[l.action] || 0) + 1; });
