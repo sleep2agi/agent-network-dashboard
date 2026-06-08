@@ -109,26 +109,32 @@ export default function AdminPage() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        {/* Server Overview */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Server Overview</h2>
+        {/* Server Overview.
+            #209 R42: same mobile density pattern R39 brought to the
+            Overview StatsBar 4-card grid — p-5 → p-4 sm:p-5 and
+            text-3xl numbers → text-2xl sm:text-3xl on phones. The
+            2×2 numeric grid shrinks ~25 % on mobile (~60 px of fold
+            reclaimed) while reading identically on desktop. mb-4 on
+            the section heading also drops to mb-3 sm:mb-4. */}
+        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4 sm:p-5">
+          <h2 className="text-sm font-semibold text-gray-300 mb-3 sm:mb-4">Server Overview</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-3xl font-bold text-green-400 tabular-nums">{onlineNodes.length}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-green-400 tabular-nums">{onlineNodes.length}</div>
               <div className="text-xs text-gray-500">Online</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-gray-500 tabular-nums">{offlineNodes.length}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-gray-500 tabular-nums">{offlineNodes.length}</div>
               <div className="text-xs text-gray-500">Offline</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-cyan-400 tabular-nums">{health?.sse_connections ?? '--'}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-cyan-400 tabular-nums">{health?.sse_connections ?? '--'}</div>
               <div className="text-xs text-gray-500">
                 SSE Streams <span className="text-gray-600">· server</span>
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-white tabular-nums">{stats?.tasks?.total ?? '--'}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">{stats?.tasks?.total ?? '--'}</div>
               <div className="text-xs text-gray-500">Total Tasks</div>
             </div>
           </div>
