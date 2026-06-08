@@ -17,11 +17,11 @@ const page = await ctx.newPage();
 await page.goto('http://127.0.0.1:3000/', { waitUntil: 'domcontentloaded', timeout: 20000 });
 await page.waitForTimeout(3000);
 await page.goto('http://127.0.0.1:3000/nodes', { waitUntil: 'domcontentloaded', timeout: 20000 });
-await page.waitForSelector('button[aria-label="Open search"]', { timeout: 25000 });
+await page.waitForSelector('button[aria-label^="Open"]', { timeout: 25000 });
 await page.waitForTimeout(800);
 await page.screenshot({ path: '/tmp/anet-mobile-qa/r32-nodes-closed.png', animations: 'disabled', fullPage: false });
 
-await page.click('button[aria-label="Open search"]');
+await page.click('button[aria-label^="Open"]');
 await page.waitForTimeout(400);
 await page.screenshot({ path: '/tmp/anet-mobile-qa/r32-nodes-open.png', animations: 'disabled', fullPage: false });
 

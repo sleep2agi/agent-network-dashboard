@@ -6,6 +6,7 @@ import { useSessions, useHealth } from '../lib/hooks';
 import { TaskChatPanel } from '../components/TaskChatPanel';
 import { EmptyState, NodesEmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
+import { useCollapsibleSearch } from '../components/CollapsibleSearch';
 import type { Session } from '../components/types';
 import { SESSION_STATUS_CHIP_CLASS as STATUS_COLORS } from '../lib/status';
 import { useChatUnread } from '../lib/chat-unread';
@@ -34,15 +35,17 @@ export default function NodesPage() {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [chatAlias, setChatAlias] = useState<string | null>(null);
-  // #209 R32 (Vincent msg 563 WeChat direction "搜索框学习微信放到右上角一个
-  // 小圆圈"): the search input no longer lives inline in the filter row.
-  // Instead a magnifier icon button sits in the top-right of the page
-  // header (mirroring WeChat's chat-list header). Tapping it slides
-  // a search field open below the header; tapping again (or clearing
-  // and confirming) tucks it away. Default state: closed. Search value
-  // is preserved across open/close so the filter applies even when the
-  // input is hidden — only the input chrome collapses, not the filter.
-  const [searchOpen, setSearchOpen] = useState(false);
+  // #209 R32→R34: the WeChat-style magnifier-toggle search was hand-rolled
+  // inline in R32. R34 extracted it to a shared hook so /nodes, /messages,
+  // and any future search surface stay visually + behaviourally identical.
+  // The hook returns a Button (place in header) + Row (place after header).
+  const searchCtl = useCollapsibleSearch({
+    value: search,
+    onChange: setSearch,
+    placeholder: 'Search nodes…',
+    label: 'Search nodes',
+    enabled: sessions.length > 0,
+  });
 
   const filtered: SessionRow[] = sessions
     .map(s => ({ ...s, online: !!sseFor(s) }))
@@ -77,60 +80,13 @@ export default function NodesPage() {
             {sessions.length} total
           </span>
         </div>
-        {sessions.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setSearchOpen(v => !v)}
-            aria-label={searchOpen ? 'Close search' : 'Open search'}
-            aria-pressed={searchOpen}
-            title={searchOpen ? 'Close search' : 'Search nodes'}
-            className={`relative shrink-0 inline-flex items-center justify-center rounded-full border w-9 h-9 transition-colors ${
-              searchOpen || search
-                ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
-                : 'border-[#2a2a4a] bg-[#111128] text-gray-400 hover:text-gray-200 hover:border-[#3a3a5a]'
-            }`}
-          >
-            {/* magnifier icon — matches the one used in CommandPalette &
-                Sidebar quick-search for visual consistency */}
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            {/* if a search term is active but the box is closed, a tiny
-                cyan dot shows there is an active filter — same idea as
-                the WeChat red-dot unread marker. */}
-            {search && !searchOpen && (
-              <span aria-hidden className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 ring-2 ring-[#0a0a1a]" />
-            )}
-          </button>
-        )}
+        <searchCtl.Button />
       </div>
 
-      {/* R32 collapsible search row — only renders when the magnifier
-          is toggled open OR a search term is active (so the user can
-          see + clear it). Closes on Escape. */}
-      {sessions.length > 0 && (searchOpen || search) && (
-        <div className="mb-3 sm:mb-4 flex items-center gap-2">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false); } }}
-            placeholder="Search nodes…"
-            autoFocus={searchOpen}
-            className="flex-1 bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
-          />
-          {(search || searchOpen) && (
-            <button
-              type="button"
-              onClick={() => { setSearch(''); setSearchOpen(false); }}
-              className="shrink-0 text-xs text-gray-500 hover:text-gray-300 px-2 py-2"
-              aria-label="Clear and close search"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      )}
+      {/* #209 R34: shared <CollapsibleSearch> component handles row reveal,
+          autofocus, Escape, and Cancel. enabled=sessions.length>0 hides
+          everything until there's content to search. */}
+      <searchCtl.Row />
 
       {/* Status bar */}
       {sessions.length > 0 && (() => {

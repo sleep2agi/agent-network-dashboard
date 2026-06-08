@@ -5,6 +5,7 @@ import { useMessages } from '../lib/hooks';
 import { timeAgo, previewContent } from '../components/utils';
 import { EmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
+import { useCollapsibleSearch } from '../components/CollapsibleSearch';
 
 interface MessageItem {
   id: string;
@@ -58,14 +59,14 @@ export default function MessagesPage() {
   const [search, setSearch] = useState('');
   const [debug, setDebug] = useState(false);
   const [viewMode, setViewMode] = useState<'timeline' | 'grouped'>('timeline');
-  // #209 R33 (Vincent msg 563 WeChat direction): same magnifier-toggle
-  // search pattern as R32 on /nodes. Inline ~290 px search input was
-  // soaking up scroll real-estate on phones; collapse it behind a
-  // top-right magnifier circle in the page header. Default closed;
-  // open state autofocuses; an active search value with the box
-  // closed shows a cyan dot on the icon as a "filter still applied"
-  // hint, mirroring WeChat's red-dot unread marker.
-  const [searchOpen, setSearchOpen] = useState(false);
+  // #209 R33→R34: WeChat-style magnifier-toggle search hook (shared with /nodes).
+  const searchCtl = useCollapsibleSearch({
+    value: search,
+    onChange: setSearch,
+    placeholder: 'Search from/to/content or use from:alias…',
+    label: 'Search messages',
+    enabled: messages.length > 0,
+  });
 
   const quickFromChips = useMemo(() => {
     const aliases = new Set<string>();
@@ -151,55 +152,12 @@ export default function MessagesPage() {
             </button>
           )}
         </div>
-        {messages.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setSearchOpen(v => !v)}
-            aria-label={searchOpen ? 'Close search' : 'Open search'}
-            aria-pressed={searchOpen}
-            title={searchOpen ? 'Close search' : 'Search messages'}
-            className={`relative shrink-0 inline-flex items-center justify-center rounded-full border w-9 h-9 transition-colors ${
-              searchOpen || search
-                ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
-                : 'border-[#2a2a4a] bg-[#111128] text-gray-400 hover:text-gray-200 hover:border-[#3a3a5a]'
-            }`}
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            {search && !searchOpen && (
-              <span aria-hidden className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 ring-2 ring-[#0a0a1a]" />
-            )}
-          </button>
-        )}
+        <searchCtl.Button />
       </div>
 
-      {/* R33: collapsible search row — renders when magnifier is open
-          OR a search term is active so the user can see/clear it.
-          Escape clears + closes; explicit Cancel button does the same. */}
-      {messages.length > 0 && (searchOpen || search) && (
-        <div className="mb-3 sm:mb-4 flex items-center gap-2">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false); } }}
-            placeholder="Search from/to/content or use from:alias…"
-            autoFocus={searchOpen}
-            className="flex-1 bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
-          />
-          {(search || searchOpen) && (
-            <button
-              type="button"
-              onClick={() => { setSearch(''); setSearchOpen(false); }}
-              className="shrink-0 text-xs text-gray-500 hover:text-gray-300 px-2 py-2"
-              aria-label="Clear and close search"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      )}
+      {/* #209 R34: shared <CollapsibleSearch> component. enabled gate
+          handles the no-content case (button + row both hide). */}
+      <searchCtl.Row />
 
       {/* Round 76: hide search + type filter + view toggle + Debug button
           when there are no messages at all. Same r70-class fix carried
