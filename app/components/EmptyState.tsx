@@ -274,8 +274,15 @@ function QuickstartCommand({ cmd }: { cmd: string }) {
     } catch {}
   };
   return (
-    <div className="anet-empty-cmd flex items-center gap-2 bg-[#0a0a15] border border-[#2a2a4a] rounded-lg pl-4 pr-1.5 py-1.5 text-xs sm:text-sm">
-      <code className="text-cyan-300 font-mono select-all">{cmd}</code>
+    <div className="anet-empty-cmd flex items-start sm:items-center gap-2 bg-[#0a0a15] border border-[#2a2a4a] rounded-lg pl-4 pr-1.5 py-1.5 text-xs sm:text-sm">
+      {/* #209 R44: long quickstart commands (e.g. the `npm install -g …`
+          variant) overflowed the empty-state card horizontally on phones
+          because <code> defaults to white-space:pre. break-all on mobile
+          lets them wrap inside the box; sm: up restores normal wrapping
+          so desktop monospace lines stay clean. items-start on phones
+          aligns the Copy button to the top so a wrapped 2-line command
+          doesn't bottom-anchor the button. */}
+      <code className="text-cyan-300 font-mono select-all min-w-0 break-all sm:break-normal">{cmd}</code>
       <button
         type="button"
         onClick={onCopy}
