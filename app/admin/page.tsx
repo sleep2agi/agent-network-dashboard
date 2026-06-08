@@ -82,7 +82,11 @@ export default function AdminPage() {
           read as inert labels rather than tappable jumps. Wrapping each in a
           visible bordered chip restores the affordance and lifts tap height
           to ~44px without changing the desktop hierarchy. */}
-      <nav className="mb-8 flex flex-wrap gap-2 text-xs">
+      {/* #209 R31 (mobile vertical rhythm — same pattern as R28/R30):
+          chip-jump nav was mb-8 (32 px) — biggest single gap on /admin
+          above the fold. Drop to mb-4 sm:mb-8 — phones get 16 px, sm:
+          up keeps the original breathing room. */}
+      <nav className="mb-4 sm:mb-8 flex flex-wrap gap-2 text-xs">
         {[
           { href: '#status',  label: 'Status' },
           { href: '#actions', label: 'Actions' },

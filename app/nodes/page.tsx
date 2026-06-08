@@ -50,7 +50,12 @@ export default function NodesPage() {
 
   return (
     <div className="min-h-screen max-w-full overflow-x-hidden bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
-      <div className="flex items-center gap-4 mb-6">
+      {/* #209 R31 (mobile vertical rhythm — goal "大幅提升移动端体验",
+          extending R28's Overview pattern + R30's /tasks pattern):
+          this header row + the status-bar wrapper + the filter row
+          below all drop mb-6 → mb-4 sm:mb-6. Three spots × 8 px =
+          ~24 px scroll reclaim on /nodes before the first card. */}
+      <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Nodes</h1>
         <span className="text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded-full border border-green-800/30">
           {onlineCount} online
@@ -67,7 +72,7 @@ export default function NodesPage() {
         const offline = filtered.filter(s => !s.online).length;
         const total = filtered.length || 1;
         return (
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <div className="flex h-2 rounded-full overflow-hidden bg-gray-800">
               {working > 0 && <div className="bg-green-500" style={{ width: `${(working/total)*100}%` }} />}
               {idle > 0 && <div className="bg-cyan-500" style={{ width: `${(idle/total)*100}%` }} />}
@@ -88,7 +93,7 @@ export default function NodesPage() {
           exists, the chrome is back even if the current filter happens
           to hide everything (so users can clear filters). */}
       {sessions.length > 0 && (
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-4 sm:mb-6">
         <input
           type="text"
           value={search}
