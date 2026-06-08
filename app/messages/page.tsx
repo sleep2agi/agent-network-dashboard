@@ -105,7 +105,10 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
-      <div className="flex items-center gap-4 mb-6">
+      {/* #209 R31 (mobile vertical rhythm — same pattern as R28/R30):
+          header row + quick-from chips row both mb-6 → mb-4 sm:mb-6.
+          ~16 px scroll reclaim on /messages above the first thread. */}
+      <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Messages</h1>
         {/* Round 89: filter-aware chip. When search/type filter is active
             the visible rows are filtered.length; the total loaded is
@@ -181,7 +184,7 @@ export default function MessagesPage() {
       )}
 
       {quickFromChips.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-4 sm:mb-6 flex flex-wrap gap-2">
           {quickFromChips.map(alias => (
             <button
               key={alias}
