@@ -370,7 +370,20 @@ export default function Dashboard() {
         </div>
       )}
 
-      {showTopo && sessions.length > 0 && <TopoGraph sessions={sessions} sseSessions={sseSessions} renameSignal={renameSignal} />}
+      {showTopo && sessions.length > 0 && (
+        // #209 R41: mobile-only soft cap on the rendered TopoGraph.
+        // Default behaviour on desktop is unchanged (lg: drops the cap
+        // entirely). On phones the SVG card was free to claim ~600+ px
+        // of vertical real-estate, which on a 667-844 px viewport meant
+        // tapping "Show Topology" pushed the agent grid completely off
+        // screen. Capping to 70 vh with overflow-y-auto keeps the graph
+        // interactive (the SVG already does its own pan + zoom inside
+        // the viewport) while letting the page below stay reachable
+        // with a single ordinary scroll past the cap.
+        <div className="lg:max-h-none lg:overflow-visible max-h-[70vh] overflow-y-auto rounded-xl border border-transparent lg:border-0">
+          <TopoGraph sessions={sessions} sseSessions={sseSessions} renameSignal={renameSignal} />
+        </div>
+      )}
 
       {sessions.length === 0 && !sessError ? (
         <EmptyState
