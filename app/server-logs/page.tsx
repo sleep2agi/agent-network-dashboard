@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCollapsibleSearch } from '@/app/components/CollapsibleSearch';
 import Link from 'next/link';
 
 interface LogLine {
@@ -63,6 +64,16 @@ export default function ServerLogsPage() {
   const [filterLevel, setFilterLevel] = useState<'all' | LogLine['level']>('all');
   const [search, setSearch] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
+  // #209 R35: adopt the shared CollapsibleSearch hook (R34) so the
+  // inline 全宽 search input collapses behind a magnifier circle in
+  // the toolbar — same WeChat-style affordance as /nodes /messages.
+  const searchCtl = useCollapsibleSearch({
+    value: search,
+    onChange: setSearch,
+    placeholder: '搜索关键字 (alias / task_id / error message)',
+    label: 'Search logs',
+    enabled: true,
+  });
   const lastTsRef = useRef<string>('');
 
   const fetchLogs = useCallback(async (initial = false) => {
@@ -116,10 +127,15 @@ export default function ServerLogsPage() {
   for (const l of logs) counts[l.level]++;
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto">
+    // #209 R35: p-6 → p-4 sm:p-6 mobile-tighten (matches /tasks, /nodes,
+    // /messages, /overview convention). Saves 16 px of L/R padding on phones.
+    <div className="p-4 sm:p-6 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <h1 className="text-2xl font-bold text-white">Server Logs</h1>
+          {/* #209 R35: lg:ml-0 ml-10 burger-clearance — without it the
+              fixed top-3 left-3 mobile hamburger sat right on top of the
+              "Se" of "Server Logs". Caught by playwright mobile shot. */}
+          <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Server Logs</h1>
           {/* Round 86: dropped the {logs.length} header chip — r84 added
               `all <count>` to the filter strip just below, so this duplicated
               the value within 40px of itself. */}
@@ -158,8 +174,16 @@ export default function ServerLogsPage() {
             </svg>
             <span className="hidden sm:inline">Reload</span>
           </button>
+          {/* #209 R35: magnifier-toggle search (WeChat-style, via the
+              shared CollapsibleSearch hook). Lives at the tail of the
+              toolbar so it sits at the right edge of the header. */}
+          <searchCtl.Button />
         </div>
       </div>
+
+      {/* R35: collapsible search row — sits above the filter chip strip
+          so toggling it doesn't shift the chip layout. */}
+      <searchCtl.Row />
 
       {/* Round 95: flex-wrap + min-w-0 on the search wrapper so the
           search input drops below the chip strip on mobile instead of
@@ -192,13 +216,10 @@ export default function ServerLogsPage() {
             );
           })}
         </div>
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="搜索关键字 (alias / task_id / error message)"
-          className="flex-1 min-w-[140px] basis-full sm:basis-0 px-3 py-1.5 text-base sm:text-xs bg-[#11111c] border border-[#2a2a4a] rounded text-gray-200 focus:outline-none focus:border-cyan-500/40"
-        />
-        <span className="text-[10px] text-gray-600">
+        {/* R35: inline search input moved to the magnifier-toggle in
+            the toolbar above. count chip stays as a quick scan
+            "filter is biting" indicator. */}
+        <span className="text-[10px] text-gray-600 ml-auto">
           {filtered.length} / {logs.length}
         </span>
       </div>
