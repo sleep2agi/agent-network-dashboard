@@ -398,7 +398,17 @@ function EventsTimeline({ events, loading }: { events: Array<{ id: number; event
 
 export default function NodePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-6 font-mono">Loading...</div>}>
+    <Suspense fallback={
+      // #209 R36: same pattern R30 fixed on /tasks — bare "Loading..."
+      // string used p-6 (no mobile padding tighten) + no left indent,
+      // so the fixed top-3 left-3 mobile hamburger covered the "Loa".
+      // Match the loaded layout: p-4 sm:p-6 + lg:ml-0 ml-10 mobile
+      // indent on the text. Loading state now visually maps to the
+      // populated /node detail page.
+      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+        <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading…</div>
+      </div>
+    }>
       <NodeDetailContent />
     </Suspense>
   );

@@ -24,7 +24,9 @@ export default function SettingsPage() {
           R3 of #190 mobile polish: matches the /admin chip treatment
           (preview.3) — 44px tap-target + visible border so the chips read
           as tappable rather than as inert headings on 375–390px. */}
-      <nav className="mb-8 flex flex-wrap gap-2 text-xs">
+      {/* #209 R36: mb-8 → mb-4 sm:mb-8 — same pattern R31 applied to
+          /admin's identical jump-nav. Saves 16 px on phones. */}
+      <nav className="mb-4 sm:mb-8 flex flex-wrap gap-2 text-xs">
         {[
           { href: '#connection', label: 'Connection' },
           { href: '#account',    label: 'Account' },
