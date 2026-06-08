@@ -136,8 +136,15 @@ export default function Dashboard() {
         <div className="flex-1"><UserBar /></div>
       </div>
 
-      {/* anet config (collapsed by default) */}
-      <section className="mb-6 rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-3 shadow-lg shadow-black/20">
+      {/* anet config (collapsed by default).
+          #209 R28 (mobile vertical rhythm — goal "大幅提升移动端体验"):
+          this + Task Status + Nav rail + Recent Activity all drop their
+          24 px (mb-6) section gap to 16 px (mb-4) on phones, restoring
+          mb-6 from sm: up. Overview on mobile stacks 5-7 sections above
+          the agent grid; tightening 4 of those gaps reclaims ~32 px of
+          scroll. No content removed, no feature changed — desktop is
+          identical. */}
+      <section className="mb-4 sm:mb-6 rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-3 shadow-lg shadow-black/20">
         <button onClick={() => setShowConfig(!showConfig)} className="w-full flex items-center justify-between text-left">
           <div className="flex items-center gap-2 text-xs">
             <span className="uppercase text-gray-600">Config</span>
@@ -169,7 +176,7 @@ export default function Dashboard() {
 
       {/* Task Status Stats */}
       {Object.keys(taskStats).length > 0 && (
-        <section className="mb-6 rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-3 shadow-lg shadow-black/20">
+        <section className="mb-4 sm:mb-6 rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-3 shadow-lg shadow-black/20">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs uppercase text-gray-600">Task Status</div>
             <Link href="/tasks" prefetch={false} className="text-xs text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
@@ -292,7 +299,7 @@ export default function Dashboard() {
       </section>
 
       {/* Nav rail — pure navigation, icon + label, no data */}
-      <section className="mb-6 grid grid-cols-3 gap-2 sm:gap-3">
+      <section className="mb-4 sm:mb-6 grid grid-cols-3 gap-2 sm:gap-3">
         {[
           { href: '/messages', label: 'Messages', icon: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' },
           { href: '/logs', label: 'Audit log', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
@@ -310,7 +317,7 @@ export default function Dashboard() {
 
       {/* Recent Activity */}
       {tasks.length > 0 && (
-        <section className="mb-6 bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+        <section className="mb-4 sm:mb-6 bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-gray-300">Recent Activity</h2>
             <Link href="/tasks" className="text-xs text-cyan-400 hover:text-cyan-300">All tasks &rarr;</Link>
