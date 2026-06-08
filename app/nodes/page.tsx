@@ -34,6 +34,15 @@ export default function NodesPage() {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [chatAlias, setChatAlias] = useState<string | null>(null);
+  // #209 R32 (Vincent msg 563 WeChat direction "搜索框学习微信放到右上角一个
+  // 小圆圈"): the search input no longer lives inline in the filter row.
+  // Instead a magnifier icon button sits in the top-right of the page
+  // header (mirroring WeChat's chat-list header). Tapping it slides
+  // a search field open below the header; tapping again (or clearing
+  // and confirming) tucks it away. Default state: closed. Search value
+  // is preserved across open/close so the filter applies even when the
+  // input is hidden — only the input chrome collapses, not the filter.
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const filtered: SessionRow[] = sessions
     .map(s => ({ ...s, online: !!sseFor(s) }))
@@ -54,16 +63,74 @@ export default function NodesPage() {
           extending R28's Overview pattern + R30's /tasks pattern):
           this header row + the status-bar wrapper + the filter row
           below all drop mb-6 → mb-4 sm:mb-6. Three spots × 8 px =
-          ~24 px scroll reclaim on /nodes before the first card. */}
+          ~24 px scroll reclaim on /nodes before the first card.
+          #209 R32: search affordance moved to top-right magnifier
+          button (Vincent WeChat ref msg 563). justify-between makes
+          the title cluster hug left, button hugs right. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
-        <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Nodes</h1>
-        <span className="text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded-full border border-green-800/30">
-          {onlineCount} online
-        </span>
-        <span className="text-xs bg-gray-900/30 text-gray-400 px-2 py-0.5 rounded-full border border-gray-800/30">
-          {sessions.length} total
-        </span>
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Nodes</h1>
+          <span className="text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded-full border border-green-800/30 shrink-0">
+            {onlineCount} online
+          </span>
+          <span className="text-xs bg-gray-900/30 text-gray-400 px-2 py-0.5 rounded-full border border-gray-800/30 shrink-0">
+            {sessions.length} total
+          </span>
+        </div>
+        {sessions.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setSearchOpen(v => !v)}
+            aria-label={searchOpen ? 'Close search' : 'Open search'}
+            aria-pressed={searchOpen}
+            title={searchOpen ? 'Close search' : 'Search nodes'}
+            className={`relative shrink-0 inline-flex items-center justify-center rounded-full border w-9 h-9 transition-colors ${
+              searchOpen || search
+                ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
+                : 'border-[#2a2a4a] bg-[#111128] text-gray-400 hover:text-gray-200 hover:border-[#3a3a5a]'
+            }`}
+          >
+            {/* magnifier icon — matches the one used in CommandPalette &
+                Sidebar quick-search for visual consistency */}
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            {/* if a search term is active but the box is closed, a tiny
+                cyan dot shows there is an active filter — same idea as
+                the WeChat red-dot unread marker. */}
+            {search && !searchOpen && (
+              <span aria-hidden className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 ring-2 ring-[#0a0a1a]" />
+            )}
+          </button>
+        )}
       </div>
+
+      {/* R32 collapsible search row — only renders when the magnifier
+          is toggled open OR a search term is active (so the user can
+          see + clear it). Closes on Escape. */}
+      {sessions.length > 0 && (searchOpen || search) && (
+        <div className="mb-3 sm:mb-4 flex items-center gap-2">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false); } }}
+            placeholder="Search nodes…"
+            autoFocus={searchOpen}
+            className="flex-1 bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
+          />
+          {(search || searchOpen) && (
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setSearchOpen(false); }}
+              className="shrink-0 text-xs text-gray-500 hover:text-gray-300 px-2 py-2"
+              aria-label="Clear and close search"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Status bar */}
       {sessions.length > 0 && (() => {
@@ -94,13 +161,9 @@ export default function NodesPage() {
           to hide everything (so users can clear filters). */}
       {sessions.length > 0 && (
       <div className="flex flex-wrap gap-3 mb-4 sm:mb-6">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search nodes..."
-          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none w-full sm:w-48"
-        />
+        {/* R32: the inline search input was moved to the top-right
+            magnifier toggle above. The status select + List/Grid
+            toggle stay here. */}
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
