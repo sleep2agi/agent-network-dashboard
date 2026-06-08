@@ -12,8 +12,15 @@ export function StatsBar({ online, working, total, version, uptime }: StatsBarPr
   const onlinePercent = total > 0 ? Math.round((online / total) * 100) : 0;
   const fleetEmpty = total === 0;
 
+  // #209 R29 (mobile vertical rhythm — goal "大幅提升移动端体验"):
+  // populated branch previously left mb-8 (32 px) below the 4-card grid,
+  // the single biggest gap on the Overview page. Drop to mb-4 (16 px)
+  // on phones, restore mb-8 from sm: up. Pairs with R28's section-gap
+  // tighten — together they reclaim ~48 px of pure scroll waste before
+  // the agent grid. The empty-fleet branch already used mb-4 since R72,
+  // so this only touches the populated case.
   return (
-    <div className={fleetEmpty ? 'mb-4' : 'mb-8'}>
+    <div className={fleetEmpty ? 'mb-4' : 'mb-4 sm:mb-8'}>
       {/* Title row */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold text-white tracking-tight">Agent Network</h1>
