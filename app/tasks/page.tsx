@@ -104,8 +104,14 @@ function TasksContent() {
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      {/* Header.
+          #209 R30 (mobile vertical rhythm — goal "大幅提升移动端体验",
+          extending R28's Overview pattern to /tasks): this mb-6 + the
+          From/To filter row mb-6 below both drop to mb-4 on phones,
+          restoring mb-6 from sm: up. Saves ~16 px per spot = ~32 px of
+          scroll reclaim on /tasks before the actual task rows. /tasks
+          is the second-most-trafficked page after Overview. */}
+      <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Tasks</h1>
         {/* Round 88: pagination-aware chip. When tasks.length < count
             the API has more rows than the current limit=100 slice;
@@ -171,8 +177,9 @@ function TasksContent() {
       </div>
       </div>
 
-      {/* From/To Filters — same visual block as the status tabs above. */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
+      {/* From/To Filters — same visual block as the status tabs above.
+          R30 (see header above): mb-6 → mb-4 sm:mb-6 mobile-tighten. */}
+      <div className="flex flex-wrap items-center gap-2 mb-4 sm:mb-6">
         <div className="flex items-center gap-1.5 rounded-lg border border-[#2a2a4a] bg-[#111128] px-2.5 py-1.5 focus-within:border-blue-500/40">
           <span className="text-[10px] uppercase tracking-wide text-gray-600">From</span>
           <input
@@ -427,7 +434,18 @@ function TasksContent() {
 
 export default function TasksPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-6 font-mono">Loading tasks...</div>}>
+    <Suspense fallback={
+      // #209 R30 (playwright mobile-shot caught it): the bare Suspense
+      // fallback rendered "Loading tasks..." at p-6 with no left-indent,
+      // so the fixed top-3 left-3 mobile burger (56 px right-edge) sat
+      // right on top of "Loa" — the screenshot read as a broken page.
+      // Match the loaded layout: p-4 sm:p-6 page padding + ml-10 mobile
+      // indent on the text, so the burger clears and the loading state
+      // visually maps to the populated page.
+      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+        <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading tasks…</div>
+      </div>
+    }>
       <TasksContent />
     </Suspense>
   );
