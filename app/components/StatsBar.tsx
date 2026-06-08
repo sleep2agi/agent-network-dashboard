@@ -21,12 +21,18 @@ export function StatsBar({ online, working, total, version, uptime }: StatsBarPr
   // so this only touches the populated case.
   return (
     <div className={fleetEmpty ? 'mb-4' : 'mb-4 sm:mb-8'}>
-      {/* Title row */}
+      {/* Title row.
+          #209 R39: when /api/hub/health hasn't responded yet, version
+          and uptime were both '--', so the line rendered as the broken-
+          looking 'CommHub-- · --'. Only render the subtitle once at
+          least one of the two is a real value. */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold text-white tracking-tight">Agent Network</h1>
-        <span className="text-xs text-gray-500">
-          CommHub {version} &middot; {uptime}
-        </span>
+        {(version !== '--' || uptime !== '--') && (
+          <span className="text-xs text-gray-500">
+            CommHub {version} &middot; {uptime}
+          </span>
+        )}
       </div>
 
       {fleetEmpty ? (
@@ -97,15 +103,21 @@ function StatCard({ value, label, sub, color, accent, border }: {
   // so the light-theme top-strip CSS can pick the right accent.
   const accentKey = color.replace('text-', '').split('-')[0];
   return (
+    // #209 R39: mobile density tighten on the StatsBar 4-card grid.
+    // Was px-4 py-3 + text-3xl on every viewport; 2×2 grid on phones
+    // ate ~160 px of vertical space for what is decorative status.
+    // Now: px-3 sm:px-4 py-2.5 sm:py-3 + text-2xl sm:text-3xl
+    // + text-xs sm:text-sm label. Each card shrinks ~25 % on phones,
+    // so the 2×2 grid reclaims ~40 px of fold. Desktop pixel-identical.
     <div
       data-anet-stat-card={accentKey}
-      className={`anet-stat-card relative overflow-hidden rounded-xl border ${border} bg-[#111128] px-4 py-3 transition-all`}
+      className={`anet-stat-card relative overflow-hidden rounded-xl border ${border} bg-[#111128] px-3 sm:px-4 py-2.5 sm:py-3 transition-all`}
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${accent} pointer-events-none`} />
       <div className="relative">
-        <div className={`text-3xl font-bold ${color} tabular-nums leading-tight`}>{value}</div>
-        <div className="text-sm text-gray-300 mt-0.5">{label}</div>
-        <div className="text-xs text-gray-600 mt-1">{sub}</div>
+        <div className={`text-2xl sm:text-3xl font-bold ${color} tabular-nums leading-tight`}>{value}</div>
+        <div className="text-xs sm:text-sm text-gray-300 mt-0.5">{label}</div>
+        <div className="text-[10px] sm:text-xs text-gray-600 mt-1">{sub}</div>
       </div>
     </div>
   );
