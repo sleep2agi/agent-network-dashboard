@@ -96,8 +96,16 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
       {/* Footer: time + chat + hover chevron affordance (round 44).
           The card is a <Link> so it's clickable everywhere, but with no
           visible cue users may not realise. Chevron appears on hover and
-          slides right ~2px for a "drill in" hint. */}
-      <div className="mt-3 flex justify-between items-center text-[10px] text-gray-600">
+          slides right ~2px for a "drill in" hint.
+          #209 R40: two small mobile tweaks —
+            (1) the hover chevron is `hidden sm:inline-block` because
+                touch devices never trigger the :hover state, and the
+                12 px wide reserved slot was just an empty void on
+                mobile — but flex with opacity-0 was still spending
+                12 + 8 (gap) = 20 px on the right side of every card.
+            (2) mt-3 → mt-2 sm:mt-3 mirrors the same density pattern
+                R28 / R39 brought to the rest of the page. */}
+      <div className="mt-2 sm:mt-3 flex justify-between items-center text-[10px] text-gray-600">
         <span className="truncate" title={s.server || ''}>{s.server || '--'}</span>
         <div className="flex items-center gap-2">
           {onChat && hasSse && (
@@ -111,7 +119,7 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
           <span>{timeAgo(s.updated_at)}</span>
           <svg
             aria-hidden
-            className="w-3 h-3 text-gray-700 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+            className="hidden sm:inline-block w-3 h-3 text-gray-700 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
             fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
           >
             <path d="M9 18l6-6-6-6" />
