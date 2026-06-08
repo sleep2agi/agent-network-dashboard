@@ -58,6 +58,14 @@ export default function MessagesPage() {
   const [search, setSearch] = useState('');
   const [debug, setDebug] = useState(false);
   const [viewMode, setViewMode] = useState<'timeline' | 'grouped'>('timeline');
+  // #209 R33 (Vincent msg 563 WeChat direction): same magnifier-toggle
+  // search pattern as R32 on /nodes. Inline ~290 px search input was
+  // soaking up scroll real-estate on phones; collapse it behind a
+  // top-right magnifier circle in the page header. Default closed;
+  // open state autofocuses; an active search value with the box
+  // closed shows a cyan dot on the icon as a "filter still applied"
+  // hint, mirroring WeChat's red-dot unread marker.
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const quickFromChips = useMemo(() => {
     const aliases = new Set<string>();
@@ -107,38 +115,91 @@ export default function MessagesPage() {
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       {/* #209 R31 (mobile vertical rhythm — same pattern as R28/R30):
           header row + quick-from chips row both mb-6 → mb-4 sm:mb-6.
-          ~16 px scroll reclaim on /messages above the first thread. */}
+          #209 R33: header restructured to mirror /nodes R32 — title
+          cluster left (Messages + count chip + Export MD), magnifier
+          circle right. Inline ~290 px search input was moved into the
+          collapsible row below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
-        <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Messages</h1>
-        {/* Round 89: filter-aware chip. When search/type filter is active
-            the visible rows are filtered.length; the total loaded is
-            messages.length (capped at 200 by useMessages). Show
-            `filtered / total` so users notice how much the filter is
-            hiding. Same pattern as r88 /tasks chip. */}
-        <span
-          className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums"
-          title={filtered.length < messages.length ? `Showing ${filtered.length} of ${messages.length} messages` : undefined}
-        >
-          {filtered.length < messages.length ? `${filtered.length} / ${messages.length}` : messages.length}
-        </span>
-        {filtered.length > 0 && (
-          <button
-            onClick={() => {
-              const md = filtered.map((m: MessageItem) =>
-                `**${m.from_alias || '?'}** → ${m.to_alias || '?'} (${m.type || '?'}) — ${m.created_at || ''}\n\n${m.content || '--'}\n\n---`
-              ).join('\n\n');
-              const blob = new Blob([`# Messages Export\n\n${md}`], { type: 'text/markdown' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `messages-${new Date().toISOString().slice(0,10)}.md`;
-              a.click(); URL.revokeObjectURL(url);
-            }}
-            className="text-xs text-gray-500 hover:text-gray-300 border border-gray-700/50 px-2.5 py-1 rounded-lg transition-colors"
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Messages</h1>
+          {/* Round 89: filter-aware chip. When search/type filter is active
+              the visible rows are filtered.length; the total loaded is
+              messages.length (capped at 200 by useMessages). Show
+              `filtered / total` so users notice how much the filter is
+              hiding. Same pattern as r88 /tasks chip. */}
+          <span
+            className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums shrink-0"
+            title={filtered.length < messages.length ? `Showing ${filtered.length} of ${messages.length} messages` : undefined}
           >
-            Export MD
+            {filtered.length < messages.length ? `${filtered.length} / ${messages.length}` : messages.length}
+          </span>
+          {filtered.length > 0 && (
+            <button
+              onClick={() => {
+                const md = filtered.map((m: MessageItem) =>
+                  `**${m.from_alias || '?'}** → ${m.to_alias || '?'} (${m.type || '?'}) — ${m.created_at || ''}\n\n${m.content || '--'}\n\n---`
+                ).join('\n\n');
+                const blob = new Blob([`# Messages Export\n\n${md}`], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `messages-${new Date().toISOString().slice(0,10)}.md`;
+                a.click(); URL.revokeObjectURL(url);
+              }}
+              className="text-xs text-gray-500 hover:text-gray-300 border border-gray-700/50 px-2.5 py-1 rounded-lg transition-colors shrink-0"
+            >
+              Export MD
+            </button>
+          )}
+        </div>
+        {messages.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setSearchOpen(v => !v)}
+            aria-label={searchOpen ? 'Close search' : 'Open search'}
+            aria-pressed={searchOpen}
+            title={searchOpen ? 'Close search' : 'Search messages'}
+            className={`relative shrink-0 inline-flex items-center justify-center rounded-full border w-9 h-9 transition-colors ${
+              searchOpen || search
+                ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
+                : 'border-[#2a2a4a] bg-[#111128] text-gray-400 hover:text-gray-200 hover:border-[#3a3a5a]'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            {search && !searchOpen && (
+              <span aria-hidden className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 ring-2 ring-[#0a0a1a]" />
+            )}
           </button>
         )}
       </div>
+
+      {/* R33: collapsible search row — renders when magnifier is open
+          OR a search term is active so the user can see/clear it.
+          Escape clears + closes; explicit Cancel button does the same. */}
+      {messages.length > 0 && (searchOpen || search) && (
+        <div className="mb-3 sm:mb-4 flex items-center gap-2">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false); } }}
+            placeholder="Search from/to/content or use from:alias…"
+            autoFocus={searchOpen}
+            className="flex-1 bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
+          />
+          {(search || searchOpen) && (
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setSearchOpen(false); }}
+              className="shrink-0 text-xs text-gray-500 hover:text-gray-300 px-2 py-2"
+              aria-label="Clear and close search"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Round 76: hide search + type filter + view toggle + Debug button
           when there are no messages at all. Same r70-class fix carried
@@ -146,13 +207,8 @@ export default function MessagesPage() {
           exists, the chrome reappears so users can still clear filters. */}
       {messages.length > 0 && (
       <div className="flex flex-wrap gap-3 mb-3">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search from/to/content or use from:alias"
-          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none w-full sm:w-72"
-        />
+        {/* R33: inline search input moved to the top-right magnifier
+            toggle above. Type select + view-mode toggle + Debug stay. */}
         <select
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
