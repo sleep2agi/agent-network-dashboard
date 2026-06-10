@@ -4,11 +4,9 @@ interface StatsBarProps {
   online: number;
   working: number;
   total: number;
-  version: string;
-  uptime: string;
 }
 
-export function StatsBar({ online, working, total, version, uptime }: StatsBarProps) {
+export function StatsBar({ online, working, total }: StatsBarProps) {
   const onlinePercent = total > 0 ? Math.round((online / total) * 100) : 0;
   const fleetEmpty = total === 0;
 
@@ -21,18 +19,11 @@ export function StatsBar({ online, working, total, version, uptime }: StatsBarPr
   // so this only touches the populated case.
   return (
     <div className={fleetEmpty ? 'mb-4' : 'mb-4 sm:mb-8'}>
-      {/* Title row.
-          #209 R39: when /api/hub/health hasn't responded yet, version
-          and uptime were both '--', so the line rendered as the broken-
-          looking 'CommHub-- · --'. Only render the subtitle once at
-          least one of the two is a real value. */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      {/* Title row. #217 S3 (less is more): the `CommHub x.y.z · uptime`
+          subtitle is ops info, not at-a-glance status — it lives in
+          Settings → CommHub Connection (version + uptime rows). */}
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-white tracking-tight">Agent Network</h1>
-        {(version !== '--' || uptime !== '--') && (
-          <span className="text-xs text-gray-500">
-            CommHub {version} &middot; {uptime}
-          </span>
-        )}
       </div>
 
       {fleetEmpty ? (
