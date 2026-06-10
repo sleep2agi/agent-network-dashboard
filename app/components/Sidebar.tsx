@@ -74,10 +74,10 @@ export function Sidebar() {
           prefetch={false}
           onClick={() => setMobileOpen(false)}
           title={collapsed ? item.label : undefined}
-          className={`relative flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors active:bg-[#1a1a3a] ${
+          className={`relative flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors active:bg-[#232327] ${
             isActive(item.href)
               ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 anet-nav-active'
-              : 'text-gray-400 hover:text-gray-200 hover:bg-[#1a1a2a]'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-[#1c1c1f]'
           } ${collapsed ? 'justify-center px-0' : ''}`}
         >
           <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -96,7 +96,7 @@ export function Sidebar() {
           explicit min-w/min-h so it can never be miss-tapped. */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-3 left-3 z-50 lg:hidden bg-[#111128] border border-[#2a2a4a] rounded-lg p-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-gray-400 hover:text-white active:bg-[#1a1a3a]"
+        className="fixed top-3 left-3 z-50 lg:hidden bg-[#161618] border border-[#26262b] rounded-lg p-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-gray-400 hover:text-white active:bg-[#232327]"
         aria-label="Toggle menu"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -115,15 +115,15 @@ export function Sidebar() {
         />
       )}
 
-      {/* Sidebar — `bg-[#0d0d1a]` resolves to var(--bg) in dark themes,
+      {/* Sidebar — `bg-[#111113]` resolves to var(--bg) in dark themes,
           but in light/mint we want a distinct surface, so we layer
-          `lg:bg-white` / `lg:dark:bg-[#0d0d1a]` via the theme attribute.
+          `lg:bg-white` / `lg:dark:bg-[#111113]` via the theme attribute.
           The CSS shim in globals.css upgrades sidebar bg to bg-secondary
           in light themes so the sidebar reads as its own card.
           Round 47: explicit ease-out curve + slight shadow so the drawer
           edge "leaves a trail" as it slides in. */}
       <aside data-anet-sidebar="true" className={`
-        fixed top-0 left-0 h-full z-40 bg-[#0d0d1a] border-r border-[#2a2a4a]
+        fixed top-0 left-0 h-full z-40 bg-[#111113] border-r border-[#26262b]
         transition-transform duration-200 ease-out
         ${collapsed ? 'w-16' : 'w-52'}
         ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 lg:shadow-none' : '-translate-x-full'}
@@ -133,11 +133,11 @@ export function Sidebar() {
             with an inline live "online" pulse so every page surfaces
             fleet health without leaving for /nodes. */}
         <SidebarBrand collapsed={collapsed} />
-        <div className={`border-b border-[#2a2a4a]`} />
+        <div className={`border-b border-[#26262b]`} />
 
         {/* Network list */}
         {!collapsed && networks.length > 0 && (
-          <div className="px-2 py-3 border-b border-[#2a2a4a]">
+          <div className="px-2 py-3 border-b border-[#26262b]">
             <div className="px-3 text-[10px] text-gray-600 uppercase mb-2">Networks</div>
             <div className="space-y-0.5 max-h-32 overflow-y-auto">
               {networks.map((n: SidebarNetwork) => (
@@ -148,7 +148,7 @@ export function Sidebar() {
                   className={`w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 rounded-md text-xs transition-colors text-left ${
                     networkId === n.network_id
                       ? 'bg-cyan-500/10 text-cyan-300'
-                      : 'text-gray-500 hover:text-gray-300 hover:bg-[#1a1a2a]'
+                      : 'text-gray-500 hover:text-gray-300 hover:bg-[#1c1c1f]'
                   }`}
                 >
                   <span>{ROLE_ICON[n.role || 'member'] || '👤'}</span>
@@ -179,13 +179,13 @@ export function Sidebar() {
         {/* Sign out + collapse — round 27: collapsed-state gets icon-only
             variants so users still have Sign out / Quick search access at
             56px width, plus title= tooltips. */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-[#2a2a4a] bg-[#0d0d1a]">
+        <div className="absolute bottom-0 left-0 right-0 border-t border-[#26262b] bg-[#111113]">
           <button
             onClick={() => {
               window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
             }}
             title={collapsed ? 'Quick search (⌘K)' : undefined}
-            className={`w-full flex items-center text-[11px] text-gray-600 hover:text-gray-400 hover:bg-[#1a1a2a] transition-colors ${
+            className={`w-full flex items-center text-[11px] text-gray-600 hover:text-gray-400 hover:bg-[#1c1c1f] transition-colors ${
               collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2 px-5 py-3 lg:py-2'
             }`}
             aria-label="Open command palette"
@@ -262,7 +262,7 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
   return (
     <Link
       href="/"
-      className="block px-4 py-4 flex items-center gap-3 hover:bg-[#11112a]/40 transition-colors rounded-r-xl"
+      className="block px-4 py-4 flex items-center gap-3 hover:bg-[#161618]/40 transition-colors rounded-r-xl"
       aria-label="Agent Network — home"
     >
       <BrandMark size={32} />

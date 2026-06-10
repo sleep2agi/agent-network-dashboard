@@ -19,7 +19,7 @@ export default function SettingsPage() {
   const valueClass = 'break-all sm:max-w-[320px] sm:text-right';
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Settings</h1>
 
       {/* Section anchor nav (round 28) — jump to a group instead of scrolling
@@ -38,7 +38,7 @@ export default function SettingsPage() {
           { href: '#resources',  label: 'Resources' },
         ].map(a => (
           <a key={a.href} href={a.href}
-            className="inline-flex min-h-[44px] items-center rounded-md border border-[#2a2a4a] bg-[#0a0a15]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+            className="inline-flex min-h-[44px] items-center rounded-md border border-[#26262b] bg-[#0e0e10]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
             {a.label}
           </a>
         ))}
@@ -52,13 +52,13 @@ export default function SettingsPage() {
         <div id="appearance" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Appearance</div>
-            <div className="flex-1 h-px bg-[#2a2a4a]" />
+            <div className="flex-1 h-px bg-[#26262b]" />
           </div>
-          <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+          <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
             <h2 className="text-sm font-semibold text-gray-300 mb-4">Theme</h2>
             <div className="grid grid-cols-2 gap-3">
               {([
-                { id: 'cyber', label: 'Dark', swatch: '#0a0a1a', ring: '#22d3ee' },
+                { id: 'cyber', label: 'Dark', swatch: '#0b0b0d', ring: '#22d3ee' },
                 { id: 'light', label: 'Light', swatch: '#f6f7f9', ring: '#009e7e' },
               ] as const).map(t => (
                 <button
@@ -72,7 +72,7 @@ export default function SettingsPage() {
                   className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-colors ${
                     theme === t.id
                       ? 'border-cyan-500/60 bg-cyan-500/10 text-gray-100'
-                      : 'border-[#2a2a4a] text-gray-400 hover:border-[#3a3a5a]'
+                      : 'border-[#26262b] text-gray-400 hover:border-[#3a3a41]'
                   }`}
                 >
                   <span
@@ -92,11 +92,11 @@ export default function SettingsPage() {
         <div id="connection" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Connection</div>
-            <div className="flex-1 h-px bg-[#2a2a4a]" />
+            <div className="flex-1 h-px bg-[#26262b]" />
           </div>
 
         {/* CommHub Connection */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">CommHub Connection</h2>
           <div className="space-y-3 text-sm">
             <div className={rowClass}>
@@ -122,7 +122,7 @@ export default function SettingsPage() {
               </span>
             </div>
             {config?.error && (
-              <div className="border-t border-[#2a2a4a] pt-3 text-xs text-gray-600">
+              <div className="border-t border-[#26262b] pt-3 text-xs text-gray-600">
                 {config.error}
               </div>
             )}
@@ -130,7 +130,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Server Info */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Server Info</h2>
           <div className="space-y-3 text-sm">
             <div className={rowClass}>
@@ -153,7 +153,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Dashboard Info */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Dashboard</h2>
           <div className="space-y-3 text-sm">
             <div className={rowClass}>
@@ -178,17 +178,17 @@ export default function SettingsPage() {
         <div id="account" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Account</div>
-            <div className="flex-1 h-px bg-[#2a2a4a]" />
+            <div className="flex-1 h-px bg-[#26262b]" />
           </div>
 
         {/* Change Password */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Change Password</h2>
           <div className="space-y-3">
             <input type="password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} placeholder="Current password"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="New password"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <button onClick={async () => {
               if (!oldPwd || !newPwd) return;
               const saved = sessionStorage.getItem('anet_v3_auth');
@@ -218,7 +218,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Session — tone-neutral, no longer "danger zone" red */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Sign out</h2>
           <p className="text-xs text-gray-500 mb-3">Signing out clears your dashboard session cookie. You'll return to the login page.</p>
           <button
@@ -226,7 +226,7 @@ export default function SettingsPage() {
               await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
               window.location.assign('/login');
             }}
-            className="px-4 py-2 bg-transparent hover:bg-[#1a1a2a] text-gray-300 text-sm rounded-lg border border-[#2a2a4a] hover:border-[#3a3a5a] transition-colors"
+            className="px-4 py-2 bg-transparent hover:bg-[#1c1c1f] text-gray-300 text-sm rounded-lg border border-[#26262b] hover:border-[#3a3a41] transition-colors"
           >
             Sign out
           </button>
@@ -237,7 +237,7 @@ export default function SettingsPage() {
         <div id="resources" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Resources</div>
-            <div className="flex-1 h-px bg-[#2a2a4a]" />
+            <div className="flex-1 h-px bg-[#26262b]" />
           </div>
 
         {/* #209 (per Vincent 521/522): the low-frequency pages 通信龙
@@ -248,27 +248,27 @@ export default function SettingsPage() {
             sidebar stays at 6, and users still have a one-tap way to
             reach them without remembering URLs or opening Cmd+K. */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link href="/settings/tokens" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
+          <Link href="/settings/tokens" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
             <h2 className="text-sm font-semibold text-gray-300">API Tokens</h2>
             <p className="text-xs text-gray-500 mt-2">Create and manage tokens for CLI access.</p>
             <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
           </Link>
-          <Link href="/settings/networks" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
+          <Link href="/settings/networks" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
             <h2 className="text-sm font-semibold text-gray-300">Networks</h2>
             <p className="text-xs text-gray-500 mt-2">Create, manage, and delete agent networks.</p>
             <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
           </Link>
-          <Link href="/messages" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
+          <Link href="/messages" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
             <h2 className="text-sm font-semibold text-gray-300">Messages</h2>
             <p className="text-xs text-gray-500 mt-2">Global timeline of CommHub messages across all agents.</p>
             <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
           </Link>
-          <Link href="/logs" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
+          <Link href="/logs" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
             <h2 className="text-sm font-semibold text-gray-300">Audit Log</h2>
             <p className="text-xs text-gray-500 mt-2">Authentication, token rotations, and admin actions.</p>
             <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
           </Link>
-          <Link href="/server-logs" className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
+          <Link href="/server-logs" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
             <h2 className="text-sm font-semibold text-gray-300">Server Logs</h2>
             <p className="text-xs text-gray-500 mt-2">Live stdout / stderr from the CommHub server.</p>
             <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>

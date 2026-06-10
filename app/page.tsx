@@ -97,7 +97,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <StatsBar online={online} working={working} total={total} />
 
       {/* #217 S5 (Vincent: "极简极简，这些都可以放到设置里面去"): the
@@ -111,7 +111,7 @@ export default function Dashboard() {
           only two numbers that drive action are running and failed;
           everything else lives on /tasks. */}
       {Object.keys(taskStats).length > 0 && (
-        <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-2.5 text-xs">
+        <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg border border-[#26262b] bg-[#161618] px-4 py-2.5 text-xs">
           <div className="text-gray-400 tabular-nums">
             <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} running</span>
             <span className="text-gray-600"> &middot; </span>
@@ -200,7 +200,7 @@ export default function Dashboard() {
                   className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                     agentFilter === c.key
                       ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
-                      : 'text-gray-500 hover:text-gray-200 hover:bg-[#1a1a2a] border border-transparent'
+                      : 'text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] border border-transparent'
                   }`}
                 >
                   {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}

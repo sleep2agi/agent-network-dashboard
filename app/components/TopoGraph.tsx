@@ -422,11 +422,11 @@ interface Palette {
 }
 
 const DARK_PALETTE: Palette = {
-  panelStops: ['#0b1220', '#080814', '#101018'],
+  panelStops: ['#0b1220', '#0a0a0c', '#101018'],
   radarStops: [
     { color: '#22d3ee', opacity: 0.18 },
     { color: '#22c55e', opacity: 0.045 },
-    { color: '#020617', opacity: 0 },
+    { color: '#060608', opacity: 0 },
   ],
   arrowFill: '#67e8f9',
   ringStroke: '#164e63',
@@ -434,14 +434,14 @@ const DARK_PALETTE: Palette = {
   flowEdge: '#67e8f9',
   flowPath: '#e0f2fe',
   flowParticle: '#fef08a',
-  nodeFill: { online: '#020617', offline: '#080814' },
-  labelBox: { fill: '#020617', stroke: '#1f2937' },
-  legendBox: { fill: '#020617', stroke: '#1f2937' },
+  nodeFill: { online: '#060608', offline: '#0a0a0c' },
+  labelBox: { fill: '#060608', stroke: '#1f2937' },
+  legendBox: { fill: '#060608', stroke: '#1f2937' },
   legendText: '#94a3b8',
   legendHeadline: '#e5e7eb',
   legendAccent: '#67e8f9',
-  containerBg: '#080814',
-  containerBorder: '#2a2a4a',
+  containerBg: '#0a0a0c',
+  containerBorder: '#26262b',
   topRailGradient: 'from-transparent via-cyan-400/70 to-transparent',
 };
 
@@ -462,7 +462,7 @@ const LIGHT_PALETTE: Palette = {
   labelBox: { fill: '#ffffff', stroke: '#e2e8f0' },
   legendBox: { fill: '#ffffff', stroke: '#e2e8f0' },
   legendText: '#475569',
-  legendHeadline: '#0f172a',
+  legendHeadline: '#18181b',
   legendAccent: '#0d9488',
   containerBg: '#ffffff',
   containerBorder: '#e3e6eb',
@@ -2673,7 +2673,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               wrapper + Grid button's internal divider used hardcoded
               `border-gray-500/25` (pale gray, fixed in both themes)
               while the bottom-right chrome strip (nodeSize, zoom)
-              used pal.containerBorder (cyber #2a2a4a dark indigo ↔
+              used pal.containerBorder (cyber #26262b dark indigo ↔
               light #e3e6eb pale gray). Visible mismatch in cyber
               theme: Layout toggle border read as pale gray while
               chrome strip borders read as darker indigo — two
@@ -4952,7 +4952,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         /* Round 254 / Loop: top-level TopoGraph wrapper gains theme-
            toggle transition. This is the BIGGEST theme-driven surface
            on the dashboard by pixel area — pal.containerBg fills the
-           entire visible canvas area (cyber #080814 ↔ light #ffffff),
+           entire visible canvas area (cyber #0a0a0c ↔ light #ffffff),
            and pal.containerBorder rims it. Pre-R254 every inner
            element eased through theme but the outer wrapper hard-cut,
            visually anchoring the snap. R253 declared
@@ -5870,7 +5870,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             <filter id="topo-groupbox-lift" x="-10%" y="-10%" width="120%" height="120%">
               <feDropShadow
                 dx="0" dy="3" stdDeviation="4"
-                floodColor={isLight ? '#0f172a' : '#000000'}
+                floodColor={isLight ? '#18181b' : '#000000'}
                 floodOpacity={isLight ? 0.18 : 0.55}
               />
             </filter>
@@ -7045,7 +7045,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      data-group-box-rx exposes the resolved value. */
                   rx={isPinned ? '16' : '14'}
                   data-group-box-rx={isPinned ? '16' : '14'}
-                  fill={isLight ? '#0f172a' : '#a5b4fc'}
+                  fill={isLight ? '#18181b' : '#a5b4fc'}
                   // R68: 3-tier opacity + stroke ladder.
                   //   pinned   → fill 0.08 / 0.13, stroke 3 px (locked)
                   //   hovered  → fill 0.05 / 0.09, stroke 2 px (inspecting)
@@ -7258,7 +7258,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       : undefined,
                     /* Round 248 / Loop: append fill 200ms ease-out to
                        the existing R66 transition list. Pre-R248 the
-                       rect's fill (isLight ? '#0f172a' (slate-900) :
+                       rect's fill (isLight ? '#18181b' (slate-900) :
                        '#a5b4fc' (indigo-300)) snapped on theme toggle
                        while stroke / fill-opacity / filter all eased.
                        Closes the last theme-toggle snap on the group
@@ -8796,7 +8796,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                             r 180ms (R164 hover lift)
                             stroke 300ms (R188 hot/pinned colour flip)
                             stroke-width 300ms (R188 hot/pinned width flip)
-                          fill (pal.legendBox.fill: cyber #020617 ↔ light
+                          fill (pal.legendBox.fill: cyber #060608 ↔ light
                           #ffffff) and opacity (cyber 0.82 ↔ light 0.95)
                           were theme-driven but missed from the list —
                           the badge chrome snapped on theme switch while
@@ -11314,7 +11314,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      gap so offline halos read more confidently as
                      present-but-stale anchors. Cyber theme stays at
                      R407's 0.30 (cyber backdrop is dark; the cyber
-                     offline halo against #080814 contains a stronger
+                     offline halo against #0a0a0c contains a stronger
                      contrast envelope than light, so doesn't need
                      the same lift). R440 hover 0.45→0.60 light + R12
                      status.halo color + R407 transition list all
@@ -12531,7 +12531,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           fill + opacity in its transition list. R142
                           already eased filter (drop-shadow) + stroke
                           (R217 cyan tint on hover); the rect's fill
-                          (pal.labelBox.fill: cyber #020617 ↔ light
+                          (pal.labelBox.fill: cyber #060608 ↔ light
                           #ffffff) and theme-derived opacity (0.94
                           cyber / 1 light) still snapped on theme
                           toggle. R211 already closed the alias/sub
@@ -12918,7 +12918,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                           for legibility" pattern, now applied to the
                           per-node sub-text line. At fontSize=8-9
                           monospace against the label-card chrome
-                          (pal.labelBox.fill cyber #020617 / light
+                          (pal.labelBox.fill cyber #060608 / light
                           #ffffff), the default fw=400 sits at the
                           legibility floor; fw=500 (font-medium) lifts
                           it into a clearly readable band without
@@ -13556,7 +13556,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    include fill + stroke + opacity at 200ms. R135
                    already eased filter (hover drop-shadow); the
                    three theme-driven properties (pal.legendBox.fill
-                   cyber #020617 ↔ light #ffffff, pal.legendBox.
+                   cyber #060608 ↔ light #ffffff, pal.legendBox.
                    stroke cyber #1f2937 ↔ light #e2e8f0, opacity
                    0.92 ↔ 0.97) still snapped on theme toggle. Same
                    per-element 4-property easing R246 added to the
@@ -13590,7 +13590,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             {/* Round 266 / Loop: panel title fill picks up theme-toggle
                 transition. Pre-R266 the title "recent signal" had
                 fill={pal.legendHeadline} (cyber #e5e7eb ↔ light
-                #0f172a) without any inline transition — so the BIGGEST
+                #18181b) without any inline transition — so the BIGGEST
                 text in the recent-signal panel (fontSize 12 fontWeight
                 700) hard-flipped color on theme toggle while the panel
                 rect (R247) and every row inside (various) eased.
@@ -16535,7 +16535,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               corners hold recent-signal + legend panels, bottom-
               right holds the chrome strip). No icon yet — public/
               has only favicon.svg (small abstract network icon
-              with hardcoded #0a0a1a dark bg that wouldn't blend on
+              with hardcoded #0b0b0d dark bg that wouldn't blend on
               light theme) + intern_avatar.png (书生 brand-specific).
               Without a sleep2agi-specific crescent/lockup asset,
               R282 ships a low-opacity text-only mark; R283+ can

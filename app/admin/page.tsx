@@ -73,7 +73,7 @@ export default function AdminPage() {
   const offlineNodes = sessions.filter(s => !sseFor(s));
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Admin</h1>
 
       {/* Section anchor nav — same pattern as Settings r28; R2 of #190 mobile
@@ -93,7 +93,7 @@ export default function AdminPage() {
           { href: '#users',   label: 'Users' },
         ].map(a => (
           <a key={a.href} href={a.href}
-            className="inline-flex min-h-[44px] items-center rounded-md border border-[#2a2a4a] bg-[#0a0a15]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+            className="inline-flex min-h-[44px] items-center rounded-md border border-[#26262b] bg-[#0e0e10]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
             {a.label}
           </a>
         ))}
@@ -105,7 +105,7 @@ export default function AdminPage() {
         <div id="status" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Status</div>
-            <div className="flex-1 h-px bg-[#2a2a4a]" />
+            <div className="flex-1 h-px bg-[#26262b]" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
@@ -116,7 +116,7 @@ export default function AdminPage() {
             2×2 numeric grid shrinks ~25 % on mobile (~60 px of fold
             reclaimed) while reading identically on desktop. mb-4 on
             the section heading also drops to mb-3 sm:mb-4. */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4 sm:p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-4 sm:p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-3 sm:mb-4">Server Overview</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -145,7 +145,7 @@ export default function AdminPage() {
                Unknown statuses fall back to the previous flat gray. */
             <div className="mt-4 flex flex-wrap gap-2">
               {stats.tasks.by_status.map((s: { status: string; count: number }) => (
-                <span key={s.status} className={`text-xs px-2 py-1 rounded border ${STATUS_CHIP_CLASS[s.status] || 'bg-[#0a0a15] border-[#1a1a2a] text-gray-400'}`}>
+                <span key={s.status} className={`text-xs px-2 py-1 rounded border ${STATUS_CHIP_CLASS[s.status] || 'bg-[#0e0e10] border-[#1c1c1f] text-gray-400'}`}>
                   {s.status}: {s.count}
                 </span>
               ))}
@@ -154,7 +154,7 @@ export default function AdminPage() {
         </section>
 
         {/* Online Sessions — pulled into Status group (was below Send Task) */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">
             Online Sessions <span className="text-gray-600">({onlineNodes.length})</span>
           </h2>
@@ -162,7 +162,7 @@ export default function AdminPage() {
             {onlineNodes.length === 0 ? (
               <div className="text-xs text-gray-600 text-center py-4">No online sessions</div>
             ) : onlineNodes.map(s => (
-              <div key={s.alias} className="flex items-center gap-3 bg-[#0a0a15] rounded-lg px-3 py-2 border border-[#1a1a2a]">
+              <div key={s.alias} className="flex items-center gap-3 bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f]">
                 <AliasAvatar alias={s.alias} size={20} />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-white font-medium truncate">{s.alias}</div>
@@ -187,28 +187,28 @@ export default function AdminPage() {
         <div id="actions" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Actions</div>
-            <div className="flex-1 h-px bg-[#2a2a4a]" />
+            <div className="flex-1 h-px bg-[#26262b]" />
           </div>
           {sessions.length === 0 ? (
             /* Round 77: Broadcast and Send Task both require at least one
                registered agent. Surfacing the empty cards above an empty
                fleet is the same dead-control class as the Overview
                Dispatch button (r70). Replace with a single inline hint. */
-            <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl px-5 py-4 text-sm text-gray-500">
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl px-5 py-4 text-sm text-gray-500">
               Broadcast and Send Task become available after the first agent registers.
             </div>
           ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Broadcast */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Broadcast</h2>
           <textarea
             value={broadcastMsg}
             onChange={e => setBroadcastMsg(e.target.value)}
             placeholder="Message to all online nodes..."
             rows={3}
-            className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none resize-none"
+            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none resize-none"
           />
           <div className="flex justify-between items-center mt-3">
             <span className="text-xs text-gray-600">{broadcastMsg.length}/500</span>
@@ -224,12 +224,12 @@ export default function AdminPage() {
         </section>
 
         {/* Send Task */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Send Task</h2>
           <select
             value={taskTarget}
             onChange={e => setTaskTarget(e.target.value)}
-            className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-cyan-500/50 focus:outline-none mb-3"
+            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-cyan-500/50 focus:outline-none mb-3"
           >
             <option value="">Select target node...</option>
             {onlineNodes.map(s => (
@@ -246,7 +246,7 @@ export default function AdminPage() {
             onChange={e => setTaskContent(e.target.value)}
             placeholder="Task content..."
             rows={3}
-            className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none resize-none"
+            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none resize-none"
           />
           <div className="flex justify-end mt-3">
             <button
@@ -268,12 +268,12 @@ export default function AdminPage() {
         <div id="users" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Users</div>
-            <div className="flex-1 h-px bg-[#2a2a4a]" />
+            <div className="flex-1 h-px bg-[#26262b]" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* User Management (V3 Auth) */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Register User (V3)</h2>
           <div className="space-y-3">
             <input
@@ -281,14 +281,14 @@ export default function AdminPage() {
               value={regUser}
               onChange={e => setRegUser(e.target.value)}
               placeholder="Username"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none"
+              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none"
             />
             <input
               type="password"
               value={regPass}
               onChange={e => setRegPass(e.target.value)}
               placeholder="Password"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none"
+              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none"
             />
             <button
               onClick={registerUser}

@@ -103,7 +103,7 @@ function TasksContent() {
   }, [fetchTasks]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       {/* Header.
           #209 R30 (mobile vertical rhythm — goal "大幅提升移动端体验",
           extending R28's Overview pattern to /tasks): this mb-6 + the
@@ -140,7 +140,7 @@ function TasksContent() {
           subtle gradient fade-edges (via .anet-tabstrip-wrap pseudo
           elements) hinting more content. */}
       <div className="anet-tabstrip-wrap mb-4">
-      <div className="anet-tabstrip flex sm:flex-wrap gap-1 bg-[#111128] rounded-lg border border-[#2a2a4a] p-1 overflow-x-auto sm:overflow-x-visible scrollbar-thin">
+      <div className="anet-tabstrip flex sm:flex-wrap gap-1 bg-[#161618] rounded-lg border border-[#26262b] p-1 overflow-x-auto sm:overflow-x-visible scrollbar-thin">
         {(() => {
           // Round 56: compute per-status counts so the tab strip doubles as a
           // status distribution dashboard. Matches Audit Log (r43) + Overview
@@ -158,7 +158,7 @@ function TasksContent() {
                 className={`px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
                   isActive
                     ? `${STATUS_CHIP_CLASS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#1a1a2a]/40'
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#1c1c1f]/40'
                 }`}
               >
                 {s && (
@@ -180,7 +180,7 @@ function TasksContent() {
       {/* From/To Filters — same visual block as the status tabs above.
           R30 (see header above): mb-6 → mb-4 sm:mb-6 mobile-tighten. */}
       <div className="flex flex-wrap items-center gap-2 mb-4 sm:mb-6">
-        <div className="flex items-center gap-1.5 rounded-lg border border-[#2a2a4a] bg-[#111128] px-2.5 py-1.5 focus-within:border-blue-500/40">
+        <div className="flex items-center gap-1.5 rounded-lg border border-[#26262b] bg-[#161618] px-2.5 py-1.5 focus-within:border-blue-500/40">
           <span className="text-[10px] uppercase tracking-wide text-gray-600">From</span>
           <input
             type="text"
@@ -190,7 +190,7 @@ function TasksContent() {
             className="w-28 bg-transparent text-base sm:text-sm text-white placeholder-gray-700 focus:outline-none"
           />
         </div>
-        <div className="flex items-center gap-1.5 rounded-lg border border-[#2a2a4a] bg-[#111128] px-2.5 py-1.5 focus-within:border-blue-500/40">
+        <div className="flex items-center gap-1.5 rounded-lg border border-[#26262b] bg-[#161618] px-2.5 py-1.5 focus-within:border-blue-500/40">
           <span className="text-[10px] uppercase tracking-wide text-gray-600">To</span>
           <input
             type="text"
@@ -271,10 +271,10 @@ function TasksContent() {
             return (
             <div
               key={t.task_id}
-              className={`anet-task-row group bg-[#111128] border rounded-lg px-3 py-2 sm:px-4 sm:py-3 transition-all duration-200 cursor-pointer ${
+              className={`anet-task-row group bg-[#161618] border rounded-lg px-3 py-2 sm:px-4 sm:py-3 transition-all duration-200 cursor-pointer ${
                 isOpen
-                  ? 'border-[#3a3a5a] shadow-lg shadow-black/20'
-                  : 'border-[#2a2a4a] hover:border-[#3a3a5a] hover:bg-[#15152e]'
+                  ? 'border-[#3a3a41] shadow-lg shadow-black/20'
+                  : 'border-[#26262b] hover:border-[#3a3a41] hover:bg-[#15152e]'
               }`}
               onClick={() => toggleExpand(t.task_id)}
               role="button"
@@ -357,17 +357,17 @@ function TasksContent() {
                 aria-hidden={!isOpen}
               >
                 <div className="overflow-hidden">
-                <div className="pt-3 border-t border-[#2a2a4a] space-y-3">
+                <div className="pt-3 border-t border-[#26262b] space-y-3">
                   {t.content && (
                     <div>
                       <div className="text-xs text-gray-600 mb-1">Content</div>
-                      <div className="text-xs text-gray-300 whitespace-pre-wrap bg-[#0a0a15] rounded-lg px-3 py-2 border border-[#1a1a2a]">{t.content}</div>
+                      <div className="text-xs text-gray-300 whitespace-pre-wrap bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f]">{t.content}</div>
                     </div>
                   )}
                   {t.result && (
                     <div>
                       <div className="text-xs text-gray-600 mb-1">Result</div>
-                      <div className="text-xs text-gray-300 whitespace-pre-wrap bg-[#0a0a15] rounded-lg px-3 py-2 border border-[#1a1a2a] max-h-48 overflow-y-auto">{t.result}</div>
+                      <div className="text-xs text-gray-300 whitespace-pre-wrap bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f] max-h-48 overflow-y-auto">{t.result}</div>
                     </div>
                   )}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -442,7 +442,7 @@ export default function TasksPage() {
       // Match the loaded layout: p-4 sm:p-6 page padding + ml-10 mobile
       // indent on the text, so the burger clears and the loading state
       // visually maps to the populated page.
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
         <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading tasks…</div>
       </div>
     }>

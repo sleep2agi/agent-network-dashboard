@@ -73,9 +73,9 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-40 anet-fade-in" onClick={onClose} />
-      <div className="fixed inset-x-3 inset-y-3 max-h-[calc(100dvh-1.5rem)] lg:inset-x-[15%] lg:inset-y-[5%] lg:max-h-none bg-[#0a0a1a] border border-[#2a2a4a] rounded-2xl z-50 flex flex-col shadow-2xl shadow-black/70 overflow-hidden anet-fade-in">
+      <div className="fixed inset-x-3 inset-y-3 max-h-[calc(100dvh-1.5rem)] lg:inset-x-[15%] lg:inset-y-[5%] lg:max-h-none bg-[#0b0b0d] border border-[#26262b] rounded-2xl z-50 flex flex-col shadow-2xl shadow-black/70 overflow-hidden anet-fade-in">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2a4a] bg-[#0d0d1a]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#26262b] bg-[#111113]">
           <div>
             <h2 className="text-lg font-bold text-white">Dispatch Task</h2>
             <p className="text-xs text-gray-500 mt-0.5">Send a task to one or more agents</p>
@@ -83,7 +83,7 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
           {/* R22 of #190: same SVG-only-no-aria-label pattern that R16
               fixed on TaskChatPanel/TaskDrawer/ChatPopover; DispatchPanel
               missed that pass. ~32 px hit zone + silent on screen-reader. */}
-          <button onClick={onClose} aria-label="Close dispatch panel" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white rounded-lg hover:bg-[#1a1a2a]">
+          <button onClick={onClose} aria-label="Close dispatch panel" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white rounded-lg hover:bg-[#1c1c1f]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -92,12 +92,12 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Left: Node selection */}
-          <div className="lg:w-[280px] border-b lg:border-b-0 lg:border-r border-[#2a2a4a] flex flex-col">
-            <div className="px-4 py-3 border-b border-[#2a2a4a]">
+          <div className="lg:w-[280px] border-b lg:border-b-0 lg:border-r border-[#26262b] flex flex-col">
+            <div className="px-4 py-3 border-b border-[#26262b]">
               <input
                 type="text" value={filter} onChange={e => setFilter(e.target.value)}
                 placeholder="Filter agents..."
-                className="w-full bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-xs text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
+                className="w-full bg-[#161618] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-xs text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
               />
               <div className="flex items-center justify-between mt-2">
                 <button onClick={selectAll} className="text-[10px] text-cyan-400 hover:text-cyan-300">
@@ -110,7 +110,7 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
               {filtered.map(s => (
                 <button key={s.alias} onClick={() => toggleNode(s.alias)}
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-left transition-colors ${
-                    selected.has(s.alias) ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20' : 'text-gray-400 hover:bg-[#1a1a2a]'
+                    selected.has(s.alias) ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20' : 'text-gray-400 hover:bg-[#1c1c1f]'
                   }`}>
                   <AliasAvatar alias={s.alias} size={16} />
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.status === 'working' ? 'bg-green-400' : s.status === 'idle' ? 'bg-cyan-400' : 'bg-gray-500'}`} />
@@ -129,12 +129,12 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
               <textarea
                 value={prompt} onChange={e => setPrompt(e.target.value)}
                 placeholder="Enter the task you want to dispatch..."
-                className="flex-1 min-h-[120px] bg-[#111128] border border-[#2a2a4a] rounded-xl px-4 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none resize-none"
+                className="flex-1 min-h-[120px] bg-[#161618] border border-[#26262b] rounded-xl px-4 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none resize-none"
               />
 
               <div className="flex items-center gap-3 mt-4">
                 <select value={priority} onChange={e => setPriority(e.target.value)}
-                  className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-xs text-white focus:outline-none">
+                  className="bg-[#161618] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-xs text-white focus:outline-none">
                   <option value="normal">Normal priority</option>
                   <option value="high">High priority</option>
                   <option value="low">Low priority</option>
@@ -158,7 +158,7 @@ export function DispatchPanel({ sessions, onClose }: DispatchPanelProps) {
 
             {/* Results */}
             {results.length > 0 && (
-              <div className="px-6 py-3 border-t border-[#2a2a4a] bg-[#0d0d1a]">
+              <div className="px-6 py-3 border-t border-[#26262b] bg-[#111113]">
                 <div className="text-xs text-gray-500 mb-2">
                   {successCount}/{results.length} dispatched successfully
                 </div>

@@ -4,7 +4,7 @@ import { ServersPanel } from '../components/ServersDrawer';
 
 export default function ServersPage() {
   return (
-    <main className="min-h-screen bg-[#0a0a1a] px-4 py-5 text-gray-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#0b0b0d] px-4 py-5 text-gray-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-5">
         {/* #209 R37: header card compressed for mobile. Original layout
             stacked 4 things vertically on phones (INFRASTRUCTURE eyebrow,
@@ -19,7 +19,7 @@ export default function ServersPage() {
             p-5 → p-4 sm:p-5 also tightens the inner padding.
             Zero feature removed; the eyebrow + desc still render where
             there is room. */}
-        <header className="rounded-2xl border border-[#2a2a4a] bg-[#111128] p-4 sm:p-5 shadow-lg shadow-black/20">
+        <header className="rounded-2xl border border-[#26262b] bg-[#161618] p-4 sm:p-5 shadow-lg shadow-black/20">
           <div className="flex items-center justify-between gap-3 lg:ml-0 ml-10">
             <div className="flex items-baseline gap-2 min-w-0">
               <span className="hidden sm:inline text-[11px] uppercase tracking-[0.18em] text-cyan-300/70 shrink-0">
@@ -42,7 +42,7 @@ export default function ServersPage() {
           </p>
         </header>
 
-        <section className="rounded-2xl border border-[#2a2a4a] bg-[#111128] p-3 shadow-lg shadow-black/20">
+        <section className="rounded-2xl border border-[#26262b] bg-[#161618] p-3 shadow-lg shadow-black/20">
           <ServersPanel className="max-h-none overflow-visible" />
         </section>
       </div>

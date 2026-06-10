@@ -172,7 +172,7 @@ export function EmptyState({ variant = 'generic', title, sub, cta, compact = fal
  *  floating in the content column. */
 function EmptyCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="max-w-2xl mx-auto rounded-xl border border-[#2a2a4a] bg-[#111128] shadow-lg shadow-black/20">
+    <div className="max-w-2xl mx-auto rounded-xl border border-[#26262b] bg-[#161618] shadow-lg shadow-black/20">
       {children}
     </div>
   );
@@ -274,7 +274,7 @@ function QuickstartCommand({ cmd }: { cmd: string }) {
     } catch {}
   };
   return (
-    <div className="anet-empty-cmd flex items-start sm:items-center gap-2 bg-[#0a0a15] border border-[#2a2a4a] rounded-lg pl-4 pr-1.5 py-1.5 text-xs sm:text-sm">
+    <div className="anet-empty-cmd flex items-start sm:items-center gap-2 bg-[#0e0e10] border border-[#26262b] rounded-lg pl-4 pr-1.5 py-1.5 text-xs sm:text-sm">
       {/* #209 R44: long quickstart commands (e.g. the `npm install -g …`
           variant) overflowed the empty-state card horizontally on phones
           because <code> defaults to white-space:pre. break-all on mobile
@@ -287,7 +287,7 @@ function QuickstartCommand({ cmd }: { cmd: string }) {
         type="button"
         onClick={onCopy}
         aria-label={copied ? 'Copied' : 'Copy command'}
-        className="shrink-0 rounded-md px-2 py-1.5 text-[11px] text-gray-500 hover:text-gray-200 hover:bg-[#1a1a2a] transition-colors"
+        className="shrink-0 rounded-md px-2 py-1.5 text-[11px] text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] transition-colors"
       >
         {copied ? (
           <span className="flex items-center gap-1 text-green-400">

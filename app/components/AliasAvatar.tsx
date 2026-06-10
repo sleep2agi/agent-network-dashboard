@@ -22,6 +22,10 @@ export function aliasInitial(alias?: string): string {
   return ch.toUpperCase();
 }
 
+function isGrokAlias(alias: string) {
+  return /\bgrok\b|grok-build|grok测试员|grok-demo/i.test(alias);
+}
+
 interface AliasAvatarProps {
   alias: string;
   size?: number;
@@ -29,6 +33,24 @@ interface AliasAvatarProps {
 }
 
 export function AliasAvatar({ alias, size = 28, className = '' }: AliasAvatarProps) {
+  if (isGrokAlias(alias)) {
+    return (
+      <span
+        className={`anet-alias-avatar inline-flex items-center justify-center rounded-full border border-emerald-500/45 bg-emerald-950/70 shrink-0 ${className}`}
+        style={{
+          width: size,
+          height: size,
+          backgroundImage: 'url(/vendors/grok.svg)',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '68% 68%',
+        }}
+        title={alias}
+        aria-hidden
+      />
+    );
+  }
+
   const c = aliasAvatarColors(alias);
   const fs = Math.max(9, Math.round(size * 0.42));
   return (

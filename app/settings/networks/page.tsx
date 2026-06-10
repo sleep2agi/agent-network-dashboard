@@ -96,7 +96,7 @@ export default function NetworksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/settings" className="text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10">&larr; Settings</Link>
         <h1 className="text-2xl font-bold text-white">Networks</h1>
@@ -107,13 +107,13 @@ export default function NetworksPage() {
 
       <div className="max-w-2xl space-y-6">
         {/* Create */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-3">Create Network</h2>
           <div className="space-y-3">
             <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Network name"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <input type="text" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description (optional)"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <button onClick={createNetwork} disabled={!newName.trim()}
               className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-800 text-white text-sm rounded-lg transition-colors">
               Create
@@ -123,7 +123,7 @@ export default function NetworksPage() {
         </section>
 
         {/* List */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-gray-300">My Networks</h2>
             {networks.length > 0 && (
@@ -141,7 +141,7 @@ export default function NetworksPage() {
           ) : (
             <div className="space-y-3">
               {networks.map(n => (
-                <div key={n.network_id} className="bg-[#0a0a15] rounded-lg px-4 py-3 border border-[#1a1a2a]">
+                <div key={n.network_id} className="bg-[#0e0e10] rounded-lg px-4 py-3 border border-[#1c1c1f]">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0">
                       <AliasAvatar alias={n.network_name} size={28} />
@@ -173,7 +173,7 @@ export default function NetworksPage() {
                   </div>
 
                   {expandedNetwork === n.network_id && (
-                    <div className="mt-3 pt-3 border-t border-[#1a1a2a]">
+                    <div className="mt-3 pt-3 border-t border-[#1c1c1f]">
                       <div className="text-xs text-gray-500 mb-2">Members ({(members[n.network_id] || []).length})</div>
                       {(members[n.network_id] || []).length === 0 ? (
                         <div className="text-[10px] text-gray-600">No members or V3 auth required</div>
@@ -195,11 +195,11 @@ export default function NetworksPage() {
                       )}
 
                       {/* Invite */}
-                      <div className="mt-3 pt-3 border-t border-[#1a1a2a]">
+                      <div className="mt-3 pt-3 border-t border-[#1c1c1f]">
                         <div className="text-xs text-gray-500 mb-2">Invite</div>
                         <div className="flex gap-2">
                           <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
-                            className="bg-[#0a0a15] border border-[#2a2a4a] rounded px-2 py-1 text-base sm:text-xs text-white focus:outline-none">
+                            className="bg-[#0e0e10] border border-[#26262b] rounded px-2 py-1 text-base sm:text-xs text-white focus:outline-none">
                             <option value="member">member</option>
                             <option value="admin">admin</option>
                             <option value="viewer">viewer</option>

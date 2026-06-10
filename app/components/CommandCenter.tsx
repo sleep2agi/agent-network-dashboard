@@ -26,9 +26,9 @@ export function CommandCenter({ tabs, activeTab, onOpenTab, onCloseTab, onSetAct
       <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed top-0 right-0 h-[100dvh] w-full lg:w-[500px] bg-[#0a0a1a] border-l border-[#2a2a4a] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
+      <div className="fixed top-0 right-0 h-[100dvh] w-full lg:w-[500px] bg-[#0b0b0d] border-l border-[#26262b] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
         {/* Tab bar */}
-        <div className="flex items-center border-b border-[#2a2a4a] bg-[#0d0d1a] overflow-x-auto">
+        <div className="flex items-center border-b border-[#26262b] bg-[#111113] overflow-x-auto">
           <div className="flex-1 flex min-w-0">
             {tabs.map(alias => (
               <button
@@ -61,7 +61,7 @@ export function CommandCenter({ tabs, activeTab, onOpenTab, onCloseTab, onSetAct
           {/* R21 mobile a11y: outer command-center close was SVG-only
               and screen-reader silent; also bumped to 44 x 44 hit zone
               from 32 x ~36. */}
-          <button onClick={onClose} aria-label="Close command center" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white shrink-0 border-l border-[#2a2a4a]">
+          <button onClick={onClose} aria-label="Close command center" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white shrink-0 border-l border-[#26262b]">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>

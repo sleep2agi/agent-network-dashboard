@@ -81,16 +81,16 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40 anet-fade-in" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-[100dvh] w-full lg:w-[500px] bg-[#0a0a1a] border-l border-[#2a2a4a] z-50 flex flex-col shadow-2xl shadow-black/60 overflow-y-auto animate-slide-in">
+      <div className="fixed top-0 right-0 h-[100dvh] w-full lg:w-[500px] bg-[#0b0b0d] border-l border-[#26262b] z-50 flex flex-col shadow-2xl shadow-black/60 overflow-y-auto animate-slide-in">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2a4a] bg-[#0d0d1a] sticky top-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#26262b] bg-[#111113] sticky top-0">
           <div>
             <div className="text-sm font-semibold text-white">Task Detail</div>
             <div className="text-[10px] text-gray-500 mt-0.5">{taskId.slice(0, 16)}...</div>
           </div>
           {/* R16 of #190: same chat-panel close pattern — was ~32 px
               tap target; lift to a uniform 44 x 44 hit zone. */}
-          <button onClick={onClose} aria-label="Close task drawer" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white rounded-lg hover:bg-[#1a1a2a]">
+          <button onClick={onClose} aria-label="Close task drawer" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white rounded-lg hover:bg-[#1c1c1f]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -129,7 +129,7 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
 
             {/* Timeline — round 36 polish: relative timestamps, current-step
                 pulse if task is still in flight, full ISO in title=. */}
-            <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-xs text-gray-500 uppercase tracking-wide">Timeline</div>
                 {duration !== null && (
@@ -182,14 +182,14 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
             </div>
 
             {/* Content */}
-            <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
               <div className="text-xs text-gray-500 uppercase mb-2">Input</div>
               <div className="text-sm text-gray-300 whitespace-pre-wrap">{task.content || '--'}</div>
             </div>
 
             {/* Result */}
             {task.result && (
-              <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+              <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
                 <div className="text-xs text-gray-500 uppercase mb-2">Output</div>
                 <div className="text-sm text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto">{task.result}</div>
               </div>
@@ -197,7 +197,7 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
 
             {/* Events */}
             {events.length > 0 && (
-              <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+              <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
                 <div className="text-xs text-gray-500 uppercase mb-2">Events ({events.length})</div>
                 <div className="space-y-1.5 max-h-40 overflow-y-auto">
                   {events.map(e => (

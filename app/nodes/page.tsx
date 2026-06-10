@@ -61,7 +61,7 @@ export default function NodesPage() {
   const onlineCount = sessions.filter(s => sseFor(s)).length;
 
   return (
-    <div className="min-h-screen max-w-full overflow-x-hidden bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       {/* #209 R31 (mobile vertical rhythm — goal "大幅提升移动端体验",
           extending R28's Overview pattern + R30's /tasks pattern):
           this header row + the status-bar wrapper + the filter row
@@ -123,7 +123,7 @@ export default function NodesPage() {
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-blue-500/50 focus:outline-none"
+          className="bg-[#161618] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-blue-500/50 focus:outline-none"
         >
           <option value="">All</option>
           <option value="online">Online</option>
@@ -137,7 +137,7 @@ export default function NodesPage() {
             grid-cols-1 below `md` and List degrades to the same single
             column, so the toggle has no visual effect under sm and only
             steals a row of vertical space. */}
-        <div className="hidden sm:flex ml-auto rounded-lg border border-[#2a2a4a] bg-[#111128] p-1 text-sm">
+        <div className="hidden sm:flex ml-auto rounded-lg border border-[#26262b] bg-[#161618] p-1 text-sm">
           {(['list', 'grid'] as const).map(mode => (
             <button
               key={mode}
@@ -189,7 +189,7 @@ export default function NodesPage() {
                 tabIndex={0}
                 onClick={() => setChatAlias(s.alias)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setChatAlias(s.alias); } }}
-                className={`relative min-w-0 max-w-full overflow-hidden rounded-xl border border-[#2a2a4a] bg-[#111128] p-4 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-60' : ''}`}
+                className={`relative min-w-0 max-w-full overflow-hidden rounded-xl border border-[#26262b] bg-[#161618] p-4 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-60' : ''}`}
               >
                 {!s.online && (
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -201,7 +201,7 @@ export default function NodesPage() {
                 <div className="flex items-start gap-3">
                   <div className="relative shrink-0">
                     <AliasAvatar alias={s.alias} size={36} />
-                    {unread && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#111128] bg-red-500" />}
+                    {unread && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#161618] bg-red-500" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export default function NodesPage() {
                   <span className="hidden shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[10px] text-cyan-300/70 sm:inline">Tap to chat</span>
                 </div>
 
-                <div className="mt-3 rounded-lg border border-[#1a1a2a] bg-[#0a0a15] px-3 py-2 text-xs">
+                <div className="mt-3 rounded-lg border border-[#1c1c1f] bg-[#0e0e10] px-3 py-2 text-xs">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-[10px] uppercase tracking-wide text-gray-600">Current task</span>
                     <span className="text-[10px] text-gray-600">{timeAgo(s.last_seen_at || s.updated_at)}</span>
@@ -261,7 +261,7 @@ export default function NodesPage() {
                 tabIndex={0}
                 onClick={() => setChatAlias(s.alias)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setChatAlias(s.alias); } }}
-                className={`rounded-lg border border-[#2a2a4a] bg-[#111128] px-3 py-2 sm:px-4 sm:py-3 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-50' : ''}`}
+                className={`rounded-lg border border-[#26262b] bg-[#161618] px-3 py-2 sm:px-4 sm:py-3 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-50' : ''}`}
               >
                 <div className="hidden sm:grid sm:grid-cols-10 gap-2 items-center">
                   <div className="col-span-1">
@@ -273,7 +273,7 @@ export default function NodesPage() {
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="relative shrink-0">
                         <AliasAvatar alias={s.alias} size={20} />
-                        {unread && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border border-[#111128] bg-red-500" />}
+                        {unread && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border border-[#161618] bg-red-500" />}
                       </div>
                       <span className="truncate text-sm font-medium text-white">{s.alias}</span>
                       {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">New</span>}
@@ -296,7 +296,7 @@ export default function NodesPage() {
                   <div className="flex items-center gap-2.5">
                     <div className="relative shrink-0">
                       <AliasAvatar alias={s.alias} size={28} />
-                      {unread && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#111128] bg-red-500" />}
+                      {unread && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#161618] bg-red-500" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 min-w-0">

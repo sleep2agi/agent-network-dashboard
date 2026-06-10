@@ -36,7 +36,7 @@ export function MobileNav() {
   };
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#2a2a4a] bg-[#0d0d1a]/95 px-1 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 backdrop-blur lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#26262b] bg-[#111113]/95 px-1 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 backdrop-blur lg:hidden">
       <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
         {MOBILE_NAV_ITEMS.map(item => {
           const active = isActive(item.href);
@@ -49,7 +49,7 @@ export function MobileNav() {
               className={`relative flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[10px] transition-colors ${
                 active
                   ? 'bg-cyan-500/12 text-cyan-300 before:absolute before:top-0 before:left-3 before:right-3 before:h-0.5 before:rounded-full before:bg-cyan-400'
-                  : 'text-gray-500 active:bg-[#1a1a3a] active:text-gray-200'
+                  : 'text-gray-500 active:bg-[#232327] active:text-gray-200'
               }`}
             >
               <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>

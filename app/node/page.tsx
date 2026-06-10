@@ -60,7 +60,7 @@ function TmuxViewer({ tmuxName }: { tmuxName: string }) {
   };
 
   return (
-    <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+    <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-semibold text-gray-300">Terminal ({tmuxName})</h2>
         <div className="flex gap-2">
@@ -76,7 +76,7 @@ function TmuxViewer({ tmuxName }: { tmuxName: string }) {
         </div>
       </div>
       {output && (
-        <pre className={`text-[11px] text-green-300 bg-[#050510] rounded-lg px-3 py-2 border border-[#1a1a2a] overflow-x-auto whitespace-pre font-mono ${expanded ? 'max-h-96' : 'max-h-32'} overflow-y-auto`}>
+        <pre className={`text-[11px] text-green-300 bg-[#060607] rounded-lg px-3 py-2 border border-[#1c1c1f] overflow-x-auto whitespace-pre font-mono ${expanded ? 'max-h-96' : 'max-h-32'} overflow-y-auto`}>
           {output}
         </pre>
       )}
@@ -142,7 +142,7 @@ function NodeDetailContent() {
 
   if (!alias) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-6 flex items-center justify-center">
         <p className="text-gray-500">No alias specified. <Link href="/" className="text-blue-400 hover:underline">Back to dashboard</Link></p>
       </div>
     );
@@ -153,7 +153,7 @@ function NodeDetailContent() {
   const statusColor = SESSION_STATUS_TEXT_CLASS[session?.status || ''] || SESSION_STATUS_TEXT_CLASS.offline;
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       {/* Header — round 40: avatar joins the alias for cross-page hue
           consistency; agent type lives in a subtitle so users know what
           kind of node they're looking at. */}
@@ -203,10 +203,10 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
   }, [tab, eventsLoaded]);
 
   return (
-    <div className="bg-[#0d0d1a] border border-[#2a2a4a] rounded-xl overflow-hidden h-[calc(100vh-140px)] flex flex-col">
+    <div className="bg-[#111113] border border-[#26262b] rounded-xl overflow-hidden h-[calc(100vh-140px)] flex flex-col">
       {/* Tab bar — round 40: emoji icons (💬 📋 📊) replaced with stroke
           SVG to drop the "AI generated" tell. */}
-      <div className="flex border-b border-[#2a2a4a] bg-[#0a0a15] shrink-0">
+      <div className="flex border-b border-[#26262b] bg-[#0e0e10] shrink-0">
         {([
           { id: 'chat',   label: 'Chat',   icon: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' },
           { id: 'events', label: 'Events', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
@@ -241,7 +241,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
 
         {tab === 'info' && (
           <div className="p-4 overflow-y-auto h-full space-y-4 max-w-2xl">
-            <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
               <h2 className="text-sm font-semibold text-gray-300 mb-3">Node Info</h2>
             <div className="space-y-2 text-xs">
               {[
@@ -278,7 +278,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
 
           {/* Current Task */}
           {session?.task && (
-            <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
               <h2 className="text-sm font-semibold text-gray-300 mb-2">Current Task</h2>
               <p className="text-xs text-gray-400 whitespace-pre-wrap">{session.task}</p>
             </div>
@@ -286,14 +286,14 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
 
           {/* Output */}
           {session?.output && (
-            <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
               <h2 className="text-sm font-semibold text-gray-300 mb-2">Last Output</h2>
               <p className="text-xs text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto">{session.output}</p>
             </div>
           )}
 
           {/* Send Task */}
-          <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+          <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
             <h2 className="text-sm font-semibold text-gray-300 mb-2">Send Task</h2>
             <div className="flex gap-2">
               <input
@@ -302,7 +302,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
                 onChange={e => setSendMsg(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendTask()}
                 placeholder={`Send task to ${alias}...`}
-                className="flex-1 bg-[#0a0a15] border border-[#2a2a4a] rounded px-3 py-2 text-base sm:text-xs text-white placeholder-gray-600 focus:border-blue-500 focus:outline-none"
+                className="flex-1 bg-[#0e0e10] border border-[#26262b] rounded px-3 py-2 text-base sm:text-xs text-white placeholder-gray-600 focus:border-blue-500 focus:outline-none"
               />
               <button
                 onClick={sendTask}
@@ -354,11 +354,11 @@ function EventsTimeline({ events, loading }: { events: Array<{ id: number; event
   return (
     <div className="p-4 overflow-y-auto h-full space-y-4">
       {[...groups.entries()].map(([taskId, taskEvents]) => (
-        <div key={taskId} className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+        <div key={taskId} className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
           <div className="text-[10px] text-gray-600 mb-3 truncate">Task: {taskId.slice(0, 20)}...</div>
           <div className="relative pl-6">
             {/* Vertical line */}
-            <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-[#1a1a2a]" />
+            <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-[#1c1c1f]" />
 
             {taskEvents.map((e, i) => {
               const cfg = EVENT_COLORS[e.to_status] || EVENT_COLORS.created;
@@ -366,8 +366,8 @@ function EventsTimeline({ events, loading }: { events: Array<{ id: number; event
                 <div key={e.id} className="relative pb-4 last:pb-0">
                   {/* Dot on line — round 59: emoji icons replaced with
                       a 10px stroke SVG path matching event type. */}
-                  <div className={`absolute -left-6 top-0.5 w-[18px] h-[18px] rounded-full ${cfg.dot} flex items-center justify-center z-10 border-2 border-[#111128]`}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0a0a15" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <div className={`absolute -left-6 top-0.5 w-[18px] h-[18px] rounded-full ${cfg.dot} flex items-center justify-center z-10 border-2 border-[#161618]`}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0e0e10" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <path d={cfg.path} />
                     </svg>
                   </div>
@@ -405,7 +405,7 @@ export default function NodePage() {
       // Match the loaded layout: p-4 sm:p-6 + lg:ml-0 ml-10 mobile
       // indent on the text. Loading state now visually maps to the
       // populated /node detail page.
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
         <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading…</div>
       </div>
     }>
