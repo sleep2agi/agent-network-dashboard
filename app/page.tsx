@@ -204,8 +204,10 @@ export default function Dashboard() {
                   }`}
                 >
                   {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}
+                  {/* #217 D5: counts dropped — the KPI cards directly above
+                      already carry 53/100/153; repeating them here doubled
+                      every number on the first screen. */}
                   <span>{c.label}</span>
-                  <span className={`text-[10px] tabular-nums ${agentFilter === c.key ? 'text-cyan-400' : 'text-gray-600'}`}>{counts[c.key]}</span>
                 </button>
               ))}
             </div>
