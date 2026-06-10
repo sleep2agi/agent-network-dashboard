@@ -213,6 +213,18 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   const [mentionNodes, setMentionNodes] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // #217 M4 (Vincent: 倒序加载, 上滑再拉旧的): history is paged. We load
+  // only the newest PAGE on open and grow the window when the user
+  // scrolls to the top. The hub API has no `before` cursor (offset is
+  // ignored), so "older" = refetch with a larger limit and prepend the
+  // delta — each step is on-demand and tiny vs one full pull.
+  const HISTORY_PAGE = 20;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const histLimitRef = useRef(HISTORY_PAGE);
+  const skipAutoScrollRef = useRef(false);
+  const anchoredRef = useRef(false);
+  const [hasOlder, setHasOlder] = useState(true);
+  const [loadingOlder, setLoadingOlder] = useState(false);
 
   // Load available nodes for @ mention
   useEffect(() => {
@@ -231,14 +243,22 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
     markChatRead(alias, networkId);
   }, [alias, networkId]);
 
-  // Load task history for this node
-  const loadHistory = useCallback(async () => {
+  // Load task history for this node — newest `limit` only (M4).
+  const loadHistory = useCallback(async (limit: number) => {
     try {
-      const res = await fetch(`/api/hub/tasks?to_name=${encodeURIComponent(alias)}&limit=30`);
+      const res = await fetch(`/api/hub/tasks?to_name=${encodeURIComponent(alias)}&limit=${limit}`);
       const data = await res.json();
       if (data.tasks) {
-        // Show oldest first
-        setMessages(data.tasks.reverse());
+        const fetched = data.tasks.reverse(); // oldest first for display
+        if (data.tasks.length < limit) setHasOlder(false);
+        // Merge: keep current messages the fetch doesn't know about yet
+        // (optimistic sends / SSE patches) so growing the window never
+        // drops an in-flight bubble.
+        setMessages(prev => {
+          const ids = new Set(fetched.map((t: { task_id?: string }) => t.task_id));
+          const extras = prev.filter(t => t.task_id && !ids.has(t.task_id));
+          return [...fetched, ...extras];
+        });
       }
     } catch {} finally {
       setHistoryLoaded(true);
@@ -248,13 +268,52 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   useEffect(() => {
     setMessages([]);
     setHistoryLoaded(false);
-    loadHistory();
+    histLimitRef.current = HISTORY_PAGE;
+    anchoredRef.current = false;
+    setHasOlder(true);
+    loadHistory(HISTORY_PAGE);
     // Focus textarea
     setTimeout(() => textareaRef.current?.focus(), 300);
   }, [alias, loadHistory]);
 
-  // Auto-scroll to bottom
+  // M4: user scrolled to the top → grow the history window, keeping the
+  // viewport anchored on the message they were looking at.
+  const loadOlder = useCallback(async () => {
+    if (loadingOlder || !hasOlder) return;
+    setLoadingOlder(true);
+    const el = scrollRef.current;
+    const prevHeight = el?.scrollHeight ?? 0;
+    skipAutoScrollRef.current = true;
+    histLimitRef.current += HISTORY_PAGE;
+    await loadHistory(histLimitRef.current);
+    requestAnimationFrame(() => {
+      if (el) el.scrollTop += el.scrollHeight - prevHeight;
+      setLoadingOlder(false);
+    });
+  }, [loadingOlder, hasOlder, loadHistory]);
+
+  const onMessagesScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // The initial bottom-anchor is a smooth scroll, so its own scroll
+    // events pass through scrollTop≈0 territory. Arm the older-page
+    // trigger only after the container has actually reached the bottom
+    // once — everything before that is layout/auto-scroll noise.
+    if (!anchoredRef.current) {
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 80) anchoredRef.current = true;
+      return;
+    }
+    if (el.scrollTop < 40) loadOlder();
+  }, [loadOlder]);
+
+  // Auto-scroll to bottom on new messages — but not when we just
+  // prepended older history (that would yank the user away from what
+  // they scrolled up to read).
   useEffect(() => {
+    if (skipAutoScrollRef.current) {
+      skipAutoScrollRef.current = false;
+      return;
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -490,11 +549,31 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
             mobile and the per-pair grouping (line 540) from space-y-2
             to space-y-1.5 so messages read denser without losing the
             speaker-turn rhythm. Desktop unchanged at sm: and up. */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 space-y-2 sm:space-y-4">
+        <div ref={scrollRef} onScroll={onMessagesScroll} className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 space-y-2 sm:space-y-4">
           {!historyLoaded && (
             <div className="flex justify-center py-8">
               <div className="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
             </div>
+          )}
+          {/* M4: top-of-thread row — scroll-to-top auto-loads older, and
+              the row is also tappable for short threads that don't
+              overflow (nothing to scroll). Quiet "beginning" marker
+              once history is exhausted. */}
+          {historyLoaded && hasOlder && messages.length > 0 && (
+            <button
+              type="button"
+              onClick={loadOlder}
+              className="w-full flex justify-center py-2 text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg-muted)]"
+            >
+              {loadingOlder ? (
+                <span className="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
+              ) : (
+                <span>↑ Load earlier messages</span>
+              )}
+            </button>
+          )}
+          {historyLoaded && !hasOlder && messages.length > 0 && (
+            <div className="text-center text-[10px] text-[var(--fg-dim)] py-1">— beginning of history —</div>
           )}
           {historyLoaded && messages.length === 0 && (
             <div className="text-center py-12">
