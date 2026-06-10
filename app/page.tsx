@@ -98,9 +98,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
-      <div className="lg:ml-0 ml-10">
-        <StatsBar online={online} working={working} total={total} />
-      </div>
+      <StatsBar online={online} working={working} total={total} />
 
       {/* #217 S5 (Vincent: "极简极简，这些都可以放到设置里面去"): the
           Dispatch button and UserBar row are gone from Overview.
