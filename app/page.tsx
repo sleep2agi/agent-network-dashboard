@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { StatsBar } from './components/StatsBar';
 import { TopoGraph } from './components/TopoGraph';
@@ -13,15 +13,14 @@ import { useSSE } from './lib/useSSE';
 import { useSWRConfig } from 'swr';
 
 export default function Dashboard() {
-  // Auto-upgrade: if no V3 auth in session, force re-login to get user token
-  useEffect(() => {
-    const hasV3 = sessionStorage.getItem('anet_v3_auth');
-    if (!hasV3) {
-      // Try silent re-auth: logout old cookie + redirect to login
-      fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-      window.location.assign('/login');
-    }
-  }, []);
+  // #214 F1: the old "V3 auto-upgrade" guard here checked per-tab
+  // sessionStorage and, when empty (every new tab / browser restart /
+  // bookmark visit), logged out the *valid* cookie session and bounced
+  // to /login. Unauthenticated access is already handled server-side
+  // by proxy.ts (no cookie → /login); the sessionStorage blob is just
+  // a client cache that pages re-hydrate on demand. A genuinely stale
+  // pre-V3 cookie now surfaces as API 401s with the error banner
+  // instead of silent session destruction.
 
   const { sessions, hint: sessHint, error: sessError, isLoading } = useSessions();
   const { health } = useHealth();
