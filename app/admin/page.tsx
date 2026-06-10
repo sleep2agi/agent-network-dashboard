@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useSessions, useHealth, useStats } from '../lib/hooks';
 import { timeAgo } from '../components/utils';
 import { AliasAvatar } from '../components/AliasAvatar';
-import { STATUS_CHIP_CLASS, SESSION_STATUS_CHIP_CLASS } from '../lib/status';
+import { SESSION_STATUS_CHIP_CLASS } from '../lib/status';
 
 export default function AdminPage() {
   const { sessions } = useSessions();
@@ -138,19 +139,23 @@ export default function AdminPage() {
               <div className="text-xs text-gray-500">Total Tasks</div>
             </div>
           </div>
-          {stats?.tasks?.by_status && stats.tasks.by_status.length > 0 && (
-            /* Round 90: adopt the shared STATUS_CHIP_CLASS palette so
-               `acked`/`replied`/`failed` here color-match the same
-               chips on /tasks, Overview r69, and /tasks/[id] r68.
-               Unknown statuses fall back to the previous flat gray. */
-            <div className="mt-4 flex flex-wrap gap-2">
-              {stats.tasks.by_status.map((s: { status: string; count: number }) => (
-                <span key={s.status} className={`text-xs px-2 py-1 rounded border ${STATUS_CHIP_CLASS[s.status] || 'bg-[#0e0e10] border-[#1c1c1f] text-gray-400'}`}>
-                  {s.status}: {s.count}
-                </span>
-              ))}
-            </div>
-          )}
+          {stats?.tasks?.by_status && stats.tasks.by_status.length > 0 && (() => {
+            /* #217 D7 (less is more): the 6-9 chip per-status wall
+               duplicated the /tasks tab strip. Same one-line summary
+               idiom as the Overview task line — running/failed are the
+               only numbers that drive action, the rest is on /tasks. */
+            const byStatus = Object.fromEntries(stats.tasks.by_status.map((s: { status: string; count: number }) => [s.status, s.count]));
+            return (
+              <div className="mt-4 flex items-center justify-between border-t border-[#26262b] pt-3 text-xs">
+                <div className="text-gray-400 tabular-nums">
+                  <span className={byStatus['running'] ? 'text-green-400' : 'text-gray-500'}>{byStatus['running'] || 0} running</span>
+                  <span className="text-gray-600"> &middot; </span>
+                  <span className={byStatus['failed'] ? 'text-red-400' : 'text-gray-500'}>{byStatus['failed'] || 0} failed</span>
+                </div>
+                <Link href="/tasks" prefetch={false} className="text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
+              </div>
+            );
+          })()}
         </section>
 
         {/* Online Sessions — pulled into Status group (was below Send Task) */}
