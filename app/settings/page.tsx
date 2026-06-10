@@ -7,7 +7,7 @@ import { DASHBOARD_VERSION } from '../lib/version';
 
 export default function SettingsPage() {
   const { config } = useAnetConfig();
-  const { health } = useHealth();
+  const { health, error: healthError } = useHealth();
   const [theme, setTheme] = useState<string>(() => {
     if (typeof window === 'undefined') return 'cyber';
     try { return localStorage.getItem('anet-theme') || 'cyber'; } catch { return 'cyber'; }
@@ -124,6 +124,17 @@ export default function SettingsPage() {
             {config?.error && (
               <div className="border-t border-[#26262b] pt-3 text-xs text-gray-600">
                 {config.error}
+              </div>
+            )}
+            {/* #214 F5: the red HealthBanner's "Open Settings" CTA used to
+                land on a read-only page with no next step. When the hub is
+                unreachable, give the user actual recovery commands. */}
+            {(healthError || health?.ok === false) && (
+              <div className="border-t border-red-500/20 pt-3 text-xs space-y-1.5" role="alert">
+                <div className="text-red-300 font-medium">CommHub unreachable — how to recover:</div>
+                <div className="text-gray-400">1. Check the hub process on the server: <code className="font-mono bg-[#0e0e10] border border-[#1c1c1f] rounded px-1.5 py-0.5">anet hub status</code></div>
+                <div className="text-gray-400">2. Start it if stopped: <code className="font-mono bg-[#0e0e10] border border-[#1c1c1f] rounded px-1.5 py-0.5">anet hub start</code></div>
+                <div className="text-gray-400">3. Confirm the Hub URL above matches where the hub actually listens.</div>
               </div>
             )}
           </div>
