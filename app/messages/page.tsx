@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMessages } from '../lib/hooks';
 import { timeAgo, previewContent } from '../components/utils';
 import { EmptyState } from '../components/EmptyState';
@@ -53,12 +53,32 @@ function renderHighlighted(content: string | undefined, search: string) {
   return <>{text.slice(0, idx)}<mark className="bg-yellow-500/30 text-yellow-200 rounded px-0.5">{text.slice(idx, idx + q.length)}</mark>{text.slice(idx + q.length)}</>;
 }
 
+// #217 M5 (Vincent tg 655/656, same directive as chat M4): don't pull the
+// full history on every 5s poll. Open with the newest page only and grow
+// the window when the user explicitly asks for older messages.
+const HISTORY_PAGE = 30;
+
 export default function MessagesPage() {
-  const { messages, isLoading } = useMessages(200);
+  const [histLimit, setHistLimit] = useState(HISTORY_PAGE);
+  const { messages, isLoading } = useMessages(histLimit);
+  // The hub returned a full page → assume more history exists beyond it.
+  const hasOlder = messages.length >= histLimit;
+  const loadingOlder = isLoading && messages.length > 0;
   const [filterType, setFilterType] = useState('');
   const [search, setSearch] = useState('');
   const [debug, setDebug] = useState(false);
   const [viewMode, setViewMode] = useState<'timeline' | 'grouped'>('timeline');
+  // M5: the timeline runs oldest→newest top-to-bottom, so land the first
+  // paint on the newest message (what the user came to read) instead of
+  // the oldest of the loaded window. Once only — later polls/loads must
+  // not yank the scroll position.
+  const endRef = useRef<HTMLDivElement>(null);
+  const didInitialScrollRef = useRef(false);
+  useEffect(() => {
+    if (didInitialScrollRef.current || messages.length === 0) return;
+    didInitialScrollRef.current = true;
+    endRef.current?.scrollIntoView();
+  }, [messages.length]);
   // #209 R33→R34: WeChat-style magnifier-toggle search hook (shared with /nodes).
   const searchCtl = useCollapsibleSearch({
     value: search,
@@ -125,7 +145,7 @@ export default function MessagesPage() {
           <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Messages</h1>
           {/* Round 89: filter-aware chip. When search/type filter is active
               the visible rows are filtered.length; the total loaded is
-              messages.length (capped at 200 by useMessages). Show
+              messages.length (the M5 lazy window, newest histLimit). Show
               `filtered / total` so users notice how much the filter is
               hiding. Same pattern as r88 /tasks chip. */}
           <span
@@ -228,7 +248,24 @@ export default function MessagesPage() {
         </div>
       )}
 
-      {isLoading ? (
+      {/* M5: paging affordance — mirrors the chat panel's M4 row. Sits
+          above the list because older history is prepended above what's
+          already on screen. Hidden once the hub returns a short page
+          (we've reached the beginning). */}
+      {messages.length > 0 && hasOlder && (
+        <div className="mb-3 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setHistLimit(l => l + HISTORY_PAGE)}
+            disabled={loadingOlder}
+            className="rounded-full border border-[#26262b] bg-[#161618] px-4 py-1.5 text-xs text-gray-400 transition-colors hover:text-gray-200 disabled:opacity-50"
+          >
+            {loadingOlder ? 'Loading…' : '↑ Load earlier messages'}
+          </button>
+        </div>
+      )}
+
+      {isLoading && messages.length === 0 ? (
         <div className="animate-pulse space-y-3">
           {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 rounded-2xl bg-gray-800/20" />)}
         </div>
@@ -371,6 +408,7 @@ export default function MessagesPage() {
               </div>
             );
           })}
+          <div ref={endRef} />
         </div>
       )}
     </div>

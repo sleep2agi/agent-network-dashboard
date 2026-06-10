@@ -65,10 +65,13 @@ export function useStats() {
 
 export function useMessages(limit = 100) {
   const { networkId } = useNetworkId();
+  // keepPreviousData: /messages grows `limit` when the user asks for older
+  // history (#217 M5) — without it the key change would blank the list and
+  // flash the skeleton while the bigger page is in flight.
   const { data, error, isLoading } = useSWR(
     withNetwork(`/api/hub/messages?limit=${limit}`, networkId),
     fetcher,
-    SWR_OPTIONS,
+    { ...SWR_OPTIONS, keepPreviousData: true },
   );
   return { messages: data?.messages || [], error, isLoading };
 }
