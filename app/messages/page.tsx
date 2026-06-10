@@ -197,14 +197,17 @@ export default function MessagesPage() {
       </div>
       )}
 
+      {/* #217 S8 (less is more): on phones the sender chips wrapped into
+          ~5 rows and pushed the first message below the fold. One
+          scrollable row on mobile; wrap returns from sm: up. */}
       {quickFromChips.length > 0 && (
-        <div className="mb-4 sm:mb-6 flex flex-wrap gap-2">
+        <div className="mb-4 sm:mb-6 flex gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-thin sm:flex-wrap sm:overflow-visible sm:whitespace-normal sm:pb-0">
           {quickFromChips.map(alias => (
             <button
               key={alias}
               type="button"
               onClick={() => setSearch(`from:${alias}`)}
-              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+              className={`shrink-0 rounded-full border px-3 py-1 text-xs transition-colors ${
                 search === `from:${alias}`
                   ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
                   : 'border-[#2a2a4a] bg-[#111128] text-gray-400 hover:text-gray-200'
@@ -217,7 +220,7 @@ export default function MessagesPage() {
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-500 hover:text-gray-200"
+              className="shrink-0 rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-500 hover:text-gray-200"
             >
               Clear
             </button>
