@@ -59,8 +59,6 @@ export function StatsBar({ online, working, total }: StatsBarProps) {
             label="Online"
             sub={`${onlinePercent}% of fleet`}
             color="text-green-400"
-            accent="from-green-500/20 to-green-500/0"
-            border="border-green-500/15"
           />
           {working > 0 && (
             <StatCard
@@ -68,8 +66,6 @@ export function StatsBar({ online, working, total }: StatsBarProps) {
               label="Working"
               sub={online > 0 ? `${Math.round((working / online) * 100)}% utilization` : '--'}
               color="text-cyan-400"
-              accent="from-cyan-500/20 to-cyan-500/0"
-              border="border-cyan-500/15"
             />
           )}
           <StatCard
@@ -77,16 +73,12 @@ export function StatsBar({ online, working, total }: StatsBarProps) {
             label="Offline"
             sub={total - online === 0 ? 'All systems go' : `${total - online} disconnected`}
             color="text-gray-400"
-            accent="from-gray-500/10 to-gray-500/0"
-            border="border-gray-500/15"
           />
           <StatCard
             value={total}
             label="Total"
             sub="Registered nodes"
             color="text-white"
-            accent="from-blue-500/15 to-blue-500/0"
-            border="border-blue-500/15"
           />
         </div>
       )}
@@ -94,29 +86,18 @@ export function StatsBar({ online, working, total }: StatsBarProps) {
   );
 }
 
-function StatCard({ value, label, sub, color, accent, border }: {
-  value: number; label: string; sub: string; color: string; accent: string; border: string;
+function StatCard({ value, label, sub, color }: {
+  value: number; label: string; sub: string; color: string;
 }) {
-  // Extract the color family (green/cyan/gray/blue/white) from `color` prop
-  // so the light-theme top-strip CSS can pick the right accent.
-  const accentKey = color.replace('text-', '').split('-')[0];
+  // #217 D2 (OpenWebUI-style color restraint): the per-color gradient
+  // wash + tinted borders made the KPI row read as four neon billboards.
+  // Surfaces are now neutral (shared border + bg); color survives only
+  // on the number itself. Mobile density values are #209 R39.
   return (
-    // #209 R39: mobile density tighten on the StatsBar 4-card grid.
-    // Was px-4 py-3 + text-3xl on every viewport; 2×2 grid on phones
-    // ate ~160 px of vertical space for what is decorative status.
-    // Now: px-3 sm:px-4 py-2.5 sm:py-3 + text-2xl sm:text-3xl
-    // + text-xs sm:text-sm label. Each card shrinks ~25 % on phones,
-    // so the 2×2 grid reclaims ~40 px of fold. Desktop pixel-identical.
-    <div
-      data-anet-stat-card={accentKey}
-      className={`anet-stat-card relative overflow-hidden rounded-xl border ${border} bg-[#111128] px-3 sm:px-4 py-2.5 sm:py-3 transition-all`}
-    >
-      <div className={`absolute inset-0 bg-gradient-to-br ${accent} pointer-events-none`} />
-      <div className="relative">
-        <div className={`text-2xl sm:text-3xl font-bold ${color} tabular-nums leading-tight`}>{value}</div>
-        <div className="text-xs sm:text-sm text-gray-300 mt-0.5">{label}</div>
-        <div className="text-[10px] sm:text-xs text-gray-600 mt-1">{sub}</div>
-      </div>
+    <div className="anet-stat-card rounded-xl border border-[#2a2a4a] bg-[#111128] px-3 sm:px-4 py-2.5 sm:py-3 transition-all">
+      <div className={`text-2xl sm:text-3xl font-bold ${color} tabular-nums leading-tight`}>{value}</div>
+      <div className="text-xs sm:text-sm text-gray-300 mt-0.5">{label}</div>
+      <div className="text-[10px] sm:text-xs text-gray-600 mt-1">{sub}</div>
     </div>
   );
 }
