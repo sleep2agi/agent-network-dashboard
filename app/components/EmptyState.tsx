@@ -246,6 +246,14 @@ export function NodesEmptyState({
         <div className="mt-4 inline-block">
           <QuickstartCommand cmd="npx --yes @sleep2agi/agent-network init" />
         </div>
+        {/* #214 F6: expectation management — without this line, users
+            copy the command and stare at an empty screen not knowing
+            what to wait for. The page polls every 5s, so the node
+            really does appear by itself. */}
+        <p className="text-gray-600 text-xs mt-3 max-w-md mx-auto">
+          Once the agent connects, it appears here automatically within a
+          few seconds — no refresh needed.
+        </p>
         <div className="mt-3">
           <a
             href="https://anet.sh"
