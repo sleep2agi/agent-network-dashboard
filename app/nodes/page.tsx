@@ -88,27 +88,10 @@ export default function NodesPage() {
           everything until there's content to search. */}
       <searchCtl.Row />
 
-      {/* Status bar */}
-      {sessions.length > 0 && (() => {
-        const working = filtered.filter(s => s.online && s.status === 'working').length;
-        const idle = filtered.filter(s => s.online && s.status === 'idle').length;
-        const offline = filtered.filter(s => !s.online).length;
-        const total = filtered.length || 1;
-        return (
-          <div className="mb-4 sm:mb-6">
-            <div className="flex h-2 rounded-full overflow-hidden bg-gray-800">
-              {working > 0 && <div className="bg-green-500" style={{ width: `${(working/total)*100}%` }} />}
-              {idle > 0 && <div className="bg-cyan-500" style={{ width: `${(idle/total)*100}%` }} />}
-              {offline > 0 && <div className="bg-gray-600" style={{ width: `${(offline/total)*100}%` }} />}
-            </div>
-            <div className="flex gap-4 mt-1.5 text-[10px] text-gray-500">
-              {working > 0 && <span><span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1" />{working} working</span>}
-              {idle > 0 && <span><span className="inline-block w-2 h-2 rounded-full bg-cyan-500 mr-1" />{idle} idle</span>}
-              {offline > 0 && <span><span className="inline-block w-2 h-2 rounded-full bg-gray-600 mr-1" />{offline} offline</span>}
-            </div>
-          </div>
-        );
-      })()}
+      {/* #217 D6 (less is more): the status distribution bar + its
+          working/idle/offline legend duplicated the header chips
+          (N online / N total) and the per-card status pills right
+          below. One count display per screen — the bar is gone. */}
 
       {/* Round 74: hide the filter+view chrome when there are no nodes
           anywhere — these controls have nothing to act on, and they only
