@@ -69,8 +69,12 @@ export default function Dashboard() {
   // Fall back to alias-only for legacy hubs.
   const sseLookup = (s: { alias: string; network_id?: string }) =>
     (s.network_id ? sseSessions[`${s.network_id}:${s.alias}`] : undefined) ?? sseSessions[s.alias];
-  // Online = status is not 'offline' (not just SSE-connected)
-  const isOnline = (s: { alias: string; status: string; network_id?: string }) => s.status !== 'offline' || !!sseLookup(s);
+  // #214 F2: online = SSE-reachable ("can I talk to it right now").
+  // The old definition (status !== 'offline' OR sse) inflated the count
+  // with stale hub statuses and disagreed with /admin and /nodes, which
+  // both count pure SSE — and a "online" card you can't chat with
+  // contradicts the M2 tap-to-chat model. One definition everywhere.
+  const isOnline = (s: { alias: string; status: string; network_id?: string }) => !!sseLookup(s);
   const online = sessions.filter(isOnline).length;
   const total = sessions.length;
   const working = sessions.filter(s => s.status === 'working').length;
