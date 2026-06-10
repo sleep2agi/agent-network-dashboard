@@ -113,16 +113,18 @@ function TasksContent() {
           is the second-most-trafficked page after Overview. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Tasks</h1>
-        {/* Round 88: pagination-aware chip. When tasks.length < count
-            the API has more rows than the current limit=100 slice;
-            show `loaded / total` so users notice. Otherwise just the
-            single total — matches r87 /logs pattern. */}
-        <span
-          className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums"
-          title={tasks.length < count ? `Showing ${tasks.length} of ${count} tasks` : undefined}
-        >
-          {tasks.length < count ? `${tasks.length} / ${count}` : count}
-        </span>
+        {/* Round 88 made this chip pagination-aware; #217 D6 hides it
+            entirely in the common case — the All tab right below shows
+            the same count. It only renders when it carries unique info
+            (loaded < total ⇒ the list is a slice). */}
+        {tasks.length < count && (
+          <span
+            className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums"
+            title={`Showing ${tasks.length} of ${count} tasks`}
+          >
+            {tasks.length} / {count}
+          </span>
+        )}
       </div>
 
       {/* Round 75: hide the status tab strip + From/To filter row when
