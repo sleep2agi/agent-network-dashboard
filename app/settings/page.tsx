@@ -8,6 +8,10 @@ import { DASHBOARD_VERSION } from '../lib/version';
 export default function SettingsPage() {
   const { config } = useAnetConfig();
   const { health } = useHealth();
+  const [theme, setTheme] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'cyber';
+    try { return localStorage.getItem('anet-theme') || 'cyber'; } catch { return 'cyber'; }
+  });
   const [oldPwd, setOldPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [pwdResult, setPwdResult] = useState('');
@@ -28,6 +32,7 @@ export default function SettingsPage() {
           /admin's identical jump-nav. Saves 16 px on phones. */}
       <nav className="mb-4 sm:mb-8 flex flex-wrap gap-2 text-xs">
         {[
+          { href: '#appearance', label: 'Appearance' },
           { href: '#connection', label: 'Connection' },
           { href: '#account',    label: 'Account' },
           { href: '#resources',  label: 'Resources' },
@@ -40,6 +45,49 @@ export default function SettingsPage() {
       </nav>
 
       <div className="max-w-2xl space-y-10">
+        {/* ── Group: Appearance (#217 S6 — Vincent: "设置里面再来一个
+            优化白色的主题"). The light theme tokens were restored from
+            pre-R8 history; this card is the visible owner of the toggle
+            (previously theme switching hid inside Cmd+K only). */}
+        <div id="appearance" className="space-y-4 scroll-mt-6">
+          <div className="flex items-center gap-2 px-1">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Appearance</div>
+            <div className="flex-1 h-px bg-[#2a2a4a]" />
+          </div>
+          <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-gray-300 mb-4">Theme</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                { id: 'cyber', label: 'Dark', swatch: '#0a0a1a', ring: '#22d3ee' },
+                { id: 'light', label: 'Light', swatch: '#f6f7f9', ring: '#009e7e' },
+              ] as const).map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    try { localStorage.setItem('anet-theme', t.id); } catch {}
+                    document.documentElement.setAttribute('data-theme', t.id);
+                    setTheme(t.id);
+                  }}
+                  aria-pressed={theme === t.id}
+                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-colors ${
+                    theme === t.id
+                      ? 'border-cyan-500/60 bg-cyan-500/10 text-gray-100'
+                      : 'border-[#2a2a4a] text-gray-400 hover:border-[#3a3a5a]'
+                  }`}
+                >
+                  <span
+                    aria-hidden
+                    className="inline-block w-5 h-5 rounded-full border border-black/20 shrink-0"
+                    style={{ backgroundColor: t.swatch }}
+                  />
+                  {t.label}
+                  {theme === t.id && <span className="ml-auto text-cyan-400">✓</span>}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+
         {/* ── Group: Connection ─────────────────────────────────── */}
         <div id="connection" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">

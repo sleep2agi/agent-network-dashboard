@@ -2,19 +2,24 @@
 
 import { useEffect } from 'react';
 
-// Cleanup (issue #4) — less is more. The dashboard is designed dark/cyber;
-// the light / mint / sunset themes were never verified and the picker just
-// added a knob nobody validated. We lock to the single cyber theme and drop
-// the switcher control. (The unused [data-theme] CSS branches in globals.css
-// are now dead but harmless — left for a later dedicated CSS sweep.)
+// #217 S6 — two verified themes: cyber (dark, default) and light (white,
+// Vincent-requested, tokens restored from pre-R8 history). The issue #4
+// cleanup locked this to cyber because the old light/mint/sunset themes
+// were unverified; light is now owned by Settings → Appearance, so the
+// provider honors the persisted choice again. Anything else in storage
+// (old mint/sunset values) falls back to cyber.
 
-const THEME = 'cyber';
+const THEMES = new Set(['cyber', 'light']);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-theme', THEME);
-    }
+    if (typeof document === 'undefined') return;
+    let t = 'cyber';
+    try {
+      const saved = localStorage.getItem('anet-theme');
+      if (saved && THEMES.has(saved)) t = saved;
+    } catch {}
+    document.documentElement.setAttribute('data-theme', t);
   }, []);
   return <>{children}</>;
 }
