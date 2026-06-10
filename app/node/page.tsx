@@ -142,7 +142,7 @@ function NodeDetailContent() {
 
   if (!alias) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-6 font-mono flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-6 flex items-center justify-center">
         <p className="text-gray-500">No alias specified. <Link href="/" className="text-blue-400 hover:underline">Back to dashboard</Link></p>
       </div>
     );
@@ -153,7 +153,7 @@ function NodeDetailContent() {
   const statusColor = SESSION_STATUS_TEXT_CLASS[session?.status || ''] || SESSION_STATUS_TEXT_CLASS.offline;
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
       {/* Header — round 40: avatar joins the alias for cross-page hue
           consistency; agent type lives in a subtitle so users know what
           kind of node they're looking at. */}
@@ -405,7 +405,7 @@ export default function NodePage() {
       // Match the loaded layout: p-4 sm:p-6 + lg:ml-0 ml-10 mobile
       // indent on the text. Loading state now visually maps to the
       // populated /node detail page.
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
         <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading…</div>
       </div>
     }>

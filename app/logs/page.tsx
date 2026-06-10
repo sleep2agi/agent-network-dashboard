@@ -75,7 +75,7 @@ export default function LogsPage() {
   }, [fetchLogs]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
       {/* #209 R36: mobile vertical rhythm — same R28/R30/R31 pattern,
           mb-6 → mb-4 sm:mb-6 here and on the action-filter strip below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">

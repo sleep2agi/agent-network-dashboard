@@ -113,7 +113,7 @@ export default function MessagesPage() {
   }, [filtered]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
       {/* #209 R31 (mobile vertical rhythm — same pattern as R28/R30):
           header row + quick-from chips row both mb-6 → mb-4 sm:mb-6.
           #209 R33: header restructured to mirror /nodes R32 — title

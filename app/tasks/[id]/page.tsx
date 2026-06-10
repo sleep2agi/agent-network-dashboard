@@ -73,7 +73,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-8 w-48 bg-gray-800 rounded" />
           <div className="h-64 bg-gray-800/20 rounded-lg" />
@@ -84,7 +84,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   if (!task) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-6 font-mono flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-6 flex items-center justify-center">
         <div className="text-center">
           <div className="text-gray-600 text-4xl mb-4">--</div>
           <p className="text-gray-400">Task not found</p>
@@ -103,7 +103,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/tasks" className="text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10">&larr; Tasks</Link>
         <h1 className="text-xl font-bold text-white truncate">Task Detail</h1>

@@ -61,7 +61,7 @@ export default function NodesPage() {
   const onlineCount = sessions.filter(s => sseFor(s)).length;
 
   return (
-    <div className="min-h-screen max-w-full overflow-x-hidden bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
       {/* #209 R31 (mobile vertical rhythm — goal "大幅提升移动端体验",
           extending R28's Overview pattern + R30's /tasks pattern):
           this header row + the status-bar wrapper + the filter row

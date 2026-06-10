@@ -1,10 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "./components/AppShell";
 import { NetworkProvider } from "./lib/network-context";
 import { ThemeProvider } from "./components/ThemeSwitcher";
 import { PwaInstaller } from "./components/PwaInstaller";
+
+// #217 D1 (Vincent: OpenWebUI-style serious-product feel): UI text is
+// sans; mono stays for code blocks, IDs and logs via .font-mono.
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -77,7 +84,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="cyber" className={`${geistMono.variable} h-full antialiased`}>
+    <html lang="en" data-theme="cyber" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
