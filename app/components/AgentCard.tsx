@@ -78,12 +78,14 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
           single-line padding (px-2 py-1) so the task strip is ~28px
           rather than ~56px. The full task is still in the title
           tooltip and on /node detail. */}
-      {s.task ? (
+      {/* #217 M3: the "No active task" italic placeholder is gone — the
+          idle status chip in the header already says it, and the line
+          cost ~30px on every idle card across a 150-node fleet. The
+          task strip renders only when there is a task. */}
+      {s.task && (
         <div className="text-xs text-gray-400 bg-[#0e0e10] rounded-lg px-2 sm:px-3 py-1 sm:py-2 border border-[#1c1c1f] line-clamp-1 sm:line-clamp-2" title={s.task}>
           {s.task}
         </div>
-      ) : (
-        <div className="text-xs text-gray-700 italic">No active task</div>
       )}
 
       {/* Progress bar — hidden below sm so an empty 0% bar doesn't
