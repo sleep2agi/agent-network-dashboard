@@ -56,8 +56,11 @@ export function StatsBar({ online, working, total, version, uptime }: StatsBarPr
           </span>
         </div>
       ) : (
-        /* Populated state — full 4-card grid as before */
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        /* Populated state. #217 S2 (less is more): the Working card only
+           earns its grid cell when something is actually working — a
+           "0 / 0% utilization" card is dead weight, and dropping it
+           collapses the mobile 2×2 grid to one 3-up row. */
+        <div className={`grid gap-3 ${working > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
           <StatCard
             value={online}
             label="Online"
@@ -66,14 +69,16 @@ export function StatsBar({ online, working, total, version, uptime }: StatsBarPr
             accent="from-green-500/20 to-green-500/0"
             border="border-green-500/15"
           />
-          <StatCard
-            value={working}
-            label="Working"
-            sub={online > 0 ? `${Math.round((working / online) * 100)}% utilization` : '--'}
-            color="text-cyan-400"
-            accent="from-cyan-500/20 to-cyan-500/0"
-            border="border-cyan-500/15"
-          />
+          {working > 0 && (
+            <StatCard
+              value={working}
+              label="Working"
+              sub={online > 0 ? `${Math.round((working / online) * 100)}% utilization` : '--'}
+              color="text-cyan-400"
+              accent="from-cyan-500/20 to-cyan-500/0"
+              border="border-cyan-500/15"
+            />
+          )}
           <StatCard
             value={total - online}
             label="Offline"
