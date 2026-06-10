@@ -13,7 +13,7 @@ import { STATUS_DOT_HEX, STATUS_CHIP_CLASS } from './lib/status';
 import { UserBar } from './components/UserBar';
 import { CommandCenter, useCommandCenter } from './components/CommandCenter';
 import { DispatchPanel } from './components/DispatchPanel';
-import { useSessions, useHealth, useAnetConfig, useTasks, useStats } from './lib/hooks';
+import { useSessions, useHealth, useTasks, useStats } from './lib/hooks';
 import { useSSE } from './lib/useSSE';
 import { useSWRConfig } from 'swr';
 
@@ -30,11 +30,9 @@ export default function Dashboard() {
 
   const { sessions, hint: sessHint, error: sessError, isLoading } = useSessions();
   const { health } = useHealth();
-  const { config: anetConfig } = useAnetConfig();
   const { tasks } = useTasks({ limit: '500' });
   const { stats } = useStats();
   const [showTopo, setShowTopo] = useState(typeof window !== 'undefined' && window.innerWidth >= 1024);
-  const [showConfig, setShowConfig] = useState(false);
   const cmd = useCommandCenter();
   const [showDispatch, setShowDispatch] = useState(false);
   const [agentFilter, setAgentFilter] = useState<'all' | 'working' | 'idle' | 'offline'>('all');
@@ -85,12 +83,6 @@ export default function Dashboard() {
   const working = sessions.filter(s => s.status === 'working').length;
   const uptime = health ? formatUptime(health.uptime) : '--';
   const version = health?.version || '--';
-  const configHealthy = Boolean(anetConfig?.hub && anetConfig.tokenConfigured);
-  const configSourceLabel =
-    anetConfig?.source === 'file' ? 'Local config'
-    : anetConfig?.source === 'runtime-env' ? 'Runtime env'
-    : 'Config missing';
-
   // Task stats: prefer /api/stats, fallback to manual
   const taskStats: Record<string, number> = {};
   if (stats?.tasks?.by_status?.length) {
@@ -135,44 +127,6 @@ export default function Dashboard() {
         )}
         <div className="flex-1"><UserBar /></div>
       </div>
-
-      {/* anet config (collapsed by default).
-          #209 R28 (mobile vertical rhythm — goal "大幅提升移动端体验"):
-          this + Task Status + Nav rail + Recent Activity all drop their
-          24 px (mb-6) section gap to 16 px (mb-4) on phones, restoring
-          mb-6 from sm: up. Overview on mobile stacks 5-7 sections above
-          the agent grid; tightening 4 of those gaps reclaims ~32 px of
-          scroll. No content removed, no feature changed — desktop is
-          identical. */}
-      <section className="mb-4 sm:mb-6 rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-3 shadow-lg shadow-black/20">
-        <button onClick={() => setShowConfig(!showConfig)} className="w-full flex items-center justify-between text-left">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="uppercase text-gray-600">Config</span>
-            <span className={`w-2 h-2 rounded-full ${configHealthy ? 'bg-green-400' : 'bg-red-400'}`} />
-            <span className="text-gray-500">{configSourceLabel}</span>
-          </div>
-          <svg className={`w-4 h-4 text-gray-600 transition-transform ${showConfig ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {showConfig && (
-          <div className="mt-3 pt-3 border-t border-[#2a2a4a]">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <div className="text-gray-100 truncate text-sm" title={anetConfig?.hub || undefined}>
-                  Hub: <span className={anetConfig?.hub ? 'text-cyan-300' : 'text-red-300'}>{anetConfig?.hub?.trim() || 'not configured'}</span>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className={`px-2.5 py-1 rounded-md border ${anetConfig?.tokenConfigured ? 'bg-blue-500/5 text-blue-300 border-blue-500/20' : 'bg-gray-500/5 text-gray-400 border-gray-500/20'}`}>
-                  Token: {anetConfig?.tokenPreview || 'not configured'}
-                </span>
-              </div>
-            </div>
-            {anetConfig?.error && <div className="mt-2 text-xs text-gray-600">{anetConfig.error}</div>}
-          </div>
-        )}
-      </section>
 
       {/* Task Status Stats */}
       {Object.keys(taskStats).length > 0 && (
