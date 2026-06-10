@@ -1,5 +1,6 @@
 import { requireDashboardAuth } from '@/app/lib/dashboard-auth';
 import { hubFetch } from '@/app/lib/hub';
+import { normalizeSessionIdentity } from '@/app/lib/session-normalize';
 
 export async function GET(req: Request) {
   const authFailure = await requireDashboardAuth();
@@ -13,7 +14,8 @@ export async function GET(req: Request) {
     // Get session status
     const statusRes = await hubFetch('/api/status');
     const statusData = await statusRes.json();
-    const session = (statusData.sessions || []).find((s: { alias: string }) => s.alias === alias);
+    const sessionRaw = (statusData.sessions || []).find((s: { alias: string }) => s.alias === alias);
+    const session = sessionRaw ? normalizeSessionIdentity(sessionRaw) : null;
 
     // Get inbox messages for this session (sent TO this session)
     const inboxRes = await hubFetch('/mcp', {

@@ -426,10 +426,10 @@ export function CommandPalette() {
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden />
       <div
-        className="relative w-full max-w-xl rounded-xl border border-[#2a2a4a] bg-[#0d0d1a] shadow-2xl shadow-black/40 overflow-hidden"
+        className="relative w-full max-w-xl rounded-xl border border-[#26262b] bg-[#111113] shadow-2xl shadow-black/40 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center gap-2 border-b border-[#2a2a4a] px-3 py-2.5">
+        <div className="flex items-center gap-2 border-b border-[#26262b] px-3 py-2.5">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-gray-500 shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -440,7 +440,7 @@ export function CommandPalette() {
             placeholder="Type a command or search…"
             className="flex-1 bg-transparent text-base sm:text-sm text-gray-200 placeholder-gray-600 focus:outline-none"
           />
-          <kbd className="text-[10px] text-gray-600 border border-[#2a2a4a] rounded px-1.5 py-0.5 font-mono">esc</kbd>
+          <kbd className="text-[10px] text-gray-600 border border-[#26262b] rounded px-1.5 py-0.5 font-mono">esc</kbd>
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto py-2">
@@ -461,7 +461,7 @@ export function CommandPalette() {
                       onMouseEnter={() => setSelected(idx)}
                       onClick={() => { pushRecent(c.id); c.perform(router); setOpen(false); }}
                       className={`anet-cmdk-row w-full flex items-center gap-3 px-3 py-2 text-left text-sm ${
-                        isActive ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-300 hover:bg-[#1a1a2a]/50'
+                        isActive ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-300 hover:bg-[#1c1c1f]/50'
                       }`}
                     >
                       <span className={isActive ? 'text-cyan-400' : 'text-gray-500'}>{c.icon}</span>
@@ -484,7 +484,7 @@ export function CommandPalette() {
           )}
         </div>
 
-        <div className="border-t border-[#2a2a4a] px-3 py-1.5 flex items-center justify-between text-[10px] text-gray-600">
+        <div className="border-t border-[#26262b] px-3 py-1.5 flex items-center justify-between text-[10px] text-gray-600">
           <span className="flex items-center gap-3">
             <span><kbd className="font-mono">↑↓</kbd> navigate</span>
             <span><kbd className="font-mono">↵</kbd> select</span>

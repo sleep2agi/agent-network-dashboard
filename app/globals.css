@@ -13,23 +13,23 @@ body {
 
 :root,
 [data-theme="cyber"] {
-  --bg:           #0a0a1a;
-  --bg-secondary: #11112a;
-  --bg-elevated:  #161640;
+  --bg:           #0b0b0d;
+  --bg-secondary: #161618;
+  --bg-elevated:  #1f1f24;
   --fg:           #e5e7eb;
   --fg-muted:     #9ca3af;
   --fg-dim:       #6b7280;
-  --border:       #2a2a4a;
-  --border-hover: #3a3a5a;
+  --border:       #26262b;
+  --border-hover: #3a3a41;
   --accent:       #8b5cf6;
   --accent-fg:    #ffffff;
   --success:      #10b981;
   --warning:      #f59e0b;
   --danger:       #ef4444;
   --info:         #3b82f6;
-  --scrollbar:    #2a2a4a;
-  --scrollbar-hover: #3a3a5a;
-  --code-bg:      #1a1a3a;
+  --scrollbar:    #26262b;
+  --scrollbar-hover: #3a3a41;
+  --code-bg:      #232327;
   color-scheme:   dark;
 }@theme inline {
   --color-background: var(--bg);
@@ -138,11 +138,11 @@ nothing blurs. */
    card bg without being loud. Dark: lighter navy block on dark card.
    Light: mid-grey on white card (not too light or it disappears). */
 .anet-skeleton-bar {
-  background-color: #1a1a2a;
+  background-color: #1c1c1f;
 }/* Command palette modal surface — bumped depth so it sits clearly above
    the page content in both themes. Light/mint: white shell with a real
    shadow (not the dark navy that the CSS shim would normally translate
-   `bg-[#0d0d1a]` into). */
+   `bg-[#111113]` into). */
 .anet-cmdk kbd {
   font-size: 9px;
   line-height: 1;
@@ -193,11 +193,11 @@ not redundancy. */
   z-index: 1;
 }.anet-tabstrip-wrap::before {
   left: 0;
-  background: linear-gradient(to right, #111128, transparent);
+  background: linear-gradient(to right, #161618, transparent);
   border-radius: 8px 0 0 8px;
 }.anet-tabstrip-wrap::after {
   right: 0;
-  background: linear-gradient(to left, #111128, transparent);
+  background: linear-gradient(to left, #161618, transparent);
   border-radius: 0 8px 8px 0;
 }
 @media (min-width: 640px) {
@@ -1419,63 +1419,63 @@ joining the R145
 
 /* ────────────────────────────────────────────────────
    Compatibility shims — gradually replace hard-coded
-   #0a0a1a / zinc-9xx / etc. in components with var()
+   #0b0b0d / zinc-9xx / etc. in components with var()
    over time. These rules let the existing components
    pick up the active theme even before they are
    migrated.
    ──────────────────────────────────────────────────── */
 
 /* page-level dark backgrounds → use --bg */
-[data-theme="light"] .bg-\[\#050510\],
-[data-theme="light"] .bg-\[\#080814\],
-[data-theme="light"] .bg-\[\#0a0a14\],
-[data-theme="light"] .bg-\[\#0a0a15\],
-[data-theme="light"] .bg-\[\#0a0a1a\],
-[data-theme="light"] .bg-\[\#0d0d1a\],
-[data-theme="light"] .bg-\[\#11112a\],
-[data-theme="light"] .bg-\[\#11111c\],
-[data-theme="light"] .bg-\[\#161630\],
-[data-theme="light"] .bg-\[\#161640\],
-[data-theme="mint"] .bg-\[\#050510\],
-[data-theme="mint"] .bg-\[\#080814\],
-[data-theme="mint"] .bg-\[\#0a0a14\],
-[data-theme="mint"] .bg-\[\#0a0a15\],
-[data-theme="mint"] .bg-\[\#0a0a1a\],
-[data-theme="mint"] .bg-\[\#0d0d1a\],
-[data-theme="mint"] .bg-\[\#11112a\],
-[data-theme="mint"] .bg-\[\#11111c\],
-[data-theme="mint"] .bg-\[\#161630\],
-[data-theme="mint"] .bg-\[\#161640\] {
+[data-theme="light"] .bg-\[\#060607\],
+[data-theme="light"] .bg-\[\#0a0a0c\],
+[data-theme="light"] .bg-\[\#0e0e10\],
+[data-theme="light"] .bg-\[\#0e0e10\],
+[data-theme="light"] .bg-\[\#0b0b0d\],
+[data-theme="light"] .bg-\[\#111113\],
+[data-theme="light"] .bg-\[\#161618\],
+[data-theme="light"] .bg-\[\#161618\],
+[data-theme="light"] .bg-\[\#1f1f24\],
+[data-theme="light"] .bg-\[\#1f1f24\],
+[data-theme="mint"] .bg-\[\#060607\],
+[data-theme="mint"] .bg-\[\#0a0a0c\],
+[data-theme="mint"] .bg-\[\#0e0e10\],
+[data-theme="mint"] .bg-\[\#0e0e10\],
+[data-theme="mint"] .bg-\[\#0b0b0d\],
+[data-theme="mint"] .bg-\[\#111113\],
+[data-theme="mint"] .bg-\[\#161618\],
+[data-theme="mint"] .bg-\[\#161618\],
+[data-theme="mint"] .bg-\[\#1f1f24\],
+[data-theme="mint"] .bg-\[\#1f1f24\] {
   background-color: var(--bg) !important;
 }
 
 /* card / elevated backgrounds (incl. opacity variants) */
-[data-theme="light"] .bg-\[\#111128\],
-[data-theme="light"] .bg-\[\#111128\]\/80,
-[data-theme="light"] .bg-\[\#1a1a2a\],
-[data-theme="light"] .bg-\[\#1a1a3a\],
-[data-theme="mint"] .bg-\[\#111128\],
-[data-theme="mint"] .bg-\[\#111128\]\/80,
-[data-theme="mint"] .bg-\[\#1a1a2a\],
-[data-theme="mint"] .bg-\[\#1a1a3a\] {
+[data-theme="light"] .bg-\[\#161618\],
+[data-theme="light"] .bg-\[\#161618\]\/80,
+[data-theme="light"] .bg-\[\#1c1c1f\],
+[data-theme="light"] .bg-\[\#232327\],
+[data-theme="mint"] .bg-\[\#161618\],
+[data-theme="mint"] .bg-\[\#161618\]\/80,
+[data-theme="mint"] .bg-\[\#1c1c1f\],
+[data-theme="mint"] .bg-\[\#232327\] {
   background-color: var(--bg-secondary) !important;
 }
 
 /* hover / input field backgrounds */
-[data-theme="light"] .bg-\[\#2a2a4a\],
-[data-theme="mint"] .bg-\[\#2a2a4a\] {
+[data-theme="light"] .bg-\[\#26262b\],
+[data-theme="mint"] .bg-\[\#26262b\] {
   background-color: var(--bg-elevated) !important;
 }
 
 /* hardcoded borders */
-[data-theme="light"] .border-\[\#111128\],
-[data-theme="light"] .border-\[\#1a1a2a\],
-[data-theme="light"] .border-\[\#2a2a4a\],
-[data-theme="light"] .border-\[\#3a3a5a\],
-[data-theme="mint"] .border-\[\#111128\],
-[data-theme="mint"] .border-\[\#1a1a2a\],
-[data-theme="mint"] .border-\[\#2a2a4a\],
-[data-theme="mint"] .border-\[\#3a3a5a\] {
+[data-theme="light"] .border-\[\#161618\],
+[data-theme="light"] .border-\[\#1c1c1f\],
+[data-theme="light"] .border-\[\#26262b\],
+[data-theme="light"] .border-\[\#3a3a41\],
+[data-theme="mint"] .border-\[\#161618\],
+[data-theme="mint"] .border-\[\#1c1c1f\],
+[data-theme="mint"] .border-\[\#26262b\],
+[data-theme="mint"] .border-\[\#3a3a41\] {
   border-color: var(--border) !important;
 }
 
@@ -1673,9 +1673,9 @@ joining the R145
    to read as a layer rather than blending into the page background) */
 [data-theme="light"] .bg-zinc-900,
 [data-theme="light"] .bg-zinc-950,
-[data-theme="light"] .bg-\[\#0a0a1a\],
-[data-theme="light"] .bg-\[\#11112a\],
-[data-theme="light"] .bg-\[\#161640\] {
+[data-theme="light"] .bg-\[\#0b0b0d\],
+[data-theme="light"] .bg-\[\#161618\],
+[data-theme="light"] .bg-\[\#1f1f24\] {
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 6px 18px -8px rgba(15, 23, 42, 0.08);
 }
 
@@ -1868,8 +1868,8 @@ joining the R145
 
 /* Generic card hover elevation — every white card on light bg gets a
    subtle lift on hover so clickability is obvious. */
-[data-theme="light"] .bg-\[\#111128\]:hover,
-[data-theme="mint"] .bg-\[\#111128\]:hover {
+[data-theme="light"] .bg-\[\#161618\]:hover,
+[data-theme="mint"] .bg-\[\#161618\]:hover {
   box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.12);
 }
 
@@ -1990,9 +1990,9 @@ joining the R145
 
 /* #217 S6 — opacity-variant fills that postdate the original shim
    table (MobileNav bottom bar, Settings/admin jump chips). */
-[data-theme="light"] .bg-\[\#0d0d1a\]\/95 {
+[data-theme="light"] .bg-\[\#111113\]\/95 {
   background-color: rgba(255, 255, 255, 0.95) !important;
 }
-[data-theme="light"] .bg-\[\#0a0a15\]\/60 {
+[data-theme="light"] .bg-\[\#0e0e10\]\/60 {
   background-color: rgba(255, 255, 255, 0.6) !important;
 }

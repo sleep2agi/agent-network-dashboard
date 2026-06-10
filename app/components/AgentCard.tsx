@@ -30,8 +30,8 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
       prefetch={false}
       className={`anet-agent-card group relative block rounded-xl border p-3 sm:p-4 transition-all duration-300 cursor-pointer hover:-translate-y-0.5 ${
         hasSse
-          ? `bg-[#111128] border-[#2a2a4a] hover:border-cyan-500/30 hover:shadow-lg ${cfg.glow}`
-          : 'bg-[#0d0d1a] border-[#1a1a2a] opacity-40'
+          ? `bg-[#161618] border-[#26262b] hover:border-cyan-500/30 hover:shadow-lg ${cfg.glow}`
+          : 'bg-[#111113] border-[#1c1c1f] opacity-40'
       }`}
     >
       {/* Header: avatar + name + status. Avatar carries the alias→hue map
@@ -55,7 +55,7 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
           chews ~28px per card × 99 sessions on Overview mobile. The
           agent type stays one tap away on /node detail. */}
       <div className="hidden sm:flex items-center gap-2 mb-3">
-        <span className="text-xs text-gray-600 bg-[#0a0a15] px-2 py-0.5 rounded border border-[#1a1a2a]">
+        <span className="text-xs text-gray-600 bg-[#0e0e10] px-2 py-0.5 rounded border border-[#1c1c1f]">
           {s.agent || 'unknown'}
         </span>
         {hasSse && (
@@ -68,7 +68,7 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
           rather than ~56px. The full task is still in the title
           tooltip and on /node detail. */}
       {s.task ? (
-        <div className="text-xs text-gray-400 bg-[#0a0a15] rounded-lg px-2 sm:px-3 py-1 sm:py-2 border border-[#1a1a2a] line-clamp-1 sm:line-clamp-2" title={s.task}>
+        <div className="text-xs text-gray-400 bg-[#0e0e10] rounded-lg px-2 sm:px-3 py-1 sm:py-2 border border-[#1c1c1f] line-clamp-1 sm:line-clamp-2" title={s.task}>
           {s.task}
         </div>
       ) : (

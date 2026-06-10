@@ -113,7 +113,7 @@ export default function MessagesPage() {
   }, [filtered]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       {/* #209 R31 (mobile vertical rhythm — same pattern as R28/R30):
           header row + quick-from chips row both mb-6 → mb-4 sm:mb-6.
           #209 R33: header restructured to mirror /nodes R32 — title
@@ -170,7 +170,7 @@ export default function MessagesPage() {
         <select
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
-          className="bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-blue-500/50 focus:outline-none"
+          className="bg-[#161618] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-blue-500/50 focus:outline-none"
         >
           <option value="">All types</option>
           <option value="task">task</option>
@@ -178,7 +178,7 @@ export default function MessagesPage() {
           <option value="broadcast">broadcast</option>
           <option value="reply">reply</option>
         </select>
-        <div className="flex rounded-lg border border-[#2a2a4a] bg-[#111128] p-0.5">
+        <div className="flex rounded-lg border border-[#26262b] bg-[#161618] p-0.5">
           {(['timeline', 'grouped'] as const).map(mode => (
             <button key={mode} type="button" onClick={() => setViewMode(mode)}
               className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${viewMode === mode ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-500 hover:text-gray-200'}`}>
@@ -210,7 +210,7 @@ export default function MessagesPage() {
               className={`shrink-0 rounded-full border px-3 py-1 text-xs transition-colors ${
                 search === `from:${alias}`
                   ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
-                  : 'border-[#2a2a4a] bg-[#111128] text-gray-400 hover:text-gray-200'
+                  : 'border-[#26262b] bg-[#161618] text-gray-400 hover:text-gray-200'
               }`}
             >
               from:{alias}
@@ -237,8 +237,8 @@ export default function MessagesPage() {
       ) : viewMode === 'grouped' ? (
         <div className="space-y-4">
           {conversations.map((conv, ci) => (
-            <div key={ci} className="bg-[#111128] border border-[#2a2a4a] rounded-xl overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-[#2a2a4a] flex items-center justify-between">
+            <div key={ci} className="bg-[#161618] border border-[#26262b] rounded-xl overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-[#26262b] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AliasAvatar alias={conv.participants[0]} size={16} />
                   <span className="text-sm text-gray-200 font-medium">{conv.participants[0]}</span>
@@ -286,9 +286,9 @@ export default function MessagesPage() {
                     Halve it on mobile. */}
                 {gapExceeded && (
                   <div className="my-2 sm:my-4 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-[#2a2a4a]" />
+                    <div className="h-px flex-1 bg-[#26262b]" />
                     <div className="text-[11px] text-gray-600">{formatDividerLabel(message.created_at)}</div>
-                    <div className="h-px flex-1 bg-[#2a2a4a]" />
+                    <div className="h-px flex-1 bg-[#26262b]" />
                   </div>
                 )}
 

@@ -73,7 +73,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-8 w-48 bg-gray-800 rounded" />
           <div className="h-64 bg-gray-800/20 rounded-lg" />
@@ -84,7 +84,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   if (!task) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-6 flex items-center justify-center">
         <div className="text-center">
           <div className="text-gray-600 text-4xl mb-4">--</div>
           <p className="text-gray-400">Task not found</p>
@@ -103,7 +103,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/tasks" className="text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10">&larr; Tasks</Link>
         <h1 className="text-xl font-bold text-white truncate">Task Detail</h1>
@@ -113,12 +113,12 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Timeline + Info */}
         <div className="space-y-4">
-          <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+          <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
             <h2 className="text-sm font-semibold text-gray-300 mb-4">Timeline</h2>
             <Timeline steps={steps} />
           </div>
 
-          <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+          <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
             <h2 className="text-sm font-semibold text-gray-300 mb-3">Info</h2>
             <div className="space-y-2 text-xs">
               {[
@@ -140,17 +140,17 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
         {/* Right: Content + Result */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+          <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
             <h2 className="text-sm font-semibold text-gray-300 mb-2">Content</h2>
-            <div className="text-sm text-gray-300 whitespace-pre-wrap bg-[#0a0a15] rounded-lg px-4 py-3 border border-[#1a1a2a]">
+            <div className="text-sm text-gray-300 whitespace-pre-wrap bg-[#0e0e10] rounded-lg px-4 py-3 border border-[#1c1c1f]">
               {task.content || '--'}
             </div>
           </div>
 
           {task.result && (
-            <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
               <h2 className="text-sm font-semibold text-gray-300 mb-2">Result</h2>
-              <div className="text-sm text-gray-300 whitespace-pre-wrap bg-[#0a0a15] rounded-lg px-4 py-3 border border-[#1a1a2a] max-h-96 overflow-y-auto">
+              <div className="text-sm text-gray-300 whitespace-pre-wrap bg-[#0e0e10] rounded-lg px-4 py-3 border border-[#1c1c1f] max-h-96 overflow-y-auto">
                 {task.result}
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
           {/* Task Events */}
           {eventsData?.events && eventsData.events.length > 0 && (
-            <div className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
               <h2 className="text-sm font-semibold text-gray-300 mb-3">Events ({eventsData.events.length})</h2>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {eventsData.events.map((e: { id: number; event_type: string; from_status: string; to_status: string; detail: string; created_at: string }, i: number) => (

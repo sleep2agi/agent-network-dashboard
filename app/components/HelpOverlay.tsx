@@ -233,10 +233,10 @@ export function HelpOverlay() {
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden />
       <div
-        className="relative w-full max-w-md rounded-xl border border-[#2a2a4a] bg-[#0d0d1a] shadow-2xl shadow-black/40 overflow-hidden"
+        className="relative w-full max-w-md rounded-xl border border-[#26262b] bg-[#111113] shadow-2xl shadow-black/40 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-[#2a2a4a] px-4 py-2.5">
+        <div className="flex items-center justify-between border-b border-[#26262b] px-4 py-2.5">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-200">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -261,7 +261,7 @@ export function HelpOverlay() {
                   <li key={i} className="flex items-center gap-3 text-xs">
                     <span className="flex items-center gap-1">
                       {s.keys.map((k, ki) => (
-                        <kbd key={ki} className="text-[10px] font-mono border border-[#2a2a4a] rounded px-1.5 py-0.5 text-gray-400 bg-[#1a1a2a]/40">
+                        <kbd key={ki} className="text-[10px] font-mono border border-[#26262b] rounded px-1.5 py-0.5 text-gray-400 bg-[#1c1c1f]/40">
                           {k}
                         </kbd>
                       ))}
@@ -274,7 +274,7 @@ export function HelpOverlay() {
           ))}
         </div>
 
-        <div className="border-t border-[#2a2a4a] px-4 py-1.5 text-[10px] text-gray-600 flex items-center justify-between">
+        <div className="border-t border-[#26262b] px-4 py-1.5 text-[10px] text-gray-600 flex items-center justify-between">
           <span>Press <kbd className="font-mono">?</kbd> to toggle</span>
           <span>or <kbd className="font-mono">esc</kbd> to close</span>
         </div>

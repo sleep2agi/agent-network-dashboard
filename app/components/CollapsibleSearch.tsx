@@ -84,14 +84,14 @@ export function useCollapsibleSearch({
         className={`relative shrink-0 inline-flex items-center justify-center rounded-full border w-9 h-9 transition-colors ${
           active
             ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
-            : 'border-[#2a2a4a] bg-[#111128] text-gray-400 hover:text-gray-200 hover:border-[#3a3a5a]'
+            : 'border-[#26262b] bg-[#161618] text-gray-400 hover:text-gray-200 hover:border-[#3a3a41]'
         }`}
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         {value && !open && (
-          <span aria-hidden className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 ring-2 ring-[#0a0a1a]" />
+          <span aria-hidden className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 ring-2 ring-[#0b0b0d]" />
         )}
       </button>
     );
@@ -109,7 +109,7 @@ export function useCollapsibleSearch({
           onKeyDown={e => { if (e.key === 'Escape') reset(); }}
           placeholder={placeholder}
           autoFocus={open}
-          className="flex-1 bg-[#111128] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
+          className="flex-1 bg-[#161618] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
         />
         <button
           type="button"

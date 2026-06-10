@@ -46,7 +46,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a1a] text-gray-100 flex items-center justify-center relative overflow-hidden px-4 py-10 sm:py-16">
+    <main className="min-h-screen bg-[#0b0b0d] text-gray-100 flex items-center justify-center relative overflow-hidden px-4 py-10 sm:py-16">
       {/* Subtle off-grid background — restraint over AI-glow.
           Dark themes get a faint radial wash; light themes show a low-contrast
           dotted grid for surface texture without noise. */}
@@ -57,7 +57,7 @@ export default function LoginPage() {
           {/* Brand mark — uses the favicon 3-node mesh SVG which IS the
               agent-network concept (nodes + edges). Replaces the previous
               flat emerald square placeholder. */}
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-[#111128] border border-[#2a2a4a] anet-login-mark">
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-[#161618] border border-[#26262b] anet-login-mark">
             <svg className="w-9 h-9" viewBox="0 0 32 32" aria-hidden>
               <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.25" className="text-cyan-400 anet-login-mark-ring" />
               <line x1="16" y1="10" x2="10" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.5" className="text-cyan-400 anet-login-mark-edge" />
@@ -77,7 +77,7 @@ export default function LoginPage() {
         </div>
 
         {/* Mode toggle */}
-        <div className="flex rounded-lg border border-[#2a2a4a] bg-[#111128] p-1 mb-4">
+        <div className="flex rounded-lg border border-[#26262b] bg-[#161618] p-1 mb-4">
           {(['login', 'register'] as const).map(m => (
             <button key={m} type="button" onClick={() => { setMode(m); setError(''); }}
               className={`flex-1 rounded-md px-3 py-2 text-sm transition-colors ${mode === m ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-500 hover:text-gray-200'}`}>
@@ -86,13 +86,13 @@ export default function LoginPage() {
           ))}
         </div>
 
-        <form onSubmit={submit} className="border border-[#2a2a4a] bg-[#111128]/80 backdrop-blur-sm rounded-xl p-6 shadow-2xl shadow-black/30">
+        <form onSubmit={submit} className="border border-[#26262b] bg-[#161618]/80 backdrop-blur-sm rounded-xl p-6 shadow-2xl shadow-black/30">
           <label htmlFor="username" className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
             Username
           </label>
           <input id="username" type="text" value={username} onChange={e => setUsername(e.target.value)} autoFocus
             placeholder="Enter username"
-            className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-4 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all mb-4" />
+            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-4 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all mb-4" />
 
           <label htmlFor="password" className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
             Password
@@ -100,7 +100,7 @@ export default function LoginPage() {
           <div className="relative">
             <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
               placeholder="Enter password"
-              className="w-full bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-4 pr-11 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all" />
+              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-4 pr-11 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all" />
             <button
               type="button"
               onClick={() => setShowPassword(s => !s)}

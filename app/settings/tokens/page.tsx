@@ -67,7 +67,7 @@ export default function TokensPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/settings" className="text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10">&larr; Settings</Link>
         <h1 className="text-2xl font-bold text-white">API Tokens</h1>
@@ -75,12 +75,12 @@ export default function TokensPage() {
 
       <div className="max-w-2xl space-y-6">
         {/* Create token */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-3">Create Token</h2>
           <div className="flex gap-2">
             <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
               placeholder="Token name (e.g. my-cli)"
-              className="flex-1 bg-[#0a0a15] border border-[#2a2a4a] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="flex-1 bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <button onClick={createToken} disabled={!newName.trim()}
               className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-800 text-white text-sm rounded-lg transition-colors">
               Create
@@ -96,7 +96,7 @@ export default function TokensPage() {
         </section>
 
         {/* Token list */}
-        <section className="bg-[#111128] border border-[#2a2a4a] rounded-xl p-5">
+        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-3">Active Tokens ({tokens.length})</h2>
           {loading ? (
             <div className="animate-pulse space-y-2">{[1,2].map(i => <div key={i} className="h-12 bg-gray-800/20 rounded" />)}</div>
@@ -109,7 +109,7 @@ export default function TokensPage() {
           ) : (
             <div className="space-y-2">
               {tokens.map(t => (
-                <div key={t.token_id} className="flex items-center justify-between bg-[#0a0a15] rounded-lg px-3 py-2 border border-[#1a1a2a]">
+                <div key={t.token_id} className="flex items-center justify-between bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f]">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-white font-medium">{t.name}</span>

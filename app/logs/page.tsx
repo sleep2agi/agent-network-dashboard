@@ -75,7 +75,7 @@ export default function LogsPage() {
   }, [fetchLogs]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       {/* #209 R36: mobile vertical rhythm — same R28/R30/R31 pattern,
           mb-6 → mb-4 sm:mb-6 here and on the action-filter strip below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
@@ -113,7 +113,7 @@ export default function LogsPage() {
                 className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 whitespace-nowrap ${
                   isActive
                     ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
-                    : 'text-gray-500 hover:text-gray-200 hover:bg-[#1a1a2a] border border-transparent'
+                    : 'text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] border border-transparent'
                 }`}
               >
                 {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}
@@ -172,7 +172,7 @@ export default function LogsPage() {
           {logs.map(log => {
             const userName = log.username || log.user_id;
             return (
-            <div key={log.id} className="relative bg-[#111128] border border-[#2a2a4a] rounded-lg pl-3 pr-3 py-2 sm:pl-4 sm:pr-4 sm:py-3 hover:border-[#3a3a5a] transition-colors overflow-hidden">
+            <div key={log.id} className="relative bg-[#161618] border border-[#26262b] rounded-lg pl-3 pr-3 py-2 sm:pl-4 sm:pr-4 sm:py-3 hover:border-[#3a3a41] transition-colors overflow-hidden">
               {/* 2px left rail per action (round 33) — failed logins, token
                   rotations spike out of a wall of register/login rows. */}
               <span

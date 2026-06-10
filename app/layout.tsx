@@ -59,7 +59,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#0a0a1a",
+  themeColor: "#0b0b0d",
   // R25 of #190: metadata.appleWebApp.statusBarStyle above is
   // "black-translucent", which renders the iOS status bar as a
   // transparent overlay above the page (rather than reserving its own

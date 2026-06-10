@@ -32,7 +32,7 @@ export function StatsBar({ online, working, total }: StatsBarProps) {
         /* Round 72: thin status strip replaces the 4-card grid when fleet
            is empty. Saves ~280px on mobile (CTA y=650 → ~370) and keeps
            the same data visible in a single inline row. */
-        <div className="anet-stat-strip flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 border-t border-b border-[#2a2a4a] py-2">
+        <div className="anet-stat-strip flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 border-t border-b border-[#26262b] py-2">
           <span className="inline-flex items-center gap-1.5">
             <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
             <span className="text-gray-300 tabular-nums">0</span> online
@@ -94,7 +94,7 @@ function StatCard({ value, label, sub, color }: {
   // Surfaces are now neutral (shared border + bg); color survives only
   // on the number itself. Mobile density values are #209 R39.
   return (
-    <div className="anet-stat-card rounded-xl border border-[#2a2a4a] bg-[#111128] px-3 sm:px-4 py-2.5 sm:py-3 transition-all">
+    <div className="anet-stat-card rounded-xl border border-[#26262b] bg-[#161618] px-3 sm:px-4 py-2.5 sm:py-3 transition-all">
       <div className={`text-2xl sm:text-3xl font-bold ${color} tabular-nums leading-tight`}>{value}</div>
       <div className="text-xs sm:text-sm text-gray-300 mt-0.5">{label}</div>
       <div className="text-[10px] sm:text-xs text-gray-600 mt-1">{sub}</div>

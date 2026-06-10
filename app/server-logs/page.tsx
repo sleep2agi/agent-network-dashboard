@@ -207,7 +207,7 @@ export default function ServerLogsPage() {
                 className={`px-2.5 py-1 rounded border flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed ${
                   isActive
                     ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40'
-                    : 'bg-[#11111c] text-gray-400 border-[#2a2a4a] hover:bg-[#1a1a2a]'
+                    : 'bg-[#161618] text-gray-400 border-[#26262b] hover:bg-[#1c1c1f]'
                 }`}
               >
                 <span>{lv}</span>
@@ -256,7 +256,7 @@ export default function ServerLogsPage() {
         );
       })()}
 
-      <div className="rounded border border-[#1a1a2a] bg-[#050510] font-mono text-[11px] leading-relaxed overflow-hidden">
+      <div className="rounded border border-[#1c1c1f] bg-[#060607] font-mono text-[11px] leading-relaxed overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-8 text-center text-gray-600">
             {error ? '加载失败' : logs.length === 0 ? '加载中...' : '没有匹配的日志'}
@@ -264,7 +264,7 @@ export default function ServerLogsPage() {
         ) : (
           <div className="divide-y divide-[#0d0d18] max-h-[calc(100vh-260px)] overflow-y-auto">
             {filtered.map((l, i) => (
-              <div key={`${l.ts}-${i}`} className="relative pl-3 pr-3 py-1 hover:bg-[#0a0a14] flex gap-3">
+              <div key={`${l.ts}-${i}`} className="relative pl-3 pr-3 py-1 hover:bg-[#0e0e10] flex gap-3">
                 {/* Round 32: 2px left rail keyed to level. Makes warn/error
                     spike visible in a wall of `log` lines without users having
                     to read the level chip on every row. */}

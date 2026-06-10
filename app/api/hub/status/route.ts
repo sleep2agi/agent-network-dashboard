@@ -1,5 +1,6 @@
 import { requireDashboardAuth } from '@/app/lib/dashboard-auth';
 import { hubFetch } from '@/app/lib/hub';
+import { normalizeSessions } from '@/app/lib/session-normalize';
 
 export async function GET(req: Request) {
   const authFailure = await requireDashboardAuth();
@@ -14,12 +15,14 @@ export async function GET(req: Request) {
   try {
     const res = await hubFetch(`/api/status${qs}`);
     const data = await res.json();
+    if (Array.isArray(data.sessions)) data.sessions = normalizeSessions(data.sessions);
 
     // If filtered result is empty, fetch global count for empty-state hint
     if (includeFilter && Array.isArray(data.sessions) && data.sessions.length === 0) {
       try {
         const globalRes = await hubFetch('/api/status');
         const globalData = await globalRes.json();
+        if (Array.isArray(globalData.sessions)) globalData.sessions = normalizeSessions(globalData.sessions);
         const globalCount = Array.isArray(globalData.sessions) ? globalData.sessions.length : 0;
         if (globalCount > 0) {
           return Response.json({ ...data, _hint: { global_count: globalCount, filtered_network: networkId } });
