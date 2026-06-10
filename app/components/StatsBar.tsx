@@ -19,11 +19,13 @@ export function StatsBar({ online, working, total }: StatsBarProps) {
   // so this only touches the populated case.
   return (
     <div className={fleetEmpty ? 'mb-4' : 'mb-4 sm:mb-8'}>
-      {/* Title row. #217 S3 (less is more): the `CommHub x.y.z · uptime`
-          subtitle is ops info, not at-a-glance status — it lives in
-          Settings → CommHub Connection (version + uptime rows). */}
+      {/* Title row. #217 S3 dropped the version/uptime subtitle (lives in
+          Settings → CommHub Connection). S9 (Vincent tg 613 "没居中"):
+          WeChat-style centered title on phones — centering also clears
+          the fixed hamburger symmetrically, replacing the old ml-10
+          indent that read as misalignment. Left-aligned from lg: up. */}
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-white tracking-tight">Agent Network</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight text-center lg:text-left">Agent Network</h1>
       </div>
 
       {fleetEmpty ? (
