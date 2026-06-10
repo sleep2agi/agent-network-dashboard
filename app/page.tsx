@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { formatUptime, previewContent } from './components/utils';
+import { previewContent } from './components/utils';
 import { StatsBar } from './components/StatsBar';
 import { TopoGraph } from './components/TopoGraph';
 import { AgentCard } from './components/AgentCard';
@@ -81,8 +81,6 @@ export default function Dashboard() {
   const online = sessions.filter(isOnline).length;
   const total = sessions.length;
   const working = sessions.filter(s => s.status === 'working').length;
-  const uptime = health ? formatUptime(health.uptime) : '--';
-  const version = health?.version || '--';
   // Task stats: prefer /api/stats, fallback to manual
   const taskStats: Record<string, number> = {};
   if (stats?.tasks?.by_status?.length) {
@@ -113,7 +111,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       <div className="lg:ml-0 ml-10">
-        <StatsBar online={online} working={working} total={total} version={version} uptime={uptime} />
+        <StatsBar online={online} working={working} total={total} />
       </div>
 
       {/* Dispatch + User Bar — Dispatch hidden when fleet empty (nothing to
