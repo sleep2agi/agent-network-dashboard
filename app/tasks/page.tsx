@@ -103,7 +103,7 @@ function TasksContent() {
   }, [fetchTasks]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
       {/* Header.
           #209 R30 (mobile vertical rhythm — goal "大幅提升移动端体验",
           extending R28's Overview pattern to /tasks): this mb-6 + the
@@ -442,7 +442,7 @@ export default function TasksPage() {
       // Match the loaded layout: p-4 sm:p-6 page padding + ml-10 mobile
       // indent on the text, so the burger clears and the loading state
       // visually maps to the populated page.
-      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+      <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
         <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading tasks…</div>
       </div>
     }>

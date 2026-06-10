@@ -96,7 +96,7 @@ export default function NetworksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/settings" className="text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10">&larr; Settings</Link>
         <h1 className="text-2xl font-bold text-white">Networks</h1>

@@ -34,13 +34,16 @@ body {
 }@theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--fg);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }html,
 body {
   background: var(--bg);
   color: var(--fg);
-}body {
-  font-family: var(--font-mono), ui-monospace, monospace;
+}/* #217 D1: UI text is sans (OpenWebUI-style product feel); mono is
+   opt-in via .font-mono for code, IDs and logs. */
+body {
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
 }/* Smooth scrollbar — themed */
 .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }.scrollbar-thin::-webkit-scrollbar-thumb {

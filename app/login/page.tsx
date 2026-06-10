@@ -46,7 +46,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a1a] text-gray-100 font-mono flex items-center justify-center relative overflow-hidden px-4 py-10 sm:py-16">
+    <main className="min-h-screen bg-[#0a0a1a] text-gray-100 flex items-center justify-center relative overflow-hidden px-4 py-10 sm:py-16">
       {/* Subtle off-grid background — restraint over AI-glow.
           Dark themes get a faint radial wash; light themes show a low-contrast
           dotted grid for surface texture without noise. */}

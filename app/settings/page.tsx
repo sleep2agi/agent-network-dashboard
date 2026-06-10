@@ -19,7 +19,7 @@ export default function SettingsPage() {
   const valueClass = 'break-all sm:max-w-[320px] sm:text-right';
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
+    <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6">
       <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Settings</h1>
 
       {/* Section anchor nav (round 28) — jump to a group instead of scrolling
