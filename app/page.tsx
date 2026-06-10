@@ -2,17 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { previewContent } from './components/utils';
 import { StatsBar } from './components/StatsBar';
 import { TopoGraph } from './components/TopoGraph';
 import { AgentCard } from './components/AgentCard';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { NodesEmptyState as EmptyState } from './components/EmptyState';
-import { AliasAvatar } from './components/AliasAvatar';
-import { STATUS_DOT_HEX, STATUS_CHIP_CLASS } from './lib/status';
-import { UserBar } from './components/UserBar';
 import { CommandCenter, useCommandCenter } from './components/CommandCenter';
-import { DispatchPanel } from './components/DispatchPanel';
 import { useSessions, useHealth, useTasks, useStats } from './lib/hooks';
 import { useSSE } from './lib/useSSE';
 import { useSWRConfig } from 'swr';
@@ -34,7 +29,6 @@ export default function Dashboard() {
   const { stats } = useStats();
   const [showTopo, setShowTopo] = useState(typeof window !== 'undefined' && window.innerWidth >= 1024);
   const cmd = useCommandCenter();
-  const [showDispatch, setShowDispatch] = useState(false);
   const [agentFilter, setAgentFilter] = useState<'all' | 'working' | 'idle' | 'offline'>('all');
   // #84: last node.renamed event — passed to TopoGraph so an open chat
   // popover follows the rename instead of pointing at a dead alias. `ts`
@@ -102,200 +96,39 @@ export default function Dashboard() {
     return bWorking - aWorking;
   });
 
-  /** Round 70: when the fleet is empty, the Overview reorders to lead with
-   *  the "Spin up your first agent" CTA and hides the Quick Navigation /
-   *  Nav rail / Broadcast bar that would otherwise occupy prime real estate
-   *  with zeros and dead-end links. Computed once, used as a gate below. */
-  const fleetEmpty = sessions.length === 0 && !sessError;
-
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-gray-100 p-4 sm:p-6 font-mono">
       <div className="lg:ml-0 ml-10">
         <StatsBar online={online} working={working} total={total} />
       </div>
 
-      {/* Dispatch + User Bar — Dispatch hidden when fleet empty (nothing to
-          dispatch to); UserBar still useful (account/sign-out menu). */}
-      <div className="flex items-center gap-3 mb-4">
-        {!fleetEmpty && (
-          <button onClick={() => setShowDispatch(true)}
-            className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-cyan-500/10 transition-all active:scale-95 shrink-0">
-            ⚡ Dispatch
-          </button>
-        )}
-        <div className="flex-1"><UserBar /></div>
-      </div>
+      {/* #217 S5 (Vincent: "极简极简，这些都可以放到设置里面去"): the
+          Dispatch button and UserBar row are gone from Overview.
+          Dispatch lives in /admin (Send Task panel); sign-out lives in
+          Settings and the sidebar; network switching lives in the
+          sidebar. */}
 
-      {/* Task Status Stats */}
+      {/* Task summary. #217 S5 (Vincent: "乱七八糟的东西太多"): the
+          9-status colored chip wall is now a single quiet line — the
+          only two numbers that drive action are running and failed;
+          everything else lives on /tasks. */}
       {Object.keys(taskStats).length > 0 && (
-        <section className="mb-4 sm:mb-6 rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-3 shadow-lg shadow-black/20">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs uppercase text-gray-600">Task Status</div>
-            <Link href="/tasks" prefetch={false} className="text-xs text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
+        <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg border border-[#2a2a4a] bg-[#111128] px-4 py-2.5 text-xs">
+          <div className="text-gray-400 tabular-nums">
+            <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} running</span>
+            <span className="text-gray-600"> &middot; </span>
+            <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} failed</span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {/* Round 69: order is "hot first" — active flow before terminal
-                states — intentionally different from the lifecycle order on
-                /tasks. Colors come from shared STATUS_CHIP_CLASS so a
-                palette tweak in app/lib/status.ts updates here too.
-                'created' added in r69 (was missing — enum-coverage bug). */}
-            {(['running', 'delivered', 'acked', 'replied', 'created', 'failed', 'cancelled', 'expired', 'closed'] as const)
-              .filter((key) => taskStats[key])
-              .map((key) => (
-                <Link key={key} href={`/tasks?status=${key}`} prefetch={false} className={`px-2.5 py-1 rounded-md border text-xs ${STATUS_CHIP_CLASS[key]} hover:opacity-80 transition-opacity`}>
-                  {key}: {taskStats[key]}
-                </Link>
-              ))}
-          </div>
+          <Link href="/tasks" prefetch={false} className="text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
         </section>
       )}
 
-      {/* Quick Actions — split into two distinct intents:
-          (1) Top: live stat cards (carry data, drill-in on click)
-          (2) Bottom: pure nav rail (no number, icon + label)
-          Round 24 — wrap both in a labelled block so the rhythm reads as
-          "here are the main jumps" instead of two disconnected strips.
-          Round 70 — entire Quick Nav + Nav rail + Broadcast + Recent
-          Activity block is hidden when the fleet is empty so the
-          onboarding CTA gets the page above the fold. */}
-      {!fleetEmpty && <>
-      <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 mb-2">Quick navigation</div>
-      <section className="mb-3 grid grid-cols-3 gap-2 sm:gap-3">
-        {(() => {
-          // Build breakdown popover content per card. Pure data — pure CSS
-          // popover (no JS state) wires the hover-show transition below.
-          const idleCount = sessions.filter(s => isOnline(s) && s.status !== 'working').length;
-          const offlineCount = total - online;
-          const orderedStatuses = ['running', 'replied', 'failed', 'cancelled', 'expired', 'closed', 'created', 'delivered', 'acked'];
-          const failedRecent = tasks.filter((t: { status: string }) => t.status === 'failed').length;
-
-          const cards = [
-            {
-              href: '/nodes', label: 'Nodes',
-              value: `${online}/${total}`,
-              sub: `${total > 0 ? Math.round((online / total) * 100) : 0}% online`,
-              color: 'text-green-400 border-green-500/20',
-              popover: total === 0 ? null : [
-                { k: 'working', v: working, dot: '', color: '#4ade80' },
-                { k: 'idle', v: idleCount, dot: '', color: '#22d3ee' },
-                { k: 'offline', v: offlineCount, dot: '', color: '#9ca3af' },
-              ],
-            },
-            {
-              href: '/tasks', label: 'Tasks',
-              value: String(Object.values(taskStats).reduce((a, b) => a + b, 0) || 0),
-              sub: 'all-time',
-              color: 'text-cyan-400 border-cyan-500/20',
-              popover: Object.keys(taskStats).length === 0 ? null
-                : orderedStatuses
-                    .filter(s => taskStats[s])
-                    .map(s => {
-                      // Inline hex avoids Tailwind purging dynamic
-                      // `bg-${color}-400` class names.
-                      const hex = ({
-                        running:   '#4ade80', replied:   '#a78bfa', failed:    '#f87171',
-                        cancelled: '#facc15', expired:   '#fb923c', closed:    '#9ca3af',
-                        created:   '#9ca3af', delivered: '#60a5fa', acked:     '#22d3ee',
-                      } as Record<string, string>)[s] || '#9ca3af';
-                      return { k: s, v: taskStats[s], dot: '', color: hex };
-                    }),
-            },
-            {
-              href: '/tasks?status=failed', label: 'Failed',
-              value: String(taskStats['failed'] || 0),
-              sub: taskStats['failed'] ? 'needs review' : 'none',
-              color: taskStats['failed'] ? 'text-red-400 border-red-500/25' : 'text-gray-500 border-gray-700/30',
-              popover: !failedRecent ? [{ k: 'no failures yet', v: '', dot: '', color: '#4b5563' }]
-                : [{ k: `${failedRecent} in current view`, v: '', dot: '', color: '#f87171' }],
-            },
-          ];
-
-          return cards.map(a => (
-            <Link
-              key={a.href}
-              href={a.href}
-              prefetch={false}
-              className={`anet-stat-link group relative rounded-xl border ${a.color} bg-[#111128] px-3 py-3 transition-all hover:-translate-y-px`}
-            >
-              <div className="flex items-baseline justify-between">
-                <div className={`text-xl font-semibold tabular-nums ${a.color.split(' ')[0]}`}>{a.value}</div>
-                <div className="hidden sm:block text-[10px] text-gray-600 group-hover:text-gray-400 transition-colors">View →</div>
-              </div>
-              <div className="text-[11px] text-gray-400 mt-0.5">{a.label}</div>
-              <div className="text-[10px] text-gray-600 mt-px">{a.sub}</div>
-
-              {/* Hover popover — CSS-only, restrained. Hidden on touch
-                  (no :hover) so mobile is unaffected. Positioned just
-                  below the card so it doesn't fight nav rail. */}
-              {a.popover && a.popover.length > 0 && (
-                <div className="anet-stat-popover hidden md:block pointer-events-none absolute left-2 right-2 top-full mt-1 z-20 rounded-lg border border-[#2a2a4a] bg-[#0d0d1a] shadow-lg shadow-black/30 px-3 py-2 opacity-0 translate-y-[-2px] group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 delay-100">
-                  <div className="text-[10px] text-gray-600 uppercase tracking-wider mb-1.5">Breakdown</div>
-                  <ul className="space-y-1">
-                    {a.popover.map(row => (
-                      <li key={row.k} className="flex items-center gap-2 text-[11px]">
-                        <span
-                          className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                          style={{ backgroundColor: row.color }}
-                          aria-hidden
-                        />
-                        <span className="text-gray-400 capitalize">{row.k}</span>
-                        {row.v !== '' && <span className="ml-auto text-gray-300 tabular-nums font-medium">{row.v}</span>}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Link>
-          ));
-        })()}
-      </section>
-
-      {/* Nav rail — pure navigation, icon + label, no data */}
-      <section className="mb-4 sm:mb-6 grid grid-cols-3 gap-2 sm:gap-3">
-        {[
-          { href: '/messages', label: 'Messages', icon: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' },
-          { href: '/logs', label: 'Audit log', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
-          { href: '/admin', label: 'Admin', icon: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2' },
-        ].map(a => (
-          <Link key={a.href} href={a.href} prefetch={false}
-            className="anet-nav-tile flex items-center justify-center gap-2 rounded-xl border border-[#2a2a4a] bg-[#111128] px-3 py-2.5 text-[12px] text-gray-400 hover:text-gray-200 transition-colors">
-            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d={a.icon} />
-            </svg>
-            <span>{a.label}</span>
-          </Link>
-        ))}
-      </section>
-
-      {/* Recent Activity */}
-      {tasks.length > 0 && (
-        <section className="mb-4 sm:mb-6 bg-[#111128] border border-[#2a2a4a] rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-300">Recent Activity</h2>
-            <Link href="/tasks" className="text-xs text-cyan-400 hover:text-cyan-300">All tasks &rarr;</Link>
-          </div>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {tasks.slice(0, 5).map((t: { task_id: string; from_name: string; to_name: string; status: string; content: string; created_at: string }) => (
-              <div key={t.task_id} className="flex items-center gap-2 text-xs">
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ backgroundColor: STATUS_DOT_HEX[t.status] || '#6b7280' }}
-                />
-                {t.from_name && <AliasAvatar alias={t.from_name} size={14} />}
-                <span className="text-gray-300 shrink-0 max-w-[20%] truncate">{t.from_name || '?'}</span>
-                <span className="text-gray-600">&rarr;</span>
-                {t.to_name && <AliasAvatar alias={t.to_name} size={14} />}
-                <span className="text-gray-300 shrink-0 max-w-[20%] truncate">{t.to_name || '?'}</span>
-                <span className="text-gray-500 truncate flex-1" title={t.content || ''}>{previewContent(t.content).slice(0, 60)}</span>
-                <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] border ${
-                  STATUS_CHIP_CLASS[t.status] || 'text-gray-500 border-gray-700/30'
-                }`}>{t.status}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-      </>}
+      {/* #217 S5 (less is more): Quick Navigation stat cards, the nav
+          rail, and Recent Activity are deleted. Every route they linked
+          to is one tap away in the bottom tab bar (mobile) or sidebar
+          (desktop), the headline numbers already live in the KPI cards
+          and the task summary line, and recent tasks live on /tasks.
+          Restore path: git revert this commit. */}
 
       {sessError && (
         <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-4 py-3 rounded-lg mb-6 text-sm flex items-center justify-between" role="alert">
@@ -417,9 +250,6 @@ export default function Dashboard() {
           </>
         )}
       </div>
-
-      {/* Dispatch Panel */}
-      {showDispatch && <DispatchPanel sessions={sessions} onClose={() => setShowDispatch(false)} />}
 
       {/* Command Center (multi-tab chat) */}
       {cmd.tabs.length > 0 && (
