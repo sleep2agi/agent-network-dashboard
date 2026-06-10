@@ -28,6 +28,17 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
     <Link
       href={`/node?alias=${encodeURIComponent(s.alias)}`}
       prefetch={false}
+      onClick={e => {
+        // #217 M2 (Vincent tg 646 "为什么还要留一个 chat 按钮，直接点击
+        // 不就行了"): tapping a reachable agent's card opens chat
+        // directly — the Chat button is gone. Offline/unreachable cards
+        // keep navigating to /node detail, and detail for reachable
+        // agents stays available via the Agents tab.
+        if (onChat && hasSse) {
+          e.preventDefault();
+          onChat(s.alias);
+        }
+      }}
       className={`anet-agent-card group relative block rounded-xl border p-3 sm:p-4 transition-all duration-300 cursor-pointer hover:-translate-y-0.5 ${
         hasSse
           ? `bg-[#161618] border-[#26262b] hover:border-cyan-500/30 hover:shadow-lg ${cfg.glow}`
@@ -111,14 +122,6 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
             phone card — desktop keeps it, /node detail always has it. */}
         <span className="hidden sm:inline truncate" title={s.server || ''}>{s.server || '--'}</span>
         <div className="flex items-center gap-2 ml-auto">
-          {onChat && hasSse && (
-            <button
-              onClick={e => { e.preventDefault(); e.stopPropagation(); onChat(s.alias); }}
-              className="text-cyan-400 hover:text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/20 hover:bg-cyan-500/10 transition-colors"
-            >
-              Chat
-            </button>
-          )}
           <span>{timeAgo(s.updated_at)}</span>
           <svg
             aria-hidden
