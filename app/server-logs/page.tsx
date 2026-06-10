@@ -135,7 +135,9 @@ export default function ServerLogsPage() {
           {/* #209 R35: lg:ml-0 ml-10 burger-clearance — without it the
               fixed top-3 left-3 mobile hamburger sat right on top of the
               "Se" of "Server Logs". Caught by playwright mobile shot. */}
-          <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Server Logs</h1>
+          {/* #217 D8: text-xl + nowrap on phones — at text-2xl the title
+              wrapped to two lines under the 4-control toolbar. */}
+          <h1 className="text-xl sm:text-2xl font-bold text-white lg:ml-0 ml-10 whitespace-nowrap">Server Logs</h1>
           {/* Round 86: dropped the {logs.length} header chip — r84 added
               `all <count>` to the filter strip just below, so this duplicated
               the value within 40px of itself. */}
@@ -216,12 +218,15 @@ export default function ServerLogsPage() {
             );
           })}
         </div>
-        {/* R35: inline search input moved to the magnifier-toggle in
-            the toolbar above. count chip stays as a quick scan
-            "filter is biting" indicator. */}
-        <span className="text-[10px] text-gray-600 ml-auto">
-          {filtered.length} / {logs.length}
-        </span>
+        {/* #217 D8 (same rule as the D6 /tasks chip): the counter only
+            renders when it carries unique info — a filter or search is
+            actually narrowing the list. "500 / 500" duplicated the
+            `all 500` chip 20px to its left. */}
+        {filtered.length < logs.length && (
+          <span className="text-[10px] text-gray-600 ml-auto tabular-nums">
+            {filtered.length} / {logs.length}
+          </span>
+        )}
       </div>
 
       {error && (() => {
