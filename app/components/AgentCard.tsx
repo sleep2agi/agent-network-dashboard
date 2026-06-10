@@ -106,8 +106,11 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
             (2) mt-3 → mt-2 sm:mt-3 mirrors the same density pattern
                 R28 / R39 brought to the rest of the page. */}
       <div className="mt-2 sm:mt-3 flex justify-between items-center text-[10px] text-gray-600">
-        <span className="truncate" title={s.server || ''}>{s.server || '--'}</span>
-        <div className="flex items-center gap-2">
+        {/* #217 D5 (Vincent: 乱七八糟的元素都可以删掉): the raw server
+            hostname (cloud instance IDs like iZrj93…) is noise on a
+            phone card — desktop keeps it, /node detail always has it. */}
+        <span className="hidden sm:inline truncate" title={s.server || ''}>{s.server || '--'}</span>
+        <div className="flex items-center gap-2 ml-auto">
           {onChat && hasSse && (
             <button
               onClick={e => { e.preventDefault(); e.stopPropagation(); onChat(s.alias); }}
