@@ -135,8 +135,12 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* #217 M1: topology toggle is lg-only — on a 390px phone the
+          graph needed a 70vh cap (R41) just to stay scrollable, i.e.
+          it never really worked there. Desktop keeps the full feature;
+          mobile Overview loses its last piece of chrome. */}
       {sessions.length > 0 && (
-        <div className="flex justify-center mb-4">
+        <div className="hidden lg:flex justify-center mb-4">
           <button
             onClick={() => setShowTopo(!showTopo)}
             className="text-xs text-gray-500 hover:text-gray-300 border border-gray-700/50 px-4 py-1.5 rounded-lg transition-colors hover:border-gray-600 cursor-pointer"

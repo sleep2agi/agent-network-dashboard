@@ -49,11 +49,39 @@ export function StatsBar({ online, working, total }: StatsBarProps) {
           </span>
         </div>
       ) : (
-        /* Populated state. #217 S2 (less is more): the Working card only
-           earns its grid cell when something is actually working — a
-           "0 / 0% utilization" card is dead weight, and dropping it
-           collapses the mobile 2×2 grid to one 3-up row. */
-        <div className={`grid gap-3 ${working > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+        <>
+        {/* #217 M1 (Vincent: "再简洁点你自己理解一下"): on phones the
+            populated state reuses the round-72 thin strip instead of
+            the card grid — one quiet line of numbers, ~70px reclaimed.
+            Cards return from sm: up where they have room to breathe. */}
+        <div className="sm:hidden anet-stat-strip flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 border-t border-b border-[#26262b] py-2">
+          <span className="inline-flex items-center gap-1.5">
+            <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-green-400" />
+            <span className="text-gray-200 tabular-nums">{online}</span> online
+          </span>
+          {working > 0 && (
+            <>
+              <span className="text-gray-700">·</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 anet-brand-pulse" />
+                <span className="text-gray-200 tabular-nums">{working}</span> working
+              </span>
+            </>
+          )}
+          <span className="text-gray-700">·</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
+            <span className="text-gray-200 tabular-nums">{total - online}</span> offline
+          </span>
+          <span className="text-gray-700">·</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="text-gray-200 tabular-nums">{total}</span> total
+          </span>
+        </div>
+        {/* Populated state, sm: up. #217 S2 (less is more): the Working
+           card only earns its grid cell when something is actually
+           working. */}
+        <div className={`hidden sm:grid gap-3 ${working > 0 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
           <StatCard
             value={online}
             label="Online"
@@ -81,6 +109,7 @@ export function StatsBar({ online, working, total }: StatsBarProps) {
             color="text-white"
           />
         </div>
+        </>
       )}
     </div>
   );
