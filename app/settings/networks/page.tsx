@@ -97,12 +97,12 @@ export default function NetworksPage() {
 
   return (
     <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/settings" className="text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10">&larr; Settings</Link>
+      {/* #217 D9: back link stacks above the title instead of sitting
+          beside it — the old single row read as an off-balance
+          "← Settings   Networks" pair on phones. */}
+      <div className="mb-6">
+        <Link href="/settings" className="inline-block text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10 mb-1">&larr; Settings</Link>
         <h1 className="text-2xl font-bold text-white">Networks</h1>
-        {/* Round 93: dropped {networks.length} header chip — the
-            My Networks panel below already carries `<N> total` in its
-            own subhead. Matches r86/r87 pattern. */}
       </div>
 
       <div className="max-w-2xl space-y-6">
@@ -126,7 +126,9 @@ export default function NetworksPage() {
         <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-gray-300">My Networks</h2>
-            {networks.length > 0 && (
+            {/* #217 D9: "N TOTAL" counter dropped below 4 rows — counting
+                a visibly one-item list is noise (D6 conditional rule). */}
+            {networks.length > 3 && (
               <span className="text-[10px] text-gray-600 uppercase tracking-wide">{networks.length} total</span>
             )}
           </div>
