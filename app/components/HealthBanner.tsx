@@ -3,6 +3,7 @@
 import useSWR from 'swr';
 import { useState } from 'react';
 import Link from 'next/link';
+import { parseHubTime } from '../lib/time';
 
 interface StatsResponse {
   ok?: boolean;
@@ -44,6 +45,17 @@ export function HealthBanner() {
     shouldRetryOnError: false,
   });
 
+  // #217 S4 (less is more): the amber count used the all-time `failed`
+  // total from /api/hub/stats, so the banner said "N failed recently"
+  // forever — a permanent warning is no warning. Only fetch the actual
+  // failed tasks when stats reports any, and count just the last 24 h.
+  const allTimeFailed = stats?.tasks?.by_status?.find(s => s.status === 'failed')?.count || 0;
+  const { data: failedTasks } = useSWR<{ tasks?: { created_at?: string | null; completed_at?: string | null }[] }>(
+    allTimeFailed > 0 ? '/api/hub/tasks?status=failed&limit=100' : null,
+    fetcher,
+    { refreshInterval: 60000, dedupingInterval: 30000, shouldRetryOnError: false },
+  );
+
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return sessionStorage.getItem('anet-hb-dismissed') === '1';
@@ -53,7 +65,11 @@ export function HealthBanner() {
 
   // Determine current state — priority: red > amber > empty > green
   const hubDown = (statsErr && healthErr) || (health && health.ok === false);
-  const failed = stats?.tasks?.by_status?.find(s => s.status === 'failed')?.count || 0;
+  const dayAgo = Date.now() - 24 * 3600 * 1000;
+  const failed = (failedTasks?.tasks || []).filter(t => {
+    const at = parseHubTime(t.completed_at) ?? parseHubTime(t.created_at);
+    return at !== null && at >= dayAgo;
+  }).length;
   const fleetEmpty = stats?.nodes?.total === 0;
 
   let kind: 'red' | 'amber' | 'green';
@@ -66,7 +82,7 @@ export function HealthBanner() {
     cta = { label: 'Open Settings', href: '/settings' };
   } else if (failed > 0) {
     kind = 'amber';
-    message = `${failed} task${failed > 1 ? 's' : ''} failed recently`;
+    message = `${failed} task${failed > 1 ? 's' : ''} failed in the last 24h`;
     cta = { label: 'Review failures', href: '/tasks?status=failed' };
   } else if (fleetEmpty) {
     // Round 70 — was "All systems go" before, which is misleading when
