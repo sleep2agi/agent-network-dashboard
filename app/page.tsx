@@ -148,13 +148,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Mobile hint when topo hidden */}
-      {!showTopo && sessions.length > 0 && (
-        <div className="lg:hidden text-center text-xs text-gray-600 mb-4">
-          Topology hidden on mobile for better readability
-        </div>
-      )}
-
       {showTopo && sessions.length > 0 && (
         // #209 R41: mobile-only soft cap on the rendered TopoGraph.
         // Default behaviour on desktop is unchanged (lg: drops the cap
