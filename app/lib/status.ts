@@ -19,8 +19,6 @@ export const TASK_STATUSES = [
   'expired',
 ] as const;
 
-export type TaskStatus = typeof TASK_STATUSES[number];
-
 /** Pill / chip background+text+border. Tailwind classes, not inlined hex,
  *  because chips are static class names safe from purge. */
 /** #217 D3 (OpenWebUI-style color restraint): the 9-hue rainbow is
