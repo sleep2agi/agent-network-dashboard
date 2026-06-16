@@ -75,18 +75,3 @@ export function useMessages(limit = 100) {
   );
   return { messages: data?.messages || [], error, isLoading };
 }
-
-export function useNodeSession(alias: string) {
-  const { data, error, isLoading } = useSWR(
-    alias ? `/api/hub/session?alias=${encodeURIComponent(alias)}` : null,
-    fetcher,
-    SWR_OPTIONS,
-  );
-  return {
-    session: data?.session || null,
-    inbox: data?.inbox || [],
-    sse: data?.sse || 0,
-    error,
-    isLoading,
-  };
-}
