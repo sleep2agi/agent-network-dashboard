@@ -58,8 +58,8 @@ export default function SettingsPage() {
             <h2 className="text-sm font-semibold text-gray-300 mb-4">Theme</h2>
             <div className="grid grid-cols-2 gap-3">
               {([
-                { id: 'cyber', label: 'Dark', swatch: '#0b0b0d', ring: '#22d3ee' },
-                { id: 'light', label: 'Light', swatch: '#f6f7f9', ring: '#009e7e' },
+                { id: 'cyber', label: 'Dark', swatch: '#0b0b0d' },
+                { id: 'light', label: 'Light', swatch: '#f6f7f9' },
               ] as const).map(t => (
                 <button
                   key={t.id}
