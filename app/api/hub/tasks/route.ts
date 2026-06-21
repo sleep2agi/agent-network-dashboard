@@ -72,6 +72,16 @@ export async function GET(req: Request) {
         }
         return Response.json(data);
       }
+      // For targeted queries (chat history by to_name, or a single task_id),
+      // a valid empty v2 result is authoritative — return it immediately
+      // instead of falling through to a global /api/completions scan. That
+      // extra round-trip is what kept the chat-history spinner turning on a
+      // node with no tasks yet, and its substring to_name match could surface
+      // unrelated rows. Broad list queries keep the legacy fallback below.
+      // (Vincent tg923: 转圈加载太久)
+      if (data.ok && Array.isArray(data.tasks) && (filterTo || filterTaskId)) {
+        return Response.json(data);
+      }
     }
 
     // Fallback: map /api/completions to tasks shape

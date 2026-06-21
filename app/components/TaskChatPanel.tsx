@@ -207,6 +207,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   const [sending, setSending] = useState(false);
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
   const [targetAlias, setTargetAlias] = useState(alias);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState('');
@@ -244,9 +245,18 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   }, [alias, networkId]);
 
   // Load task history for this node — newest `limit` only (M4).
+  // Vincent tg923 (转圈加载太久): bound the request with an AbortController so
+  // a stalled hub call can't leave the panel spinning forever. On
+  // timeout/error we clear the spinner and flag historyError, which renders a
+  // tappable retry row instead of an endless spin.
   const loadHistory = useCallback(async (limit: number) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12_000);
     try {
-      const res = await fetch(`/api/hub/tasks?to_name=${encodeURIComponent(alias)}&limit=${limit}`);
+      const res = await fetch(
+        `/api/hub/tasks?to_name=${encodeURIComponent(alias)}&limit=${limit}`,
+        { signal: ctrl.signal },
+      );
       const data = await res.json();
       if (data.tasks) {
         const fetched = data.tasks.reverse(); // oldest first for display
@@ -260,7 +270,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
           return [...fetched, ...extras];
         });
       }
-    } catch {} finally {
+      setHistoryError(false);
+    } catch {
+      setHistoryError(true);
+    } finally {
+      clearTimeout(timer);
       setHistoryLoaded(true);
     }
   }, [alias]);
@@ -268,6 +282,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
   useEffect(() => {
     setMessages([]);
     setHistoryLoaded(false);
+    setHistoryError(false);
     histLimitRef.current = HISTORY_PAGE;
     anchoredRef.current = false;
     setHasOlder(true);
@@ -575,11 +590,25 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes }: TaskCh
           {historyLoaded && !hasOlder && messages.length > 0 && (
             <div className="text-center text-[10px] text-[var(--fg-dim)] py-1">— beginning of history —</div>
           )}
-          {historyLoaded && messages.length === 0 && (
+          {historyLoaded && !historyError && messages.length === 0 && (
             <div className="text-center py-12">
               <div className="text-3xl mb-3">💬</div>
               <div className="text-[var(--fg-muted)] text-sm">Start a conversation</div>
               <div className="text-[var(--fg-dim)] text-xs mt-1">Send a task to {alias}</div>
+            </div>
+          )}
+          {/* Vincent tg923: bounded fetch failed/timed out — offer a retry
+              instead of a stuck spinner or a misleading empty state. */}
+          {historyLoaded && historyError && messages.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-[var(--fg-muted)] text-sm">加载超时</div>
+              <button
+                type="button"
+                onClick={() => { setHistoryLoaded(false); setHistoryError(false); loadHistory(histLimitRef.current); }}
+                className="mt-2 text-xs text-cyan-400 hover:text-cyan-300 underline"
+              >
+                点此重试
+              </button>
             </div>
           )}
 
