@@ -35,6 +35,14 @@ export async function GET(req: Request) {
   const filterFrom = searchParams.get('from_name') || '';
   const filterTo = searchParams.get('to_name') || '';
   const filterTaskId = searchParams.get('task_id') || '';
+  // #248 — the dashboard never consumes the per-status `stats` block that
+  // the v2 endpoint computes by default (full GROUP BY scan on a large
+  // tasks table). Opt out via `?skip_stats=1` to skip the subquery on
+  // commhub-server ≥ 0.8.8 — older servers ignore the unknown flag and
+  // return the full payload, so this is safe regardless of hub version.
+  // Combined with the composite `(to_name, created_at DESC)` index that
+  // also shipped in 0.8.8, the chat panel's history fetch goes from
+  // ~28 ms p50 to ~1 ms p50 on a 100k-task DB (Docker A/B verified).
 
   try {
     // Try v2 /api/tasks first
@@ -45,6 +53,7 @@ export async function GET(req: Request) {
     if (filterTo) params.set('to_name', filterTo);
     if (filterTaskId) params.set('task_id', filterTaskId);
     params.set('limit', String(limit));
+    params.set('skip_stats', '1');
 
     const tasksRes = await fetch(
       `${HUB_URL}/api/tasks?${params.toString()}`,
@@ -63,6 +72,7 @@ export async function GET(req: Request) {
         if (filterFrom) fallbackParams.set('from_name', filterFrom);
         if (filterTo) fallbackParams.set('to_name', filterTo);
         fallbackParams.set('limit', String(limit));
+        fallbackParams.set('skip_stats', '1');
         const fbRes = await fetch(`${HUB_URL}/api/tasks?${fallbackParams.toString()}`, { headers: await hubHeaders(), next: { revalidate: 0 } });
         if (fbRes.ok) {
           const fbData = await fbRes.json();
