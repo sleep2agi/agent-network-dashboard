@@ -20,26 +20,50 @@ export async function GET(req: Request) {
   const headers: Record<string, string> = {};
   if (userToken) headers['Authorization'] = `Bearer ${userToken}`;
 
-  // Resolve the SSE channel name: explicit ?alias= wins; otherwise look up
-  // the user's username from /api/auth/me so we subscribe to the channel
-  // the server pushes replies to.
-  let channel = new URL(req.url).searchParams.get('alias') || '';
-  if (!channel) {
+  // Resolve the SSE channel name AND network id. `?alias=` and `?network_id=`
+  // overrides win; otherwise both default from /api/auth/me (single round-trip).
+  //
+  // #247: the hub's /events SSE handler requires an explicit network_id for
+  // utok_ callers (utok_ has no implicit network binding the way ntok_ does).
+  // Pre-#247 the dashboard didn't pass network_id, so even after the hub
+  // started accepting utok_ the upstream would still 403 at the network gate.
+  const reqUrl = new URL(req.url);
+  let channel = reqUrl.searchParams.get('alias') || '';
+  let networkId = reqUrl.searchParams.get('network_id') || '';
+
+  if (!channel || !networkId) {
     try {
       const meRes = await fetch(`${HUB_URL}/api/auth/me`, { headers });
       if (meRes.ok) {
         const me = await meRes.json();
-        channel = me?.user?.username || 'Dashboard';
+        if (!channel) channel = me?.user?.username || 'Dashboard';
+        if (!networkId) {
+          // commhub /api/auth/me returns either `current_network` (string) or
+          // a `networks[]` array. Prefer the explicit current_network; fall
+          // back to the first network the user belongs to.
+          networkId = me?.current_network || me?.networks?.[0]?.network_id || '';
+        }
       } else {
-        channel = 'Dashboard';
+        if (!channel) channel = 'Dashboard';
       }
     } catch {
-      channel = 'Dashboard';
+      if (!channel) channel = 'Dashboard';
     }
   }
 
+  // #247: surface a clear error if we still don't have a network_id, instead
+  // of letting the upstream return an opaque 403 / a generic 502 from the proxy.
+  if (!networkId) {
+    return new Response(
+      'SSE proxy: no network_id available (user is not a member of any network — log in and verify network membership)',
+      { status: 400 },
+    );
+  }
+
+  const upstreamUrl = `${HUB_URL}/events/${encodeURIComponent(channel)}?network_id=${encodeURIComponent(networkId)}`;
+
   try {
-    const upstream = await fetch(`${HUB_URL}/events/${encodeURIComponent(channel)}`, {
+    const upstream = await fetch(upstreamUrl, {
       headers,
       // @ts-expect-error - Next.js fetch doesn't type duplex
       duplex: 'half',
