@@ -8,21 +8,24 @@ import { AliasAvatar } from './AliasAvatar';
  * Per-node settings panel (issue #260 → v0.11 flagship #262, Vincent tg
  * 2026-06-24, "must actually work").
  *
- * STATUS (F2/F1, 通信龙 review round 2):
+ * STATUS (F1/F2/F3, 通信龙 review round 2):
  *  - **Wired (real)**: B Runtime·模型 model select + C 运行模式 flags
  *    (permissionMode / dangerouslySkipPermissions / teammateMode / maxTurns /
- *    budget / timeout). These are controlled form state, loaded on mount from
- *    `GET /api/anet/node-config` and persisted via `POST` of the same. The six
- *    flags + model are the editable contract 通信龙 specified.
+ *    budget / timeout). Controlled form state, loaded on mount from
+ *    `GET /api/anet/node-config` and persisted via `POST`. The six flags +
+ *    model are the editable contract 通信龙 specified.
+ *  - **F3 apply lifecycle**: after Save the panel runs a take-effect state
+ *    machine — saving → applying (node restarting) → applied | rejected |
+ *    timeout — polling `GET ?apply_id` for real backends and showing a colored
+ *    status strip ("toast") for the outcome.
  *  - **Still P2 stub (disabled)**: A 接入 Channel (display-only) and D 运维
- *    ops buttons (no-op). These stay presentational until their backend lands;
- *    each carries its own local "暂未接后端" note so the removed top banner
- *    doesn't leave them looking live.
+ *    ops buttons (no-op), each with its own local "暂未接后端" note.
  *
  * ⚠️ The hub-side tool is not deployed yet (工程马 WIP): the route mock-falls
- * back with `mock: true`, and Save surfaces that honestly ("已保存（后端未接入·
- * 暂未真正下发）") rather than claiming a node restarted. Runtime + imageCapable
- * stay read-only (auto-derived). Field names mirror anet's real config.json.
+ * back with `mock: true` + `status: pending`, so the lifecycle is *simulated*
+ * on local timers and the UI says so ("模拟 · 后端未接入") rather than claiming a
+ * node actually restarted. Runtime + imageCapable stay read-only (auto-derived).
+ * Field names mirror anet's real config.json.
  */
 
 // B. Runtime → selectable model presets (from anet VENDORS, bin/cli.ts).
@@ -98,7 +101,43 @@ const DEFAULT_FLAGS: FlagsForm = {
   timeout: '',
 };
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'mock' | 'error';
+// F3 apply lifecycle. A save flows:
+//   idle → saving (POST in flight) → applying (config dispatched, node
+//   restarting / taking effect) → applied | rejected | timeout.
+// `error` = the save POST itself failed. The `mock` flag flavours the terminal
+// copy when the hub tool isn't deployed (the lifecycle is then simulated on
+// local timers rather than polled).
+type ApplyPhase = 'idle' | 'saving' | 'applying' | 'applied' | 'rejected' | 'timeout' | 'error';
+
+// Real-backend apply-status poll cadence + ceiling. The mock path uses its own
+// short timers instead of polling (the route would only ever return pending).
+const APPLY_POLL_MS = 1500;
+const APPLY_TIMEOUT_MS = 30000;
+// Simulated mock progression delay (dispatched → applied).
+const MOCK_APPLY_MS = 1400;
+// Auto-dismiss the success strip after this long.
+const SUCCESS_DISMISS_MS = 4000;
+// Per-request ceiling so a hung hub proxy can't freeze the lifecycle — every
+// POST/poll fetch is aborted past this (通信牛 review #11 blocker 2).
+const FETCH_TIMEOUT_MS = 8000;
+
+function isAbort(e: unknown): boolean {
+  return e instanceof DOMException && e.name === 'AbortError';
+}
+
+/** fetch + json with a hard AbortController timeout. Rejects (AbortError) if it
+ *  doesn't resolve in `timeoutMs` — callers treat that as transient/abort. */
+async function fetchJson(url: string, init: RequestInit, timeoutMs: number): Promise<{ res: Response; data: Record<string, unknown> }> {
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal: ctrl.signal });
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    return { res, data };
+  } finally {
+    clearTimeout(to);
+  }
+}
 
 function channelSet(channels: Session['channels']): Set<string> {
   if (!channels) return new Set();
@@ -209,11 +248,41 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
   const [flags, setFlags] = useState<FlagsForm>(DEFAULT_FLAGS);
   const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saveState, setSaveState] = useState<SaveState>('idle');
-  const [saveMsg, setSaveMsg] = useState('');
+  // ---- F3 apply lifecycle ----
+  const [phase, setPhase] = useState<ApplyPhase>('idle');
+  const [phaseMsg, setPhaseMsg] = useState('');
+  const [phaseMock, setPhaseMock] = useState(false);
+  // Outstanding lifecycle timers (mock progression, real poll, auto-dismiss);
+  // cleared on unmount and at the start of each new save so a stale timer can't
+  // overwrite a fresh result.
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const clearTimers = useCallback(() => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+  }, []);
+  const after = useCallback((ms: number, fn: () => void) => {
+    timersRef.current.push(setTimeout(fn, ms));
+  }, []);
   // Avoid setState after unmount (panel closes mid-request).
   const mounted = useRef(true);
-  useEffect(() => () => { mounted.current = false; }, []);
+  useEffect(() => () => { mounted.current = false; clearTimers(); }, [clearTimers]);
+
+  // Monotonic run id, bumped on every save. Each async lifecycle callback
+  // captures the run id it belongs to and bails if a newer save superseded it —
+  // this guards the callback that has ALREADY passed `await fetch` and so can't
+  // be cancelled by clearTimers() (通信牛 review #11 blocker 1: stale poll
+  // overwriting a fresh save).
+  const applySeqRef = useRef(0);
+  // "First terminal wins" within a run: once applied/rejected/timeout is set, a
+  // late result can't overwrite it — this makes the 30s ceiling truly hard
+  // (通信牛 review #11 blocker 2).
+  const settledRef = useRef(false);
+  const isCurrent = useCallback((runId: number) => mounted.current && runId === applySeqRef.current, []);
+  const settle = useCallback((runId: number, apply: () => void) => {
+    if (!isCurrent(runId) || settledRef.current) return;
+    settledRef.current = true;
+    apply();
+  }, [isCurrent]);
 
   const setFlag = useCallback(<K extends keyof FlagsForm>(key: K, v: FlagsForm[K]) => {
     setFlags(f => ({ ...f, [key]: v }));
@@ -248,9 +317,60 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
     return () => { cancelled = true; };
   }, [nodeKey]);
 
+  // Terminal "applied" state + auto-dismiss of the success strip.
+  const finishApplied = useCallback((mock: boolean, runId: number) => {
+    settle(runId, () => {
+      setPhase('applied');
+      setPhaseMock(mock);
+      setPhaseMsg(mock ? '已应用（模拟 · 后端未接入，未真正下发）' : '配置已生效');
+      after(SUCCESS_DISMISS_MS, () => {
+        if (isCurrent(runId)) setPhase(p => (p === 'applied' ? 'idle' : p));
+      });
+    });
+  }, [after, isCurrent, settle]);
+
+  const markTimeout = useCallback((runId: number) => {
+    settle(runId, () => {
+      setPhase('timeout');
+      setPhaseMsg('应用超时未确认，请稍后在节点详情核对');
+    });
+  }, [settle]);
+
+  // Poll the real apply-status endpoint until terminal or timeout. `runId` ties
+  // every callback to the save that started it; a newer save (or a settled
+  // result) makes it bail before touching state.
+  const pollApply = useCallback((applyId: string, startedAt: number, runId: number) => {
+    after(APPLY_POLL_MS, async () => {
+      if (!isCurrent(runId) || settledRef.current) return;
+      let status: string | undefined;
+      let detail: string | undefined;
+      try {
+        const { data } = await fetchJson(`/api/anet/node-config?apply_id=${encodeURIComponent(applyId)}`, { cache: 'no-store' }, FETCH_TIMEOUT_MS);
+        status = data?.status as string | undefined;
+        detail = data?.detail as string | undefined;
+      } catch { /* transient / aborted — fall through to retry or timeout */ }
+      // Re-check AFTER the await: a newer save may have superseded this poll.
+      if (!isCurrent(runId) || settledRef.current) return;
+      if (status === 'applied') { finishApplied(false, runId); return; }
+      if (status === 'rejected') {
+        settle(runId, () => {
+          setPhase('rejected');
+          setPhaseMsg(detail ? `应用被拒绝：${detail}` : '应用被拒绝');
+        });
+        return;
+      }
+      if (Date.now() - startedAt >= APPLY_TIMEOUT_MS) { markTimeout(runId); return; }
+      pollApply(applyId, startedAt, runId); // still pending → keep polling
+    });
+  }, [after, finishApplied, isCurrent, markTimeout, settle]);
+
   async function handleSave() {
-    setSaveState('saving');
-    setSaveMsg('');
+    clearTimers();                          // cancel any pending timers from a prior run
+    const runId = ++applySeqRef.current;    // supersede any in-flight (post-await) callback
+    settledRef.current = false;
+    setPhase('saving');
+    setPhaseMsg('');
+    setPhaseMock(false);
     // Coerce numeric strings → numbers; drop blanks so unset fields aren't
     // forced to 0 on the backend.
     const numOrUndef = (v: string) => (v.trim() === '' ? undefined : Number(v));
@@ -266,32 +386,50 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
         timeout: numOrUndef(flags.timeout),
       },
     };
+    let data: { ok?: boolean; error?: string; mock?: boolean; applied?: boolean; status?: string; applyId?: string } = {};
     try {
-      const res = await fetch('/api/anet/node-config', {
+      const r = await fetchJson('/api/anet/node-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!mounted.current) return;
-      if (!res.ok || data?.ok === false) {
-        setSaveState('error');
-        setSaveMsg(data?.error ? `保存失败：${data.error}` : '保存失败');
+      }, FETCH_TIMEOUT_MS);
+      if (!isCurrent(runId)) return;        // a newer save started while this POST was in flight
+      data = r.data as typeof data;
+      if (!r.res.ok || data?.ok === false) {
+        settledRef.current = true;
+        setPhase('error');
+        setPhaseMsg(data?.error ? `保存失败：${data.error}` : '保存失败');
         return;
       }
-      setDirty(false);
-      if (data?.mock || data?.applied === false) {
-        // Honest: backend tool not live, so config wasn't actually pushed.
-        setSaveState('mock');
-        setSaveMsg('已保存（后端未接入 · 暂未真正下发到节点）');
-      } else {
-        setSaveState('saved');
-        setSaveMsg('已保存，配置生效中…');
-      }
     } catch (e) {
-      if (!mounted.current) return;
-      setSaveState('error');
-      setSaveMsg(e instanceof Error ? `保存失败：${e.message}` : '保存失败');
+      if (!isCurrent(runId)) return;
+      settledRef.current = true;
+      setPhase('error');
+      setPhaseMsg(isAbort(e) ? '保存超时，请重试' : e instanceof Error ? `保存失败：${e.message}` : '保存失败');
+      return;
+    }
+
+    // Save accepted — now drive the take-effect lifecycle.
+    setDirty(false);
+    const mock = !!(data.mock || data.applied === false);
+    if (data.status === 'applied') { finishApplied(mock, runId); return; }
+    if (data.status === 'rejected') { settle(runId, () => { setPhase('rejected'); setPhaseMsg('应用被拒绝'); }); return; }
+
+    // Optimistic "applying" — node is restarting / taking the new config.
+    setPhase('applying');
+    setPhaseMock(mock);
+    if (mock) {
+      // Backend not live: simulate the apply so the lifecycle UI is reviewable.
+      after(MOCK_APPLY_MS, () => finishApplied(true, runId));
+    } else if (data.applyId) {
+      // Hard 30s ceiling that fires regardless of whether a poll is in flight
+      // or the hub proxy is hanging — `settle` makes the first terminal win, so
+      // a late poll result can't reopen it (通信牛 review #11 blocker 2).
+      after(APPLY_TIMEOUT_MS, () => markTimeout(runId));
+      pollApply(data.applyId, Date.now(), runId);
+    } else {
+      // Real success with no applyId to poll → treat as applied.
+      finishApplied(false, runId);
     }
   }
 
@@ -388,26 +526,56 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
             </div>
           </section>
 
-          {/* Save bar (model + flags) */}
+          {/* Save bar + F3 apply lifecycle (optimistic → restarting → ack) */}
           <section>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={loading || saveState === 'saving' || !dirty}
-              className={`w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                loading || saveState === 'saving' || !dirty
-                  ? 'bg-[#1c1c1f] text-gray-600 cursor-not-allowed'
-                  : 'bg-cyan-600 text-white hover:bg-cyan-500'
-              }`}
-            >
-              {saveState === 'saving' ? '保存中…' : dirty ? '保存模型 / flags' : loading ? '加载中…' : '无改动'}
-            </button>
-            {saveMsg && (
-              <p className={`mt-2 text-[11px] ${
-                saveState === 'error' ? 'text-red-400' : saveState === 'mock' ? 'text-amber-300/90' : 'text-green-400'
-              }`}>
-                {saveMsg}
-              </p>
+            {(() => {
+              const busy = phase === 'saving' || phase === 'applying';
+              const btnDisabled = loading || busy || !dirty;
+              const btnLabel = phase === 'saving' ? '保存中…'
+                : phase === 'applying' ? '应用中…'
+                : loading ? '加载中…'
+                : dirty ? '保存模型 / flags'
+                : '无改动';
+              return (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={btnDisabled}
+                  className={`flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    btnDisabled ? 'bg-[#1c1c1f] text-gray-600 cursor-not-allowed' : 'bg-cyan-600 text-white hover:bg-cyan-500'
+                  }`}
+                >
+                  {busy && (
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  )}
+                  {btnLabel}
+                </button>
+              );
+            })()}
+
+            {/* Lifecycle status strip — the "toast" for the apply outcome. */}
+            {phase !== 'idle' && (() => {
+              const map: Record<Exclude<ApplyPhase, 'idle'>, { tone: string; icon: string; text: string }> = {
+                saving:   { tone: 'border-[#26262b] bg-[#161618] text-gray-300', icon: '·', text: '正在提交配置…' },
+                applying: { tone: 'border-cyan-800/50 bg-cyan-900/15 text-cyan-300', icon: '↻', text: '已下发，正在应用（节点重启生效中）…' },
+                applied:  { tone: 'border-green-800/50 bg-green-900/15 text-green-300', icon: '✓', text: phaseMsg || '配置已生效' },
+                rejected: { tone: 'border-red-800/50 bg-red-900/15 text-red-300', icon: '✗', text: phaseMsg || '应用被拒绝' },
+                timeout:  { tone: 'border-amber-700/50 bg-amber-900/15 text-amber-300', icon: '⚠', text: phaseMsg || '应用超时未确认' },
+                error:    { tone: 'border-red-800/50 bg-red-900/15 text-red-300', icon: '✗', text: phaseMsg || '保存失败' },
+              };
+              const v = map[phase];
+              return (
+                <div role="status" aria-live="polite" className={`mt-2 flex items-start gap-2 rounded-lg border px-3 py-2 text-[12px] ${v.tone}`}>
+                  <span className={`shrink-0 leading-5 ${phase === 'applying' ? 'inline-block animate-spin' : ''}`} aria-hidden>{v.icon}</span>
+                  <span>{v.text}</span>
+                </div>
+              );
+            })()}
+            {phaseMock && (phase === 'applying' || phase === 'applied') && (
+              <p className="mt-1 text-[10px] text-gray-600">后端工具未上线，应用流程为模拟演示（不会真正下发到节点）</p>
             )}
           </section>
 
