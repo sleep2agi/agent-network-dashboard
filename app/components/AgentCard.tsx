@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Session } from './types';
 import { timeAgo } from './utils';
 import { AliasAvatar } from './AliasAvatar';
+import { NodeSettingsPanel } from './NodeSettingsPanel';
 
 interface AgentCardProps {
   session: Session;
@@ -23,8 +25,13 @@ const DEFAULT_STATUS = { bg: 'bg-gray-800/50 border-gray-700/30', text: 'text-gr
 
 export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardProps) {
   const cfg = hasSse ? (STATUS_CONFIG[s.status] || DEFAULT_STATUS) : DEFAULT_STATUS;
+  // #260: per-node settings panel (UI-only stub). Local open state — the
+  // panel itself is presentational and issues no backend calls.
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
+    <>
+    {settingsOpen && <NodeSettingsPanel session={s} onClose={() => setSettingsOpen(false)} />}
     <Link
       href={`/node?alias=${encodeURIComponent(s.alias)}`}
       prefetch={false}
@@ -56,9 +63,31 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
           <span className="font-semibold text-white truncate text-sm" title={s.alias}>{s.alias}</span>
           <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot} ${hasSse && s.status === 'working' ? 'animate-pulse' : ''}`} />
         </div>
-        <span className={`text-[11px] px-2 py-0.5 rounded-md border shrink-0 ${cfg.bg} ${cfg.text}`}>
-          {hasSse ? s.status : 'offline'}
-        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className={`text-[11px] px-2 py-0.5 rounded-md border ${cfg.bg} ${cfg.text}`}>
+            {hasSse ? s.status : 'offline'}
+          </span>
+          {/* #260: per-node ⋮ menu → settings panel. The card is a <Link>,
+              so stop the click from navigating / opening chat. Opens a
+              UI-only stub panel (channels / model / mode / restart) — no
+              backend wired yet. 44px tap target for mobile. */}
+          <button
+            type="button"
+            aria-label={`${s.alias} 节点设置`}
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSettingsOpen(true);
+            }}
+            className="inline-flex h-7 w-7 items-center justify-center -mr-1 rounded-md text-gray-500 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <circle cx="12" cy="5" r="1.6" />
+              <circle cx="12" cy="12" r="1.6" />
+              <circle cx="12" cy="19" r="1.6" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Agent type badge — hidden below sm because the runtime
@@ -135,5 +164,6 @@ export function AgentCard({ session: s, hasSse, sseCount, onChat }: AgentCardPro
         </div>
       </div>
     </Link>
+    </>
   );
 }
