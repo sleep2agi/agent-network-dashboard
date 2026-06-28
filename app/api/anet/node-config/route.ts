@@ -6,7 +6,9 @@ import { hubFetch } from '@/app/lib/hub';
  * actually work). Thin proxy to the hub, using the browser session's V3 user
  * token (hubFetch):
  *   GET ?node_id=…|alias=…  → current node config snapshot (model + flags)
- *   POST { node_id|alias, model?, flags? } → update_node_config
+ *   GET ?apply_id=…         → apply-lifecycle status for a prior POST (F3)
+ *   POST { node_id|alias, model?, flags? } → update_node_config; returns an
+ *                            applyId + status so the UI can poll take-effect.
  *
  * ⚠️ The hub-side tool (update_node_config + config snapshot) is not deployed
  * yet (工程马 WIP, contract under 通信牛 co-review). Until it lands, these calls
@@ -18,6 +20,7 @@ import { hubFetch } from '@/app/lib/hub';
 
 const HUB_GET_PATH = (nodeId: string) => `/api/nodes/${encodeURIComponent(nodeId)}/config`;
 const HUB_UPDATE_PATH = '/api/nodes/config'; // POST → hub MCP update_node_config
+const HUB_APPLY_STATUS_PATH = (applyId: string) => `/api/nodes/config/apply/${encodeURIComponent(applyId)}`;
 
 // Editable flags whitelist (contract per 通信龙). Anything outside this set is
 // dropped before forwarding, so the UI can't smuggle unexpected keys to the hub.
@@ -39,6 +42,28 @@ export async function GET(req: Request) {
   if (authFailure) return authFailure;
 
   const { searchParams } = new URL(req.url);
+
+  // F3 apply-lifecycle poll: GET ?apply_id=… returns the take-effect status of
+  // a prior POST (status: pending | applied | rejected). When the hub tool
+  // isn't deployed it mock-returns `pending` — the client drives its own mock
+  // progression in that case, so it never actually polls this path.
+  const applyId = searchParams.get('apply_id');
+  if (applyId) {
+    try {
+      const res = await hubFetch(HUB_APPLY_STATUS_PATH(applyId));
+      if (res.ok && isJson(res)) return Response.json(await res.json());
+      return Response.json({ ok: true, mock: true, applyId, status: 'pending' });
+    } catch (e: unknown) {
+      return Response.json({
+        ok: true,
+        mock: true,
+        applyId,
+        status: 'pending',
+        _hubError: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+
   const nodeId = searchParams.get('node_id') || searchParams.get('alias') || '';
   if (!nodeId) return Response.json({ error: 'node_id or alias required' }, { status: 400 });
 
@@ -95,8 +120,9 @@ export async function POST(req: Request) {
     });
     if (res.ok && isJson(res)) return Response.json(await res.json());
     if (res.status === 404 || res.status === 501) {
-      // hub tool not deployed yet — flagged mock so the Save flow can develop.
-      return Response.json({ ok: true, mock: true, applied: false, node_id: nodeId, echo: payload });
+      // hub tool not deployed yet — flagged mock so the Save + apply flow can
+      // develop. `status: pending` + `applyId` let the client run its lifecycle.
+      return Response.json({ ok: true, mock: true, applied: false, status: 'pending', applyId: `mock-${nodeId}`, node_id: nodeId, echo: payload });
     }
     return Response.json({ ok: false, error: `hub ${res.status}`, status: res.status }, { status: 502 });
   } catch (e: unknown) {
@@ -104,6 +130,8 @@ export async function POST(req: Request) {
       ok: true,
       mock: true,
       applied: false,
+      status: 'pending',
+      applyId: `mock-${nodeId}`,
       node_id: nodeId,
       echo: payload,
       _hubError: e instanceof Error ? e.message : String(e),
