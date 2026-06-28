@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/stamp-build-commit.mjs",
     "start": "next start",
     "lint": "eslint",
     "app:android:init": "npx cap add android",
