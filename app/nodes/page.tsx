@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { timeAgo } from '../components/utils';
 import { useSessions, useHealth } from '../lib/hooks';
 import { TaskChatPanel } from '../components/TaskChatPanel';
+import { CreateNodeWizard } from '../components/CreateNodeWizard';
 import { EmptyState, NodesEmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
 import { useCollapsibleSearch } from '../components/CollapsibleSearch';
@@ -35,6 +36,7 @@ export default function NodesPage() {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [chatAlias, setChatAlias] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
   // #209 R32→R34: the WeChat-style magnifier-toggle search was hand-rolled
   // inline in R32. R34 extracted it to a shared hook so /nodes, /messages,
   // and any future search surface stay visually + behaviourally identical.
@@ -80,8 +82,22 @@ export default function NodesPage() {
             {sessions.length} total
           </span>
         </div>
-        <searchCtl.Button />
+        <div className="flex items-center gap-2 shrink-0">
+          {/* node-lifecycle M2: open the create-node wizard (RFC-026 §3.1 P1). */}
+          <button
+            type="button"
+            onClick={() => setShowCreate(true)}
+            aria-label="新建节点"
+            className="inline-flex items-center gap-1 rounded-lg border border-cyan-700/50 bg-cyan-900/15 px-3 py-1.5 text-sm font-medium text-cyan-300 hover:bg-cyan-900/25 transition-colors"
+          >
+            <span aria-hidden className="text-base leading-none">+</span>
+            <span className="hidden sm:inline">新建节点</span>
+          </button>
+          <searchCtl.Button />
+        </div>
       </div>
+
+      {showCreate && <CreateNodeWizard onClose={() => setShowCreate(false)} />}
 
       {/* #209 R34: shared <CollapsibleSearch> component handles row reveal,
           autofocus, Escape, and Cancel. enabled=sessions.length>0 hides
