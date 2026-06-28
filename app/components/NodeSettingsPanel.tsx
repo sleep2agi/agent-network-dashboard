@@ -72,14 +72,6 @@ const CHANNELS: { key: string; label: string; roadmap?: boolean; fields: { label
 ];
 
 // D. Node ops — still P2 no-op stubs this round. `danger` = destructive styling.
-const OPS: { label: string; danger?: boolean }[] = [
-  { label: '重启节点', danger: true },
-  { label: '停止节点' },
-  { label: '查看日志' },
-  { label: '重命名' },
-  { label: '新开会话 (reset session)' },
-  { label: '删除节点', danger: true },
-];
 
 // Editable flag form shape. Numeric fields are kept as strings for controlled
 // inputs and coerced (or dropped when blank) at save time.
@@ -252,6 +244,11 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
   const [phase, setPhase] = useState<ApplyPhase>('idle');
   const [phaseMsg, setPhaseMsg] = useState('');
   const [phaseMock, setPhaseMock] = useState(false);
+  // ---- M1 node lifecycle actions (restart wired to RFC-024 restart_node;
+  // rename/stop/delete gated on backend → shown as 即将支持). Self-contained,
+  // independent of the config apply lifecycle above.
+  const [lcBusy, setLcBusy] = useState(false);
+  const [lcResult, setLcResult] = useState<{ tone: 'info' | 'ok' | 'warn' | 'err'; text: string } | null>(null);
   // Outstanding lifecycle timers (mock progression, real poll, auto-dismiss);
   // cleared on unmount and at the start of each new save so a stale timer can't
   // overwrite a fresh result.
@@ -433,6 +430,35 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
     }
   }
 
+  async function handleRestart() {
+    if (lcBusy) return;
+    if (typeof window !== 'undefined' && !window.confirm(`重启节点「${s.alias}」？当前会话会中断，节点将以现有配置重新启动。`)) return;
+    setLcBusy(true);
+    setLcResult({ tone: 'info', text: '重启指令下发中…' });
+    try {
+      const r = await fetch('/api/anet/node-lifecycle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Pass the node's own network so multi-network users (whose default
+        // network may differ from this node's) restart the right node.
+        body: JSON.stringify({ node_id: nodeKey, action: 'restart', ...(s.network_id ? { network_id: s.network_id } : {}) }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!mounted.current) return;
+      if (r.ok && data?.ok) {
+        setLcResult({ tone: 'ok', text: '重启已下发，节点正在重启生效中…' });
+      } else if (data?.unconfirmed) {
+        setLcResult({ tone: 'warn', text: `后端工具未上线：${data?.error || 'restart_node 不可用'}` });
+      } else {
+        setLcResult({ tone: 'err', text: data?.error ? `重启失败：${data.error}` : '重启失败' });
+      }
+    } catch (e) {
+      if (mounted.current) setLcResult({ tone: 'err', text: `重启失败：${e instanceof Error ? e.message : '网络错误'}` });
+    } finally {
+      if (mounted.current) setLcBusy(false);
+    }
+  }
+
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} aria-hidden />
@@ -603,27 +629,56 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
             <p className="mt-2 text-[11px] text-gray-600">Channel 绑定为下一阶段（P2）· 当前仅展示，暂未接后端</p>
           </section>
 
-          {/* D. 运维 (P2 — no-op) */}
+          {/* D. 节点操作 (M1 lifecycle — restart wired to RFC-024 restart_node;
+              rename/stop/delete gated on backend, shown as 即将支持). */}
           <section>
-            <SectionTitle>运维</SectionTitle>
-            <div className="grid grid-cols-2 gap-2">
-              {OPS.map(op => (
-                <button
+            <SectionTitle>节点操作</SectionTitle>
+            <button
+              type="button"
+              onClick={handleRestart}
+              disabled={lcBusy}
+              className={`flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[13px] font-medium transition-colors ${
+                lcBusy
+                  ? 'border-[#26262b] bg-[#1c1c1f] text-gray-600 cursor-not-allowed'
+                  : 'border-amber-700/50 bg-amber-900/15 text-amber-300 hover:bg-amber-900/25'
+              }`}
+            >
+              {lcBusy && (
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              )}
+              重启节点
+            </button>
+            {lcResult && (() => {
+              const tone = lcResult.tone === 'ok' ? 'border-green-800/50 bg-green-900/15 text-green-300'
+                : lcResult.tone === 'warn' ? 'border-amber-700/50 bg-amber-900/15 text-amber-300'
+                : lcResult.tone === 'err' ? 'border-red-800/50 bg-red-900/15 text-red-300'
+                : 'border-[#26262b] bg-[#161618] text-gray-300';
+              return (
+                <div role="status" aria-live="polite" className={`mt-2 rounded-lg border px-3 py-2 text-[12px] ${tone}`}>
+                  {lcResult.text}
+                </div>
+              );
+            })()}
+            {/* Gated actions — backend not yet available (RFC-024 rename / RFC-027 stop+delete). */}
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {[{ label: '重命名' }, { label: '停止' }, { label: '删除', danger: true }].map(op => (
+                <div
                   key={op.label}
-                  type="button"
-                  // RED LINE: ops stay no-ops until their backend lands (#260/#262 P2).
-                  onClick={() => { /* UI stub — intentionally does nothing */ }}
-                  className={`rounded-lg border px-3 py-2 text-[12px] font-medium transition-colors ${
-                    op.danger
-                      ? 'border-red-800/50 bg-red-900/15 text-red-300 hover:bg-red-900/25'
-                      : 'border-[#26262b] bg-[#161618] text-gray-300 hover:bg-[#1c1c1f]'
+                  aria-disabled="true"
+                  title="后端待上线"
+                  className={`flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-2 text-[12px] cursor-not-allowed ${
+                    op.danger ? 'border-red-900/30 bg-red-900/[0.06] text-red-300/55' : 'border-[#26262b] bg-[#161618] text-gray-500'
                   }`}
                 >
                   {op.label}
-                </button>
+                  <span className="text-[9px] px-1 py-0.5 rounded bg-[#2a2a30] text-gray-400">即将支持</span>
+                </div>
               ))}
             </div>
-            <p className="mt-2 text-[11px] text-gray-600">运维操作为下一阶段（P2）· 暂未接后端，点击不会执行任何操作</p>
+            <p className="mt-2 text-[11px] text-gray-600">重启已接入后端；重命名 / 停止 / 删除待后端（RFC-024 改名 · RFC-027 停止/删除）上线。</p>
           </section>
         </div>
       </div>
