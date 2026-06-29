@@ -30,6 +30,28 @@ export function useSessions() {
   return { sessions: data?.sessions || [], hint: data?._hint, error, isLoading };
 }
 
+// RFC-027 PR2 — alias → lifecycle_state map sourced from /api/nodes
+// (commhub-server preview.12+). /api/status reads from `sessions` which
+// doesn't carry lifecycle_state; /api/nodes does. Cheap secondary
+// fetch, same SWR cadence as useSessions; merged client-side by alias.
+// Absent alias → caller defaults to 'active'.
+interface NodesResp { nodes?: Array<{ alias?: string; node_id?: string; lifecycle_state?: string | null }>; }
+export function useNodeLifecycle() {
+  const { networkId } = useNetworkId();
+  const { data, error } = useSWR<NodesResp>(
+    withNetwork('/api/hub/nodes', networkId),
+    fetcher,
+    SWR_OPTIONS,
+  );
+  const lifecycleByAlias: Record<string, string> = {};
+  const nodeIdByAlias: Record<string, string> = {};
+  for (const n of data?.nodes ?? []) {
+    if (n.alias && typeof n.lifecycle_state === 'string') lifecycleByAlias[n.alias] = n.lifecycle_state;
+    if (n.alias && typeof n.node_id === 'string') nodeIdByAlias[n.alias] = n.node_id;
+  }
+  return { lifecycleByAlias, nodeIdByAlias, error };
+}
+
 export function useHealth() {
   const { data, error } = useSWR<Health>('/api/hub/health', fetcher, SWR_OPTIONS);
   return { health: data || null, error };
