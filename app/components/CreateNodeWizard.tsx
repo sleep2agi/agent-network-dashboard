@@ -2,20 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import { useNetworkId } from '../lib/network-context';
+import { HostSupervisorPicker } from './HostSupervisorPicker';
 
 /**
- * Create-node wizard (node-lifecycle UI M2 — RFC-026 §3.1 P1, 本机创建).
- * 5 steps: ① name ② runtime ③ model ④ flags ⑤ confirm → POST /api/anet/node-create.
+ * Create-node wizard (node-lifecycle UI M2/PR4 — RFC-026 §3.1).
+ * 6 steps now: ⓪ host (PR4 #338) ① name ② runtime ③ model ④ flags ⑤ confirm
+ * → POST /api/anet/node-create with `daemon_node_id` set to the chosen host.
  *
- * ⚠️ Two contract gaps the submit path depends on (asked 通信龙/工程马):
- *   - node_spec.runtime enum: these ids (claude-agent-sdk / codex / grok) follow
- *     通信龙's spec, but the panel's RUNTIME_MODELS keys differ; confirm the exact
- *     values the backend expects, then adjust RUNTIMES below.
- *   - daemon_node_id: P1 is "本机". Until there's a way to resolve the local
- *     daemon's node_id, we omit it (the route omits when absent) and surface
- *     whatever the hub returns — never a fake success.
- * The route already returns a flagged `unconfirmed` when create_node isn't
- * available (e.g. test hub not on #299), so this UI degrades honestly.
+ * PR4 (#338 main lane PR4) folds RFC-026 §9.4 host_supervisor picker in front
+ * of the existing 5 steps. Three states the picker resolves internally:
+ *   - count=0 → onboarding (no daemon, show install command + block forward)
+ *   - count=1 → auto-pick + forward immediately
+ *   - count≥2 → user picks, then forward
+ * The wizard now ALWAYS passes daemon_node_id to /api/anet/node-create (the
+ * route's `resolveLocalDaemonNodeId` fallback only fires if daemon_node_id is
+ * absent — kept for back-compat with non-wizard callers but no longer used
+ * from this flow). Per [[feedback_doc_capability_claim_verify_code_path]] —
+ * the API contract is exercised locally before any prod hub touches the path.
  */
 
 const RUNTIMES: { id: string; label: string; models: string[] }[] = [
@@ -24,7 +27,7 @@ const RUNTIMES: { id: string; label: string; models: string[] }[] = [
   { id: 'grok', label: 'Grok', models: ['grok-build'] },
 ];
 const PERMISSION_MODES = ['auto', 'default', 'bypassPermissions'];
-const STEPS = ['名字', 'Runtime', '模型', '参数', '确认'];
+const STEPS = ['服务器', '名字', 'Runtime', '模型', '参数', '确认'];
 
 type Phase = 'form' | 'creating' | 'done' | 'unconfirmed' | 'error';
 
@@ -38,6 +41,7 @@ export function CreateNodeWizard({
   onCreated?: (result: unknown) => void;
 }) {
   const [step, setStep] = useState(0);
+  const [daemonNodeId, setDaemonNodeId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [runtimeId, setRuntimeId] = useState(RUNTIMES[0].id);
   const [model, setModel] = useState('');
@@ -84,7 +88,10 @@ export function CreateNodeWizard({
 
   const runtime = RUNTIMES.find(r => r.id === runtimeId) || RUNTIMES[0];
   const nameValid = name.trim().length > 0;
-  const canNext = step !== 0 || nameValid;
+  const canNext =
+    (step === 0 && Boolean(daemonNodeId)) ||      // step 0: must have chosen a daemon
+    (step === 1 && nameValid) ||                   // step 1: name non-empty
+    (step >= 2 && step < STEPS.length);            // later steps: nothing required to advance
   const busy = phase === 'creating';
 
   async function handleCreate() {
@@ -106,7 +113,11 @@ export function CreateNodeWizard({
       const r = await fetch('/api/anet/node-create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ node_spec, ...(networkId ? { network_id: networkId } : {}) }),
+        body: JSON.stringify({
+          node_spec,
+          ...(daemonNodeId ? { daemon_node_id: daemonNodeId } : {}),
+          ...(networkId ? { network_id: networkId } : {}),
+        }),
       });
       const data = await r.json().catch(() => ({}));
       if (r.ok && data?.ok) {
@@ -135,7 +146,9 @@ export function CreateNodeWizard({
       <div
         role="dialog"
         aria-label="新建节点"
-        className="fixed left-1/2 top-1/2 z-50 w-[min(92vw,440px)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#26262b] bg-[#161618] shadow-2xl"
+        // RFC-026 §9.4 responsive: mobile single-screen (full width minus
+        // gutter, taller); desktop ~3-col-friendly width when picker is shown.
+        className="fixed left-1/2 top-1/2 z-50 w-[min(94vw,440px)] md:w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#26262b] bg-[#161618] shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#26262b] px-4 py-3">
@@ -187,13 +200,28 @@ export function CreateNodeWizard({
           ) : (
             <>
               {step === 0 && (
+                <div className="space-y-2">
+                  <span className="text-xs text-gray-400">在哪台机器上创建</span>
+                  <HostSupervisorPicker
+                    networkId={netId || undefined}
+                    value={daemonNodeId}
+                    onChange={setDaemonNodeId}
+                  />
+                  {!daemonNodeId && (
+                    <p className="text-[11px] text-gray-600">
+                      没选服务器之前无法继续；如果列表是空的，按提示在目标机器上跑 <code className="rounded bg-black/40 px-1 py-0.5">anet daemon up &lt;name&gt;</code>。
+                    </p>
+                  )}
+                </div>
+              )}
+              {step === 1 && (
                 <label className="block space-y-1.5">
                   <span className="text-xs text-gray-400">节点名字</span>
                   <input autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="例如 my-agent-1" className={inputCls} />
                   {!nameValid && <span className="text-[11px] text-gray-600">名字不能为空</span>}
                 </label>
               )}
-              {step === 1 && (
+              {step === 2 && (
                 <div className="space-y-2">
                   <span className="text-xs text-gray-400">Runtime</span>
                   {RUNTIMES.map(r => (
@@ -215,7 +243,7 @@ export function CreateNodeWizard({
                   ))}
                 </div>
               )}
-              {step === 2 && (
+              {step === 3 && (
                 <label className="block space-y-1.5">
                   <span className="text-xs text-gray-400">模型（{runtime.label}）</span>
                   <select value={model} onChange={e => setModel(e.target.value)} className={inputCls}>
@@ -224,7 +252,7 @@ export function CreateNodeWizard({
                   </select>
                 </label>
               )}
-              {step === 3 && (
+              {step === 4 && (
                 <div className="space-y-3">
                   <label className="block space-y-1.5">
                     <span className="text-xs text-gray-400">permissionMode</span>
@@ -239,17 +267,23 @@ export function CreateNodeWizard({
                   </div>
                 </div>
               )}
-              {step === 4 && (
+              {step === 5 && (
                 <div className="space-y-2 text-sm">
                   <div className="rounded-md border border-[#26262b] bg-[#0e0e10] divide-y divide-[#1c1c1f]">
-                    {[['名字', name.trim() || '—'], ['Runtime', runtime.label], ['模型', model || '默认'], ['permissionMode', permissionMode], ['maxTurns / budget / timeout', `${maxTurns || '—'} / ${budget || '—'} / ${timeout || '—'}`]].map(([k, v]) => (
+                    {[
+                      ['服务器', daemonNodeId ? `${daemonNodeId.slice(0, 24)}…` : '—'],
+                      ['名字', name.trim() || '—'],
+                      ['Runtime', runtime.label],
+                      ['模型', model || '默认'],
+                      ['permissionMode', permissionMode],
+                      ['maxTurns / budget / timeout', `${maxTurns || '—'} / ${budget || '—'} / ${timeout || '—'}`],
+                    ].map(([k, v]) => (
                       <div key={k} className="flex items-start justify-between gap-3 px-3 py-2">
                         <span className="shrink-0 text-gray-500 text-xs">{k}</span>
                         <span className="text-right text-gray-200 text-xs break-all">{v}</span>
                       </div>
                     ))}
                   </div>
-                  <p className="text-[11px] text-gray-600">P1：创建在本机 daemon（绕过选服务器）。</p>
                 </div>
               )}
             </>
