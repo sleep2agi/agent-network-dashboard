@@ -59,7 +59,10 @@ export function HostSupervisorPicker({
 }: {
   networkId?: string | null;
   value: string | null;
-  onChange: (nodeId: string | null) => void;
+  // (#338 wizard-runtime-filter) passes the full daemon row alongside the
+  // id so the wizard can filter the Runtime step by daemon.runtimes_supported
+  // — disabling combos the hub would reject anyway and surfacing why upfront.
+  onChange: (nodeId: string | null, daemon: DaemonOption | null) => void;
 }) {
   const [state, setState] = useState<LoadState>('loading');
   const [daemons, setDaemons] = useState<DaemonOption[]>([]);
@@ -94,7 +97,7 @@ export function HostSupervisorPicker({
         setState('ready');
         // count=1 auto-pick: preselect the only daemon. count≥2 leaves the
         // selection to the user (parent value stays null until click).
-        if (list.length === 1 && !value) onChange(list[0].daemon_node_id);
+        if (list.length === 1 && !value) onChange(list[0].daemon_node_id, list[0]);
       })
       .catch(e => {
         if (!alive) return;
@@ -206,7 +209,7 @@ anet daemon up my-daemon`}</pre>
             key={d.daemon_node_id}
             daemon={d}
             selected={d.daemon_node_id === value}
-            onClick={() => onChange(d.daemon_node_id)}
+            onClick={() => onChange(d.daemon_node_id, d)}
           />
         ))}
       </div>
