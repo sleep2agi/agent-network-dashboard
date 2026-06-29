@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNetworkId } from '../lib/network-context';
-import { HostSupervisorPicker } from './HostSupervisorPicker';
+import { DaemonOption, HostSupervisorPicker } from './HostSupervisorPicker';
 
 /**
  * Create-node wizard (node-lifecycle UI M2/PR4 — RFC-026 §3.1).
@@ -42,6 +42,10 @@ export function CreateNodeWizard({
 }) {
   const [step, setStep] = useState(0);
   const [daemonNodeId, setDaemonNodeId] = useState<string | null>(null);
+  // (#338 wizard-runtime-filter) keep the full daemon row so the Runtime
+  // step can disable runtimes the chosen daemon doesn't declare support
+  // for. Hub-side enforcement still wins; this is UX surfacing.
+  const [daemon, setDaemon] = useState<DaemonOption | null>(null);
   const [name, setName] = useState('');
   const [runtimeId, setRuntimeId] = useState(RUNTIMES[0].id);
   const [model, setModel] = useState('');
@@ -205,7 +209,21 @@ export function CreateNodeWizard({
                   <HostSupervisorPicker
                     networkId={netId || undefined}
                     value={daemonNodeId}
-                    onChange={setDaemonNodeId}
+                    onChange={(id, d) => {
+                      setDaemonNodeId(id);
+                      setDaemon(d);
+                      // (#338 wizard-runtime-filter) If the current runtime
+                      // pick isn't supported by the new daemon, reset so
+                      // the user is forced to re-pick on step 2. Otherwise
+                      // they could land on step 5 (确认) with an
+                      // already-invalid combo that only hub rejection
+                      // surfaces.
+                      const supported = d?.runtimes_supported;
+                      if (supported && supported.length > 0 && !supported.includes(runtimeId)) {
+                        setRuntimeId(supported[0]);
+                        setModel('');
+                      }
+                    }}
                   />
                   {!daemonNodeId && (
                     <p className="text-[11px] text-gray-600">
@@ -223,24 +241,45 @@ export function CreateNodeWizard({
               )}
               {step === 2 && (
                 <div className="space-y-2">
-                  <span className="text-xs text-gray-400">Runtime</span>
-                  {RUNTIMES.map(r => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => { setRuntimeId(r.id); setModel(''); }}
-                      className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
-                        runtimeId === r.id ? 'border-cyan-600 bg-cyan-900/15 text-cyan-200' : 'border-[#26262b] bg-[#0e0e10] text-gray-300 hover:border-[#3a3a41]'
-                      }`}
-                    >
-                      {r.label}
-                      {runtimeId === r.id && (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                          <path d="M20 6 9 17l-5-5" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
+                  <span className="text-xs text-gray-400">
+                    Runtime{daemon ? `（${daemon.alias} 支持）` : ''}
+                  </span>
+                  {RUNTIMES.map(r => {
+                    // (#338 wizard-runtime-filter) Permissive when the
+                    // daemon didn't publish runtimes_supported at all
+                    // (pre-PR3 daemons OR daemons not yet upgraded) — hub
+                    // still validates. Restrictive only when the daemon
+                    // explicitly told us its supported set.
+                    const supported = daemon?.runtimes_supported;
+                    const disabled = Array.isArray(supported) && supported.length > 0 && !supported.includes(r.id);
+                    const selected = runtimeId === r.id;
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => { if (!disabled) { setRuntimeId(r.id); setModel(''); } }}
+                        title={disabled ? `${daemon?.alias || '该 daemon'} 未声明支持此 runtime` : undefined}
+                        className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
+                          disabled
+                            ? 'border-[#1c1c1f] bg-[#0a0a0c] text-gray-600 cursor-not-allowed'
+                            : selected
+                              ? 'border-cyan-600 bg-cyan-900/15 text-cyan-200'
+                              : 'border-[#26262b] bg-[#0e0e10] text-gray-300 hover:border-[#3a3a41]'
+                        }`}
+                      >
+                        <span>
+                          {r.label}
+                          {disabled && <span className="ml-2 text-[10px] text-gray-700">该 daemon 不支持</span>}
+                        </span>
+                        {selected && !disabled && (
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
               {step === 3 && (
