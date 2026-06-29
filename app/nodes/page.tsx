@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { timeAgo } from '../components/utils';
-import { useSessions, useHealth } from '../lib/hooks';
+import { useSessions, useHealth, useNodeLifecycle } from '../lib/hooks';
+import { useSWRConfig } from 'swr';
 import { TaskChatPanel } from '../components/TaskChatPanel';
 import { CreateNodeWizard } from '../components/CreateNodeWizard';
+import { NodeLifecycleMenu } from '../components/NodeLifecycleMenu';
 import { EmptyState, NodesEmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
 import { useCollapsibleSearch } from '../components/CollapsibleSearch';
@@ -26,7 +28,16 @@ type SessionRow = Session & { online: boolean };
 export default function NodesPage() {
   const { sessions, isLoading: loading } = useSessions();
   const { health } = useHealth();
+  const { lifecycleByAlias, nodeIdByAlias } = useNodeLifecycle();
   const { hasUnread } = useChatUnread();
+  const { mutate } = useSWRConfig();
+  // RFC-027 PR2 — after a stop/delete/restart dispatch lands, refresh
+  // /api/hub/nodes (lifecycle_state) AND /api/hub/status (sessions).
+  // Both feed the menu's state-aware items; otherwise menu stays
+  // stale until next 5s SWR poll.
+  const refreshNodes = () => {
+    mutate((k: unknown) => typeof k === 'string' && (k.startsWith('/api/hub/nodes') || k.startsWith('/api/hub/status')));
+  };
   const sseMap = health?.sse_sessions || {};
   // SSE keys are `network_id:alias` since server v0.7+. Look up with the
   // composite key first, fall back to alias-only for legacy hubs.
@@ -215,6 +226,16 @@ export default function NodesPage() {
                     </div>
                   </div>
                   <span className="hidden shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[10px] text-cyan-300/70 sm:inline">Tap to chat</span>
+                  {/* RFC-027 PR2 — per-node ⋮ lifecycle menu. The button stopsPropagation
+                      internally so it doesn't open chat. lifecycleByAlias absent → 'active'
+                      default, menu renders normal stop/delete options. */}
+                  <NodeLifecycleMenu
+                    nodeId={nodeIdByAlias[s.alias] || s.node_id || s.alias}
+                    alias={s.alias}
+                    lifecycleState={lifecycleByAlias[s.alias]}
+                    networkId={s.network_id || null}
+                    onCompleted={refreshNodes}
+                  />
                 </div>
 
                 <div className="mt-3 rounded-lg border border-[#1c1c1f] bg-[#0e0e10] px-3 py-2 text-xs">
@@ -282,7 +303,18 @@ export default function NodesPage() {
                     <span className="truncate">{s.agent || '--'}<span className="text-gray-700 mx-1.5">·</span>{shortServer(s.server)}</span>
                   </div>
                   <div className="col-span-4 truncate text-xs text-gray-500" title={s.task || ''}>{s.task || '--'}</div>
-                  <div className="col-span-1 text-xs text-gray-500">{timeAgo(s.last_seen_at || s.updated_at)}</div>
+                  <div className="col-span-1 flex items-center justify-between gap-2 text-xs text-gray-500">
+                    <span className="truncate">{timeAgo(s.last_seen_at || s.updated_at)}</span>
+                    {/* RFC-027 PR2 ⋮ lifecycle menu — desktop list. Defaults
+                        to 'active' when lifecycleByAlias absent. */}
+                    <NodeLifecycleMenu
+                      nodeId={nodeIdByAlias[s.alias] || s.node_id || s.alias}
+                      alias={s.alias}
+                      lifecycleState={lifecycleByAlias[s.alias]}
+                      networkId={s.network_id || null}
+                      onCompleted={refreshNodes}
+                    />
+                  </div>
                 </div>
                 {/* R7 of #190: mobile node row was ~340px tall × ~150
                     rows = the 51k page. Wins this round, in priority
@@ -307,6 +339,14 @@ export default function NodesPage() {
                     <span className={`shrink-0 text-xs px-2 py-0.5 rounded-md border ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
                       {statusKey}
                     </span>
+                    {/* RFC-027 PR2 ⋮ lifecycle menu — mobile list. */}
+                    <NodeLifecycleMenu
+                      nodeId={nodeIdByAlias[s.alias] || s.node_id || s.alias}
+                      alias={s.alias}
+                      lifecycleState={lifecycleByAlias[s.alias]}
+                      networkId={s.network_id || null}
+                      onCompleted={refreshNodes}
+                    />
                   </div>
                   {s.task && <div className="truncate text-xs text-gray-500">{s.task}</div>}
                 </div>

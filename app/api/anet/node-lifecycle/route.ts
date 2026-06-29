@@ -29,15 +29,29 @@ import { callMcp, parseMcpEnvelope, resolveDefaultNetworkId } from '@/app/lib/hu
 
 const MCP_TOOL_RESTART = 'restart_node';
 const MCP_TOOL_RENAME = 'rename_node'; // ⚠️ Q1 — confirm hub-side tool name before relying on this
+// RFC-027 PR2 — stop/delete lifecycle. daemon_node_id is auto-resolved
+// hub-side from child_node_id (PR2 prereq); dashboard doesn't pass it.
+const MCP_TOOL_STOP = 'stop_node';
+const MCP_TOOL_DELETE = 'delete_node';
 
-const ACTIONS = ['restart', 'rename'] as const;
+const ACTIONS = ['restart', 'rename', 'stop', 'delete'] as const;
 type Action = (typeof ACTIONS)[number];
 
 export async function POST(req: Request) {
   const authFailure = await requireDashboardAuth();
   if (authFailure) return authFailure;
 
-  let body: { node_id?: string; action?: string; new_name?: string; network_id?: string };
+  let body: {
+    node_id?: string;
+    action?: string;
+    new_name?: string;
+    network_id?: string;
+    // RFC-027 PR2 stop/delete:
+    confirm_alias?: string;     // delete only — must equal node alias byte-exact
+    force?: boolean;             // both — override in-flight refuse + audit
+    grace_seconds?: number;      // both — SIGTERM grace before SIGKILL (5-60s, default 10)
+    delete_config?: boolean;     // delete only — false keeps config dir, default true backs up
+  };
   try {
     body = await req.json();
   } catch {
@@ -65,18 +79,53 @@ export async function POST(req: Request) {
 
   if (action === 'restart') {
     tool = MCP_TOOL_RESTART;
-  } else {
-    // rename
+  } else if (action === 'rename') {
     const newName = (body.new_name || '').trim();
     if (!newName) return Response.json({ error: 'new_name required for rename' }, { status: 400 });
     tool = MCP_TOOL_RENAME;
     args.new_name = newName;
+  } else if (action === 'stop') {
+    // RFC-027 §2.2 stop_node. daemon_node_id auto-resolves hub-side.
+    tool = MCP_TOOL_STOP;
+    args.child_node_id = nodeId;
+    delete args.node_id;
+    if (body.force === true) args.force = true;
+    if (typeof body.grace_seconds === 'number') args.grace_seconds = body.grace_seconds;
+  } else if (action === 'delete') {
+    // RFC-027 §2.2 delete_node. confirm_alias REQUIRED + must match.
+    const confirmAlias = (body.confirm_alias || '').trim();
+    if (!confirmAlias) return Response.json({ error: 'confirm_alias required for delete (must equal node alias)' }, { status: 400 });
+    tool = MCP_TOOL_DELETE;
+    args.child_node_id = nodeId;
+    delete args.node_id;
+    args.confirm_alias = confirmAlias;
+    if (body.force === true) args.force = true;
+    if (typeof body.grace_seconds === 'number') args.grace_seconds = body.grace_seconds;
+    if (body.delete_config === false) args.delete_config = false;
+  } else {
+    // exhaustive; the ACTIONS check above catches unknown actions first
+    return Response.json({ error: `unhandled action: ${action}` }, { status: 500 });
   }
 
   try {
     const res = await callMcp(tool, args);
     if (res.ok) {
-      const result = await parseMcpEnvelope(res);
+      const result = await parseMcpEnvelope(res) as Record<string, unknown>;
+      // RFC-027 PR2 (通信龙 explicit): structured errors from the hub tool
+      // payload (node_not_active / cannot_delete_daemon / node_busy_in_flight
+      // / confirm_alias_mismatch / forbidden_cross_tenant ...) MUST surface
+      // as-is to the user — don't wrap them as outer ok:true with a hidden
+      // result.ok:false. Promote the inner ok + error to the outer envelope
+      // so the dashboard can render the real message.
+      if (result && typeof result === 'object' && (result as { ok?: boolean }).ok === false) {
+        // Bubble hub's structured payload to a 409 (action refused, e.g.
+        // in-flight/cross-tenant/wrong-confirm) so the dashboard can branch
+        // on error code without parsing 200-with-ok:false.
+        return Response.json(
+          { ...result, action, node_id: nodeId },
+          { status: 409 },
+        );
+      }
       return Response.json({ ok: true, action, node_id: nodeId, result });
     }
     // Hub reached but tool not available (e.g. rename_node not deployed yet → Q1).
