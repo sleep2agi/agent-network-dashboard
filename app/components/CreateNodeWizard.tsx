@@ -21,12 +21,19 @@ import { DaemonOption, HostSupervisorPicker } from './HostSupervisorPicker';
  * the API contract is exercised locally before any prod hub touches the path.
  */
 
+// IDs MUST match the hub validator enums (server/src/create-node-validate.ts).
+// Caught via local /mcp probe during mobile wizard build (#338 plan B):
+// pre-fix RUNTIMES had 'codex' + 'grok' but hub accepts 'codex-sdk' +
+// 'grok-build-acp'; pre-fix PERMISSION_MODES had 'auto' but hub rejects it
+// (flag_value_invalid). The wizard has been silently shipping invalid combos
+// for any non-claude-agent-sdk pick since M2 — only worked end-to-end with
+// the default claude path.
 const RUNTIMES: { id: string; label: string; models: string[] }[] = [
   { id: 'claude-agent-sdk', label: 'Claude Agent SDK', models: ['deepseek-v4-pro', 'MiniMax-M3', 'claude-sonnet-4-6', 'claude-opus-4-x'] },
-  { id: 'codex', label: 'Codex', models: ['gpt-5.5'] },
-  { id: 'grok', label: 'Grok', models: ['grok-build'] },
+  { id: 'codex-sdk', label: 'Codex SDK', models: ['gpt-5.5'] },
+  { id: 'grok-build-acp', label: 'Grok (build-acp)', models: ['grok-build'] },
 ];
-const PERMISSION_MODES = ['auto', 'default', 'bypassPermissions'];
+const PERMISSION_MODES = ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
 const STEPS = ['服务器', '名字', 'Runtime', '模型', '参数', '确认'];
 
 type Phase = 'form' | 'creating' | 'done' | 'unconfirmed' | 'error';
@@ -49,7 +56,7 @@ export function CreateNodeWizard({
   const [name, setName] = useState('');
   const [runtimeId, setRuntimeId] = useState(RUNTIMES[0].id);
   const [model, setModel] = useState('');
-  const [permissionMode, setPermissionMode] = useState('auto');
+  const [permissionMode, setPermissionMode] = useState('default');
   const [maxTurns, setMaxTurns] = useState('');
   const [budget, setBudget] = useState('');
   const [timeout, setTimeout] = useState('');
