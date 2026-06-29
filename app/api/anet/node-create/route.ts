@@ -15,19 +15,28 @@ async function resolveLocalDaemonNodeId(): Promise<string | null> {
     const raw = data.nodes ?? data.sessions ?? data;
     const list = Array.isArray(raw) ? raw : raw && typeof raw === 'object' ? Object.values(raw) : [];
     const arr = list as Array<Record<string, unknown>>;
-    // Preferred: explicit role (when the hub exposes it on /api/nodes — TODO
-    // 工程马: /api/nodes currently strips role/daemon_capabilities from
-    // config_snapshot, so the explicit check below rarely fires).
+    // PRIMARY — server-extracted `role` field (sleep2agi/agent-network PR
+    // fix/api-nodes-role-field). Hub reads role from config_snapshot JSON
+    // and exposes it as a top-level row field. Works for ANY daemon node_id
+    // (user-created or otherwise), not just the `node_daemon_` prefix.
     for (const n of arr) {
       if (!n || typeof n !== 'object') continue;
       if (n.role === 'host_supervisor') return String(n.node_id || '');
+    }
+    // LEGACY config_snapshot path — for any older hub that still passes
+    // through the raw snapshot blob (no longer the case post-#312, but
+    // defensive). Cheap, no extra round-trip.
+    for (const n of arr) {
+      if (!n || typeof n !== 'object') continue;
       const snapRaw = n.config_snapshot;
       if (typeof snapRaw === 'string') {
         try { if (JSON.parse(snapRaw)?.role === 'host_supervisor') return String(n.node_id || ''); } catch { /* skip */ }
       }
     }
-    // P1 heuristic fallback: host-supervisor daemons get a `node_daemon_` id
-    // prefix (per the create-node contract); pick the first online such node.
+    // LAST-RESORT heuristic — pre-role-field hubs (preview2.4 and older):
+    // host_supervisor daemons started via the RFC-026 docker e2e get a
+    // `node_daemon_` id prefix. User-created daemons (any node_id) won't
+    // match here; they need the `role` field (hub post fix/api-nodes-role-field).
     const daemon = arr.find(n => n && typeof n === 'object' && String(n.node_id || '').startsWith('node_daemon_'));
     if (daemon) return String(daemon.node_id || '');
   } catch { /* fall through */ }
