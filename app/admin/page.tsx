@@ -171,7 +171,9 @@ export default function AdminPage() {
                 <AliasAvatar alias={s.alias} size={20} />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-white font-medium truncate">{s.alias}</div>
-                  <div className="text-xs text-gray-500 truncate">{s.agent || '--'} · {s.task || 'idle'}</div>
+                  {/* Show the current task only when present; an idle session's
+                      status is already on the chip → drop the redundant "· idle". */}
+                  <div className="text-xs text-gray-500 truncate">{s.agent || '--'}{s.task ? ` · ${s.task}` : ''}</div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {/* Round 91: 5-state palette via shared
