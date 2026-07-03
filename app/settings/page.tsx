@@ -269,6 +269,11 @@ export default function SettingsPage() {
             <p className="text-xs text-gray-500 mt-2">Create, manage, and delete agent networks.</p>
             <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
           </Link>
+          <Link href="/settings/providers" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
+            <h2 className="text-sm font-semibold text-gray-300">Model Providers</h2>
+            <p className="text-xs text-gray-500 mt-2">Configure model providers and per-server reachability.</p>
+            <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
+          </Link>
           <Link href="/messages" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
             <h2 className="text-sm font-semibold text-gray-300">Messages</h2>
             <p className="text-xs text-gray-500 mt-2">Global timeline of CommHub messages across all agents.</p>
