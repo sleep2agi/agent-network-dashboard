@@ -33,6 +33,12 @@ const EDITABLE_FLAGS = [
   'timeout',
 ] as const;
 
+// #260 channel edit — the panel toggles enable/disable for these keys only.
+// Per-channel secrets (bot token / app secret / allowFrom) stay in the node's
+// local config.json, never on the wire from the UI. WeChat is roadmap-only in
+// the panel and intentionally not listed here.
+const EDITABLE_CHANNELS = ['telegram', 'feishu', 'commhub'] as const;
+
 function isJson(res: Response): boolean {
   return (res.headers.get('content-type') || '').includes('application/json');
 }
@@ -72,7 +78,7 @@ export async function GET(req: Request) {
     if (res.ok && isJson(res)) return Response.json(await res.json());
     // backend not ready (404/501/non-JSON) → flagged empty snapshot so the
     // panel can initialise its form and develop the save flow.
-    return Response.json({ ok: true, mock: true, node_id: nodeId, model: null, flags: {} });
+    return Response.json({ ok: true, mock: true, node_id: nodeId, model: null, flags: {}, channels: [] });
   } catch (e: unknown) {
     return Response.json({
       ok: true,
@@ -80,6 +86,7 @@ export async function GET(req: Request) {
       node_id: nodeId,
       model: null,
       flags: {},
+      channels: [],
       _hubError: e instanceof Error ? e.message : String(e),
     });
   }
@@ -89,7 +96,7 @@ export async function POST(req: Request) {
   const authFailure = await requireDashboardAuth();
   if (authFailure) return authFailure;
 
-  let body: { node_id?: string; alias?: string; model?: unknown; flags?: Record<string, unknown> };
+  let body: { node_id?: string; alias?: string; model?: unknown; flags?: Record<string, unknown>; channels?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -106,10 +113,27 @@ export async function POST(req: Request) {
       if (k in body.flags && body.flags[k] !== undefined) flags[k] = body.flags[k];
     }
   }
+  // Whitelist channels — accept string[] of EDITABLE_CHANNELS keys only. Any
+  // other shape or key is dropped, so the panel can never smuggle a secret
+  // payload or an unknown channel name to the hub.
+  let channels: string[] | undefined;
+  if (Array.isArray(body.channels)) {
+    const allow = new Set<string>(EDITABLE_CHANNELS);
+    const seen = new Set<string>();
+    channels = [];
+    for (const c of body.channels) {
+      if (typeof c !== 'string') continue;
+      const key = c.trim().toLowerCase();
+      if (!allow.has(key) || seen.has(key)) continue;
+      seen.add(key);
+      channels.push(key);
+    }
+  }
   const payload = {
     node_id: nodeId,
     ...(body.model !== undefined ? { model: body.model } : {}),
     flags,
+    ...(channels !== undefined ? { channels } : {}),
   };
 
   try {
