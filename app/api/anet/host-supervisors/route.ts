@@ -1,5 +1,6 @@
 import { requireDashboardAuth } from '@/app/lib/dashboard-auth';
 import { hubFetch } from '@/app/lib/hub';
+import { resolveDefaultNetworkId } from '@/app/lib/hub-mcp';
 
 /**
  * PR4 #338 — proxy GET /api/host-supervisors (RFC-026 §9.2 / list_host_supervisors
@@ -47,7 +48,22 @@ export async function GET(req: Request) {
   if (authFailure) return authFailure;
 
   const { searchParams } = new URL(req.url);
-  const networkId = searchParams.get('network_id');
+  // #338 GA-blocker (2026-07-04, 通信龙 catch): hub /api/host-supervisors
+  // (post-#380) requires an explicit network_id for admin utok callers —
+  // admin membership spans networks, so hub refuses to guess ("400
+  // missing_network_id"). The create-node wizard's picker forwards the
+  // NetworkProvider context value verbatim, and on first-load (before
+  // sessionStorage rehydrates) that value is the empty string → the
+  // picker sends the query without network_id → hub 400 → wizard stuck
+  // at step 1 for every admin. Fall back to resolveDefaultNetworkId
+  // here rather than propagate the 400 to the picker UI; empty context
+  // is a first-load reality, not a user error. #381 hub-side single-
+  // network fallback covers the same case for non-admin utoks — this
+  // fixes the admin path symmetrically.
+  let networkId = searchParams.get('network_id');
+  if (!networkId) {
+    networkId = await resolveDefaultNetworkId();
+  }
   const path = networkId
     ? `/api/host-supervisors?network_id=${encodeURIComponent(networkId)}`
     : '/api/host-supervisors';
