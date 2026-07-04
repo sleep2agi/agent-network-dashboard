@@ -8,18 +8,22 @@ import { AliasAvatar } from './AliasAvatar';
  * Per-node settings panel (issue #260 → v0.11 flagship #262, Vincent tg
  * 2026-06-24, "must actually work").
  *
- * STATUS (F1/F2/F3, 通信龙 review round 2):
- *  - **Wired (real)**: B Runtime·模型 model select + C 运行模式 flags
- *    (permissionMode / dangerouslySkipPermissions / teammateMode / maxTurns /
- *    budget / timeout). Controlled form state, loaded on mount from
- *    `GET /api/anet/node-config` and persisted via `POST`. The six flags +
- *    model are the editable contract 通信龙 specified.
+ * STATUS (F1/F2/F3 + A channel edit, 通信龙 review round 3):
+ *  - **Wired (real)**: A 接入 Channel enable/disable + B Runtime·模型 model
+ *    select + C 运行模式 flags (permissionMode / dangerouslySkipPermissions /
+ *    teammateMode / maxTurns / budget / timeout). Controlled form state,
+ *    loaded on mount from `GET /api/anet/node-config` and persisted via
+ *    `POST`. The seven editable knobs are the contract 通信龙 specified.
  *  - **F3 apply lifecycle**: after Save the panel runs a take-effect state
  *    machine — saving → applying (node restarting) → applied | rejected |
  *    timeout — polling `GET ?apply_id` for real backends and showing a colored
  *    status strip ("toast") for the outcome.
- *  - **Still P2 stub (disabled)**: A 接入 Channel (display-only) and D 运维
- *    ops buttons (no-op), each with its own local "暂未接后端" note.
+ *  - **Channel red-line**: only the on/off flip is on the wire. Per-channel
+ *    bot token / app secret / allowFrom stay in the node's local config.json
+ *    and are shown here as masked read-only (StubField). Editing a secret
+ *    from the dashboard is a separate vault-backed feature (#393-adjacent).
+ *  - **Still P2 stub**: D 运维 ops buttons other than restart (rename/stop/
+ *    delete) — gated on RFC-024 rename + RFC-027 stop/delete backends.
  *
  * ⚠️ The hub-side tool is not deployed yet (工程马 WIP): the route mock-falls
  * back with `mock: true` + `status: pending`, so the lifecycle is *simulated*
@@ -41,7 +45,10 @@ const RUNTIME_MODELS: Record<string, string[]> = {
 // booleans; three numeric bounds. These six are the entire editable flag set.
 const PERMISSION_MODES = ['auto', 'default', 'bypassPermissions'];
 
-// A. Channel display (P2 — read-only this round). `roadmap` = greyed "即将支持".
+// A. Channel bindings — enable/disable is editable; the per-channel secret
+// fields below stay read-only (`StubField`, masked). `roadmap` = greyed "即将
+// 支持". Keep this list in sync with EDITABLE_CHANNELS in
+// app/api/anet/node-config/route.ts (server-side whitelist).
 const CHANNELS: { key: string; label: string; roadmap?: boolean; fields: { label: string; value?: string }[] }[] = [
   {
     key: 'telegram', label: 'Telegram',
@@ -59,13 +66,6 @@ const CHANNELS: { key: string; label: string; roadmap?: boolean; fields: { label
       { label: '允许的 open_id (allowFrom)', value: '—' },
       { label: '允许的群 chat_id (allowChats)', value: '—' },
       { label: '群触发策略', value: 'mention' },
-    ],
-  },
-  {
-    key: 'commhub', label: 'CommHub',
-    fields: [
-      { label: 'Hub 地址', value: '<hub-address>' },
-      { label: '节点 token（自动）', value: '••••••••' },
     ],
   },
   { key: 'wechat', label: 'WeChat', roadmap: true, fields: [] },
@@ -223,7 +223,6 @@ function NumberField({ label, value, onChange, placeholder }: { label: string; v
 }
 
 export function NodeSettingsPanel({ session: s, onClose }: { session: Session; onClose: () => void }) {
-  const active = channelSet(s.channels);
   const runtime = s.runtime || '—';
   const initialModel = s.model || s.agent || '';
   // imageCapable: read-only, auto from model (MiniMax-M3 / Claude = yes).
@@ -235,9 +234,13 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
 
   const nodeKey = s.node_id || s.alias;
 
-  // ---- Editable form state (B model + C flags) ----
+  // ---- Editable form state (A channels + B model + C flags) ----
   const [model, setModel] = useState(initialModel);
   const [flags, setFlags] = useState<FlagsForm>(DEFAULT_FLAGS);
+  // Enabled channel keys — Set for O(1) toggle, serialized to array at save.
+  // Seeded from the session prop so the panel renders coherent state before
+  // the load effect resolves; hub snapshot overrides once available.
+  const [channels, setChannels] = useState<Set<string>>(() => channelSet(s.channels));
   const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
   // ---- F3 apply lifecycle ----
@@ -260,9 +263,16 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
   const after = useCallback((ms: number, fn: () => void) => {
     timersRef.current.push(setTimeout(fn, ms));
   }, []);
-  // Avoid setState after unmount (panel closes mid-request).
+  // Avoid setState after unmount (panel closes mid-request). Set the flag on
+  // each mount as well as clear on unmount — React strict-mode double-invokes
+  // effects in dev, which without the mount reset would leave mounted=false
+  // after the second attach and starve every subsequent state update (the
+  // loading spinner would never resolve, blocking the whole panel).
   const mounted = useRef(true);
-  useEffect(() => () => { mounted.current = false; clearTimers(); }, [clearTimers]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; clearTimers(); };
+  }, [clearTimers]);
 
   // Monotonic run id, bumped on every save. Each async lifecycle callback
   // captures the run id it belongs to and bails if a newer save superseded it —
@@ -286,6 +296,16 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
     setDirty(true);
   }, []);
 
+  const toggleChannel = useCallback((key: string) => {
+    setChannels(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+    setDirty(true);
+  }, []);
+
   // Load current config on mount. Falls back to session-derived defaults when
   // the hub tool isn't deployed (route returns mock with empty flags).
   useEffect(() => {
@@ -305,6 +325,13 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
           budget: numStr(f.budget),
           timeout: numStr(f.timeout),
         });
+        // Channels: prefer hub snapshot when present (authoritative). If the
+        // field is absent (older hub or contract not deployed), keep the
+        // session-derived seed so users aren't shown an empty list on nodes
+        // that clearly have channels wired.
+        if (Array.isArray(data?.channels)) {
+          setChannels(new Set(data.channels.filter((c: unknown): c is string => typeof c === 'string').map((c: string) => c.trim().toLowerCase())));
+        }
       } catch {
         // keep defaults — Save still works (mock path) so the UI is reviewable
       } finally {
@@ -382,6 +409,7 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
         budget: numOrUndef(flags.budget),
         timeout: numOrUndef(flags.timeout),
       },
+      channels: Array.from(channels).sort(),
     };
     let data: { ok?: boolean; error?: string; mock?: boolean; applied?: boolean; status?: string; applyId?: string } = {};
     try {
@@ -560,7 +588,7 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
               const btnLabel = phase === 'saving' ? '保存中…'
                 : phase === 'applying' ? '应用中…'
                 : loading ? '加载中…'
-                : dirty ? '保存模型 / flags'
+                : dirty ? '保存设置'
                 : '无改动';
               return (
                 <button
@@ -605,28 +633,41 @@ export function NodeSettingsPanel({ session: s, onClose }: { session: Session; o
             )}
           </section>
 
-          {/* A. 接入 Channel (P2 — display only) */}
+          {/* A. 接入 Channel — enable/disable editable; per-channel secrets
+              stay masked read-only (bot token / app secret / allowFrom live in
+              the node's local config.json, not on the wire from this UI). */}
           <section>
             <SectionTitle>接入 Channel</SectionTitle>
             <div className="space-y-2">
-              {CHANNELS.map(ch => (
-                <div key={ch.key} className={`rounded-lg border border-[#26262b] bg-[#161618] ${ch.roadmap ? 'opacity-50' : ''}`}>
-                  <label className="flex items-center justify-between px-3 py-2 text-sm text-gray-300 cursor-not-allowed">
-                    <span className="flex items-center gap-2">
-                      {ch.label}
-                      {ch.roadmap && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#2a2a30] text-gray-400">即将支持</span>}
-                    </span>
-                    <input type="checkbox" checked={!ch.roadmap && active.has(ch.key)} disabled readOnly className="h-4 w-4 accent-cyan-500 cursor-not-allowed" />
-                  </label>
-                  {!ch.roadmap && active.has(ch.key) && ch.fields.length > 0 && (
-                    <div className="px-3 pb-3 pt-1 space-y-2 border-t border-[#1c1c1f]">
-                      {ch.fields.map(f => <StubField key={f.label} label={f.label} value={f.value} />)}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {CHANNELS.map(ch => {
+                const enabled = channels.has(ch.key);
+                const editable = !ch.roadmap && !loading;
+                return (
+                  <div key={ch.key} className={`rounded-lg border border-[#26262b] bg-[#161618] ${ch.roadmap ? 'opacity-50' : ''}`}>
+                    <label className={`flex items-center justify-between px-3 py-2 text-sm text-gray-300 ${editable ? 'cursor-pointer hover:bg-[#1a1a1d]' : 'cursor-not-allowed'}`}>
+                      <span className="flex items-center gap-2">
+                        {ch.label}
+                        {ch.roadmap && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#2a2a30] text-gray-400">即将支持</span>}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={!ch.roadmap && enabled}
+                        onChange={editable ? () => toggleChannel(ch.key) : undefined}
+                        disabled={!editable}
+                        aria-label={`${editable ? '启用/关闭' : '（暂不可切换）'} ${ch.label}`}
+                        className={`h-4 w-4 accent-cyan-500 ${editable ? '' : 'cursor-not-allowed'}`}
+                      />
+                    </label>
+                    {!ch.roadmap && enabled && ch.fields.length > 0 && (
+                      <div className="px-3 pb-3 pt-1 space-y-2 border-t border-[#1c1c1f]">
+                        {ch.fields.map(f => <StubField key={f.label} label={f.label} value={f.value} />)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <p className="mt-2 text-[11px] text-gray-600">Channel 绑定为下一阶段（P2）· 当前仅展示，暂未接后端</p>
+            <p className="mt-2 text-[11px] text-gray-600">勾选启用/关闭该 Channel；per-channel 的 token / secret / allowFrom 仍保存在节点本地 config.json，不在此处编辑。</p>
           </section>
 
           {/* D. 节点操作 (M1 lifecycle — restart wired to RFC-024 restart_node;
