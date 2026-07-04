@@ -28,10 +28,17 @@ import { DaemonOption, HostSupervisorPicker } from './HostSupervisorPicker';
 // (flag_value_invalid). The wizard has been silently shipping invalid combos
 // for any non-claude-agent-sdk pick since M2 — only worked end-to-end with
 // the default claude path.
-const RUNTIMES: { id: string; label: string; models: string[] }[] = [
-  { id: 'claude-agent-sdk', label: 'Claude Agent SDK', models: ['deepseek-v4-pro', 'MiniMax-M3', 'claude-sonnet-4-6', 'claude-opus-4-x'] },
-  { id: 'codex-sdk', label: 'Codex SDK', models: ['gpt-5.5'] },
-  { id: 'grok-build-acp', label: 'Grok (build-acp)', models: ['grok-build'] },
+//
+// `defaultModel` — hub's `create_node.node_spec.model` schema is
+// `z.string().min(1).max(100)`; the wizard's "默认" option leaves the state
+// empty, so pre-fix the POST body dropped `model` entirely and hub rejected
+// with `Invalid input: expected string, received undefined`. `defaultModel`
+// gets substituted before submit (and shown in the dropdown label so the
+// operator knows what "默认" will actually become).
+const RUNTIMES: { id: string; label: string; models: string[]; defaultModel: string }[] = [
+  { id: 'claude-agent-sdk', label: 'Claude Agent SDK', models: ['deepseek-v4-pro', 'MiniMax-M3', 'claude-sonnet-4-6', 'claude-opus-4-x'], defaultModel: 'claude-sonnet-4-6' },
+  { id: 'codex-sdk', label: 'Codex SDK', models: ['gpt-5.5'], defaultModel: 'gpt-5.5' },
+  { id: 'grok-build-acp', label: 'Grok (build-acp)', models: ['grok-build'], defaultModel: 'grok-build' },
 ];
 const PERMISSION_MODES = ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
 const STEPS = ['服务器', '名字', 'Runtime', '模型', '参数', '确认'];
@@ -109,10 +116,16 @@ export function CreateNodeWizard({
     setPhase('creating');
     setMsg('');
     const numOrUndef = (v: string) => (v.trim() === '' ? undefined : Number(v));
+    // Hub's create_node.node_spec.model schema is z.string().min(1); the
+    // wizard's "默认" option leaves state empty, so pick the runtime's
+    // documented default here. This mirrors what agent-node itself defaults
+    // to at boot (see agent-node cli.ts model resolution), so the "默认"
+    // dropdown label + this fallback both point at the same model.
+    const effectiveModel = model || runtime.defaultModel;
     const node_spec = {
       name: name.trim(),
       runtime: runtimeId,
-      ...(model ? { model } : {}),
+      model: effectiveModel,
       flags: {
         permissionMode,
         maxTurns: numOrUndef(maxTurns),
@@ -293,7 +306,7 @@ export function CreateNodeWizard({
                 <label className="block space-y-1.5">
                   <span className="text-xs text-gray-400">模型（{runtime.label}）</span>
                   <select value={model} onChange={e => setModel(e.target.value)} className={inputCls}>
-                    <option value="">默认</option>
+                    <option value="">默认（{runtime.defaultModel}）</option>
                     {runtime.models.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </label>
@@ -320,7 +333,7 @@ export function CreateNodeWizard({
                       ['服务器', daemonNodeId ? `${daemonNodeId.slice(0, 24)}…` : '—'],
                       ['名字', name.trim() || '—'],
                       ['Runtime', runtime.label],
-                      ['模型', model || '默认'],
+                      ['模型', model || `默认（${runtime.defaultModel}）`],
                       ['permissionMode', permissionMode],
                       ['maxTurns / budget / timeout', `${maxTurns || '—'} / ${budget || '—'} / ${timeout || '—'}`],
                     ].map(([k, v]) => (
