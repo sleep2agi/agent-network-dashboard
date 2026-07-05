@@ -50,10 +50,10 @@ interface ProviderPreset {
   keyPlaceholder?: string;
 }
 const PRESETS: ProviderPreset[] = [
-  { id: 'deepseek', label: 'DeepSeek', type: 'anthropic', base_url: 'https://api.deepseek.com/anthropic', models: ['deepseek-chat', 'deepseek-reasoner'], keyPlaceholder: 'sk-…' },
-  { id: 'minimax', label: 'MiniMax', type: 'anthropic', base_url: 'https://api.minimax.chat/anthropic', models: ['MiniMax-M3', 'MiniMax-M2'], keyPlaceholder: 'MiniMax API key' },
+  { id: 'deepseek', label: 'DeepSeek', type: 'anthropic', base_url: 'https://api.deepseek.com/anthropic', models: ['deepseek-v4-pro', 'deepseek-v4-flash'], keyPlaceholder: 'sk-…' },
+  { id: 'minimax', label: 'MiniMax', type: 'anthropic', base_url: 'https://api.minimaxi.com/anthropic', models: ['MiniMax-M2.7'], keyPlaceholder: 'MiniMax API key' },
   { id: 'glm', label: '智谱 GLM', type: 'anthropic', base_url: 'https://open.bigmodel.cn/api/anthropic', models: ['glm-4.6', 'glm-4.5', 'glm-4-plus'], keyPlaceholder: '{id}.{secret}' },
-  { id: 'claude', label: 'Claude（Anthropic 官方）', type: 'anthropic', base_url: 'https://api.anthropic.com', models: ['claude-sonnet-4-6', 'claude-opus-4-1', 'claude-haiku-4-5'], keyPlaceholder: 'sk-ant-…' },
+  { id: 'claude', label: 'Claude（Anthropic 官方）', type: 'anthropic', base_url: 'https://api.anthropic.com', models: ['claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5'], keyPlaceholder: 'sk-ant-…' },
   { id: 'custom', label: '自定义（手动填 URL / 模型）', type: 'anthropic', base_url: '', models: [] },
 ];
 
