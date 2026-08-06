@@ -72,6 +72,7 @@ const publicRootScripts = new Set([
   'scripts/check-avatars.mjs',
   'scripts/check-color-ratchet.mjs',
   'scripts/color-ratchet-baseline.json',
+  'scripts/oss-binary-scan.mjs',
   'scripts/oss-public-surface-scan.mjs',
   'scripts/oss-readiness-check.mjs',
   'scripts/oss-secret-scan.mjs',
@@ -97,6 +98,15 @@ const surfaceScan = spawnSync(
 check(surfaceScan.status === 0, 'working-tree portability scan must pass');
 if (surfaceScan.stdout.trim()) console.log(surfaceScan.stdout.trim());
 if (surfaceScan.status !== 0 && surfaceScan.stderr.trim()) console.error(surfaceScan.stderr.trim());
+
+const binaryScan = spawnSync(
+  process.execPath,
+  ['scripts/oss-binary-scan.mjs'],
+  { encoding: 'utf8' },
+);
+check(binaryScan.status === 0, 'tracked-binary byte scan must pass');
+if (binaryScan.stdout.trim()) console.log(binaryScan.stdout.trim());
+if (binaryScan.status !== 0 && binaryScan.stderr.trim()) console.error(binaryScan.stderr.trim());
 
 if (failures.length > 0) {
   console.error(`[oss-readiness] FAIL — ${failures.length}/${checks} checks failed`);

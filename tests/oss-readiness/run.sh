@@ -22,7 +22,7 @@ node scripts/oss-readiness-check.mjs
 
 echo 'L2 tree mutation must be witnessed red'
 mkdir -p /tmp/tree-mutation
-cp scripts/oss-secret-scan.mjs /tmp/tree-mutation/
+cp scripts/oss-secret-scan.mjs scripts/oss-binary-scan.mjs /tmp/tree-mutation/
 cd /tmp/tree-mutation
 git init -q
 printf 'credential=%s_%s\n' 'ghp' 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' > leaked.txt
@@ -38,6 +38,23 @@ if grep -q 'AAAAAAAAAAAAAAAAAAAA' /tmp/tree-mutation.out; then
   echo 'FAIL: scanner printed the credential value' >&2
   exit 1
 fi
+
+echo 'L2b binary mutation must be witnessed red'
+printf '\211PNG\r\n\032\n\000credential=%s_%s\000' 'ghp' 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB' > leaked.png
+git add leaked.png
+git commit -qm 'fixture: credential bytes in binary'
+if node oss-binary-scan.mjs >/tmp/binary-mutation.out 2>&1; then
+  echo 'FAIL: binary credential mutation stayed green' >&2
+  exit 1
+fi
+grep -q 'credential_shape: leaked.png' /tmp/binary-mutation.out
+if grep -q 'BBBBBBBBBBBBBBBBBBBB' /tmp/binary-mutation.out; then
+  echo 'FAIL: binary scanner printed the credential value' >&2
+  exit 1
+fi
+rm leaked.png
+git add leaked.png
+git commit -qm 'fixture: remove binary credential'
 
 echo 'L3 deleted-history mutation must be witnessed red'
 printf 'redacted\n' > leaked.txt

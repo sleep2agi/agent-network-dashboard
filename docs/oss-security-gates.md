@@ -1,6 +1,6 @@
 # OSS security gates
 
-The repository runs value-safe checks for credentials, non-portable source paths, package contents, dependencies, lint, and production builds.
+The repository runs value-safe checks for credentials, non-portable source paths, binary byte strings, package contents, dependencies, lint, and production builds.
 
 ## History attestation
 
@@ -14,11 +14,14 @@ Surfaces the command cannot attest are printed as `NOT COVERED`. These currently
 
 Linux and macOS user-home paths are rejected generically. Deployment operators may set the comma-separated `OSS_PRIVATE_HOST_SUFFIXES` repository variable to scan organization-specific private hostnames without committing those values to source. When it is absent, the scanner explicitly reports `private_host_suffixes: NOT CONFIGURED`.
 
+`npm run oss:binaries` scans tracked binary files for extractable credential, user-home, and configured private-host byte sequences. It reports paths only. Visual content and compressed semantics are explicitly `NOT COVERED`; release screenshots and personalized runtime imagery require separate human review and are not kept as repository test evidence.
+
 ## Local verification
 
 ```bash
 npm ci
 npm run oss:check
+npm run oss:binaries
 npm run oss:secrets:history
 npm run oss:surface
 npm run lint

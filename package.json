@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "oss:check": "node scripts/oss-readiness-check.mjs",
+    "oss:binaries": "node scripts/oss-binary-scan.mjs",
     "oss:secrets": "node scripts/oss-secret-scan.mjs --scope tree",
     "oss:secrets:history": "node scripts/oss-secret-scan.mjs --scope history",
     "oss:surface": "node scripts/oss-public-surface-scan.mjs --scope all",
