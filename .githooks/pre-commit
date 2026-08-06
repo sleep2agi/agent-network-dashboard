@@ -1,0 +1,54 @@
+#!/bin/sh
+# Physical gate for the twice-hit React #310 trap (hooks below an early
+# return): staged ts/tsx files must pass react-hooks/rules-of-hooks
+# before a commit is allowed. Seconds-fast (staged files only).
+#
+# Failure taxonomy: a broken environment must never read like a code
+# violation when the worktree simply has no node_modules:
+#   env cannot run eslint  → say so + install hint, FAIL-OPEN (exit 0;
+#                            the gate explicitly reports it did NOT run)
+#   lint ran, violations   → "commit blocked", exit 1
+#   lint ran, clean        → report "checked N files, 0 violations"
+#                            (silence would be indistinguishable from
+#                            "never ran")
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' | grep -v '^\.next/')
+[ -z "$files" ] && exit 0
+n=$(printf '%s\n' "$files" | wc -l | tr -d ' ')
+
+if ! command -v npx >/dev/null 2>&1; then
+  echo "pre-commit: ⚠ ENVIRONMENT — npx not found; rules-of-hooks gate DID NOT RUN (fail-open)."
+  exit 0
+fi
+# Probe that eslint is actually executable (npx exists ≠ eslint installed:
+# a fresh worktree without node_modules used to make the run below fail
+# and get misreported as a violation).
+if ! npx --no-install eslint --version >/dev/null 2>&1; then
+  echo "pre-commit: ⚠ ENVIRONMENT — eslint is not installed/executable here."
+  echo "  rules-of-hooks gate DID NOT RUN (fail-open). To enable it:  npm install"
+  exit 0
+fi
+
+echo "pre-commit: rules-of-hooks check on $n staged file(s)…"
+# shellcheck disable=SC2086
+npx --no-install eslint $files --rule '{"react-hooks/rules-of-hooks":"error"}' --quiet
+code=$?
+if [ $code -ne 0 ]; then
+  echo ""
+  echo "✗ react-hooks/rules-of-hooks violation — commit blocked."
+  echo "  (Hooks must not sit below an early return. See loop R29/R41.)"
+  exit 1
+fi
+echo "pre-commit: ✓ checked $n file(s), 0 rules-of-hooks violations."
+
+# Color-class ratchet (issue #70 ②): hardcoded (bg|text|border|ring)-[#hex]
+# must not grow while the token migration (batches 2-7) runs. Same failure
+# taxonomy as above: if node is missing, say ENVIRONMENT and fail-open.
+if command -v node >/dev/null 2>&1 && [ -f scripts/check-color-ratchet.mjs ]; then
+  if ! node scripts/check-color-ratchet.mjs; then
+    echo "✗ color-ratchet regression — commit blocked. (Pick a token from the globals.css table.)"
+    exit 1
+  fi
+else
+  echo "pre-commit: ⚠ ENVIRONMENT — node/ratchet script unavailable; color-ratchet DID NOT RUN (fail-open)."
+fi
+exit 0

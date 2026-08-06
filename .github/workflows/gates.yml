@@ -1,0 +1,50 @@
+# Run the checks this repo already has.
+#
+# Why this exists: on 2026-08-01 two gates were added here — the hardcoded-colour
+# ratchet (scripts/check-color-ratchet.mjs) and the theme contract spec — and
+# neither had an npm script or a CI job. They only ran if someone happened to
+# know the file path. A gate nobody runs protects nothing; the same day this
+# repo family produced three other instances of the pattern (a docs site that
+# had not deployed in five weeks, two mobile builds broken since a dependency
+# was added without updating the lockfile, and an iOS pipeline that had never
+# executed once since it was written).
+#
+# Deliberately narrow: only the checks that are green on main today and need no
+# browser or dev server. The theme contract spec (tests/theme-screenshots.spec.ts)
+# needs Playwright plus a running server and is left out until someone wires that
+# up properly — a job that is red or flaky on arrival gets disabled, and then it
+# protects nothing either.
+
+name: gates
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/gates.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/gates.yml'
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Prints "scanned N files, M/M" and exits 2 on an empty scope, so
+      # "no regressions" can never be confused with "never ran".
+      - name: hardcoded-colour ratchet
+        run: node scripts/check-color-ratchet.mjs
+
+      - name: avatar pool integrity
+        run: node scripts/check-avatars.mjs

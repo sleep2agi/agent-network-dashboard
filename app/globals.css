@@ -1,0 +1,2268 @@
+/* ════════════════════════════════════════════════════════════════════
+   SEMANTIC TOKEN NAMING (通信龙 2026-07-31 — 306 处硬编码色分批 token 化,
+   本轮只做三栏主路径; 后续页面照这张表选 token, 不要自造新名):
+
+   面 (surfaces)
+     --bg / --bg-secondary / --bg-elevated   页面底 / 卡片·行底 / 悬停·浮层
+     --col-nav / --col-list / --col-chat     三栏底色 (SPEC §2, 图标栏/列表/聊天)
+     --col-inset                             栏内可编辑区 (输入框) 的下沉底
+     --code-bg                               只读代码块底 (可编辑区用 --col-inset)
+   线 (lines)
+     --border / --border-hover               常规控件边界 / 悬停态
+     --col-line / --col-line-strong          栏与栏之间 1px 分界 / 加重变体
+     --col-hairline                          栏内部行分隔发丝线
+   字 (text)
+     --fg / --fg-muted / --fg-dim            主文字 / 次级 / 三级(时间戳等)
+   状态 (status; hue=语义, 只随主题调明度, 不换 hue)
+     --success / --warning / --danger / --info
+     --badge-muted-bg / --badge-muted-fg     免打扰角标 (灰: 不能红,也不能不显示)
+     --hl                                    高亮/选中指示 (hue 恒定, 明度随主题)
+   浮层与聊天 (batch 2)
+     --menu-bg                               右键/溢出菜单底 (仅菜单; 一般浮层
+                                             /悬停面/抽屉一律 --bg-elevated —
+                                             独立审 batch-2 归属裁定)
+     --bubble-in / --bubble-out              聊天气泡 对方/己方
+     --control-off                           开关 off 轨道
+   薄涂与代码 (batch 3 — white/black 透明度 utility 替身)
+     --hover-tint / --hover-tint-strong     5%/10% 前景薄涂: 悬停/按压反馈,
+                                             也可作静态轻表面 (bg-white/5 在
+                                             浅底位移恰 0, 故须随主题换向)
+     --code-fg                               代码块文字 (配 --code-bg, 文字
+                                             对比按 4.5:1 验, 见批3测试)
+   规则: 组件一律 bg-[var(--x)] 形式; [data-theme] 只改 token 值;
+   类名 shim (见下方 compat 块) 仅用于尚未 token 化的旧文件, 新代码禁用。
+   ════════════════════════════════════════════════════════════════════ */
+@import "tailwindcss";
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}* {
+  box-sizing: border-box;
+}/* ────────────────────────────────────────────────────
+   Design tokens — switch via [data-theme="..."] on <html>
+   See ThemeProvider for runtime selection.
+   ──────────────────────────────────────────────────── */
+
+:root,
+[data-theme="cyber"] {
+  --bg:           #0b0b0d;
+  --bg-secondary: #161618;
+  --bg-elevated:  #1f1f24;
+  --fg:           #e5e7eb;
+  --fg-muted:     #9ca3af;
+  --fg-dim:       #6b7280;
+  --border:       #26262b;
+  --border-hover: #3a3a41;
+  --accent:       #8b5cf6;
+  --accent-fg:    #ffffff;
+  --success:      #10b981;
+  --warning:      #f59e0b;
+  --danger:       #ef4444;
+  --info:         #3b82f6;
+  --scrollbar:    #26262b;
+  --scrollbar-hover: #3a3a41;
+  --code-bg:      #232327;
+  color-scheme:   dark;
+}@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+}/* #217 D1: UI text is sans (OpenWebUI-style product feel); mono is
+   opt-in via .font-mono for code, IDs and logs. */
+body {
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}/* Smooth scrollbar — themed */
+.scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: 4px;
+}.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}/* Mobile touch targets */
+@media (max-width: 640px) {
+  select, input[type="text"], button {
+    min-height: 44px;
+  }
+}/* Safe area for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}/* When sidebar is collapsed (w-16 {
+  border-radius: 8px !important;
+  padding-left: 0 !important;
+  border-left: 0 !important;
+  background-color: var(--bg-elevated) !important;
+  color: var(--accent) !important;
+}/* Q6: native <select> theming for light/mint.
+   Without this,
+dropdowns on Nodes / Messages / Logs / Settings render with
+   the OS default chrome (heavy chevron,
+off-spec font weight,
+no border
+   radius). We strip the native chrome with appearance-none {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23525a66' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 8l5 5 5-5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.6rem center !important;
+  background-size: 1rem 1rem !important;
+  padding-right: 2rem !important;
+  background-color: var(--bg-secondary) !important;
+  border-radius: 8px;
+}/* Mint reuses the same chevron — color picker would need its own gray,
+but
+   accent is similar enough that the default chevron color reads OK. */
+
+/* KPI stat cards in light mode: kill the gradient wash (which reads as
+   pale-mud on white) {
+  border-top-width: 2px;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -8px rgba(15, 23, 42, 0.08);
+}/* ─────────────────────────────────────────────────────────────────────
+   Login surface (round 1 polish)
+   Restrained,
+minimal — first impression for new Agent Network users.
+   ─────────────────────────────────────────────────────────────────── */
+.anet-login-bg {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(34, 211, 238, 0.05), transparent 55%),
+    radial-gradient(circle at 33% 75%, rgba(59, 130, 246, 0.045), transparent 55%);
+}/* Health banner — sticky thin strip above content {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+  color: #047857 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}/* Sidebar brand "online" pulse — slow,
+restrained,
+NO glow.
+   1.6s opacity drift between 1.0 and 0.5; nothing scales,
+nothing blurs. */
+@keyframes anet-brand-pulse-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}.anet-brand-pulse {
+  animation: anet-brand-pulse-kf 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-brand-pulse { animation: none; }
+}/* Skeleton pulse — same 1.6s rhythm as the brand pulse but applied to a
+   container so all bars inside breathe together. Drifts between full
+   token value and 60% so light themes show a calm grey-to-bg-elevated
+   fade and dark themes show a calm navy-to-elevated fade. */
+@keyframes anet-skeleton-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}.anet-skeleton-pulse {
+  animation: anet-skeleton-kf 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-skeleton-pulse { animation: none; }
+}/* Skeleton bar fill — different per theme so it's visible against the
+   card bg without being loud. Dark: lighter navy block on dark card.
+   Light: mid-grey on white card (not too light or it disappears). */
+.anet-skeleton-bar {
+  background-color: #1c1c1f;
+}/* Command palette modal surface — bumped depth so it sits clearly above
+   the page content in both themes. Light/mint: white shell with a real
+   shadow (not the dark navy that the CSS shim would normally translate
+   `bg-[#111113]` into). */
+.anet-cmdk kbd {
+  font-size: 9px;
+  line-height: 1;
+  padding: 1px 4px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  opacity: 0.6;
+}/* Round 20 — matched-char highlight inside cmdk titles/hints. Inherits
+   line color (`color`) instead of forcing one — keeps text readable on
+   both inactive (gray) and active (cyan-300) rows. <mark> default is a
+   garish yellow block,
+which we override. */
+.anet-cmdk-mark {
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  /* Subtle underline so the mark stays visible even on the active row
+     where the background tint matches the accent color. */
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-skip-ink: none;
+}/* Cyber: accent the matched glyph color so it pops on the dark bg. */
+[data-theme="cyber"] .anet-cmdk-mark,
+:root:not([data-theme]) .anet-cmdk-mark {
+  color: #22d3ee;
+}/* On the active (cyan-tinted) row,
+the title is already cyan-300 — use
+   white-with-underline so the highlight reads as emphasis,
+not redundancy. */
+.anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark {
+  color: #f0fdff;
+}/* Tasks tab strip horizontal scroll fade — gradient overlays at left/right
+   edges hint that there's more content when the row overflows. Only
+   applied on <sm (where the strip actually scrolls). The wrapper is
+   `position: relative` and the fades are absolute siblings. */
+.anet-tabstrip-wrap {
+  position: relative;
+}.anet-tabstrip-wrap::before,
+.anet-tabstrip-wrap::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 20px;
+  pointer-events: none;
+  z-index: 1;
+}.anet-tabstrip-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, #161618, transparent);
+  border-radius: 8px 0 0 8px;
+}.anet-tabstrip-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, #161618, transparent);
+  border-radius: 0 8px 8px 0;
+}
+@media (min-width: 640px) {
+  /* sm: stops scrolling, hide the fades */
+  .anet-tabstrip-wrap::before,
+  .anet-tabstrip-wrap::after { display: none; }
+}/* Round 30 — global drawer entrance keyframes so TaskDrawer,
+TaskChatPanel,
+and any future right-side panel share one source. Previously the
+   keyframe lived inside TaskChatPanel's <style jsx global>; if that
+   component never mounted,
+the keyframe was missing for TaskDrawer. */
+@keyframes anet-slide-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0);    }
+}.animate-slide-in { animation: anet-slide-in 0.2s ease-out; }
+
+@keyframes anet-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}.anet-fade-in { animation: anet-fade-in 0.15s ease-out; }/* Round 184 — chrome reset button click-spin. The reset button's
+   onClick triggers R168 smoothView crossfade on the canvas,
+but the
+   BUTTON itself had no visual feedback that the click registered. A
+   single 360° rotation on the refresh-arrow icon (450ms ease-out) is
+   a quick "yes,
+I heard you" confirmation. Counter-clockwise (-360°)
+   reads as "rewind" / "undo" — natural for a reset gesture. Mirror
+   to R52's hub click ripple at the chrome scope. */
+@keyframes anet-reset-spin {
+  from { transform: rotate(0deg);     }
+  to   { transform: rotate(-360deg); }
+}.anet-reset-spin {
+  animation: anet-reset-spin 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  transform-box: fill-box;
+}/* Round 186 — chrome zoom-in / zoom-out buttons get a brief icon pop
+   on click. Same click-feel idiom R184 added for the reset button —
+   the canvas already smoothes via R168/R169 smoothView,
+but the
+   chrome BUTTON itself needs its own confirmation. A quick scale
+   up-then-back (1 → 1.18 → 1 over 220ms) reads as "tapped". Same
+   transform-box: fill-box anchoring as R184 keeps the icon
+   centered in place. */
+@keyframes anet-chrome-pop {
+  0%   { transform: scale(1);    }
+  50%  { transform: scale(1.18); }
+  100% { transform: scale(1);    }
+}.anet-chrome-pop {
+  animation: anet-chrome-pop 0.22s ease-out;
+  transform-origin: center;
+  transform-box: fill-box;
+}/* Round 498 — recent-signal row hot-count subtle pulse (信息密度 +
+   呼吸感 themes). When a row's edge count crosses the hot threshold
+   (≥ 10),
+the existing R127/R320/R445 amber-fill + fw-700 typography
+   already calls attention; R498 adds a slow 3s opacity breath (0.85 ↔
+   1.0) on the digit so the hot tspans gently pulse — at-a-glance scan
+   of the panel reads "high-traffic lane right here" with motion in
+   addition to color+weight. 3s cycle is deliberate: faster (1-2s)
+   would compete with the working-status halo cadence; slower (5s+)
+   would lose the "alive" signal. Amplitude 15% (matches R497 hub-
+   highlight breath idiom).
+   prefers-reduced-motion handled by the R29 blanket override
+   (animation-duration: 0.001ms !important) — no per-class guard
+   needed. The component-side gate (`!reducedMotion && isHot`)
+   ensures the className is only applied when both conditions hold,
+so even without the blanket the no-motion preference is respected. */
+@keyframes anet-recent-hot-pulse-kf {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1;    }
+}.anet-recent-hot-pulse {
+  animation: anet-recent-hot-pulse-kf 3s ease-in-out infinite;
+}/* Round 36 — current-step ring pulse on TaskDrawer timeline. Halo gently
+   breathes around the active step's dot so users can spot "task is here". */
+@keyframes anet-current-step-pulse-kf {
+  0%, 100% { transform: scale(1);   opacity: 0.6; }
+  50%      { transform: scale(1.25); opacity: 0.0; }
+}.anet-current-step-pulse {
+  animation: anet-current-step-pulse-kf 1.6s ease-in-out infinite;
+}/* Round 45 — TopoGraph rotating radar sweep wedge. 6s slow rotation
+   gives the topology canvas a real "radar scan" feel without distracting
+   from the agent nodes.
+   R146: split shorthand into longhand so per-render inline style can
+   override animation-duration via --sweep-dur,
+joining the R145
+   --spoke-dur / R132 --march-dur pattern. Default 6s preserves R45's
+   original cadence for any caller that forgets the var. */
+@keyframes anet-topo-sweep-kf {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}.anet-topo-sweep {
+  animation-name: anet-topo-sweep-kf;
+  animation-duration: var(--sweep-dur, 6s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* R155 — focus-visible outline for TopoGraph chip-row interactives.
+   Cyber theme's dark canvas often swallows the browser default focus
+   ring; R154 fixed it for chrome buttons via Tailwind's focus-visible:
+   ring (box-shadow). Chip-row chips reuse `box-shadow` for the R88 /
+   R139 / R140 pin-mirror inset — so a focus box-shadow would conflict
+   with the pinned-state shadow. `outline` is a separate CSS property
+   and doesn't fight box-shadow, so we use it here. `currentColor`
+   inherits the chip's own accent (green for working, cyan for online,
+   per-vendor for letters, etc.). Only fires on :focus-visible
+   (keyboard) — mouse focus stays unstyled.
+   Round 490 / Loop — focus outline transitions on color rather than
+   hard-cutting. Pre-R490 the keyboard focus ring snapped in/out
+   instantly (no `transition` declaration), while every other hover/
+   pin state on the same chip eased through the Hero D 200ms ease-out
+   vocabulary (R459-R475 cluster + R489 hover ring). Keyboard users
+   tabbing through chips saw discontinuous focus jumps — pointer
+   users saw smooth motion. R490 unifies the two by holding a
+   permanent transparent outline (no painted footprint, no layout
+   shift — `outline` is drawn outside the border-box and doesn't
+   trigger reflow) and transitioning ONLY outline-color when focus
+   arrives/leaves. The cyber-theme dark canvas keyboard nav now
+   reads as one motion vocabulary with pointer hover. */
+.anet-topo-chip-focus {
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  /* R490 (revised) — Tailwind utility classes on the chips (transition-
+     colors / transition-transform / duration-200) set their own
+     `transition-property` list at the same selector specificity (0,1,0),
+     and since Tailwind's stylesheet loads after globals.css they win
+     the cascade — without `!important` my outline-color transition is
+     ignored. The unified list below replaces Tailwind's narrower list
+     with a superset (color, bg, border, opacity, box-shadow, transform
+     all preserved) plus `outline-color` for R490. All at 200ms ease-
+     out, matching the chip-row's existing Tailwind duration-200 ease-
+     out so visible animations on the chip are unchanged.
+
+     Round 524 / Loop — CORRECTION + bug fix.
+     R490's original 'trade-off' note read:
+       'chips with inline style.transition (R210 pressure-bar
+        segments at 220ms width / 150ms boxShadow / 150ms filter)
+        keep their inline value because inline style wins over class
+        rules regardless of !important.'
+     That was WRONG about CSS cascade. Per the spec, `!important`
+     author declarations DO override normal-priority inline-style
+     declarations. So R490's transition-property list silently
+     dropped every inline transition that targeted a property NOT
+     in this class's list — including R165's width 220ms tween on
+     the pressure-bar segments AND R210's filter brightness(1.2)
+     hover on those same segments. Both motion polishes have been
+     silently broken (snapping instead of easing) since R490
+     landed; banked as test-craft lesson in R523.
+     R524 fixes by extending the transition-property list to
+     include `width` and `filter` so the pressure-bar segments
+     (and any future chip-focus surface with width/filter motion)
+     animate per the class's unified 200ms ease-out. The cadence
+     shift (R165's 220ms → 200ms, R210's 150ms → 200ms) loses 20-
+     50ms of intent precision but slots into the dashboard's
+     uniform 200ms motion vocabulary the rest of the chip family
+     already uses — net visible improvement (motion was DEAD,
+     now eases at 200ms; that's a strictly better state than
+     snapping).
+     Other chip-focus surfaces (filter pills, online/working
+     chips, minimap container, "+N more" footer's <g>) don't
+     change width or filter at runtime, so adding these
+     properties to the list is a no-op for them. */
+  transition-property:
+    outline-color, color, background-color, border-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+    width, filter
+    !important;
+  transition-duration: 200ms !important;
+  transition-timing-function: ease-out !important;
+}
+.anet-topo-chip-focus:focus-visible {
+  outline-color: currentColor;
+}
+
+/* R156 — focus-visible outline for SVG-side TopoGraph interactives.
+   Same idiom as R155's chip-row class but for SVG <g> elements
+   (recent-signal rows, legend rows, group labels, edge badges,
+   node bodies, "+N more" footer). Each <g> already has role=
+   "button"/"link" + tabIndex=0 + onKeyDown (R116/R121/R133/R143/
+   R144/R151/R152). Browser default focus outline on SVG is hard
+   to spot against the canvas; explicit cyan-300 ring matches the
+   dashboard's legendAccent. 2-px outline-offset gives breathing
+   room around the painted bounding box.
+   Round 491 / Loop — SVG-side counterpart to R490's chip-focus
+   outline-color transition. Pre-R491 keyboard focus on SVG g
+   elements (recent rows, legend rows, group labels, edge badges,
+   nodes, "+N more") snapped instantly; HTML chips (post-R490) now
+   ease through 200ms ease-out but SVG g still hard-cut. Same
+   baseline-transparent + transition-outline-color recipe brings
+   the SVG canvas into the unified keyboard motion vocabulary —
+   keyboard users tabbing between chip-row and SVG canvas see
+   ONE smooth fade timing instead of HTML-smooth-then-SVG-snap.
+   The cyan-300 (#67e8f9) target color matches R156's original
+   choice (legendAccent visual identity); only the transition
+   timing is new.
+   Note on cascade: SVG g elements rarely carry Tailwind
+   transition-* utility classes (Tailwind defaults are HTML-
+   centric), so the (0,1,0) specificity of .anet-topo-svg-focus
+   typically wins without !important. Adding !important defensively
+   anyway since the React component may add future inline styles
+   or Tailwind classes. Same trade-off as R490 (inline
+   style.transition still wins if added). */
+.anet-topo-svg-focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition-property: outline-color !important;
+  transition-duration: 200ms !important;
+  transition-timing-function: ease-out !important;
+}
+.anet-topo-svg-focus:focus-visible {
+  outline-color: #67e8f9;
+}
+
+/* Round 46 — animated dashed spokes flowing from hub outward. Each spoke
+   gets a small animationDelay (set inline) so the dashes don't all flow
+   in sync — reads as "command relay" pulse rather than a metronome.
+   R145: split shorthand into longhand so per-render inline style can
+   override animation-duration via the --spoke-dur custom property —
+   same idiom R132 uses for --march-dur on group boxes. Default 2.4s
+   when --spoke-dur isn't set, so any future caller that forgets the
+   var keeps R46's original cadence. */
+@keyframes anet-topo-spoke-flow-kf {
+  from { stroke-dashoffset: 0;   }
+  to   { stroke-dashoffset: -40; }
+}
+.anet-topo-spoke-flow {
+  animation-name: anet-topo-spoke-flow-kf;
+  animation-duration: var(--spoke-dur, 2.4s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Round 85 — group-box "marching ants" perimeter drift.
+   Applied to a grid-layout group box whose `statuses.working > 0`
+   AND that is neither hovered nor pinned (those treatments already
+   carry their own visual emphasis via solid stroke). Slow 12s
+   linear cycle reads as ambient motion, not animation — the eye
+   parses "this group has live work" without registering the box
+   as moving. R86 stride matches the box's `strokeDasharray="6 6"`
+   so a single full cycle returns to a frame-identical state.
+   prefers-reduced-motion handled by the blanket override below.
+   R132: split shorthand into longhand so per-group inline style can
+   override animation-duration via the --march-dur custom property
+   without re-declaring keyframe + timing + iteration count. Default
+   stays at 12s when --march-dur isn't set, so existing single-group
+   call sites keep their cadence. */
+@keyframes anet-topo-groupbox-march-kf {
+  from { stroke-dashoffset: 0;   }
+  to   { stroke-dashoffset: -12; }
+}
+.anet-topo-groupbox-live {
+  animation-name: anet-topo-groupbox-march-kf;
+  animation-duration: var(--march-dur, 12s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Round 553 — title-block brand logo subtle idle breath.
+   5th anchor in the 呼吸感 breath family — cadence ladder:
+     row hot      3s
+     hub idle     4s
+     brand logo   5s   ← this round
+     watermark    6s
+     crescent     7s
+   Pure opacity breath (0.92 ↔ 1, ~8% delta) on the title-block
+   crescent SVG so the brand mark reads as a "living mark" at
+   rest. Composes cleanly with R548 hover:scale-105 +
+   R549 hover:rotate-6 (independent properties: opacity vs
+   scale/rotate; the moon keeps breathing as it lifts on hover).
+   prefers-reduced-motion handled by R29 blanket override —
+   animation-duration → 0.001ms neutralises the keyframe without
+   killing the static opacity baseline. Component-side gate also
+   applied (`!reducedMotion` toggles the className) as canonical
+   TopoGraph breath pattern (sibling to R130 hub idle / R519
+   watermark / R326 crescent breath gates). */
+@keyframes anet-topo-brand-logo-breath-kf {
+  0%, 100% { opacity: 1;    }
+  50%      { opacity: 0.92; }
+}
+.anet-topo-brand-logo-breath {
+  animation: anet-topo-brand-logo-breath-kf 5s ease-in-out infinite;
+}
+
+/* Round 683 — brand 书生 logo extends single-layer drop-shadow hover
+   (R604, Tailwind `hover:drop-shadow-[0_0_8px_currentColor]`) to the
+   multi-layer halo family vocabulary: near 8px + far 16px (2× blur
+   stride) at currentColor (inherits inline style.color = teal #0d9488
+   / cyan #67e8f9), stacked with brightness(1.10). Matches R642-R667
+   0.5×-falloff convention by using currentColor for both layers —
+   the same hue at native alpha layers up because drop-shadow alpha
+   accumulates additively when stacked.
+   Pure CSS `:hover` so no new React state needed; the SVG element
+   listens via its own pseudo-class. Inline transition list already
+   covers `filter 200ms ease-out` (R557) so the multi-layer halo eases
+   under the same cadence. Tailwind v4 utility composition for multi-
+   drop-shadow doesn't work cleanly (per R659 detour note), so dropping
+   the utility classes (`hover:brightness-110`, `hover:drop-shadow-[...]`)
+   in favor of an explicit CSS rule that wins over the cascade.
+   42nd anchor in multi-layer halo family — first brand-mark anchor. */
+.anet-topo-brand-logo-mark:hover {
+  filter: drop-shadow(0 0 8px currentColor)
+          drop-shadow(0 0 16px currentColor)
+          brightness(1.10);
+}
+
+/* Round 684 — title-block H2 "Command mesh" gains multi-layer halo
+   via the wrapper's `:hover` (sibling pattern to R683 brand logo —
+   both lift together when ANY surface in the title-block cluster
+   is hovered, including the brand logo, kicker, or H2 itself).
+   Pre-R684 the H2 had only 2 typographic hover axes (R554 tracking-
+   tighter + R556 font-bold) via group-hover Tailwind utilities; the
+   paint axis was untouched. R684 adds the multi-layer halo paint
+   axis to the H2's hover signature — same near + far layered glow
+   vocabulary the 42 other surfaces in the family share.
+   Stride: 4 + 8px (2× blur stride at h2 scale, text-lg = 18px —
+   smaller than brand logo's 8+16 since the H2 is text not graphic).
+   Tint: currentColor — inherits the H2's resolved fill color
+   (white on cyber, darker on light theme overrides).
+   No brightness multiply — H2 text-white is already near-peak
+   luminance on cyber; adding brightness would push past saturation.
+   The selector targets the H2 via its data-attr `data-topo-section-
+   title` nested under the title-block wrapper's group container
+   (`data-topo-section-titleblock-group`). Inline `transition-
+   [letter-spacing,font-weight]` on the H2 doesn't include filter,
+   so the halo would snap on. Add a transition rule here so the
+   halo eases under the same 200ms cadence as the existing 2 axes —
+   keeps the cluster's hover gesture motion-coherent.
+   43rd anchor in multi-layer halo family — sibling to R683 brand
+   logo, closing the title-block cluster's paint-axis halo at the
+   H2 element scope. */
+[data-topo-section-titleblock-group]:hover [data-topo-section-title] {
+  filter: drop-shadow(0 0 4px currentColor)
+          drop-shadow(0 0 8px currentColor);
+}
+[data-topo-section-title] {
+  transition: letter-spacing 200ms ease-out,
+              font-weight 200ms ease-out,
+              filter 200ms ease-out;
+}
+
+/* Round 685 — kicker "Network Topology" gains multi-layer halo via
+   the title-block wrapper's `:hover`, closing the title-block trio
+   at 3/3 paint-axis halo (logo R683 + H2 R684 + kicker R685). Pre-
+   R685 the kicker had only 2 hover axes (R555 tracking-spread +
+   color lift gray-500 → gray-400); the paint axis was untouched.
+   R685 adds 2-layer drop-shadow at 2 + 4px stride (2× blur stride
+   at kicker scale — text-xs = 12px, smaller than H2's 4+8 and
+   logo's 8+16). currentColor inherits the kicker's resolved fill
+   (gray-500 rest / gray-400 hover post-R555) so the halo paints
+   in the same hue as the text.
+   Selector targets the kicker via `data-topo-section-kicker` data-
+   attr (already present on the kicker div). Sibling rule + transition
+   pattern to R684 H2; both fire on the wrapper's :hover and ease at
+   200ms.
+   When the user hovers the title cluster, ALL 3 surfaces (logo +
+   H2 + kicker) glow simultaneously — cluster reads as one
+   coherent hover unit, paint axis CLOSED across all surfaces.
+   44th anchor in multi-layer halo family — completes title-block
+   trio 3/3. */
+[data-topo-section-titleblock-group]:hover [data-topo-section-kicker] {
+  filter: drop-shadow(0 0 2px currentColor)
+          drop-shadow(0 0 4px currentColor);
+}
+[data-topo-section-kicker] {
+  transition: letter-spacing 200ms ease-out,
+              color 200ms ease-out,
+              filter 200ms ease-out;
+}
+
+/* Round 697 — chrome strip segmented-control wrappers gain a wrapper-
+   level multi-layer halo when ANY inner button is hovered. Pre-R697
+   the 3 chrome wrappers (Layout / nodeSize / zoom) had only static
+   border + background — individual buttons inside halo via R674/R675/
+   R673/R668 but the parent wrapper stayed flat. R697 uses CSS `:has()`
+   to detect inner button hover and applies a 2-layer drop-shadow at
+   cyan-300 (#67e8f9) — compact-chrome tier (2+4 stride, 0.5/0.25 alpha).
+
+   When user hovers a child Ring/Grid/S/M/L/zoom button, the WRAPPER
+   itself echoes the inner-button halo outward in a soft glow — chrome
+   strip reads as one coherent "this control group is active" gesture
+   alongside the per-button cyan halo.
+
+   Cyan-300 hardcoded (vs theme-driven pal.legendAccent) since CSS
+   doesn't have a clean handle on the React-computed palette token at
+   this wrapper level. Cyan-300 ≈ light theme's pal.legendAccent
+   (#0d9488 teal-600) is bluish; the halo is hover-only + brief so the
+   slight cross-theme hue mismatch is acceptable.
+
+   transition: filter 200ms ease-out — matches the inner buttons'
+   200ms cadence so wrapper + buttons ease together on hover-in/out.
+
+   53rd anchor in multi-layer halo family — first wrapper-level
+   has-hover anchor. Closes chrome-strip "active control group"
+   signal at the parent scope alongside R667-R675 per-button anchors. */
+[data-topo-chrome-layout-trailer]:has(button:hover),
+[data-topo-chrome-fleet-group-trailer]:has(button:hover),
+[data-topo-chrome-zoom-wrapper]:has(button:hover) {
+  filter: drop-shadow(0 0 2px rgba(103, 232, 249, 0.5))
+          drop-shadow(0 0 4px rgba(103, 232, 249, 0.25));
+}
+[data-topo-chrome-layout-trailer],
+[data-topo-chrome-fleet-group-trailer],
+[data-topo-chrome-zoom-wrapper] {
+  transition: background-color 200ms ease-out,
+              border-color 200ms ease-out,
+              filter 200ms ease-out;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Round 698 — vendor-distribution chip-row outer wrapper joins the
+   R697 wrapper-level :has() halo family. Pre-R698 only the chrome-strip
+   wrappers (Layout/nodeSize/zoom) echoed inner-button hover at the
+   parent scope; the vendor-distribution wrapper stayed flat even though
+   its inner vendor letter chips already halo'd per-element (R676/R688/
+   R690).
+
+   R697 used `:has(button:hover)` because chrome wrappers contain real
+   <button> children. The vendor letter chips are `<span role="button">`
+   (clickable spans, not buttons — preserves inline-baseline alignment
+   with the title text). The :has() selector variant `[role="button"]:hover`
+   extends R697's wrapper-level vocabulary from real-button children
+   to ARIA-button children — same gesture, broader applicability.
+
+   Cyan-300 (#67e8f9) at 2+4 stride, 0.5/0.25 alpha — matches R697
+   cadence exactly. Transition matches the per-chip 200ms hover cascade.
+   When user hovers any A:N / O:N / 书:N / ?:N chip, the outer chip-row
+   wrapper echoes the per-chip halo outward — reads as "this vendor-
+   distribution control group is active" alongside the existing R676
+   vendor letter glyph halo + R688 count suffix halo.
+
+   54th anchor in multi-layer halo family — 2nd wrapper-level :has()
+   anchor. First :has() rule targeting [role="button"] (vs <button>)
+   children. Closes vendor-chip-row "active control group" signal at
+   the parent scope. */
+[data-topo-chrome-vendor-distribution-wrapper]:has([role="button"]:hover) {
+  filter: drop-shadow(0 0 2px rgba(103, 232, 249, 0.5))
+          drop-shadow(0 0 4px rgba(103, 232, 249, 0.25));
+}
+[data-topo-chrome-vendor-distribution-wrapper] {
+  transition: background-color 200ms ease-out,
+              border-color 200ms ease-out,
+              filter 200ms ease-out;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Round 699 — kicker "Network Topology" at-rest breathing fade.
+
+   The H2 below ("Command mesh") already had its hover halo via the R684
+   descendant rule; the kicker eyebrow above had R685 hover halo + R555
+   tracking-expand, but at REST it sat at a fixed alpha — static, no
+   sign of life. R699 adds a slow respiratory cycle (opacity 0.78 ↔ 1
+   at 6 s ease-in-out infinite) on `.anet-topo-kicker-breath`.
+
+   6 s is deliberately ~3× slower than the sidebar brand-pulse (1.6 s)
+   and the recent-hot pulse (3 s) — kicker isn't signaling urgency, just
+   "this section is alive". Group-hover overrides via R555/R685 take
+   precedence the moment user enters the title-block, so the breath
+   never competes with the gesture vocabulary.
+
+   Pure opacity: no transform / no filter blur / no size change → text
+   bounding box stable → topo-overlap-test grid + ring untouched. Pairs
+   sequentially with `anet-brand-pulse-kf` (1.6 s, brand status) and
+   `anet-recent-hot-pulse-kf` (3 s, recent-signal heat) as the third
+   distinct respiratory rhythm in the topo canvas.
+
+   prefers-reduced-motion: reduce → animation: none (kicker freezes at
+   resting alpha = 1, sibling to other R29-family motion guards).
+   ───────────────────────────────────────────────────────────────────── */
+/* Round 699 + R714 — kicker "Network Topology" dual-axis breath.
+   R699 introduced 6s opacity breath (0.78 ↔ 1, ~22%); R714 adds a
+   SECOND axis in the same @keyframes: a transform scale (0.995 ↔ 1,
+   ~0.5%). Two axes share cadence (6s) so they breathe IN PHASE —
+   the dimmest moment is also the smallest moment, mirroring the
+   R711 H2 dual-axis at the title-block's eyebrow tier.
+
+   Why scale 0.5%: the kicker is the section's secondary text (eyebrow
+   above the H2 headline). Its alpha range is wider (22% vs H2's 12%)
+   so a slightly wider scale range (0.5% vs H2's 0.3%) keeps the
+   axes proportionally weighted. Still sub-pixel at xs font-size
+   (~12 px text height → 0.06px swing) — imperceptible per-frame,
+   accumulates as "the eyebrow gently pulses with the breath".
+
+   Mirrors R711 H2 pattern (HTML text dual-axis: opacity + CSS
+   transform scale) — both title-block text tiers now have dual-axis
+   breath, closing title-block dual-axis symmetry across kicker and
+   H2. Brand-logo (the 3rd title-block trio member) still single-axis
+   since it already has its own 5-axis hover signature (R548/R549/R553/
+   R557/R604) plus 5s breath; further axes would oversubscribe the
+   brand mark. Pattern budget: title-block trio members get dual-axis
+   if their hover signature is sparse, single-axis if rich.
+
+   transform-origin defaults to center — kicker scales around its own
+   midpoint, no glyph drift. paint-only → flex parent stable → topo-
+   overlap-test untouched. prefers-reduced-motion: reduce neutralizes. */
+/* Round 740 — one-time canvas entrance animation. Plays on FIRST PAINT
+   only, then the canvas sits at scale(1) opacity(1) for the rest of
+   the session. Distinct from all prior animation families:
+     - breath family (R699+) is rest-axis infinite
+     - ambient family (R735+) is sweep-axis infinite
+     - R740 entrance is ONE-SHOT (no `infinite` keyword) — plays once
+   Subsequent re-mounts (route changes, etc.) replay the animation —
+   intended as a "the canvas just arrived" signal to the user.
+
+   Animation: 0% scale(0.99) opacity(0.8) → 100% scale(1) opacity(1)
+   over 600ms with ease-out timing. Subtle: the scale change is only
+   1% (0.99 → 1.00); opacity ramps from 0.8 to 1.0. Reads as "settling
+   in" — the canvas zooms in slightly while fading in.
+
+   transform-origin defaults to 50% 50% (canvas center), so the scale
+   ripple comes from the middle outward.
+
+   prefers-reduced-motion guard: when reduced motion is preferred, the
+   class isn't applied (JSX-level gate in TopoGraph.tsx), so the CSS
+   animation never runs. Belt-and-suspenders @media block below
+   neutralises if the class somehow ends up applied. */
+@keyframes anet-topo-canvas-entrance-kf {
+  0%   { transform: scale(0.99); opacity: 0.8; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+.anet-topo-canvas-entrance {
+  animation: anet-topo-canvas-entrance-kf 600ms ease-out;
+  transform-origin: 50% 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-canvas-entrance { animation: none; }
+}
+
+/* Round 728 — recent + legend panel titles join the triple-axis tier
+   at 8 s, forming the "8 s triple-axis PAIR" (mirror to R724's 6 s pair).
+   Both panel titles already share R700/R701 SMIL opacity (8 s) +
+   R713 SMIL font-size (8 s) — R728 adds a 3rd CSS-animated axis:
+   text-shadow glow at the same 8 s cadence in phase.
+
+   Same hybrid SMIL + CSS pattern as R722 watermark: SMIL drives SVG
+   attributes (opacity, font-size); CSS drives the text-shadow CSS
+   property on the same <text> element. Modern browsers honour both
+   vocabularies side-by-side without conflict.
+
+   Multi-cadence triple-axis tier post-R728 (6 members across 4 cadences):
+     6 s   kicker + watermark         (R721/R722, "6 s pair")
+     8 s   recent + legend titles     (R728, "8 s pair") ← this round
+     9 s   zoom-level readout         (R727)
+     10 s  H2 section title           (R725)
+
+   Pattern structural mirror: R724's 6 s pair (title-block + canvas-
+   brand tiers) finds its sibling in R728's 8 s pair (panel-title tier).
+   Both pairs use parity-shape (members at same cadence). Adds new
+   R717 pattern entry `triple-axis-pair-8s` (shape `8s-triple-pair`)
+   to formalize the structural mirror.
+
+   Glow tuning vs prior 4 triple-axis members:
+     R721 kicker      blur 6 px, alpha 0.30 @ 6 s   (title-block, sharp)
+     R722 watermark   blur 8 px, alpha 0.20 @ 6 s   (canvas-brand, quiet)
+     R725 H2          blur 8 px, alpha 0.22 @ 10 s  (title-block, mellow)
+     R727 zoom-level  blur 5 px, alpha 0.25 @ 9 s   (data tier, sharp pill)
+     R728 panel-pair  blur 7 px, alpha 0.23 @ 8 s   (panel-title) ← this round
+   Mid-range blur (7 px) — between zoom-level (5 px pill) and H2 (8 px
+   heading); alpha 0.23 — between H2 (0.22 mellow) and zoom-level (0.25)
+   to position the panel-title glow as a "calm-medium" register that
+   matches the panel titles' weight in the visual hierarchy (heading-
+   weight but smaller fontSize than H2).
+
+   Gating: piggybacks on the existing JSX gates (R700: !reducedMotion &&
+   !activeEdgeKey; R701: !reducedMotion && !pinnedStatus). The CSS class
+   is applied conditionally; when ungated, both SMIL animates and CSS
+   animation coexist. prefers-reduced-motion @media guard provides
+   belt-and-suspenders. */
+@keyframes anet-topo-panel-title-glow-breath-kf {
+  0%, 100% { text-shadow: none; }
+  50%      { text-shadow: 0 0 7px rgba(34, 211, 238, 0.23); }
+}
+.anet-topo-panel-title-glow-breath {
+  animation: anet-topo-panel-title-glow-breath-kf 8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-panel-title-glow-breath { animation: none; }
+}
+
+/* Round 722 — watermark text becomes the 2ND TRIPLE-axis surface,
+   completing a "6 s triple-axis PAIR" with R721 kicker (both at the
+   fastest dual-axis cadence, both with sparse hover signatures, both
+   read-target text — symmetric structural mirror).
+
+   The watermark's prior axes:
+     R519 SMIL opacity         (6 s, 0.32 ↔ 0.48)
+     R712 SMIL letter-spacing  (6 s, 0.45 ↔ 0.55)
+   R722 adds a 3rd CSS-animated axis on the SAME `<text>` element:
+     R722 CSS text-shadow      (6 s, none ↔ 0 0 8 px rgba(34, 211, 238, 0.20))
+
+   The SMIL animations (opacity + letter-spacing) drive SVG attributes
+   in their own clock; the CSS animation drives `text-shadow` as a CSS
+   property. SVG <text> in modern browsers honours both vocabularies
+   on the same element — no conflict. The 6 s cadence shared across
+   all 3 axes keeps them in phase: at the dimmest+tightest moment the
+   glow appears; at the brightest+widest moment the glow is gone. One
+   coherent inhale-exhale.
+
+   Glow tuning vs kicker (R721):
+     kicker    blur 6 px, alpha 0.30
+     watermark blur 8 px, alpha 0.20
+   The watermark text sits at canvas bottom-left at fontSize 11 with
+   a base opacity of 0.4 (R282) — the glow needs more spread (8 vs 6)
+   to register at that low base opacity, but less alpha (0.20 vs 0.30)
+   to stay proportional to the wordmark's quieter visual register.
+
+   Gating: piggybacks on the existing R519 reducedMotion JSX gate
+   (the entire <animate> tree only mounts when !reducedMotion). When
+   reducedMotion is true the class is still applied but the @media
+   (prefers-reduced-motion: reduce) below neutralises the CSS
+   animation. Belt-and-suspenders. */
+@keyframes anet-topo-brand-watermark-glow-breath-kf {
+  0%, 100% { text-shadow: none; }
+  50%      { text-shadow: 0 0 8px rgba(34, 211, 238, 0.20); }
+}
+.anet-topo-brand-watermark-glow-breath {
+  animation: anet-topo-brand-watermark-glow-breath-kf 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-brand-watermark-glow-breath { animation: none; }
+}
+
+/* Round 721 — kicker becomes the family's first TRIPLE-axis breath
+   surface. R699 opacity (6 s) + R714 transform-scale (6 s) joined by
+   R721 text-shadow (6 s) — all 3 axes share the 6 s cadence in phase.
+
+   At rest peak (0%, 100%) the kicker reads as a static title;
+   at mid-breath (50%) it dims (0.78), retracts (scale 0.995), AND
+   emits a soft cyan glow (text-shadow 0 0 6px rgba(34, 211, 238, 0.30)).
+   The glow appears OUT-OF-PHASE with the dim — as the text shrinks
+   slightly it gains a subtle aura. Reads as an "inhale glow": a small
+   visible payoff at the bottom of the breath cycle.
+
+   Why kicker first (vs other dual-axis surfaces):
+     - kicker has the SPARSEST hover signature in the family — being
+       below H2 (the page heading), it's read-target text, not an
+       interactive surface. The breath family's "if hover sig sparse,
+       dual-axis; if hover sig rich, single-axis" budget rule extends
+       naturally to "if hover sig SPARSE, can go triple-axis".
+     - 6 s is the fastest dual-axis cadence in the rolodex — at fast
+       cadence the 3rd axis (a glow appear+disappear cycle every 3 s
+       on each half) registers as ambient rhythm, not a distraction.
+
+   text-shadow chosen over letter-spacing or font-size because:
+     - text-shadow doesn't reflow text (no horizontal motion)
+     - glow against the dark canvas reads clearly without competing
+       with the opacity dim
+     - cyan tint at 30% alpha + 6 px blur is below the brightness
+       threshold of any node halo (R674/R675 nodes use 0.5+ alpha)
+
+   Composition note: the R29 prefers-reduced-motion guard already
+   neutralizes the entire 6 s animation; no separate text-shadow
+   reduced-motion logic needed. */
+@keyframes anet-topo-kicker-breath-kf {
+  0%, 100% { opacity: 1;    transform: scale(1);     text-shadow: none; }
+  50%      { opacity: 0.78; transform: scale(0.995); text-shadow: 0 0 6px rgba(34, 211, 238, 0.30); }
+}
+.anet-topo-kicker-breath {
+  animation: anet-topo-kicker-breath-kf 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-kicker-breath { animation: none; }
+}
+
+/* Round 702 — H2 "Command mesh" at-rest breathing fade, completing the
+   title-block respiratory trio (brand-logo 5 s / kicker 6 s / H2 10 s).
+   Tighter alpha range (0.88 ↔ 1, ~12%) vs the kicker (0.78 ↔ 1, ~22%):
+   H2 carries more visual weight, so a gentler breath keeps it from
+   looking flickery. Slowest in the trio — 10 s reads as calm anchoring,
+   not anxious. prefers-reduced-motion: reduce → animation: none,
+   sibling to the R699 kicker guard. */
+/* Round 702 + R711 — H2 "Command mesh" dual-axis breath. R702 introduced
+   the 10s opacity breath (0.88 ↔ 1, ~12%); R711 adds a SECOND axis in
+   the same @keyframes: a transform scale (0.997 ↔ 1, ~0.3%). The two
+   axes share cadence (10s) so they breathe in PHASE — the dimmest moment
+   is also the smallest moment, like a single coherent inhale-exhale.
+
+   Why scale 0.3%: the H2 is the section's primary text identity; scale
+   changes affect glyph rasterization at sub-pixel level. 0.3% range
+   keeps the visible change at fraction of a pixel for a 40-px-tall text,
+   imperceptible per-frame but cumulatively reads as "the title gently
+   pulses with the breath", reinforcing the opacity dimming without
+   adding new gesture. Scale doesn't affect layout flow (CSS transform
+   is paint-only) — flex parent stays stable, overlap test safe.
+
+   First DUAL-AXIS breath anchor in the 呼吸感 family — establishes that
+   future anchors can layer multiple animation properties on a single
+   keyframe block for "deeper aliveness" on a single surface, without
+   needing a second class or animation. Pattern budget: prefer single-
+   axis on most anchors (visual hierarchy) and reserve dual-axis for
+   primary identity surfaces (H2 here = first primary-identity dual). */
+/* Round 725 — H2 section title becomes the 3RD triple-axis surface,
+   FIRST triple-axis member at a NON-6 s cadence (10 s). Establishes
+   that the triple-axis TIER is multi-cadence rather than 6 s-locked —
+   the R724 `triple-axis-pair` pattern stays valid for kicker+watermark
+   at 6 s; H2 joins the triple-axis TIER as a solo 10 s member.
+
+   H2's prior dual-axis (R702 opacity + R711 transform-scale @ 10 s)
+   gains a 3rd CSS-animated axis: text-shadow glow at 10 s in phase.
+   Reads as a slow inhale glow on the section heading — calmer than
+   the 6 s pair (kicker/watermark) because H2's slower cadence keeps
+   the glow appearance interval at 5 s (vs 3 s for the 6 s tier).
+
+   Glow tuning vs kicker (R721) and watermark (R722):
+     kicker     blur 6 px, alpha 0.30 @ 6 s
+     watermark  blur 8 px, alpha 0.20 @ 6 s
+     H2         blur 8 px, alpha 0.22 @ 10 s    ← this round
+   H2 sits between the two at alpha; its larger fontSize (section
+   heading, much bigger than kicker/watermark) needs a wider blur
+   (8 px to match watermark) but a slightly higher alpha than
+   watermark (0.22 vs 0.20) because at H2's slower 10 s cadence the
+   glow gets a longer dwell time at peak — proportionally tighter
+   alpha would feel under-emphasised vs the 6 s pair's snappier peaks.
+
+   The triple-axis tier now has 3 members across 2 cadences:
+     6 s  kicker + watermark  (R724 "triple-axis-pair" pattern)
+     10 s H2                  (solo)
+   R725 doesn't add a new R717 pattern entry — H2 is a solo, not
+   a pair. R723 catalog (triple-axis-surfaces) extends to 3 entries.
+
+   prefers-reduced-motion guard already in place on the existing
+   R702 H2 breath class; this round's text-shadow axis joins the
+   same animation rule and is neutralised by the same @media block. */
+@keyframes anet-topo-section-title-breath-kf {
+  0%, 100% { opacity: 1;    transform: scale(1);     text-shadow: none; }
+  50%      { opacity: 0.88; transform: scale(0.997); text-shadow: 0 0 8px rgba(34, 211, 238, 0.22); }
+}
+.anet-topo-section-title-breath {
+  animation: anet-topo-section-title-breath-kf 10s ease-in-out infinite;
+  /* transform-origin defaults to 50% 50% which is what we want — the H2
+     scales around its own center, no glyph drift. */
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-section-title-breath { animation: none; }
+}
+
+/* Round 703 — chrome zoom-level readout at-rest breath. 9 s cadence sits
+   between the 8 s panel titles and the 10 s H2 in the respiratory
+   rolodex. Tighter alpha range (0.85 ↔ 1, ~15%) than the kicker —
+   readout carries tabular numeric data, so it shouldn't drift too far
+   from full opacity. Hover gate via the data attribute: when
+   data-topo-chrome-zoom-level-hover="true", animation: none, and the
+   existing R347 ls + R420 fw + R517 color + R593 brightness + R668
+   halo 4-axis lift takes precedence cleanly. prefers-reduced-motion:
+   reduce neutralizes, sibling to R699/R702 guards. */
+/* Round 703 + R715 — chrome zoom-level readout dual-axis breath.
+   R703 introduced 9s opacity breath (0.85 ↔ 1, ~15%); R715 adds a
+   SECOND axis in the same @keyframes: a transform scale (0.996 ↔ 1,
+   ~0.4%). Two axes share cadence (9s) so they breathe IN PHASE —
+   dimmest = smallest, mirroring R711 H2 / R714 kicker pattern at the
+   CHROME DATA TIER (vs title-block primary text tier).
+
+   Why scale 0.4% on zoom-level (vs H2's 0.3%, kicker's 0.5%): zoom-
+   level's alpha range is between H2 (12%) and kicker (22%) at 15%
+   — scale axis interpolated to 0.4% keeps the three dual-axis HTML
+   text surfaces co-proportioned. Sub-pixel at xs font-size → ~0.04px
+   swing at ~10px text height; imperceptible per-frame, accumulates
+   as "the readout pulses with the breath".
+
+   Pattern budget extension — chrome data tier dual-axis:
+     R699+R714  kicker            6s   eyebrow tier
+     R703+R715  zoom-level        9s   chrome data tier  ← this round
+     R702+R711  H2                10s  primary headline tier
+   The 6/9/10 s cadences and the kicker/zoom-level/H2 scale ratios
+   (0.5/0.4/0.3 %) form a tier-graded ladder: faster cadence + larger
+   scale on secondary-tier text; slower cadence + smaller scale on
+   primary-tier text. Each tier has its own "tempo + amplitude"
+   coupled signature — kicker pulses quickly-and-noticeably, H2
+   pulses slowly-and-subtly, zoom-level sits between.
+
+   Hover gate via `[data-topo-chrome-zoom-level-hover="true"]` →
+   animation: none, so R347/R420/R517/R593 hover axes take precedence
+   without animation underneath. transform-origin defaults to center
+   — pill scales around its own midpoint. prefers-reduced-motion:
+   reduce also neutralizes. */
+/* Round 727 — zoom-level readout becomes the 4TH triple-axis surface and
+   FIRST chrome-tier (data-tier) member to join the multi-cadence triple-
+   axis tier. R703 opacity (9 s) + R715 transform-scale (9 s) joined by
+   R727 text-shadow (9 s) — all 3 axes share the 9 s cadence in phase.
+
+   Multi-cadence triple-axis tier post-R727 (4 members across 3 cadences):
+     6 s   kicker + watermark      (title-block + canvas-brand tiers)
+     9 s   zoom-level readout      (data tier) ← this round
+     10 s  H2 section title        (title-block tier)
+   Pattern budget extension: prior triple-axis members were all read-target
+   text in primary-identity tiers (title-block + canvas-brand). R727 extends
+   to the DATA tier — a chrome readout, not pure text. Justified because:
+     - zoom-level's hover sig (R703 data-attr gate) is sparse: only the
+       hover-tracking attr; no rich tactile axes
+     - the surface is a single-tone monospace digit pill — visually quiet
+       enough that a glow pulse remains subordinate to node halos
+     - the chrome strip's "data tier" sub-role becomes a structural mirror
+       of the title-block tier in the triple-axis context
+
+   Glow tuning vs prior 3 triple-axis members:
+     R721 kicker      blur 6 px, alpha 0.30 @ 6 s   (title-block)
+     R722 watermark   blur 8 px, alpha 0.20 @ 6 s   (canvas-brand)
+     R725 H2          blur 8 px, alpha 0.22 @ 10 s  (title-block)
+     R727 zoom-level  blur 5 px, alpha 0.25 @ 9 s   (data tier) ← this round
+   Smaller blur (5 px) for the smaller pill surface; mid-range alpha
+   (0.25) between kicker (sharp+bright at 0.30) and H2 (medium at 0.22).
+   At 9 s the glow appearance interval is ~4.5 s on each half — between
+   the 3 s 6 s-pair peak and the 5 s H2 peak, matching the cadence
+   interpolation.
+
+   Hover gate preserved: the existing R703 [data-topo-chrome-zoom-level-
+   hover="true"] selector still gates the entire animation off when user
+   interacts — R727's text-shadow is part of the same @keyframes block
+   so it gets gated together. */
+@keyframes anet-topo-chrome-zoom-level-breath-kf {
+  0%, 100% { opacity: 1;    transform: scale(1);     text-shadow: none; }
+  50%      { opacity: 0.85; transform: scale(0.996); text-shadow: 0 0 5px rgba(34, 211, 238, 0.25); }
+}
+.anet-topo-chrome-zoom-level-breath {
+  animation: anet-topo-chrome-zoom-level-breath-kf 9s ease-in-out infinite;
+}
+.anet-topo-chrome-zoom-level-breath[data-topo-chrome-zoom-level-hover="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-zoom-level-breath { animation: none; }
+}
+
+/* Round 704 — brand watermark WRAPPER envelope breath at 15 s — slowest
+   tier in the respiratory rolodex. Inner "sleep2agi" text already
+   breathes at 6 s (R519); this adds an outer wrapper envelope so the
+   brand area has nested respiration (fast inner / slow outer). 0.85 ↔ 1
+   alpha range (~15%) matches the R703 tabular/decorative surface band
+   — heavy visual register shouldn't drift too far from full opacity.
+
+   Focal-recede gate via data-attr selector — when the wrapper's
+   data-topo-brand-watermark-recede attr flips to "true" (user is
+   hovering a node/edge/group on the canvas), animation: none gates
+   off so the R525 inline opacity={0.7} attr takes effect cleanly.
+   Pattern sibling to R703 zoom-level data-attr selector gate.
+   prefers-reduced-motion: reduce also neutralizes. */
+@keyframes anet-topo-brand-watermark-envelope-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.85; }
+}
+.anet-topo-brand-watermark-envelope-breath {
+  animation: anet-topo-brand-watermark-envelope-breath-kf 15s ease-in-out infinite;
+}
+.anet-topo-brand-watermark-envelope-breath[data-topo-brand-watermark-recede="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-brand-watermark-envelope-breath { animation: none; }
+}
+
+/* Round 705 — canvas crescent wrapper envelope breath at 13 s. Mirror
+   to R704 watermark wrapper, closing canvas-brand-pair envelope
+   symmetry. Cadence 13 s coprime with R704 (15 s) so the two never
+   beat together when both visible. Tighter alpha range (0.30 ↔ 0.35,
+   ~14%) deliberately hugs the existing inline 0.35 baseline — preserves
+   the visible-state intent while adding nested respiration.
+
+   Two gate-off rules instead of one (R704 had a single recede gate):
+   - visible="false" → animation: none, so inline opacity={0} holds when
+     the recent panel is shown (crescent must be invisible).
+   - recede="true"   → animation: none, so inline opacity={0.245} holds
+     when canvas attention is elsewhere.
+   Either gate flips → CSS releases control to inline opacity attr.
+   prefers-reduced-motion: reduce also neutralizes. */
+@keyframes anet-topo-brand-canvas-mark-envelope-breath-kf {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.30; }
+}
+.anet-topo-brand-canvas-mark-envelope-breath {
+  animation: anet-topo-brand-canvas-mark-envelope-breath-kf 13s ease-in-out infinite;
+}
+.anet-topo-brand-canvas-mark-envelope-breath[data-topo-brand-canvas-mark-visible="false"] {
+  animation: none;
+}
+.anet-topo-brand-canvas-mark-envelope-breath[data-topo-brand-canvas-mark-recede="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-brand-canvas-mark-envelope-breath { animation: none; }
+}
+
+/* Round 706 — title-block wrapper envelope breath at 11s. Mirrors the
+   canvas-brand-pair nested-envelope pattern (R704/R705) at the title-
+   block scope. 11s coprime with all 3 inner trio cadences (5, 6, 10) —
+   no common factor → no phase lock with inner anchors. Tighter alpha
+   range (0.92 ↔ 1, ~8%) than canvas-brand-pair envelopes because the
+   title-block carries primary text identity; even subtle dimming on
+   the H2 + kicker headline reads as flicker if too aggressive. 8%
+   range = "barely-perceptible aliveness". prefers-reduced-motion:
+   reduce neutralizes. */
+@keyframes anet-topo-title-block-envelope-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.92; }
+}
+.anet-topo-title-block-envelope-breath {
+  animation: anet-topo-title-block-envelope-breath-kf 11s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-title-block-envelope-breath { animation: none; }
+}
+
+/* Round 742 — title-block entrance, 2nd member of the entrance family.
+   Staggered choreography with R740 canvas entrance:
+     R740 canvas        0   → 600 ms   (scale 0.99 → 1, opacity 0.8 → 1)
+     R742 title-block   200 → 700 ms   (translateY -4px → 0, opacity 0.7 → 1)
+   The 100ms gap (600 → 700 ms) between canvas settle and title-block
+   settle creates a perceived "shake out" — canvas arrives, then the
+   heading writes itself into place. Both done by ~700 ms.
+
+   CSS cascade detail: when an element has BOTH .anet-topo-title-block-
+   envelope-breath (R706, infinite 11s breath) AND .anet-topo-title-
+   block-entrance (R742, one-shot 500ms), the `animation` property
+   doesn't merge — only one wins. So R742 declares a COMPOUND animation
+   listing BOTH (entrance first as one-shot, breath second as the
+   ongoing infinite). Placed AFTER the R706 envelope-breath block in
+   source order so cascade gives R742 the win when both classes are
+   applied. When ONLY envelope-breath is applied (reducedMotion strips
+   the entrance class via JSX), R706 rule takes over with just the
+   breath animation. */
+@keyframes anet-topo-title-block-entrance-kf {
+  0%   { transform: translateY(-4px); opacity: 0.7; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+.anet-topo-title-block-entrance {
+  animation:
+    anet-topo-title-block-entrance-kf 500ms ease-out 200ms backwards,
+    anet-topo-title-block-envelope-breath-kf 11s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-title-block-entrance { animation: none; }
+}
+
+/* Round 743 — chrome strip entrance, 3rd member of the entrance family,
+   completing the entrance TRIO. Three-stage cascade:
+     R740 canvas       0   → 600 ms   scale 0.99→1, opacity 0.8→1
+     R742 title-block  200 → 700 ms   translateY -4→0, opacity 0.7→1
+     R743 chrome strip 400 → 900 ms   translateX 8→0, opacity 0.7→1
+   Each stage offset +200 ms. translateX (not translateY) because the
+   chrome strip docks at the canvas right edge — sliding in from its
+   own edge reads as "docking into place".
+
+   The chrome strip wrapper div has no other animation, so a plain
+   single-animation class works here (no compound needed like R742's
+   title-block which collided with R706 envelope-breath). One-shot —
+   no `infinite`, runs once per mount. prefers-reduced-motion JSX gate
+   + CSS @media guard. */
+@keyframes anet-topo-chrome-strip-entrance-kf {
+  0%   { transform: translateX(8px); opacity: 0.7; }
+  100% { transform: translateX(0);   opacity: 1; }
+}
+.anet-topo-chrome-strip-entrance {
+  animation: anet-topo-chrome-strip-entrance-kf 500ms ease-out 400ms backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-strip-entrance { animation: none; }
+}
+
+/* Round 707 — chrome Layout wrapper at-rest breath at 17 s. Slowest tier
+   among HTML chrome respiratory anchors (sibling to R703 zoom-level 9 s
+   in the chrome strip's data tier; this 17 s lands in the chrome strip's
+   control tier). 17 is prime → coprime with every other cadence in the
+   rolodex (3/4/5/6/7/8/9/10/11/13/15). Never phase-locks with any other
+   anchor.
+
+   Tightest alpha range yet (0.94 ↔ 1, ~6%) — the Layout buttons are
+   interactive controls with active-state cyan tint; even ~10% dimming
+   on the inner button color would feel jarring. 6% = "barely-perceptible
+   aliveness" on a control group.
+
+   Hover gate via :has() selector — when user hovers any inner Ring/Grid
+   button, the R697 wrapper-level halo (cyan filter) takes precedence;
+   animation: none on hover pauses the breath so the halo reads crisp
+   without underlying alpha drift. Third gate-off mechanism in the family
+   vocabulary, sibling to R703 hover data-attr gate + R704/R705 recede
+   gates. */
+@keyframes anet-topo-chrome-layout-trailer-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.94; }
+}
+.anet-topo-chrome-layout-trailer-breath {
+  animation: anet-topo-chrome-layout-trailer-breath-kf 17s ease-in-out infinite;
+}
+.anet-topo-chrome-layout-trailer-breath:has(button:hover) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-layout-trailer-breath { animation: none; }
+}
+
+/* Round 708 — chrome nodeSize wrapper at-rest breath at 19 s. Sibling
+   to R707 Layout 17 s — both chrome control-tier wrappers carry the
+   same alpha range (6%) + the same :has(button:hover) gate. Two coprime
+   prime cadences (17, 19) form a chrome-control respiratory pair,
+   pattern-parallel to canvas-brand-pair (R704/R705) coprime envelope
+   pair. */
+@keyframes anet-topo-chrome-fleet-group-trailer-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.94; }
+}
+.anet-topo-chrome-fleet-group-trailer-breath {
+  animation: anet-topo-chrome-fleet-group-trailer-breath-kf 19s ease-in-out infinite;
+}
+.anet-topo-chrome-fleet-group-trailer-breath:has(button:hover) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-fleet-group-trailer-breath { animation: none; }
+}
+
+/* Round 709 — chrome zoom wrapper at-rest breath at 23 s. Closes the
+   chrome control trio (R707 Layout 17s + R708 nodeSize 19s + R709 zoom
+   23s) with three adjacent prime coprime cadences. 23s slowest in the
+   chrome trio — reads as "calm anchor for the viewport-control cluster"
+   since zoom is the most functional of the 3 wrappers (its inner buttons
+   compound viewport math). Same alpha (6%) + :has(button:hover) gate
+   as siblings. */
+@keyframes anet-topo-chrome-zoom-wrapper-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.94; }
+}
+.anet-topo-chrome-zoom-wrapper-breath {
+  animation: anet-topo-chrome-zoom-wrapper-breath-kf 23s ease-in-out infinite;
+}
+.anet-topo-chrome-zoom-wrapper-breath:has(button:hover) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-zoom-wrapper-breath { animation: none; }
+}
+
+/* Round 718 — chrome reset button joins the respiratory family at 21 s.
+   5th anchor on the chrome-strip pattern, extending it from
+   "tiered-with-trio" → "tiered-with-quartet". The chrome strip now
+   spans a data tier + a prime quartet across control surfaces:
+     R703  zoom-level readout   9 s   (data tier)
+     R707  Layout    wrapper   17 s   (control wrapper tier)
+     R708  nodeSize  wrapper   19 s   (control wrapper tier)
+     R718  reset     button    21 s   (atomic control tier) ← this round
+     R709  zoom      wrapper   23 s   (control wrapper tier)
+
+   21 is composite (3 × 7), the ONE composite in the prime quartet —
+   slots between the prime wrappers 19 and 23 to fill the 17/19/21/23
+   odd-number ladder. Coprime with all rolodex cadences (the rolodex
+   has no 3-multiples until 9 and no 7-multiples until 7 itself — but
+   neither 9 nor 7 share factors with 21's other co-tier mates 17/19/23).
+   Actually 21 IS divisible by 3 like 9 — gcd(21,9)=3 so 21 phase-locks
+   with 9 every 63 s. That's deliberate: the data tier (9 s) and the
+   atomic-control tier (21 s) RE-ALIGN every minute — a slow handshake
+   between "what the chrome reads" and "the reset action". Aesthetic
+   over arithmetic: a 1-per-minute alignment is sub-perceptible.
+
+   Atomic-control sub-tier rationale: the reset button is the only
+   STANDALONE atomic chrome button with a 5-axis hover signature
+   (R594 brightness + R400 hover-lift + R196 active-state + R350 icon
+   spin + R184 release pop). The 5 hover axes already give it a rich
+   interactive voice; a 6th REST axis at 7% alpha (slightly looser than
+   the 6% wrappers, to compensate for the smaller icon-button surface)
+   marks it as "alive" at rest without competing with the hover axes.
+
+   Hover gate via data-attr (R703 pattern, not R707/R708/R709 :has()
+   pattern). The button itself exposes data-topo-chrome-reset-hover —
+   already plumbed for the R350 icon-rotate cue and R594 brightness —
+   so the breath gates off naturally on its own hover state. Sibling
+   gate pattern to R703 zoom-level (the only other chrome anchor at
+   the leaf-element tier; both gate via their own hover data-attr
+   rather than parent :has()). */
+@keyframes anet-topo-chrome-reset-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.93; }
+}
+.anet-topo-chrome-reset-breath {
+  animation: anet-topo-chrome-reset-breath-kf 21s ease-in-out infinite;
+}
+.anet-topo-chrome-reset-breath[data-topo-chrome-reset-hover="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-reset-breath { animation: none; }
+}
+
+/* Round 719 — chrome fullscreen button joins the respiratory family at
+   25 s. 6th anchor on the chrome-strip pattern, extending the shape
+   from "tiered-with-quartet" → "tiered-with-quintet". Sibling to R718
+   reset (21 s) — closes the ATOMIC-CONTROL DUO: both standalone
+   chrome buttons (reset + fullscreen, the only non-segmented chrome
+   buttons in the family per R400 doc) now breathe at parity alpha
+   range with coprime cadences.
+
+   Chrome-strip pattern post-R719:
+     R703  zoom-level readout    9 s   (data tier)
+     R707  Layout    wrapper    17 s   (control wrapper tier)
+     R708  nodeSize  wrapper    19 s   (control wrapper tier)
+     R718  reset     button     21 s   (atomic control tier)
+     R709  zoom      wrapper    23 s   (control wrapper tier)
+     R719  fullscreen button    25 s   (atomic control tier) ← this round
+
+   25 = 5² — coprime with every other rolodex cadence (no factor 5
+   anywhere). Fills the 17/19/21/23/25 odd-number ladder perfectly
+   and becomes the new slowest cadence on the rolodex (prior slowest:
+   23 s zoom wrapper). The chrome strip now spans a 16 s arc from
+   9 → 25, with its two atomic-control members at 21 s and 25 s
+   bracketing the wrapper trio (17/19/23) — atomic controls breathe
+   slower than wrappers, matching their role as terminal commits
+   (reset wipes state; fullscreen flips viewport mode).
+
+   Same 7% alpha (0.93 ↔ 1) as R718 reset — atomic-control tier
+   parity. The duo reads as a matched pair at rest. Hover gate via
+   data-topo-chrome-fullscreen-hover (R703 leaf-element pattern,
+   sibling to R718 reset's gate). */
+@keyframes anet-topo-chrome-fullscreen-breath-kf {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.93; }
+}
+.anet-topo-chrome-fullscreen-breath {
+  animation: anet-topo-chrome-fullscreen-breath-kf 25s ease-in-out infinite;
+}
+.anet-topo-chrome-fullscreen-breath[data-topo-chrome-fullscreen-hover="true"] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anet-topo-chrome-fullscreen-breath { animation: none; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Round 29 — prefers-reduced-motion a11y sweep
+
+   Rounds 19~27 accumulated a lot of small animations: Tasks row 0fr↔1fr
+   expand, chevron rotate, hover bg shifts, Cmd+K popover, TaskChatPanel
+   slide-in, brand/skeleton pulses already had their own guards.
+
+   For users who set system "reduce motion": neutralise everything in one
+   pass. Don't kill state changes outright — only their durations and
+   keyframes. Hover and focus colours still apply, just instantly.
+   ───────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Skeleton pulse already has its own guard; harden in case the bar
+     class is reused without anet-skeleton-pulse. */
+  .anet-skeleton-bar {
+    animation: none !important;
+  }
+  /* Brand pulse hidden — green/red dot still indicates state via color. */
+  .anet-brand-pulse {
+    animation: none !important;
+  }
+  /* Drawer entrance kills — keyframes promoted to globals in r30. */
+  .animate-slide-in,
+  .anet-fade-in,
+  .anet-current-step-pulse,
+  .anet-topo-sweep,
+  .anet-topo-spoke-flow,
+  .anet-topo-groupbox-live {
+    animation: none !important;
+  }
+  /* Tasks row grid 0fr↔1fr keep working (it's the toggle mechanism),
+     but the smooth transition just snaps. Already handled via the
+     blanket transition-duration override above. */
+}
+
+/* ────────────────────────────────────────────────────
+   #190 mobile polish — tap feel
+   ────────────────────────────────────────────────────
+   `touch-action: manipulation` removes the 300 ms tap-delay browsers
+   add to disambiguate double-tap-zoom, and (more importantly) keeps an
+   accidental double-tap on an interactive element from zooming the
+   page. Pinch-zoom on the rest of the page is unaffected. The hint is
+   a no-op on inputs without a touch driver, so zero desktop cost.
+
+   `-webkit-tap-highlight-color` swaps iOS Safari's default opaque grey
+   tap overlay for a faint themed shimmer (~18 % accent over transparent),
+   matching the cyber / light palettes via the `--accent` token. */
+@layer base {
+  button,
+  a,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  summary {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: color-mix(in oklab, var(--accent) 18%, transparent);
+  }
+}
+
+
+/* ════════════════════════════════════════════════════════════
+   #217 S6 — Light (white) theme, restored from pre-R8 history
+   (4e05d91^). R8 stripped it as dead code because no UI exposed
+   it; Vincent asked for an optimized white theme in Settings,
+   which now owns the toggle. Mint/sunset stay deleted.
+   ════════════════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+  --bg:           #f6f7f9;
+  --bg-secondary: #ffffff;
+  --bg-elevated:  #eef0f4;
+  --fg:           #0f1419;
+  --fg-muted:     #525a66;
+  --fg-dim:       #8a94a3;
+  --border:       #e3e6eb;
+  --border-hover: #c8cdd6;
+  --accent:       #009e7e;
+  --accent-fg:    #ffffff;
+  --success:      #059669;
+  --warning:      #d97706;
+  --danger:       #dc2626;
+  --info:         #0284c7;
+  --scrollbar:    #d4d8df;
+  --scrollbar-hover: #a1a8b5;
+  --code-bg:      #eef0f4;
+  color-scheme:   light;
+}
+
+/* ────────────────────────────────────────────────────
+   Compatibility shims — gradually replace hard-coded
+   #0b0b0d / zinc-9xx / etc. in components with var()
+   over time. These rules let the existing components
+   pick up the active theme even before they are
+   migrated.
+   ──────────────────────────────────────────────────── */
+
+/* page-level dark backgrounds → use --bg */
+[data-theme="light"] .bg-\[\#060607\],
+[data-theme="light"] .bg-\[\#0a0a0c\],
+[data-theme="light"] .bg-\[\#0e0e10\],
+[data-theme="light"] .bg-\[\#0e0e10\],
+[data-theme="light"] .bg-\[\#0b0b0d\],
+[data-theme="light"] .bg-\[\#111113\],
+[data-theme="light"] .bg-\[\#161618\],
+[data-theme="light"] .bg-\[\#161618\],
+[data-theme="light"] .bg-\[\#1f1f24\],
+[data-theme="light"] .bg-\[\#1f1f24\],
+[data-theme="mint"] .bg-\[\#060607\],
+[data-theme="mint"] .bg-\[\#0a0a0c\],
+[data-theme="mint"] .bg-\[\#0e0e10\],
+[data-theme="mint"] .bg-\[\#0e0e10\],
+[data-theme="mint"] .bg-\[\#0b0b0d\],
+[data-theme="mint"] .bg-\[\#111113\],
+[data-theme="mint"] .bg-\[\#161618\],
+[data-theme="mint"] .bg-\[\#161618\],
+[data-theme="mint"] .bg-\[\#1f1f24\],
+[data-theme="mint"] .bg-\[\#1f1f24\] {
+  background-color: var(--bg) !important;
+}
+
+/* card / elevated backgrounds (incl. opacity variants) */
+[data-theme="light"] .bg-\[\#161618\],
+[data-theme="light"] .bg-\[\#161618\]\/80,
+[data-theme="light"] .bg-\[\#1c1c1f\],
+[data-theme="light"] .bg-\[\#232327\],
+[data-theme="mint"] .bg-\[\#161618\],
+[data-theme="mint"] .bg-\[\#161618\]\/80,
+[data-theme="mint"] .bg-\[\#1c1c1f\],
+[data-theme="mint"] .bg-\[\#232327\] {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* hover / input field backgrounds */
+[data-theme="light"] .bg-\[\#26262b\],
+[data-theme="mint"] .bg-\[\#26262b\] {
+  background-color: var(--bg-elevated) !important;
+}
+
+/* hardcoded borders */
+[data-theme="light"] .border-\[\#161618\],
+[data-theme="light"] .border-\[\#1c1c1f\],
+[data-theme="light"] .border-\[\#26262b\],
+[data-theme="light"] .border-\[\#3a3a41\],
+[data-theme="mint"] .border-\[\#161618\],
+[data-theme="mint"] .border-\[\#1c1c1f\],
+[data-theme="mint"] .border-\[\#26262b\],
+[data-theme="mint"] .border-\[\#3a3a41\] {
+  border-color: var(--border) !important;
+}
+
+/* dark-tuned gradient buttons → flat brand color in light themes */
+[data-theme="light"] [class*="from-cyan-"][class*="to-blue-"],
+[data-theme="light"] [class*="from-cyan-"][class*="to-emerald-"],
+[data-theme="light"] [class*="from-emerald-"][class*="to-cyan-"],
+[data-theme="light"] [class*="from-blue-"][class*="to-cyan-"] {
+  background: var(--accent) !important;
+  color: var(--accent-fg) !important;
+}
+
+[data-theme="light"] [class*="from-cyan-"][class*="to-blue-"]:hover,
+[data-theme="light"] [class*="from-cyan-"][class*="to-emerald-"]:hover,
+[data-theme="light"] [class*="from-emerald-"][class*="to-cyan-"]:hover,
+[data-theme="light"] [class*="from-blue-"][class*="to-cyan-"]:hover {
+  background: #00b894 !important;
+  filter: brightness(1.05);
+}
+
+[data-theme="light"] .text-gray-100,
+[data-theme="light"] .text-gray-200,
+[data-theme="light"] .text-gray-300,
+[data-theme="light"] .text-gray-100\/90,
+[data-theme="mint"] .text-gray-100,
+[data-theme="mint"] .text-gray-200,
+[data-theme="mint"] .text-gray-300,
+[data-theme="mint"] .text-gray-100\/90 {
+  color: var(--fg) !important;
+}
+
+[data-theme="light"] .text-gray-400,
+[data-theme="light"] .text-gray-500,
+[data-theme="light"] .text-gray-600,
+[data-theme="light"] .placeholder-gray-600::placeholder,
+[data-theme="mint"] .text-gray-400,
+[data-theme="mint"] .text-gray-500,
+[data-theme="mint"] .text-gray-600,
+[data-theme="mint"] .placeholder-gray-600::placeholder {
+  color: var(--fg-muted) !important;
+}
+
+[data-theme="light"] .text-white,
+[data-theme="mint"] .text-white {
+  color: var(--fg) !important;
+}
+
+[data-theme="light"] .text-zinc-100,
+[data-theme="light"] .text-zinc-200,
+[data-theme="light"] .text-white,
+[data-theme="mint"] .text-zinc-100,
+[data-theme="mint"] .text-zinc-200,
+[data-theme="mint"] .text-white {
+  color: var(--fg) !important;
+}
+
+[data-theme="light"] .text-zinc-400,
+[data-theme="light"] .text-zinc-500,
+/* batch 3: neutral-* 家族此前整族漏在 shim 外 (AttachmentBlock 附件行浅色
+   下三连隐形的文字半边); 与 zinc 同档映射 */
+[data-theme="light"] .text-neutral-300,
+[data-theme="light"] .text-neutral-400,
+[data-theme="light"] .text-neutral-500,
+[data-theme="mint"] .text-zinc-400,
+[data-theme="mint"] .text-zinc-500,
+[data-theme="mint"] .text-neutral-300,
+[data-theme="mint"] .text-neutral-400,
+[data-theme="mint"] .text-neutral-500 {
+  color: var(--fg-muted) !important;
+}
+
+[data-theme="light"] .bg-zinc-900,
+[data-theme="light"] .bg-zinc-950,
+[data-theme="light"] .bg-black,
+[data-theme="mint"] .bg-zinc-900,
+[data-theme="mint"] .bg-zinc-950,
+[data-theme="mint"] .bg-black {
+  background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="light"] .bg-zinc-800,
+[data-theme="mint"] .bg-zinc-800 {
+  background-color: var(--bg-elevated) !important;
+}
+
+[data-theme="light"] .border-zinc-700,
+[data-theme="light"] .border-zinc-800,
+[data-theme="light"] .border-white\/10,
+[data-theme="light"] .border-white\/5,
+[data-theme="mint"] .border-zinc-700,
+[data-theme="mint"] .border-zinc-800,
+[data-theme="mint"] .border-white\/10,
+[data-theme="mint"] .border-white\/5 {
+  border-color: var(--border) !important;
+}
+
+/* Light theme: additional zinc shades + accent colors override */
+[data-theme="light"] .bg-zinc-700,
+[data-theme="light"] .bg-zinc-600,
+[data-theme="mint"] .bg-zinc-700,
+[data-theme="mint"] .bg-zinc-600 {
+  background-color: var(--bg-elevated) !important;
+}
+
+[data-theme="light"] .text-zinc-300,
+[data-theme="light"] .text-zinc-600,
+[data-theme="mint"] .text-zinc-300,
+[data-theme="mint"] .text-zinc-600 {
+  color: var(--fg-muted) !important;
+}
+
+[data-theme="light"] .text-zinc-700,
+[data-theme="light"] .text-zinc-800,
+[data-theme="mint"] .text-zinc-700,
+[data-theme="mint"] .text-zinc-800 {
+  color: var(--fg) !important;
+}
+
+/* Light theme: emerald / cyan / indigo accents → unified brand emerald */
+[data-theme="light"] .text-emerald-400,
+[data-theme="light"] .text-emerald-300,
+[data-theme="light"] .text-cyan-400,
+[data-theme="light"] .text-cyan-300,
+[data-theme="light"] .text-indigo-400 {
+  color: var(--accent) !important;
+}
+
+/* Light theme: every "-300/400" accent text color needs a darker mid-tone
+   variant. The default Tailwind `-300/-400` shades are designed for dark
+   backgrounds — putting them on white gives "barely visible" text (the
+   problem Vincent flagged: "浅色下很多字体看不见"). Map each family to its
+   `-700` equivalent so contrast against white card is ≥ AA. */
+[data-theme="light"] .text-green-400,
+[data-theme="light"] .text-green-300,
+[data-theme="mint"]  .text-green-400,
+[data-theme="mint"]  .text-green-300 { color: #047857 !important; }
+
+[data-theme="light"] .text-yellow-400,
+[data-theme="light"] .text-yellow-300,
+[data-theme="mint"]  .text-yellow-400,
+[data-theme="mint"]  .text-yellow-300 { color: #92400e !important; }
+
+[data-theme="light"] .text-amber-400,
+[data-theme="light"] .text-amber-300,
+[data-theme="mint"]  .text-amber-400,
+[data-theme="mint"]  .text-amber-300 { color: #92400e !important; }
+
+[data-theme="light"] .text-red-400,
+[data-theme="light"] .text-red-300,
+[data-theme="mint"]  .text-red-400,
+[data-theme="mint"]  .text-red-300 { color: #b91c1c !important; }
+
+[data-theme="light"] .text-purple-400,
+[data-theme="light"] .text-purple-300,
+[data-theme="mint"]  .text-purple-400,
+[data-theme="mint"]  .text-purple-300 { color: #6d28d9 !important; }
+
+[data-theme="light"] .text-orange-400,
+[data-theme="light"] .text-orange-300,
+[data-theme="mint"]  .text-orange-400,
+[data-theme="mint"]  .text-orange-300 { color: #c2410c !important; }
+
+[data-theme="light"] .text-blue-400,
+[data-theme="light"] .text-blue-300,
+[data-theme="mint"]  .text-blue-400,
+[data-theme="mint"]  .text-blue-300 { color: #1d4ed8 !important; }
+
+[data-theme="light"] .text-pink-400,
+[data-theme="light"] .text-pink-300,
+[data-theme="mint"]  .text-pink-400,
+[data-theme="mint"]  .text-pink-300 { color: #be185d !important; }
+
+[data-theme="light"] .text-violet-400,
+[data-theme="light"] .text-violet-300,
+[data-theme="mint"]  .text-violet-400,
+[data-theme="mint"]  .text-violet-300 { color: #6d28d9 !important; }
+
+[data-theme="light"] .text-teal-400,
+[data-theme="light"] .text-teal-300,
+[data-theme="mint"]  .text-teal-400,
+[data-theme="mint"]  .text-teal-300 { color: #0f766e !important; }
+
+/* Light theme: text-gray-700 (used in footers / muted body) is too pale
+   when sitting on slightly-grey page bg. Bump to fg-muted. */
+[data-theme="light"] .text-gray-700,
+[data-theme="mint"]  .text-gray-700 { color: var(--fg-muted) !important; }
+
+[data-theme="light"] .bg-emerald-500\/10,
+[data-theme="light"] .bg-emerald-500\/20,
+[data-theme="light"] .bg-cyan-500\/10,
+[data-theme="light"] .bg-cyan-500\/20 {
+  background-color: rgba(0, 158, 126, 0.08) !important;
+}
+
+[data-theme="light"] .border-emerald-500\/30,
+[data-theme="light"] .border-emerald-500\/40,
+[data-theme="light"] .border-cyan-500\/30 {
+  border-color: rgba(0, 158, 126, 0.32) !important;
+}
+
+/* Light theme: card-like containers get a subtle elevation shadow
+   (cards in dark mode lean on glow; in light mode they need a real shadow
+   to read as a layer rather than blending into the page background) */
+[data-theme="light"] .bg-zinc-900,
+[data-theme="light"] .bg-zinc-950,
+[data-theme="light"] .bg-\[\#0b0b0d\],
+[data-theme="light"] .bg-\[\#161618\],
+[data-theme="light"] .bg-\[\#1f1f24\] {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 6px 18px -8px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .bg-zinc-800 {
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* Light theme: kill any leftover ring / shadow-glow that was tuned for dark bg */
+[data-theme="light"] [class*="shadow-emerald"],
+[data-theme="light"] [class*="shadow-cyan"],
+[data-theme="light"] [class*="shadow-indigo"] {
+  --tw-shadow-color: rgba(0, 158, 126, 0.18);
+}
+
+/* Solid-color action buttons (bg-blue-600 / bg-cyan-600 / bg-green-600 / …)
+   stay dark navy in light themes because the gradient-button shim above only
+   matches `from-…-to-…` gradient buttons. Map every primary solid background
+   to the active accent so Broadcast / Send Task / Register / Change Password
+   etc. read as the brand color instead of black-on-white. */
+[data-theme="light"] .bg-blue-600,
+[data-theme="light"] .bg-blue-500,
+[data-theme="light"] .bg-cyan-600,
+[data-theme="light"] .bg-cyan-500,
+[data-theme="light"] .bg-emerald-600,
+[data-theme="light"] .bg-emerald-500,
+[data-theme="light"] .bg-green-600,
+[data-theme="light"] .bg-green-500,
+[data-theme="light"] .bg-indigo-600,
+[data-theme="light"] .bg-indigo-500,
+[data-theme="light"] .bg-purple-600,
+[data-theme="light"] .bg-purple-500,
+[data-theme="mint"] .bg-blue-600,
+[data-theme="mint"] .bg-blue-500,
+[data-theme="mint"] .bg-cyan-600,
+[data-theme="mint"] .bg-cyan-500,
+[data-theme="mint"] .bg-emerald-600,
+[data-theme="mint"] .bg-emerald-500,
+[data-theme="mint"] .bg-green-600,
+[data-theme="mint"] .bg-green-500,
+[data-theme="mint"] .bg-indigo-600,
+[data-theme="mint"] .bg-indigo-500,
+[data-theme="mint"] .bg-purple-600,
+[data-theme="mint"] .bg-purple-500 {
+  background-color: var(--accent) !important;
+  color: var(--accent-fg) !important;
+}
+
+[data-theme="light"] .hover\:bg-blue-500:hover,
+[data-theme="light"] .hover\:bg-cyan-500:hover,
+[data-theme="light"] .hover\:bg-emerald-500:hover,
+[data-theme="light"] .hover\:bg-green-500:hover,
+[data-theme="light"] .hover\:bg-indigo-500:hover,
+[data-theme="light"] .hover\:bg-purple-500:hover,
+[data-theme="mint"] .hover\:bg-blue-500:hover,
+[data-theme="mint"] .hover\:bg-cyan-500:hover,
+[data-theme="mint"] .hover\:bg-emerald-500:hover,
+[data-theme="mint"] .hover\:bg-green-500:hover,
+[data-theme="mint"] .hover\:bg-indigo-500:hover,
+[data-theme="mint"] .hover\:bg-purple-500:hover {
+  background-color: #00b894 !important;
+  filter: brightness(1.05);
+}
+
+/* Disabled state for the same family — keep contrast against the page bg
+   so disabled buttons don't read as "dark and active" in light mode */
+[data-theme="light"] .disabled\:bg-gray-800:disabled,
+[data-theme="light"] .disabled\:bg-zinc-800:disabled,
+[data-theme="mint"] .disabled\:bg-gray-800:disabled,
+[data-theme="mint"] .disabled\:bg-zinc-800:disabled {
+  background-color: var(--bg-elevated) !important;
+  color: var(--fg-muted) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   v0.4.3 light-theme polish — Phase 3 P0 fixes
+   ─────────────────────────────────────────────────────────────────── */
+
+/* P0-1: Sidebar gets its own surface in light themes (not page-colored).
+   In Cyber (dark) the sidebar already feels separate via depth; in
+   light/mint the page bg == sidebar bg so only the right border separates
+   them. Switch sidebar to bg-secondary (white) + a hairline shadow. */
+[data-theme="light"] aside[data-anet-sidebar="true"],
+[data-theme="mint"] aside[data-anet-sidebar="true"] {
+  background-color: var(--bg-secondary) !important;
+  /* Right edge: solid hairline border + a soft 16px halo so the sidebar
+     reads as a card hovering over the page, not "part of the page". */
+  box-shadow:
+    1px 0 0 var(--border),
+    8px 0 20px -10px rgba(15, 23, 42, 0.10),
+    0 0 0 1px rgba(15, 23, 42, 0.02);
+  border-right-color: transparent !important;
+}
+
+/* Also tint page bg slightly cooler so the white sidebar pops more */
+[data-theme="light"] {
+  --bg: #f3f5f8; /* was #f6f7f9 — bumped 3pt cooler for sidebar contrast */
+}
+
+/* P0-2: Active nav — collapse the 4-emerald stack (bg + border + text + ring)
+   to a single accent cue: 3px left bar + medium-weight text. Dark themes
+   keep the existing tinted-pill look. */
+/* Active nav = ONE calm cue for ALL themes (design-polish #17 R3): a 4px left
+   bar + brightened text, NO bg billboard. Light/mint override below with their
+   emerald accent; the default-dark + cyber themes previously fell through to
+   the heavier inline cyan tint+border+cyan-text (the "competing surface" the
+   final spec dropped) — this brings them to the same calm treatment, in cyan. */
+.anet-nav-active {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  border-left: 4px solid #22d3ee !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding-left: calc(0.75rem - 4px) !important;
+  color: #e5e7eb !important;
+  font-weight: 600;
+}
+.anet-nav-active:hover {
+  background-color: #1c1c1f !important;
+}
+aside.w-16 .anet-nav-active {
+  border-radius: 8px !important;
+  padding-left: 0 !important;
+  border-left: 0 !important;
+  background-color: rgba(34, 211, 238, 0.08) !important;
+  color: #67e8f9 !important;
+}
+
+[data-theme="light"] .anet-nav-active,
+[data-theme="mint"] .anet-nav-active {
+  /* 通信龙 final spec (Q1 + 3-piece lockdown): active nav = ONE cue.
+     4px left bar emerald, text in --fg (NOT emerald), NO bg tint.
+     Reads as a calm "current page" indicator without competing emerald
+     surfaces. (Earlier 0.4.3 had 3px + faint tint + emerald text.) */
+  background-color: transparent !important;
+  border-color: transparent !important;
+  border-left: 4px solid var(--accent) !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding-left: calc(0.75rem - 4px) !important;
+  color: var(--fg) !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .anet-nav-active:hover,
+[data-theme="mint"] .anet-nav-active:hover {
+  background-color: var(--bg-elevated) !important;
+}
+
+/* When sidebar is collapsed (w-16, justify-center) the left bar would look
+   weird against a centered icon — switch to a left-bg accent instead. */
+[data-theme="light"] aside.w-16 .anet-nav-active,
+[data-theme="mint"] aside.w-16 .anet-nav-active {
+  border-radius: 8px !important;
+  padding-left: 0 !important;
+  border-left: 0 !important;
+  background-color: var(--bg-elevated) !important;
+  color: var(--accent) !important;
+}
+
+/* Q6: native <select> theming for light/mint.
+   Without this, dropdowns on Nodes / Messages / Logs / Settings render with
+   the OS default chrome (heavy chevron, off-spec font weight, no border
+   radius). We strip the native chrome with appearance-none, then paint our
+   own chevron via a background-image SVG. ~10 LOC. */
+[data-theme="light"] select,
+[data-theme="mint"] select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23525a66' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 8l5 5 5-5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.6rem center !important;
+  background-size: 1rem 1rem !important;
+  padding-right: 2rem !important;
+  background-color: var(--bg-secondary) !important;
+  border-radius: 8px;
+}
+
+[data-theme="light"] select:focus,
+[data-theme="mint"] select:focus {
+  outline: 2px solid rgba(0, 158, 126, 0.2);
+  outline-offset: -1px;
+  border-color: var(--accent) !important;
+}
+
+/* Mint reuses the same chevron — color picker would need its own gray, but
+   accent is similar enough that the default chevron color reads OK. */
+
+/* Dark-theme KPI cards: parity with light/mint's hover lift (design-polish
+   #17 R2). Light/mint had a tactile hover; the default dark cards were flat
+   (the inline `transition-all` had nothing to animate). Pure interaction
+   feedback — a subtle border-brighten + 1px rise, no resting color (keeps the
+   #217 D2 restraint). The more-specific light/mint rules below still win. */
+.anet-stat-card {
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.anet-stat-card:hover {
+  border-color: #34343c;
+  box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.7);
+  transform: translateY(-1px);
+}
+
+/* KPI stat cards in light mode: kill the gradient wash (which reads as
+   pale-mud on white), replace with a 2px top accent strip per color
+   family + real elevation shadow. Dark themes keep the gradient. */
+[data-theme="light"] .anet-stat-card,
+[data-theme="mint"] .anet-stat-card {
+  border-top-width: 2px;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -8px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .anet-stat-card:hover,
+[data-theme="mint"] .anet-stat-card:hover {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06), 0 12px 24px -12px rgba(15, 23, 42, 0.16);
+}
+
+/* Top-strip colors per stat family */
+[data-theme="light"] .anet-stat-card[data-anet-stat-card="green"] { border-top-color: #10b981; }
+
+[data-theme="light"] .anet-stat-card[data-anet-stat-card="cyan"] { border-top-color: var(--accent); }
+
+[data-theme="light"] .anet-stat-card[data-anet-stat-card="gray"] { border-top-color: #94a3b8; }
+
+[data-theme="light"] .anet-stat-card[data-anet-stat-card="white"] { border-top-color: #3b82f6; }
+
+/* Drop the gradient wash in light themes — looks like dust on white. */
+[data-theme="light"] .anet-stat-card > .pointer-events-none,
+[data-theme="mint"] .anet-stat-card > .pointer-events-none {
+  display: none;
+}
+
+/* Generic card hover elevation — every white card on light bg gets a
+   subtle lift on hover so clickability is obvious. */
+[data-theme="light"] .bg-\[\#161618\]:hover,
+[data-theme="mint"] .bg-\[\#161618\]:hover {
+  box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.12);
+}
+
+/* Task row hover bg (round 19) — dark hex would land on a white card and
+   look like a stripe. Re-map to a faint accent tint per theme. */
+[data-theme="light"] .anet-task-row:hover {
+  background-color: #f5f7fb !important;
+}
+
+/* Open state — slightly stronger fill so users can see "this one is the
+   open row" while scrolling. */
+[data-theme="light"] .anet-task-row[aria-expanded="true"] {
+  background-color: #fafbfd !important;
+  box-shadow: 0 4px 14px -10px rgba(15, 23, 42, 0.14) !important;
+}
+
+[data-theme="light"] .anet-login-bg,
+[data-theme="mint"] .anet-login-bg {
+  background-image:
+    radial-gradient(circle at 50% 35%, rgba(0, 158, 126, 0.06), transparent 60%),
+    radial-gradient(circle, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px;
+}
+
+[data-theme="light"] .anet-login-mark,
+[data-theme="mint"] .anet-login-mark {
+  background: var(--bg-secondary) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px var(--border);
+}
+
+/* Health banner — sticky thin strip above content, with theme-aware
+   green/amber/red tints. Dark themes use the lower-opacity bg+border
+   that come from the component classes directly. Light/mint need
+   slightly more saturation so the tint reads on a white surface. */
+[data-theme="light"] .anet-health-banner.bg-emerald-500\/6,
+[data-theme="mint"] .anet-health-banner.bg-emerald-500\/6 {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+  color: #047857 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+[data-theme="light"] .anet-health-banner.bg-amber-500\/8,
+[data-theme="mint"] .anet-health-banner.bg-amber-500\/8 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  color: #92400e !important;
+  border-color: rgba(245, 158, 11, 0.30) !important;
+}
+
+[data-theme="light"] .anet-health-banner.bg-red-500\/8,
+[data-theme="mint"] .anet-health-banner.bg-red-500\/8 {
+  background-color: rgba(220, 38, 38, 0.10) !important;
+  color: #b91c1c !important;
+  border-color: rgba(220, 38, 38, 0.30) !important;
+}
+
+[data-theme="light"] .anet-skeleton-bar,
+[data-theme="mint"] .anet-skeleton-bar {
+  background-color: #d4d8df;
+}
+
+[data-theme="light"] .anet-cmdk > div:not([aria-hidden]),
+[data-theme="mint"]  .anet-cmdk > div:not([aria-hidden]) {
+  background-color: var(--bg-secondary) !important;
+  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.18),
+              0 2px 6px -2px rgba(15, 23, 42, 0.10);
+}
+
+[data-theme="light"] .anet-cmdk-row.bg-cyan-500\/10,
+[data-theme="mint"]  .anet-cmdk-row.bg-cyan-500\/10 {
+  background-color: rgba(0, 158, 126, 0.08) !important;
+}
+
+/* Light/mint: use the brand teal — undertone matches the active row. */
+[data-theme="light"] .anet-cmdk-mark,
+[data-theme="mint"]  .anet-cmdk-mark {
+  color: #0d9488;
+}
+
+[data-theme="light"] .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark,
+[data-theme="mint"]  .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark {
+  color: #064e3b;
+}
+
+/* Help overlay — same white-card-with-shadow treatment as cmdk on light */
+[data-theme="light"] .anet-help > div:not([aria-hidden]),
+[data-theme="mint"]  .anet-help > div:not([aria-hidden]) {
+  background-color: var(--bg-secondary) !important;
+  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.18),
+              0 2px 6px -2px rgba(15, 23, 42, 0.10);
+}
+
+[data-theme="light"] .anet-tabstrip-wrap::before,
+[data-theme="mint"]  .anet-tabstrip-wrap::before {
+  background: linear-gradient(to right, var(--bg-secondary), transparent);
+}
+
+[data-theme="light"] .anet-tabstrip-wrap::after,
+[data-theme="mint"]  .anet-tabstrip-wrap::after {
+  background: linear-gradient(to left, var(--bg-secondary), transparent);
+}
+
+/* P0-3 baseline: error / warning chip colors for light themes.
+   The component-level copy (replacing raw JSON with human text) is fixed
+   in the Logs / Server-Logs page components separately. */
+[data-theme="light"] .anet-error-chip,
+[data-theme="mint"] .anet-error-chip {
+  background-color: rgba(220, 38, 38, 0.06) !important;
+  color: #b91c1c !important;
+  border-color: rgba(220, 38, 38, 0.25) !important;
+}
+
+[data-theme="light"] .anet-warn-chip,
+[data-theme="mint"] .anet-warn-chip {
+  background-color: rgba(217, 119, 6, 0.08) !important;
+  color: #92400e !important;
+  border-color: rgba(217, 119, 6, 0.28) !important;
+}
+
+/* #217 S6 — opacity-variant fills that postdate the original shim
+   table (MobileNav bottom bar, Settings/admin jump chips). */
+[data-theme="light"] .bg-\[\#111113\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+[data-theme="light"] .bg-\[\#0e0e10\]\/60 {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SLACK SKIN (Vincent 2026-07-16: "其他的就搞成那种 Slack 方式吧…
+   快速搞一个" — Slack-style default; the topology page keeps its
+   dark showcase visuals).
+
+   Mechanism: applyTheme('slack') sets data-theme="light" (so every
+   light compat-shim above applies unchanged) + data-skin="slack",
+   which these overrides key on. Aubergine rail + white content +
+   Slack-blue accent + de-noise. The full hex→token sweep stays
+   scheduled as redesign Phase 0 next version — this block is the
+   fast theme-level version.
+   ════════════════════════════════════════════════════════════════ */
+
+[data-skin="slack"] {
+  --accent:     #1264a3; /* Slack blue */
+  --accent-fg:  #ffffff;
+  --success:    #2bac76; /* Slack presence green */
+  --bg:         #f8f8f8;
+  --border:     #e0e0e0;
+}
+
+/* ── Aubergine rail. html[data-skin] + double attribute beats the
+   light shim's [data-theme="light"] .bg-\[\#111113\] (0,2,0 vs 0,2,1). */
+html[data-skin="slack"] aside[data-anet-sidebar][data-anet-sidebar] {
+  background-color: #3f0e40 !important;
+  border-color: #4d2650 !important;
+}
+/* Rail text/icons: light-on-aubergine (the light shims would paint them
+   near-black). Blanket over the rail's inline elements, then re-tint
+   states below. */
+html[data-skin="slack"] aside[data-anet-sidebar] a,
+html[data-skin="slack"] aside[data-anet-sidebar] span,
+html[data-skin="slack"] aside[data-anet-sidebar] button,
+html[data-skin="slack"] aside[data-anet-sidebar] svg,
+html[data-skin="slack"] aside[data-anet-sidebar] div {
+  color: #d1d2d3 !important;
+}
+html[data-skin="slack"] aside[data-anet-sidebar] .text-white,
+html[data-skin="slack"] aside[data-anet-sidebar] .font-semibold {
+  color: #ffffff !important;
+}
+/* Active nav item: Slack's white-tint pill instead of the cyan tint. */
+html[data-skin="slack"] aside[data-anet-sidebar] [class*="bg-cyan"] {
+  background-color: rgba(255, 255, 255, 0.16) !important;
+  border-color: transparent !important;
+}
+html[data-skin="slack"] aside[data-anet-sidebar] [class*="bg-cyan"] * {
+  color: #ffffff !important;
+}
+/* Hover rows: white tint, not the light theme's gray. */
+html[data-skin="slack"] aside[data-anet-sidebar] a:hover,
+html[data-skin="slack"] aside[data-anet-sidebar] button:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+/* Inner hairlines on the rail. */
+html[data-skin="slack"] aside[data-anet-sidebar] [class*="border-"] {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ── Accent convergence: cyan → Slack blue across content. Solid
+   button fills first, then generic text/border/tint maps (later
+   rules win at equal specificity, so keep this order). */
+[data-skin="slack"] [class*="text-cyan"] { color: #1264a3 !important; }
+[data-skin="slack"] [class*="border-cyan"] { border-color: rgba(18, 100, 163, 0.35) !important; }
+[data-skin="slack"] [class*="bg-cyan"] { background-color: rgba(18, 100, 163, 0.08) !important; }
+[data-skin="slack"] .bg-cyan-600,
+[data-skin="slack"] .bg-cyan-500 { background-color: #1264a3 !important; color: #ffffff !important; }
+[data-skin="slack"] .hover\:bg-cyan-500:hover { background-color: #0b4f83 !important; }
+/* (The rail rules above re-override these inside the aside.) */
+
+/* ── De-noise: no pulsing outside the topology showcase. */
+[data-skin="slack"] .animate-pulse,
+[data-skin="slack"] .anet-brand-pulse { animation: none !important; }
+[data-skin="slack"] [data-topo-showcase] .animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+}
+[data-skin="slack"] [data-topo-showcase] .anet-brand-pulse {
+  animation: anet-brand-pulse 2.4s ease-in-out infinite !important;
+}
+
+/* ── Topology showcase frame: the canvas keeps its dark cyber palette
+   (TopoGraph pins itself dark under this skin), so give it a dark
+   rounded stage on the light page — reads as an intentional
+   "mission display" panel. */
+[data-skin="slack"] [data-topo-showcase] {
+  background-color: #0b0b0d;
+  border: 1px solid #26262b;
+  border-radius: 16px;
+  padding: 16px;
+}
+/* Inside the showcase, counter the light shims so the dark canvas chrome
+   (panels, chips, labels) keeps its dark-theme colors. html[data-skin] +
+   descendant class = (0,3,0), beating the (0,2,0) light shims. */
+html[data-skin="slack"] [data-topo-showcase] .bg-\[\#0b0b0d\] { background-color: #0b0b0d !important; }
+html[data-skin="slack"] [data-topo-showcase] .bg-\[\#111113\] { background-color: #111113 !important; }
+html[data-skin="slack"] [data-topo-showcase] .bg-\[\#161618\] { background-color: #161618 !important; }
+html[data-skin="slack"] [data-topo-showcase] .bg-\[\#161618\]\/80 { background-color: rgba(22,22,24,.8) !important; }
+html[data-skin="slack"] [data-topo-showcase] .bg-\[\#0e0e10\] { background-color: #0e0e10 !important; }
+html[data-skin="slack"] [data-topo-showcase] .bg-\[\#1c1c1f\] { background-color: #1c1c1f !important; }
+html[data-skin="slack"] [data-topo-showcase] .bg-\[\#232327\] { background-color: #232327 !important; }
+html[data-skin="slack"] [data-topo-showcase] .border-\[\#26262b\],
+html[data-skin="slack"] [data-topo-showcase] .border-\[\#1c1c1f\],
+html[data-skin="slack"] [data-topo-showcase] .border-\[\#3a3a41\] { border-color: #26262b !important; }
+html[data-skin="slack"] [data-topo-showcase] .text-white { color: #ffffff !important; }
+html[data-skin="slack"] [data-topo-showcase] .text-gray-300 { color: #d1d5db !important; }
+html[data-skin="slack"] [data-topo-showcase] .text-gray-400 { color: #9ca3af !important; }
+html[data-skin="slack"] [data-topo-showcase] .text-gray-500 { color: #6b7280 !important; }
+/* Showcase keeps its cyan identity too — undo the blue remap inside. */
+html[data-skin="slack"] [data-topo-showcase] [class*="text-cyan"] { color: #22d3ee !important; }
+html[data-skin="slack"] [data-topo-showcase] [class*="border-cyan"] { border-color: rgba(34,211,238,.35) !important; }
+html[data-skin="slack"] [data-topo-showcase] [class*="bg-cyan"] { background-color: rgba(34,211,238,.10) !important; }
+
+/* ── WeChat-optimization loop R2 (性能主线): native lazy rendering for the
+   agent grid. content-visibility:auto lets the browser SKIP layout+paint
+   for off-screen cards (191-node fleets render ~a viewport's worth instead
+   of all). contain-intrinsic-size reserves an estimated height for
+   never-rendered cards so the scrollbar stays stable; once a card has
+   rendered, the browser remembers its real size. Zero-dependency
+   virtualization — no library, no markup change, fully reversible. */
+.anet-agent-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 160px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   SPEC §2 — 三栏底色 semantic tokens (dark 已上线 v52, light 反转).
+   根因修法: 本轮三栏用的硬编码 hex 绕过了 token 层, light/slack 下
+   rail/chat 纹丝不动 (生产 v52 实测: 亮底+深 rail+深 chat)。
+   我方文件 (NodesView/NodeList/ChatPane) 改用 var(--col-*);
+   Sidebar (#0A0C14) 不是本单文件面 → 用类名 shim 覆盖, slack 皮肤的
+   aubergine 侧栏靠 html[data-skin] 双属性特异性压过它 (见 slack 块)。
+   ════════════════════════════════════════════════════════════ */
+[data-theme="cyber"],
+:root:not([data-theme]) {
+  --col-nav:  #0A0C14;
+  --col-list: #0F1320;
+  --col-chat: #141826;
+  --col-inset: #0A0D18;
+  --col-line:        rgba(255, 255, 255, 0.06);
+  --col-line-strong: rgba(255, 255, 255, 0.08);
+  --col-hairline: #1e1e22;
+  --badge-muted-bg: #475569;
+  --badge-muted-fg: #CBD5E1;
+  --hl:          #7DD3FC; /* 高亮/选中指示 (SPEC sky) */
+  --menu-bg:     #1E293B; /* 浮层菜单底 (右键/溢出) */
+  --bubble-in:   #1E293B; /* 聊天气泡: 对方 */
+  --bubble-out:  #1E3A5F; /* 聊天气泡: 己方 */
+  --control-off: #2a2a30; /* 开关 off 轨道 */
+  /* batch 3: 深色=白薄涂 (与旧 bg-white/5|10 计算值恒等), 浅色=黑薄涂 */
+  --hover-tint:        rgba(255, 255, 255, 0.05);
+  --hover-tint-strong: rgba(255, 255, 255, 0.10);
+  --code-fg:           #67e8f9; /* = cyan-300, 旧值原样; #232327 上 11.9:1 */
+}
+[data-theme="light"] {
+  --col-nav:  #F5F6F8;
+  --col-list: #FAFAFC;
+  --col-chat: #FFFFFF;
+  --col-inset: #F1F3F7;
+  --col-line:        rgba(0, 0, 0, 0.06);
+  --col-line-strong: rgba(0, 0, 0, 0.08);
+  --col-hairline: #e9ebf0;
+  --badge-muted-bg: #CBD5E1;
+  --badge-muted-fg: #334155;
+  --hl:          #0284c7; /* sky-600: 浅底上可读的同 hue */
+  --menu-bg:     #ffffff;
+  --bubble-in:   #F1F5F9;
+  --bubble-out:  #DBEAFE;
+  --control-off: #CBD5E1;
+  --hover-tint:        rgba(0, 0, 0, 0.05);
+  --hover-tint-strong: rgba(0, 0, 0, 0.10);
+  --code-fg:           #0369a1; /* sky-700: #eef0f4 底上 5.2:1 (cyan-300 系
+                                   同 hue 最近的 ≥4.5 档; shim 的 --accent
+                                   #009e7e 在 code-bg 上只有 2.98:1) */
+}
+/* Sidebar shim (file not in this task's scope) */
+[data-theme="light"] .bg-\[\#0A0C14\] { background-color: var(--col-nav) !important; }
+/* rail 内部细线/悬停/选中文字 — 深色专用值在浅底不可读 */
+/* consumers: NodeSettingsPanel (#1a1a1d), Sidebar (hover) — NodeList 已 token 化 */
+[data-theme="light"] .border-\[\#1a1a1d\] { border-color: var(--border) !important; }
+[data-theme="light"] .hover\:bg-\[\#161618\]:hover { background-color: var(--bg-elevated) !important; }
+[data-theme="light"] .text-cyan-200 { color: #0e7490 !important; }
+/* 免打扰灰角标 (设计判据: 不能红、不能不显示): 深色 #475569 底 + #CBD5E1 字
+   搬到浅底对比倒置。浅色 slate-300 底 + slate-700 字 — 仍是灰, 字/底 ≈7:1。
+   (.text-[#CBD5E1] 同时覆盖 /messages 次要文字, 浅底同样需要压深, 一并正确。) */
+/* consumer: app/messages/page.tsx 次要文字 (未 token 化页面) */
+[data-theme="light"] .text-\[\#CBD5E1\] { color: #334155 !important; }
+/* 绿点 (bg-green-400) 浅底对比度不足 — 状态色属全局定义, 按 issue #70
+   单独一节处理, 本批只量报数字不改 (通信龙 判据)。 */

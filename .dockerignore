@@ -1,0 +1,14 @@
+.git
+.next
+node_modules
+test-results
+playwright-report
+screenshots
+docs/tests/*
+android/.gradle
+android/app/build
+ios/Pods
+*.tgz
+*.log
+.env*
+!.env.example

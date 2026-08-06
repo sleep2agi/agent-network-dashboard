@@ -1,0 +1,41 @@
+name: OSS readiness gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Fetch every branch ref for the history gate
+        run: git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Working-tree OSS checks
+        run: npm run oss:check
+      - name: Full-history credential scan
+        run: npm run oss:secrets:history
+      - name: Public repository surface scan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OSS_PRIVATE_HOST_SUFFIXES: ${{ vars.OSS_PRIVATE_HOST_SUFFIXES }}
+        run: npm run oss:surface
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build

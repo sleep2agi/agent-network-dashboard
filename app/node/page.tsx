@@ -1,0 +1,422 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { TaskChatPanel } from '../components/TaskChatPanel';
+import { timeAgo } from '../components/utils';
+import { AliasAvatar } from '../components/AliasAvatar';
+import { SESSION_STATUS_TEXT_CLASS } from '../lib/status';
+import { useChatUnread } from '../lib/chat-unread';
+
+interface SessionDetail {
+  resume_id: string;
+  network_id?: string;
+  alias: string;
+  status: string;
+  agent: string;
+  server: string;
+  hostname: string;
+  task: string;
+  output: string;
+  progress: number;
+  score: number;
+  registered_at: string;
+  updated_at: string;
+  project_dir: string;
+  tmux_name: string;
+  ip: string;
+  node_id: string;
+  session_id: string;
+  config_path: string;
+  channels: string[];
+  last_seen_at: string;
+  model: string;
+  version: string;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  from_session: string;
+  priority: string;
+  created_at: string;
+  type: string;
+}
+
+function TmuxViewer({ tmuxName }: { tmuxName: string }) {
+  const [output, setOutput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const fetchTmux = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/hub/tmux?name=${encodeURIComponent(tmuxName)}`);
+      const data = await res.json();
+      setOutput(data.output || data.error || 'No output');
+    } catch { setOutput('Failed to fetch'); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-sm font-semibold text-gray-300">Terminal ({tmuxName})</h2>
+        <div className="flex gap-2">
+          <button onClick={fetchTmux} disabled={loading}
+            className="text-xs text-cyan-400 hover:text-cyan-300 disabled:text-gray-600">
+            {loading ? 'Loading...' : 'Capture'}
+          </button>
+          {output && (
+            <button onClick={() => setExpanded(!expanded)} className="text-xs text-gray-500 hover:text-gray-300">
+              {expanded ? 'Collapse' : 'Expand'}
+            </button>
+          )}
+        </div>
+      </div>
+      {output && (
+        <pre className={`text-[11px] text-green-300 bg-[#060607] rounded-lg px-3 py-2 border border-[#1c1c1f] overflow-x-auto whitespace-pre font-mono ${expanded ? 'max-h-96' : 'max-h-32'} overflow-y-auto`}>
+          {output}
+        </pre>
+      )}
+      {!output && <p className="text-xs text-gray-600">Click Capture to view terminal output</p>}
+    </div>
+  );
+}
+
+function NodeDetailContent() {
+  const searchParams = useSearchParams();
+  const alias = searchParams.get('alias') || '';
+  const [session, setSession] = useState<SessionDetail | null>(null);
+  const [inbox, setInbox] = useState<Message[]>([]);
+  const [sse, setSse] = useState(0);
+  const [error, setError] = useState('');
+  const [sendMsg, setSendMsg] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    if (!alias) return;
+    try {
+      const res = await fetch(`/api/hub/session?alias=${encodeURIComponent(alias)}`);
+      const data = await res.json();
+      if (data.session) setSession(data.session);
+      if (data.inbox) setInbox(data.inbox);
+      setSse(data.sse || 0);
+      setError('');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'fetch failed');
+    }
+  }, [alias]);
+
+  useEffect(() => {
+    // Initial fetch kick-off + poll; state lands async after the fetch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  const [sendError, setSendError] = useState('');
+
+  const sendTask = async () => {
+    if (!sendMsg.trim() || !alias) return;
+    setSending(true);
+    setSendError('');
+    try {
+      const res = await fetch('/api/hub/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alias, task: sendMsg,
+          // P0 network_id fix: scope to the node's own network.
+          ...(session?.network_id ? { network_id: session.network_id } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSendMsg('');
+        setTimeout(fetchData, 2000);
+      } else {
+        setSendError(data.error || 'Send failed');
+      }
+    } catch (e: unknown) {
+      setSendError(e instanceof Error ? e.message : 'Send failed');
+    }
+    setSending(false);
+  };
+
+  if (!alias) {
+    return (
+      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-6 flex items-center justify-center">
+        <p className="text-gray-500">No alias specified. <Link href="/" className="text-blue-400 hover:underline">Back to dashboard</Link></p>
+      </div>
+    );
+  }
+
+  /* Round 92: shared 5-state palette (was working / idle / other,
+     collapsed blocked + error into gray). */
+  const statusColor = SESSION_STATUS_TEXT_CLASS[session?.status || ''] || SESSION_STATUS_TEXT_CLASS.offline;
+
+  return (
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+      {/* Header — round 40: avatar joins the alias for cross-page hue
+          consistency; agent type lives in a subtitle so users know what
+          kind of node they're looking at. */}
+      <div className="flex items-center gap-3 mb-6 lg:ml-0 ml-10">
+        <Link href="/nodes" className="text-gray-500 hover:text-gray-300 text-sm shrink-0">&larr; Nodes</Link>
+        <AliasAvatar alias={alias} size={32} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{alias}</h1>
+            <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${
+              sse > 0 ? (session?.status === 'working' ? 'bg-green-500 animate-pulse' : 'bg-emerald-400') : 'bg-gray-500'
+            }`} />
+            <span className={`text-[10px] uppercase tracking-wide font-semibold ${statusColor}`}>{session?.status || 'unknown'}</span>
+          </div>
+          {session?.agent && (
+            <div className="text-xs text-gray-500 truncate">{session.agent}{session.server ? <> <span className="text-gray-700 mx-1">·</span> {session.server}</> : null}</div>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-4 py-2 rounded-lg mb-6 text-sm">{error}</div>
+      )}
+
+      {/* Full-width tabbed layout */}
+      <NodeFullPanel alias={alias} session={session} sse={sse} sendMsg={sendMsg} setSendMsg={setSendMsg} sending={sending} sendTask={sendTask} sendError={sendError} />
+    </div>
+  );
+}
+
+function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, sendTask, sendError }: {
+  alias: string; session: SessionDetail | null; sse: number; sendMsg: string; setSendMsg: (v: string) => void; sending: boolean; sendTask: () => void; sendError: string;
+}) {
+  const [tab, setTab] = useState<'chat' | 'events' | 'info'>('chat');
+  const { hasUnread } = useChatUnread();
+  const [events, setEvents] = useState<Array<{ id: number; event_type: string; from_status: string; to_status: string; detail: string; created_at: string }>>([]);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
+  const chatUnread = hasUnread(alias);
+
+  useEffect(() => {
+    if (tab === 'events' && !eventsLoaded) {
+      fetch('/api/hub/task-events?limit=50').then(r => r.json()).then(d => {
+        setEvents(d.events || []);
+        setEventsLoaded(true);
+      }).catch(() => setEventsLoaded(true));
+    }
+  }, [tab, eventsLoaded]);
+
+  return (
+    <div className="bg-[#111113] border border-[#26262b] rounded-xl overflow-hidden h-[calc(100vh-140px)] flex flex-col">
+      {/* Tab bar — round 40: emoji icons (💬 📋 📊) replaced with stroke
+          SVG to drop the "AI generated" tell. */}
+      <div className="flex border-b border-[#26262b] bg-[#0e0e10] shrink-0">
+        {([
+          { id: 'chat',   label: 'Chat',   icon: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' },
+          { id: 'events', label: 'Events', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
+          { id: 'info',   label: 'Info',   icon: 'M12 21a9 9 0 100-18 9 9 0 000 18z M12 8h.01 M11 12h1v4h1' },
+        ] as const).map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+              tab === t.id ? 'border-cyan-400 text-cyan-300' : 'border-transparent text-gray-500 hover:text-gray-300'
+            }`}>
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d={t.icon} />
+            </svg>
+            <span className="relative inline-flex items-center gap-2">
+              {t.label}
+              {t.id === 'chat' && chatUnread && tab !== 'chat' && (
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" aria-label="Unread chat messages" />
+              )}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div className="flex-1 overflow-hidden">
+        {tab === 'chat' && (
+          <TaskChatPanel alias={alias} onClose={() => {}} inline />
+        )}
+
+        {tab === 'events' && (
+          <EventsTimeline events={events} loading={!eventsLoaded} />
+        )}
+
+        {tab === 'info' && (
+          <div className="p-4 overflow-y-auto h-full space-y-4 max-w-2xl">
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
+              <h2 className="text-sm font-semibold text-gray-300 mb-3">Node Info</h2>
+            <div className="space-y-2 text-xs">
+              {[
+                { label: 'Node ID', value: session?.node_id, alwaysShow: true },
+                { label: 'Session ID', value: session?.session_id, alwaysShow: true },
+                { label: 'Resume ID', value: session?.resume_id, alwaysShow: true },
+                { label: 'Alias', value: session?.alias, alwaysShow: true },
+                { label: 'Agent', value: session?.agent, alwaysShow: true },
+                { label: 'Model', value: session?.model, alwaysShow: true },
+                { label: 'Version', value: session?.version },
+                { label: 'Server', value: session?.server, alwaysShow: true },
+                { label: 'Hostname', value: session?.hostname, alwaysShow: true },
+                { label: 'IP', value: session?.ip, alwaysShow: true },
+                { label: 'Project', value: session?.project_dir },
+                { label: 'Config', value: session?.config_path, alwaysShow: true },
+                { label: 'Channels', value: session?.channels?.length ? (Array.isArray(session.channels) ? session.channels.join(', ') : session.channels) : null, alwaysShow: true },
+                { label: 'Tmux', value: session?.tmux_name },
+                { label: 'SSE', value: sse > 0 ? `Connected (${sse})` : 'Disconnected', alwaysShow: true },
+                { label: 'Progress', value: session?.progress ? `${session.progress}%` : null },
+                { label: 'Score', value: session?.score },
+                { label: 'Last Seen', value: session?.last_seen_at, alwaysShow: true },
+                { label: 'Registered', value: session?.registered_at, alwaysShow: true },
+                { label: 'Updated', value: session?.updated_at, alwaysShow: true },
+              ].map(({ label, value, alwaysShow }) => (value || alwaysShow) ? (
+                <div key={label} className="flex justify-between gap-3">
+                  <span className="text-gray-500 shrink-0">{label}</span>
+                  <span className="text-gray-300 truncate max-w-[200px]" title={value ? String(value) : '--'}>
+                    {value ? String(value) : '--'}
+                  </span>
+                </div>
+              ) : null)}
+            </div>
+          </div>
+
+          {/* Current Task */}
+          {session?.task && (
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
+              <h2 className="text-sm font-semibold text-gray-300 mb-2">Current Task</h2>
+              <p className="text-xs text-gray-400 whitespace-pre-wrap">{session.task}</p>
+            </div>
+          )}
+
+          {/* Output */}
+          {session?.output && (
+            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
+              <h2 className="text-sm font-semibold text-gray-300 mb-2">Last Output</h2>
+              <p className="text-xs text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto">{session.output}</p>
+            </div>
+          )}
+
+          {/* Send Task */}
+          <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
+            <h2 className="text-sm font-semibold text-gray-300 mb-2">Send Task</h2>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={sendMsg}
+                onChange={e => setSendMsg(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendTask()}
+                placeholder={`Send task to ${alias}...`}
+                className="flex-1 bg-[#0e0e10] border border-[#26262b] rounded px-3 py-2 text-base sm:text-xs text-white placeholder-gray-600 focus:border-blue-500 focus:outline-none"
+              />
+              <button
+                onClick={sendTask}
+                disabled={sending || !sendMsg.trim()}
+                className="inline-flex min-h-[44px] items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white text-xs rounded transition-colors"
+              >
+                {sending ? '...' : 'Send'}
+              </button>
+            </div>
+            {sendError && <div className="mt-2 text-xs text-red-400">{sendError}</div>}
+          </div>
+
+          {/* Tmux Terminal */}
+          {session?.tmux_name && (
+            <TmuxViewer tmuxName={session.tmux_name} />
+          )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Round 59: emoji icons replaced with stroke SVG paths to drop the
+ *  "AI generated" tell. Each path is sized to fit inside the 18px
+ *  colored event dot. */
+const EVENT_COLORS: Record<string, { dot: string; line: string; path: string }> = {
+  delivered: { dot: 'bg-blue-400',   line: 'bg-blue-500/30',   path: 'M12 5v14 M5 12l7 7 7-7' },                   // down arrow
+  acked:     { dot: 'bg-yellow-400', line: 'bg-yellow-500/30', path: 'M20 6 9 17l-5-5' },                          // check
+  running:   { dot: 'bg-green-400',  line: 'bg-green-500/30',  path: 'M13 2L4 14h6l-1 8 10-12h-6l1-8z' },         // bolt
+  replied:   { dot: 'bg-purple-400', line: 'bg-purple-500/30', path: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' }, // chat bubble
+  failed:    { dot: 'bg-red-400',    line: 'bg-red-500/30',    path: 'M18 6 6 18 M6 6l12 12' },                    // X
+  created:   { dot: 'bg-gray-400',   line: 'bg-gray-500/30',   path: 'M12 5v14 M5 12h14' },                       // plus
+};
+
+function EventsTimeline({ events, loading }: { events: Array<{ id: number; event_type: string; from_status: string; to_status: string; detail: string; created_at: string; task_id?: string }>; loading: boolean }) {
+  if (loading) return <div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" /></div>;
+  if (events.length === 0) return <div className="text-center py-12 text-gray-600 text-xs">No task events yet</div>;
+
+  // Group by task_id
+  const groups = new Map<string, typeof events>();
+  events.forEach(e => {
+    const key = (e as { task_id?: string }).task_id || `ungrouped-${e.id}`;
+    const group = groups.get(key) || [];
+    group.push(e);
+    groups.set(key, group);
+  });
+
+  return (
+    <div className="p-4 overflow-y-auto h-full space-y-4">
+      {[...groups.entries()].map(([taskId, taskEvents]) => (
+        <div key={taskId} className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
+          <div className="text-[10px] text-gray-600 mb-3 truncate">Task: {taskId.slice(0, 20)}...</div>
+          <div className="relative pl-6">
+            {/* Vertical line */}
+            <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-[#1c1c1f]" />
+
+            {taskEvents.map((e, i) => {
+              const cfg = EVENT_COLORS[e.to_status] || EVENT_COLORS.created;
+              return (
+                <div key={e.id} className="relative pb-4 last:pb-0">
+                  {/* Dot on line — round 59: emoji icons replaced with
+                      a 10px stroke SVG path matching event type. */}
+                  <div className={`absolute -left-6 top-0.5 w-[18px] h-[18px] rounded-full ${cfg.dot} flex items-center justify-center z-10 border-2 border-[#161618]`}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0e0e10" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d={cfg.path} />
+                    </svg>
+                  </div>
+                  {/* Content */}
+                  <div className="ml-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-medium ${e.to_status === 'failed' ? 'text-red-400' : e.to_status === 'replied' ? 'text-purple-400' : 'text-gray-300'}`}>
+                        {e.event_type}
+                      </span>
+                      {e.from_status && (
+                        <span className="text-[10px] text-gray-600">{e.from_status} → {e.to_status}</span>
+                      )}
+                      <span className="text-[10px] text-gray-600 ml-auto">{timeAgo(e.created_at)}</span>
+                    </div>
+                    {e.detail && (
+                      <div className="text-[11px] text-gray-500 mt-0.5 truncate">{e.detail.slice(0, 50)}{e.detail.length > 50 ? '...' : ''}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function NodePage() {
+  return (
+    <Suspense fallback={
+      // #209 R36: same pattern R30 fixed on /tasks — bare "Loading..."
+      // string used p-6 (no mobile padding tighten) + no left indent,
+      // so the fixed top-3 left-3 mobile hamburger covered the "Loa".
+      // Match the loaded layout: p-4 sm:p-6 + lg:ml-0 ml-10 mobile
+      // indent on the text. Loading state now visually maps to the
+      // populated /node detail page.
+      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+        <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading…</div>
+      </div>
+    }>
+      <NodeDetailContent />
+    </Suspense>
+  );
+}

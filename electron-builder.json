@@ -1,0 +1,18 @@
+{
+  "appId": "ai.sleep2agi.agentnetwork.dashboard",
+  "productName": "Agent Network",
+  "files": [
+    "apps/desktop/electron/**/*",
+    "package.json"
+  ],
+  "mac": {
+    "category": "public.app-category.productivity",
+    "target": ["dmg", "zip"]
+  },
+  "linux": {
+    "target": ["AppImage"]
+  },
+  "win": {
+    "target": ["nsis"]
+  }
+}

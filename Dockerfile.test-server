@@ -1,0 +1,37 @@
+FROM oven/bun:latest
+RUN bun add @sleep2agi/commhub-server@preview
+RUN apt-get update -qq && apt-get install -y -qq curl > /dev/null 2>&1 || true
+
+RUN echo '#!/bin/bash\n\
+echo "Starting CommHub server..."\n\
+PORT=9200 COMMHUB_AUTH_TOKEN=${COMMHUB_AUTH_TOKEN:-demo-token} bun node_modules/@sleep2agi/commhub-server/bin/commhub.js &\n\
+sleep 3\n\
+\n\
+echo "Registering admin user..."\n\
+REG=$(curl -sf -X POST http://127.0.0.1:9200/api/auth/register -H "Content-Type: application/json" \
+  -d "{\"username\":\"admin\",\"password\":\"admin123\",\"display_name\":\"Admin\"}")\n\
+UTOK=$(echo "$REG" | grep -o "utok_[a-f0-9]*")\n\
+echo "User token: ${UTOK:0:15}..."\n\
+\n\
+echo "Registering demo nodes with user token..."\n\
+MCP="http://127.0.0.1:9200/mcp"\n\
+for ARGS in \
+  "{\"resume_id\":\"a\",\"alias\":\"成语大师A\",\"status\":\"working\",\"agent\":\"codex-sdk\",\"server\":\"docker\",\"hostname\":\"nstation\",\"project_dir\":\"/demo\",\"task\":\"成语接龙\",\"progress\":80}" \
+  "{\"resume_id\":\"b\",\"alias\":\"成语大师B\",\"status\":\"working\",\"agent\":\"codex-sdk\",\"server\":\"docker\",\"hostname\":\"nstation\",\"project_dir\":\"/demo\",\"task\":\"接龙中\",\"progress\":75}" \
+  "{\"resume_id\":\"j\",\"alias\":\"成语裁判\",\"status\":\"working\",\"agent\":\"minimax\",\"server\":\"docker\",\"hostname\":\"nstation\",\"project_dir\":\"/demo\",\"task\":\"比分A:8 B:7\",\"progress\":90}" \
+  "{\"resume_id\":\"w1\",\"alias\":\"选题编辑\",\"status\":\"working\",\"agent\":\"claude-sdk\",\"server\":\"docker\",\"hostname\":\"nstation\",\"project_dir\":\"/demo\",\"task\":\"选题完成\",\"progress\":100}" \
+  "{\"resume_id\":\"w2\",\"alias\":\"大纲作者\",\"status\":\"working\",\"agent\":\"codex-sdk\",\"server\":\"docker\",\"hostname\":\"nstation\",\"project_dir\":\"/demo\",\"task\":\"撰写大纲\",\"progress\":70}" \
+  "{\"resume_id\":\"c1\",\"alias\":\"开发者Alpha\",\"status\":\"working\",\"agent\":\"codex-sdk\",\"server\":\"docker\",\"hostname\":\"nstation\",\"project_dir\":\"/demo\",\"task\":\"PR #42\",\"progress\":100}" \
+  "{\"resume_id\":\"c2\",\"alias\":\"审查员Beta\",\"status\":\"working\",\"agent\":\"claude-sdk\",\"server\":\"docker\",\"hostname\":\"nstation\",\"project_dir\":\"/demo\",\"task\":\"审查中\",\"progress\":60}"; do\n\
+  curl -sf -X POST "$MCP" -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -H "Authorization: Bearer $UTOK" \
+    -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-03-26\",\"capabilities\":{},\"clientInfo\":{\"name\":\"d\"}}}" > /dev/null 2>&1\n\
+  curl -sf -X POST "$MCP" -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -H "Authorization: Bearer $UTOK" \
+    -d "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"report_status\",\"arguments\":$ARGS}}" > /dev/null 2>&1\n\
+done\n\
+\n\
+echo "Demo ready: admin/admin123 + 7 nodes"\n\
+wait' > /start.sh && chmod +x /start.sh
+
+EXPOSE 9200
+ENV PORT=9200
+CMD ["/bin/bash", "/start.sh"]

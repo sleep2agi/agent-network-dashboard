@@ -1,0 +1,74 @@
+{
+  "name": "@sleep2agi/agent-network-dashboard",
+  "version": "0.6.3-preview.54",
+  "description": "Agent Network Dashboard — Web UI for managing AI Agent networks",
+  "main": "apps/desktop/electron/main.cjs",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "postbuild": "node scripts/stamp-build-commit.mjs",
+    "start": "next start",
+    "lint": "eslint",
+    "oss:check": "node scripts/oss-readiness-check.mjs",
+    "oss:secrets": "node scripts/oss-secret-scan.mjs --scope tree",
+    "oss:secrets:history": "node scripts/oss-secret-scan.mjs --scope history",
+    "oss:surface": "node scripts/oss-public-surface-scan.mjs --scope all",
+    "app:android:init": "npx cap add android",
+    "app:android:sync": "npx cap sync android",
+    "app:android:open": "npx cap open android",
+    "app:ios:init": "npx cap add ios",
+    "app:ios:sync": "npx cap sync ios",
+    "app:ios:open": "npx cap open ios",
+    "app:desktop": "electron apps/desktop/electron/main.cjs",
+    "app:desktop:pack": "electron-builder --config electron-builder.json",
+    "prepublishOnly": "[ -f .next/BUILD_ID ] || (echo 'prepublishOnly: .next/BUILD_ID missing — run npm run build first (see commit 05c1ebf body for R224 chunk-500 root cause)' >&2 && exit 1)",
+    "avatars:check": "node scripts/check-avatars.mjs",
+    "ratchet": "node scripts/check-color-ratchet.mjs",
+    "gates": "node scripts/check-color-ratchet.mjs && node scripts/check-avatars.mjs"
+  },
+  "bin": {
+    "agent-network-dashboard": "./bin/start.js"
+  },
+  "homepage": "https://anet.sh",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sleep2agi/agent-network-dashboard-oss"
+  },
+  "bugs": {
+    "url": "https://github.com/sleep2agi/agent-network-dashboard-oss/issues"
+  },
+  "author": "sleep2agi",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.4",
+    "next": "16.3.0",
+    "pinyin-pro": "^3.28.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "swr": "^2.4.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
+    "@playwright/test": "^1.59.1",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "electron": "^39.2.6",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

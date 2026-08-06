@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- illu-15 · house · hue 210 -->
+  <circle cx="50" cy="50" r="48" fill="hsl(210 62% 42%)"/>
+  <polygon points="50,18 84,48 74,48 74,82 26,82 26,48 16,48" fill="white"/>
+</svg>

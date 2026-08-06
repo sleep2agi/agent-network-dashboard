@@ -1,0 +1,25 @@
+FROM mcr.microsoft.com/playwright:v1.52.0-noble
+
+WORKDIR /app/dashboard
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts 2>/dev/null || npm install
+RUN npx playwright install chromium
+
+COPY . .
+
+# Install CommHub server globally
+RUN npm install -g @sleep2agi/commhub-server@preview 2>/dev/null || true
+
+RUN echo '#!/bin/bash\n\
+echo "=== Starting CommHub ==="\n\
+npx @sleep2agi/commhub-server --port 9200 --token test-token &\n\
+sleep 4\n\
+echo "=== Register admin ==="\n\
+curl -sf -X POST http://localhost:9200/api/auth/register -H "Content-Type: application/json" \
+  -d "{\"username\":\"admin\",\"password\":\"admin123\",\"display_name\":\"Admin\"}" | head -c 50\n\
+echo ""\n\
+echo "=== Run tests ==="\n\
+COMMHUB_URL=http://localhost:9200 ANET_DASHBOARD_PASSWORD=admin123 COMMHUB_AUTH_TOKEN=test-token npx playwright test --reporter=line\n\
+echo "Exit: $?"' > /run.sh && chmod +x /run.sh
+
+CMD ["/bin/bash", "/run.sh"]

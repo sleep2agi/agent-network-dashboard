@@ -1,0 +1,101 @@
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { AppShell } from "./components/AppShell";
+import { NetworkProvider } from "./lib/network-context";
+import { ThemeProvider } from "./components/ThemeSwitcher";
+import { PwaInstaller } from "./components/PwaInstaller";
+
+// #217 D1 (Vincent: OpenWebUI-style serious-product feel): UI text is
+// sans; mono stays for code blocks, IDs and logs via .font-mono.
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Agent Network Dashboard",
+  description: "Real-time monitoring dashboard for Agent Network nodes via CommHub",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Agent Network",
+  },
+  // R26 of #190: Next.js 16 renders `mobile-web-app-capable` (the modern
+  // standardized meta) but NOT the legacy `apple-mobile-web-app-capable`.
+  // iOS Safari < 16.4 only checks the apple-prefixed name; without it,
+  // the dashboard won't install as a web app on those iOS versions and
+  // the statusBarStyle + apple-touch-icon (R24) are silently ignored.
+  // Emit the legacy alias via metadata.other for back-compat.
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+  },
+  // R24 of #190: appleWebApp.capable above declares this is an iOS web
+  // app, but only `icon` was specified, leaving iOS Safari to fall back
+  // to a generic icon on Add-to-Home-Screen. iOS 15+ accepts SVG via
+  // `rel="apple-touch-icon" type="image/svg+xml"`; older iOS will fall
+  // back to the manifest icons (added R23) and then the generic. Reuse
+  // the existing sleep2agi-logo.svg — no new asset shipped.
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/sleep2agi-logo.svg', type: 'image/svg+xml' }],
+    shortcut: '/favicon.svg',
+  },
+  openGraph: {
+    title: "Agent Network Dashboard",
+    description: "Real-time monitoring dashboard for Agent Network nodes",
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: "#0b0b0d",
+  // R25 of #190: metadata.appleWebApp.statusBarStyle above is
+  // "black-translucent", which renders the iOS status bar as a
+  // transparent overlay above the page (rather than reserving its own
+  // strip). Without viewportFit: "cover" the resulting safe-area-inset
+  // env() values resolve to 0, so the HealthBanner gets occluded by
+  // the clock/battery row when the user opens the installed PWA.
+  viewportFit: "cover",
+};
+
+// Inline pre-paint script to apply persisted theme before React hydrates,
+// preventing a white flash on light/mint themes for users who already set it.
+const themeBootScript = `
+try {
+  var t = localStorage.getItem('anet-theme') || 'cyber';
+  document.documentElement.setAttribute('data-theme', t);
+} catch (e) {}
+`;
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" data-theme="cyber" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
+      <body className="min-h-full" style={{ background: 'var(--bg)', color: 'var(--fg)' }}>
+        <ThemeProvider>
+          <NetworkProvider>
+            <PwaInstaller />
+            <AppShell>{children}</AppShell>
+          </NetworkProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
