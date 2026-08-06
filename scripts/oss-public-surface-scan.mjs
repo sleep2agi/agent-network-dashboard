@@ -12,7 +12,7 @@ const valueFor = (name) => {
 };
 
 const scope = valueFor('--scope') ?? 'all';
-const repository = valueFor('--repo') ?? 'sleep2agi/agent-network-dashboard-oss';
+const repository = valueFor('--repo') ?? 'sleep2agi/agent-network-dashboard';
 const fixturePath = valueFor('--fixture');
 if (!['tree', 'github', 'all'].includes(scope) || argv.includes('--help')) {
   console.log('usage: node scripts/oss-public-surface-scan.mjs --scope tree|github|all [--repo owner/name] [--fixture file.json]');

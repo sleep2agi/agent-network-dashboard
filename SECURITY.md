@@ -2,7 +2,7 @@
 
 ## Report a vulnerability
 
-Do not open a public issue for vulnerabilities, leaked credentials, or private deployment data. Use [GitHub Private Security Advisories](https://github.com/sleep2agi/agent-network-dashboard-oss/security/advisories/new).
+Do not open a public issue for vulnerabilities, leaked credentials, or private deployment data. Use [GitHub Private Security Advisories](https://github.com/sleep2agi/agent-network-dashboard/security/advisories/new).
 
 Include the affected version or commit, impact, reproduction steps, and a suggested remediation when available. Redact credentials and personal data from screenshots and logs.
 

@@ -33,10 +33,10 @@
   "homepage": "https://anet.sh",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sleep2agi/agent-network-dashboard-oss"
+    "url": "https://github.com/sleep2agi/agent-network-dashboard"
   },
   "bugs": {
-    "url": "https://github.com/sleep2agi/agent-network-dashboard-oss/issues"
+    "url": "https://github.com/sleep2agi/agent-network-dashboard/issues"
   },
   "author": "sleep2agi",
   "license": "Apache-2.0",

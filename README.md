@@ -2,7 +2,7 @@
 
 Web, desktop, and mobile UI for an [Agent Network](https://anet.sh) CommHub. It provides authenticated views for chat, tasks, nodes, messages, networks, logs, and administration.
 
-The public source repository is named `agent-network-dashboard-oss`. The established npm package remains `@sleep2agi/agent-network-dashboard` for compatibility with existing installations and CLI integrations.
+The public source repository is `agent-network-dashboard`. The established npm package remains `@sleep2agi/agent-network-dashboard` for compatibility with existing installations and CLI integrations.
 
 ## Quick start
 
@@ -25,8 +25,8 @@ Open <http://127.0.0.1:3000>. Change bootstrap credentials before exposing CommH
 Development requirements: Node.js 22.12 or newer, npm, and a reachable CommHub. The published web launcher itself supports Node.js 20 or newer; the higher development floor comes from the Electron build toolchain.
 
 ```bash
-git clone https://github.com/sleep2agi/agent-network-dashboard-oss.git
-cd agent-network-dashboard-oss
+git clone https://github.com/sleep2agi/agent-network-dashboard.git
+cd agent-network-dashboard
 cp .env.example .env.local
 npm ci
 npm run dev

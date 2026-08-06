@@ -7,8 +7,8 @@ Source development requires Node.js 22.12 or newer because the desktop build too
 ## Set up
 
 ```bash
-git clone https://github.com/sleep2agi/agent-network-dashboard-oss.git
-cd agent-network-dashboard-oss
+git clone https://github.com/sleep2agi/agent-network-dashboard.git
+cd agent-network-dashboard
 cp .env.example .env.local
 npm ci
 npm run dev
