@@ -2,6 +2,8 @@
 
 Web, desktop, and mobile UI for an [Agent Network](https://anet.sh) CommHub. It provides authenticated views for chat, tasks, nodes, messages, networks, logs, and administration.
 
+The public source repository is named `agent-network-dashboard-oss`. The established npm package remains `@sleep2agi/agent-network-dashboard` for compatibility with existing installations and CLI integrations.
+
 ## Quick start
 
 The supported path is through the Agent Network CLI:

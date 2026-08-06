@@ -26,6 +26,7 @@ const desktopMain = read('apps/desktop/electron/main.cjs');
 const capacitorConfig = read('capacitor.config.ts');
 const androidMain = read('android/app/src/main/java/ai/sleep2agi/agentnetwork/dashboard/MainActivity.java');
 
+check(pkg.name === '@sleep2agi/agent-network-dashboard', 'published package name must remain backward compatible');
 check(pkg.license === 'Apache-2.0', 'package.json license must be Apache-2.0');
 check(pkg.engines?.node === '>=20', 'package.json must declare the documented Node.js floor');
 check(pkg.repository?.url === 'https://github.com/sleep2agi/agent-network-dashboard-oss', 'package metadata must name the public source repository');
@@ -44,6 +45,7 @@ check(
   'SECURITY must point to this repository private advisory page',
 );
 check(!readme.includes('repository is still private'), 'public README must not carry the predecessor repository freeze banner');
+check(readme.includes('npm package remains `@sleep2agi/agent-network-dashboard`'), 'README must explain the repository/package naming boundary');
 check(gatesDoc.includes('NOT COVERED'), 'OSS gate documentation must explain uncovered-surface reporting');
 check(gatesDoc.includes('full clone'), 'OSS gate documentation must require a full clone for history attestation');
 check(gitignore.includes('!.env.example'), '.gitignore must allow the safe environment example');
