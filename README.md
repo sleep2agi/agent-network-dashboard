@@ -4,15 +4,17 @@ Web, desktop, and mobile UI for an [Agent Network](https://anet.sh) CommHub. It 
 
 The public source repository is `agent-network-dashboard`. The established npm package remains `@sleep2agi/agent-network-dashboard` for compatibility with existing installations and CLI integrations.
 
-## Screenshots
+## See it in action
 
 The screenshots use synthetic demo data—no production users, nodes, or credentials are shown.
 
-![Dashboard overview showing fleet health and recent activity](docs/images/dashboard-overview.png)
+### Command agents through conversation
 
-| Task tracking | Administration |
-| --- | --- |
-| ![Task list with status filters and demo tasks](docs/images/dashboard-tasks.png) | ![Administration view with demo sessions and task controls](docs/images/dashboard-admin.png) |
+![Conversation view showing tasks and replies between an operator and an AI agent](docs/images/dashboard-chat.png)
+
+### See the whole agent network
+
+![Live topology showing five collaborating AI agents and their active links](docs/images/dashboard-topology.png)
 
 ## Quick start
 

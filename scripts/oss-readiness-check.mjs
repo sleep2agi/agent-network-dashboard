@@ -70,9 +70,8 @@ check(!trackedPaths.some((path) => path.startsWith('screenshots/') || path.inclu
 check(!trackedPaths.includes('.mcp.json'), 'private MCP workspace configuration must not be tracked');
 
 const publicScreenshots = [
-  'docs/images/dashboard-overview.png',
-  'docs/images/dashboard-tasks.png',
-  'docs/images/dashboard-admin.png',
+  'docs/images/dashboard-chat.png',
+  'docs/images/dashboard-topology.png',
 ];
 for (const screenshot of publicScreenshots) {
   check(existsSync(screenshot), `public screenshot must exist: ${screenshot}`);
