@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
 const failures = [];
@@ -68,6 +68,16 @@ const forbiddenTracked = trackedPaths.filter((path) =>
 check(forbiddenTracked.length === 0, `forbidden tracked artifacts: ${forbiddenTracked.join(', ')}`);
 check(!trackedPaths.some((path) => path.startsWith('screenshots/') || path.includes('/screenshots/')), 'internal visual evidence must not be tracked');
 check(!trackedPaths.includes('.mcp.json'), 'private MCP workspace configuration must not be tracked');
+
+const publicScreenshots = [
+  'docs/images/dashboard-overview.png',
+  'docs/images/dashboard-tasks.png',
+  'docs/images/dashboard-admin.png',
+];
+for (const screenshot of publicScreenshots) {
+  check(existsSync(screenshot), `public screenshot must exist: ${screenshot}`);
+  check(readme.includes(`](${screenshot})`), `README must reference public screenshot: ${screenshot}`);
+}
 
 const publicRootScripts = new Set([
   'scripts/build-guard.sh',
