@@ -22,6 +22,9 @@ export default function SkillHubPage() {
   const [draft, setDraft] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<Skill | null>(null);
+  const [publicLicense, setPublicLicense] = useState('');
+  const [publicPublisher, setPublicPublisher] = useState('');
+  const [exported, setExported] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true); setError('');
@@ -68,7 +71,43 @@ export default function SkillHubPage() {
     if (networkId) qs.set('network_id', networkId);
     const res = await fetch(`/api/anet/skills?${qs}`, { cache: 'no-store' });
     const data = await res.json();
-    if (!data.ok) setError(data.error || '读取失败'); else setSelected(data.skill);
+    if (!data.ok) setError(data.error || '读取失败'); else {
+      setSelected(data.skill); setPublicLicense(''); setPublicPublisher(''); setExported(false);
+    }
+  }
+
+  async function exportPublicSubmission() {
+    setError(''); setExported(false);
+    if (!selected || selected.status !== 'published' || !reviewer) {
+      setError('只有网络审核员可以导出已在网络内发布的 Skill'); return;
+    }
+    if (!publicLicense || !publicPublisher.trim()) {
+      setError('公开投稿前请选择许可证并填写公开发布者名称'); return;
+    }
+    const content = selected.content || '';
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content));
+    const contentSha256 = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+    const publicBundle = {
+      schema_version: 1,
+      metadata: {
+        schema_version: 1,
+        slug: selected.slug,
+        name: selected.name,
+        description: selected.description || '',
+        version: selected.version,
+        license: publicLicense,
+        publisher: { name: publicPublisher.trim() },
+        tags: [],
+        published_at: new Date().toISOString().slice(0, 10),
+      },
+      content,
+      content_sha256: contentSha256,
+    };
+    const blob = new Blob([`${JSON.stringify(publicBundle, null, 2)}\n`], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url; anchor.download = `${selected.slug}-${selected.version}.skillhub-submission.json`;
+    anchor.click(); URL.revokeObjectURL(url); setExported(true);
   }
 
   return (
@@ -76,7 +115,7 @@ export default function SkillHubPage() {
       <div className="mb-6 flex items-center gap-3">
         <div>
           <h1 className="ml-10 text-2xl font-bold text-[var(--fg)] lg:ml-0">SkillHub</h1>
-          <p className="mt-1 text-sm text-[var(--fg-dim)]">节点沉淀可复用能力，审核后供整个网络使用。</p>
+          <p className="mt-1 text-sm text-[var(--fg-dim)]">节点沉淀可复用能力，审核后供整个网络使用；网络内发布不会自动公开。</p>
         </div>
         <button onClick={() => setShowUpload(true)} className="ml-auto rounded-lg bg-[var(--hl)] px-3 py-2 text-sm font-medium text-[var(--bg)] hover:opacity-90">上传 Skill</button>
       </div>
@@ -91,7 +130,7 @@ export default function SkillHubPage() {
           <article key={skill.skill_id} className="flex min-h-40 flex-col rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1"><h2 className="truncate font-semibold text-[var(--fg)]">{skill.name}</h2><code className="text-xs text-[var(--hl)]">{skill.slug}@{skill.version}</code></div>
-              <span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-[10px] ${skill.status === 'published' ? 'text-[var(--success)]' : skill.status === 'pending' ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>{skill.status}</span>
+              <span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-[10px] ${skill.status === 'published' ? 'text-[var(--success)]' : skill.status === 'pending' ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>{skill.status === 'published' ? '网络内发布' : skill.status === 'pending' ? '待审核' : '已拒绝'}</span>
             </div>
             <p className="mt-3 line-clamp-3 text-sm text-[var(--fg-muted)]">{skill.description || '暂无说明'}</p>
             <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-[var(--fg-dim)]">
@@ -121,6 +160,18 @@ export default function SkillHubPage() {
         <section className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-t-2xl border border-[var(--border-hover)] bg-[var(--bg-secondary)] p-5 sm:rounded-2xl">
           <div className="flex items-start gap-3"><div><h2 className="text-lg font-semibold">{selected.name}</h2><code className="text-xs text-[var(--hl)]">{selected.slug}@{selected.version}</code></div><button onClick={() => setSelected(null)} className="ml-auto text-[var(--fg-dim)]">✕</button></div>
           <pre className="mt-4 overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--code-bg)] p-4 text-xs leading-6 text-[var(--fg-muted)]">{selected.content}</pre>
+          {reviewer && selected.status === 'published' && <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--hover-tint)] p-4">
+            <h3 className="text-sm font-semibold">投稿到 anet.sh 公共 SkillHub</h3>
+            <p className="mt-1 text-xs leading-5 text-[var(--fg-muted)]">导出只生成本地投稿包，不会自动公开。公共仓库还会进行第二次审核；包内不会包含 network_id、节点 ID、用户 ID、token alias 或私有审核记录。</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_180px_auto]">
+              <input aria-label="公开发布者名称" value={publicPublisher} onChange={e => setPublicPublisher(e.target.value)} placeholder="公开发布者名称" maxLength={120} className="rounded border border-[var(--border-hover)] bg-[var(--col-inset)] px-3 py-2 text-xs" />
+              <select aria-label="公开许可证" value={publicLicense} onChange={e => setPublicLicense(e.target.value)} className="rounded border border-[var(--border-hover)] bg-[var(--col-inset)] px-3 py-2 text-xs">
+                <option value="">选择许可证</option><option value="Apache-2.0">Apache-2.0</option><option value="MIT">MIT</option><option value="CC-BY-4.0">CC-BY-4.0</option>
+              </select>
+              <button type="button" onClick={exportPublicSubmission} className="rounded bg-[var(--hl)] px-3 py-2 text-xs font-medium text-[var(--bg)]">导出公共投稿包</button>
+            </div>
+            <div className="mt-2 flex items-center gap-3 text-xs"><a href="https://anet.sh/skillhub/contribute" target="_blank" rel="noreferrer" className="text-[var(--hl)]">查看公共投稿步骤 ↗</a>{exported && <span className="text-[var(--success)]">已下载，尚未公开</span>}</div>
+          </div>}
         </section>
       </div>}
     </div>
