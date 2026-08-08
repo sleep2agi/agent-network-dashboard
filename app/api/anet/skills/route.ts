@@ -12,7 +12,16 @@ async function invoke(tool: string, args: Record<string, unknown>) {
     return Response.json({ ok: false, unconfirmed: true, error: `hub lacks ${tool}` }, { status: 200 });
   }
   if (!res.ok) return Response.json({ ok: false, error: `hub ${res.status}` }, { status: 502 });
-  const result = await parseMcpEnvelope(res) as { ok?: boolean; error?: string };
+  let result: { ok?: boolean; error?: string };
+  try {
+    result = await parseMcpEnvelope(res) as { ok?: boolean; error?: string };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/unknown tool|tool.+not found|not registered/i.test(message)) {
+      return Response.json({ ok: false, unconfirmed: true, error: `hub lacks ${tool}` }, { status: 200 });
+    }
+    throw error;
+  }
   return Response.json(result, { status: result?.ok === false ? 400 : 200 });
 }
 

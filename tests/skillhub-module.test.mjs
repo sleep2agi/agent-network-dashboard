@@ -16,5 +16,6 @@ assert.match(api, /requireDashboardAuth\(\)/, 'proxy must require Dashboard auth
 assert.match(api, /invoke\('submit_skill'/, 'upload must use Hub submit_skill');
 assert.match(api, /invoke\('review_skill'/, 'review must use Hub review_skill');
 assert.match(api, /invoke\('get_skill'/, 'detail view must use Hub get_skill');
+assert.match(api, /unknown tool\|tool\.\+not found\|not registered/, '200-level missing-tool errors must stay honest');
 assert.doesNotMatch(page, /HUB_TOKEN|COMMHUB_TOKEN|Authorization/, 'browser module must not carry Hub credentials');
 console.log('skillhub dashboard contract: PASS');
