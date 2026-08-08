@@ -1,0 +1,128 @@
+'use client';
+
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useNetworkId } from '../lib/network-context';
+
+type Skill = {
+  skill_id: string; slug: string; name: string; description: string; version: string;
+  status: 'pending' | 'published' | 'rejected'; source_type: 'node' | 'user';
+  source_alias?: string; updated_at: string; review_note?: string; content?: string;
+};
+
+const EMPTY = { slug: '', name: '', description: '', version: '1.0.0', content: '# Skill\n\nDescribe when and how an agent should use this skill.\n' };
+
+export default function SkillHubPage() {
+  const { networkId } = useNetworkId();
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [reviewer, setReviewer] = useState(false);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showUpload, setShowUpload] = useState(false);
+  const [draft, setDraft] = useState(EMPTY);
+  const [saving, setSaving] = useState(false);
+  const [selected, setSelected] = useState<Skill | null>(null);
+
+  const refresh = useCallback(async () => {
+    setLoading(true); setError('');
+    const qs = new URLSearchParams({ review: '1' });
+    if (networkId) qs.set('network_id', networkId);
+    if (query.trim()) qs.set('q', query.trim());
+    try {
+      const res = await fetch(`/api/anet/skills?${qs}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.unconfirmed ? '当前 Hub 尚未升级 SkillHub 后端' : (data.error || '加载失败'));
+      setSkills(Array.isArray(data.skills) ? data.skills : []);
+      setReviewer(!!data.reviewer);
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { setLoading(false); }
+  }, [networkId, query]);
+
+  useEffect(() => { const id = setTimeout(refresh, 180); return () => clearTimeout(id); }, [refresh]);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault(); setSaving(true); setError('');
+    try {
+      const res = await fetch('/api/anet/skills', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...draft, ...(networkId ? { network_id: networkId } : {}) }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || '上传失败');
+      setShowUpload(false); setDraft(EMPTY); await refresh();
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { setSaving(false); }
+  }
+
+  async function review(skillId: string, decision: 'published' | 'rejected') {
+    const res = await fetch('/api/anet/skills', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skill_id: skillId, decision, ...(networkId ? { network_id: networkId } : {}) }),
+    });
+    const data = await res.json();
+    if (!data.ok) setError(data.error || '审核失败'); else refresh();
+  }
+
+  async function openSkill(skill: Skill) {
+    const qs = new URLSearchParams({ skill_id: skill.skill_id });
+    if (networkId) qs.set('network_id', networkId);
+    const res = await fetch(`/api/anet/skills?${qs}`, { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.ok) setError(data.error || '读取失败'); else setSelected(data.skill);
+  }
+
+  return (
+    <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
+      <div className="mb-6 flex items-center gap-3">
+        <div>
+          <h1 className="ml-10 text-2xl font-bold text-[var(--fg)] lg:ml-0">SkillHub</h1>
+          <p className="mt-1 text-sm text-[var(--fg-dim)]">节点沉淀可复用能力，审核后供整个网络使用。</p>
+        </div>
+        <button onClick={() => setShowUpload(true)} className="ml-auto rounded-lg bg-[var(--hl)] px-3 py-2 text-sm font-medium text-[var(--bg)] hover:opacity-90">上传 Skill</button>
+      </div>
+
+      <div className="mb-4 max-w-3xl">
+        <input aria-label="搜索 Skills" value={query} onChange={e => setQuery(e.target.value)} placeholder="搜索名称、slug 或说明…" className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-sm outline-none focus:border-[var(--hl)]" />
+      </div>
+      {error && <div className="mb-4 max-w-3xl rounded-lg border border-[var(--danger)] bg-[var(--hover-tint)] p-3 text-sm text-[var(--danger)]">{error}</div>}
+
+      <div className="grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {loading ? [1,2,3].map(i => <div key={i} className="h-40 animate-pulse rounded-xl bg-[var(--bg-elevated)]" />) : skills.map(skill => (
+          <article key={skill.skill_id} className="flex min-h-40 flex-col rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1"><h2 className="truncate font-semibold text-[var(--fg)]">{skill.name}</h2><code className="text-xs text-[var(--hl)]">{skill.slug}@{skill.version}</code></div>
+              <span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-[10px] ${skill.status === 'published' ? 'text-[var(--success)]' : skill.status === 'pending' ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>{skill.status}</span>
+            </div>
+            <p className="mt-3 line-clamp-3 text-sm text-[var(--fg-muted)]">{skill.description || '暂无说明'}</p>
+            <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-[var(--fg-dim)]">
+              <span>{skill.source_type === 'node' ? '节点' : '用户'} · {skill.source_alias || 'unknown'}</span>
+              <button onClick={() => openSkill(skill)} className="ml-auto rounded border border-[var(--border-hover)] px-2 py-1 text-[var(--fg-muted)]">查看</button>
+              {reviewer && skill.status === 'pending' && <span className="flex gap-1"><button onClick={() => review(skill.skill_id, 'rejected')} className="rounded border border-[var(--danger)] px-2 py-1 text-[var(--danger)]">拒绝</button><button onClick={() => review(skill.skill_id, 'published')} className="rounded border border-[var(--success)] px-2 py-1 text-[var(--success)]">发布</button></span>}
+            </div>
+          </article>
+        ))}
+        {!loading && skills.length === 0 && <div className="col-span-full rounded-xl border border-dashed border-[var(--border-hover)] p-10 text-center text-sm text-[var(--fg-dim)]">还没有 Skill。让节点总结经验，或上传第一份 SKILL.md。</div>}
+      </div>
+
+      {showUpload && <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--bg) 70%, transparent)' }} onMouseDown={e => { if (e.target === e.currentTarget) setShowUpload(false); }}>
+        <form onSubmit={submit} className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-[var(--border-hover)] bg-[var(--bg-secondary)] p-5 sm:rounded-2xl">
+          <div className="mb-4 flex items-center"><h2 className="text-lg font-semibold">上传 Skill</h2><button type="button" onClick={() => setShowUpload(false)} className="ml-auto text-[var(--fg-dim)]">✕</button></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs text-[var(--fg-muted)]">名称<input required value={draft.name} onChange={e => setDraft({...draft, name:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-2 text-sm" /></label>
+            <label className="text-xs text-[var(--fg-muted)]">Slug<input required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={draft.slug} onChange={e => setDraft({...draft, slug:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-2 font-mono text-sm" /></label>
+            <label className="text-xs text-[var(--fg-muted)] sm:col-span-2">说明<input value={draft.description} onChange={e => setDraft({...draft, description:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-2 text-sm" /></label>
+            <label className="text-xs text-[var(--fg-muted)]">版本<input required value={draft.version} onChange={e => setDraft({...draft, version:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-2 font-mono text-sm" /></label>
+            <label className="text-xs text-[var(--fg-muted)] sm:col-span-2">SKILL.md<textarea required rows={12} value={draft.content} onChange={e => setDraft({...draft, content:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-3 font-mono text-xs" /></label>
+          </div>
+          <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={() => setShowUpload(false)} className="rounded border border-[var(--border-hover)] px-3 py-2 text-sm">取消</button><button disabled={saving} className="rounded bg-[var(--hl)] px-3 py-2 text-sm font-medium text-[var(--bg)] disabled:opacity-50">{saving ? '上传中…' : '提交审核'}</button></div>
+        </form>
+      </div>}
+      {selected && <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--bg) 70%, transparent)' }} onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null); }}>
+        <section className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-t-2xl border border-[var(--border-hover)] bg-[var(--bg-secondary)] p-5 sm:rounded-2xl">
+          <div className="flex items-start gap-3"><div><h2 className="text-lg font-semibold">{selected.name}</h2><code className="text-xs text-[var(--hl)]">{selected.slug}@{selected.version}</code></div><button onClick={() => setSelected(null)} className="ml-auto text-[var(--fg-dim)]">✕</button></div>
+          <pre className="mt-4 overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--code-bg)] p-4 text-xs leading-6 text-[var(--fg-muted)]">{selected.content}</pre>
+        </section>
+      </div>}
+    </div>
+  );
+}
