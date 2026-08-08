@@ -19,6 +19,7 @@ assert.match(page, /reviewer && selected\.status/, 'public export must stay revi
 assert.match(page, /content_sha256: contentSha256/, 'public bundle must bind exact content');
 assert.match(page, /license: publicLicense/, 'public export must require an explicit license');
 assert.doesNotMatch(page.match(/const publicBundle = \{[\s\S]*?\n    \};/)?.[0] || '', /network_id|source_alias|skill_id|review_note/, 'public bundle must omit private identity and review fields');
+assert.match(page, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 0\)/, 'download URL must remain valid through the click dispatch');
 assert.match(page, /network_id: networkId/, 'selected Dashboard network must be sent');
 assert.match(api, /requireDashboardAuth\(\)/, 'proxy must require Dashboard auth');
 assert.match(api, /invoke\('submit_skill'/, 'upload must use Hub submit_skill');

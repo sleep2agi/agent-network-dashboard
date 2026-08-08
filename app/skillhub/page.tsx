@@ -107,7 +107,9 @@ export default function SkillHubPage() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url; anchor.download = `${selected.slug}-${selected.version}.skillhub-submission.json`;
-    anchor.click(); URL.revokeObjectURL(url); setExported(true);
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    setExported(true);
   }
 
   return (
