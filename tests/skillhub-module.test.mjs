@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+console.log(`source_commit=${process.env.SKILLHUB_DASHBOARD_SOURCE_COMMIT || 'unknown'}`);
+
 const page = readFileSync('app/skillhub/page.tsx', 'utf8');
 const api = readFileSync('app/api/anet/skills/route.ts', 'utf8');
 const sidebar = readFileSync('app/components/Sidebar.tsx', 'utf8');
