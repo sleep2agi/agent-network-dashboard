@@ -11,7 +11,7 @@ echo "# test607 dashboard — authoritative Hub upload limits"
 echo "source_commit=${TEST607_DASHBOARD_SOURCE_COMMIT:-unknown}"
 echo "date=$(date -Is)"
 
-run_unit() { bun test app/lib/hub-upload-limits.test.ts; }
+run_unit() { bun test app/lib/hub-upload-limits.test.mjs; }
 run_contract() { node tests/upload-limits-module.test.mjs; }
 
 echo "L0 resolver behavior + production wiring contract"

@@ -23,7 +23,11 @@ describe('#496 authoritative Hub upload limits', () => {
 
   test('concurrent callers share one health fetch and cache its authority', async () => {
     let calls = 0;
-    const fetchHealth = async () => { calls += 1; await Bun.sleep(10); return authoritative; };
+    const fetchHealth = async () => {
+      calls += 1;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      return authoritative;
+    };
     const [a, b] = await Promise.all([
       resolveHubUploadLimits({ fetchHealth }),
       resolveHubUploadLimits({ fetchHealth }),
@@ -36,8 +40,8 @@ describe('#496 authoritative Hub upload limits', () => {
   });
 
   test('invalid/unavailable health uses the compatibility value and logs loudly once', async () => {
-    const messages: string[] = [];
-    const logger = { error: (message: string) => messages.push(message) };
+    const messages = [];
+    const logger = { error: (message) => messages.push(message) };
     const first = await resolveHubUploadLimits({ fetchHealth: async () => ({}), logger });
     const second = await resolveHubUploadLimits({ fetchHealth: async () => { throw new Error('must not run'); }, logger });
     expect(first).toEqual({ ...COMPAT_UPLOAD_LIMITS, source: 'compat-fallback' });
@@ -53,8 +57,8 @@ describe('#496 authoritative Hub upload limits', () => {
   });
 
   test('a late lazy-fetch failure cannot overwrite a boot health authority', async () => {
-    let rejectFetch!: (error: Error) => void;
-    const pending = new Promise<unknown>((_resolve, reject) => { rejectFetch = reject; });
+    let rejectFetch;
+    const pending = new Promise((_resolve, reject) => { rejectFetch = reject; });
     const resolving = resolveHubUploadLimits({ fetchHealth: () => pending, logger: { error() {} } });
     expect(recordHubUploadLimits(authoritative)).toBe(true);
     rejectFetch(new Error('late failure'));
