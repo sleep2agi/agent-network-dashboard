@@ -2,14 +2,14 @@
 
 Date: 2026-08-09
 Base commit: 63328d5b55f8867381bd35d427f06d96441a4f06
-Source commit: 1ebaf22d7d021cc5782f24b5f5858e36275323a5
+Source commit: b92d571e3760ee8107d562164c80cad0860658f8
 Docker tag: anet-dashboard-test459:dev
-Docker image: sha256:0effc53f11d760e9ab0a706fb5d419a87399fd204d0d85d33293c810b40dd76c
-Embedded environment: TEST459_SOURCE_COMMIT=1ebaf22d7d021cc5782f24b5f5858e36275323a5
+Docker image: sha256:9bfcd2fcd0b8978ee12c6b4e57736782ea52f6eebaa699daae8dc1ddda11dda3
+Embedded environment: TEST459_SOURCE_COMMIT=b92d571e3760ee8107d562164c80cad0860658f8
 
 Command:
 
-    sg docker -c 'docker build -t anet-dashboard-test459:dev --build-arg SOURCE_COMMIT=1ebaf22d7d021cc5782f24b5f5858e36275323a5 -f tests/test-chat-ha/Dockerfile . && docker run --rm anet-dashboard-test459:dev'
+    sg docker -c 'docker build -t anet-dashboard-test459:dev --build-arg SOURCE_COMMIT=b92d571e3760ee8107d562164c80cad0860658f8 -f tests/test-chat-ha/Dockerfile . && docker run --rm anet-dashboard-test459:dev'
 
 Results:
 
@@ -17,6 +17,10 @@ Results:
 - Task-history pagination suite: 4 passed, 0 failed.
 - Mutation deleting `before_task_id`: witnessed red (rc=1).
 - Mutation dropping retained rows during merge: witnessed red (rc=1).
+- Real Next.js production server forwarded both cursor fields to a fake Hub on
+  the network-scoped request and the existing network-empty retry.
+- Mutation deleting proxy forwarding for `before_task_id`: witnessed red
+  (rc=1), then the restored production server passed the same wire assertion.
 - ESLint: 0 errors, 6 pre-existing warnings.
 - Next.js production build and TypeScript: PASS (53 routes generated).
 
@@ -24,9 +28,14 @@ Behavior covered:
 
 - Initial and soft-refresh requests remain bounded and cursor-free.
 - Older-page requests send the compound Hub cursor (`before` and `before_task_id`).
+- The Dashboard API proxy preserves that pair all the way to the upstream Hub;
+  the client helper's correct URL cannot be silently truncated at the server
+  route boundary.
 - Optimistic/local rows are never used as server cursors.
 - Incremental pages preserve already-loaded rows, same-second rows, live arrivals, and optimistic reconciliation.
 
 Deployment dependency:
 
-The Dashboard change must be merged/deployed after agent-network Hub PR #624. Older Hub versions ignore `before_task_id` and cannot provide the compound keyset contract required by this client.
+Agent-network Hub PR #624 is merged. Dashboard remains the second deployment
+step because older deployed Hub versions ignore `before_task_id` and cannot
+provide the compound keyset contract required by this client.
