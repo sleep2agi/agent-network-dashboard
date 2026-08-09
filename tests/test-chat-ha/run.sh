@@ -71,16 +71,21 @@ capture_proxy_requests() {
   trap cleanup_proxy_test EXIT
   ready=0
   for _ in $(seq 1 100); do
-    if curl -fsS "http://127.0.0.1:$next_port/login" >/dev/null 2>&1; then
+    if node -e "fetch('http://127.0.0.1:$next_port/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
       ready=1
       break
     fi
     sleep 0.1
   done
   test "$ready" -eq 1
-  proxy_response=$(curl -fsS \
-    -H 'Cookie: anet_dashboard_session=v3:atok_test459_proxy_token' \
-    "http://127.0.0.1:$next_port/api/hub/tasks?network_id=net-a&to_name=agent%20%2F%20one&limit=12&before=2026-08-09T11%3A22%3A33.000Z&before_task_id=tie-y")
+  proxy_response=$(TEST459_NEXT_PORT="$next_port" node -e '
+    const port = process.env.TEST459_NEXT_PORT;
+    const url = `http://127.0.0.1:${port}/api/hub/tasks?network_id=net-a&to_name=agent%20%2F%20one&limit=12&before=2026-08-09T11%3A22%3A33.000Z&before_task_id=tie-y`;
+    const response = await fetch(url, { headers: { cookie: "anet_dashboard_session=v3:atok_test459_proxy_token" } });
+    const body = await response.text();
+    if (!response.ok) { console.error(body); process.exit(1); }
+    process.stdout.write(body);
+  ')
   printf '%s' "$proxy_response" | grep -Fq 'older-same-second-a'
   test "$(grep -c '^GET /api/tasks?' "$capture")" -eq 2
   cleanup_proxy_test
