@@ -6,5 +6,7 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+ARG SOURCE_COMMIT
+ENV TEST459_SOURCE_COMMIT=$SOURCE_COMMIT
 RUN chmod +x tests/test-chat-ha/run.sh
 CMD ["tests/test-chat-ha/run.sh"]
