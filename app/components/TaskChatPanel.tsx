@@ -4,6 +4,12 @@ import { useState, useEffect, useRef, useCallback, useMemo, memo, Fragment } fro
 import { AliasAvatar } from './AliasAvatar';
 import { AttachmentBlock, extractAttachments } from './AttachmentBlock';
 import { isOnline as presenceIsOnline } from '../lib/presence';
+import {
+  buildTaskHistoryUrl,
+  mergeTaskHistoryPage,
+  oldestTaskHistoryCursor,
+  type TaskHistoryCursor,
+} from '../lib/task-history-pagination';
 
 interface ChatTask {
   task_id: string;
@@ -671,18 +677,14 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // #217 M4 (Vincent: 倒序加载, 上滑再拉旧的): history is paged. We load
-  // only the newest PAGE on open and grow the window when the user
-  // scrolls to the top. The hub API has no `before` cursor (offset is
-  // ignored), so "older" = refetch with a larger limit and prepend the
-  // delta — each step is on-demand and tiny vs one full pull.
+  // only the newest PAGE on open and fetch one keyset page when the user
+  // scrolls to the top. `before` + `before_task_id` preserve rows that share
+  // the Hub's one-second created_at precision.
   // P0 chat batch (Vincent "感觉是一脑子全部拉了"): 20 tasks render up to
   // ~40 bubbles (task+reply) — a wall on open. 12 keeps the first paint to
-  // roughly one viewport of conversation; scroll-up still grows the window.
-  // True O(page) older-loads need the hub `before` cursor (tracked upstream
-  // as #459); until then growing the limit stays the mechanism.
+  // roughly one viewport of conversation; scroll-up stays O(page).
   const HISTORY_PAGE = 12;
   const scrollRef = useRef<HTMLDivElement>(null);
-  const histLimitRef = useRef(HISTORY_PAGE);
   const skipAutoScrollRef = useRef(false);
   const anchoredRef = useRef(false);
   const [hasOlder, setHasOlder] = useState(true);
@@ -826,19 +828,22 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
   //     through, so the panel opens with *some* recent history rather than a
   //     full-screen timeout. The composer below is never gated on history,
   //     so the user can always send even if both attempts fail.
-  const runFetch = useCallback(async (limit: number, budgetMs: number): Promise<boolean> => {
+  const runFetch = useCallback(async (
+    limit: number,
+    budgetMs: number,
+    cursor?: TaskHistoryCursor,
+  ): Promise<boolean> => {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), budgetMs);
     try {
       const res = await fetch(
-        `/api/hub/tasks?to_name=${encodeURIComponent(alias)}&limit=${limit}`,
+        buildTaskHistoryUrl(alias, limit, cursor),
         { signal: ctrl.signal },
       );
       const data = await res.json();
       if (data.tasks) {
-        const fetched = data.tasks.reverse(); // oldest first for display
         const persistedRequestIds = new Set<string>();
-        for (const task of fetched as ChatTask[]) {
+        for (const task of data.tasks as ChatTask[]) {
           const requestId = requestIdFromTaskMeta(task.meta_json);
           if (requestId) {
             persistedRequestIds.add(requestId);
@@ -846,16 +851,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
           }
         }
         if (data.tasks.length < limit) setHasOlder(false);
-        // Merge: keep current messages the fetch doesn't know about yet
-        // (optimistic sends / SSE patches) so growing the window never
-        // drops an in-flight bubble.
-        setMessages(prev => {
-          const ids = new Set(fetched.map((t: { task_id?: string }) => t.task_id));
-          const extras = prev.filter(t => t.task_id
-            && !ids.has(t.task_id)
-            && (!t.client_request_id || !persistedRequestIds.has(t.client_request_id)));
-          return [...fetched, ...extras];
-        });
+        // Merge by identity and sort oldest-first. This preserves older pages,
+        // optimistic sends, and SSE patches while a bounded newest-page refresh
+        // updates current statuses.
+        setMessages(prev => mergeTaskHistoryPage(prev, data.tasks, persistedRequestIds));
       }
       return true;
     } catch {
@@ -865,11 +864,12 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     }
   }, [alias, privateStorageScope]);
 
-  // Single-attempt loader used to GROW the window (scroll-up older pages).
-  const loadHistory = useCallback(async (limit: number) => {
-    const ok = await runFetch(limit, 12_000);
+  // Single-attempt loader used for one older keyset page.
+  const loadHistory = useCallback(async (cursor: TaskHistoryCursor) => {
+    const ok = await runFetch(HISTORY_PAGE, 12_000, cursor);
     setHistoryError(!ok);
     setHistoryLoaded(true);
+    return ok;
   }, [runFetch]);
 
   // Initial open — retry ladder so a congested transport still opens with
@@ -880,7 +880,6 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     let ok = await runFetch(HISTORY_PAGE, 10_000);
     if (!ok) {
       ok = await runFetch(6, 6_000);
-      if (ok) histLimitRef.current = 6;
     }
     setHistoryError(!ok);
     setHistoryLoaded(true);
@@ -890,7 +889,6 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     setMessages([]);
     setHistoryLoaded(false);
     setHistoryError(false);
-    histLimitRef.current = HISTORY_PAGE;
     anchoredRef.current = false;
     firstAnchorRef.current = true;
     atBottomRef.current = true;
@@ -923,21 +921,26 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     setTimeout(() => textareaRef.current?.focus(), 300);
   }, [alias, loadInitial, privateStorageScope]);
 
-  // M4: user scrolled to the top → grow the history window, keeping the
+  // M4: user scrolled to the top → fetch one older page, keeping the
   // viewport anchored on the message they were looking at.
   const loadOlder = useCallback(async () => {
     if (loadingOlder || !hasOlder) return;
+    const cursor = oldestTaskHistoryCursor(messages);
+    if (!cursor) {
+      setHasOlder(false);
+      return;
+    }
     setLoadingOlder(true);
     const el = scrollRef.current;
     const prevHeight = el?.scrollHeight ?? 0;
     skipAutoScrollRef.current = true;
-    histLimitRef.current += HISTORY_PAGE;
-    await loadHistory(histLimitRef.current);
+    const loaded = await loadHistory({ task_id: cursor.task_id, created_at: cursor.created_at });
     requestAnimationFrame(() => {
-      if (el) el.scrollTop += el.scrollHeight - prevHeight;
+      if (loaded && el) el.scrollTop += el.scrollHeight - prevHeight;
+      if (!loaded) skipAutoScrollRef.current = false;
       setLoadingOlder(false);
     });
-  }, [loadingOlder, hasOlder, loadHistory]);
+  }, [loadingOlder, hasOlder, loadHistory, messages]);
 
   const onMessagesScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -1033,7 +1036,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       const wait = Math.max(1500, 6000 - (Date.now() - lastSoftRefreshRef.current));
       refreshTimerRef.current = setTimeout(() => {
         lastSoftRefreshRef.current = Date.now();
-        runFetch(histLimitRef.current, 12_000);
+        runFetch(HISTORY_PAGE, 12_000);
       }, wait);
     },
   });
@@ -1057,7 +1060,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       return;
     }
     if (!wasActiveRef.current) {
-      runFetch(histLimitRef.current, 12_000);
+      runFetch(HISTORY_PAGE, 12_000);
       // R27 (微信手感): switching back to a tab refocuses the composer —
       // desktop only (focusing on touch pops the soft keyboard uninvited).
       if (!coarsePointerRef.current) textareaRef.current?.focus();
@@ -1065,7 +1068,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     wasActiveRef.current = true;
     const id = setInterval(() => {
       if (document.visibilityState === 'hidden') return;
-      runFetch(histLimitRef.current, 12_000);
+      runFetch(HISTORY_PAGE, 12_000);
     }, 15_000);
     return () => clearInterval(id);
   }, [historyLoaded, isActive, runFetch]);
