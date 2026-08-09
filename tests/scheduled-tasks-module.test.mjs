@@ -21,6 +21,7 @@ check('timezone is explicit', page.includes('resolvedOptions().timeZone') && pag
 check('proxy requires dashboard auth', proxy.includes('requireDashboardAuth()') && proxy.includes('getV3UserToken()'));
 check('proxy path is bounded and token is server-side', proxy.includes('path.length > 2') && proxy.includes('Authorization: `Bearer ${token}`'));
 check('nodes proxy preserves network scope', nodesProxy.includes("['node_id', 'alias', 'network_id']"));
+check('legacy sessions fallback remains network scoped', nodesProxy.includes('statusUrl') && nodesProxy.includes('s.network_id === requestedNetworkId'));
 check('desktop and mobile expose module', sidebar.includes("href: '/scheduled-tasks'") && mobile.includes("href: '/scheduled-tasks'"));
 
 console.log(`dashboard scheduled tasks: ${passed} checks passed`);
