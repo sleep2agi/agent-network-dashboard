@@ -18,6 +18,7 @@ type ScheduleRow = {
   priority: string;
   schedule: ScheduleSpec;
   timezone: string;
+  misfire_policy?: 'catch_up_once' | 'skip';
   status: 'active' | 'paused' | 'completed' | 'cancelled';
   next_run_at?: string | null;
   last_run_at?: string | null;
@@ -44,6 +45,10 @@ function describeSchedule(spec: ScheduleSpec, timezone: string) {
   return `每周 ${spec.weekdays.map(d => WEEKDAYS[d]).join('、')} ${spec.time} · ${timezone}`;
 }
 
+function describeMisfire(policy?: ScheduleRow['misfire_policy']) {
+  return policy === 'skip' ? '错过后跳过' : '错过后补跑一次';
+}
+
 export default function ScheduledTasksPage() {
   const { networkId } = useNetworkId();
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
@@ -65,6 +70,7 @@ export default function ScheduledTasksPage() {
   const [unit, setUnit] = useState<'minutes' | 'hours' | 'days'>('hours');
   const [clock, setClock] = useState('09:00');
   const [weekdays, setWeekdays] = useState<number[]>([1]);
+  const [misfirePolicy, setMisfirePolicy] = useState<'catch_up_once' | 'skip'>('catch_up_once');
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', []);
 
   const query = networkId ? `?network_id=${encodeURIComponent(networkId)}` : '';
@@ -113,11 +119,11 @@ export default function ScheduledTasksPage() {
     try {
       const res = await fetch('/api/hub/scheduled-tasks', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ network_id: networkId, name, target_node_id: targetNodeId, task, priority, timezone, schedule: makeSchedule() }),
+        body: JSON.stringify({ network_id: networkId, name, target_node_id: targetNodeId, task, priority, timezone, misfire_policy: misfirePolicy, schedule: makeSchedule() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
-      setShowForm(false); setName(''); setTask(''); setTargetNodeId('');
+      setShowForm(false); setName(''); setTask(''); setTargetNodeId(''); setMisfirePolicy('catch_up_once');
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
@@ -176,6 +182,7 @@ export default function ScheduledTasksPage() {
             <label className="text-sm text-[var(--fg-muted)] md:col-span-2">任务内容<textarea value={task} onChange={e => setTask(e.target.value)} maxLength={10000} rows={4} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" placeholder="节点收到的具体任务" /></label>
             <label className="text-sm text-[var(--fg-muted)]">计划类型<select value={kind} onChange={e => setKind(e.target.value as ScheduleSpec['type'])} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="once">单次</option><option value="interval">固定间隔</option><option value="daily">每天</option><option value="weekly">每周</option></select></label>
             <label className="text-sm text-[var(--fg-muted)]">优先级<select value={priority} onChange={e => setPriority(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="normal">普通</option><option value="high">高</option><option value="low">低</option></select></label>
+            <label className="text-sm text-[var(--fg-muted)]">错过执行<select value={misfirePolicy} onChange={e => setMisfirePolicy(e.target.value as typeof misfirePolicy)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="catch_up_once">恢复后补跑一次（适合新闻抓取）</option><option value="skip">跳过本次，等待下一周期</option></select><span className="mt-1 block text-xs text-[var(--fg-dim)]">Hub 延迟超过 60 秒才视为错过；补跑最多一次，不会集中重放。</span></label>
             {kind === 'once' && <label className="text-sm text-[var(--fg-muted)]">执行时间<input type="datetime-local" value={onceAt} onChange={e => setOnceAt(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" /></label>}
             {kind === 'interval' && <div className="flex gap-2"><label className="flex-1 text-sm text-[var(--fg-muted)]">间隔<input type="number" min="1" value={every} onChange={e => setEvery(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" /></label><label className="text-sm text-[var(--fg-muted)]">单位<select value={unit} onChange={e => setUnit(e.target.value as typeof unit)} className="mt-1 rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="minutes">分钟</option><option value="hours">小时</option><option value="days">天</option></select></label></div>}
             {(kind === 'daily' || kind === 'weekly') && <label className="text-sm text-[var(--fg-muted)]">时间<input type="time" value={clock} onChange={e => setClock(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" /><span className="mt-1 block text-xs text-[var(--fg-dim)]">时区：{timezone}</span></label>}
@@ -190,7 +197,7 @@ export default function ScheduledTasksPage() {
       ) : <div className="space-y-3">{schedules.map(row => (
         <section key={row.schedule_id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 className="font-semibold text-[var(--fg)]">{row.name}</h2><span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-xs ${row.status === 'active' ? 'text-[var(--success)]' : row.status === 'paused' ? 'text-[var(--warning)]' : 'text-[var(--fg-dim)]'}`}>{row.status}</span></div><p className="mt-1 text-sm text-[var(--hl)]">{row.target_alias}</p><p className="mt-2 line-clamp-2 text-sm text-[var(--fg-muted)]">{row.task_content}</p><p className="mt-3 text-xs text-[var(--fg-dim)]">{describeSchedule(row.schedule, row.timezone)} · 下次 {formatTime(row.next_run_at)} · 上次 {formatTime(row.last_run_at)}</p></div>
+            <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 className="font-semibold text-[var(--fg)]">{row.name}</h2><span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-xs ${row.status === 'active' ? 'text-[var(--success)]' : row.status === 'paused' ? 'text-[var(--warning)]' : 'text-[var(--fg-dim)]'}`}>{row.status}</span></div><p className="mt-1 text-sm text-[var(--hl)]">{row.target_alias}</p><p className="mt-2 line-clamp-2 text-sm text-[var(--fg-muted)]">{row.task_content}</p><p className="mt-3 text-xs text-[var(--fg-dim)]">{describeSchedule(row.schedule, row.timezone)} · {describeMisfire(row.misfire_policy)} · 下次 {formatTime(row.next_run_at)} · 上次 {formatTime(row.last_run_at)}</p></div>
             <div className="flex flex-wrap gap-2"><button disabled={busy || !['active','paused'].includes(row.status)} onClick={() => mutate(row, 'toggle')} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">{row.status === 'active' ? '暂停' : '恢复'}</button><button disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'run')} className="rounded-md border border-[var(--hl)] px-3 py-1.5 text-xs text-[var(--hl)]">立即执行</button><button onClick={() => openHistory(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">记录</button><button disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'cancel')} className="rounded-md border border-[var(--danger)] px-3 py-1.5 text-xs text-[var(--danger)]">取消</button></div>
           </div>
           {historyFor === row.schedule_id && <div className="mt-4 overflow-x-auto border-t border-[var(--border)] pt-4"><table className="w-full text-left text-xs"><thead className="text-[var(--fg-dim)]"><tr><th className="pb-2">计划时间</th><th>状态</th><th>Task ID</th><th>错误</th></tr></thead><tbody>{runs.map(run => <tr key={run.run_id} className="border-t border-[var(--col-hairline)] text-[var(--fg-muted)]"><td className="py-2">{formatTime(run.scheduled_for)}</td><td>{run.status}</td><td className="font-mono">{run.task_id?.slice(0, 12) || '—'}</td><td className="text-[var(--danger)]">{run.error_code || '—'}</td></tr>)}</tbody></table>{runs.length === 0 && <p className="text-[var(--fg-dim)]">暂无执行记录</p>}</div>}
