@@ -1,11 +1,11 @@
 import { requireDashboardAuth, getV3UserToken } from '@/app/lib/dashboard-auth';
+import { resolveHubUploadLimits } from '@/app/lib/hub-upload-limits';
 
 const HUB_URL = process.env.COMMHUB_URL || 'http://127.0.0.1:9200';
 
-// ── Hub upload-limit mirror ─────────────────────────────────────
+// ── Hub-authoritative upload limits ─────────────────────────────
 //
-// Mirror of the hub's own `MAX_UPLOAD_BYTES` / `MAX_REQUEST_CONTENT_LENGTH`
-// (agent-network:server/src/uploads.ts). Duplicated here for one reason:
+// The proxy pre-checks the Hub's limits before streaming for one reason:
 // without a client-side pre-check, an oversize upload:
 //   1. dashboard opens streaming request → hub
 //   2. hub 413s + FINs mid-body
@@ -14,35 +14,10 @@ const HUB_URL = process.env.COMMHUB_URL || 'http://127.0.0.1:9200';
 //      user sees "服务端不可达" for a "your file is too big" problem
 // Pre-check on this side so 413 fires before we open the hub socket.
 //
-// 🔴 DRIFT WARNING — two hard-coded constants for the same rule =
-// silent drift risk. If this side stays at 12 MiB and hub raises to
-// 20 MiB, users see "12 MB 上限" from the dashboard even though hub
-// would accept.
-//
-// Mitigations shipped with this PR are PARTIAL — read carefully:
-//   1. Comment above names the exact hub source (uploads.ts) so a
-//      human editor knows both must change together.
-//   2. Runtime drift-detect: any hub 413 response includes
-//      `limit_bytes` — if it disagrees with HUB_MAX_UPLOAD_BYTES,
-//      the proxy loudly `console.error`s so ops sees it in the
-//      dashboard server log.
-//
-// 🔴 BLIND SPOT (通信龙 #45 pre-review): the runtime detect above is
-// one-directional.
-//   • L_dashboard > L_hub → dashboard passes, hub 413s with limit_bytes
-//     → DETECTED ✓
-//   • L_dashboard < L_hub → dashboard rejects client-side, hub is
-//     never contacted → NEVER DETECTED 🔴
-//   The second case is the more damaging one: legitimate files get
-//   rejected with the wrong cap message, no log line, no signal.
-//
-// Real fix — sleep2agi/agent-network#496 — hub exposes MAX_UPLOAD_BYTES
-// via /health; dashboard reads it at startup, caches, fallback to
-// this hard-coded value if fetch fails (with a LOUD LOG when the
-// fallback is in use — silent fetch failure re-introduces two
-// constants). Blocked on hub-side PR.
-const HUB_MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
-const HUB_MAX_REQUEST_CONTENT_LENGTH = HUB_MAX_UPLOAD_BYTES + 1024 * 1024;
+// Hub /health is the source of truth (#496). The normal Dashboard boot health
+// request warms a process-global cache; if upload wins that race, the proxy
+// performs one anonymous health fetch itself. Old/unreachable Hubs retain the
+// 12 MiB compatibility behavior with a loud server log, never a silent mirror.
 
 // #492 upload half — dashboard → hub `/api/upload` proxy.
 //
@@ -123,6 +98,8 @@ export async function POST(req: Request) {
     );
   }
 
+  const uploadLimits = await resolveHubUploadLimits();
+
   // Content-Length — hub requires it (411 otherwise). Reject client-side
   // too so we fail fast without opening a socket to the hub.
   const contentLength = req.headers.get('content-length');
@@ -143,14 +120,14 @@ export async function POST(req: Request) {
   // racing the hub's early close. Without this, undici's streaming
   // request throws mid-body when the hub responds 413 + FIN, which
   // surfaces as `fetch failed` → we'd 502 a request that should 413.
-  if (declaredBytes > HUB_MAX_REQUEST_CONTENT_LENGTH) {
-    const mib = Math.floor(HUB_MAX_UPLOAD_BYTES / 1024 / 1024);
+  if (declaredBytes > uploadLimits.max_request_content_length) {
+    const mib = Math.floor(uploadLimits.max_upload_bytes / 1024 / 1024);
     return Response.json(
       {
         ok: false,
         error: 'payload_too_large',
         message: `文件超过 ${mib} MB 上限`,
-        limit_bytes: HUB_MAX_UPLOAD_BYTES,
+        limit_bytes: uploadLimits.max_upload_bytes,
       },
       { status: 413 },
     );
@@ -225,11 +202,11 @@ export async function POST(req: Request) {
     if (
       hubRes.status === 413 &&
       typeof err.limit_bytes === 'number' &&
-      err.limit_bytes !== HUB_MAX_UPLOAD_BYTES
+      err.limit_bytes !== uploadLimits.max_upload_bytes
     ) {
       console.error(
-        `[upload-proxy] hub upload cap drift — dashboard mirror=${HUB_MAX_UPLOAD_BYTES}, hub reports=${err.limit_bytes}. ` +
-          `Update HUB_MAX_UPLOAD_BYTES in app/api/hub/upload/route.ts to match hub's server/src/uploads.ts:MAX_UPLOAD_BYTES.`,
+        `[upload-proxy] Hub upload cap changed during this request — cached=${uploadLimits.max_upload_bytes}, hub reports=${err.limit_bytes}. ` +
+          `The next Dashboard process health warm-up will refresh the cached authority.`,
       );
     }
     return Response.json(

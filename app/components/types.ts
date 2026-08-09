@@ -33,6 +33,10 @@ export interface Health {
   sse_sessions: Record<string, number>;
   uptime: number;
   auth?: string;
+  limits?: {
+    max_upload_bytes: number;
+    max_request_content_length: number;
+  };
 }
 
 export interface InboxMessage {
