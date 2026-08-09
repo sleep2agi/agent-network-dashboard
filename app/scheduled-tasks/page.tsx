@@ -69,6 +69,10 @@ export default function ScheduledTasksPage() {
 
   const query = networkId ? `?network_id=${encodeURIComponent(networkId)}` : '';
   const load = useCallback(async () => {
+    if (!networkId) {
+      setSchedules([]); setNodes([]); setLoading(false); setError('请先在左侧选择一个网络');
+      return;
+    }
     try {
       const [scheduleRes, nodeRes] = await Promise.all([
         fetch(`/api/hub/scheduled-tasks${query}`, { cache: 'no-store' }),
@@ -77,6 +81,7 @@ export default function ScheduledTasksPage() {
       const scheduleData = await scheduleRes.json();
       const nodeData = await nodeRes.json();
       if (!scheduleRes.ok) throw new Error(scheduleData.message || scheduleData.error || `HTTP ${scheduleRes.status}`);
+      if (!nodeRes.ok) throw new Error(nodeData.message || nodeData.error || `HTTP ${nodeRes.status}`);
       setSchedules(scheduleData.schedules || []);
       setNodes((nodeData.nodes || []).filter((n: NodeRow) => n.node_id && n.alias));
       setError('');
@@ -85,7 +90,7 @@ export default function ScheduledTasksPage() {
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [networkId, query]);
 
   useEffect(() => {
     void load();
@@ -145,7 +150,7 @@ export default function ScheduledTasksPage() {
     if (res.ok) setRuns(data.runs || []); else setError(data.error || `HTTP ${res.status}`);
   };
 
-  const createDisabled = busy || !name.trim() || !targetNodeId || !task.trim() ||
+  const createDisabled = busy || !networkId || !name.trim() || !targetNodeId || !task.trim() ||
     (kind === 'once' && !onceAt) || (kind === 'interval' && (!Number(every) || Number(every) < 1)) ||
     (kind === 'weekly' && weekdays.length === 0);
 

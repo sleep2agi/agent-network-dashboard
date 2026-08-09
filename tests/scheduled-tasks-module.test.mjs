@@ -14,6 +14,7 @@ const mobile = readFileSync('app/components/MobileNav.tsx', 'utf8');
 
 check('page lists schedules through dashboard proxy', page.includes("fetch(`/api/hub/scheduled-tasks${query}`"));
 check('page loads stable node inventory', page.includes("fetch(`/api/hub/nodes${query}`") && page.includes('target_node_id: targetNodeId'));
+check('creation requires one selected network and node load cannot fail silently', page.includes("setError('请先在左侧选择一个网络')") && page.includes('if (!nodeRes.ok)'));
 check('all four schedule forms are presented', ['once', 'interval', 'daily', 'weekly'].every(x => page.includes(`value=\"${x}\"`)));
 check('management actions exist', ['run-now', "method: 'PATCH'", "method: 'DELETE'", '/runs'].every(x => page.includes(x)));
 check('optimistic revision is forwarded', page.includes('revision: row.revision'));
