@@ -2,12 +2,14 @@ import { test, expect, Page } from '@playwright/test';
 
 const BASE = process.env.TEST_URL || 'http://localhost:3100';
 
-// 07-31 fix — Sidebar default should be 'icon-rail' for NEW visitors,
-// but MUST NOT overwrite an existing choice in localStorage. The
-// two are trivially entangled: setting the initial `useState` to
-// 'icon-rail' fixes the first (default = narrow) and the useEffect
-// that reads `anet-sidebar-mode` preserves the second (existing
-// user's expanded/collapsed stays).
+// 08-09 update — Sidebar default flipped back to 'expanded' for NEW
+// visitors (Vincent「左侧标签栏要显示完全 / 都没有展开」), reversing the
+// 07-31 'icon-rail' default. It still MUST NOT overwrite an existing
+// choice in localStorage. The two are entangled: the initial `useState`
+// sets the default (now 'expanded') and the useEffect that reads
+// `anet-sidebar-mode` preserves an existing user's choice. NB: because
+// the default is now 'expanded', the preservation witnessed-red rides on
+// Test C (seeds 'collapsed'), not Test B — see plan at end of file.
 //
 // 通信龙 07-31 review:
 // > 只写第一条是不够的 — 第二条正是"改默认"最容易顺手破坏的东西，
@@ -65,20 +67,22 @@ async function stubHub(page: Page) {
 }
 
 test.describe('Sidebar default (07-31)', () => {
-  test('A — first-visit user (no localStorage) gets icon-rail by default, width ~56px', async ({ page, context }) => {
+  test('A — first-visit user (no localStorage) gets expanded by default, width ~208px', async ({ page, context }) => {
     await login(context);
     await stubHub(page);
     // Make sure NOTHING is in localStorage — first-visit simulation.
     await page.addInitScript(() => window.localStorage.removeItem('anet-sidebar-mode'));
     await page.goto(`${BASE}/`);
-    await expect(page.locator('[data-anet-sidebar="true"]')).toHaveAttribute('data-sidebar-mode', 'icon-rail', { timeout: 15000 });
-    // Numeric width — spec's 56px target. Sub-pixel wiggle allowed
-    // (rounding / scrollbar). N站马's measurement of 207px on the
-    // pre-fix build corresponded to expanded (w-52 = 208px), so any
-    // number in this range is unambiguously the narrow form.
+    // 08-09 (Vincent「左侧标签栏要显示完全/都没有展开」): default flipped back
+    // to 'expanded' so new visitors see icons + labels in full.
+    await expect(page.locator('[data-anet-sidebar="true"]')).toHaveAttribute('data-sidebar-mode', 'expanded', { timeout: 15000 });
+    // Width = expanded (w-52 = 208px), NOT the 56px icon-rail. Sub-pixel
+    // wiggle allowed (rounding / scrollbar).
     const w = await page.locator('[data-anet-sidebar="true"]').first().evaluate(el => el.getBoundingClientRect().width);
-    expect(w).toBeGreaterThanOrEqual(48);
-    expect(w).toBeLessThanOrEqual(64);
+    expect(w).toBeGreaterThan(180);
+    expect(w).toBeLessThanOrEqual(216);
+    // Labels visible — proves it's really expanded, not a render failure.
+    await expect(page.locator('[data-nav-item][data-nav-href="/"]')).toContainText('Overview');
   });
 
   test('B — returning user with expanded already stored is NOT overwritten', async ({ page, context }) => {
@@ -129,13 +133,15 @@ test.describe('Sidebar default (07-31)', () => {
 //     // } catch {}
 //   }, []);
 //
-// Expected under mutation:
-//   - Test A stays GREEN. No LS means nothing to read anyway; default
-//     'icon-rail' still applies.
-//   - Test B REDS. Expected data-sidebar-mode='expanded', received
-//     'icon-rail'. Width also reds (Expected > 180, Received ~56).
-//   - Test C REDS. Same shape.
+// Expected under mutation (after 08-09 default flip to 'expanded'):
+//   - Test A stays GREEN. No LS; default 'expanded' still applies.
+//   - Test B now also stays GREEN — the seeded value 'expanded' equals
+//     the new default, so removing the read is indistinguishable here.
+//     B is therefore VACUOUS for the preservation claim under this
+//     default and is kept only as an expanded-renders positive smoke.
+//   - Test C REDS. Expected data-sidebar-mode='collapsed', received
+//     'expanded' (default); width reds (Expected ~64, Received ~208).
 //
-// If Test B stays green while A does too, the useEffect isn't actually
-// standing between us and the "silently overwriting" failure — the
-// two tests are testing the same thing and one of them is redundant.
+// So the preservation witnessed-red now rides ENTIRELY on Test C, whose
+// seeded value ('collapsed') differs from the default. If C ever stops
+// reding under this mutation, the useEffect preservation path is dead.

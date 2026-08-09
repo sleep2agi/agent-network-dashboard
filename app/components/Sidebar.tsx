@@ -79,7 +79,11 @@ export function Sidebar() {
   // the second failure is the one that reads to users as "the app
   // forgot my setting" and it has no error surface, so it needs its
   // own witnessed-red assertion (see e2e-sidebar-default.spec.ts).
-  const [mode, setMode] = useState<SidebarMode>('icon-rail');
+  // 08-09 (Vincent「左侧标签栏要显示完全/都没有展开」): default back to
+  // 'expanded' so first-visit users see icons + labels in full. This reverses
+  // the 07-31 'icon-rail' default; the cycle button + localStorage still let
+  // anyone pick icon-rail/collapsed and that choice is preserved (useEffect below).
+  const [mode, setMode] = useState<SidebarMode>('expanded');
   useEffect(() => {
     try {
       const v = localStorage.getItem(SIDEBAR_MODE_STORAGE);
@@ -286,7 +290,7 @@ export function Sidebar() {
         data-sidebar-mode={mode}
         data-total-unread={totalUnread}
         className={`
-        fixed top-0 left-0 h-full z-40
+        fixed top-0 left-0 h-full z-40 flex flex-col
         transition-transform duration-200 ease-out
         ${mode === 'expanded' ? 'w-52 bg-[#111113] border-r border-[#26262b]' : mode === 'icon-rail' ? 'w-14 bg-[#0A0C14]' : 'w-16 bg-[#111113] border-r border-[#26262b]'}
         ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 lg:shadow-none' : '-translate-x-full'}
@@ -298,11 +302,16 @@ export function Sidebar() {
         <SidebarBrand collapsed={collapsed} />
         <div className={`border-b border-[#26262b]`} />
 
+        {/* Scrollable middle: networks + nav grow and scroll together so
+            nothing is cut off when there are many networks / short viewports
+            (goal: 左侧标签栏「显示完全」). Brand stays pinned top, footer bottom. */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+
         {/* Network list */}
         {!collapsed && networks.length > 0 && (
           <div className="px-2 py-3 border-b border-[#26262b]">
             <div className="px-3 text-[10px] text-gray-600 uppercase mb-2">Networks</div>
-            <div className="space-y-0.5 max-h-32 overflow-y-auto">
+            <div className="space-y-0.5">
               {networks.map((n: SidebarNetwork) => (
                 <button
                   key={n.network_id}
@@ -335,14 +344,17 @@ export function Sidebar() {
             pb-20 (80px), so the last nav entry (Settings on /settings)
             was being eaten by the footer overlay. Bump to pb-28 (112px)
             to clear the actual footer height. */}
-        <div className="pb-28">
+        <div className="pb-3">
           {nav}
         </div>
+        </div>{/* end scrollable middle */}
 
         {/* Sign out + collapse — round 27: collapsed-state gets icon-only
             variants so users still have Sign out / Quick search access at
-            56px width, plus title= tooltips. */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-[#26262b] bg-[#111113]">
+            56px width, plus title= tooltips. Pinned bottom of the flex column
+            (shrink-0) so it never overlaps content; the middle region above
+            scrolls instead of hiding tabs behind it. */}
+        <div className="shrink-0 border-t border-[#26262b] bg-[#111113]">
           <button
             onClick={cycleTheme}
             title={collapsed ? `主题：${THEME_LABEL[theme]}（点击切换）` : undefined}
