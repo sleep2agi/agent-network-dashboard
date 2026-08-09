@@ -14,8 +14,12 @@ export async function GET(req: Request) {
   if (authFailure) return authFailure;
 
   const { searchParams } = new URL(req.url);
+  const requestedNetworkId = searchParams.get('network_id');
   const params = new URLSearchParams();
-  for (const key of ['node_id', 'alias']) {
+  // `network_id` is required by network-scoped pickers (scheduled tasks,
+  // lifecycle UI). Dropping it here makes the browser look scoped while the
+  // Hub actually returns every network visible to the user.
+  for (const key of ['node_id', 'alias', 'network_id']) {
     const val = searchParams.get(key);
     if (val) params.set(key, val);
   }
@@ -31,10 +35,14 @@ export async function GET(req: Request) {
       const data = await res.json();
       if (data.nodes && data.nodes.length > 0) return Response.json(data);
       // nodes table empty — fall back to sessions, map to node shape
-      const statusRes = await fetch(`${HUB_URL}/api/status`, { headers: await hubHeaders(), next: { revalidate: 0 } });
+      const statusUrl = `${HUB_URL}/api/status${params.toString() ? '?' + params.toString() : ''}`;
+      const statusRes = await fetch(statusUrl, { headers: await hubHeaders(), next: { revalidate: 0 } });
       if (statusRes.ok) {
         const statusData = await statusRes.json();
-        const nodes = (statusData.sessions || []).map((s: Record<string, unknown>) => ({
+        const scopedSessions = (statusData.sessions || []).filter((s: Record<string, unknown>) =>
+          !requestedNetworkId || s.network_id === requestedNetworkId,
+        );
+        const nodes = scopedSessions.map((s: Record<string, unknown>) => ({
           node_id: s.node_id || s.resume_id,
           alias: s.alias,
           status: s.status,
