@@ -12,6 +12,7 @@ class MemoryStorage implements Storage {
   setItem(key: string, value: string) { this.values.set(key, value); }
 }
 
+const FIXTURE_NOW = Date.now();
 const entry = {
   requestId: 'dreq_0123456789abcdef',
   localTaskId: 'tmp-dreq_0123456789abcdef',
@@ -20,7 +21,7 @@ const entry = {
   content: 'ship it',
   priority: 'normal',
   networkId: 'net_a',
-  createdAt: '2026-08-03T12:00:00.000Z',
+  createdAt: new Date(FIXTURE_NOW - 60_000).toISOString(),
 };
 const SCOPE = 'user_a:net_a';
 
@@ -66,8 +67,8 @@ test('identity and network shards cannot read each other', () => {
 
 test('expired and oversized plaintext is neither persisted nor restored', () => {
   const storage = new MemoryStorage();
-  const now = Date.parse('2026-08-03T13:00:00.000Z');
-  const expired = { ...entry, createdAt: '2026-08-01T12:00:00.000Z' };
+  const now = FIXTURE_NOW;
+  const expired = { ...entry, createdAt: new Date(now - 49 * 60 * 60_000).toISOString() };
   storage.setItem(`anet_chat_outbox_v2:${SCOPE}`, JSON.stringify([expired]));
   assert.deepEqual(readChatOutbox(SCOPE, storage, now), []);
   assert.equal(storage.getItem(`anet_chat_outbox_v2:${SCOPE}`), '[]');
