@@ -18,6 +18,19 @@ check('creation requires one selected network and node load cannot fail silently
 check('all four schedule forms are presented', ['once', 'interval', 'daily', 'weekly'].every(x => page.includes(`value=\"${x}\"`)));
 check('management actions exist', ['run-now', "method: 'PATCH'", "method: 'DELETE'", '/runs'].every(x => page.includes(x)));
 check('optimistic revision is forwarded', page.includes('revision: row.revision'));
+check('active and paused schedules expose a full edit action while terminal schedules stay disabled',
+  page.includes("onClick={() => openEdit(row)}") && page.includes("!['active','paused'].includes(row.status)"));
+check('edit form restores every mutable field without losing interval precision',
+  ['setName(row.name)', 'setTargetNodeId(row.target_node_id)', 'setTask(row.task_content)',
+    'setPriority(row.priority)', 'setTimezone(row.timezone)', 'setMisfirePolicy', 'intervalFormValue'].every(x => page.includes(x)) &&
+  page.includes('<option value="seconds">'));
+check('edit PATCH carries exact revision and the complete mutable payload',
+  page.includes("method: editing ? 'PATCH' : 'POST'") &&
+  page.includes('...(editing ? { revision: editing.revision }') &&
+  ['name, target_node_id: targetNodeId, task, priority, timezone', 'misfire_policy: misfirePolicy', 'schedule: makeSchedule()'].every(x => page.includes(x)));
+check('revision conflict closes stale form, reloads authoritative data, and tells the user',
+  page.includes("res.status === 409 && data.error === 'revision_conflict'") &&
+  page.includes('await load()') && page.includes('已刷新最新内容，请重新编辑'));
 check('timezone is explicit', page.includes('resolvedOptions().timeZone') && page.includes('timezone') && page.includes('schedule: makeSchedule()'));
 check('creation exposes both misfire policies and sends the selected value',
   page.includes('catch_up_once') && page.includes('value="skip"') && page.includes('misfire_policy: misfirePolicy'));
