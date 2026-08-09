@@ -15,7 +15,10 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const params = new URLSearchParams();
-  for (const key of ['node_id', 'alias']) {
+  // `network_id` is required by network-scoped pickers (scheduled tasks,
+  // lifecycle UI). Dropping it here makes the browser look scoped while the
+  // Hub actually returns every network visible to the user.
+  for (const key of ['node_id', 'alias', 'network_id']) {
     const val = searchParams.get(key);
     if (val) params.set(key, val);
   }
