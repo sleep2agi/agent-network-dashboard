@@ -35,6 +35,8 @@ export async function GET(req: Request) {
   const filterFrom = searchParams.get('from_name') || '';
   const filterTo = searchParams.get('to_name') || '';
   const filterTaskId = searchParams.get('task_id') || '';
+  const before = searchParams.get('before') || '';
+  const beforeTaskId = searchParams.get('before_task_id') || '';
   // #248 — the dashboard never consumes the per-status `stats` block that
   // the v2 endpoint computes by default (full GROUP BY scan on a large
   // tasks table). Opt out via `?skip_stats=1` to skip the subquery on
@@ -52,6 +54,8 @@ export async function GET(req: Request) {
     if (filterFrom) params.set('from_name', filterFrom);
     if (filterTo) params.set('to_name', filterTo);
     if (filterTaskId) params.set('task_id', filterTaskId);
+    if (before) params.set('before', before);
+    if (beforeTaskId) params.set('before_task_id', beforeTaskId);
     params.set('limit', String(limit));
     params.set('skip_stats', '1');
 
@@ -71,6 +75,8 @@ export async function GET(req: Request) {
         if (filterStatus) fallbackParams.set('status', filterStatus);
         if (filterFrom) fallbackParams.set('from_name', filterFrom);
         if (filterTo) fallbackParams.set('to_name', filterTo);
+        if (before) fallbackParams.set('before', before);
+        if (beforeTaskId) fallbackParams.set('before_task_id', beforeTaskId);
         fallbackParams.set('limit', String(limit));
         fallbackParams.set('skip_stats', '1');
         const fbRes = await fetch(`${HUB_URL}/api/tasks?${fallbackParams.toString()}`, { headers: await hubHeaders(), next: { revalidate: 0 } });
