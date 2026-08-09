@@ -20,7 +20,7 @@ run_contract
 
 echo "L1 TypeScript + production Next build"
 bunx tsc --noEmit
-bun run build
+node node_modules/next/dist/bin/next build
 test -s .next/BUILD_ID
 
 cp app/api/hub/health/route.ts /tmp/test607-health-route.ts
