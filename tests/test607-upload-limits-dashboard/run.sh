@@ -19,6 +19,7 @@ run_unit
 run_contract
 
 echo "L1 TypeScript + production Next build"
+bun run lint
 bun x tsc --noEmit
 node node_modules/next/dist/bin/next build
 test -s .next/BUILD_ID
