@@ -8,5 +8,6 @@ npx eslint \
   app/lib/chat-outbox.ts \
   app/lib/chat-drafts.ts \
   app/lib/hub-send-recovery.ts \
+  app/lib/task-history-pagination.ts \
   tests/test-chat-ha/*.test.mts
 npm run build
