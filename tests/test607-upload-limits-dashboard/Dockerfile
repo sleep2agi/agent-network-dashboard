@@ -1,4 +1,8 @@
-FROM oven/bun:1.3.14
+FROM oven/bun:1.3.14 AS bun-runtime
+
+FROM node:22-bookworm-slim
+
+COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
 
 WORKDIR /workspace
 COPY package.json package-lock.json ./
