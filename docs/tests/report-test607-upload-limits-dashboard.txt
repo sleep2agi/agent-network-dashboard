@@ -1,0 +1,44 @@
+Test 607 — Dashboard authoritative Hub upload limits
+
+Issue: https://github.com/sleep2agi/agent-network/issues/496
+Base commit: 6e79425cf02a418ce6f8327922edde45baa9a6ba
+Source commit: e2a73f25c075302f27de340f07b63151ce562add
+
+Scope
+- Dashboard consumes upload and request limits from the Hub's anonymous `/health` response.
+- The normal boot health request warms a process-global cache.
+- An upload that wins the boot race performs one shared lazy health request.
+- An old or unavailable Hub uses the existing 12 MiB / 13 MiB compatibility mirror and logs an error once.
+- Browser input cannot supply or override either limit.
+
+Docker provenance
+- Image: anet-test607-dashboard:dev
+- Image ID: sha256:01098bee7dd4be4c7b7436819f4eea17e9a9908ce45eee73b354e6c7e5f65110
+- Embedded TEST607_DASHBOARD_SOURCE_COMMIT: e2a73f25c075302f27de340f07b63151ce562add
+- Runner artifact SHA256: 8fbe82a3f62dd3023bbebc3a37f27cb50aca31211240189bf73fef73d3f2e889
+- Runtime split: Node 22.23.2 for production Next build; Bun 1.3.14 for Bun tests.
+
+Results
+- Resolver behavior: PASS (5 tests, 16 assertions)
+- Production wiring contract: PASS
+- ESLint: PASS (0 errors; 45 pre-existing warnings)
+- TypeScript `tsc --noEmit`: PASS
+- Production Next build: PASS (53 pages)
+- Strict positive coherent integer parsing: PASS
+- Concurrent callers share one health fetch: PASS
+- Cache uses Hub authority when available: PASS
+- Compatibility fallback is cached and logged once: PASS
+- Boot health may replace an earlier compatibility fallback: PASS
+- A late lazy-fetch failure cannot overwrite boot authority: PASS
+
+Witnessed-red mutations
+- Remove boot health cache warming: FAIL (rc=1).
+- Silence compatibility fallback logging: FAIL (rc=1).
+- Restored source: PASS (5 tests, 16 assertions, wiring contract PASS).
+
+Test-environment note
+- The initial oven/bun-only image completed compilation and static generation but Bun 1.3.14
+  crashed while exiting the Next build. The final exact-source image uses the real Node runtime
+  for the production build and retains Bun only for the Bun-native unit suite.
+
+Final result: PASS
