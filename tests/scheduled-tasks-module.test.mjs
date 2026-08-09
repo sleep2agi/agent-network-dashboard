@@ -18,7 +18,11 @@ check('creation requires one selected network and node load cannot fail silently
 check('all four schedule forms are presented', ['once', 'interval', 'daily', 'weekly'].every(x => page.includes(`value=\"${x}\"`)));
 check('management actions exist', ['run-now', "method: 'PATCH'", "method: 'DELETE'", '/runs'].every(x => page.includes(x)));
 check('optimistic revision is forwarded', page.includes('revision: row.revision'));
-check('timezone is explicit', page.includes('resolvedOptions().timeZone') && page.includes('timezone, schedule'));
+check('timezone is explicit', page.includes('resolvedOptions().timeZone') && page.includes('timezone') && page.includes('schedule: makeSchedule()'));
+check('creation exposes both misfire policies and sends the selected value',
+  page.includes('catch_up_once') && page.includes('value="skip"') && page.includes('misfire_policy: misfirePolicy'));
+check('schedule cards disclose the effective misfire policy',
+  page.includes('错过后补跑一次') && page.includes('错过后跳过'));
 check('proxy requires dashboard auth', proxy.includes('requireDashboardAuth()') && proxy.includes('getV3UserToken()'));
 check('proxy path is bounded and token is server-side', proxy.includes('path.length > 2') && proxy.includes('Authorization: `Bearer ${token}`'));
 check('nodes proxy preserves network scope', nodesProxy.includes("['node_id', 'alias', 'network_id']"));
