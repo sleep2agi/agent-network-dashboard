@@ -34,6 +34,26 @@ interface SessionDetail {
   last_seen_at: string;
   model: string;
   version: string;
+  external_schedules?: ExternalSchedulesSnapshot | null;
+}
+
+interface ExternalSchedule {
+  id: string;
+  name: string;
+  kind: 'cron' | 'systemd' | 'tmux' | 'playwright' | 'custom';
+  frequency: string;
+  last_run_at: string | null;
+  last_status: 'success' | 'failed' | 'running' | 'unknown';
+  last_error: string | null;
+  next_run_at: string | null;
+  log_ref: string | null;
+  enabled: boolean;
+}
+
+interface ExternalSchedulesSnapshot {
+  observed_at: string;
+  schedules: ExternalSchedule[];
+  error?: 'invalid_manifest' | 'unsafe_manifest' | 'read_failed';
 }
 
 interface Message {
@@ -82,6 +102,55 @@ function TmuxViewer({ tmuxName }: { tmuxName: string }) {
         </pre>
       )}
       {!output && <p className="text-xs text-gray-600">Click Capture to view terminal output</p>}
+    </div>
+  );
+}
+
+function ExternalSchedulesCard({ snapshot }: { snapshot: ExternalSchedulesSnapshot | null | undefined }) {
+  if (snapshot === undefined || snapshot === null) return null;
+  const reportedAgo = timeAgo(snapshot.observed_at);
+  const age = /^(\d+)([smhd]) ago$/.exec(reportedAgo);
+  const stale = reportedAgo === '--' || Boolean(age && (age[2] === 'h' || age[2] === 'd' || (age[2] === 'm' && Number(age[1]) >= 2)));
+  return (
+    <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4" data-testid="external-schedules-card">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h2 className="text-sm font-semibold text-gray-300">External schedules</h2>
+        <span className={`text-[10px] ${stale ? 'text-amber-400' : 'text-gray-600'}`} title={snapshot.observed_at}>
+          {stale ? 'stale report' : 'reported'} {reportedAgo}
+        </span>
+      </div>
+      {snapshot.error && (
+        <div className="mb-3 rounded border border-amber-800/50 bg-amber-950/20 px-3 py-2 text-xs text-amber-300">
+          Node could not read a safe external-schedules manifest ({snapshot.error}).
+        </div>
+      )}
+      {snapshot.schedules.length === 0 && !snapshot.error ? (
+        <p className="text-xs text-gray-600">No external schedules reported by this node.</p>
+      ) : (
+        <div className="space-y-2">
+          {snapshot.schedules.map((schedule) => (
+            <div key={schedule.id} className="rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-gray-300" title={schedule.name}>{schedule.name}</span>
+                <span className={`rounded px-1.5 py-0.5 text-[10px] ${
+                  schedule.last_status === 'failed' ? 'bg-red-950/50 text-red-300' :
+                  schedule.last_status === 'running' ? 'bg-blue-950/50 text-blue-300' :
+                  schedule.last_status === 'success' ? 'bg-emerald-950/50 text-emerald-300' :
+                  'bg-gray-800 text-gray-400'
+                }`}>{schedule.last_status}</span>
+                {!schedule.enabled && <span className="text-[10px] text-gray-600">disabled</span>}
+              </div>
+              <div className="mt-1 text-[10px] text-gray-500">
+                {schedule.kind} · {schedule.frequency}
+                {schedule.next_run_at ? ` · next ${timeAgo(schedule.next_run_at)}` : ''}
+              </div>
+              {schedule.last_error && <div className="mt-1 text-[10px] text-red-300 break-words">{schedule.last_error}</div>}
+              {schedule.log_ref && <div className="mt-1 text-[10px] text-gray-600">log: {schedule.log_ref}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="mt-3 text-[10px] text-gray-600">Reported by the node; Agent Network does not execute or verify these schedules.</p>
     </div>
   );
 }
@@ -298,6 +367,8 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
               <p className="text-xs text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto">{session.output}</p>
             </div>
           )}
+
+          <ExternalSchedulesCard snapshot={session?.external_schedules} />
 
           {/* Send Task */}
           <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
