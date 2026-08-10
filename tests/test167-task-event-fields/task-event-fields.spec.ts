@@ -53,10 +53,11 @@ test('legacy task events keep a visible label and expose actor/detail audit fiel
 
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`${BASE}/tasks/${TASK_ID}`, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-testid="tasks-layout"]')).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: join(OUTPUT, 'task-event-fields.png'), fullPage: false });
   const events = page.locator('[data-testid="task-detail-events"]');
   await expect(events).toBeVisible({ timeout: 30_000 });
   await expect(events).toHaveAttribute('data-events-count', '2');
-  await page.screenshot({ path: join(OUTPUT, 'task-event-fields.png'), fullPage: false });
 
   const rows = page.locator('[data-testid="task-detail-event-row"]');
   await expect(rows).toHaveCount(2);
