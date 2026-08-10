@@ -285,14 +285,19 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
     return () => observer.disconnect();
   }, []);
 
+  const selectedIndex = selectedAlias
+    ? sessions.findIndex(session => session.alias === selectedAlias)
+    : -1;
+
   // Auto-scroll works from the item index rather than querying the DOM: a
   // selected off-screen row is intentionally not mounted by the virtualizer.
+  // Depend on the numeric index, not the sessions array reference — SWR
+  // refreshes return a fresh array every five seconds and must not snap an
+  // operator back to the selected row while they browse elsewhere.
   useEffect(() => {
-    if (!selectedAlias) return;
     const element = scrollRef.current;
-    const index = sessions.findIndex(session => session.alias === selectedAlias);
-    if (!element || index < 0) return;
-    const rowTop = index * NODE_ROW_HEIGHT;
+    if (!element || selectedIndex < 0) return;
+    const rowTop = selectedIndex * NODE_ROW_HEIGHT;
     const rowBottom = rowTop + NODE_ROW_HEIGHT;
     let nextTop = element.scrollTop;
     if (rowTop < element.scrollTop) nextTop = rowTop;
@@ -302,7 +307,7 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
     if (nextTop !== element.scrollTop) {
       element.scrollTop = nextTop;
     }
-  }, [selectedAlias, sessions]);
+  }, [selectedIndex]);
 
   // A filter can shrink the list while it is scrolled near the bottom. Clamp
   // the retained offset so the new result set cannot render as a blank rail.

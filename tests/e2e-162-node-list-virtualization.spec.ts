@@ -24,11 +24,17 @@ async function login(page: Page) {
 }
 
 async function mockFleet(page: Page) {
+  let statusRead = 0;
   await page.route('**/api/hub/status**', route => route.fulfill({
     status: 200,
     contentType: 'application/json',
-    body: JSON.stringify({ sessions }),
+    body: JSON.stringify({
+      sessions: sessions.map(session => ({ ...session, task: `refresh-${statusRead}` })),
+    }),
   }));
+  page.on('request', request => {
+    if (request.url().includes('/api/hub/status')) statusRead += 1;
+  });
   await page.route('**/api/hub/nodes**', route => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -69,6 +75,13 @@ test('180-agent rail keeps the DOM bounded and can scroll to the final agent', a
   await expect(rail.locator('[data-node-list-alias="virtual-agent-179"]')).toBeVisible();
   await expect(scroll).not.toHaveAttribute('data-virtual-start', '0');
   expect(await rows.count()).toBeLessThan(50);
+
+  // useSessions refreshes every five seconds. A data refresh must not treat
+  // the unchanged selected alias as a new selection and snap the operator
+  // away from the section of the fleet they are browsing.
+  await page.waitForTimeout(5_500);
+  await expect(rail.locator('[data-node-list-alias="virtual-agent-179"]')).toBeVisible();
+  expect(await scroll.evaluate(element => element.scrollTop)).toBeGreaterThan(7_000);
 
   // A deep link starts with its selected row outside the initial window.
   // The index-based selection effect must scroll and mount that exact row.

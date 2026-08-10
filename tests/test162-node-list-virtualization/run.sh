@@ -72,4 +72,29 @@ if [ "$mutation_rc" -eq 0 ] || ! grep -q 'toBeLessThan' /tmp/test162-mutation.lo
   exit 1
 fi
 echo "mutation delete-window-slice: witnessed red (rc=$mutation_rc)"
+
+stop_dashboard
+restore_source
+sed 's/  }, \[selectedIndex\]);/  }, [selectedIndex, sessions]);/' \
+  app/components/NodeList.tsx > /tmp/NodeList.tsx.refresh-mutated
+cmp -s app/components/NodeList.tsx /tmp/NodeList.tsx.refresh-mutated && {
+  echo 'refresh dependency mutation did not change NodeList.tsx' >&2
+  exit 1
+}
+cp /tmp/NodeList.tsx.refresh-mutated app/components/NodeList.tsx
+start_dashboard
+set +e
+TEST_URL=http://localhost:3000 ANET_DASHBOARD_PASSWORD=admin123 npx playwright test \
+  tests/e2e-162-node-list-virtualization.spec.ts \
+  --workers=1 --reporter=line >/tmp/test162-refresh-mutation.log 2>&1
+refresh_mutation_rc=$?
+set -e
+if [ "$refresh_mutation_rc" -eq 0 ] \
+  || ! grep -q 'virtual-agent-179' /tmp/test162-refresh-mutation.log \
+  || ! grep -q 'Expected: visible' /tmp/test162-refresh-mutation.log; then
+  echo 'restoring the sessions-array dependency did not reproduce scroll snap' >&2
+  cat /tmp/test162-refresh-mutation.log >&2
+  exit 1
+fi
+echo "mutation restore-array-dependency: witnessed red (rc=$refresh_mutation_rc)"
 echo 'RESULT: PASS'
