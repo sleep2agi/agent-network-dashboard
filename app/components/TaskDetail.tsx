@@ -41,11 +41,20 @@ interface TaskDetailData {
 
 interface TaskEvent {
   id: number;
-  event_type: string;
+  event_type?: string | null;
+  actor?: string | null;
   from_status: string;
   to_status: string;
-  detail: string;
+  detail?: string | null;
   created_at: string;
+}
+
+function taskEventLabel(event: TaskEvent): string {
+  return event.event_type?.trim() || event.to_status?.trim() || 'event';
+}
+
+function isDeliveryStaleObservation(event: TaskEvent): boolean {
+  return event.event_type?.startsWith('task.stale.') ?? false;
 }
 
 // 🔴 Poll cadences are declared as module-scope constants so the useSWR
@@ -358,11 +367,11 @@ export function TaskDetail({
                     <div
                       key={e.id ?? i}
                       data-testid="task-detail-event-row"
-                      className="flex items-center gap-2 text-xs"
+                      className="flex items-start gap-2 text-xs"
                     >
                       <span
                         aria-hidden
-                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${
                           e.to_status === 'running'
                             ? 'bg-green-400'
                             : e.to_status === 'replied'
@@ -372,12 +381,33 @@ export function TaskDetail({
                                 : 'bg-blue-400'
                         }`}
                       />
-                      <span className="text-gray-400">{e.event_type}</span>
-                      {e.from_status && (
-                        <span className="text-gray-600">
-                          {e.from_status} → {e.to_status}
-                        </span>
-                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span data-testid="task-event-label" className="text-gray-300 font-medium truncate">
+                            {taskEventLabel(e)}
+                          </span>
+                          {e.from_status && (
+                            <span className="text-gray-600 shrink-0">
+                              {e.from_status} → {e.to_status}
+                            </span>
+                          )}
+                          {e.actor && (
+                            <span data-testid="task-event-actor" className="text-gray-500 truncate">
+                              by {e.actor}
+                            </span>
+                          )}
+                        </div>
+                        {e.detail && (
+                          <div data-testid="task-event-detail" className="mt-0.5 text-[11px] text-gray-500 break-words">
+                            {e.detail}
+                          </div>
+                        )}
+                        {isDeliveryStaleObservation(e) && (
+                          <div data-testid="task-event-stale-context" className="mt-0.5 text-[10px] text-amber-500/80 break-words">
+                            Informational delivery observation; tasks that do not require a reply may also appear here.
+                          </div>
+                        )}
+                      </div>
                       <span className="text-gray-600 ml-auto shrink-0" title={e.created_at}>
                         {timeAgo(e.created_at)}
                       </span>

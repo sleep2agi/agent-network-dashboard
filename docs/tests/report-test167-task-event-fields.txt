@@ -1,0 +1,74 @@
+# test167 — task event fields in the live Dashboard detail pane
+
+Date: 2026-08-10
+Repository: sleep2agi/agent-network-dashboard
+Base: 3d10c3955eb803acd3109ba9805c7761c84d3a73
+Test-only red harness head: 02cdd1225094989b739302ac01d1b72be8efc579
+Source under final test: 13caf61947fcc416c5f2b0e6b6c8aba00172c59e
+
+## Scope
+
+- Changed the reachable `/tasks` detail component, `app/components/TaskDetail.tsx`.
+- Did not change the fixed four-step task timestamp timeline.
+- Did not change `TaskDrawer.tsx`: `TasksView.tsx` explicitly documents that it is no longer imported or reachable.
+- Did not deploy Dashboard or change Hub data.
+
+## Behaviour
+
+- A legacy event with no `event_type` now falls back to its `to_status`, so its title cannot render blank.
+- Optional `actor` and `detail` audit fields render when present.
+- Current events keep their explicit `event_type`.
+- No synthetic fallback claims a missing actor or detail.
+- `task.stale.*` rows remain visible audit evidence, but carry an explicit informational note that tasks without a required reply can also appear; the UI does not claim every observation is a stuck request.
+
+## Controlled red
+
+The test used only synthetic task/event records. The unchanged base component loaded both event rows, then failed because the first row had no `task-event-label` element:
+
+```
+before_rc=1
+Expected: "delivered"
+Error: element(s) not found
+```
+
+The screenshot was captured after the Events card reported `data-events-count=2`, so it is not a loading-state false red. It shows the legacy first row with only `created → delivered`, while neither row exposes actor/detail.
+
+- `docs/tests/test167-task-event-fields-before.png`
+- SHA256: `3fefcbdc93160b7d56cd786380622c5a3625b61f52e8eec53be53ae2ba4125be`
+
+## Exact-source Docker green
+
+Image tag: `anet-dashboard-test167:dev`
+
+```
+image_id=sha256:d43a84f4a590b03c316915dd9d8aff6e86ef24ab1de5aa8086e0af6f900405e6
+TEST167_SOURCE_COMMIT=13caf61947fcc416c5f2b0e6b6c8aba00172c59e
+1 passed (4.7s)
+mutation=fallback-to-event-only rc=1 witnessed-red
+RESULT: PASS — legacy and current task events render explicit audit fields
+```
+
+Assertions: two loaded event rows; legacy fallback label; explicit current label; exact actor and detail text for both rows; stale informational context only on the stale row; all four existing timeline steps retain their original done/pending values.
+
+The mutation script requires exactly one production anchor and verifies a byte change before replacing the fallback with `event_type || 'event'`. The same browser assertion then turns red on the legacy row. This is a behaviour mutation, not a source-string-only pass.
+
+Runner log SHA256: `9cbe6380bc3abc1730215a2331b90557eff10193c17d4cb50e384c9d69cc5797`
+
+- `docs/tests/test167-task-event-fields-after.png`
+- SHA256: `4079c5af1c42fae5d89c43b421cb657645277030bb1f44c334594e7539f9aab8`
+
+## Existing-page regression
+
+The exact same image ran the existing `e2e-stage-tasks-two-column.spec.ts` suite:
+
+```
+4 passed (9.0s)
+```
+
+This covers list selection, all five detail blocks, event empty state, deep link, close navigation, and the unchanged task/event polling cadences. Log SHA256: `2763370eae6e7c0de6bee7fa4fd84196f2c35b50bd681d2810a80e4b44ed9ff6`.
+
+## Static and production-build checks
+
+The exact image also completed `npm run lint && npm run build`: lint reported 0 errors (45 pre-existing warnings), Next.js compiled successfully, TypeScript completed, and all 53 static pages generated. Log SHA256: `5ddd40002ba24f69a79d84994b211fb177a8069fdc2ffe8f01d47e20549b0d3f`.
+
+No production credentials, hosts, aliases, or task data appear in the fixtures or screenshots.
