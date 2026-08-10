@@ -23,7 +23,7 @@ fi
 
 TEST_URL=http://127.0.0.1:3000 \
 TASK_EVENT_SCREENSHOT_DIR=/artifacts \
-npx playwright test tests/test167-task-event-fields/task-event-fields.pw.ts \
+npx playwright test tests/test167-task-event-fields/task-event-fields.spec.ts \
   --workers=1 --reporter=line
 
 test -s /artifacts/task-event-fields.png
