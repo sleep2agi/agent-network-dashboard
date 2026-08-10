@@ -27,5 +27,27 @@ npx playwright test tests/test167-task-event-fields/task-event-fields.spec.ts \
   --workers=1 --reporter=line
 
 test -s /artifacts/task-event-fields.png
+
+cp app/components/TaskDetail.tsx /tmp/test167-TaskDetail.tsx
+node tests/test167-task-event-fields/mutate-fallback.mjs
+if cmp -s app/components/TaskDetail.tsx /tmp/test167-TaskDetail.tsx; then
+  echo 'fallback mutation was byte-identical' >&2
+  exit 1
+fi
+set +e
+TASK_EVENT_SCREENSHOT_DIR=/tmp/test167-mutation \
+npx playwright test tests/test167-task-event-fields/task-event-fields.spec.ts \
+  --workers=1 --reporter=line >/tmp/test167-mutation.log 2>&1
+mutation_rc=$?
+set -e
+cp /tmp/test167-TaskDetail.tsx app/components/TaskDetail.tsx
+if [ "$mutation_rc" -eq 0 ]; then
+  echo 'fallback mutation did not turn the behaviour test red' >&2
+  exit 1
+fi
+grep -q 'task-event-label' /tmp/test167-mutation.log
+grep -q 'Expected:' /tmp/test167-mutation.log
+echo "mutation=fallback-to-event-only rc=$mutation_rc witnessed-red"
+
 echo "source_commit=$TEST167_SOURCE_COMMIT"
 echo "RESULT: PASS — legacy and current task events render explicit audit fields"

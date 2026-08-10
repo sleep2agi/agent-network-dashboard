@@ -73,6 +73,10 @@ test('legacy task events keep a visible label and expose actor/detail audit fiel
   await expect(rows.nth(1).locator('[data-testid="task-event-detail"]')).toHaveText(
     'Target had not started after 30 minutes.',
   );
+  await expect(rows.nth(1).locator('[data-testid="task-event-stale-context"]')).toHaveText(
+    'Informational delivery observation; tasks that do not require a reply may also appear here.',
+  );
+  await expect(rows.nth(0).locator('[data-testid="task-event-stale-context"]')).toHaveCount(0);
 
   // The fixed four-step timeline remains task-timestamp based.
   await expect(page.locator('[data-testid="timeline-step-created"]')).toHaveAttribute('data-timeline-done', 'true');

@@ -53,6 +53,10 @@ function taskEventLabel(event: TaskEvent): string {
   return event.event_type?.trim() || event.to_status?.trim() || 'event';
 }
 
+function isDeliveryStaleObservation(event: TaskEvent): boolean {
+  return event.event_type?.startsWith('task.stale.') ?? false;
+}
+
 // 🔴 Poll cadences are declared as module-scope constants so the useSWR
 // refreshInterval and the DOM `data-poll-*-ms` attribute are *literally*
 // the same number. Two separate literals meant the attribute-based test
@@ -396,6 +400,11 @@ export function TaskDetail({
                         {e.detail && (
                           <div data-testid="task-event-detail" className="mt-0.5 text-[11px] text-gray-500 break-words">
                             {e.detail}
+                          </div>
+                        )}
+                        {isDeliveryStaleObservation(e) && (
+                          <div data-testid="task-event-stale-context" className="mt-0.5 text-[10px] text-amber-500/80 break-words">
+                            Informational delivery observation; tasks that do not require a reply may also appear here.
                           </div>
                         )}
                       </div>
