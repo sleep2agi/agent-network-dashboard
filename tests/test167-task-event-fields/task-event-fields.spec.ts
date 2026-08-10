@@ -53,7 +53,7 @@ test('legacy task events keep a visible label and expose actor/detail audit fiel
     }));
   }
 
-  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.setViewportSize({ width: 1280, height: 1024 });
   await page.goto(`${BASE}/tasks/${TASK_ID}`, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-testid="tasks-layout"]')).toBeVisible({ timeout: 60_000 });
   const events = page.locator('[data-testid="task-detail-events"]');
