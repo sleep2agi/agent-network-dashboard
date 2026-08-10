@@ -112,7 +112,7 @@ function ExternalSchedulesCard({ snapshot }: { snapshot: ExternalSchedulesSnapsh
   const age = /^(\d+)([smhd]) ago$/.exec(reportedAgo);
   const stale = reportedAgo === '--' || Boolean(age && (age[2] === 'h' || age[2] === 'd' || (age[2] === 'm' && Number(age[1]) >= 2)));
   return (
-    <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4" data-testid="external-schedules-card">
+    <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4" data-testid="external-schedules-card">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-sm font-semibold text-gray-300">External schedules</h2>
         <span className={`text-[10px] ${stale ? 'text-amber-400' : 'text-gray-600'}`} title={snapshot.observed_at}>
@@ -129,7 +129,7 @@ function ExternalSchedulesCard({ snapshot }: { snapshot: ExternalSchedulesSnapsh
       ) : (
         <div className="space-y-2">
           {snapshot.schedules.map((schedule) => (
-            <div key={schedule.id} className="rounded-lg border border-[#26262b] bg-[#111113] px-3 py-2">
+            <div key={schedule.id} className="rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2">
               <div className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-xs font-medium text-gray-300" title={schedule.name}>{schedule.name}</span>
                 <span className={`rounded px-1.5 py-0.5 text-[10px] ${
