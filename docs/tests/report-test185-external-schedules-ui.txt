@@ -3,10 +3,10 @@
 Date: 2026-08-10
 Issue: #185
 Base: aece4a8b08172d47f33ebb545a9a82d8759b027d
-Source commit: 362407e926328a15a28f0913fd74bdb2fda3203b
+Source commit: 0eaa803a78787c44ce19190534a0a41a6382b64b
 Image: anet-dashboard-test185:dev
-Image ID: sha256:3b0ba5e6ea497c2204c030a07bded2d11e269dc127e5d0e9f0ea5ff4e3818783
-Embedded TEST185_DASH_SOURCE_COMMIT: 362407e926328a15a28f0913fd74bdb2fda3203b
+Image ID: sha256:95b4ba40583166e6c8b47ff92179ea7fbde12015c0cf448f54c52e26709b1d7d
+Embedded TEST185_DASH_SOURCE_COMMIT: 0eaa803a78787c44ce19190534a0a41a6382b64b
 
 ## Result
 
@@ -18,16 +18,17 @@ PASS.
 - Fresh reports display `reported`; reports two minutes old display `stale report`.
 - Removing the production card wiring made the browser assertion fail (`mutation=delete-card-wiring rc=1 witnessed-red`).
 - ESLint completed with 0 errors (45 pre-existing warnings).
+- The hardcoded-colour ratchet passed at its unchanged 448-class baseline.
 - Next production build and TypeScript phase passed.
 
 Command:
 
-    sg docker -c 'docker build -f tests/test185-external-schedules-ui/Dockerfile --build-arg TEST185_DASH_SOURCE_COMMIT=362407e926328a15a28f0913fd74bdb2fda3203b -t anet-dashboard-test185:dev .'
-    sg docker -c 'docker run --rm -v /tmp/test185-dashboard-proof.EF0WJc:/artifacts anet-dashboard-test185:dev'
+    sg docker -c 'docker build -f tests/test185-external-schedules-ui/Dockerfile --build-arg TEST185_DASH_SOURCE_COMMIT=0eaa803a78787c44ce19190534a0a41a6382b64b -t anet-dashboard-test185:dev .'
+    sg docker -c 'docker run --rm -v /tmp/test185-dashboard-ci-fix.7oG8LY:/artifacts anet-dashboard-test185:dev'
 
 Visual evidence:
 
-- `docs/tests/test185-external-schedules-before.png` — the same Info view with the production card wiring removed; SHA-256 `44febc70e5755810caa9275d7db4dd122f522838ad88568d54626b64028efe00`.
-- `docs/tests/test185-external-schedules-after.png` — the bounded node-reported inventory; SHA-256 `b48e22667acf3ec9b5630f569bfd0df9241c8b8a0b0182a1beab6e0f857b4d68`.
+- `docs/tests/test185-external-schedules-before.png` — the same Info view with the production card wiring removed; SHA-256 `aa207e72e94f361e90034199e425978035180ae4e6c61f056499a3846e19e0bb`.
+- `docs/tests/test185-external-schedules-after.png` — the bounded node-reported inventory; SHA-256 `72997370a873527c7bdb5d1629807c3965b883ea19d6240b06909067d02d602a`.
 
 The screenshots use synthetic host, node, schedule, and error data. They contain no production token, IP, path, or user content.
