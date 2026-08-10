@@ -1,0 +1,69 @@
+Test 162 — Dashboard agent-list virtualization
+Date: 2026-08-10
+Base: 794b00e3ecd2ae89e06f73c2925dc65b91b61f51
+Source commit: eedeae012968d06208b187c785038173b53829ae
+Image: anet-test162:dev
+Image ID: sha256:005319990e637f3f617177def5f1e4a976ab2b8897ed99c037356199f9539ecf
+Embedded ENV: TEST162_SOURCE_COMMIT=eedeae012968d06208b187c785038173b53829ae
+
+Scope
+-----
+- Production: app/components/NodeList.tsx
+- Test: 180-agent Playwright fleet + existing Stage A NodeList regression
+- No Hub, runtime, Sidebar, authentication, deployment, or API changes
+
+Witnessed red
+-------------
+The new Playwright test was first run against base behavior before the
+virtualizer existed. The real /nodes page mounted all 180 supplied agents:
+
+  Expected: < 50
+  Received:   180
+  exit: 1
+
+The first attempted red used the outer rail locator and failed before reaching
+the behavior assertion; it was rejected as invalid evidence. The locator was
+corrected and the 180-row failure above was rerun before production changes.
+
+Exact-source green
+------------------
+Command:
+
+  sg docker -c 'docker build -t anet-test162:dev \
+    -f tests/test162-node-list-virtualization/Dockerfile \
+    --build-arg TEST162_SOURCE_COMMIT=eedeae012968d06208b187c785038173b53829ae .'
+  sg docker -c 'docker run --rm anet-test162:dev'
+
+Result:
+
+  eslint: PASS
+  Playwright: 4 passed
+    - 180-agent DOM remains below 50 rows
+    - manual scroll reaches virtual-agent-179
+    - deep link to off-window virtual-agent-179 mounts/selects it
+    - existing Stage A list/toggle/click behavior: 3 passed
+  mutation delete-window-slice: witnessed red (rc=1)
+  RESULT: PASS
+
+The mutation replaces the production visible slice with the full sessions
+array. The runner verifies the source bytes changed and requires the resulting
+failure to reach the toBeLessThan behavior assertion, preventing a vacuous sed
+or unrelated startup failure from being counted as red.
+
+Build gate
+----------
+Command:
+
+  sg docker -c 'docker run --rm -e NEXT_TELEMETRY_DISABLED=1 \
+    anet-test162:dev npm run build'
+
+Result: PASS
+- Next production compile successful
+- TypeScript successful
+- 53/53 static pages generated
+
+Conclusion
+----------
+PASS. A 180-agent fleet now retains the complete logical list while bounding
+the mounted DOM, preserves small-list behavior, scrolls to the final row, and
+resolves an off-window deep-linked selection by index.
