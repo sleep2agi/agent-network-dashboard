@@ -63,7 +63,10 @@ test('node Info renders reported external schedules without host paths or comman
   await page.screenshot({ path: join(OUTPUT, 'external-schedules.png'), fullPage: false });
 
   observedAt = new Date(Date.now() - 120_000).toISOString();
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await Promise.all([
+    page.waitForResponse(response => response.url().includes('/api/hub/session')),
+    page.goto(`${BASE}/node?alias=pstation-ops`, { waitUntil: 'domcontentloaded' }),
+  ]);
   await page.getByRole('button', { name: 'Info' }).click();
   await expect(page.getByTestId('external-schedules-card')).toContainText('stale report');
 });
