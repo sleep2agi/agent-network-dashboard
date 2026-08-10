@@ -93,6 +93,7 @@ function NodeListRow({ session: s, selected, unread, onSelect, onContextMenu }: 
       // SPEC §11.1: pinned row = whole-row light background
       // rgba(125,211,252,0.04) (hover 0.08); no pin ICON (Feishu
       // pattern). Selected wins over both.
+      style={{ height: NODE_ROW_HEIGHT, minHeight: NODE_ROW_HEIGHT }}
       className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors border-b border-[var(--col-hairline)] ${
         selected
           ? 'bg-cyan-500/8'
@@ -170,6 +171,31 @@ function NodeListRow({ session: s, selected, unread, onSelect, onContextMenu }: 
   );
 }
 
+// Rows have an explicit fixed height so a large fleet can be windowed without
+// measuring every mounted node. Six rows of overscan keep wheel/touch scrolling
+// smooth while bounding a 100+ node rail to a small DOM working set.
+const NODE_ROW_HEIGHT = 53;
+const NODE_ROW_OVERSCAN = 6;
+const INITIAL_VIEWPORT_HEIGHT = 600;
+
+export function nodeListWindow(
+  itemCount: number,
+  scrollTop: number,
+  viewportHeight: number,
+) {
+  const safeTop = Math.max(0, Number.isFinite(scrollTop) ? scrollTop : 0);
+  const safeHeight = Math.max(1, Number.isFinite(viewportHeight) ? viewportHeight : INITIAL_VIEWPORT_HEIGHT);
+  const start = Math.max(0, Math.floor(safeTop / NODE_ROW_HEIGHT) - NODE_ROW_OVERSCAN);
+  const visible = Math.ceil(safeHeight / NODE_ROW_HEIGHT) + NODE_ROW_OVERSCAN * 2;
+  const end = Math.min(itemCount, start + visible);
+  return {
+    start,
+    end,
+    top: start * NODE_ROW_HEIGHT,
+    bottom: Math.max(0, (itemCount - end) * NODE_ROW_HEIGHT),
+  };
+}
+
 function LastLine({ alias, session }: { alias: string; session: SessionRow }) {
   const draft = useHasDraft(alias);
   if (draft) {
@@ -195,6 +221,8 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
   // coords from the contextmenu event so the menu appears where the
   // user right-clicked, not at a static offset.
   const [menu, setMenu] = useState<{ alias: string; x: number; y: number } | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(INITIAL_VIEWPORT_HEIGHT);
 
   // Batch (07-31) segment 3: keyboard ↑↓ walks the list, Enter opens
   // the focused entry (URL changes via parent's onSelect → router.push).
@@ -247,15 +275,53 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Auto-scroll: after selection change, bring the selected entry into
-  // the rail's viewport. Runs on every render — cheap and safe. Uses
-  // scrollIntoView block:'nearest' so it doesn't jerk the list when
-  // the selected entry is already visible.
   useEffect(() => {
-    if (!selectedAlias) return;
-    const el = scrollRef.current?.querySelector(`[data-node-list-alias="${CSS.escape(selectedAlias)}"]`) as HTMLElement | null;
-    if (el) el.scrollIntoView({ block: 'nearest' });
-  }, [selectedAlias]);
+    const element = scrollRef.current;
+    if (!element) return;
+    const measure = () => setViewportHeight(Math.max(1, element.clientHeight));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const selectedIndex = selectedAlias
+    ? sessions.findIndex(session => session.alias === selectedAlias)
+    : -1;
+
+  // Auto-scroll works from the item index rather than querying the DOM: a
+  // selected off-screen row is intentionally not mounted by the virtualizer.
+  // Depend on the numeric index, not the sessions array reference — SWR
+  // refreshes return a fresh array every five seconds and must not snap an
+  // operator back to the selected row while they browse elsewhere.
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element || selectedIndex < 0) return;
+    const rowTop = selectedIndex * NODE_ROW_HEIGHT;
+    const rowBottom = rowTop + NODE_ROW_HEIGHT;
+    let nextTop = element.scrollTop;
+    if (rowTop < element.scrollTop) nextTop = rowTop;
+    else if (rowBottom > element.scrollTop + element.clientHeight) {
+      nextTop = Math.max(0, rowBottom - element.clientHeight);
+    }
+    if (nextTop !== element.scrollTop) {
+      element.scrollTop = nextTop;
+    }
+  }, [selectedIndex]);
+
+  // A filter can shrink the list while it is scrolled near the bottom. Clamp
+  // the retained offset so the new result set cannot render as a blank rail.
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+    const maxTop = Math.max(0, sessions.length * NODE_ROW_HEIGHT - element.clientHeight);
+    if (element.scrollTop > maxTop) {
+      element.scrollTop = maxTop;
+    }
+  }, [sessions.length]);
+
+  const virtualWindow = nodeListWindow(sessions.length, scrollTop, viewportHeight);
+  const visibleSessions = sessions.slice(virtualWindow.start, virtualWindow.end);
 
   return (
     <div
@@ -286,7 +352,14 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
           onClose={() => setMenu(null)}
         />
       )}
-      <div ref={scrollRef} data-testid="node-list-scroll" className="flex-1 min-h-0 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">
+      <div
+        ref={scrollRef}
+        data-testid="node-list-scroll"
+        data-virtual-start={virtualWindow.start}
+        data-virtual-end={virtualWindow.end}
+        onScroll={event => setScrollTop(event.currentTarget.scrollTop)}
+        className="flex-1 min-h-0 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0"
+      >
         {sessions.length === 0 ? (
           search ? (
             /* #Stage D (Vincent ③ 判据): a no-match search MUST look
@@ -308,17 +381,21 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
           </div>
           )
         ) : (
-          sessions.map(s => <NodeListRow
-            key={s.alias}
-            session={s}
-            selected={s.alias === selectedAlias}
-            unread={unreadCount(s.alias)}
-            onSelect={onSelect}
-            onContextMenu={(alias, e) => {
-              e.preventDefault();
-              setMenu({ alias, x: e.clientX, y: e.clientY });
-            }}
-          />)
+          <>
+            {virtualWindow.top > 0 && <div aria-hidden style={{ height: virtualWindow.top }} />}
+            {visibleSessions.map(s => <NodeListRow
+              key={s.alias}
+              session={s}
+              selected={s.alias === selectedAlias}
+              unread={unreadCount(s.alias)}
+              onSelect={onSelect}
+              onContextMenu={(alias, e) => {
+                e.preventDefault();
+                setMenu({ alias, x: e.clientX, y: e.clientY });
+              }}
+            />)}
+            {virtualWindow.bottom > 0 && <div aria-hidden style={{ height: virtualWindow.bottom }} />}
+          </>
         )}
       </div>
     </div>
