@@ -48,6 +48,8 @@ interface ExternalSchedule {
   next_run_at: string | null;
   log_ref: string | null;
   enabled: boolean;
+  editable?: boolean;
+  revision?: number;
 }
 
 interface ExternalSchedulesSnapshot {
@@ -106,11 +108,55 @@ function TmuxViewer({ tmuxName }: { tmuxName: string }) {
   );
 }
 
-function ExternalSchedulesCard({ snapshot }: { snapshot: ExternalSchedulesSnapshot | null | undefined }) {
+function ExternalSchedulesCard({ snapshot, nodeId, onQueued }: {
+  snapshot: ExternalSchedulesSnapshot | null | undefined;
+  nodeId?: string;
+  onQueued?: () => void;
+}) {
+  const [editing, setEditing] = useState<ExternalSchedule | null>(null);
+  const [cron, setCron] = useState('');
+  const [enabled, setEnabled] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editNotice, setEditNotice] = useState('');
   if (snapshot === undefined || snapshot === null) return null;
   const reportedAgo = timeAgo(snapshot.observed_at);
   const age = /^(\d+)([smhd]) ago$/.exec(reportedAgo);
   const stale = reportedAgo === '--' || Boolean(age && (age[2] === 'h' || age[2] === 'd' || (age[2] === 'm' && Number(age[1]) >= 2)));
+  const openEdit = (schedule: ExternalSchedule) => {
+    setEditing(schedule);
+    setCron(schedule.frequency);
+    setEnabled(schedule.enabled);
+    setEditError('');
+    setEditNotice('');
+  };
+  const submitEdit = async () => {
+    if (!editing || !nodeId || !Number.isSafeInteger(editing.revision)) return;
+    setSaving(true);
+    setEditError('');
+    setEditNotice('');
+    try {
+      const res = await fetch(`/api/hub/nodes/${encodeURIComponent(nodeId)}/external-schedule-edits`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          schedule_id: editing.id,
+          base_revision: editing.revision,
+          patch: { cron: cron.trim(), enabled },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setEditing(null);
+      setEditNotice('Edit queued for this node. Waiting for its authenticated apply acknowledgement.');
+      onQueued?.();
+    } catch (error: unknown) {
+      const code = error instanceof Error ? error.message : 'edit_failed';
+      setEditError(code === 'revision_conflict' ? 'Schedule changed since this report. Refresh and try again.' : code);
+    } finally {
+      setSaving(false);
+    }
+  };
   return (
     <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4" data-testid="external-schedules-card">
       <div className="flex items-center justify-between gap-3 mb-3">
@@ -139,6 +185,15 @@ function ExternalSchedulesCard({ snapshot }: { snapshot: ExternalSchedulesSnapsh
                   'bg-gray-800 text-gray-400'
                 }`}>{schedule.last_status}</span>
                 {!schedule.enabled && <span className="text-[10px] text-gray-600">disabled</span>}
+                {schedule.editable === true && Number.isSafeInteger(schedule.revision) && nodeId && (
+                  <button
+                    type="button"
+                    disabled={stale}
+                    onClick={() => openEdit(schedule)}
+                    className="rounded border border-cyan-900/70 px-2 py-0.5 text-[10px] text-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
+                    title={stale ? 'Wait for a fresh node report before editing' : 'Edit timing and enabled state'}
+                  >Edit</button>
+                )}
               </div>
               <div className="mt-1 text-[10px] text-gray-500">
                 {schedule.kind} · {schedule.frequency}
@@ -150,6 +205,26 @@ function ExternalSchedulesCard({ snapshot }: { snapshot: ExternalSchedulesSnapsh
           ))}
         </div>
       )}
+      {editing && (
+        <div className="mt-3 rounded-lg border border-cyan-900/60 bg-cyan-950/10 p-3" data-testid="external-schedule-editor">
+          <div className="text-xs font-medium text-gray-300">Edit {editing.name}</div>
+          <p className="mt-1 text-[10px] text-gray-500">Only five-field cron timing and enabled state can change. The command is immutable.</p>
+          <label className="mt-3 block text-[10px] text-gray-500">Five-field cron
+            <input value={cron} onChange={(event) => setCron(event.target.value)} maxLength={120}
+              className="mt-1 w-full rounded border border-[var(--border)] bg-[var(--col-inset)] px-2 py-1.5 font-mono text-xs text-gray-200" />
+          </label>
+          <label className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+            <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} /> Enabled
+          </label>
+          <div className="mt-3 flex justify-end gap-2">
+            <button type="button" onClick={() => setEditing(null)} className="rounded px-3 py-1 text-xs text-gray-400">Cancel</button>
+            <button type="button" disabled={saving || cron.trim().length < 5} onClick={submitEdit}
+              className="rounded bg-cyan-700 px-3 py-1 text-xs text-white disabled:opacity-40">{saving ? 'Queueing…' : 'Queue edit'}</button>
+          </div>
+        </div>
+      )}
+      {editError && <p className="mt-2 text-xs text-red-300" role="alert">{editError}</p>}
+      {editNotice && <p className="mt-2 text-xs text-emerald-300" role="status">{editNotice}</p>}
       <p className="mt-3 text-[10px] text-gray-600">Reported by the node; Agent Network does not execute or verify these schedules.</p>
     </div>
   );
@@ -368,7 +443,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
             </div>
           )}
 
-          <ExternalSchedulesCard snapshot={session?.external_schedules} />
+          <ExternalSchedulesCard snapshot={session?.external_schedules} nodeId={session?.node_id} />
 
           {/* Send Task */}
           <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
