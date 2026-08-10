@@ -21,7 +21,7 @@ if [ "$ready" -ne 1 ]; then
   exit 1
 fi
 
-TEST_URL=http://127.0.0.1:3000 \
+TEST_URL=http://localhost:3000 \
 TASK_EVENT_SCREENSHOT_DIR=/artifacts \
 npx playwright test tests/test167-task-event-fields/task-event-fields.spec.ts \
   --workers=1 --reporter=line

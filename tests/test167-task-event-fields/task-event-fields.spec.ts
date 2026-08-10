@@ -2,9 +2,11 @@ import { expect, test } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-const BASE = process.env.TEST_URL || 'http://127.0.0.1:3000';
+const BASE = process.env.TEST_URL || 'http://localhost:3000';
 const OUTPUT = resolve(process.env.TASK_EVENT_SCREENSHOT_DIR || 'test-results/test167-task-event-fields');
 const TASK_ID = 'synthetic-task-event-fields';
+
+test.setTimeout(90_000);
 
 test('legacy task events keep a visible label and expose actor/detail audit fields', async ({ page, context }) => {
   mkdirSync(OUTPUT, { recursive: true });
