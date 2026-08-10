@@ -3,8 +3,12 @@ Date: 2026-08-10
 Base: 794b00e3ecd2ae89e06f73c2925dc65b91b61f51
 Source commit: 37566c37b697a90977e74e5f672404b409a4f1f6
 Image: anet-test162:dev
-Image ID: sha256:9f2926f51ba5e19f1b230a295e315aa3bf2adfdee3516ecd8b1d67f60d29ad35
+Image ID: sha256:eb4aa26df1ae4abbaec52be710544785c7538d8c1451f39e09550c90d109bdeb
 Embedded ENV: TEST162_SOURCE_COMMIT=37566c37b697a90977e74e5f672404b409a4f1f6
+
+This report was refreshed after the review bounce by rebuilding and rerunning
+from a detached, clean checkout at the exact source commit above. It does not
+reuse the pre-no-yank-fix run from `eedeae01`.
 
 Scope
 -----
