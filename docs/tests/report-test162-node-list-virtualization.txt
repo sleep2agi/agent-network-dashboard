@@ -1,10 +1,10 @@
 Test 162 — Dashboard agent-list virtualization
 Date: 2026-08-10
 Base: 794b00e3ecd2ae89e06f73c2925dc65b91b61f51
-Source commit: eedeae012968d06208b187c785038173b53829ae
+Source commit: 37566c37b697a90977e74e5f672404b409a4f1f6
 Image: anet-test162:dev
-Image ID: sha256:005319990e637f3f617177def5f1e4a976ab2b8897ed99c037356199f9539ecf
-Embedded ENV: TEST162_SOURCE_COMMIT=eedeae012968d06208b187c785038173b53829ae
+Image ID: sha256:9f2926f51ba5e19f1b230a295e315aa3bf2adfdee3516ecd8b1d67f60d29ad35
+Embedded ENV: TEST162_SOURCE_COMMIT=37566c37b697a90977e74e5f672404b409a4f1f6
 
 Scope
 -----
@@ -25,13 +25,20 @@ The first attempted red used the outer rail locator and failed before reaching
 the behavior assertion; it was rejected as invalid evidence. The locator was
 corrected and the 180-row failure above was rerun before production changes.
 
+A second controlled red changed the otherwise stable status payload on the
+real five-second SWR refresh. The first implementation depended on the fresh
+`sessions` array reference, snapped the rail back to the selected first row,
+and unmounted `virtual-agent-179`. This red was accepted because the same page,
+selection, ordering, and identities were preserved; only a harmless displayed
+task snapshot changed.
+
 Exact-source green
 ------------------
 Command:
 
   sg docker -c 'docker build -t anet-test162:dev \
     -f tests/test162-node-list-virtualization/Dockerfile \
-    --build-arg TEST162_SOURCE_COMMIT=eedeae012968d06208b187c785038173b53829ae .'
+    --build-arg TEST162_SOURCE_COMMIT=37566c37b697a90977e74e5f672404b409a4f1f6 .'
   sg docker -c 'docker run --rm anet-test162:dev'
 
 Result:
@@ -40,15 +47,18 @@ Result:
   Playwright: 4 passed
     - 180-agent DOM remains below 50 rows
     - manual scroll reaches virtual-agent-179
+    - a changed five-second status refresh preserves the browsed scroll region
     - deep link to off-window virtual-agent-179 mounts/selects it
     - existing Stage A list/toggle/click behavior: 3 passed
   mutation delete-window-slice: witnessed red (rc=1)
+  mutation restore-array-dependency: witnessed red (rc=1)
   RESULT: PASS
 
-The mutation replaces the production visible slice with the full sessions
-array. The runner verifies the source bytes changed and requires the resulting
-failure to reach the toBeLessThan behavior assertion, preventing a vacuous sed
-or unrelated startup failure from being counted as red.
+The first mutation replaces the production visible slice with the full sessions
+array. The second restores the unsafe sessions-array effect dependency. The
+runner verifies that each source edit changes bytes and requires the matching
+DOM-bound or post-refresh visibility failure, preventing vacuous sed commands
+or unrelated startup failures from being counted as red.
 
 Build gate
 ----------
@@ -67,3 +77,4 @@ Conclusion
 PASS. A 180-agent fleet now retains the complete logical list while bounding
 the mounted DOM, preserves small-list behavior, scrolls to the final row, and
 resolves an off-window deep-linked selection by index.
+Ordinary SWR status refreshes no longer steal the operator's scroll position.
