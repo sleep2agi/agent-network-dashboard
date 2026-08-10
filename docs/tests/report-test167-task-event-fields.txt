@@ -1,0 +1,70 @@
+# test167 — task event fields in the live Dashboard detail pane
+
+Date: 2026-08-10
+Repository: sleep2agi/agent-network-dashboard
+Base: 3d10c3955eb803acd3109ba9805c7761c84d3a73
+Test-only red harness head: 02cdd1225094989b739302ac01d1b72be8efc579
+Source under final test: 09c0c2efe9fb25f3ecfe52e00b5b3be418f5f212
+
+## Scope
+
+- Changed the reachable `/tasks` detail component, `app/components/TaskDetail.tsx`.
+- Did not change the fixed four-step task timestamp timeline.
+- Did not change `TaskDrawer.tsx`: `TasksView.tsx` explicitly documents that it is no longer imported or reachable.
+- Did not deploy Dashboard or change Hub data.
+
+## Behaviour
+
+- A legacy event with no `event_type` now falls back to its `to_status`, so its title cannot render blank.
+- Optional `actor` and `detail` audit fields render when present.
+- Current events keep their explicit `event_type`.
+- No synthetic fallback claims a missing actor or detail.
+
+## Controlled red
+
+The test used only synthetic task/event records. The unchanged base component loaded both event rows, then failed because the first row had no `task-event-label` element:
+
+```
+before_rc=1
+Expected: "delivered"
+Error: element(s) not found
+```
+
+The screenshot was captured after the Events card reported `data-events-count=2`, so it is not a loading-state false red. It shows the legacy first row with only `created → delivered`, while neither row exposes actor/detail.
+
+- `docs/tests/test167-task-event-fields-before.png`
+- SHA256: `3302c58c78c6d6c74bbbba811e6adb2164e9f3b5c0aca4bf22758f57fdc13049`
+
+## Exact-source Docker green
+
+Image tag: `anet-dashboard-test167:dev`
+
+```
+image_id=sha256:942f7e1bd82bb86fbcb1e8324af96e6b489facb93e55a4235094dfe31412747c
+TEST167_SOURCE_COMMIT=09c0c2efe9fb25f3ecfe52e00b5b3be418f5f212
+1 passed (4.4s)
+RESULT: PASS — legacy and current task events render explicit audit fields
+```
+
+Assertions: two loaded event rows; legacy fallback label; explicit current label; exact actor and detail text for both rows; all four existing timeline steps retain their original done/pending values.
+
+Runner log SHA256: `6cf0c676a7f524eb2255916ba5a6dfdf6e8208c40e572b5aada8ff10b5ac7c8f`
+
+- `docs/tests/test167-task-event-fields-after.png`
+- SHA256: `636c45f298ab36189152a52f04544c3caa216ce592c500cb019dee1ffbf74f30`
+
+## Existing-page regression
+
+The exact same image ran the existing `e2e-stage-tasks-two-column.spec.ts` suite:
+
+```
+4 passed (8.1s)
+```
+
+This covers list selection, all five detail blocks, event empty state, deep link, close navigation, and the unchanged task/event polling cadences. Log SHA256: `ec21ec8dd9b9bb3a7e21ea3aaf1fe1f3bb22ed6780b7c93872c826723ebeaba8`.
+
+## Static and production-build checks
+
+The exact image also completed `npm run lint && npm run build`: lint reported 0 errors (45 pre-existing warnings), Next.js compiled successfully, TypeScript completed, and all 53 static pages generated. Log SHA256: `507f1c88a1ad5e3f40b24fc30e24792e368522c5e7d6222d4bd01dd3201e7b49`.
+
+No production credentials, hosts, aliases, or task data appear in the fixtures or screenshots.
