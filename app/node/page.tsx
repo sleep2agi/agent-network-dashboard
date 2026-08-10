@@ -108,11 +108,15 @@ function TmuxViewer({ tmuxName }: { tmuxName: string }) {
 
 function ExternalSchedulesCard({ snapshot }: { snapshot: ExternalSchedulesSnapshot | null | undefined }) {
   if (snapshot === undefined || snapshot === null) return null;
+  const observedAtMs = Date.parse(snapshot.observed_at);
+  const stale = !Number.isFinite(observedAtMs) || Date.now() - observedAtMs > 90_000;
   return (
     <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4" data-testid="external-schedules-card">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-sm font-semibold text-gray-300">External schedules</h2>
-        <span className="text-[10px] text-gray-600" title={snapshot.observed_at}>reported {timeAgo(snapshot.observed_at)}</span>
+        <span className={`text-[10px] ${stale ? 'text-amber-400' : 'text-gray-600'}`} title={snapshot.observed_at}>
+          {stale ? 'stale report' : 'reported'} {timeAgo(snapshot.observed_at)}
+        </span>
       </div>
       {snapshot.error && (
         <div className="mb-3 rounded border border-amber-800/50 bg-amber-950/20 px-3 py-2 text-xs text-amber-300">

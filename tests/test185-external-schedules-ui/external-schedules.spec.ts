@@ -9,6 +9,7 @@ test.setTimeout(90_000);
 
 test('node Info renders reported external schedules without host paths or commands', async ({ page, context }) => {
   mkdirSync(OUTPUT, { recursive: true });
+  let observedAt = new Date().toISOString();
   const login = await context.request.post(`${BASE}/api/auth/login`, {
     data: { password: process.env.ANET_DASHBOARD_PASSWORD || 'admin123' },
   });
@@ -24,7 +25,7 @@ test('node Info renders reported external schedules without host paths or comman
       session: {
         alias: 'pstation-ops', status: 'idle', agent: 'agent-node:codex', server: 'demo-host',
         external_schedules: {
-          observed_at: new Date().toISOString(),
+          observed_at: observedAt,
           schedules: [{
             id: 'pstation-smoke', name: 'P station Playwright smoke', kind: 'playwright',
             frequency: '*/5 * * * *', last_run_at: '2026-08-10T01:02:03.000Z',
@@ -46,14 +47,23 @@ test('node Info renders reported external schedules without host paths or comman
   await page.setViewportSize({ width: 1280, height: 1100 });
   await page.goto(`${BASE}/node?alias=pstation-ops`, { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'Info' }).click();
+  if (process.env.TEST185_BEFORE_SCREENSHOT === '1') {
+    await page.screenshot({ path: join(OUTPUT, 'external-schedules-before.png'), fullPage: false });
+  }
   const card = page.getByTestId('external-schedules-card');
   await expect(card).toBeVisible();
   await expect(card).toContainText('P station Playwright smoke');
   await expect(card).toContainText('failed');
   await expect(card).toContainText('homepage returned 503');
   await expect(card).toContainText('log: pstation-smoke.log');
+  await expect(card).toContainText('reported');
   await expect(card).toContainText('Reported by the node; Agent Network does not execute or verify these schedules.');
   await expect(card).not.toContainText('/var/private');
   await expect(card).not.toContainText('cat /etc/passwd');
   await page.screenshot({ path: join(OUTPUT, 'external-schedules.png'), fullPage: false });
+
+  observedAt = new Date(Date.now() - 120_000).toISOString();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'Info' }).click();
+  await expect(page.getByTestId('external-schedules-card')).toContainText('stale report');
 });
