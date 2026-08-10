@@ -1,0 +1,33 @@
+# test690 — owner-gated external schedule editing (Dashboard)
+
+Date: 2026-08-10
+Base commit: 3bd4f6c2438dd346cecd47d85821ac39453884b8
+Source commit under test: e33e3a6ac054805961b994704a90139392de4a3d
+Docker tag: anet-dashboard-test690:dev
+Docker image: sha256:46663a82bfef6700678c57bef7725d37928f18ff37bb67d593934c2d50b97956
+Embedded TEST690_SOURCE_COMMIT: e33e3a6ac054805961b994704a90139392de4a3d
+
+## Scope
+
+- Dashboard renders Edit only when the authenticated Hub response marks an exact-node external schedule editable and supplies an integer revision.
+- The UI submits only an opaque schedule id, base revision, five-field cron text, and enabled state.
+- The authenticated server-side proxy accepts only a Dashboard user token (`utok_`) and forwards it in the Authorization header.
+- Unknown top-level or nested patch keys, including command injection attempts, are rejected before reaching Hub.
+- The command remains visible but immutable; read-only schedules remain read-only.
+
+## Docker result
+
+Command: `docker run --rm anet-dashboard-test690:dev`
+
+- Contract checks: 8/8 PASS.
+- Playwright tests: 2/2 PASS (real Next Dashboard route plus controlled fake Hub).
+- Mutation `remove-editable-gate`: witnessed red, rc=1.
+- Mutation `allow-command-patch-key`: witnessed red, rc=1.
+- ESLint: 0 errors; 45 pre-existing warnings.
+- Next.js production build: PASS; dynamic route `/api/hub/nodes/[ref]/external-schedule-edits` emitted.
+- Embedded runner source and tested source are identical.
+- Final result: PASS.
+
+## Safety boundary
+
+This Dashboard segment cannot mint authority from chat or node credentials. It requires an authenticated `utok_`; Hub remains authoritative for exact immutable node ownership, intent issuance, revision CAS, TTL, and single-use consumption. No merge, deployment, npm publication, production database access, or production schedule mutation occurred during this test.
