@@ -47,6 +47,7 @@ test('node Info renders reported external schedules without host paths or comman
   await page.setViewportSize({ width: 1280, height: 1100 });
   await page.goto(`${BASE}/node?alias=pstation-ops`, { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'Info' }).click();
+  await expect(page.getByRole('heading', { name: 'Node Info' })).toBeVisible();
   if (process.env.TEST185_BEFORE_SCREENSHOT === '1') {
     await page.screenshot({ path: join(OUTPUT, 'external-schedules-before.png'), fullPage: false });
   }
