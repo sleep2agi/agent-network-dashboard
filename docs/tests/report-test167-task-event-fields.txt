@@ -4,7 +4,7 @@ Date: 2026-08-10
 Repository: sleep2agi/agent-network-dashboard
 Base: 3d10c3955eb803acd3109ba9805c7761c84d3a73
 Test-only red harness head: 02cdd1225094989b739302ac01d1b72be8efc579
-Source under final test: 09c0c2efe9fb25f3ecfe52e00b5b3be418f5f212
+Source under final test: 13caf61947fcc416c5f2b0e6b6c8aba00172c59e
 
 ## Scope
 
@@ -19,6 +19,7 @@ Source under final test: 09c0c2efe9fb25f3ecfe52e00b5b3be418f5f212
 - Optional `actor` and `detail` audit fields render when present.
 - Current events keep their explicit `event_type`.
 - No synthetic fallback claims a missing actor or detail.
+- `task.stale.*` rows remain visible audit evidence, but carry an explicit informational note that tasks without a required reply can also appear; the UI does not claim every observation is a stuck request.
 
 ## Controlled red
 
@@ -33,38 +34,41 @@ Error: element(s) not found
 The screenshot was captured after the Events card reported `data-events-count=2`, so it is not a loading-state false red. It shows the legacy first row with only `created → delivered`, while neither row exposes actor/detail.
 
 - `docs/tests/test167-task-event-fields-before.png`
-- SHA256: `3302c58c78c6d6c74bbbba811e6adb2164e9f3b5c0aca4bf22758f57fdc13049`
+- SHA256: `3fefcbdc93160b7d56cd786380622c5a3625b61f52e8eec53be53ae2ba4125be`
 
 ## Exact-source Docker green
 
 Image tag: `anet-dashboard-test167:dev`
 
 ```
-image_id=sha256:942f7e1bd82bb86fbcb1e8324af96e6b489facb93e55a4235094dfe31412747c
-TEST167_SOURCE_COMMIT=09c0c2efe9fb25f3ecfe52e00b5b3be418f5f212
-1 passed (4.4s)
+image_id=sha256:d43a84f4a590b03c316915dd9d8aff6e86ef24ab1de5aa8086e0af6f900405e6
+TEST167_SOURCE_COMMIT=13caf61947fcc416c5f2b0e6b6c8aba00172c59e
+1 passed (4.7s)
+mutation=fallback-to-event-only rc=1 witnessed-red
 RESULT: PASS — legacy and current task events render explicit audit fields
 ```
 
-Assertions: two loaded event rows; legacy fallback label; explicit current label; exact actor and detail text for both rows; all four existing timeline steps retain their original done/pending values.
+Assertions: two loaded event rows; legacy fallback label; explicit current label; exact actor and detail text for both rows; stale informational context only on the stale row; all four existing timeline steps retain their original done/pending values.
 
-Runner log SHA256: `6cf0c676a7f524eb2255916ba5a6dfdf6e8208c40e572b5aada8ff10b5ac7c8f`
+The mutation script requires exactly one production anchor and verifies a byte change before replacing the fallback with `event_type || 'event'`. The same browser assertion then turns red on the legacy row. This is a behaviour mutation, not a source-string-only pass.
+
+Runner log SHA256: `9cbe6380bc3abc1730215a2331b90557eff10193c17d4cb50e384c9d69cc5797`
 
 - `docs/tests/test167-task-event-fields-after.png`
-- SHA256: `636c45f298ab36189152a52f04544c3caa216ce592c500cb019dee1ffbf74f30`
+- SHA256: `4079c5af1c42fae5d89c43b421cb657645277030bb1f44c334594e7539f9aab8`
 
 ## Existing-page regression
 
 The exact same image ran the existing `e2e-stage-tasks-two-column.spec.ts` suite:
 
 ```
-4 passed (8.1s)
+4 passed (9.0s)
 ```
 
-This covers list selection, all five detail blocks, event empty state, deep link, close navigation, and the unchanged task/event polling cadences. Log SHA256: `ec21ec8dd9b9bb3a7e21ea3aaf1fe1f3bb22ed6780b7c93872c826723ebeaba8`.
+This covers list selection, all five detail blocks, event empty state, deep link, close navigation, and the unchanged task/event polling cadences. Log SHA256: `2763370eae6e7c0de6bee7fa4fd84196f2c35b50bd681d2810a80e4b44ed9ff6`.
 
 ## Static and production-build checks
 
-The exact image also completed `npm run lint && npm run build`: lint reported 0 errors (45 pre-existing warnings), Next.js compiled successfully, TypeScript completed, and all 53 static pages generated. Log SHA256: `507f1c88a1ad5e3f40b24fc30e24792e368522c5e7d6222d4bd01dd3201e7b49`.
+The exact image also completed `npm run lint && npm run build`: lint reported 0 errors (45 pre-existing warnings), Next.js compiled successfully, TypeScript completed, and all 53 static pages generated. Log SHA256: `5ddd40002ba24f69a79d84994b211fb177a8069fdc2ffe8f01d47e20549b0d3f`.
 
 No production credentials, hosts, aliases, or task data appear in the fixtures or screenshots.
