@@ -108,14 +108,15 @@ function TmuxViewer({ tmuxName }: { tmuxName: string }) {
 
 function ExternalSchedulesCard({ snapshot }: { snapshot: ExternalSchedulesSnapshot | null | undefined }) {
   if (snapshot === undefined || snapshot === null) return null;
-  const observedAtMs = Date.parse(snapshot.observed_at);
-  const stale = !Number.isFinite(observedAtMs) || Date.now() - observedAtMs > 90_000;
+  const reportedAgo = timeAgo(snapshot.observed_at);
+  const age = /^(\d+)([smhd]) ago$/.exec(reportedAgo);
+  const stale = reportedAgo === '--' || Boolean(age && (age[2] === 'h' || age[2] === 'd' || (age[2] === 'm' && Number(age[1]) >= 2)));
   return (
     <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4" data-testid="external-schedules-card">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-sm font-semibold text-gray-300">External schedules</h2>
         <span className={`text-[10px] ${stale ? 'text-amber-400' : 'text-gray-600'}`} title={snapshot.observed_at}>
-          {stale ? 'stale report' : 'reported'} {timeAgo(snapshot.observed_at)}
+          {stale ? 'stale report' : 'reported'} {reportedAgo}
         </span>
       </div>
       {snapshot.error && (
