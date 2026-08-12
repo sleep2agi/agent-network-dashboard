@@ -1,6 +1,7 @@
 'use client';
 
 import { AliasAvatar } from './AliasAvatar';
+import { relativeAgo } from '../lib/time';
 import { previewContent } from './utils';
 import { STATUS_CHIP_CLASS, STATUS_DOT_HEX } from '../lib/status';
 
@@ -25,14 +26,12 @@ export interface TaskListItem {
   created_at: string;
 }
 
+// 同 TaskDetail:统一到 lib/time,关掉 ISO→"…ZZ"→NaN 那条路径。
+// 注意这里的输出**不带 " ago" 后缀**(列表里空间紧),所以要把后缀去掉,
+// 保持既有视觉不变。
 function timeAgo(dateStr: string): string {
-  if (!dateStr) return '--';
-  const diff = Date.now() - new Date(dateStr.replace(' ', 'T') + 'Z').getTime();
-  const s = Math.floor(diff / 1000);
-  if (s < 60) return `${s}s`;
-  if (s < 3600) return `${Math.floor(s / 60)}m`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h`;
-  return `${Math.floor(s / 86400)}d`;
+  const v = relativeAgo(dateStr);
+  return v === null ? '--' : v.replace(/ ago$/, '');
 }
 
 export function TaskList({
