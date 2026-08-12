@@ -1,0 +1,60 @@
+name: scrub-guard
+
+# Fails if any [[slug]] reference (internal memory system notation)
+# leaks into public repo code. Runs on every push + PR against every
+# branch — this repo is public and outside readers see comments in
+# the same source tree.
+#
+# The guard reports its denominator (files scanned + hits) so an empty
+# scan can't silently pass; a scope typo that matches nothing would
+# otherwise look like "0 hits, all green".
+#
+# Scope is INTENTIONALLY narrow: code files under app/. It
+# does NOT scan docs/ (internal notes may reference slugs), plans, or
+# generated artefacts (node_modules, ios, android, dist, .next).
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  scrub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for internal [[slug]] refs in code
+        run: |
+          set -euo pipefail
+          # Files to scan: TypeScript/JS/TSX under src/, plus the top-level
+          # App.tsx. Explicit list so a rename doesn't silently widen or
+          # shrink the scope. `find` before `grep` so we can count the
+          # denominator honestly.
+          FILES=$(find app -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' \) 2>/dev/null)
+          if [ -z "$FILES" ]; then
+            echo "::error::scrub-guard scanned ZERO files — scope regression, refusing to pass"
+            exit 2
+          fi
+          COUNT=$(echo "$FILES" | wc -l)
+          echo "scanned $COUNT source file(s) under app/"
+
+          # Hit list. Fixed-string grep to avoid regex escaping surprises.
+          # 与 app 仓那份的唯一差异:那边用固定串 `[[`,在本仓会假红 ——
+          # app/components/TopoGraph.tsx 里有合法的嵌套数组字面量
+          #   ([['S', 0.7], ['M', 0.84], ['L', 1]] as const)
+          # 所以这里改成匹配**真实 slug 形状**:[[小写下划线]]。
+          # 仍能抓到每一个内部 memory slug,但不再把 TS 语法当违规。
+          HITS=$(echo "$FILES" | xargs grep -nE '\[\[[A-Za-z0-9_-]+\]\]' 2>/dev/null || true)
+          if [ -z "$HITS" ]; then
+            echo "✓ no [[slug]] refs in $COUNT scanned files"
+            exit 0
+          fi
+
+          echo "::group::[[ references found — internal memory slugs must not appear in public-repo code"
+          echo "$HITS"
+          echo "::endgroup::"
+          HITCOUNT=$(echo "$HITS" | wc -l)
+          echo "::error::found $HITCOUNT [[ reference(s) across $COUNT scanned files. Replace each with the rationale in prose (see PR #19 for pattern)."
+          exit 1
