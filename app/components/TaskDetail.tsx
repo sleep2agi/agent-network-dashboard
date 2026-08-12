@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { relativeAgo } from '../lib/time';
 import useSWR from 'swr';
 import { AliasAvatar } from './AliasAvatar';
 import { STATUS_CHIP_CLASS as STATUS_CHIP } from '../lib/status';
@@ -69,14 +70,14 @@ function isDeliveryStaleObservation(event: TaskEvent): boolean {
 const POLL_TASK_MS = 5000;
 const POLL_EVENTS_MS = 10000;
 
+// Round 38 / Round 44 已经把时间戳解析统一到 lib/time;这里是漏网的一处。
+// 旧的内联写法对**已经是 ISO** 的输入会补成 "…ZZ" → Date.parse 得 NaN
+// → 后续 `NaN < 60` 全 false,一路落到最后一行显示 "NaNd ago"。
+// 现在 hub 只发裸 SQL,所以那条路径尚未发生;这是提前关掉它。
+// 同时拿到 relativeAgo 的时钟偏移兜底(未来时间戳 → 'just now',而不是负数)。
+
 function timeAgo(dateStr: string): string {
-  if (!dateStr) return '--';
-  const diff = Date.now() - new Date(dateStr.replace(' ', 'T') + 'Z').getTime();
-  const s = Math.floor(diff / 1000);
-  if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
+  return relativeAgo(dateStr) ?? '--';
 }
 
 function priorityClass(priority: string) {
