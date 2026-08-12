@@ -152,14 +152,35 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
     const el = rootRef.current;
     if (!el) return;
     const apply = () => {
-      const top = el.getBoundingClientRect().top + window.scrollY;
+      // getBoundingClientRect().top is already viewport-relative, which is
+      // exactly the quantity we want: "how much screen is left below me".
+      // Adding scrollY turned it into a document coordinate and then
+      // subtracted it from innerHeight (a viewport quantity) — a unit
+      // mismatch that made the element short by however far the page
+      // happened to be scrolled when apply() ran. Since AppShell's root is
+      // min-h-[100dvh] and the HealthBanner sits in flow above us, the
+      // document IS taller than the viewport and does scroll, so any
+      // re-measure after a scroll shrank this container and exposed a band
+      // of page background at the bottom of the window.
+      const top = el.getBoundingClientRect().top;
       el.style.height = `${Math.max(240, window.innerHeight - top)}px`;
     };
     apply();
     window.addEventListener('resize', apply);
+    // Our viewport top moves whenever the document scrolls (it does scroll:
+    // the shell root is min-h-[100dvh] and the banner sits above us in
+    // flow), so re-measure on scroll as well. Without this the container
+    // keeps its first-paint height and, once the page is scrolled, stops
+    // reaching the bottom of the window — the same visible symptom the
+    // coordinate fix above addresses, arrived at from the other direction.
+    window.addEventListener('scroll', apply, { passive: true });
     const ro = new ResizeObserver(apply);
     ro.observe(document.body);
-    return () => { window.removeEventListener('resize', apply); ro.disconnect(); };
+    return () => {
+      window.removeEventListener('resize', apply);
+      window.removeEventListener('scroll', apply);
+      ro.disconnect();
+    };
   }, []);
   // #Vincent 插单 (07-31): entering /nodes with nothing selected showed the
   // management table full-bleed — "这样特别难看". Feishu opens INTO a
