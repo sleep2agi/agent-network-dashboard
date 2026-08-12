@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNetworkId } from '../lib/network-context';
 import { pinyinMatch, usePinyinReady } from '../lib/pinyin-match';
+import { isHubTimeStale, relativeAgo } from '../lib/time';
 
-type NodeRow = { node_id: string; alias?: string | null; node_name?: string | null; lifecycle_state?: string | null };
+type NodeRow = { node_id: string; alias?: string | null; node_name?: string | null; lifecycle_state?: string | null; updated_at?: string | null };
 
 const nodeLabel = (n: NodeRow) => `${n.alias} · ${n.node_id.slice(0, 12)}`;
 
@@ -49,6 +50,15 @@ function NodePicker({ nodes, value, onChange }: {
     };
   }, [open]);
 
+  // 陈旧的排到后面。原因见 app/lib/time.ts 的 NODE_STALE_MS 注释:
+  // 生产上约三分之二的条目是几个月前的死会话,而 lifecycle_state 全是 "active",
+  // 所以不排序的话,一屏里最先看到的往往都是幽灵。
+  // 只降权不隐藏 —— 给一个临时掉线的节点排任务是合法操作,藏起来会让人以为节点没了。
+  const ordered = useMemo(() => {
+    const stale = (n: NodeRow) => (isHubTimeStale(n.updated_at) ? 1 : 0);
+    return [...matches].sort((a, b) => stale(a) - stale(b));
+  }, [matches]);
+
   return (
     <div className="relative mt-1" ref={boxRef}>
       <input
@@ -67,7 +77,7 @@ function NodePicker({ nodes, value, onChange }: {
         >
           {matches.length === 0 ? (
             <div className="px-3 py-2 text-sm text-[var(--fg-dim)]">无匹配节点</div>
-          ) : matches.map(n => (
+          ) : ordered.map(n => (
             <button
               key={n.node_id}
               type="button"
@@ -79,7 +89,23 @@ function NodePicker({ nodes, value, onChange }: {
                 n.node_id === value ? 'text-[var(--hl)]' : 'text-[var(--fg)]'
               } hover:bg-[var(--hover-tint)]`}
             >
-              {nodeLabel(n)}
+              <span className="flex items-baseline justify-between gap-3">
+                <span className={isHubTimeStale(n.updated_at) ? 'text-[var(--fg-dim)]' : ''}>
+                  {nodeLabel(n)}
+                </span>
+                {/* 最后活动时间。这是 /api/nodes 里唯一能分辨死活的字段 ——
+                    lifecycle_state 对三个月没动的节点同样返回 "active"(#751)。 */}
+                {relativeAgo(n.updated_at) && (
+                  <span
+                    data-testid="schedule-node-option-lastseen"
+                    className={`shrink-0 text-xs tabular-nums ${
+                      isHubTimeStale(n.updated_at) ? 'text-[var(--fg-dim)]' : 'text-[var(--fg)]'
+                    }`}
+                  >
+                    {relativeAgo(n.updated_at)}
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </div>
