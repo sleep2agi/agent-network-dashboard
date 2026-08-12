@@ -1,9 +1,92 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNetworkId } from '../lib/network-context';
+import { pinyinMatch, usePinyinReady } from '../lib/pinyin-match';
 
 type NodeRow = { node_id: string; alias?: string | null; node_name?: string | null; lifecycle_state?: string | null };
+
+const nodeLabel = (n: NodeRow) => `${n.alias} · ${n.node_id.slice(0, 12)}`;
+
+/** The fleet has ~200 nodes, so the native <select> this replaces meant
+ *  scrolling a 200-row popup to find one. Type to filter instead — by alias
+ *  (pinyin and initials work, same helper the node list uses) or by node id,
+ *  which is the half you can actually paste from a task or a log line. */
+function NodePicker({ nodes, value, onChange }: {
+  nodes: NodeRow[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const pinyinReady = usePinyinReady();
+
+  const selected = nodes.find(n => n.node_id === value);
+  const matches = useMemo(() => {
+    const q = query.trim();
+    if (!q) return nodes;
+    return nodes.filter(n =>
+      n.node_id.toLowerCase().includes(q.toLowerCase()) ||
+      pinyinMatch(n.alias || '', q));
+    // pinyinReady is not read here on purpose: it is a re-render trigger for
+    // when the dict finishes loading mid-typing, so a query typed before the
+    // lazy load lands still re-filters once it does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, query, pinyinReady]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative mt-1" ref={boxRef}>
+      <input
+        data-testid="schedule-node-picker-input"
+        value={open ? query : (selected ? nodeLabel(selected) : '')}
+        onChange={e => { setQuery(e.target.value); setOpen(true); }}
+        onFocus={() => { setQuery(''); setOpen(true); }}
+        placeholder="搜索节点（别名/拼音/node_id）"
+        className="w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"
+      />
+      {open && (
+        <div
+          role="listbox"
+          data-testid="schedule-node-picker-panel"
+          className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--col-inset)] py-1 shadow-lg"
+        >
+          {matches.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-[var(--fg-dim)]">无匹配节点</div>
+          ) : matches.map(n => (
+            <button
+              key={n.node_id}
+              type="button"
+              role="option"
+              aria-selected={n.node_id === value}
+              data-testid="schedule-node-option"
+              onClick={() => { onChange(n.node_id); setQuery(''); setOpen(false); }}
+              className={`block w-full px-3 py-2 text-left text-sm ${
+                n.node_id === value ? 'text-[var(--hl)]' : 'text-[var(--fg)]'
+              } hover:bg-[var(--hover-tint)]`}
+            >
+              {nodeLabel(n)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 type ScheduleSpec =
   | { type: 'once'; run_at: string }
   | { type: 'interval'; every_seconds: number }
@@ -237,7 +320,7 @@ export default function ScheduledTasksPage() {
           <div className="mb-4 flex items-center justify-between"><h2 className="font-semibold text-[var(--fg)]">{editing ? '编辑计划' : '新建计划'}</h2>{editing && <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="text-sm text-[var(--fg-dim)]">取消编辑</button>}</div>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm text-[var(--fg-muted)]">名称<input value={name} onChange={e => setName(e.target.value)} maxLength={120} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" placeholder="例如：每日发布巡检" /></label>
-            <label className="text-sm text-[var(--fg-muted)]">执行节点<select value={targetNodeId} onChange={e => setTargetNodeId(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="">选择节点</option>{nodes.map(n => <option key={n.node_id} value={n.node_id}>{n.alias} · {n.node_id.slice(0, 12)}</option>)}</select></label>
+            <div className="text-sm text-[var(--fg-muted)]">执行节点<NodePicker nodes={nodes} value={targetNodeId} onChange={setTargetNodeId} /></div>
             <label className="text-sm text-[var(--fg-muted)] md:col-span-2">任务内容<textarea value={task} onChange={e => setTask(e.target.value)} maxLength={10000} rows={4} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" placeholder="节点收到的具体任务" /></label>
             <label className="text-sm text-[var(--fg-muted)]">计划类型<select value={kind} onChange={e => setKind(e.target.value as ScheduleSpec['type'])} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="once">单次</option><option value="interval">固定间隔</option><option value="daily">每天</option><option value="weekly">每周</option></select></label>
             <label className="text-sm text-[var(--fg-muted)]">优先级<select value={priority} onChange={e => setPriority(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="normal">普通</option><option value="high">高</option><option value="low">低</option></select></label>
