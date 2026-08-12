@@ -8,7 +8,7 @@ import { aliasAvatarColors, aliasInitial } from './AliasAvatar';
 import { getAvatarUrl, useAvatarsVersion } from '../lib/avatars';
 import { ChatPopover } from './ChatPopover';
 import { vendorForModel, runtimeIdentity, identityLine } from '../lib/vendorIdentity';
-import { parseHubTime, relativeAgo } from '../lib/time';
+import { parseHubTime, relativeAgo, NODE_STALE_MS } from '../lib/time';
 import { DASHBOARD_VERSION } from '../lib/version';
 import { useChatUnread } from '../lib/chat-unread';
 import { isOnline as presenceIsOnline, sseCountFor as presenceSseCountFor } from '../lib/presence';
@@ -835,7 +835,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     // healthy agent heartbeats every few seconds; if it's been silent for
     // an hour it's effectively gone. 1 h gives a fresh disconnect time to
     // come back while removing dead nodes well within an operator session.
-    const GHOST_MS = 60 * 60 * 1000;
+    // 阈值提到 app/lib/time.ts 共享,避免这里和节点选择器各飘各的(#751)。
+    const GHOST_MS = NODE_STALE_MS;
     const now = Date.now();
     // #515 note: isGhost is deliberately NOT converted to presenceIsOnline —
     // it's a different concept (age-based pruning of stale offline nodes) and

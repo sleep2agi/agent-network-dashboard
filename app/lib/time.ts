@@ -21,6 +21,29 @@ export function parseHubTime(dateStr: string | null | undefined): number | null 
   return Number.isFinite(t) ? t : null;
 }
 
+/** 一个节点静默多久算「陈旧」。
+ *
+ *  这个阈值原本只活在 TopoGraph 里(Round 27 / P0 把它从 24h 收到 1h:
+ *  健康 agent 每几秒心跳一次,静默一小时基本等于没了)。但同一份节点数据
+ *  有多个入口,而只有拓扑图知道这个阈值 —— 定时任务的节点选择器完全不知道,
+ *  于是下拉框里几个月前的死节点和刚心跳过的节点长得一模一样。
+ *
+ *  实测(2026-08-13 生产):171 个节点里 110 个 `updated_at` 超过一小时,
+ *  最久的停在三个月前,而 **171/171 的 `lifecycle_state` 都是 "active"** ——
+ *  除了时间戳,没有任何字段能分辨(hub 侧见 #751)。
+ *
+ *  提到这里是为了让两个入口不会各飘各的。注意**只有阈值可共享**:
+ *  TopoGraph 的 `isGhost` 还要求 `status === 'offline'` 且无 SSE 连接,
+ *  那些字段 `/api/nodes` 不返回,不能照搬。 */
+export const NODE_STALE_MS = 60 * 60 * 1000;
+
+/** 按 `NODE_STALE_MS` 判断一个 hub 时间戳是否已陈旧。
+ *  时间戳缺失/不可解析时返回 false —— 保守:宁可不标记,也不误标一个新节点。 */
+export function isHubTimeStale(dateStr: string | null | undefined): boolean {
+  const t = parseHubTime(dateStr);
+  return t !== null && Date.now() - t > NODE_STALE_MS;
+}
+
 /** Format `dateStr` as a short relative-time string ("6m ago" / "2h ago").
  *  Future timestamps (clock skew) collapse to "just now". Returns null when
  *  the input doesn't parse — callers can decide on a fallback. */
