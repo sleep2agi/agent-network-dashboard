@@ -18,14 +18,22 @@ export default function TokensPage() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [createResult, setCreateResult] = useState<{ token?: string; error?: string }>({});
 
   const fetchTokens = useCallback(async () => {
+    // A swallowed failure here used to render the empty state, which tells the
+    // user they have no tokens and invites them to create one — indistinguishable
+    // from a hub that is down, and it invites duplicates. Surface it instead.
+    setLoadError(null);
     try {
       const res = await fetch('/api/hub/tokens');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setTokens(data.tokens || []);
-    } catch {} finally { setLoading(false); }
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : '请求失败');
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchTokens(); }, [fetchTokens]);
@@ -100,6 +108,18 @@ export default function TokensPage() {
           <h2 className="text-sm font-semibold text-gray-300 mb-3">Active Tokens ({tokens.length})</h2>
           {loading ? (
             <div className="animate-pulse space-y-2">{[1,2].map(i => <div key={i} className="h-12 bg-gray-800/20 rounded" />)}</div>
+          ) : loadError ? (
+            <div
+              data-testid="tokens-load-error"
+              className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-3 text-sm text-[var(--fg-muted)]"
+            >
+              <div className="text-[var(--fg)]">无法加载 token 列表({loadError})</div>
+              <div className="mt-1 text-xs">这不代表你没有 token —— 请先确认 hub 可达,不要重复创建。</div>
+              <button
+                onClick={() => { setLoading(true); fetchTokens(); }}
+                className="mt-2 rounded-md border border-[var(--border)] px-2 py-1 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+              >重试</button>
+            </div>
           ) : tokens.length === 0 ? (
             <EmptyState
               variant="tokens"
