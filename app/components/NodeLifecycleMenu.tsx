@@ -71,7 +71,12 @@ const normalizeState = (s: LifecycleState | null | undefined): LifecycleState =>
 export function useLifecycleCaps(): Record<string, boolean> | null {
   const { data } = useSWR<{ ok: boolean; tools?: Record<string, boolean> }>(
     '/api/anet/node-lifecycle',
-    (url: string) => fetch(url).then(r => r.json()),
+    // Non-2xx must reject, or SWR treats an error payload as data.
+    async (url: string) => {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    },
     { revalidateOnFocus: false, dedupingInterval: 60_000, shouldRetryOnError: false },
   );
   return data?.ok && data.tools ? data.tools : null;
