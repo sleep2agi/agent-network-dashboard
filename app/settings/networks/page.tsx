@@ -7,7 +7,15 @@ import { EmptyState } from '../../components/EmptyState';
 import { AliasAvatar } from '../../components/AliasAvatar';
 import useSWR from 'swr';
 
-const fetcher = (url: string) => fetch(url).then(r => r.json());
+// Without the res.ok check a 401 or 500 carrying a JSON body resolves as a
+// successful load, so SWR reports no error and the page renders whatever the
+// error payload happened to contain — or an empty list, which is
+// indistinguishable from "you have no networks".
+const fetcher = async (url: string) => {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+};
 
 interface Network {
   network_id: string;
