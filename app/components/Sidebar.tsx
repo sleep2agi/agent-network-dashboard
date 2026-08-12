@@ -64,6 +64,8 @@ interface SidebarNetwork {
   role?: string;
   /** Round 107: live agent count, derived from /api/status sessions. */
   agentCount?: number;
+  /** Name shown in the list; carries a short id suffix when names collide. */
+  displayName?: string;
 }
 
 const ROLE_ICON: Record<string, string> = { owner: '⭐', admin: '🔧', member: '👤', viewer: '👁' };
@@ -130,6 +132,7 @@ export function Sidebar() {
     setTheme(next);
   };
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showEmptyNetworks, setShowEmptyNetworks] = useState(false);
   const { networkId, setNetworkId } = useNetworkId();
   const { data: netData } = useSWR<{ networks: SidebarNetwork[] }>('/api/hub/networks', networkFetcher, { refreshInterval: 15000, dedupingInterval: 10000 });
   // Round 107 (issue #92): /api/networks can be scope-limited (a hub owner's
@@ -150,8 +153,33 @@ export function Sidebar() {
     const derived: SidebarNetwork[] = [...agentCount.keys()]
       .filter(id => !known.has(id))
       .map(id => ({ network_id: id, network_name: id }));
-    return [...apiNetworks, ...derived].map(n => ({ ...n, agentCount: agentCount.get(n.network_id) || 0 }));
+    const merged = [...apiNetworks, ...derived]
+      .map(n => ({ ...n, agentCount: agentCount.get(n.network_id) || 0 }));
+    // Every registration used to mint a network literally named "default",
+    // so an admin on a hub with many users saw a wall of identical rows
+    // (23 on the live hub, 22 of them empty). Registration now names the
+    // network after its owner, but existing rows keep their old name — so
+    // surface the ones that matter first and keep same-named rows apart.
+    const nameCount = new Map<string, number>();
+    for (const n of merged) nameCount.set(n.network_name, (nameCount.get(n.network_name) || 0) + 1);
+    return merged
+      .map(n => ({
+        ...n,
+        // Only disambiguate when the name is actually ambiguous, so a hub
+        // with unique names stays clean.
+        displayName: (nameCount.get(n.network_name) || 0) > 1
+          ? `${n.network_name} · ${n.network_id.replace(/^net_/, '').slice(0, 6)}`
+          : n.network_name,
+      }))
+      .sort((a, b) => (b.agentCount || 0) - (a.agentCount || 0));
   })();
+  // Networks with no agents are noise for everyone except their owner, but
+  // hiding them outright would strand a freshly created one — keep them a
+  // single click away instead.
+  const emptyNetworks = networks.filter(n => !n.agentCount && n.network_id !== networkId);
+  const visibleNetworks = showEmptyNetworks
+    ? networks
+    : networks.filter(n => n.agentCount || n.network_id === networkId);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -312,7 +340,7 @@ export function Sidebar() {
           <div className="px-2 py-3 border-b border-[#26262b]">
             <div className="px-3 text-[10px] text-gray-600 uppercase mb-2">Networks</div>
             <div className="space-y-0.5">
-              {networks.map((n: SidebarNetwork) => (
+              {visibleNetworks.map((n: SidebarNetwork) => (
                 <button
                   key={n.network_id}
                   onClick={() => { setNetworkId(n.network_id); setMobileOpen(false); }}
@@ -324,7 +352,7 @@ export function Sidebar() {
                   }`}
                 >
                   <span>{ROLE_ICON[n.role || 'member'] || '👤'}</span>
-                  <span className="truncate flex-1">{n.network_name}</span>
+                  <span className="truncate flex-1">{n.displayName || n.network_name}</span>
                   {/* Round 107 (issue #92): show live agent count so an
                       admin can spot which network actually has agents —
                       the whole point of the bug was a network with 30
@@ -334,6 +362,17 @@ export function Sidebar() {
                   ) : null}
                 </button>
               ))}
+              {emptyNetworks.length > 0 && (
+                <button
+                  onClick={() => setShowEmptyNetworks(v => !v)}
+                  data-testid="sidebar-empty-networks-toggle"
+                  className="w-full px-3 py-1.5 rounded-md text-[10px] text-[var(--fg-dim)] hover:text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] text-left transition-colors"
+                >
+                  {showEmptyNetworks
+                    ? `隐藏 ${emptyNetworks.length} 个空网络`
+                    : `另有 ${emptyNetworks.length} 个空网络`}
+                </button>
+              )}
             </div>
           </div>
         )}
