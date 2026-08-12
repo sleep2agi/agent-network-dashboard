@@ -25,6 +25,19 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install exact dependencies
+        # electron's postinstall downloads a ~100MB binary from GitHub releases,
+        # and that download is the only part of this job that touches the
+        # network after npm ci resolves. It has failed twice today with
+        # `RequestError: socket hang up` inside node_modules/electron/install.js,
+        # which reports as a red readiness gate on PRs that never went near the
+        # desktop shell.
+        #
+        # Nothing this job runs needs the binary: oss:check, oss:secrets:history
+        # and the surface scan are static checks over the working tree and git
+        # history. Skip the download so the gate depends on the repo rather than
+        # on GitHub releases being reachable at that moment.
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
         run: npm ci
       - name: Working-tree OSS checks
         run: npm run oss:check
