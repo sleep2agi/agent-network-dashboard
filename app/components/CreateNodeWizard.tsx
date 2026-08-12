@@ -17,7 +17,7 @@ import { DaemonOption, HostSupervisorPicker } from './HostSupervisorPicker';
  * The wizard now ALWAYS passes daemon_node_id to /api/anet/node-create (the
  * route's `resolveLocalDaemonNodeId` fallback only fires if daemon_node_id is
  * absent — kept for back-compat with non-wizard callers but no longer used
- * from this flow). Per [[feedback_doc_capability_claim_verify_code_path]] —
+ * from this flow). Per 「文档宣称的能力必须对着代码路径逐条验证」这条判据 —
  * the API contract is exercised locally before any prod hub touches the path.
  */
 

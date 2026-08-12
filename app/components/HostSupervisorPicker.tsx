@@ -20,7 +20,7 @@ import { useEffect, useState } from 'react';
  * Data shape mirrors `/api/anet/host-supervisors`, which in turn mirrors the
  * hub's GET /api/host-supervisors (#338 PR2 — needs commhub-server@0.9.0-preview.8+).
  * On `unconfirmed` (older hub), we degrade honestly to an upgrade hint — never
- * show a fake empty list. Per [[feedback_doc_capability_claim_verify_code_path]].
+ * show a fake empty list. Per 「文档宣称的能力必须对着代码路径逐条验证」这条判据.
  */
 
 export interface DaemonOption {
