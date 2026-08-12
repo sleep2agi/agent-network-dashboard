@@ -49,6 +49,7 @@ export default function ProvidersPage() {
   const [mock, setMock] = useState(false);
   const [editing, setEditing] = useState<ProviderDraft | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [toggleError, setToggleError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchProviders = useCallback(async () => {
@@ -73,10 +74,19 @@ export default function ProvidersPage() {
   };
   const toggleEnabled = async (p: Provider) => {
     setProviders(prev => prev.map(x => (x.provider_id || x.name) === (p.provider_id || p.name) ? { ...x, enabled: !x.enabled } : x)); // optimistic
-    await fetch('/api/anet/providers', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider_id: p.provider_id, enabled: !p.enabled }),
-    }).catch(() => {});
+    setToggleError(null);
+    // The optimistic flip above is corrected by the refetch below, so a failed
+    // write used to show as the switch quietly sliding back with no reason
+    // given — indistinguishable from a mis-click. Say what happened instead.
+    try {
+      const res = await fetch('/api/anet/providers', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider_id: p.provider_id, enabled: !p.enabled }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (e) {
+      setToggleError(`${p.name}: ${e instanceof Error ? e.message : '请求失败'}`);
+    }
     fetchProviders();
   };
 
@@ -93,6 +103,15 @@ export default function ProvidersPage() {
           新增供应商
         </button>
       </div>
+      {toggleError && (
+        <div
+          data-testid="providers-toggle-error"
+          className="mb-4 rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--fg-muted)]"
+        >
+          <span className="text-[var(--fg)]">启用状态未能保存({toggleError})</span>
+          <span className="ml-2 text-xs">开关已回到服务端的实际状态,请确认 hub 可达后重试。</span>
+        </div>
+      )}
 
       <div className="max-w-3xl space-y-4">
         <p className="text-sm text-gray-500">
