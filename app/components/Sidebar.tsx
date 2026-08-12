@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { applyTheme } from './ThemeSwitcher';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { useNetworkId } from '../lib/network-context';
 import { isOnline as presenceIsOnline, presenceStatus } from '../lib/presence';
@@ -132,7 +132,8 @@ export function Sidebar() {
     setTheme(next);
   };
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [showEmptyNetworks, setShowEmptyNetworks] = useState(false);
+  const [netOpen, setNetOpen] = useState(false);
+  const netRef = useRef<HTMLDivElement | null>(null);
   const { networkId, setNetworkId } = useNetworkId();
   const { data: netData } = useSWR<{ networks: SidebarNetwork[] }>('/api/hub/networks', networkFetcher, { refreshInterval: 15000, dedupingInterval: 10000 });
   // Round 107 (issue #92): /api/networks can be scope-limited (a hub owner's
@@ -173,13 +174,27 @@ export function Sidebar() {
       }))
       .sort((a, b) => (b.agentCount || 0) - (a.agentCount || 0));
   })();
-  // Networks with no agents are noise for everyone except their owner, but
-  // hiding them outright would strand a freshly created one — keep them a
-  // single click away instead.
-  const emptyNetworks = networks.filter(n => !n.agentCount && n.network_id !== networkId);
-  const visibleNetworks = showEmptyNetworks
-    ? networks
-    : networks.filter(n => n.agentCount || n.network_id === networkId);
+  // One row instead of one row *per network*. A hub with 25 networks used to
+  // spend the entire sidebar listing them (24 of which had no agents), which
+  // is what the switcher below replaces: show the active one, put the rest
+  // behind a click.
+  const activeNetwork = networks.find(n => n.network_id === networkId) || networks[0];
+
+  // Close the switcher on outside click / Escape. Bound only while open so
+  // the sidebar adds no global listeners at rest.
+  useEffect(() => {
+    if (!netOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (netRef.current && !netRef.current.contains(e.target as Node)) setNetOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setNetOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [netOpen]);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -338,40 +353,58 @@ export function Sidebar() {
         {/* Network list */}
         {!collapsed && networks.length > 0 && (
           <div className="px-2 py-3 border-b border-[#26262b]">
-            <div className="px-3 text-[10px] text-gray-600 uppercase mb-2">Networks</div>
-            <div className="space-y-0.5">
-              {visibleNetworks.map((n: SidebarNetwork) => (
-                <button
-                  key={n.network_id}
-                  onClick={() => { setNetworkId(n.network_id); setMobileOpen(false); }}
-                  title={n.network_id}
-                  className={`w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 rounded-md text-xs transition-colors text-left ${
-                    networkId === n.network_id
-                      ? 'bg-cyan-500/10 text-cyan-300'
-                      : 'text-gray-500 hover:text-gray-300 hover:bg-[#1c1c1f]'
-                  }`}
+            <div className="px-3 text-[10px] text-gray-600 uppercase mb-2">Network</div>
+            <div className="relative" ref={netRef}>
+              <button
+                type="button"
+                onClick={() => setNetOpen(v => !v)}
+                data-testid="network-switcher"
+                aria-haspopup="listbox"
+                aria-expanded={netOpen}
+                title={activeNetwork?.network_id}
+                className="w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 rounded-md text-xs text-left transition-colors bg-[var(--bg-elevated)] text-gray-300 hover:text-gray-100"
+              >
+                <span>{ROLE_ICON[activeNetwork?.role || 'member'] || '👤'}</span>
+                <span className="truncate flex-1">
+                  {activeNetwork?.displayName || activeNetwork?.network_name || '—'}
+                </span>
+                {/* Round 107 (issue #92): keep the live agent count visible so
+                    an admin can still tell at a glance whether the network
+                    they are looking at is the one holding the fleet. */}
+                {activeNetwork?.agentCount ? (
+                  <span className="shrink-0 tabular-nums text-[10px] text-gray-600">{activeNetwork.agentCount}</span>
+                ) : null}
+                <span className={`shrink-0 text-[9px] text-gray-600 transition-transform ${netOpen ? 'rotate-180' : ''}`}>▼</span>
+              </button>
+
+              {netOpen && (
+                <div
+                  role="listbox"
+                  data-testid="network-switcher-panel"
+                  className="absolute z-30 mt-1 w-full max-h-72 overflow-y-auto rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] shadow-lg py-1"
                 >
-                  <span>{ROLE_ICON[n.role || 'member'] || '👤'}</span>
-                  <span className="truncate flex-1">{n.displayName || n.network_name}</span>
-                  {/* Round 107 (issue #92): show live agent count so an
-                      admin can spot which network actually has agents —
-                      the whole point of the bug was a network with 30
-                      agents being invisible. */}
-                  {n.agentCount ? (
-                    <span className="shrink-0 tabular-nums text-[10px] text-gray-600">{n.agentCount}</span>
-                  ) : null}
-                </button>
-              ))}
-              {emptyNetworks.length > 0 && (
-                <button
-                  onClick={() => setShowEmptyNetworks(v => !v)}
-                  data-testid="sidebar-empty-networks-toggle"
-                  className="w-full px-3 py-1.5 rounded-md text-[10px] text-[var(--fg-dim)] hover:text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] text-left transition-colors"
-                >
-                  {showEmptyNetworks
-                    ? `隐藏 ${emptyNetworks.length} 个空网络`
-                    : `另有 ${emptyNetworks.length} 个空网络`}
-                </button>
+                  {networks.map((n: SidebarNetwork) => (
+                    <button
+                      key={n.network_id}
+                      role="option"
+                      aria-selected={networkId === n.network_id}
+                      data-testid="network-option"
+                      onClick={() => { setNetworkId(n.network_id); setNetOpen(false); setMobileOpen(false); }}
+                      title={n.network_id}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 text-xs transition-colors text-left ${
+                        networkId === n.network_id
+                          ? 'bg-cyan-500/10 text-cyan-300'
+                          : 'text-gray-500 hover:text-gray-300 hover:bg-[#1c1c1f]'
+                      }`}
+                    >
+                      <span>{ROLE_ICON[n.role || 'member'] || '👤'}</span>
+                      <span className="truncate flex-1">{n.displayName || n.network_name}</span>
+                      {n.agentCount ? (
+                        <span className="shrink-0 tabular-nums text-[10px] text-gray-600">{n.agentCount}</span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           </div>
