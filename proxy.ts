@@ -68,5 +68,6 @@ export const config = {
     '/logs',
     '/settings', '/settings/:path*',
     '/admin',
+    '/scheduled-tasks',
   ],
 };

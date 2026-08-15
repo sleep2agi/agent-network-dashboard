@@ -294,6 +294,11 @@ export default function ScheduledTasksPage() {
   };
 
   const mutate = async (row: ScheduleRow, action: 'toggle' | 'run' | 'cancel') => {
+    // Cancel goes through POST /cancel, not DELETE. Some reverse proxies
+    // strip or 405 DELETE, which surfaces as HTML from the proxy layer — and
+    // that HTML then blew up `await res.json()` with "Unexpected token <",
+    // hiding the actual failure from the user. See dispatch task 08342434.
+    if (action === 'cancel' && typeof window !== 'undefined' && !window.confirm('确定取消这个定时计划？取消后不能恢复。')) return;
     setBusy(true); setError('');
     try {
       let path = `/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}${query}`;
@@ -301,10 +306,25 @@ export default function ScheduledTasksPage() {
       if (action === 'run') {
         path = `/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}/run-now${query}`;
         init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
-      } else if (action === 'cancel') init = { method: 'DELETE' };
-      else init = { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ revision: row.revision, status: row.status === 'active' ? 'paused' : 'active' }) };
+      } else if (action === 'cancel') {
+        path = `/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}/cancel${query}`;
+        init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
+      } else init = { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ revision: row.revision, status: row.status === 'active' ? 'paused' : 'active' }) };
       const res = await fetch(path, init);
-      const data = await res.json();
+      // Parse as text first so an empty body or an HTML error page (from a
+      // misbehaving proxy) doesn't throw "Unexpected token <" before we ever
+      // look at the status code. Empty body ⇒ {}; JSON parse errors surface
+      // with the status + first chunk of the body so we know which layer
+      // returned the non-JSON.
+      type MutateResponse = { error?: string; message?: string; ok?: boolean };
+      const raw = await res.text();
+      let data: MutateResponse = {};
+      if (raw.trim().length > 0) {
+        try { data = JSON.parse(raw) as MutateResponse; }
+        catch {
+          if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 120)}`);
+        }
+      }
       if (res.status === 409 && data.error === 'revision_conflict') {
         await load(); setError('计划已在其他设备更新，已刷新最新内容，请重试。'); return;
       }
@@ -334,7 +354,7 @@ export default function ScheduledTasksPage() {
           <h1 className="text-2xl font-bold text-[var(--fg)] lg:ml-0 ml-10">定时任务</h1>
           <p className="mt-1 text-sm text-[var(--fg-dim)]">由 Hub 统一调度；节点只接收普通任务，离线时自动排队。</p>
         </div>
-        <button onClick={openCreate} className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-semibold text-[var(--bg)] hover:opacity-90">
+        <button type="button" onClick={openCreate} className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-semibold text-[var(--bg)] hover:opacity-90">
           {showForm && !editing ? '收起' : '新建计划'}
         </button>
       </div>
@@ -361,17 +381,26 @@ export default function ScheduledTasksPage() {
         </section>
       )}
 
-      {loading ? <div className="py-20 text-center text-[var(--fg-dim)]">加载中…</div> : schedules.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[var(--border)] py-20 text-center text-[var(--fg-dim)]">还没有 Hub 定时任务</div>
-      ) : <div className="space-y-3">{schedules.map(row => (
+      {loading ? <div className="py-20 text-center text-[var(--fg-dim)]">加载中…</div> : (() => {
+        // Cancelled schedules are terminal — hide them from the default view.
+        // Server still stores history for the audit trail, but the list is
+        // meant for "what's on the calendar going forward", not "what ever
+        // existed". Users who need the paper trail can consult run history
+        // per schedule (record button); a dedicated show-cancelled toggle
+        // was out of scope for this fix.
+        const visible = schedules.filter(row => row.status !== 'cancelled');
+        return visible.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[var(--border)] py-20 text-center text-[var(--fg-dim)]">还没有 Hub 定时任务</div>
+        ) : <div className="space-y-3">{visible.map(row => (
         <section key={row.schedule_id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 className="font-semibold text-[var(--fg)]">{row.name}</h2><span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-xs ${row.status === 'active' ? 'text-[var(--success)]' : row.status === 'paused' ? 'text-[var(--warning)]' : 'text-[var(--fg-dim)]'}`}>{row.status}</span></div><p className="mt-1 text-sm text-[var(--hl)]">{row.target_alias}</p><p className="mt-2 line-clamp-2 text-sm text-[var(--fg-muted)]">{row.task_content}</p><p className="mt-3 text-xs text-[var(--fg-dim)]">{describeSchedule(row.schedule, row.timezone)} · {describeMisfire(row.misfire_policy)} · 下次 {formatTime(row.next_run_at)} · 上次 {formatTime(row.last_run_at)}</p></div>
-            <div className="flex flex-wrap gap-2"><button disabled={busy || !['active','paused'].includes(row.status)} onClick={() => openEdit(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">编辑</button><button disabled={busy || !['active','paused'].includes(row.status)} onClick={() => mutate(row, 'toggle')} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">{row.status === 'active' ? '暂停' : '恢复'}</button><button disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'run')} className="rounded-md border border-[var(--hl)] px-3 py-1.5 text-xs text-[var(--hl)]">立即执行</button><button onClick={() => openHistory(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">记录</button><button disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'cancel')} className="rounded-md border border-[var(--danger)] px-3 py-1.5 text-xs text-[var(--danger)]">取消</button></div>
+            <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => openEdit(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">编辑</button><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => mutate(row, 'toggle')} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">{row.status === 'active' ? '暂停' : '恢复'}</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'run')} className="rounded-md border border-[var(--hl)] px-3 py-1.5 text-xs text-[var(--hl)]">立即执行</button><button type="button" onClick={() => openHistory(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">记录</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'cancel')} className="rounded-md border border-[var(--danger)] px-3 py-1.5 text-xs text-[var(--danger)]">取消</button></div>
           </div>
           {historyFor === row.schedule_id && <div className="mt-4 overflow-x-auto border-t border-[var(--border)] pt-4"><table className="w-full text-left text-xs"><thead className="text-[var(--fg-dim)]"><tr><th className="pb-2">计划时间</th><th>状态</th><th>Task ID</th><th>错误</th></tr></thead><tbody>{runs.map(run => <tr key={run.run_id} className="border-t border-[var(--col-hairline)] text-[var(--fg-muted)]"><td className="py-2">{formatTime(run.scheduled_for)}</td><td>{run.status}</td><td className="font-mono">{run.task_id?.slice(0, 12) || '—'}</td><td className="text-[var(--danger)]">{run.error_code || '—'}</td></tr>)}</tbody></table>{runs.length === 0 && <p className="text-[var(--fg-dim)]">暂无执行记录</p>}</div>}
         </section>
-      ))}</div>}
+      ))}</div>;
+      })()}
     </main>
   );
 }
