@@ -16,7 +16,40 @@ check('page lists schedules through dashboard proxy', page.includes("fetch(`/api
 check('page loads stable node inventory', page.includes("fetch(`/api/hub/nodes${query}`") && page.includes('target_node_id: targetNodeId'));
 check('creation requires one selected network and node load cannot fail silently', page.includes("setError('请先在左侧选择一个网络')") && page.includes('if (!nodeRes.ok)'));
 check('all four schedule forms are presented', ['once', 'interval', 'daily', 'weekly'].every(x => page.includes(`value=\"${x}\"`)));
-check('management actions exist', ['run-now', "method: 'PATCH'", "method: 'DELETE'", '/runs'].every(x => page.includes(x)));
+check('management actions exist', ['run-now', "method: 'PATCH'", '/runs'].every(x => page.includes(x)));
+// Cancel goes through POST /cancel, not DELETE. Some reverse proxies swallow
+// DELETE and return 405 HTML which broke `await res.json()` with "Unexpected
+// token <". The change is two-part: the URL must include `/cancel` and the
+// mutate call must build a POST init for the cancel branch.
+check('cancel uses POST /cancel path (not DELETE)',
+  page.includes("/cancel${query}") &&
+  page.includes("action === 'cancel'") &&
+  !page.includes("action === 'cancel') init = { method: 'DELETE' }"));
+// Response body is parsed as text first so an empty body or an HTML error
+// page from a misbehaving proxy doesn't throw before the status is checked.
+check('mutate reads response as text before JSON.parse',
+  page.includes('await res.text()') && page.includes('JSON.parse(raw)'));
+// Cancel action requires explicit user confirmation (terminal state; cannot
+// be resurrected via PATCH — the server rejects with 409 schedule_cancelled).
+check('cancel prompts for confirmation before firing',
+  page.includes("action === 'cancel'") && page.includes("window.confirm('确定取消这个定时计划？取消后不能恢复。')"));
+// Cancelled schedules are hidden by default so the list represents "what's on
+// the calendar going forward", not the full audit trail.
+check('cancelled schedules are filtered from the default list',
+  page.includes("schedules.filter(row => row.status !== 'cancelled')"));
+// Every action button on a schedule row has an explicit type="button". A
+// missing type="button" inside a rendered <form>-like context is what turned
+// "取消" into a form submit in the field report. All five row actions plus
+// the top "新建计划" button must carry it.
+check('all row action buttons have explicit type="button"',
+  ['openEdit(row)', "mutate(row, 'toggle')", "mutate(row, 'run')", 'openHistory(row)', "mutate(row, 'cancel')"].every(handler => {
+    const idx = page.indexOf(handler);
+    if (idx < 0) return false;
+    // walk backwards from the handler to find the enclosing <button ...>
+    const openTag = page.lastIndexOf('<button', idx);
+    if (openTag < 0) return false;
+    return page.slice(openTag, idx).includes('type="button"');
+  }));
 check('optimistic revision is forwarded', page.includes('revision: row.revision'));
 check('active and paused schedules expose a full edit action while terminal schedules stay disabled',
   page.includes("onClick={() => openEdit(row)}") && page.includes("!['active','paused'].includes(row.status)"));
