@@ -87,6 +87,10 @@ const publicRootScripts = new Set([
   'scripts/oss-public-surface-scan.mjs',
   'scripts/oss-readiness-check.mjs',
   'scripts/oss-secret-scan.mjs',
+  // 单测聚合 runner(#26)。只做三件事:遍历 tests/ 与 app/ 找 *.test.{mjs,mts}、
+  // 按文件是否 import node:test/bun:test 分派给 `node` 或 `bun test`、聚合退出码。
+  // 不读任何凭据、不发网络请求、不写仓外路径。
+  'scripts/run-tests.mjs',
   'scripts/stamp-build-commit.mjs',
 ]);
 const unexpectedRootScripts = trackedPaths.filter((path) => path.startsWith('scripts/') && !publicRootScripts.has(path));

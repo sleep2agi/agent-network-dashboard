@@ -1,0 +1,44 @@
+# 11 个测试文件此前**没有任何 CI 会跑**(#26)。
+#
+# 已有的三个 workflow 各管一摊,都不碰这些断言:
+#   gates.yml      颜色棘轮 + 头像池完整性
+#   oss-gates.yml  OSS 就绪检查 + 全历史凭据扫描 + lint + build
+#   scrub-guard.yml 内部记忆 slug 泄漏
+#
+# 🔴 `scripts/run-tests.mjs` 按文件内容分派,因为任何单一命令都跑不全:
+#   - 自执行脚本(读源码做契约检查,自己 exit 1)→ `node <file>`
+#   - `node:test` / `bun:test` 风格(需要 runner)  → `bun test <file>`
+# 用 bun 而不是 `node --test` 是因为 `.mts` 需要类型擦除,而 `--experimental-strip-types`
+# 要 node 22+。
+#
+# runner 在**扫不到任何测试文件时主动退非零** —— `0/0 passed` 和 `11/11 passed`
+# 在日志里是同一片绿,而目录改名 / 后缀变化 / rebase 丢文件都会造出前者。
+
+name: unit tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: '1.3.14'
+
+      # npm ci:同一个 commit 在不同时间必须装出同一份依赖图。
+      - run: npm ci
+
+      - run: npm test
