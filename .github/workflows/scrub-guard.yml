@@ -25,36 +25,74 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Scan for internal [[slug]] refs in code
+      - name: Scan for internal memory references in code and docs
         run: |
           set -euo pipefail
-          # Files to scan: TypeScript/JS/TSX under src/, plus the top-level
-          # App.tsx. Explicit list so a rename doesn't silently widen or
-          # shrink the scope. `find` before `grep` so we can count the
-          # denominator honestly.
-          FILES=$(find app -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' \) 2>/dev/null)
+          # 取集：app/ 下的源码 + **全仓 .md** + app/ 之外的 ts/tsx。
+          #
+          # 🔴 2026-08-18 扩集。原来只扫 `app/**` 的 ts/tsx（125 个文件），而本仓
+          # origin/main 上还有 13 个 .md 和 27 个 app/ 之外的 ts/tsx（23 个在 tests/，
+          # 4 个是根目录 config），一条躺在
+          # docs/ 里的 slug 泄漏的东西，和躺在源码里的一样多，而 RFC 更可能被外人读到。
+          # app 仓当天就因为这个补过一次（docs/RFC-026 里有一条真 slug，门是绿的）。
+          #
+          # 刻意不扫 .github/**：这个 workflow 自己的注释里就写着字面量 `[[slug]]`，
+          # 扫它等于让门永远咬自己。
+          FILES=$(
+            find app -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' \) 2>/dev/null
+            find docs -type f -name '*.md' 2>/dev/null
+            find tests -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.mts' -o -name '*.mjs' \) 2>/dev/null
+            ls ./*.ts 2>/dev/null || true
+            ls ./*.md 2>/dev/null || true
+          )
           if [ -z "$FILES" ]; then
             echo "::error::scrub-guard scanned ZERO files — scope regression, refusing to pass"
             exit 2
           fi
           COUNT=$(echo "$FILES" | wc -l)
-          echo "scanned $COUNT source file(s) under app/"
+          echo "scanned $COUNT file(s): app/ sources + docs/*.md + non-app ts/tsx + root *.md"
 
-          # Hit list. Fixed-string grep to avoid regex escaping surprises.
-          # 与 app 仓那份的唯一差异:那边用固定串 `[[`,在本仓会假红 ——
-          # app/components/TopoGraph.tsx 里有合法的嵌套数组字面量
-          #   ([['S', 0.7], ['M', 0.84], ['L', 1]] as const)
-          # 所以这里改成匹配**真实 slug 形状**:[[小写下划线]]。
-          # 仍能抓到每一个内部 memory slug,但不再把 TS 语法当违规。
-          HITS=$(echo "$FILES" | xargs grep -nE '\[\[[A-Za-z0-9_-]+\]\]' 2>/dev/null || true)
+          # 判据两条。
+          #
+          # SLUG_RE —— 匹配**真实 slug 形状**，不是固定串 `[[`：
+          #   app/components/TopoGraph.tsx 里有合法的嵌套数组字面量
+          #   ([['S', 0.7], ['M', 0.84], ['L', 1]] as const)，固定串会假红。
+          #
+          # 🔴 MEMPATH_RE —— 2026-08-18 补。只认 [[slug]] 一种形状是不够的：
+          #   主仓当天发现同一件事写成 markdown 链接或裸路径就整个穿过去了，
+          #   而门还是绿的（sleep2agi/agent-network PR #957：一条带完整绝对路径的
+          #   引用躺在本该被守着的文件里，判据一处都没命中）。
+          #   判据是按形状写的，只挡得住那个形状。绿的含义是「没有那个形状」，
+          #   不是「没有那件事」。
+          #
+          #   只认 memory 库路径，故意不认「任何绝对家目录」：后者在夹具和部署记录里
+          #   大量正当出现，一道在正当写法上常红的门只会被绕过。
+          SLUG_RE='\[\[[A-Za-z0-9_-]+\]\]'
+          MEMPATH_RE='(~|/home/[^/[:space:]]+|/Users/[^/[:space:]]+)?/?\.claude/(projects/[^/[:space:]`)]+/)?memory/|agent-orchestra/memory/'
+
+          # 判据自检：先证明这两条各自真的能抓住它该抓的东西。一道从没在已知阳性上
+          # 验过的门，绿了也不知道是「没问题」还是「没看见」。
+          PROBE=$(mktemp -d)
+          printf 'see [[%s]]\n' 'feedback_example_thing'   > "$PROBE/a.md"
+          printf 'see [m](../.claude/memory/x.md)\n'        > "$PROBE/b.md"
+          printf 'ordinary /home/testuser/project/src\n'    > "$PROBE/c.md"
+          printf "const S = [['S', 0.7], ['M', 0.84]];\n"   > "$PROBE/d.ts"
+          grep -qE "$SLUG_RE"    "$PROBE/a.md" || { echo "::error::selftest: SLUG_RE 抓不到 [[slug]]"; exit 2; }
+          grep -qE "$MEMPATH_RE" "$PROBE/b.md" || { echo "::error::selftest: MEMPATH_RE 抓不到 memory 路径"; exit 2; }
+          grep -qE "$MEMPATH_RE" "$PROBE/c.md" && { echo "::error::selftest: MEMPATH_RE 冤枉了普通家目录路径"; exit 2; }
+          grep -qE "$SLUG_RE"    "$PROBE/d.ts" && { echo "::error::selftest: SLUG_RE 把合法嵌套数组当成了 slug"; exit 2; }
+          rm -rf "$PROBE"
+          echo "selftest: 4/4 ok（slug 命中 / memory 路径命中 / 普通家目录不误报 / 嵌套数组不误报）"
+
+          HITS=$(echo "$FILES" | xargs grep -nE "$SLUG_RE|$MEMPATH_RE" 2>/dev/null || true)
           if [ -z "$HITS" ]; then
-            echo "✓ no [[slug]] refs in $COUNT scanned files"
+            echo "✓ no internal memory reference ([[slug]] or memory path) in $COUNT scanned files"
             exit 0
           fi
 
-          echo "::group::[[ references found — internal memory slugs must not appear in public-repo code"
+          echo "::group::internal memory references found — must not appear in a public repo"
           echo "$HITS"
           echo "::endgroup::"
           HITCOUNT=$(echo "$HITS" | wc -l)
-          echo "::error::found $HITCOUNT [[ reference(s) across $COUNT scanned files. Replace each with the rationale in prose (see PR #19 for pattern)."
+          echo "::error::found $HITCOUNT internal memory reference(s) ([[slug]] or memory path) across $COUNT scanned files. Replace each with the rationale in prose (see PR #19 for pattern)."
           exit 1
