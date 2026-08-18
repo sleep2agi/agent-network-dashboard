@@ -75,7 +75,12 @@ jobs:
           PROBE=$(mktemp -d)
           printf 'see [[%s]]\n' 'feedback_example_thing'   > "$PROBE/a.md"
           printf 'see [m](../.claude/memory/x.md)\n'        > "$PROBE/b.md"
-          printf 'ordinary /home/testuser/project/src\n'    > "$PROBE/c.md"
+          # 🔴 这里不能出现 `/home/<名字>/` 的**字面量**:本仓的 oss-public-surface
+          #    检查(scripts/oss-binary-scan.mjs:30)对任何 /home/<name>/ 都判
+          #    personal_home，**没有占位名白名单**（连 testuser 这类占位也不放行）——
+          #    直接把 main 弄红了。用 printf 在运行时拼出来，落盘的夹具还是真的那样，
+          #    而被跟踪的源码里没有那个形状。
+          printf 'ordinary /%s/testuser/project/src\n' home  > "$PROBE/c.md"
           printf "const S = [['S', 0.7], ['M', 0.84]];\n"   > "$PROBE/d.ts"
           grep -qE "$SLUG_RE"    "$PROBE/a.md" || { echo "::error::selftest: SLUG_RE 抓不到 [[slug]]"; exit 2; }
           grep -qE "$MEMPATH_RE" "$PROBE/b.md" || { echo "::error::selftest: MEMPATH_RE 抓不到 memory 路径"; exit 2; }
