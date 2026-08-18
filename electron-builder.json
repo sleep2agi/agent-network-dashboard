@@ -13,7 +13,8 @@
     "target": ["AppImage"],
     "executableName": "agent-network",
     "category": "Utility",
-    "icon": "apps/desktop/icon.png"
+    "icon": "apps/desktop/icon.png",
+    "syncDesktopName": true
   },
   "win": {
     "target": ["nsis"]
