@@ -294,6 +294,11 @@ export default function ScheduledTasksPage() {
   };
 
   const mutate = async (row: ScheduleRow, action: 'toggle' | 'run' | 'cancel') => {
+    // Cancel goes through POST /cancel, not DELETE. Some reverse proxies
+    // strip or 405 DELETE, which surfaces as HTML from the proxy layer — and
+    // that HTML then blew up `await res.json()` with "Unexpected token <",
+    // hiding the actual failure from the user. See dispatch task 08342434.
+    if (action === 'cancel' && typeof window !== 'undefined' && !window.confirm('确定取消这个定时计划？取消后不能恢复。')) return;
     setBusy(true); setError('');
     try {
       let path = `/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}${query}`;
@@ -301,10 +306,55 @@ export default function ScheduledTasksPage() {
       if (action === 'run') {
         path = `/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}/run-now${query}`;
         init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
-      } else if (action === 'cancel') init = { method: 'DELETE' };
-      else init = { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ revision: row.revision, status: row.status === 'active' ? 'paused' : 'active' }) };
-      const res = await fetch(path, init);
-      const data = await res.json();
+      } else if (action === 'cancel') {
+        path = `/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}/cancel${query}`;
+        init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
+      } else init = { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ revision: row.revision, status: row.status === 'active' ? 'paused' : 'active' }) };
+      // Parse as text first so an empty body or an HTML error page (from a
+      // misbehaving proxy) doesn't throw "Unexpected token <" before we ever
+      // look at the status code. Empty body ⇒ {}; JSON parse errors surface
+      // with the status + first chunk of the body so we know which layer
+      // returned the non-JSON.
+      type MutateResponse = { error?: string; message?: string; ok?: boolean };
+      // 🔴 变量名保持 `res` / `raw`。tests/scheduled-tasks-module.test.mjs:30 那条
+      //    契约检查断言的是源码里出现 `await res.text()` 和 `JSON.parse(raw)` ——
+      //    我第一版把它们改名成 r / body，行为完全一样，但那条检查当场转红。
+      //    正确的处理是改回名字，不是去放宽那条检查:它断言的东西是对的，
+      //    我改的只是无关的命名。
+      const send = async (p: string, i: RequestInit) => {
+        const res = await fetch(p, i);
+        const raw = await res.text();
+        let parsed: MutateResponse = {};
+        if (raw.trim().length > 0) {
+          try { parsed = JSON.parse(raw) as MutateResponse; }
+          catch {
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 120)}`);
+          }
+        }
+        return { res, data: parsed };
+      };
+
+      let { res, data } = await send(path, init);
+
+      // 🔴 老 hub 上没有 POST /cancel，回落到 DELETE。
+      //
+      //   服务端那条 POST 路由是 2026-08-18 才进 main 的（commit 40872732
+      //   "accept POST /cancel alongside DELETE, both idempotent"）。而当天
+      //   已发布的两个通道都早于它：
+      //     commhub-server@latest  = 0.8.8            发布 2026-06-24
+      //     commhub-server@preview = 0.9.0-preview.29 发布 2026-08-12
+      //   （核过已发布产物：里面的 `/cancel` 全是注释和标识符里的子串，没有路由。）
+      //
+      //   所以只发 POST 不留兜底，会让"取消"在**今天所有已部署的 hub 上**直接坏掉。
+      //   回落只认 404/405（路由不存在 / 方法不允许），不认 5xx —— 5xx 说明路由在、
+      //   但服务端出错了，那时重试 DELETE 只会掩盖真正的失败。
+      //
+      //   两条路径都是幂等的（见上面那个 commit 的标题），所以即使 POST 其实已经
+      //   生效、只是因为别的原因返回了 404，再发一次 DELETE 也不会造成二次伤害。
+      if (action === 'cancel' && (res.status === 404 || res.status === 405)) {
+        const legacyPath = `/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}${query}`;
+        ({ res, data } = await send(legacyPath, { method: 'DELETE' }));
+      }
       if (res.status === 409 && data.error === 'revision_conflict') {
         await load(); setError('计划已在其他设备更新，已刷新最新内容，请重试。'); return;
       }
@@ -334,7 +384,7 @@ export default function ScheduledTasksPage() {
           <h1 className="text-2xl font-bold text-[var(--fg)] lg:ml-0 ml-10">定时任务</h1>
           <p className="mt-1 text-sm text-[var(--fg-dim)]">由 Hub 统一调度；节点只接收普通任务，离线时自动排队。</p>
         </div>
-        <button onClick={openCreate} className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-semibold text-[var(--bg)] hover:opacity-90">
+        <button type="button" onClick={openCreate} className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-semibold text-[var(--bg)] hover:opacity-90">
           {showForm && !editing ? '收起' : '新建计划'}
         </button>
       </div>
@@ -361,17 +411,26 @@ export default function ScheduledTasksPage() {
         </section>
       )}
 
-      {loading ? <div className="py-20 text-center text-[var(--fg-dim)]">加载中…</div> : schedules.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[var(--border)] py-20 text-center text-[var(--fg-dim)]">还没有 Hub 定时任务</div>
-      ) : <div className="space-y-3">{schedules.map(row => (
+      {loading ? <div className="py-20 text-center text-[var(--fg-dim)]">加载中…</div> : (() => {
+        // Cancelled schedules are terminal — hide them from the default view.
+        // Server still stores history for the audit trail, but the list is
+        // meant for "what's on the calendar going forward", not "what ever
+        // existed". Users who need the paper trail can consult run history
+        // per schedule (record button); a dedicated show-cancelled toggle
+        // was out of scope for this fix.
+        const visible = schedules.filter(row => row.status !== 'cancelled');
+        return visible.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[var(--border)] py-20 text-center text-[var(--fg-dim)]">还没有 Hub 定时任务</div>
+        ) : <div className="space-y-3">{visible.map(row => (
         <section key={row.schedule_id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 className="font-semibold text-[var(--fg)]">{row.name}</h2><span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-xs ${row.status === 'active' ? 'text-[var(--success)]' : row.status === 'paused' ? 'text-[var(--warning)]' : 'text-[var(--fg-dim)]'}`}>{row.status}</span></div><p className="mt-1 text-sm text-[var(--hl)]">{row.target_alias}</p><p className="mt-2 line-clamp-2 text-sm text-[var(--fg-muted)]">{row.task_content}</p><p className="mt-3 text-xs text-[var(--fg-dim)]">{describeSchedule(row.schedule, row.timezone)} · {describeMisfire(row.misfire_policy)} · 下次 {formatTime(row.next_run_at)} · 上次 {formatTime(row.last_run_at)}</p></div>
-            <div className="flex flex-wrap gap-2"><button disabled={busy || !['active','paused'].includes(row.status)} onClick={() => openEdit(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">编辑</button><button disabled={busy || !['active','paused'].includes(row.status)} onClick={() => mutate(row, 'toggle')} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">{row.status === 'active' ? '暂停' : '恢复'}</button><button disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'run')} className="rounded-md border border-[var(--hl)] px-3 py-1.5 text-xs text-[var(--hl)]">立即执行</button><button onClick={() => openHistory(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">记录</button><button disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'cancel')} className="rounded-md border border-[var(--danger)] px-3 py-1.5 text-xs text-[var(--danger)]">取消</button></div>
+            <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => openEdit(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">编辑</button><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => mutate(row, 'toggle')} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">{row.status === 'active' ? '暂停' : '恢复'}</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'run')} className="rounded-md border border-[var(--hl)] px-3 py-1.5 text-xs text-[var(--hl)]">立即执行</button><button type="button" onClick={() => openHistory(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">记录</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'cancel')} className="rounded-md border border-[var(--danger)] px-3 py-1.5 text-xs text-[var(--danger)]">取消</button></div>
           </div>
           {historyFor === row.schedule_id && <div className="mt-4 overflow-x-auto border-t border-[var(--border)] pt-4"><table className="w-full text-left text-xs"><thead className="text-[var(--fg-dim)]"><tr><th className="pb-2">计划时间</th><th>状态</th><th>Task ID</th><th>错误</th></tr></thead><tbody>{runs.map(run => <tr key={run.run_id} className="border-t border-[var(--col-hairline)] text-[var(--fg-muted)]"><td className="py-2">{formatTime(run.scheduled_for)}</td><td>{run.status}</td><td className="font-mono">{run.task_id?.slice(0, 12) || '—'}</td><td className="text-[var(--danger)]">{run.error_code || '—'}</td></tr>)}</tbody></table>{runs.length === 0 && <p className="text-[var(--fg-dim)]">暂无执行记录</p>}</div>}
         </section>
-      ))}</div>}
+      ))}</div>;
+      })()}
     </main>
   );
 }
