@@ -316,17 +316,22 @@ export default function ScheduledTasksPage() {
       // with the status + first chunk of the body so we know which layer
       // returned the non-JSON.
       type MutateResponse = { error?: string; message?: string; ok?: boolean };
+      // 🔴 变量名保持 `res` / `raw`。tests/scheduled-tasks-module.test.mjs:30 那条
+      //    契约检查断言的是源码里出现 `await res.text()` 和 `JSON.parse(raw)` ——
+      //    我第一版把它们改名成 r / body，行为完全一样，但那条检查当场转红。
+      //    正确的处理是改回名字，不是去放宽那条检查:它断言的东西是对的，
+      //    我改的只是无关的命名。
       const send = async (p: string, i: RequestInit) => {
-        const r = await fetch(p, i);
-        const body = await r.text();
+        const res = await fetch(p, i);
+        const raw = await res.text();
         let parsed: MutateResponse = {};
-        if (body.trim().length > 0) {
-          try { parsed = JSON.parse(body) as MutateResponse; }
+        if (raw.trim().length > 0) {
+          try { parsed = JSON.parse(raw) as MutateResponse; }
           catch {
-            if (!r.ok) throw new Error(`HTTP ${r.status}: ${body.slice(0, 120)}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 120)}`);
           }
         }
-        return { res: r, data: parsed };
+        return { res, data: parsed };
       };
 
       let { res, data } = await send(path, init);
