@@ -310,20 +310,45 @@ export default function ScheduledTasksPage() {
         path = `/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}/cancel${query}`;
         init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
       } else init = { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ revision: row.revision, status: row.status === 'active' ? 'paused' : 'active' }) };
-      const res = await fetch(path, init);
       // Parse as text first so an empty body or an HTML error page (from a
       // misbehaving proxy) doesn't throw "Unexpected token <" before we ever
       // look at the status code. Empty body ⇒ {}; JSON parse errors surface
       // with the status + first chunk of the body so we know which layer
       // returned the non-JSON.
       type MutateResponse = { error?: string; message?: string; ok?: boolean };
-      const raw = await res.text();
-      let data: MutateResponse = {};
-      if (raw.trim().length > 0) {
-        try { data = JSON.parse(raw) as MutateResponse; }
-        catch {
-          if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 120)}`);
+      const send = async (p: string, i: RequestInit) => {
+        const r = await fetch(p, i);
+        const body = await r.text();
+        let parsed: MutateResponse = {};
+        if (body.trim().length > 0) {
+          try { parsed = JSON.parse(body) as MutateResponse; }
+          catch {
+            if (!r.ok) throw new Error(`HTTP ${r.status}: ${body.slice(0, 120)}`);
+          }
         }
+        return { res: r, data: parsed };
+      };
+
+      let { res, data } = await send(path, init);
+
+      // 🔴 老 hub 上没有 POST /cancel，回落到 DELETE。
+      //
+      //   服务端那条 POST 路由是 2026-08-18 才进 main 的（commit 40872732
+      //   "accept POST /cancel alongside DELETE, both idempotent"）。而当天
+      //   已发布的两个通道都早于它：
+      //     commhub-server@latest  = 0.8.8            发布 2026-06-24
+      //     commhub-server@preview = 0.9.0-preview.29 发布 2026-08-12
+      //   （核过已发布产物：里面的 `/cancel` 全是注释和标识符里的子串，没有路由。）
+      //
+      //   所以只发 POST 不留兜底，会让"取消"在**今天所有已部署的 hub 上**直接坏掉。
+      //   回落只认 404/405（路由不存在 / 方法不允许），不认 5xx —— 5xx 说明路由在、
+      //   但服务端出错了，那时重试 DELETE 只会掩盖真正的失败。
+      //
+      //   两条路径都是幂等的（见上面那个 commit 的标题），所以即使 POST 其实已经
+      //   生效、只是因为别的原因返回了 404，再发一次 DELETE 也不会造成二次伤害。
+      if (action === 'cancel' && (res.status === 404 || res.status === 405)) {
+        const legacyPath = `/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}${query}`;
+        ({ res, data } = await send(legacyPath, { method: 'DELETE' }));
       }
       if (res.status === 409 && data.error === 'revision_conflict') {
         await load(); setError('计划已在其他设备更新，已刷新最新内容，请重试。'); return;
