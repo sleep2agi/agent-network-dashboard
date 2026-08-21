@@ -20,8 +20,13 @@ const NAV_ITEMS = [
   { href: '/servers', label: 'Servers', icon: 'M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v1A2.5 2.5 0 0117.5 10h-11A2.5 2.5 0 014 7.5v-1zM4 16.5A2.5 2.5 0 016.5 14h11a2.5 2.5 0 012.5 2.5v1a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-1zM7 7h.01M7 17h.01' },
   { href: '/providers', label: 'Providers', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z' },
   { href: '/admin', label: 'Admin', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-  { href: '/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
 ];
+
+const SETTINGS_ITEM = {
+  href: '/settings',
+  label: 'Settings',
+  icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+};
 
 interface SidebarNetwork {
   network_id: string;
@@ -66,8 +71,14 @@ export function Sidebar() {
     return pathname.startsWith(href);
   };
 
+  const iconPath = (path: string, className = 'w-5 h-5 shrink-0', strokeWidth = 1.6) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={strokeWidth}>
+      <path strokeLinecap="round" strokeLinejoin="round" d={path} />
+    </svg>
+  );
+
   const nav = (
-    <nav className="flex flex-col gap-1 px-2 py-4">
+    <nav className={`flex flex-col gap-2 px-2 ${collapsed ? 'py-6' : 'py-5'}`}>
       {NAV_ITEMS.map(item => (
         <Link
           key={item.href}
@@ -81,9 +92,7 @@ export function Sidebar() {
               : 'text-gray-400 hover:text-gray-200 hover:bg-[#1c1c1f]'
           } ${collapsed ? 'justify-center px-0' : ''}`}
         >
-          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-          </svg>
+          {iconPath(item.icon)}
           {!collapsed && <span>{item.label}</span>}
         </Link>
       ))}
@@ -124,7 +133,7 @@ export function Sidebar() {
           Round 47: explicit ease-out curve + slight shadow so the drawer
           edge "leaves a trail" as it slides in. */}
       <aside data-anet-sidebar="true" className={`
-        fixed top-0 left-0 h-full z-40 bg-[#111113] border-r border-[#26262b]
+        fixed top-0 left-0 h-full z-40 flex flex-col bg-[#111113] border-r border-[#26262b]
         transition-transform duration-200 ease-out
         ${collapsed ? 'w-16' : 'w-52'}
         ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 lg:shadow-none' : '-translate-x-full'}
@@ -134,11 +143,10 @@ export function Sidebar() {
             with an inline live "online" pulse so every page surfaces
             fleet health without leaving for /nodes. */}
         <SidebarBrand collapsed={collapsed} />
-        <div className={`border-b border-[#26262b]`} />
 
         {/* Network list */}
         {!collapsed && networks.length > 0 && (
-          <div className="px-2 py-3 border-b border-[#26262b]">
+          <div className="px-2 pb-2 pt-1">
             <div className="px-3 text-[10px] text-gray-600 uppercase mb-2">Networks</div>
             <div className="space-y-0.5 max-h-32 overflow-y-auto">
               {networks.map((n: SidebarNetwork) => (
@@ -167,59 +175,69 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* #209 R26 (Vincent msg 540 screenshot — "设置页面没展示全"): the
-            absolute-bottom footer below stacks 3 rows (Quick search /
-            Sign out / collapse) ≈ 92-100px tall, but this spacer was
-            pb-20 (80px), so the last nav entry (Settings on /settings)
-            was being eaten by the footer overlay. Bump to pb-28 (112px)
-            to clear the actual footer height. */}
-        <div className="pb-28">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {nav}
         </div>
 
-        {/* Sign out + collapse — round 27: collapsed-state gets icon-only
-            variants so users still have Sign out / Quick search access at
-            56px width, plus title= tooltips. */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-[#26262b] bg-[#111113]">
+        {/* Bottom utility rail — Settings is no longer part of the primary
+            nav. Keep it pinned with account actions at the bottom, separated
+            by spacing rather than divider lines. */}
+        <div className={`shrink-0 bg-[#111113] ${collapsed ? 'px-2 pb-4 pt-3' : 'px-3 pb-4 pt-3'}`}>
           <button
             onClick={() => {
               window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
             }}
             title={collapsed ? 'Quick search (⌘K)' : undefined}
-            className={`w-full flex items-center text-[11px] text-gray-600 hover:text-gray-400 hover:bg-[#1c1c1f] transition-colors ${
-              collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2 px-5 py-3 lg:py-2'
+            className={`w-full flex items-center rounded-lg text-[11px] text-gray-400 hover:text-gray-200 hover:bg-[#1c1c1f] transition-colors ${
+              collapsed ? 'justify-center px-0 py-3' : 'justify-between gap-2 px-3 py-2.5'
             }`}
             aria-label="Open command palette"
           >
             <span className={`flex items-center ${collapsed ? '' : 'gap-2'}`}>
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              {iconPath('M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', 'w-4 h-4', 1.6)}
               {!collapsed && 'Quick search'}
             </span>
             {!collapsed && <kbd className="text-[10px] border border-current rounded px-1 py-0.5 opacity-60 font-mono">⌘K</kbd>}
           </button>
-          <button
-            onClick={async () => {
-              await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-              sessionStorage.removeItem('anet_v3_auth');
-              window.location.assign('/login');
-            }}
-            title={collapsed ? 'Sign out' : undefined}
-            className={`w-full flex items-center text-xs text-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-colors ${
-              collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-5 py-3'
-            }`}
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-            </svg>
-            {!collapsed && 'Sign out'}
-          </button>
-          <div className={`flex items-center ${collapsed ? 'flex-col px-0 py-2' : 'px-3 py-2 justify-end'}`}>
+
+          <div className={collapsed ? 'mt-2 flex flex-col gap-2' : 'mt-2 grid grid-cols-2 gap-1.5'}>
+            <Link
+              href={SETTINGS_ITEM.href}
+              prefetch={false}
+              onClick={() => setMobileOpen(false)}
+              title={collapsed ? SETTINGS_ITEM.label : undefined}
+              aria-current={isActive(SETTINGS_ITEM.href) ? 'page' : undefined}
+              className={`flex items-center rounded-lg text-xs transition-colors ${
+                isActive(SETTINGS_ITEM.href)
+                  ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20'
+                  : 'text-gray-400 hover:text-gray-200 hover:bg-[#1c1c1f]'
+              } ${collapsed ? 'justify-center px-0 py-3' : 'justify-center gap-1.5 px-1 py-3 text-[11px] whitespace-nowrap'}`}
+            >
+              {iconPath(SETTINGS_ITEM.icon, 'w-4 h-4 shrink-0')}
+              {!collapsed && <span>{SETTINGS_ITEM.label}</span>}
+            </Link>
+
+            <button
+              onClick={async () => {
+                await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+                sessionStorage.removeItem('anet_v3_auth');
+                window.location.assign('/login');
+              }}
+              title={collapsed ? 'Sign out' : undefined}
+              className={`flex items-center rounded-lg text-xs text-gray-400 hover:text-red-300 hover:bg-red-500/5 transition-colors ${
+                collapsed ? 'justify-center px-0 py-3' : 'justify-center gap-1.5 px-1 py-3 text-[11px] whitespace-nowrap'
+              }`}
+            >
+              {iconPath('M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9', 'w-4 h-4', 1.6)}
+              {!collapsed && <span>Sign out</span>}
+            </button>
+          </div>
+
+          <div className={`flex items-center ${collapsed ? 'justify-center pt-2' : 'pt-2 justify-end'}`}>
             <button
               onClick={() => setCollapsed(!collapsed)}
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              className="hidden lg:flex p-1.5 rounded text-gray-600 hover:text-gray-400 transition-colors"
+              className="hidden lg:flex p-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-[#1c1c1f] transition-colors"
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <svg className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
