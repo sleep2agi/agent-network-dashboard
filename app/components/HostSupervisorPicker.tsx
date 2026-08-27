@@ -41,12 +41,20 @@ export interface DaemonOption {
   };
 }
 
+interface HostOption {
+  hostname: string;
+  status?: 'online' | 'offline';
+  daemon: DaemonOption | null;
+  has_daemon: boolean;
+}
+
 interface PickResponse {
   ok: boolean;
   unconfirmed?: boolean;
   error?: string;
   count: number;
   daemons: DaemonOption[];
+  hosts?: HostOption[];
   selected?: string | null;
 }
 
@@ -66,6 +74,7 @@ export function HostSupervisorPicker({
 }) {
   const [state, setState] = useState<LoadState>('loading');
   const [daemons, setDaemons] = useState<DaemonOption[]>([]);
+  const [hosts, setHosts] = useState<HostOption[]>([]);
   const [errMsg, setErrMsg] = useState('');
   const [forcePicker, setForcePicker] = useState(false);
 
@@ -84,16 +93,24 @@ export function HostSupervisorPicker({
           setState('unconfirmed');
           setErrMsg(body?.error || 'hub /api/host-supervisors unavailable — upgrade to >=0.9.0-preview.8');
           setDaemons([]);
+          setHosts([]);
           return;
         }
         if (!body?.ok) {
           setState('error');
           setErrMsg(body?.error || `hub ${status}`);
           setDaemons([]);
+          setHosts([]);
           return;
         }
         const list = Array.isArray(body.daemons) ? body.daemons : [];
+        const hostList = Array.isArray(body.hosts) ? body.hosts : list.map(d => ({
+          hostname: d.hostname || d.alias || d.daemon_node_id,
+          daemon: d,
+          has_daemon: true,
+        }));
         setDaemons(list);
+        setHosts(hostList);
         setState('ready');
         // count=1 auto-pick: preselect the only daemon. count≥2 leaves the
         // selection to the user (parent value stays null until click).
@@ -104,6 +121,7 @@ export function HostSupervisorPicker({
         setState('error');
         setErrMsg(e instanceof Error ? e.message : String(e));
         setDaemons([]);
+        setHosts([]);
       });
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,7 +162,7 @@ export function HostSupervisorPicker({
   }
 
   // count=0 — onboarding
-  if (daemons.length === 0) {
+  if (daemons.length === 0 && hosts.length === 0) {
     return (
       <div className="rounded-md border border-[#26262b] bg-[#0e0e10] px-3 py-4 text-xs text-gray-300">
         <div className="text-sm font-semibold text-gray-200">还没有可用的 host_supervisor 节点</div>
@@ -161,7 +179,7 @@ anet daemon up my-daemon`}</pre>
   }
 
   // count=1 — auto-pick (collapsed). User can opt into picker via "换一个 →".
-  if (daemons.length === 1 && !forcePicker) {
+  if (daemons.length === 1 && hosts.length === 1 && !forcePicker) {
     const d = daemons[0];
     return (
       <div className="rounded-md border border-cyan-700/40 bg-cyan-900/10 px-3 py-3 text-xs text-cyan-100">
@@ -192,8 +210,8 @@ anet daemon up my-daemon`}</pre>
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs text-gray-400">
-        <span>选择一台 host_supervisor 节点（{daemons.length} 台在线）</span>
-        {forcePicker && daemons.length === 1 && (
+        <span>选择一台服务器（{daemons.length} 台 daemon 在线）</span>
+        {forcePicker && daemons.length === 1 && hosts.length === 1 && (
           <button
             type="button"
             onClick={() => setForcePicker(false)}
@@ -204,12 +222,12 @@ anet daemon up my-daemon`}</pre>
         )}
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-        {daemons.map(d => (
-          <DaemonCard
-            key={d.daemon_node_id}
-            daemon={d}
-            selected={d.daemon_node_id === value}
-            onClick={() => onChange(d.daemon_node_id, d)}
+        {hosts.map(h => (
+          <HostCard
+            key={h.hostname}
+            host={h}
+            selected={Boolean(h.daemon && h.daemon.daemon_node_id === value)}
+            onPick={() => h.daemon && onChange(h.daemon.daemon_node_id, h.daemon)}
           />
         ))}
       </div>
@@ -219,21 +237,19 @@ anet daemon up my-daemon`}</pre>
 
 // ───── subcomponents ──────────────────────────────────────────────────
 
-function DaemonCard({
-  daemon,
+function HostCard({
+  host,
   selected,
-  onClick,
+  onPick,
 }: {
-  daemon: DaemonOption;
+  host: HostOption;
   selected: boolean;
-  onClick: () => void;
+  onPick: () => void;
 }) {
-  const alert = daemon.host_telemetry?.alert_level || 'gray';
+  const daemon = host.daemon;
+  const alert = daemon?.host_telemetry?.alert_level || (host.status === 'online' ? 'green' : 'gray');
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
+    <div
       className={`flex w-full flex-col gap-1.5 rounded-md border px-3 py-2.5 text-left text-xs transition-colors ${
         selected
           ? 'border-cyan-600 bg-cyan-900/15 text-cyan-100'
@@ -241,18 +257,49 @@ function DaemonCard({
       }`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate font-semibold">{daemon.alias}</span>
+        <span className="truncate font-semibold">{host.hostname}</span>
         <AlertChip level={alert} />
       </div>
-      <div className="truncate text-[11px] text-gray-500">{daemon.hostname || '—'}</div>
-      <RuntimeList runtimes={daemon.runtimes_supported} />
-      {(daemon.host_telemetry?.cpu_cores != null || daemon.host_telemetry?.mem_gb != null) && (
-        <div className="flex gap-3 text-[10px] text-gray-500">
-          {daemon.host_telemetry?.cpu_cores != null && <span>{daemon.host_telemetry.cpu_cores} 核</span>}
-          {daemon.host_telemetry?.mem_gb != null && <span>{daemon.host_telemetry.mem_gb} GB</span>}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-500">
+        <span>{host.status === 'online' ? 'online' : host.status === 'offline' ? 'offline' : 'status unknown'}</span>
+      </div>
+      {daemon ? (
+        <>
+          <div className="truncate text-[11px] text-gray-500">daemon: {daemon.alias}</div>
+          <RuntimeList runtimes={daemon.runtimes_supported} />
+          <button
+            type="button"
+            onClick={onPick}
+            aria-pressed={selected}
+            className="mt-1 rounded-md px-2.5 py-1.5 text-[11px] font-medium"
+            style={{
+              background: selected ? '#0891b2' : '#1c1c1f',
+              color: selected ? '#ffffff' : '#67e8f9',
+            }}
+          >
+            {selected ? '已选择这台服务器' : '在这台服务器创建'}
+          </button>
+        </>
+      ) : (
+        <div
+          className="mt-1 rounded-md border px-2 py-2"
+          style={{ borderColor: 'rgb(245 158 11 / 0.35)', background: 'rgb(245 158 11 / 0.10)', color: '#fef3c7' }}
+        >
+          <div className="font-semibold">无 daemon，不能在这里创建节点</div>
+          <div className="mt-0.5 text-[11px]" style={{ color: 'rgb(253 230 138 / 0.75)' }}>
+            去这台服务器的终端安装并启动 daemon 后再回来选择。
+          </div>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard?.writeText(`anet daemon up ${host.hostname}-daemon`).catch(() => {})}
+            className="mt-2 rounded-md px-2 py-1 text-[11px] font-medium"
+            style={{ background: 'rgb(217 119 6 / 0.20)', color: '#fde68a' }}
+          >
+            复制安装命令
+          </button>
         </div>
       )}
-    </button>
+    </div>
   );
 }
 

@@ -36,11 +36,72 @@ interface DaemonRow {
   };
 }
 
+interface ServerRow {
+  hostname: string;
+  status?: 'online' | 'offline';
+}
+
+interface HostSupervisorRow {
+  hostname: string;
+  status?: 'online' | 'offline';
+  daemon: DaemonRow | null;
+  has_daemon: boolean;
+}
+
 interface HubResponse {
   ok?: boolean;
   error?: string;
   count?: number;
   daemons?: DaemonRow[];
+}
+
+async function loadServers(): Promise<ServerRow[]> {
+  try {
+    const res = await hubFetch('/api/servers');
+    if (!res.ok) return [];
+    const raw = await res.json().catch(() => ({}));
+    const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.servers) ? raw.servers : [];
+    return rows
+      .filter((s: unknown): s is ServerRow => Boolean(s) && typeof s === 'object' && typeof (s as ServerRow).hostname === 'string')
+      .map((s: ServerRow) => ({
+        hostname: s.hostname,
+        status: s.status,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function normalizeHost(hostname: string | null | undefined) {
+  return (hostname || '').trim().toLowerCase();
+}
+
+function mergeHosts(servers: ServerRow[], daemons: DaemonRow[]): HostSupervisorRow[] {
+  const byHost = new Map<string, HostSupervisorRow>();
+  for (const s of servers) {
+    const key = normalizeHost(s.hostname);
+    if (!key) continue;
+    byHost.set(key, { ...s, daemon: null, has_daemon: false });
+  }
+  for (const d of daemons) {
+    const hostname = d.hostname || d.alias || d.daemon_node_id;
+    const key = normalizeHost(hostname);
+    const existing = key ? byHost.get(key) : undefined;
+    if (existing) {
+      byHost.set(key, { hostname: existing.hostname, status: existing.status, daemon: d, has_daemon: true });
+    } else {
+      byHost.set(key || d.daemon_node_id, {
+        hostname,
+        status: d.online === false ? 'offline' : 'online',
+        daemon: d,
+        has_daemon: true,
+      });
+    }
+  }
+  return [...byHost.values()].sort((a, b) => {
+    if (a.has_daemon !== b.has_daemon) return a.has_daemon ? -1 : 1;
+    return a.hostname.localeCompare(b.hostname);
+  });
 }
 
 export async function GET(req: Request) {
@@ -69,7 +130,7 @@ export async function GET(req: Request) {
     : '/api/host-supervisors';
 
   try {
-    const res = await hubFetch(path);
+    const [res, servers] = await Promise.all([hubFetch(path), loadServers()]);
     if (res.status === 404 || res.status === 501) {
       return Response.json(
         {
@@ -92,7 +153,7 @@ export async function GET(req: Request) {
     const daemons = Array.isArray(data?.daemons) ? data.daemons : [];
     const count = typeof data?.count === 'number' ? data.count : daemons.length;
     const selected = count === 1 ? daemons[0]?.daemon_node_id || null : null;
-    return Response.json({ ok: true, count, daemons, selected });
+    return Response.json({ ok: true, count, daemons, hosts: mergeHosts(servers, daemons), selected });
   } catch (e: unknown) {
     return Response.json(
       { ok: false, error: e instanceof Error ? e.message : String(e), count: 0, daemons: [] },
