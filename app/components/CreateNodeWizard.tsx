@@ -113,6 +113,11 @@ export function CreateNodeWizard({
   const busy = phase === 'creating';
 
   async function handleCreate() {
+    if (!daemonNodeId) {
+      setPhase('error');
+      setMsg('创建失败：请先选择一台有 daemon 在线的服务器');
+      return;
+    }
     setPhase('creating');
     setMsg('');
     const numOrUndef = (v: string) => (v.trim() === '' ? undefined : Number(v));
@@ -139,7 +144,7 @@ export function CreateNodeWizard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           node_spec,
-          ...(daemonNodeId ? { daemon_node_id: daemonNodeId } : {}),
+          daemon_node_id: daemonNodeId,
           ...(networkId ? { network_id: networkId } : {}),
         }),
       });

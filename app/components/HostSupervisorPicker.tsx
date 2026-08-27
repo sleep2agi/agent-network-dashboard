@@ -43,14 +43,7 @@ export interface DaemonOption {
 
 interface HostOption {
   hostname: string;
-  ip?: string | null;
-  agent_count?: number;
-  cpu_load_1min?: number | null;
-  cpu_cores?: number;
-  mem_used_gb?: number | null;
-  mem_total_gb?: number | null;
   status?: 'online' | 'offline';
-  note?: string;
   daemon: DaemonOption | null;
   has_daemon: boolean;
 }
@@ -255,12 +248,6 @@ function HostCard({
 }) {
   const daemon = host.daemon;
   const alert = daemon?.host_telemetry?.alert_level || (host.status === 'online' ? 'green' : 'gray');
-  const cpuPct = host.cpu_load_1min != null && host.cpu_cores && host.cpu_cores > 0
-    ? Math.round(Math.max(0, Math.min(100, (host.cpu_load_1min / host.cpu_cores) * 100)))
-    : null;
-  const memPct = host.mem_used_gb != null && host.mem_total_gb != null && host.mem_total_gb > 0
-    ? Math.round(Math.max(0, Math.min(100, (host.mem_used_gb / host.mem_total_gb) * 100)))
-    : null;
   return (
     <div
       className={`flex w-full flex-col gap-1.5 rounded-md border px-3 py-2.5 text-left text-xs transition-colors ${
@@ -274,10 +261,7 @@ function HostCard({
         <AlertChip level={alert} />
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-500">
-        {host.ip && <span>{host.ip}</span>}
-        {cpuPct != null && <span>CPU {cpuPct}%</span>}
-        {memPct != null && <span>RAM {memPct}%</span>}
-        {host.agent_count != null && <span>{host.agent_count} agents</span>}
+        <span>{host.status === 'online' ? 'online' : host.status === 'offline' ? 'offline' : 'status unknown'}</span>
       </div>
       {daemon ? (
         <>

@@ -38,17 +38,12 @@ interface DaemonRow {
 
 interface ServerRow {
   hostname: string;
-  ip?: string | null;
-  agent_count?: number;
-  cpu_load_1min?: number | null;
-  cpu_cores?: number;
-  mem_used_gb?: number | null;
-  mem_total_gb?: number | null;
   status?: 'online' | 'offline';
-  note?: string;
 }
 
-interface HostSupervisorRow extends ServerRow {
+interface HostSupervisorRow {
+  hostname: string;
+  status?: 'online' | 'offline';
   daemon: DaemonRow | null;
   has_daemon: boolean;
 }
@@ -70,14 +65,7 @@ async function loadServers(): Promise<ServerRow[]> {
       .filter((s: unknown): s is ServerRow => Boolean(s) && typeof s === 'object' && typeof (s as ServerRow).hostname === 'string')
       .map((s: ServerRow) => ({
         hostname: s.hostname,
-        ip: s.ip ?? null,
-        agent_count: s.agent_count ?? 0,
-        cpu_load_1min: s.cpu_load_1min ?? null,
-        cpu_cores: s.cpu_cores ?? 0,
-        mem_used_gb: s.mem_used_gb ?? null,
-        mem_total_gb: s.mem_total_gb ?? null,
         status: s.status,
-        note: s.note,
       }));
   } catch {
     return [];
@@ -100,14 +88,10 @@ function mergeHosts(servers: ServerRow[], daemons: DaemonRow[]): HostSupervisorR
     const key = normalizeHost(hostname);
     const existing = key ? byHost.get(key) : undefined;
     if (existing) {
-      byHost.set(key, { ...existing, daemon: d, has_daemon: true });
+      byHost.set(key, { hostname: existing.hostname, status: existing.status, daemon: d, has_daemon: true });
     } else {
       byHost.set(key || d.daemon_node_id, {
         hostname,
-        ip: d.host_telemetry?.ip_internal ?? null,
-        agent_count: 1,
-        cpu_cores: d.host_telemetry?.cpu_cores ?? 0,
-        mem_total_gb: d.host_telemetry?.mem_gb ?? null,
         status: d.online === false ? 'offline' : 'online',
         daemon: d,
         has_daemon: true,
