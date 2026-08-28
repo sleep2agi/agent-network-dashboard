@@ -109,7 +109,9 @@ const RUNTIME_VENDOR: Record<string, VendorIdentity> = {
   'claude-code-cli': ANTHROPIC_VENDOR,
   'claude-agent-sdk': ANTHROPIC_VENDOR,
   'codex-sdk': OPENAI_VENDOR,
+  'codex-app-server': OPENAI_VENDOR,
   'grok-build-acp': GROK_VENDOR,
+  'grok-build-cli': GROK_VENDOR,
   'grok-build': GROK_VENDOR,
   grok: GROK_VENDOR,
 };
@@ -132,7 +134,7 @@ export function vendorForModel(
   return UNKNOWN_VENDOR;
 }
 
-export type Runtime = 'claude-code-cli' | 'codex-sdk' | 'claude-agent-sdk' | 'grok-build-acp' | 'http-api';
+export type Runtime = 'claude-code-cli' | 'codex-sdk' | 'codex-app-server' | 'claude-agent-sdk' | 'grok-build-acp' | 'grok-build-cli' | 'http-api';
 
 export interface RuntimeIdentity {
   label: string;
@@ -155,6 +157,12 @@ const RUNTIME_MAP: Record<Runtime, RuntimeIdentity> = {
     iconPath: 'M9 7l-5 5 5 5 M15 7l5 5-5 5',
     color: '#38bdf8',
   },
+  // Codex app-server co-presence peer
+  'codex-app-server': {
+    label: 'Codex App Server',
+    iconPath: 'M5 6h14v12H5z M8 10h8 M8 14h5',
+    color: '#0ea5e9',
+  },
   // SDK, distinct hue from codex
   'claude-agent-sdk': {
     label: 'Claude Agent SDK',
@@ -166,6 +174,12 @@ const RUNTIME_MAP: Record<Runtime, RuntimeIdentity> = {
     label: 'Grok Build ACP',
     iconPath: 'M12 3l2.1 6.2H21l-5.5 4 2.1 6.8L12 15.9 6.4 20l2.1-6.8L3 9.2h6.9L12 3z',
     color: '#22c55e',
+  },
+  // Grok CLI/headless peer using the TUI execution stack
+  'grok-build-cli': {
+    label: 'Grok Build CLI',
+    iconPath: 'M4 5h16v14H4z M7 9l3 3-3 3 M13 15h4',
+    color: '#16a34a',
   },
   // cloud / API — non-resident process
   'http-api': {

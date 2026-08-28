@@ -65,7 +65,16 @@ async function resolveLocalDaemonNodeId(): Promise<string | null> {
 
 const MCP_TOOL_CREATE = 'create_node';
 const EDITABLE_FLAGS = ['model', 'maxTurns', 'budget', 'timeout', 'permissionMode'] as const;
-const RUNTIMES = ['claude-agent-sdk', 'codex', 'grok'] as const;
+// Canonical runtime IDs accepted by current host supervisors. Keep the two
+// preview peers routable even when a particular daemon omits them from its UI
+// capability list; the daemon/hub remains the final capability authority.
+const RUNTIMES = [
+  'claude-agent-sdk',
+  'codex-sdk',
+  'codex-app-server',
+  'grok-build-acp',
+  'grok-build-cli',
+] as const;
 
 interface NodeSpec {
   name: string;

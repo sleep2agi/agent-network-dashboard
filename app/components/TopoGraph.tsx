@@ -529,7 +529,7 @@ function commonPrefix(a: string, b: string): string {
  *  #172/#174 short-term fix: grouping is alias-prefix ONLY. The earlier
  *  project_dir co-union (Vincent 4724) was dropped — live /api/status
  *  data showed it actively wrong: 视频测试马 reported project_dir
- *  `/Users/vansin/intern-aip`, the same dir as the unrelated standalone
+   *  `~/work/intern-aip`, the same dir as the unrelated standalone
  *  nodes 知识马 / 群星马, so union-find transitively bridged 知识马 /
  *  群星马 into the 视频 team. project_dir data quality is also poor
  *  (corrupted nested paths like `VideoNode/~/code/VideoNode/~/…`).
@@ -865,22 +865,27 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       //               (left-aligned, single cluster box at bottom)
       // No orphans → no orphan band → behaviour identical to pre-#150
       // for fleets where every node has a prefix-group match.
-      type Band = { members: Session[]; startRow: number; centred: boolean; isGroup: boolean; isOrphan?: boolean };
+      type Band = { members: Session[]; startRow: number; cols: number; centred: boolean; isGroup: boolean; isOrphan?: boolean };
       const bands: Band[] = [];
       let row = 0;
       const orphanMembers: Session[] = [];
+      const realGroupColsFor = (n: number) => Math.max(1, Math.min(cols, 8, Math.ceil(Math.sqrt(n * 2))));
       for (const run of runs) {
         if (run.members.length >= 2) {
-          bands.push({ members: run.members, startRow: row, centred: false, isGroup: true });
-          row += Math.ceil(run.members.length / cols);
+          const bandCols = realGroupColsFor(run.members.length);
+          const rowCount = Math.ceil(run.members.length / bandCols);
+          bands.push({ members: run.members, startRow: row, cols: bandCols, centred: false, isGroup: true });
+          row += rowCount;
         } else {
           // single-member run → collect for the bottom orphan band
           orphanMembers.push(...run.members);
         }
       }
       if (orphanMembers.length > 0) {
-        bands.push({ members: orphanMembers, startRow: row, centred: false, isGroup: true, isOrphan: true });
-        row += Math.ceil(orphanMembers.length / cols);
+        const bandCols = Math.max(1, Math.min(cols, orphanMembers.length));
+        const rowCount = Math.ceil(orphanMembers.length / bandCols);
+        bands.push({ members: orphanMembers, startRow: row, cols: bandCols, centred: false, isGroup: true, isOrphan: true });
+        row += rowCount;
       }
       const totalRows = Math.max(1, row);
       // #112: the group label sits in a band ABOVE the topmost node, so the
@@ -913,9 +918,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // Pass 2 — place each band's members.
       for (const band of bands) {
         band.members.forEach((s, idx) => {
-          const rowInBand = Math.floor(idx / cols);
-          const c = idx % cols;
-          const inRow = Math.min(cols, band.members.length - rowInBand * cols);
+          const rowInBand = Math.floor(idx / band.cols);
+          const c = idx % band.cols;
+          const inRow = Math.min(band.cols, band.members.length - rowInBand * band.cols);
           const inset = band.centred ? ((cols - inRow) * cellW) / 2 : 0;
           positions[s.alias] = {
             x: gx0 + inset + (c + 0.5) * cellW,
