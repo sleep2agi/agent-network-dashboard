@@ -62,14 +62,14 @@ changed_file_error_hits=0
 Representative existing lint errors:
 
 ```text
-/home/vansin/agent-network-dashboard/.anet/node-server.ts
+.anet/node-server.ts
   184:86  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   238:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-/home/vansin/agent-network-dashboard/.vercel/output/functions/_global-error.rsc.func/___next_launcher.cjs
+.vercel/output/functions/_global-error.rsc.func/___next_launcher.cjs
   11:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
 
-/home/vansin/agent-network-dashboard/.vercel/output/functions/_middleware.func/___next_launcher.cjs
+.vercel/output/functions/_middleware.func/___next_launcher.cjs
   11:26   error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
   108:32  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
 ```
