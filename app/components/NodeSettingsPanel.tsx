@@ -22,20 +22,21 @@ import { useLifecycleCaps } from './NodeLifecycleMenu';
  *    `update_node_config` with a minimal diff `patch` + `base_revision`.
  *    Channels ride inside the same patch — the tool schema is
  *    { model?, flags?, channels? }.
- *  - **Apply lifecycle (revision-compare)**: saving → applying → applied |
- *    timeout | error. After the POST is accepted the panel polls the snapshot
- *    and treats `config_revision > base_revision` as applied (the node wrote
- *    its config + reported back). `apply_mode` (hot / restart) flavours the
- *    progress copy. Stale-hardened (runId guard + first-terminal-wins + hard
- *    30s ceiling). update_node_config error codes map to UI messages.
+ *  - **Apply lifecycle (node ack via revision bump)**: saving → applying →
+ *    applied | timeout | error. After the POST is accepted the panel polls the
+ *    config snapshot and treats `config_revision > base_revision` as applied.
+ *    That revision bump is written after the node-side get_config_update /
+ *    ack_config_update path completes. `apply_mode` (hot / restart) flavours
+ *    the progress copy. Stale-hardened (runId guard + first-terminal-wins +
+ *    hard 30s ceiling). update_node_config error codes map to UI messages.
  *  - **Channel red-line**: only the on/off flip is on the wire. Per-channel
  *    bot token / app secret / allowFrom stay in the node's local config.json
  *    and are shown here as masked read-only (StubField).
  *  - **Still P2 stub**: D 运维 ops buttons other than restart (rename/stop/
  *    delete) — gated on RFC-024 rename + RFC-027 stop/delete backends.
  *
- * If the hub is unreachable the GET mock-falls back (no `config_revision`) and
- * the panel disables Save with an honest note. `config_update_capable:false`
+ * If the hub/config tools are unreachable the panel disables Save with an
+ * honest note. `config_update_capable:false`
  * (node not under a W1 supervisor) surfaces a "重启类改动可能不生效" warning.
  * Runtime + imageCapable stay read-only (auto-derived).
  */
@@ -102,13 +103,10 @@ const DEFAULT_FLAGS: FlagsForm = {
 // F3 apply lifecycle. A save flows:
 //   idle → saving (POST in flight) → applying (config dispatched, node
 //   restarting / taking effect) → applied | rejected | timeout.
-// `error` = the save POST itself failed. The `mock` flag flavours the terminal
-// copy when the hub tool isn't deployed (the lifecycle is then simulated on
-// local timers rather than polled).
+// `error` = the save POST failed or the backend cannot confirm apply.
 type ApplyPhase = 'idle' | 'saving' | 'applying' | 'applied' | 'rejected' | 'timeout' | 'error';
 
-// Real-backend apply-status poll cadence + ceiling. The mock path uses its own
-// short timers instead of polling (the route would only ever return pending).
+// Real-backend apply-status poll cadence + ceiling.
 const APPLY_POLL_MS = 1500;
 const APPLY_TIMEOUT_MS = 30000;
 // Auto-dismiss the success strip after this long.
@@ -405,10 +403,9 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
   const loadedChannelsRef = useRef<Set<string>>(channelSet(s.channels));
   const [capable, setCapable] = useState(true);
   const [snapUnavailable, setSnapUnavailable] = useState(false);
-  // ---- apply lifecycle (revision-compare) ----
+  // ---- apply lifecycle (node ack observed through config_revision) ----
   const [phase, setPhase] = useState<ApplyPhase>('idle');
   const [phaseMsg, setPhaseMsg] = useState('');
-  const [phaseMock, setPhaseMock] = useState(false);
   // ---- M1 node lifecycle actions (restart wired to RFC-024 restart_node;
   // rename/stop/delete gated on backend → shown as 即将支持). Self-contained,
   // independent of the config apply lifecycle above.
@@ -419,7 +416,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
   const lifecycleCaps = useLifecycleCaps();
   const [renameVal, setRenameVal] = useState('');
   const [applyMode, setApplyMode] = useState<string | null>(null);
-  // Outstanding lifecycle timers (mock progression, real poll, auto-dismiss);
+  // Outstanding lifecycle timers (real poll, auto-dismiss);
   // cleared on unmount and at the start of each new save so a stale timer can't
   // overwrite a fresh result.
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -510,9 +507,9 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
         const res = await fetch(`/api/anet/node-config?node_id=${encodeURIComponent(nodeKey)}`, { cache: 'no-store' });
         const data = await res.json().catch(() => ({}));
         if (cancelled || !mounted.current) return;
-        // No readable revision (hub down / mock fallback / node error) → can't
+        // No readable revision (hub/config tool error) → can't
         // safely write; flag so Save disables with an honest note.
-        if (data?.ok === false || data?.mock || typeof data?.config_revision !== 'number') {
+        if (data?.ok === false || typeof data?.config_revision !== 'number') {
           setSnapUnavailable(true);
         }
         syncFromSnapshot(data);
@@ -607,21 +604,27 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
 
     setPhase('saving');
     setPhaseMsg('');
-    setPhaseMock(false);
 
-    // Apply = config_revision bump. Poll GET snapshot, compare against the
-    // base_revision we sent; a bump means the node applied + reported back.
+    // Apply = config_revision bump. The node performs get_config_update /
+    // ack_config_update; the dashboard observes the resulting snapshot fact.
     const poll = (startedAt: number) => {
       after(APPLY_POLL_MS, async () => {
         if (!isCurrent(runId) || settledRef.current) return;
         let snap: Record<string, unknown> | null = null;
         try {
-          const { data } = await fetchJson(`/api/anet/node-config?node_id=${encodeURIComponent(nodeKey)}`, { cache: 'no-store' }, FETCH_TIMEOUT_MS);
+          const { res, data } = await fetchJson(`/api/anet/node-config?node_id=${encodeURIComponent(nodeKey)}&base_revision=${encodeURIComponent(String(baseRevision))}`, { cache: 'no-store' }, FETCH_TIMEOUT_MS);
+          if (!res.ok || data?.ok === false) {
+            settle(runId, () => {
+              setPhase('error');
+              setPhaseMsg(`${mapUpdateError(data)}。当前请用 anet node 在目标机器上修改。`);
+            });
+            return;
+          }
           if (typeof data?.config_revision === 'number') snap = data;
         } catch { /* transient — retry until the 30s ceiling */ }
         if (!isCurrent(runId) || settledRef.current) return;
         if (snap && (snap.config_revision as number) > baseRevision) {
-          syncFromSnapshot(snap);   // re-sync form + base_revision to the applied state
+          syncFromSnapshot(snap);
           finishApplied(runId);
           return;
         }
@@ -643,7 +646,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
         if (!r.res.ok || d?.ok === false) {
           settledRef.current = true;
           setPhase('error');
-          setPhaseMsg(mapUpdateError(d));
+          setPhaseMsg(`${mapUpdateError(d)}。当前请用 anet node 在目标机器上修改。`);
           // On a revision conflict, refresh the snapshot so a retry uses the
           // latest base_revision (and the form shows the other writer's values).
           if (d?.error === 'revision_conflict') {
@@ -659,7 +662,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
         if (!isCurrent(runId)) return;
         settledRef.current = true;
         setPhase('error');
-        setPhaseMsg(isAbort(e) ? '保存超时，请重试' : e instanceof Error ? `保存失败：${e.message}` : '保存失败');
+        setPhaseMsg(isAbort(e) ? '保存超时，请重试' : e instanceof Error ? `保存失败：${e.message}。当前请用 anet node 在目标机器上修改。` : '保存失败。当前请用 anet node 在目标机器上修改。');
         return;
       }
 
