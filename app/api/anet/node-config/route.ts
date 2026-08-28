@@ -1,19 +1,19 @@
 import { requireDashboardAuth } from '@/app/lib/dashboard-auth';
+import { hubFetch } from '@/app/lib/hub';
 import { callMcp, parseMcpEnvelope, resolveDefaultNetworkId } from '@/app/lib/hub-mcp';
 
 /**
- * Per-node config proxy for #1316. This route talks to the real hub MCP tools:
- *   GET  ?node_id=...  -> get_config_update snapshot/status
- *   GET  ?apply_id=... -> get_config_update apply status, then ack when applied
- *   POST               -> update_node_config
+ * Per-node config proxy for #1316:
+ *   GET  ?node_id=... -> hub REST config snapshot (node-side applied fact)
+ *   POST              -> update_node_config MCP doorbell
  *
- * A save is only "applied" after get_config_update reports applied and
- * ack_config_update succeeds. There is no mock success fallback.
+ * get_config_update and ack_config_update are node-side MCP tools: the node
+ * calls them after the dashboard doorbell. The dashboard verifies success by
+ * polling the snapshot until config_revision advances. There is no mock success
+ * fallback.
  */
 
 const MCP_TOOL_UPDATE = 'update_node_config';
-const MCP_TOOL_GET_UPDATE = 'get_config_update';
-const MCP_TOOL_ACK_UPDATE = 'ack_config_update';
 
 const EDITABLE_FLAGS = [
   'permissionMode',
@@ -43,10 +43,12 @@ function normalizeResult(result: unknown): Record<string, unknown> {
   return result && typeof result === 'object' ? result as Record<string, unknown> : {};
 }
 
-function stringField(obj: Record<string, unknown>, keys: string[]): string | undefined {
-  for (const key of keys) {
-    const value = obj[key];
-    if (typeof value === 'string' && value) return value;
+function numberField(obj: Record<string, unknown>, key: string): number | undefined {
+  const value = obj[key];
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
   }
   return undefined;
 }
@@ -83,18 +85,31 @@ async function callConfigTool(tool: string, args: Record<string, unknown>) {
   return { result };
 }
 
-async function ackAppliedConfig(result: Record<string, unknown>, networkId?: string | null) {
-  const updateId = stringField(result, ['applyId', 'apply_id', 'updateId', 'update_id', 'config_update_id']);
-  const nodeId = stringField(result, ['node_id', 'nodeId']);
-  const args: Record<string, unknown> = {
-    ...(updateId ? { update_id: updateId, apply_id: updateId } : {}),
-    ...(nodeId ? { node_id: nodeId } : {}),
-    ...(networkId ? { network_id: networkId } : {}),
-  };
-  if (!Object.keys(args).some(k => k === 'update_id' || k === 'apply_id' || k === 'node_id')) {
-    return { response: Response.json({ ok: false, error: 'config_update_missing_ack_target' }, { status: 502 }) };
+async function getMaskedConfigSnapshot(nodeId: string, networkId?: string | null) {
+  const params = new URLSearchParams();
+  if (networkId) params.set('network_id', networkId);
+  const res = await hubFetch(`/api/nodes/${encodeURIComponent(nodeId)}/config${params.toString() ? `?${params}` : ''}`, {
+    headers: { Accept: 'application/json' },
+  });
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    return {
+      response: Response.json(
+        { ok: false, node_id: nodeId, error: 'node_config_snapshot_unavailable' },
+        { status: 502 },
+      ),
+    };
   }
-  return callConfigTool(MCP_TOOL_ACK_UPDATE, args);
+  const data = normalizeResult(await res.json().catch(() => ({})));
+  if (data.ok !== true) {
+    return {
+      response: Response.json(
+        { ...data, ok: false, node_id: nodeId, error: String(data.error || 'node_config_snapshot_failed') },
+        { status: res.ok ? 502 : res.status },
+      ),
+    };
+  }
+  return { result: data };
 }
 
 function buildPatch(body: ConfigBody) {
@@ -129,29 +144,24 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const networkId = searchParams.get('network_id') || (await resolveDefaultNetworkId());
-  const applyId = searchParams.get('apply_id');
-  if (applyId) {
-    try {
-      const out = await callConfigTool(MCP_TOOL_GET_UPDATE, { apply_id: applyId, update_id: applyId, ...(networkId ? { network_id: networkId } : {}) });
-      if (out.response) return out.response;
-      const result = out.result;
-      if (result.status === 'applied') {
-        const ack = await ackAppliedConfig({ ...result, applyId }, networkId);
-        if (ack.response) return ack.response;
-        return Response.json({ ok: true, ...exposeConfigSnapshot(result), applyId, ack: ack.result || true });
-      }
-      return Response.json({ ok: true, ...exposeConfigSnapshot(result), applyId });
-    } catch (e: unknown) {
-      return Response.json({ ok: false, applyId, error: errText(e) }, { status: 502 });
-    }
-  }
-
   const nodeId = searchParams.get('node_id') || searchParams.get('alias') || '';
   if (!nodeId) return Response.json({ error: 'node_id or alias required' }, { status: 400 });
   try {
-    const out = await callConfigTool(MCP_TOOL_GET_UPDATE, { node_id: nodeId, ...(networkId ? { network_id: networkId } : {}) });
+    const out = await getMaskedConfigSnapshot(nodeId, networkId);
     if (out.response) return out.response;
-    return Response.json({ ok: true, node_id: nodeId, ...exposeConfigSnapshot(out.result) });
+    const result = exposeConfigSnapshot(out.result);
+    const currentRevision = numberField(result, 'config_revision') ?? 0;
+    const baseRevision = numberField(Object.fromEntries(searchParams), 'base_revision');
+    if (baseRevision !== undefined) {
+      return Response.json({
+        ok: true,
+        node_id: nodeId,
+        ...result,
+        status: currentRevision > baseRevision ? 'applied' : 'pending',
+        base_revision: baseRevision,
+      });
+    }
+    return Response.json({ ok: true, node_id: nodeId, ...result });
   } catch (e: unknown) {
     return Response.json({ ok: false, node_id: nodeId, error: errText(e) }, { status: 502 });
   }
@@ -170,6 +180,9 @@ export async function POST(req: Request) {
 
   const nodeId = body.node_id || body.alias;
   if (!nodeId) return Response.json({ error: 'node_id or alias required' }, { status: 400 });
+  if (typeof body.base_revision !== 'number') {
+    return Response.json({ error: 'base_revision (number) required' }, { status: 400 });
+  }
 
   const patch = buildPatch(body);
   if (patch.model === undefined && !patch.flags && !patch.channels) {
@@ -179,7 +192,7 @@ export async function POST(req: Request) {
   const networkId = body.network_id || (await resolveDefaultNetworkId());
   const args = {
     node_id: nodeId,
-    ...(typeof body.base_revision === 'number' ? { base_revision: body.base_revision } : {}),
+    base_revision: body.base_revision,
     patch,
     ...(networkId ? { network_id: networkId } : {}),
   };
@@ -188,24 +201,7 @@ export async function POST(req: Request) {
     const out = await callConfigTool(MCP_TOOL_UPDATE, args);
     if (out.response) return out.response;
     const result = out.result;
-    const applyId = stringField(result, ['applyId', 'apply_id', 'updateId', 'update_id', 'config_update_id']);
-    if (result.status === 'applied') {
-      const ack = await ackAppliedConfig({ ...result, node_id: nodeId, ...(applyId ? { applyId } : {}) }, networkId);
-      if (ack.response) return ack.response;
-      return Response.json({ ok: true, ...exposeConfigSnapshot(result), ...(applyId ? { applyId } : {}), ack: ack.result || true });
-    }
-    if (!applyId) {
-      return Response.json(
-        {
-          ok: false,
-          error: 'config_update_missing_apply_id',
-          detail: 'update_node_config returned before node-side apply could be confirmed; use anet node on the target machine until the hub returns an apply_id/update_id.',
-          result,
-        },
-        { status: 502 },
-      );
-    }
-    return Response.json({ ok: true, ...exposeConfigSnapshot(result), applyId });
+    return Response.json({ ok: true, node_id: nodeId, base_revision: body.base_revision, status: 'pending', ...exposeConfigSnapshot(result) });
   } catch (e: unknown) {
     return Response.json({ ok: false, node_id: nodeId, error: errText(e) }, { status: 502 });
   }

@@ -22,12 +22,13 @@ import { useLifecycleCaps } from './NodeLifecycleMenu';
  *    `update_node_config` with a minimal diff `patch` + `base_revision`.
  *    Channels ride inside the same patch — the tool schema is
  *    { model?, flags?, channels? }.
- *  - **Apply lifecycle (MCP apply/ack)**: saving → applying → applied |
- *    rejected | timeout | error. After the POST is accepted the panel polls
- *    `GET ?apply_id` (get_config_update); the route calls ack_config_update
- *    before returning applied. `apply_mode` (hot / restart) flavours the
- *    progress copy. Stale-hardened (runId guard + first-terminal-wins + hard
- *    30s ceiling). update_node_config error codes map to UI messages.
+ *  - **Apply lifecycle (node ack via revision bump)**: saving → applying →
+ *    applied | timeout | error. After the POST is accepted the panel polls the
+ *    config snapshot and treats `config_revision > base_revision` as applied.
+ *    That revision bump is written after the node-side get_config_update /
+ *    ack_config_update path completes. `apply_mode` (hot / restart) flavours
+ *    the progress copy. Stale-hardened (runId guard + first-terminal-wins +
+ *    hard 30s ceiling). update_node_config error codes map to UI messages.
  *  - **Channel red-line**: only the on/off flip is on the wire. Per-channel
  *    bot token / app secret / allowFrom stay in the node's local config.json
  *    and are shown here as masked read-only (StubField).
@@ -402,7 +403,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
   const loadedChannelsRef = useRef<Set<string>>(channelSet(s.channels));
   const [capable, setCapable] = useState(true);
   const [snapUnavailable, setSnapUnavailable] = useState(false);
-  // ---- apply lifecycle (get_config_update + ack_config_update) ----
+  // ---- apply lifecycle (node ack observed through config_revision) ----
   const [phase, setPhase] = useState<ApplyPhase>('idle');
   const [phaseMsg, setPhaseMsg] = useState('');
   // ---- M1 node lifecycle actions (restart wired to RFC-024 restart_node;
@@ -604,40 +605,31 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
     setPhase('saving');
     setPhaseMsg('');
 
-    // Apply = get_config_update says applied; the route acks before returning
-    // that state to the panel.
-    const poll = (applyId: string, startedAt: number) => {
+    // Apply = config_revision bump. The node performs get_config_update /
+    // ack_config_update; the dashboard observes the resulting snapshot fact.
+    const poll = (startedAt: number) => {
       after(APPLY_POLL_MS, async () => {
         if (!isCurrent(runId) || settledRef.current) return;
-        let status: string | undefined;
-        let detail: string | undefined;
+        let snap: Record<string, unknown> | null = null;
         try {
-          const { res, data } = await fetchJson(`/api/anet/node-config?apply_id=${encodeURIComponent(applyId)}`, { cache: 'no-store' }, FETCH_TIMEOUT_MS);
+          const { res, data } = await fetchJson(`/api/anet/node-config?node_id=${encodeURIComponent(nodeKey)}&base_revision=${encodeURIComponent(String(baseRevision))}`, { cache: 'no-store' }, FETCH_TIMEOUT_MS);
           if (!res.ok || data?.ok === false) {
             settle(runId, () => {
               setPhase('error');
-              setPhaseMsg(mapUpdateError(data));
+              setPhaseMsg(`${mapUpdateError(data)}。当前请用 anet node 在目标机器上修改。`);
             });
             return;
           }
-          status = data?.status as string | undefined;
-          detail = typeof data?.detail === 'string' ? data.detail : undefined;
-          if (typeof data?.config_revision === 'number') syncFromSnapshot(data);
+          if (typeof data?.config_revision === 'number') snap = data;
         } catch { /* transient — retry until the 30s ceiling */ }
         if (!isCurrent(runId) || settledRef.current) return;
-        if (status === 'applied') {
+        if (snap && (snap.config_revision as number) > baseRevision) {
+          syncFromSnapshot(snap);
           finishApplied(runId);
           return;
         }
-        if (status === 'rejected') {
-          settle(runId, () => {
-            setPhase('rejected');
-            setPhaseMsg(detail ? `应用被拒绝：${detail}` : '应用被拒绝');
-          });
-          return;
-        }
         if (Date.now() - startedAt >= APPLY_TIMEOUT_MS) { markTimeout(runId); return; }
-        poll(applyId, startedAt);
+        poll(startedAt);
       });
     };
 
@@ -677,19 +669,10 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
       // Accepted → optimistic "applying"; apply_mode flavours the progress copy.
       setDirty(false);
       setApplyMode(typeof d.apply_mode === 'string' ? (d.apply_mode as string) : null);
-      if (d.status === 'applied') { finishApplied(runId); return; }
-      const applyId = typeof d.applyId === 'string' ? d.applyId : typeof d.update_id === 'string' ? d.update_id : undefined;
-      if (!applyId) {
-        settle(runId, () => {
-          setPhase('error');
-          setPhaseMsg('保存未返回 applyId，无法确认节点已应用。当前请用 anet node 在目标机器上修改。');
-        });
-        return;
-      }
       setPhase('applying');
       // Hard 30s ceiling regardless of poll/hub state (通信牛 review #11 blocker 2).
       after(APPLY_TIMEOUT_MS, () => markTimeout(runId));
-      poll(applyId, Date.now());
+      poll(Date.now());
     })();
   }
 
