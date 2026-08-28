@@ -39,6 +39,7 @@ const RUNTIMES: { id: string; label: string; models: string[]; defaultModel: str
   { id: 'claude-agent-sdk', label: 'Claude Agent SDK', models: ['deepseek-v4-pro', 'MiniMax-M3', 'claude-sonnet-4-6', 'claude-opus-4-x'], defaultModel: 'claude-sonnet-4-6' },
   { id: 'codex-sdk', label: 'Codex SDK', models: ['gpt-5.5'], defaultModel: 'gpt-5.5' },
   { id: 'grok-build-acp', label: 'Grok (build-acp)', models: ['grok-build'], defaultModel: 'grok-build' },
+  { id: 'grok-build-cli', label: 'Grok Build CLI（TUI 引擎）', models: ['grok-build'], defaultModel: 'grok-build' },
 ];
 const PERMISSION_MODES = ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
 const STEPS = ['服务器', '名字', 'Runtime', '模型', '参数', '确认'];
