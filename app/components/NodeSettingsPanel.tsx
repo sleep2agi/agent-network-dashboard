@@ -57,7 +57,9 @@ const PERMISSION_MODES = ['auto', 'default', 'bypassPermissions'];
 // A. Channel bindings — enable/disable is editable; the per-channel secret
 // fields below stay read-only (`StubField`, masked). `roadmap` = greyed "即将
 // 支持". Keep this list in sync with EDITABLE_CHANNELS in
-// app/api/anet/node-config/route.ts (server-side whitelist).
+// app/lib/node-config-patch.ts, which in turn mirrors the hub's list in
+// server/src/config-apply-validate.ts. commhub is deliberately absent:
+// it is the RPC transport every node speaks, not a per-node channel (#38).
 const CHANNELS: { key: string; label: string; roadmap?: boolean; fields: { label: string; value?: string }[] }[] = [
   {
     key: 'telegram', label: 'Telegram',
