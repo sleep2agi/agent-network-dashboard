@@ -661,7 +661,6 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [historyError, setHistoryError] = useState(false);
-  const [targetAlias, setTargetAlias] = useState(alias);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
   // R23→R25: pinyin matching moved to the shared lib (also powers /nodes
@@ -772,9 +771,6 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       setMentionNodes(sessions.filter(s => presenceIsOnline(s, health?.sse_sessions)).map(s => s.alias));
     }).catch(() => {});
   }, [availableNodes]);
-
-  // Reset target when alias changes
-  useEffect(() => { setTargetAlias(alias); }, [alias]);
 
   // Loop R9 (微信草稿): unsent text survives closing the panel, switching
   // conversations and refreshing, per conversation. Text only — File
@@ -1143,7 +1139,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
   const send = async () => {
     if ((!input.trim() && attachedFiles.length === 0) || sending) return;
     let taskContent = input.trim();
-    let sendTo = targetAlias;
+    // `alias` is the target rendered in the panel header. Do not mirror it in
+    // effect-synchronised state: after switching the singleton chat popover,
+    // React can render the new header one frame before that effect runs, and
+    // an immediate send would otherwise be delivered to the previous node.
+    let sendTo = alias;
 
     // Parse @mention at start: "@NodeName rest of message"
     const atMatch = taskContent.match(/^@(\S+)\s+([\s\S]+)/);
@@ -1787,7 +1787,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
             </div>
           )}
           <div className="hidden sm:flex justify-between text-[9px] text-[var(--fg-dim)] mt-1.5">
-            <span>{input.includes('@') ? `Sending to: ${targetAlias}` : `Type @ to mention another node`}</span>
+            <span>{input.includes('@') ? `Sending to: ${alias}` : `Type @ to mention another node`}</span>
             <span>Enter to send · paste image</span>
           </div>
         </div>
