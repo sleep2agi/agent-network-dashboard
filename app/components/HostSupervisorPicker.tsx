@@ -385,7 +385,19 @@ export type CapabilityTone = 'blocked' | 'unknown' | 'ready';
 export function capabilityPresentation(kind: CapabilityKind): { disabled: boolean; tone: CapabilityTone } {
   if (kind === 'blocked' || kind === 'blocked-age-unknown') return { disabled: true, tone: 'blocked' };
   if (kind === 'never-reported' || kind === 'ready-age-unknown') return { disabled: false, tone: 'unknown' };
-  return { disabled: false, tone: 'ready' };
+  if (kind === 'ready') return { disabled: false, tone: 'ready' };
+  // 🔴 兜底走 **unknown**,不是 ready。
+  //
+  //    上游 `describeCapability` 的 kind 联合将来可能新增取值(它在另一个仓的
+  //    另一个包里,升级依赖就会带进来)。原先这里是 `return {tone:'ready'}` 兜底 ——
+  //    也就是说**一个我们没写过的新状态,会被渲染成"可用、暗绿、可点"**。
+  //    落进 default 的那一支,恰好是看起来最正常的那个,而这正是最坏的方向:
+  //    它把"我不认识这个状态"说成了"这台没问题"。
+  //
+  //    兜底成 unknown 是对的那一侧:中性灰、**不禁用**(我们并不知道它坏,
+  //    拦下一台好机器更糟 —— 同 known-blocked ≠ unknown-treated-as-blocked),
+  //    但至少不冒充"可用"。
+  return { disabled: false, tone: 'unknown' };
 }
 
 const TONE_STYLE: Record<CapabilityTone, React.CSSProperties> = {

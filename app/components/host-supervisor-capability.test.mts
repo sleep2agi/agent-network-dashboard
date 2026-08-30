@@ -68,3 +68,15 @@ test('🔴 describeCapability 产出的每一个 kind 都在映射里有明确�
   const disabled = kinds.filter(k => capabilityPresentation(k as CapabilityKind).disabled);
   assert.equal(disabled.length, 2, `实际禁用的=${JSON.stringify(disabled)}`);
 });
+
+/* 🔴 上游 kind 联合将来会新增取值(它在另一个仓的另一个包里,升级依赖就会带进来)。
+ * 这里钉住兜底的**方向**:不认识的状态必须落到 unknown,**不能落到 ready**。
+ * 落进 ready = 把"我不认识这个状态"说成"这台没问题",是最坏的那个方向。 */
+test('🔴 不认识的 kind 兜底成 unknown,绝不冒充 ready', () => {
+  const p = capabilityPresentation('some-future-kind-we-have-not-written' as CapabilityKind);
+  assert.equal(p.tone, 'unknown', '不认识 ≠ 可用');
+  assert.notEqual(p.tone, 'ready');
+  assert.equal(p.disabled, false, '也不该拦下一台我们并不知道它坏的机器');
+  // 正控:真正的 ready 确实拿到 ready —— 证明上面不是恒真
+  assert.equal(capabilityPresentation('ready').tone, 'ready');
+});
