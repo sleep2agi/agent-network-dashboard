@@ -1,9 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import useSWR from 'swr';
+import useSWR, { useSWRConfig } from 'swr';
 import { useNetworkId } from './network-context';
 import { isMuted, useMuteVersion } from './chat-mute';
+import { currentUserAlias, mergeMessageFeeds } from './chat-unread-feed';
+import { useSSE } from './useSSE';
 
 const STORAGE_PREFIX = 'anet_chat_read_v1:';
 const UNREAD_EVENT = 'anet-chat-read-updated';
@@ -104,10 +106,46 @@ export function useChatUnread() {
   // a message to the originator (verified live: replied task + same-second
   // message, both present), so counting tasks too double-counted every
   // reply (E2E showed 4 where 2 was right).
+  const { mutate } = useSWRConfig();
+  // SSE first, poll as the floor. The badge used to wait up to 5s for the
+  // next poll; the hub already pushes an event the moment anything lands, so
+  // an event revalidates immediately and the interval only has to cover the
+  // case where SSE is unavailable or dropped. Deliberately NOT reading
+  // inbox_count off the event: a rule that every future event type must
+  // remember to carry the field is a rule that runs on memory. Re-reading
+  // the authoritative feed cannot drift.
+  const sseEnabled = process.env.NEXT_PUBLIC_DISABLE_SSE !== '1';
+  const wideKey = withNetwork('/api/hub/messages?limit=200', networkId);
+  // Scoped to the user's own inbox so a busy fleet cannot crowd their mail
+  // out of the row window. Merged with (not substituted for) the wide feed —
+  // see mergeMessageFeeds for why narrowing alone would drop rows.
+  const me = typeof window === 'undefined' ? null : currentUserAlias();
+  const inboxKey = me
+    ? withNetwork(`/api/hub/messages?limit=200&alias=${encodeURIComponent(me)}`, networkId)
+    : null;
+
+  const { connected: sseConnected } = useSSE({
+    url: '/api/hub/events',
+    enabled: sseEnabled,
+    onEvent: (event) => {
+      if (!['new_task', 'new_message', 'new_reply', 'broadcast', 'chained_reply'].includes(event.type)) return;
+      mutate(wideKey);
+      if (inboxKey) mutate(inboxKey);
+    },
+  });
+
+  // 20s once events are flowing, 5s when they are not — the old cadence is
+  // the fallback, never the primary path.
+  const refreshInterval = sseConnected ? 20000 : 5000;
   const { data: messagesData } = useSWR<{ messages?: ChatMessage[] }>(
-    withNetwork('/api/hub/messages?limit=200', networkId),
+    wideKey,
     fetcher,
-    { refreshInterval: 5000, dedupingInterval: 3000 },
+    { refreshInterval, dedupingInterval: 3000 },
+  );
+  const { data: inboxData } = useSWR<{ messages?: ChatMessage[]; pending_count?: number }>(
+    inboxKey,
+    fetcher,
+    { refreshInterval, dedupingInterval: 3000 },
   );
   const [readVersion, setReadVersion] = useState(0);
 
@@ -157,7 +195,7 @@ export function useChatUnread() {
     // Scope: only the USER'S conversation — a badge on X means "X has
     // something FOR YOU". Fleet chatter (X's messages to other agents)
     // must NOT inflate it.
-    for (const message of messagesData?.messages || []) {
+    for (const message of mergeMessageFeeds(messagesData?.messages, inboxData?.messages)) {
       const alias = message.from_alias?.trim();
       if (!alias || isUserish(alias)) continue;          // own sends never count
       if (!isUserish(message.to_alias)) continue;        // must be addressed to the user
@@ -165,7 +203,7 @@ export function useChatUnread() {
       if (at) bump(alias, at);
     }
     return { counts, lastActivity };
-  }, [messagesData, readMap]);
+  }, [messagesData, inboxData, readMap]);
 
   const hasUnread = useCallback((alias?: string | null) => {
     if (!alias) return false;
