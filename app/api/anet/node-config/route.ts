@@ -1,6 +1,7 @@
 import { requireDashboardAuth } from '@/app/lib/dashboard-auth';
 import { hubFetch } from '@/app/lib/hub';
 import { callMcp, parseMcpEnvelope, resolveDefaultNetworkId } from '@/app/lib/hub-mcp';
+import { buildPatch } from '@/app/lib/node-config-patch';
 
 /**
  * Per-node config proxy for #1316:
@@ -14,16 +15,6 @@ import { callMcp, parseMcpEnvelope, resolveDefaultNetworkId } from '@/app/lib/hu
  */
 
 const MCP_TOOL_UPDATE = 'update_node_config';
-
-const EDITABLE_FLAGS = [
-  'permissionMode',
-  'dangerouslySkipPermissions',
-  'maxTurns',
-  'budget',
-  'timeout',
-] as const;
-
-const EDITABLE_CHANNELS = ['telegram', 'feishu', 'commhub'] as const;
 
 type ConfigBody = {
   node_id?: string;
@@ -110,32 +101,6 @@ async function getMaskedConfigSnapshot(nodeId: string, networkId?: string | null
     };
   }
   return { result: data };
-}
-
-function buildPatch(body: ConfigBody) {
-  const patch: { model?: unknown; flags?: Record<string, unknown>; channels?: string[] } = {};
-  if (body.model !== undefined) patch.model = body.model;
-  if (body.flags && typeof body.flags === 'object') {
-    const flags: Record<string, unknown> = {};
-    for (const k of EDITABLE_FLAGS) {
-      if (k in body.flags && body.flags[k] !== undefined) flags[k] = body.flags[k];
-    }
-    if (Object.keys(flags).length > 0) patch.flags = flags;
-  }
-  if (Array.isArray(body.channels)) {
-    const allow = new Set<string>(EDITABLE_CHANNELS);
-    const seen = new Set<string>();
-    const channels: string[] = [];
-    for (const c of body.channels) {
-      if (typeof c !== 'string') continue;
-      const key = c.trim().toLowerCase();
-      if (!allow.has(key) || seen.has(key)) continue;
-      seen.add(key);
-      channels.push(key);
-    }
-    patch.channels = channels;
-  }
-  return patch;
 }
 
 export async function GET(req: Request) {
