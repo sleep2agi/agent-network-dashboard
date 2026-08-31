@@ -22,6 +22,27 @@ fi
 # Probe that eslint is actually executable (npx exists ≠ eslint installed:
 # a fresh worktree without node_modules used to make the run below fail
 # and get misreported as a violation).
+#
+# 🔴 This probe is necessary but NOT sufficient, and the gap is the exact
+# misreport it was written to prevent. Measured 2026-08-31 in a worktree
+# with no node_modules but a global eslint on PATH:
+#
+#     npx --no-install eslint --version   → rc=0   (prints v10.9.1)
+#     npx --no-install eslint <file>      → rc=2   ERR_MODULE_NOT_FOUND:
+#                                                 Cannot find package 'eslint'
+#                                                 imported from eslint.config.mjs
+#
+# The probe asks "is the eslint BINARY runnable"; the real run needs "can the
+# flat config resolve its own imports". Different questions — so the probe
+# passed, the run died, and the commit was blocked with
+# "✗ react-hooks/rules-of-hooks violation" on code that has none.
+#
+# The taxonomy below no longer relies on a proxy call: eslint's own exit code
+# already separates the two cases, and it is the result of THE run we care
+# about rather than a second, differently-resolved invocation.
+#     1 = lint problems found      2 = fatal (config/CLI could not run)
+# Both measured here: a real rules-of-hooks violation exits 1; the missing
+# node_modules case exits 2.
 if ! npx --no-install eslint --version >/dev/null 2>&1; then
   echo "pre-commit: ⚠ ENVIRONMENT — eslint is not installed/executable here."
   echo "  rules-of-hooks gate DID NOT RUN (fail-open). To enable it:  npm install"
@@ -32,6 +53,14 @@ echo "pre-commit: rules-of-hooks check on $n staged file(s)…"
 # shellcheck disable=SC2086
 npx --no-install eslint $files --rule '{"react-hooks/rules-of-hooks":"error"}' --quiet
 code=$?
+if [ $code -eq 2 ]; then
+  echo ""
+  echo "pre-commit: ⚠ ENVIRONMENT — eslint exited 2 (fatal: it could not run, e.g."
+  echo "  eslint.config.mjs cannot resolve its imports without node_modules)."
+  echo "  rules-of-hooks gate DID NOT RUN (fail-open). To enable it:  npm install"
+  echo "  🔴 This is NOT a code violation — do not go looking for one."
+  exit 0
+fi
 if [ $code -ne 0 ]; then
   echo ""
   echo "✗ react-hooks/rules-of-hooks violation — commit blocked."
