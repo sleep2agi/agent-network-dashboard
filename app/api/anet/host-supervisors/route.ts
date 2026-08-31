@@ -34,6 +34,17 @@ interface DaemonRow {
     mem_gb?: number | null;
     ip_internal?: string | null;
   };
+  // #1545 —— daemon 自报的「我现在能不能建节点」。hub 在 server.ts 的
+  // /api/host-supervisors 里带出，本路由是**整体透传**（见文件末尾的
+  // Response.json），所以这三格其实早就到浏览器了，缺的只是类型和渲染。
+  //
+  // 🔴 三态，不是两态：`undefined`（从没报过）**不等于** `false`（报了说不能）。
+  //    渲染见 app/lib/daemon-capability.ts，那里三态各有一句不同的话。
+  can_create_nodes?: boolean;
+  create_nodes_blocked_reason?: string;
+  /** 该能力值是在**这份 report 发出前 N 毫秒**测得的。
+   *  绝对年龄 = (now - last_seen_at) + 本值。 */
+  create_capability_observed_ms_ago?: number;
 }
 
 interface ServerRow {

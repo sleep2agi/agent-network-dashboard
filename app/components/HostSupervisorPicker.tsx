@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { describeDaemonCapability } from '../lib/daemon-capability';
 
 /**
  * PR4 #338 — host_supervisor daemon picker (RFC-026 §9.4 locked mockup).
@@ -39,6 +40,17 @@ export interface DaemonOption {
     mem_gb?: number | null;
     ip_internal?: string | null;
   };
+  // #1545 —— daemon 自报的「我现在能不能建节点」。hub 带出、
+  // app/api/anet/host-supervisors/route.ts 整体透传，所以这三格早就到了
+  // 浏览器，缺的只是类型和渲染。
+  //
+  // 🔴 三态，不是两态：`undefined`（从没报过）**不等于** `false`（报了说不能）。
+  //    渲染见 app/lib/daemon-capability.ts，那里三态各有一句不同的话。
+  can_create_nodes?: boolean;
+  create_nodes_blocked_reason?: string;
+  /** 该能力值是在**这份 report 发出前 N 毫秒**测得的。
+   *  绝对年龄 = (now - last_seen_at) + 本值。 */
+  create_capability_observed_ms_ago?: number;
 }
 
 interface HostOption {
@@ -77,6 +89,11 @@ export function HostSupervisorPicker({
   const [hosts, setHosts] = useState<HostOption[]>([]);
   const [errMsg, setErrMsg] = useState('');
   const [forcePicker, setForcePicker] = useState(false);
+  // #1545 —— 「现在」随取数一起定下来，而不是在渲染里调 Date.now()。
+  // eslint 的 react-hooks/purity 会拦后者（渲染必须是纯函数）；而且这样更诚实：
+  // 这个组件是一次性取数（依赖只有 networkId，不轮询），年龄就该相对
+  // **快照被取下来的那一刻**算，全部卡片用同一个基准，不会各算各的。
+  const [loadedAt, setLoadedAt] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -111,6 +128,7 @@ export function HostSupervisorPicker({
         }));
         setDaemons(list);
         setHosts(hostList);
+        setLoadedAt(Date.now());
         setState('ready');
         // count=1 auto-pick: preselect the only daemon. count≥2 leaves the
         // selection to the user (parent value stays null until click).
@@ -201,6 +219,7 @@ anet daemon up my-daemon`}</pre>
           </button>
         </div>
         <RuntimeList runtimes={d.runtimes_supported} className="mt-1" />
+        <CapabilityLine daemon={d} nowMs={loadedAt} className="mt-1" />
       </div>
     );
   }
@@ -228,6 +247,7 @@ anet daemon up my-daemon`}</pre>
             host={h}
             selected={Boolean(h.daemon && h.daemon.daemon_node_id === value)}
             onPick={() => h.daemon && onChange(h.daemon.daemon_node_id, h.daemon)}
+            nowMs={loadedAt}
           />
         ))}
       </div>
@@ -241,10 +261,14 @@ function HostCard({
   host,
   selected,
   onPick,
+  nowMs,
 }: {
   host: HostOption;
   selected: boolean;
   onPick: () => void;
+  // #1545 —— 取数那一刻的时间戳，由 picker 传下来。不在这里调 Date.now()：
+  // 渲染必须是纯函数（eslint react-hooks/purity），且所有卡片要用同一个基准。
+  nowMs: number;
 }) {
   const daemon = host.daemon;
   const alert = daemon?.host_telemetry?.alert_level || (host.status === 'online' ? 'green' : 'gray');
@@ -267,6 +291,7 @@ function HostCard({
         <>
           <div className="truncate text-[11px] text-gray-500">daemon: {daemon.alias}</div>
           <RuntimeList runtimes={daemon.runtimes_supported} />
+          <CapabilityLine daemon={daemon} nowMs={nowMs} className="mt-1" />
           <button
             type="button"
             onClick={onPick}
@@ -299,6 +324,25 @@ function HostCard({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// #1545 —— 卡片上那一行「它现在能不能建节点」。
+// 三态各一句话，措辞与判据都不在这里产生：见 app/lib/daemon-capability.ts。
+// 🔴 颜色用命名色，不用 text-[#hex] —— scripts/check-color-ratchet.mjs 对
+//    超出基线的硬编码色类会红（本文件基线 8，本改动加 0）。
+function CapabilityLine({ daemon, nowMs, className = '' }: { daemon: DaemonOption; nowMs: number; className?: string }) {
+  const v = describeDaemonCapability(daemon, nowMs);
+  const tone =
+    v.kind === 'ready' ? 'text-emerald-400'
+    : v.kind === 'blocked' ? 'text-red-400'
+    : 'text-gray-500';
+  const mark = v.kind === 'ready' ? '\u2713' : v.kind === 'blocked' ? '\u2715' : '?';
+  return (
+    <div className={className} data-capability={v.kind}>
+      <div className={`text-[10px] font-semibold ${tone}`}>{mark} {v.label}</div>
+      {v.detail ? <div className="text-[10px] text-gray-600 mt-0.5 leading-snug">{v.detail}</div> : null}
     </div>
   );
 }
