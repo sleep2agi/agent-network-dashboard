@@ -33,6 +33,9 @@ export interface DaemonOption {
   online?: boolean;
   last_seen_at?: string | null;
   runtimes_supported?: string[];
+  can_create_nodes?: boolean;
+  create_nodes_blocked_reason?: string;
+  runtime_readiness?: Record<string, unknown>;
   host_telemetry?: {
     alert_level?: 'green' | 'yellow' | 'red' | 'gray';
     cpu_cores?: number | null;

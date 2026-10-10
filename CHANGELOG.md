@@ -2,6 +2,41 @@
 
 All user-facing changes to `@sleep2agi/agent-network-dashboard`.
 
+## Unreleased — aligned to desktop client 0.2.228 (2026-10-10)
+
+No version bump. The package version remains `0.6.3-preview.56`.
+
+Investigated against `sleep2agi/agent-network-app` desktop **0.2.228** (tag `desktop-v0.2.228`, published 2026-10-10; `0.2.229` was in progress and is not claimed) and Hub `docs-site/docs/api/mcp-tools.md` plus `rest-data.md` on `sleep2agi/agent-network` main the same day.
+
+### Calls that were failing against the current Hub
+
+- **Create node.** The wizard sends `codex-sdk` and `grok-build-acp`, but `/api/anet/node-create` still allowed only `claude-agent-sdk`, `codex`, and `grok`. Codex and Grok creates returned 400 in the dashboard and never reached the Hub. The proxy now allows the Hub's seven runtimes (`claude-agent-sdk`, `claude-code-cli`, `codex-sdk`, `codex-app-server`, `grok-build-acp`, `grok-build-cli`, `opencode-cli`). `model` is no longer forwarded as a flag.
+- **Channel save.** `commhub` was still on the editable channel allowlist. The Hub drops it, and a replace-set that narrows to only `commhub` is `channels_all_invalid` — turning off the last real channel failed. The allowlist is telegram and feishu. An explicit empty list still means disable-all.
+- **permissionMode.** The node settings select offered `auto`, which the Hub rejects. The select is the Hub enum: `default`, `acceptEdits`, `plan`, `bypassPermissions`.
+- **Create progress.** `GET /api/anet/node-create` returned 501 ("contract Q2"). It now proxies Hub `GET /api/node-create-requests`, and the wizard shows a daemon rejection instead of only waiting for the alias to appear.
+
+### What this pass adds
+
+- Create-node model step reads `runtime_readiness[runtime]` providers and models when the daemon reported them. Keys and credentialed base URLs are dropped. Codex ids that contain `/` are not offered as Codex models.
+- Servers page lists daemon create capability (`can_create_nodes` absent stays "未上报", not "不能建") and per-runtime readiness text.
+- `/board` lists Hub requirements and asks for the real `abandoned` column (`X-Anet-Accept-Columns: abandoned`). Abandoned cards are hidden until you ask to see them, and they render with a strikethrough. Done stays green and is not struck through.
+- `/teams` reads Agent teams and human departments.
+
+### Still not connected
+
+These surfaces say「演示数据 · 后端开发中，敬请期待」and do not send a half-built request:
+
+- OpenCode V2 explicit consent and local-tool opt-in (creates stay V1).
+- Codex provider-key / preset editing.
+- Managing a daemon's child nodes (start / stop / restart / delete) from the daemon list.
+- Creating or editing requirement cards, and creating or editing teams.
+
+### Investigated and left as-is
+
+- Unread badges still count the network inbox (`GET /api/messages` without `scope=user`). The Hub's per-user inbox (`scope=user`, `unread_by_agent`) is a separate feed. Open PR #40 still matches the alias branch of that API.
+- The create-server picker still does not disable a daemon that reported `can_create_nodes === false`. Open PR #41 is that picker change.
+- Pre-commit still reports an eslint startup failure as a rules-of-hooks violation. Open PR #44 is that hook change.
+
 Format: chronological release notes; each entry lists what *changed for a user* between one release and the next, not per-commit history. Preview versions (`X.Y.Z-preview.N`) are dev-channel iterations and are collapsed under the stable release they feed into.
 
 ---

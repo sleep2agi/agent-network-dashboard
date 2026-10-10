@@ -8,6 +8,7 @@ import { useNodeLifecycle } from '../lib/hooks';
 import { toggleMute, useMuted } from '../lib/chat-mute';
 import { togglePin, usePinned } from '../lib/chat-pin';
 import { useLifecycleCaps } from './NodeLifecycleMenu';
+import { HUB_PERMISSION_MODES } from '../lib/hub-align.mjs';
 
 /**
  * Per-node settings panel (issue #260 → v0.11 flagship #262, Vincent tg
@@ -50,14 +51,14 @@ const RUNTIME_MODELS: Record<string, string[]> = {
   'grok-build-acp': ['grok-build'],
 };
 
-// C. config.flags contract (per 通信龙). permissionMode is a select; two
-// booleans; three numeric bounds. These six are the entire editable flag set.
-const PERMISSION_MODES = ['auto', 'default', 'bypassPermissions'];
+// C. config.flags contract (per 通信龙). permissionMode is the hub enum
+// (default / acceptEdits / plan / bypassPermissions). `auto` is not a hub value.
 
 // A. Channel bindings — enable/disable is editable; the per-channel secret
 // fields below stay read-only (`StubField`, masked). `roadmap` = greyed "即将
-// 支持". Keep this list in sync with EDITABLE_CHANNELS in
-// app/api/anet/node-config/route.ts (server-side whitelist).
+// 支持". The server allowlist is narrowEditableChannels in
+// app/lib/hub-align.mjs (telegram + feishu). commhub is the RPC transport,
+// not a per-node channel, and is intentionally absent.
 const CHANNELS: { key: string; label: string; roadmap?: boolean; fields: { label: string; value?: string }[] }[] = [
   {
     key: 'telegram', label: 'Telegram',
@@ -476,7 +477,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
     const m = data?.model ? String(data.model) : initialModel;
     const f = (data?.flags && typeof data.flags === 'object' ? data.flags : {}) as Record<string, unknown>;
     const nextFlags: FlagsForm = {
-      permissionMode: typeof f.permissionMode === 'string' && PERMISSION_MODES.includes(f.permissionMode) ? f.permissionMode : DEFAULT_FLAGS.permissionMode,
+      permissionMode: typeof f.permissionMode === 'string' && HUB_PERMISSION_MODES.includes(f.permissionMode) ? f.permissionMode : DEFAULT_FLAGS.permissionMode,
       dangerouslySkipPermissions: !!f.dangerouslySkipPermissions,
       maxTurns: numStr(f.maxTurns),
       budget: numStr(f.budget),
@@ -794,7 +795,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
               <Select
                 label="权限模式 permissionMode"
                 value={flags.permissionMode}
-                options={PERMISSION_MODES}
+                options={[...HUB_PERMISSION_MODES]}
                 onChange={v => setFlag('permissionMode', v)}
               />
               <Toggle
