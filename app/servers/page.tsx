@@ -1,5 +1,6 @@
 'use client';
 
+import { DaemonFleetPanel } from '../components/DaemonFleetPanel';
 import { ServersPanel } from '../components/ServersDrawer';
 
 export default function ServersPage() {
@@ -45,6 +46,7 @@ export default function ServersPage() {
         <section className="rounded-2xl border border-[#26262b] bg-[#161618] p-3 shadow-lg shadow-black/20">
           <ServersPanel className="max-h-none overflow-visible" />
         </section>
+        <DaemonFleetPanel />
       </div>
     </main>
   );
