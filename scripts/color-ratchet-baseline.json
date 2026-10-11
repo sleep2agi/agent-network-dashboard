@@ -16,7 +16,7 @@
   "app/components/NodeSettingsPanel.tsx": 41,
   "app/components/ProviderFormModal.tsx": 12,
   "app/components/ReachabilityMatrix.tsx": 2,
-  "app/components/Sidebar.tsx": 21,
+  "app/components/Sidebar.tsx": 6,
   "app/components/StatsBar.tsx": 4,
   "app/components/TaskChatPanel.tsx": 15,
   "app/components/TaskDrawer.tsx": 14,
