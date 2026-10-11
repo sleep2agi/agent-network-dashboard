@@ -34,7 +34,7 @@ type DashStats = {
   doing: number;
   pool: number;
   abandoned: number;
-  leaders: Array<{ kind?: string; id?: string; n?: number; display_name?: string; name?: string; alias?: string }>;
+  leaders: Array<{ kind?: string; id?: string; n?: number; spark?: number[]; display_name?: string; name?: string; alias?: string }>;
   recent: Array<{ id: string; seq?: number | null; name?: string; completed_by?: { kind?: string; id?: string; display_name?: string; name?: string; alias?: string } | null }>;
   daily: Array<{ date: string; n?: number }>;
 };
@@ -175,6 +175,7 @@ export function BoardWorkspace() {
   const [statsNote, setStatsNote] = useState('');
   const [people, setPeople] = useState<Person[]>([]);
   const [period, setPeriod] = useState<PeriodId>('week');
+  const [leaderKind, setLeaderKind] = useState<'all' | 'user' | 'node'>('all');
 
   useEffect(() => {
     if (view !== 'board' && view !== 'list' && view !== 'schedule') return;
@@ -363,27 +364,28 @@ export function BoardWorkspace() {
   ));
   const maxDaily = Math.max(1, ...(stats?.daily.slice(-14).map((day) => day.n || 0) ?? [1]));
 
-  const topCount = Math.max(1, ...(stats?.leaders.slice(0, 8).map((leader) => leader.n || 0) ?? [1]));
-  const statCards = stats
-    ? [
-        { label: 'Done', value: stats.done, dot: columnDot('done') },
-        { label: 'In progress', value: stats.doing, dot: columnDot('doing') },
-        { label: 'Pool', value: stats.pool, dot: columnDot('pool') },
-        { label: 'Abandoned', value: stats.abandoned, dot: columnDot('abandoned') },
-      ]
-    : [];
+  const openColumn = (column: string) => {
+    setStatus(column);
+    if (column === 'abandoned') setShowAbandoned(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('view');
+    params.set('status', column);
+    const qs = params.toString();
+    router.push(qs ? `/board?${qs}` : '/board');
+  };
 
   return (
-    <main
-      className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6 lg:px-10"
-      style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -10%, color-mix(in srgb, var(--info) 14%, transparent), transparent 60%)' }}
-    >
-      <div className="mx-auto max-w-7xl space-y-6">
+    <main className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-5 lg:px-6">
+      <div className="mx-auto max-w-[1200px] space-y-6 xl:max-w-[1360px]">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--fg-dim)]">Requirements</p>
-            <h1 className="text-2xl font-semibold tracking-tight">Board</h1>
-            <p className="max-w-xl text-sm leading-relaxed text-[var(--fg-muted)]">
+            <div className="flex items-center gap-2">
+              <h1 className="text-[22px] font-semibold leading-7">Board</h1>
+              <PendingNotice>
+                Creating, dragging, and editing cards is not wired yet. Everything below is what the Hub returned.
+              </PendingNotice>
+            </div>
+            <p className="max-w-xl text-xs leading-4 text-[var(--fg-dim)]">
               Requirement tasks. A title or #id opens that task.
               {aware ? ' Abandoned is a real column on this Hub.' : ''}
             </p>
@@ -391,12 +393,8 @@ export function BoardWorkspace() {
           <Segmented label="Task views" value={view} options={VIEWS} onChange={setView} />
         </header>
 
-        <PendingNotice>
-          Creating, dragging, and editing cards is not wired yet. Everything below is what the Hub returned.
-        </PendingNotice>
-
         {(view === 'board' || view === 'list' || view === 'schedule' || view === 'activity') && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -513,13 +511,13 @@ export function BoardWorkspace() {
         )}
 
         {error ? (
-          <p className="rounded-xl border border-[var(--danger)]/30 bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--danger)]">{error}</p>
+          <p className="text-sm text-[var(--error)]">{error}</p>
         ) : null}
 
         {view === 'board' && (
           <>
             {cards === null ? <p className="text-sm text-[var(--fg-dim)]">Loading board…</p> : null}
-            {cards !== null ? <div className="grid items-start gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {cards !== null ? <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible xl:grid-cols-4">
               {COLUMNS.filter((col) => {
                 if (col.id === 'abandoned' && !(showAbandoned || status === 'abandoned')) return false;
                 if (col.id === 'done' && hideDone && status !== 'done') return false;
@@ -527,34 +525,35 @@ export function BoardWorkspace() {
               }).map((col) => {
                 const rows = visible.filter((card) => card.column === col.id);
                 return (
-                  <TaskPanel key={col.id}>
-                    <div className="mb-3 flex items-center justify-between gap-2 px-1">
-                      <h2 className={`flex items-center gap-2 text-sm font-medium ${col.id === 'abandoned' ? 'text-[var(--fg-dim)] line-through' : ''}`}>
+                  <section key={col.id} className="w-[85vw] shrink-0 snap-start md:w-auto">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <h2 className={`flex items-center gap-2 text-[15px] font-semibold leading-[22px] ${col.id === 'abandoned' ? 'text-[var(--fg-dim)] line-through' : ''}`}>
                         <span aria-hidden className="h-2 w-2 rounded-full" style={{ backgroundColor: columnDot(col.id) }} />
                         {col.label}
                       </h2>
-                      <span className="rounded-full bg-[var(--bg)] px-2 py-0.5 text-[11px] tabular-nums text-[var(--fg-muted)]">{rows.length}</span>
+                      <span className="text-xs tabular-nums text-[var(--fg-dim)]">{rows.length}</span>
                     </div>
-                    <ul className="space-y-2.5">
+                    <ul className="space-y-2">
                       {rows.map((card) => (
                         <li key={card.id}>
-                          <TaskCard className="space-y-2.5">
+                          <TaskCard className="space-y-2">
                             <RequirementRef
                               id={card.id}
                               seq={card.seq}
                               name={card.name}
                               struck={col.id === 'abandoned'}
                               done={col.id === 'done'}
+                              lines={2}
                             />
-                            <div className="flex flex-wrap items-center gap-1.5">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--fg-dim)]">
                               <PriorityChip priority={card.priority} />
                               <DueText card={card} />
                               {card.archived ? <MetaChip>Archived</MetaChip> : null}
+                              {cardOwner(card, people) ? <span className="ml-auto max-w-[8rem] truncate text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
                             </div>
-                            {(projectName(card.projectId) || cardOwner(card, people) || (card.tags || []).length > 0) ? (
+                            {(projectName(card.projectId) || (card.tags || []).length > 0) ? (
                               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                 {projectName(card.projectId) ? <span className="text-[11px] text-[var(--fg-dim)]">{projectName(card.projectId)}</span> : null}
-                                {cardOwner(card, people) ? <span className="text-[11px] text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
                                 <TagList tags={card.tags} />
                               </div>
                             ) : null}
@@ -562,10 +561,10 @@ export function BoardWorkspace() {
                         </li>
                       ))}
                       {cards !== null && rows.length === 0 ? (
-                        <li className="rounded-xl border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--fg-dim)]">None</li>
+                        <li className="px-1 py-6 text-center text-xs text-[var(--fg-dim)]">None</li>
                       ) : null}
                     </ul>
-                  </TaskPanel>
+                  </section>
                 );
               })}
             </div> : null}
@@ -575,49 +574,40 @@ export function BoardWorkspace() {
         {view === 'list' && (
           <TaskPanel>
             {cards === null ? <p className="px-2 py-4 text-sm text-[var(--fg-dim)]">Loading list…</p> : null}
-            <ul className="space-y-2.5">
+            <ul>
               {visible.map((card) => {
                 const participants = (card.participants || []).map((person) => personLabel(person, people)).filter(Boolean);
                 return (
-                  <li key={card.id}>
-                    <TaskCard className="space-y-2.5">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <RequirementRef
-                            id={card.id}
-                            seq={card.seq}
-                            name={card.name}
-                            struck={card.column === 'abandoned'}
-                            done={card.column === 'done'}
-                          />
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <MetaChip>{columnLabel(card.column)}</MetaChip>
-                          <PriorityChip priority={card.priority} />
-                          <DueText card={card} />
-                          {card.archived ? <MetaChip>Archived</MetaChip> : null}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                        {projectName(card.projectId) ? <span className="text-[11px] text-[var(--fg-dim)]">{projectName(card.projectId)}</span> : null}
-                        {cardOwner(card, people) ? <span className="max-w-[12rem] truncate text-xs text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
-                        {participants.length > 0 ? <span className="max-w-[16rem] truncate text-[11px] text-[var(--fg-muted)]">{participants.join(', ')}</span> : null}
-                        {card.createdAt ? <span className="text-[11px] tabular-nums text-[var(--fg-dim)]">Created {stamp(card.createdAt)}</span> : null}
-                        {card.updatedAt ? <span className="text-[11px] tabular-nums text-[var(--fg-dim)]">Updated {stamp(card.updatedAt)}</span> : null}
-                        <TagList tags={card.tags} />
-                        {(card.issues || []).map((issue) => (
-                          <a
-                            key={`${issue.repo}#${issue.number}`}
-                            className="text-[11px] text-[var(--info)] hover:underline"
-                            href={`https://github.com/${issue.repo}/issues/${issue.number}`}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {issue.repo}#{issue.number}
-                          </a>
-                        ))}
-                      </div>
-                    </TaskCard>
+                  <li key={card.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-[var(--border)] px-1 py-2.5 first:border-t-0 hover:bg-[var(--bg-elevated)]">
+                    <div className="min-w-0 flex-1">
+                      <RequirementRef
+                        id={card.id}
+                        seq={card.seq}
+                        name={card.name}
+                        struck={card.column === 'abandoned'}
+                        done={card.column === 'done'}
+                      />
+                    </div>
+                    <MetaChip>{columnLabel(card.column)}</MetaChip>
+                    <PriorityChip priority={card.priority} />
+                    <DueText card={card} />
+                    {card.archived ? <MetaChip>Archived</MetaChip> : null}
+                    {cardOwner(card, people) ? <span className="max-w-[12rem] truncate text-xs text-[var(--fg-dim)]">{cardOwner(card, people)}</span> : null}
+                    {participants.length > 0 ? <span className="max-w-[16rem] truncate text-[11px] text-[var(--fg-dim)]">{participants.join(', ')}</span> : null}
+                    {projectName(card.projectId) ? <span className="text-[11px] text-[var(--fg-dim)]">{projectName(card.projectId)}</span> : null}
+                    {card.updatedAt ? <span className="text-[11px] tabular-nums text-[var(--fg-dim)]">{stamp(card.updatedAt)}</span> : null}
+                    <TagList tags={card.tags} />
+                    {(card.issues || []).map((issue) => (
+                      <a
+                        key={`${issue.repo}#${issue.number}`}
+                        className="text-[11px] text-[var(--fg)] hover:text-[var(--accent)] hover:underline"
+                        href={`https://github.com/${issue.repo}/issues/${issue.number}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {issue.repo}#{issue.number}
+                      </a>
+                    ))}
                   </li>
                 );
               })}
@@ -631,7 +621,7 @@ export function BoardWorkspace() {
         {view === 'schedule' && (
           <div className="space-y-4">
             <p className="text-sm text-[var(--fg-muted)]">
-              Due dates on requirement tasks. Agent dispatch schedules stay on <Link href="/scheduled-tasks" className="text-[var(--info)] hover:underline">Scheduled tasks</Link>.
+              Due dates on requirement tasks. Agent dispatch schedules stay on <Link href="/scheduled-tasks" className="text-[var(--fg)] hover:text-[var(--accent)] hover:underline">Scheduled tasks</Link>.
             </p>
             {cards === null ? <p className="text-sm text-[var(--fg-dim)]">Loading schedule…</p> : null}
             {SCHEDULE_BUCKETS.map((bucket) => {
@@ -640,24 +630,22 @@ export function BoardWorkspace() {
               return (
                 <TaskPanel key={bucket.id}>
                   <SectionHeading title={bucket.label} hint={cards === null ? undefined : String(rows.length)} />
-                  <ul className="space-y-2">
+                  <ul>
                     {rows.map((card) => (
-                      <li key={card.id}>
-                        <TaskCard className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                          <div className="min-w-0 flex-1">
-                            <RequirementRef
-                              id={card.id}
-                              seq={card.seq}
-                              name={card.name}
-                              struck={card.column === 'abandoned'}
-                              done={card.column === 'done'}
-                            />
-                          </div>
-                          <MetaChip>{columnLabel(card.column)}</MetaChip>
-                          <DueText card={card} />
-                          {cardOwner(card, people) ? <span className="text-xs text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
-                          <TagList tags={card.tags} />
-                        </TaskCard>
+                      <li key={card.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-[var(--border)] px-1 py-2.5 first:border-t-0 hover:bg-[var(--bg-elevated)]">
+                        <div className="min-w-0 flex-1">
+                          <RequirementRef
+                            id={card.id}
+                            seq={card.seq}
+                            name={card.name}
+                            struck={card.column === 'abandoned'}
+                            done={card.column === 'done'}
+                          />
+                        </div>
+                        <MetaChip>{columnLabel(card.column)}</MetaChip>
+                        <DueText card={card} />
+                        {cardOwner(card, people) ? <span className="text-xs text-[var(--fg-dim)]">{cardOwner(card, people)}</span> : null}
+                        <TagList tags={card.tags} />
                       </li>
                     ))}
                   </ul>
@@ -673,21 +661,19 @@ export function BoardWorkspace() {
         {view === 'activity' && (
           <TaskPanel>
             {events === null ? <p className="px-2 py-4 text-sm text-[var(--fg-dim)]">Loading activity…</p> : null}
-            <ul className="space-y-2">
+            <ul>
               {activityRows.map((event) => (
-                <li key={event.id}>
-                  <TaskCard className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <div className="min-w-[12rem] flex-1">
-                      {event.requirement_id ? (
-                        <RequirementRef id={event.requirement_id} seq={event.seq} name={event.title || undefined} />
-                      ) : (
-                        <span className="text-[13px] font-medium text-[var(--fg-dim)]">{event.title || 'Task'}</span>
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-[var(--fg)]">{personLabel(event.actor, people)}</span>
-                    <MetaChip soft>{eventSummary(event)}</MetaChip>
-                    <span className="text-xs tabular-nums text-[var(--fg-dim)]">{relativeAgo(event.at) || ''}</span>
-                  </TaskCard>
+                <li key={event.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-[var(--border)] px-1 py-2.5 first:border-t-0 hover:bg-[var(--bg-elevated)]">
+                  <div className="min-w-[12rem] flex-1">
+                    {event.requirement_id ? (
+                      <RequirementRef id={event.requirement_id} seq={event.seq} name={event.title || undefined} />
+                    ) : (
+                      <span className="text-sm font-medium text-[var(--fg)]">{event.title || 'Task'}</span>
+                    )}
+                  </div>
+                  <span className="text-xs text-[var(--fg-dim)]">{personLabel(event.actor, people)}</span>
+                  <MetaChip soft>{eventSummary(event)}</MetaChip>
+                  <span className="text-xs tabular-nums text-[var(--fg-dim)]">{relativeAgo(event.at) || ''}</span>
                 </li>
               ))}
             </ul>
@@ -698,85 +684,137 @@ export function BoardWorkspace() {
         )}
 
         {view === 'dashboard' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <Segmented label="Completion period" value={period} options={PERIODS} onChange={setPeriod} />
-            {statsNote ? <p className="text-sm text-[var(--fg-muted)]">{statsNote}</p> : null}
+            {statsNote ? <p className="text-xs text-[var(--fg-dim)]">{statsNote}</p> : null}
             {stats ? (
               <>
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                  {statCards.map((card) => (
-                    <div key={card.label} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-4">
-                      <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-[var(--fg-dim)]">
-                        <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: card.dot }} />
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                  <div className="col-span-2 rounded-[10px] bg-[var(--bg-secondary)] p-4 shadow-[var(--ds-shadow-card)] transition-colors hover:bg-[var(--bg-elevated)]">
+                    <button
+                      type="button"
+                      onClick={() => openColumn('done')}
+                      className="w-full text-left transition-colors hover:opacity-90"
+                    >
+                      <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--fg-muted)]">
+                        <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: 'var(--success)' }} />
+                        完成
+                      </div>
+                      <div className="mt-2 text-[32px] font-semibold leading-[38px] tabular-nums">{stats.done}</div>
+                    </button>
+                    {stats.abandoned > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => openColumn('abandoned')}
+                        className="mt-2 text-xs text-[var(--fg-dim)] hover:text-[var(--fg)]"
+                      >
+                        另有 {stats.abandoned} 个已废弃
+                      </button>
+                    ) : null}
+                  </div>
+                  {([
+                    { id: 'doing', label: '进行中', value: stats.doing, dot: 'var(--info)' },
+                    { id: 'pool', label: '需求池', value: stats.pool, dot: 'var(--offline)' },
+                  ] as const).map((card) => (
+                    <button
+                      key={card.id}
+                      type="button"
+                      onClick={() => openColumn(card.id)}
+                      className="rounded-[10px] bg-[var(--bg-secondary)] p-4 text-left shadow-[var(--ds-shadow-card)] transition-colors hover:bg-[var(--bg-elevated)]"
+                    >
+                      <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--fg-muted)]">
+                        <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: card.dot }} />
                         {card.label}
                       </div>
-                      <div className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">{card.value}</div>
-                    </div>
+                      <div className="mt-2 text-[24px] font-semibold leading-8 tabular-nums">{card.value}</div>
+                    </button>
                   ))}
                 </div>
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <TaskPanel>
-                    <SectionHeading title="Recent completions" hint={String(stats.recent.length)} />
-                    <ul className="space-y-2">
-                      {stats.recent.map((row) => (
-                        <li key={row.id}>
-                          <TaskCard className="flex items-center justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <RequirementRef id={row.id} seq={row.seq} name={row.name} done />
-                            </div>
-                            <span className="shrink-0 text-sm text-[var(--fg-muted)]">
-                              {personLabel(row.completed_by, people)}
-                            </span>
-                          </TaskCard>
+                <div className="grid gap-4 lg:grid-cols-12">
+                  <TaskPanel className="lg:col-span-8">
+                    <SectionHeading title="Recent completions" hint={String(Math.min(8, stats.recent.length))} />
+                    <ul>
+                      {stats.recent.slice(0, 8).map((row) => (
+                        <li key={row.id} className="flex h-11 items-center gap-3 border-t border-[var(--border)] px-1 first:border-t-0">
+                          <div className="min-w-0 flex-1">
+                            <RequirementRef id={row.id} seq={row.seq} name={row.name} done />
+                          </div>
+                          <span className="shrink-0 text-xs text-[var(--fg-dim)]">
+                            {personLabel(row.completed_by, people)}
+                          </span>
                         </li>
                       ))}
-                      {stats.recent.length === 0 ? <li className="px-2 py-6 text-sm text-[var(--fg-dim)]">Nothing completed in this period.</li> : null}
+                      {stats.recent.length === 0 ? <li className="px-1 py-6 text-sm text-[var(--fg-dim)]">Nothing completed in this period.</li> : null}
                     </ul>
+                    {stats.recent.length > 8 ? (
+                      <button type="button" onClick={() => openColumn('done')} className="mt-2 text-xs text-[var(--fg-muted)] hover:text-[var(--accent)] hover:underline">
+                        查看全部 →
+                      </button>
+                    ) : null}
                   </TaskPanel>
-                  <TaskPanel>
-                    <SectionHeading title="Leaderboard" hint={stats.leaders.length ? `Top ${Math.min(8, stats.leaders.length)}` : undefined} />
-                    <ul className="space-y-2">
-                      {stats.leaders.slice(0, 8).map((leader, index) => {
-                        const count = leader.n ?? 0;
-                        const width = Math.max(8, Math.round((count / topCount) * 100));
-                        return (
-                          <li key={`${leader.kind || 'x'}:${leader.id || index}`}>
-                            <TaskCard className="flex items-center gap-3">
-                              <span
-                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-semibold tabular-nums ${
-                                  index < 3 ? 'bg-[var(--bg)] text-[var(--fg)]' : 'text-[var(--fg-dim)]'
-                                }`}
-                              >
-                                {index + 1}
+                  <TaskPanel className="lg:col-span-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <SectionHeading title="Leaderboard" />
+                      <Segmented
+                        label="Leaderboard filter"
+                        value={leaderKind}
+                        options={[{ id: 'all', label: '全部' }, { id: 'user', label: '人' }, { id: 'node', label: 'Agent' }]}
+                        onChange={setLeaderKind}
+                      />
+                    </div>
+                    <ul>
+                      {stats.leaders
+                        .filter((leader) => leaderKind === 'all' || (leaderKind === 'node' ? leader.kind === 'node' : leader.kind !== 'node'))
+                        .slice(0, 8)
+                        .map((leader, index) => (
+                          <li key={`${leader.kind || 'x'}:${leader.id || index}`} className="flex h-11 items-center gap-3 border-t border-[var(--border)] first:border-t-0">
+                            <span className={`w-4 shrink-0 text-[13px] font-medium tabular-nums ${index < 3 ? 'font-semibold text-[var(--fg)]' : 'text-[var(--fg-dim)]'}`}>
+                              {index + 1}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-sm">{personLabel(leader, people)}</span>
+                            <span className="text-[11px] font-medium text-[var(--fg-dim)]">{leader.kind === 'node' ? 'Agent' : '成员'}</span>
+                            {Array.isArray(leader.spark) && leader.spark.length > 1 ? (
+                              <span className="flex h-4 w-12 items-end gap-px" aria-hidden>
+                                {leader.spark.slice(-14).map((n, sparkIndex, days) => {
+                                  const peak = Math.max(1, ...days);
+                                  return (
+                                    <span
+                                      key={sparkIndex}
+                                      className="min-w-0 flex-1 rounded-[1px]"
+                                      style={{
+                                        height: `${Math.max(12, (n / peak) * 100)}%`,
+                                        background: sparkIndex === days.length - 1 ? 'var(--accent)' : 'var(--fg-dim)',
+                                      }}
+                                    />
+                                  );
+                                })}
                               </span>
-                              <div className="min-w-0 flex-1">
-                                <div className="truncate text-sm font-medium">{personLabel(leader, people)}</div>
-                                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[var(--bg)]">
-                                  <div className="h-full rounded-full bg-[var(--info)]" style={{ width: `${width}%` }} />
-                                </div>
-                              </div>
-                              <MetaChip>{leader.kind === 'node' ? 'Agent' : 'Member'}</MetaChip>
-                              <span className="w-8 text-right text-sm font-semibold tabular-nums">{count}</span>
-                            </TaskCard>
+                            ) : null}
+                            <span className="w-8 text-right text-sm font-semibold tabular-nums">{leader.n ?? 0}</span>
                           </li>
-                        );
-                      })}
-                      {stats.leaders.length === 0 ? <li className="px-2 py-6 text-sm text-[var(--fg-dim)]">No completions to rank.</li> : null}
+                        ))}
+                      {stats.leaders.length === 0 ? <li className="px-1 py-6 text-sm text-[var(--fg-dim)]">No completions to rank.</li> : null}
                     </ul>
                   </TaskPanel>
                 </div>
                 {stats.daily.length > 0 ? (
                   <TaskPanel>
-                    <SectionHeading title="Last 14 days" />
-                    <div className="mt-2 flex h-28 items-end gap-1.5 rounded-xl bg-[var(--bg)] px-3 py-3">
-                      {stats.daily.slice(-14).map((day) => (
-                        <div key={day.date} className="flex h-full flex-1 items-end" title={`${day.date}: ${day.n || 0}`}>
-                          <div
-                            className="w-full rounded-md bg-[var(--info)]"
-                            style={{ height: `${Math.max(8, ((day.n || 0) / maxDaily) * 100)}%`, opacity: 0.35 + 0.65 * ((day.n || 0) / maxDaily) }}
-                          />
-                        </div>
-                      ))}
+                    <SectionHeading title="14 天完成趋势" />
+                    <div className="mt-3 flex h-[120px] items-end gap-1">
+                      {stats.daily.slice(-14).map((day, index, days) => {
+                        const last = index === days.length - 1;
+                        return (
+                          <div key={day.date} className="flex h-full flex-1 items-end" title={`${day.date}: ${day.n || 0}`}>
+                            <div
+                              className="w-full rounded-sm"
+                              style={{
+                                height: `${Math.max(4, ((day.n || 0) / maxDaily) * 100)}%`,
+                                background: last ? 'var(--accent)' : 'var(--fg-dim)',
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   </TaskPanel>
                 ) : null}
@@ -786,7 +824,7 @@ export function BoardWorkspace() {
         )}
 
         <p className="text-xs text-[var(--fg-dim)]">
-          Message tasks between agents stay on <Link href="/tasks" className="text-[var(--info)] hover:underline">Tasks</Link>.
+          Message tasks between agents stay on <Link href="/tasks" className="text-[var(--fg)] hover:text-[var(--accent)] hover:underline">Tasks</Link>.
         </p>
       </div>
     </main>

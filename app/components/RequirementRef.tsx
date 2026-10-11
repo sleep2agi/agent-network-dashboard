@@ -8,12 +8,14 @@ export function RequirementRef({
   name,
   struck = false,
   done = false,
+  lines = 1,
 }: {
   id: string;
   seq?: number | null;
   name?: string;
   struck?: boolean;
   done?: boolean;
+  lines?: 1 | 2;
 }) {
   const href = requirementDetailPath(id);
   const seqText = shortIdLabel(seq);
@@ -21,20 +23,26 @@ export function RequirementRef({
   const titleClass = struck
     ? 'text-[var(--fg-dim)] line-through'
     : done
-      ? 'text-[var(--success)]'
+      ? 'text-[var(--fg-muted)]'
       : 'text-[var(--fg)]';
   if (!href) {
-    return <span className={`truncate text-[13px] font-medium leading-5 ${titleClass}`}>{seqText ? `${seqText} ` : ''}{title}</span>;
+    return (
+      <span className={`inline-flex min-w-0 items-baseline gap-2 text-sm leading-[22px] ${titleClass}`}>
+        {done ? <span aria-hidden style={{ color: 'var(--success)' }}>✓</span> : null}
+        {seqText ? `${seqText} ` : ''}{title}
+      </span>
+    );
   }
   return (
     <div className="flex min-w-0 items-baseline gap-2">
+      {done ? <span aria-hidden className="shrink-0 text-sm" style={{ color: 'var(--success)' }}>✓</span> : null}
       {seqText ? (
         <Link
           href={href}
           prefetch={false}
           data-testid="requirement-seq"
           aria-label={`Open task ${seqText}`}
-          className="shrink-0 font-mono text-[11px] tabular-nums text-[var(--info)] hover:underline"
+          className="shrink-0 font-mono text-xs tabular-nums text-[var(--fg-dim)] hover:text-[var(--accent)] hover:underline"
         >
           {seqText}
         </Link>
@@ -44,7 +52,7 @@ export function RequirementRef({
         prefetch={false}
         data-testid="requirement-title"
         title={title}
-        className={`min-w-0 truncate text-[13px] font-medium leading-5 hover:underline ${titleClass}`}
+        className={`min-w-0 text-sm font-medium leading-[22px] hover:text-[var(--accent)] hover:underline ${lines === 2 ? 'line-clamp-2 whitespace-normal' : 'truncate'} ${titleClass}`}
       >
         {title}
       </Link>
