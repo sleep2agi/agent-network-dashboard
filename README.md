@@ -85,6 +85,7 @@ npm run oss:surface
 - [Contributing guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Code of conduct](CODE_OF_CONDUCT.md)
+- [Documentation index](docs/README.md)
 - [OSS security gates](docs/oss-security-gates.md)
 
 Please report vulnerabilities through GitHub Private Security Advisories, not public issues.
