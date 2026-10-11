@@ -227,11 +227,11 @@ not redundancy. */
   z-index: 1;
 }.anet-tabstrip-wrap::before {
   left: 0;
-  background: linear-gradient(to right, #161618, transparent);
+  background: linear-gradient(to right, var(--bg), transparent);
   border-radius: 8px 0 0 8px;
 }.anet-tabstrip-wrap::after {
   right: 0;
-  background: linear-gradient(to left, #161618, transparent);
+  background: linear-gradient(to left, var(--bg), transparent);
   border-radius: 0 8px 8px 0;
 }
 @media (min-width: 640px) {

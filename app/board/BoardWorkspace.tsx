@@ -5,13 +5,28 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PendingNotice } from '../components/PendingNotice';
 import { RequirementRef } from '../components/RequirementRef';
+import {
+  MetaChip,
+  PriorityChip,
+  SectionHeading,
+  Segmented,
+  TagList,
+  TaskCard,
+  TaskPanel,
+  columnDot,
+  columnLabel,
+} from '../components/requirement-chrome';
 import { useNetworkId } from '../lib/network-context';
 import { relativeAgo } from '../lib/time';
 import {
+  compareRequirements,
+  isRequirementOverdue,
   matchesRequirementQuery,
+  normalizeRequirement,
   periodFromIso,
   personLabel,
   readStats,
+  scheduleBucket,
 } from '../lib/requirement-links.mjs';
 
 type DashStats = {
@@ -31,7 +46,17 @@ type Card = {
   column?: string;
   priority?: string;
   due?: string;
+  start?: string;
   assignee?: string;
+  tags?: string[];
+  owner?: Person | null;
+  agent_owner?: Person | null;
+  participants?: Person[];
+  projectId?: string;
+  projectName?: string;
+  description?: string;
+  archived?: boolean;
+  createdAt?: string;
 };
 
 type Person = {
@@ -63,8 +88,16 @@ const COLUMNS = [
 const VIEWS = [
   { id: 'board', label: 'Board' },
   { id: 'list', label: 'List' },
+  { id: 'schedule', label: 'Schedule' },
   { id: 'activity', label: 'Activity' },
   { id: 'dashboard', label: 'Dashboard' },
+] as const;
+
+const SCHEDULE_BUCKETS = [
+  { id: 'overdue', label: 'Overdue' },
+  { id: 'today', label: 'Due today' },
+  { id: 'later', label: 'Upcoming' },
+  { id: 'none', label: 'No due date' },
 ] as const;
 
 const PERIODS = [
@@ -88,8 +121,26 @@ async function readJson(url: string): Promise<{ status: number; body: Record<str
 }
 
 function eventSummary(event: ActivityEvent): string {
-  const kind = event.kind || 'event';
-  return event.field ? `${kind} · ${event.field}` : kind;
+  const kind = (event.kind || 'event').replace(/[_-]+/g, ' ');
+  const pretty = kind.charAt(0).toUpperCase() + kind.slice(1);
+  return event.field ? `${pretty} · ${event.field}` : pretty;
+}
+
+function cardOwner(card: Card, people: Person[]): string {
+  if (card.owner) return personLabel(card.owner, people);
+  if (card.assignee) return card.assignee;
+  if (card.agent_owner) return personLabel(card.agent_owner, people);
+  return '';
+}
+
+function DueText({ card }: { card: Card }) {
+  if (!card.due) return null;
+  const late = isRequirementOverdue(card);
+  return (
+    <span className={`text-[11px] tabular-nums ${late ? 'text-[var(--danger)]' : 'text-[var(--fg-dim)]'}`}>
+      {late ? 'Overdue · ' : ''}{card.due}
+    </span>
+  );
 }
 
 export function BoardWorkspace() {
@@ -104,6 +155,11 @@ export function BoardWorkspace() {
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [status, setStatus] = useState(searchParams.get('status') || '');
   const [priority, setPriority] = useState('');
+  const [tag, setTag] = useState('');
+  const [project, setProject] = useState('');
+  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [includeArchived, setIncludeArchived] = useState(true);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [events, setEvents] = useState<ActivityEvent[] | null>(null);
   const [stats, setStats] = useState<DashStats | null>(null);
   const [statsNote, setStatsNote] = useState('');
@@ -111,29 +167,35 @@ export function BoardWorkspace() {
   const [period, setPeriod] = useState<PeriodId>('week');
 
   useEffect(() => {
-    if (view !== 'board' && view !== 'list') return;
+    if (view !== 'board' && view !== 'list' && view !== 'schedule') return;
     let alive = true;
     const params = new URLSearchParams();
     if (networkId) params.set('network_id', networkId);
     if (status) params.set('status', status);
     const q = query.trim();
     if (q) params.set('q', q);
+    if (q && includeArchived) params.set('include_archived', '1');
+    if (project && project !== '__none__') params.set('project_id', project);
+    params.set('view', 'full');
     params.set('limit', '200');
     const handle = window.setTimeout(() => {
       readJson(`/api/hub/requirements?${params.toString()}`)
         .then(({ status, body }) => {
           if (!alive) return;
           if (status === 401) { router.push('/login'); return; }
-          const requirements = body && Array.isArray(body.requirements) ? body.requirements as Card[] : null;
+          const requirements = body && Array.isArray(body.requirements) ? body.requirements : null;
+          const parsed = (requirements || [])
+            .map((row) => normalizeRequirement(row) as Card | null)
+            .filter((row): row is Card => !!row && !!row.id);
           if (body?.ok === false) {
             setError(typeof body.error === 'string' ? body.error : 'Could not load tasks');
-            setCards((requirements || []).filter((row) => row && row.id));
+            setCards(parsed);
             return;
           }
           const caps = body && Array.isArray(body.capabilities) ? body.capabilities : [];
           setAware(caps.includes('column_abandoned'));
           setError('');
-          setCards((requirements || []).filter((row) => row && row.id));
+          setCards(parsed);
         })
         .catch((e: unknown) => {
           if (!alive) return;
@@ -145,10 +207,28 @@ export function BoardWorkspace() {
       alive = false;
       window.clearTimeout(handle);
     };
-  }, [networkId, query, router, status, view]);
+  }, [includeArchived, networkId, project, query, router, status, view]);
 
   useEffect(() => {
-    if (view !== 'activity' && view !== 'dashboard') return;
+    if (view === 'activity' || view === 'dashboard') return;
+    let alive = true;
+    const net = networkId ? `?network_id=${encodeURIComponent(networkId)}` : '';
+    readJson(`/api/hub/requirements/projects${net}`)
+      .then(({ status, body }) => {
+        if (!alive || status === 401) return;
+        const rows = body && Array.isArray(body.projects) ? body.projects : [];
+        setProjects(rows.flatMap((row) => {
+          if (!row || typeof row !== 'object') return [];
+          const id = typeof row.id === 'string' ? row.id : '';
+          const name = typeof row.name === 'string' ? row.name : '';
+          return id && name ? [{ id, name }] : [];
+        }));
+      })
+      .catch(() => { if (alive) setProjects([]); });
+    return () => { alive = false; };
+  }, [networkId, view]);
+
+  useEffect(() => {
     let alive = true;
     const net = networkId ? `network_id=${encodeURIComponent(networkId)}&` : '';
     readJson(`/api/hub/requirements/people?${net}`)
@@ -161,7 +241,7 @@ export function BoardWorkspace() {
         if (alive) setPeople([]);
       });
     return () => { alive = false; };
-  }, [networkId, router, view]);
+  }, [networkId, router]);
 
   useEffect(() => {
     if (view !== 'activity') return;
@@ -226,12 +306,27 @@ export function BoardWorkspace() {
     return () => { alive = false; };
   }, [networkId, period, router, view]);
 
+  const projectName = useMemo(() => {
+    const names = new Map(projects.map((item) => [item.id, item.name]));
+    return (id?: string) => (id ? names.get(id) || '' : '');
+  }, [projects]);
+
+  const tagOptions = useMemo(() => {
+    const tags = new Set<string>();
+    for (const card of cards || []) for (const item of card.tags || []) tags.add(item);
+    return [...tags].sort((a, b) => a.localeCompare(b));
+  }, [cards]);
+
   const filtered = useMemo(() => {
     return (cards || []).filter((card) => {
       if (priority && card.priority !== priority) return false;
-      return matchesRequirementQuery(card, query);
-    });
-  }, [cards, priority, query]);
+      if (tag && !(card.tags || []).includes(tag)) return false;
+      if (project === '__none__' && card.projectId) return false;
+      if (project && project !== '__none__' && card.projectId !== project) return false;
+      if (overdueOnly && !isRequirementOverdue(card)) return false;
+      return matchesRequirementQuery({ ...card, projectName: projectName(card.projectId) }, query);
+    }).sort(compareRequirements);
+  }, [cards, overdueOnly, priority, project, projectName, query, tag]);
 
   const abandonedCount = useMemo(
     () => filtered.filter((card) => card.column === 'abandoned').length,
@@ -253,55 +348,54 @@ export function BoardWorkspace() {
   ));
   const maxDaily = Math.max(1, ...(stats?.daily.slice(-14).map((day) => day.n || 0) ?? [1]));
 
+  const topCount = Math.max(1, ...(stats?.leaders.slice(0, 8).map((leader) => leader.n || 0) ?? [1]));
+  const statCards = stats
+    ? [
+        { label: 'Done', value: stats.done, dot: columnDot('done') },
+        { label: 'In progress', value: stats.doing, dot: columnDot('doing') },
+        { label: 'Pool', value: stats.pool, dot: columnDot('pool') },
+        { label: 'Abandoned', value: stats.abandoned, dot: columnDot('abandoned') },
+      ]
+    : [];
+
   return (
-    <main className="min-h-screen bg-[var(--bg)] px-4 py-5 text-[var(--fg)] sm:px-6">
-      <div className="mx-auto max-w-6xl space-y-4">
-        <header className="flex flex-wrap items-end justify-between gap-3">
+    <main
+      className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6 lg:px-8"
+      style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -10%, color-mix(in srgb, var(--info) 14%, transparent), transparent 60%)' }}
+    >
+      <div className="mx-auto max-w-6xl space-y-5">
+        <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-xl font-semibold">Board</h1>
-            <p className="text-xs text-[var(--fg-muted)]">
+            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--fg-dim)]">Requirements</p>
+            <h1 className="text-2xl font-semibold tracking-tight">Board</h1>
+            <p className="max-w-xl text-sm leading-relaxed text-[var(--fg-muted)]">
               Requirement tasks. A title or #id opens that task.
               {aware ? ' Abandoned is a real column on this Hub.' : ''}
             </p>
           </div>
-          <div className="flex flex-wrap gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-1">
-            {VIEWS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setView(item.id)}
-                className={`rounded-md px-2.5 py-1 text-xs ${
-                  view === item.id
-                    ? 'bg-cyan-500/15 text-cyan-300'
-                    : 'text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+          <Segmented label="Task views" value={view} options={VIEWS} onChange={setView} />
         </header>
 
         <PendingNotice>
           Creating, dragging, and editing cards is not wired yet. Everything below is what the Hub returned.
         </PendingNotice>
 
-        {(view === 'board' || view === 'list' || view === 'activity') && (
-          <div className="flex flex-wrap items-center gap-2">
+        {(view === 'board' || view === 'list' || view === 'schedule' || view === 'activity') && (
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search title or #id"
+              placeholder="Search title, #id, tag, or person"
               aria-label="Search tasks"
-              className="w-56 max-w-full rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-cyan-500/40 focus:outline-none"
+              className="h-9 w-full max-w-xs rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-[var(--info)] focus:outline-none sm:w-72"
             />
-            {(view === 'board' || view === 'list') && (
+            {(view === 'board' || view === 'list' || view === 'schedule') && (
               <>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   aria-label="Filter by column"
-                  className="rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1.5 text-xs text-[var(--fg)]"
+                  className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-sm text-[var(--fg)]"
                 >
                   <option value="">All columns</option>
                   {COLUMNS.map((col) => <option key={col.id} value={col.id}>{col.label}</option>)}
@@ -310,18 +404,68 @@ export function BoardWorkspace() {
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
                   aria-label="Filter by priority"
-                  className="rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1.5 text-xs text-[var(--fg)]"
+                  className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-sm text-[var(--fg)]"
                 >
                   <option value="">Any priority</option>
                   {['high', 'normal', 'low', 'lowest'].map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
+                <select
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
+                  aria-label="Filter by tag"
+                  className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-sm text-[var(--fg)]"
+                >
+                  <option value="">Any tag</option>
+                  {tagOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+                <select
+                  value={project}
+                  onChange={(e) => setProject(e.target.value)}
+                  aria-label="Filter by project"
+                  className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-sm text-[var(--fg)]"
+                >
+                  <option value="">All projects</option>
+                  <option value="__none__">No project</option>
+                  {projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+                <button
+                  type="button"
+                  aria-pressed={overdueOnly}
+                  onClick={() => setOverdueOnly((value) => !value)}
+                  className={`h-9 rounded-lg border px-2.5 text-xs ${
+                    overdueOnly
+                      ? 'border-[var(--danger)]/40 bg-[var(--bg-elevated)] text-[var(--danger)]'
+                      : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
+                  }`}
+                >
+                  Overdue
+                </button>
               </>
             )}
-            {(query || status || priority) && (
+            {query.trim() ? (
+              <label className="flex h-9 items-center gap-1.5 px-1 text-xs text-[var(--fg-muted)]">
+                <input
+                  type="checkbox"
+                  checked={includeArchived}
+                  onChange={(e) => setIncludeArchived(e.target.checked)}
+                />
+                Include archived
+              </label>
+            ) : null}
+            {(view === 'board' || view === 'list' || view === 'schedule') && abandonedCount > 0 ? (
               <button
                 type="button"
-                onClick={() => { setQuery(''); setStatus(''); setPriority(''); }}
-                className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                onClick={() => setShowAbandoned((value) => !value)}
+                className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]"
+              >
+                {showAbandoned ? 'Hide abandoned' : `Show abandoned (${abandonedCount})`}
+              </button>
+            ) : null}
+            {(query || status || priority || tag || project || overdueOnly) && (
+              <button
+                type="button"
+                onClick={() => { setQuery(''); setStatus(''); setPriority(''); setTag(''); setProject(''); setOverdueOnly(false); }}
+                className="h-9 rounded-lg px-2.5 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]"
               >
                 Clear
               </button>
@@ -329,186 +473,249 @@ export function BoardWorkspace() {
           </div>
         )}
 
-        {error ? <p className="text-xs text-red-300">{error}</p> : null}
+        {error ? (
+          <p className="rounded-xl border border-[var(--danger)]/30 bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--danger)]">{error}</p>
+        ) : null}
 
         {view === 'board' && (
           <>
-            {cards === null ? <p className="text-xs text-[var(--fg-dim)]">Loading board…</p> : null}
-            {abandonedCount > 0 ? (
-              <button
-                type="button"
-                onClick={() => setShowAbandoned((value) => !value)}
-                className="text-xs text-[var(--fg-muted)] underline"
-              >
-                {showAbandoned ? 'Hide abandoned' : `Show abandoned (${abandonedCount})`}
-              </button>
-            ) : null}
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {cards === null ? <p className="text-sm text-[var(--fg-dim)]">Loading board…</p> : null}
+            {cards !== null ? <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
               {COLUMNS.filter((col) => col.id !== 'abandoned' || showAbandoned || status === 'abandoned').map((col) => {
                 const rows = visible.filter((card) => card.column === col.id);
                 return (
-                  <section key={col.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3">
-                    <h2 className={`text-xs font-medium ${col.id === 'abandoned' ? 'text-[var(--fg-dim)] line-through' : ''}`}>
-                      {col.label} · {rows.length}
-                    </h2>
-                    <ul className="mt-2 space-y-2">
+                  <TaskPanel key={col.id}>
+                    <div className="mb-3 flex items-center justify-between gap-2 px-1">
+                      <h2 className={`flex items-center gap-2 text-sm font-medium ${col.id === 'abandoned' ? 'text-[var(--fg-dim)] line-through' : ''}`}>
+                        <span aria-hidden className="h-2 w-2 rounded-full" style={{ backgroundColor: columnDot(col.id) }} />
+                        {col.label}
+                      </h2>
+                      <span className="rounded-full bg-[var(--bg)] px-2 py-0.5 text-[11px] tabular-nums text-[var(--fg-muted)]">{rows.length}</span>
+                    </div>
+                    <ul className="space-y-2">
                       {rows.map((card) => (
-                        <li key={card.id} className="rounded-md border border-[var(--border)] px-2 py-1.5 hover:border-cyan-500/30">
-                          <RequirementRef
-                            id={card.id}
-                            seq={card.seq}
-                            name={card.name}
-                            struck={col.id === 'abandoned'}
-                            done={col.id === 'done'}
-                          />
-                          {card.priority ? <div className="mt-1 text-[10px] text-[var(--fg-dim)]">{card.priority}</div> : null}
+                        <li key={card.id}>
+                          <TaskCard>
+                            <RequirementRef
+                              id={card.id}
+                              seq={card.seq}
+                              name={card.name}
+                              struck={col.id === 'abandoned'}
+                              done={col.id === 'done'}
+                            />
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              <PriorityChip priority={card.priority} />
+                              <DueText card={card} />
+                              {card.archived ? <MetaChip>Archived</MetaChip> : null}
+                              {projectName(card.projectId) ? <span className="text-[11px] text-[var(--fg-dim)]">{projectName(card.projectId)}</span> : null}
+                              {cardOwner(card, people) ? <span className="text-[11px] text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
+                              <TagList tags={card.tags} />
+                            </div>
+                          </TaskCard>
                         </li>
                       ))}
                       {cards !== null && rows.length === 0 ? (
-                        <li className="px-1 py-2 text-[11px] text-[var(--fg-dim)]">None</li>
+                        <li className="rounded-xl border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--fg-dim)]">None</li>
                       ) : null}
                     </ul>
-                  </section>
+                  </TaskPanel>
                 );
               })}
-            </div>
+            </div> : null}
           </>
         )}
 
         {view === 'list' && (
-          <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
-            {cards === null ? <p className="px-3 py-4 text-xs text-[var(--fg-dim)]">Loading list…</p> : null}
-            <ul className="divide-y divide-[var(--border)]">
+          <TaskPanel>
+            {cards === null ? <p className="px-2 py-4 text-sm text-[var(--fg-dim)]">Loading list…</p> : null}
+            <ul className="space-y-2">
               {visible.map((card) => (
-                <li key={card.id} className="flex items-center gap-3 px-3 py-2 hover:bg-[var(--bg-elevated)]">
-                  <div className="min-w-0 flex-1">
-                    <RequirementRef
-                      id={card.id}
-                      seq={card.seq}
-                      name={card.name}
-                      struck={card.column === 'abandoned'}
-                      done={card.column === 'done'}
-                    />
-                  </div>
-                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-[var(--fg-dim)]">{card.column || '—'}</span>
-                  <span className="w-14 shrink-0 text-right text-[10px] text-[var(--fg-dim)]">{card.priority || ''}</span>
+                <li key={card.id}>
+                  <TaskCard className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <div className="min-w-0 flex-1">
+                      <RequirementRef
+                        id={card.id}
+                        seq={card.seq}
+                        name={card.name}
+                        struck={card.column === 'abandoned'}
+                        done={card.column === 'done'}
+                      />
+                    </div>
+                    <MetaChip>{columnLabel(card.column)}</MetaChip>
+                    <PriorityChip priority={card.priority} />
+                    <DueText card={card} />
+                    {card.archived ? <MetaChip>Archived</MetaChip> : null}
+                    {projectName(card.projectId) ? <span className="text-[11px] text-[var(--fg-dim)]">{projectName(card.projectId)}</span> : null}
+                    {cardOwner(card, people) ? <span className="max-w-[10rem] truncate text-xs text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
+                    <TagList tags={card.tags} />
+                  </TaskCard>
                 </li>
               ))}
             </ul>
             {cards !== null && visible.length === 0 ? (
-              <p className="px-3 py-6 text-center text-xs text-[var(--fg-dim)]">No tasks match.</p>
+              <p className="px-3 py-10 text-center text-sm text-[var(--fg-dim)]">No tasks match.</p>
             ) : null}
-          </section>
+          </TaskPanel>
+        )}
+
+        {view === 'schedule' && (
+          <div className="space-y-4">
+            <p className="text-sm text-[var(--fg-muted)]">
+              Due dates on requirement tasks. Agent dispatch schedules stay on <Link href="/scheduled-tasks" className="text-cyan-400 hover:underline">Scheduled tasks</Link>.
+            </p>
+            {cards === null ? <p className="text-sm text-[var(--fg-dim)]">Loading schedule…</p> : null}
+            {SCHEDULE_BUCKETS.map((bucket) => {
+              const rows = visible.filter((card) => scheduleBucket(card) === bucket.id);
+              if (cards !== null && rows.length === 0) return null;
+              return (
+                <TaskPanel key={bucket.id}>
+                  <SectionHeading title={bucket.label} hint={cards === null ? undefined : String(rows.length)} />
+                  <ul className="space-y-2">
+                    {rows.map((card) => (
+                      <li key={card.id}>
+                        <TaskCard className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                          <div className="min-w-0 flex-1">
+                            <RequirementRef
+                              id={card.id}
+                              seq={card.seq}
+                              name={card.name}
+                              struck={card.column === 'abandoned'}
+                              done={card.column === 'done'}
+                            />
+                          </div>
+                          <MetaChip>{columnLabel(card.column)}</MetaChip>
+                          <DueText card={card} />
+                          {cardOwner(card, people) ? <span className="text-xs text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
+                          <TagList tags={card.tags} />
+                        </TaskCard>
+                      </li>
+                    ))}
+                  </ul>
+                </TaskPanel>
+              );
+            })}
+            {cards !== null && visible.length === 0 ? (
+              <p className="px-3 py-10 text-center text-sm text-[var(--fg-dim)]">No tasks match.</p>
+            ) : null}
+          </div>
         )}
 
         {view === 'activity' && (
-          <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
-            {events === null ? <p className="px-3 py-4 text-xs text-[var(--fg-dim)]">Loading activity…</p> : null}
-            <ul className="divide-y divide-[var(--border)]">
+          <TaskPanel>
+            {events === null ? <p className="px-2 py-4 text-sm text-[var(--fg-dim)]">Loading activity…</p> : null}
+            <ul className="space-y-2">
               {activityRows.map((event) => (
-                <li key={event.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
-                  <div className="min-w-0 flex-1">
-                    {event.requirement_id ? (
-                      <RequirementRef id={event.requirement_id} seq={event.seq} name={event.title || undefined} />
-                    ) : (
-                      <span className="text-xs text-[var(--fg-dim)]">{event.title || 'Task'}</span>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-[var(--fg-muted)]">{personLabel(event.actor, people)}</span>
-                  <span className="text-[11px] text-[var(--fg-dim)]">{eventSummary(event)}</span>
-                  <span className="text-[11px] tabular-nums text-[var(--fg-dim)]">{relativeAgo(event.at) || ''}</span>
+                <li key={event.id}>
+                  <TaskCard className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <div className="min-w-[12rem] flex-1">
+                      {event.requirement_id ? (
+                        <RequirementRef id={event.requirement_id} seq={event.seq} name={event.title || undefined} />
+                      ) : (
+                        <span className="text-[13px] font-medium text-[var(--fg-dim)]">{event.title || 'Task'}</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium text-[var(--fg)]">{personLabel(event.actor, people)}</span>
+                    <MetaChip soft>{eventSummary(event)}</MetaChip>
+                    <span className="text-xs tabular-nums text-[var(--fg-dim)]">{relativeAgo(event.at) || ''}</span>
+                  </TaskCard>
                 </li>
               ))}
             </ul>
             {events !== null && activityRows.length === 0 ? (
-              <p className="px-3 py-6 text-center text-xs text-[var(--fg-dim)]">No recent activity.</p>
+              <p className="px-3 py-10 text-center text-sm text-[var(--fg-dim)]">No recent activity.</p>
             ) : null}
-          </section>
+          </TaskPanel>
         )}
 
         {view === 'dashboard' && (
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-1">
-              {PERIODS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setPeriod(item.id)}
-                  className={`rounded-md px-2.5 py-1 text-xs ${
-                    period === item.id ? 'bg-cyan-500/15 text-cyan-300' : 'text-[var(--fg-muted)] hover:text-[var(--fg)]'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            {statsNote ? <p className="text-xs text-[var(--fg-muted)]">{statsNote}</p> : null}
+            <Segmented label="Completion period" value={period} options={PERIODS} onChange={setPeriod} />
+            {statsNote ? <p className="text-sm text-[var(--fg-muted)]">{statsNote}</p> : null}
             {stats ? (
               <>
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                  {[
-                    ['Done', stats.done],
-                    ['In progress', stats.doing],
-                    ['Pool', stats.pool],
-                    ['Abandoned', stats.abandoned],
-                  ].map(([label, value]) => (
-                    <div key={String(label)} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-3">
-                      <div className="text-[11px] text-[var(--fg-dim)]">{label}</div>
-                      <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
+                  {statCards.map((card) => (
+                    <div key={card.label} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-4">
+                      <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-[var(--fg-dim)]">
+                        <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: card.dot }} />
+                        {card.label}
+                      </div>
+                      <div className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">{card.value}</div>
                     </div>
                   ))}
                 </div>
-                <div className="grid gap-3 lg:grid-cols-2">
-                  <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3">
-                    <h2 className="text-xs font-medium">Recent completions</h2>
-                    <ul className="mt-2 divide-y divide-[var(--border)]">
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <TaskPanel>
+                    <SectionHeading title="Recent completions" hint={String(stats.recent.length)} />
+                    <ul className="space-y-2">
                       {stats.recent.map((row) => (
-                        <li key={row.id} className="flex items-center justify-between gap-3 py-2">
-                          <RequirementRef id={row.id} seq={row.seq} name={row.name} done />
-                          <span className="shrink-0 text-[11px] text-[var(--fg-muted)]">
-                            {personLabel(row.completed_by, people)}
-                          </span>
+                        <li key={row.id}>
+                          <TaskCard className="flex items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <RequirementRef id={row.id} seq={row.seq} name={row.name} done />
+                            </div>
+                            <span className="shrink-0 text-sm text-[var(--fg-muted)]">
+                              {personLabel(row.completed_by, people)}
+                            </span>
+                          </TaskCard>
                         </li>
                       ))}
-                      {stats.recent.length === 0 ? <li className="py-3 text-xs text-[var(--fg-dim)]">Nothing completed in this period.</li> : null}
+                      {stats.recent.length === 0 ? <li className="px-2 py-6 text-sm text-[var(--fg-dim)]">Nothing completed in this period.</li> : null}
                     </ul>
-                  </section>
-                  <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3">
-                    <h2 className="text-xs font-medium">Leaderboard</h2>
-                    <ul className="mt-2 space-y-2">
-                      {stats.leaders.slice(0, 8).map((leader, index) => (
-                        <li key={`${leader.kind || 'x'}:${leader.id || index}`} className="flex items-center gap-2 text-xs">
-                          <span className="w-4 tabular-nums text-[var(--fg-dim)]">{index + 1}</span>
-                          <span className="min-w-0 flex-1 truncate">{personLabel(leader, people)}</span>
-                          <span className="text-[10px] text-[var(--fg-dim)]">{leader.kind === 'node' ? 'Agent' : 'Member'}</span>
-                          <span className="w-8 text-right tabular-nums">{leader.n ?? 0}</span>
-                        </li>
-                      ))}
-                      {stats.leaders.length === 0 ? <li className="text-xs text-[var(--fg-dim)]">No completions to rank.</li> : null}
+                  </TaskPanel>
+                  <TaskPanel>
+                    <SectionHeading title="Leaderboard" hint={stats.leaders.length ? `Top ${Math.min(8, stats.leaders.length)}` : undefined} />
+                    <ul className="space-y-2">
+                      {stats.leaders.slice(0, 8).map((leader, index) => {
+                        const count = leader.n ?? 0;
+                        const width = Math.max(8, Math.round((count / topCount) * 100));
+                        return (
+                          <li key={`${leader.kind || 'x'}:${leader.id || index}`}>
+                            <TaskCard className="flex items-center gap-3">
+                              <span
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-semibold tabular-nums ${
+                                  index < 3 ? 'bg-[var(--bg)] text-[var(--fg)]' : 'text-[var(--fg-dim)]'
+                                }`}
+                              >
+                                {index + 1}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate text-sm font-medium">{personLabel(leader, people)}</div>
+                                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[var(--bg)]">
+                                  <div className="h-full rounded-full bg-[var(--info)]" style={{ width: `${width}%` }} />
+                                </div>
+                              </div>
+                              <MetaChip>{leader.kind === 'node' ? 'Agent' : 'Member'}</MetaChip>
+                              <span className="w-8 text-right text-sm font-semibold tabular-nums">{count}</span>
+                            </TaskCard>
+                          </li>
+                        );
+                      })}
+                      {stats.leaders.length === 0 ? <li className="px-2 py-6 text-sm text-[var(--fg-dim)]">No completions to rank.</li> : null}
                     </ul>
-                  </section>
+                  </TaskPanel>
                 </div>
                 {stats.daily.length > 0 ? (
-                  <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3">
-                    <h2 className="text-xs font-medium">Last 14 days</h2>
-                    <div className="mt-3 flex h-24 items-end gap-1">
+                  <TaskPanel>
+                    <SectionHeading title="Last 14 days" />
+                    <div className="mt-2 flex h-28 items-end gap-1.5 rounded-xl bg-[var(--bg)] px-3 py-3">
                       {stats.daily.slice(-14).map((day) => (
                         <div key={day.date} className="flex h-full flex-1 items-end" title={`${day.date}: ${day.n || 0}`}>
                           <div
-                            className="w-full rounded-sm bg-cyan-400/70"
-                            style={{ height: `${Math.max(4, ((day.n || 0) / maxDaily) * 100)}%` }}
+                            className="w-full rounded-md bg-[var(--info)]"
+                            style={{ height: `${Math.max(8, ((day.n || 0) / maxDaily) * 100)}%`, opacity: 0.35 + 0.65 * ((day.n || 0) / maxDaily) }}
                           />
                         </div>
                       ))}
                     </div>
-                  </section>
+                  </TaskPanel>
                 ) : null}
               </>
             ) : null}
           </div>
         )}
 
-        <p className="text-[11px] text-[var(--fg-dim)]">
+        <p className="text-xs text-[var(--fg-dim)]">
           Message tasks between agents stay on <Link href="/tasks" className="text-cyan-400 hover:underline">Tasks</Link>.
         </p>
       </div>

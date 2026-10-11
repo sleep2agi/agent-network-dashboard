@@ -50,17 +50,188 @@ export function personLabel(ref, people) {
   return 'Unknown';
 }
 
-/** Local filter used while a Hub search request is in flight. Empty query matches everything. */
+function fold(value) {
+  return text(value).normalize('NFKC').toLocaleLowerCase();
+}
+
+/** Tags the Hub will store: at most 10, each at most 20 characters, no controls. */
+export function normalizeTags(value) {
+  if (!Array.isArray(value) || value.length > 10) return [];
+  const tags = [];
+  for (const raw of value) {
+    if (typeof raw !== 'string') return [];
+    const tag = raw.trim();
+    if (!tag || [...tag].length > 20 || /[\u0000-\u001f\u007f]/u.test(tag)) return [];
+    if (!tags.includes(tag)) tags.push(tag);
+  }
+  return tags;
+}
+
+function personRef(value) {
+  if (!value || typeof value !== 'object') return null;
+  const kind = value.kind === 'node' || value.kind === 'user' ? value.kind : '';
+  const id = text(value.id);
+  if (!kind || !id) return null;
+  return {
+    kind,
+    id,
+    ...(text(value.display_name) ? { display_name: text(value.display_name) } : {}),
+    ...(text(value.displayName) ? { displayName: text(value.displayName) } : {}),
+    ...(text(value.name) ? { name: text(value.name) } : {}),
+    ...(text(value.alias) ? { alias: text(value.alias) } : {}),
+  };
+}
+
+function checklistOf(value) {
+  if (!Array.isArray(value)) return [];
+  const out = [];
+  for (const row of value) {
+    if (!row || typeof row !== 'object' || typeof row.id !== 'string' || typeof row.text !== 'string') continue;
+    out.push({ id: row.id, text: row.text, done: row.done === true });
+  }
+  return out;
+}
+
+function issuesOf(value) {
+  if (!Array.isArray(value) || value.length > 8) return [];
+  const out = [];
+  for (const row of value) {
+    if (!row || typeof row !== 'object') continue;
+    const repo = text(row.repo);
+    const number = typeof row.number === 'number' ? row.number : Number(row.number);
+    if (!repo || !Number.isInteger(number) || number < 1) continue;
+    out.push({ repo, number, title: text(row.title) });
+  }
+  return out;
+}
+
+/**
+ * One Hub requirement row, accepting the snake_case payload and the
+ * camelCase shape already used in the dashboard. Missing fields stay empty
+ * so an older Hub still renders.
+ */
+export function normalizeRequirement(row) {
+  if (!row || typeof row !== 'object' || typeof row.id !== 'string' || !row.id.trim()) return null;
+  const due = text(row.due);
+  const start = text(row.start);
+  const projectId = text(row.projectId) || text(row.project_id);
+  const owner = personRef(row.owner);
+  const agent = personRef(row.agentOwner) || personRef(row.agent_owner);
+  const external = text(row.externalUrl) || text(row.external_url);
+  const safeExternal = /^https?:\/\//i.test(external) ? external : '';
+  const updated = text(row.updatedAt) || text(row.updated_at);
+  const children = row.children && typeof row.children === 'object'
+    ? { total: num(row.children.total), done: num(row.children.done) }
+    : null;
+  return {
+    id: row.id.trim(),
+    name: typeof row.name === 'string' ? row.name : '',
+    seq: typeof row.seq === 'number' && Number.isSafeInteger(row.seq) && row.seq > 0 ? row.seq : null,
+    column: text(row.column) || 'pool',
+    priority: text(row.priority) || 'normal',
+    due,
+    start,
+    assignee: text(row.assignee),
+    tags: normalizeTags(row.tags),
+    owner,
+    agent_owner: agent,
+    agentOwner: agent,
+    participants: Array.isArray(row.participants) ? row.participants.map(personRef).filter(Boolean) : [],
+    projectId,
+    project_id: projectId,
+    description: typeof row.description === 'string' ? row.description : '',
+    archived: row.archived === true,
+    checklist: checklistOf(row.checklist),
+    issues: issuesOf(row.issues),
+    parentId: text(row.parentId) || text(row.parent_id),
+    children,
+    external_url: safeExternal,
+    externalUrl: safeExternal,
+    updatedAt: updated,
+    createdAt: text(row.createdAt) || text(row.created_at),
+  };
+}
+
+/** End of a date-only due, or the instant of a timestamp. Null when unset. */
+export function requirementDueMs(due) {
+  const value = text(due);
+  if (!value) return null;
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (day) {
+    const end = new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]), 23, 59, 59, 999);
+    return Number.isNaN(end.getTime()) ? null : end.getTime();
+  }
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** Open tasks whose due instant is already past. Done and abandoned are closed. */
+export function isRequirementOverdue(item, now = Date.now()) {
+  if (!item || item.archived || item.column === 'done' || item.column === 'abandoned') return false;
+  const due = requirementDueMs(item.due);
+  return due !== null && due < now;
+}
+
+/** overdue | today | later | none — the schedule buckets the client calendar uses. */
+export function scheduleBucket(item, now = Date.now()) {
+  const due = requirementDueMs(item?.due);
+  if (due === null) return 'none';
+  if (isRequirementOverdue(item, now)) return 'overdue';
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const next = new Date(start);
+  next.setDate(next.getDate() + 1);
+  if (due < next.getTime()) return 'today';
+  return 'later';
+}
+
+const PRIORITY_RANK = { high: 0, normal: 1, low: 2, lowest: 3 };
+
+/** Client column order: priority, then due, then newer cards first. */
+export function compareRequirements(a, b) {
+  const byPriority = (PRIORITY_RANK[a?.priority] ?? 1) - (PRIORITY_RANK[b?.priority] ?? 1);
+  if (byPriority) return byPriority;
+  const ad = requirementDueMs(a?.due) ?? Number.POSITIVE_INFINITY;
+  const bd = requirementDueMs(b?.due) ?? Number.POSITIVE_INFINITY;
+  if (ad !== bd) return ad < bd ? -1 : 1;
+  const ac = a?.createdAt || '';
+  const bc = b?.createdAt || '';
+  if (ac === bc) return 0;
+  return ac < bc ? 1 : -1;
+}
+
+/**
+ * Local filter used while a Hub search request is in flight.
+ * Empty query matches everything. Several words are AND across title,
+ * description, tags, assignee, people, and project name. A bare #id or
+ * id prefix still matches on its own.
+ */
 export function matchesRequirementQuery(item, query) {
-  const q = text(query).toLowerCase();
-  if (!q) return true;
-  const seqHit = /^#?(\d{1,15})$/.exec(q);
-  if (seqHit && typeof item?.seq === 'number') return item.seq === Number(seqHit[1]);
-  const name = text(item?.name).toLowerCase();
-  const id = text(item?.id).toLowerCase();
-  if (name.includes(q) || id === q) return true;
-  const bare = q.replace(/^req_/, '');
-  return bare.length >= 8 && id.replace(/^req_/, '').startsWith(bare);
+  const raw = text(query);
+  if (!raw) return true;
+  const folded = fold(raw);
+  const seqHit = /^#?(\d{1,15})$/.exec(folded);
+  if (seqHit && typeof item?.seq === 'number' && item.seq === Number(seqHit[1])) return true;
+  const id = fold(item?.id);
+  const bare = folded.replace(/^#/, '').replace(/^req_/, '');
+  if (id && (id === folded || id === bare || (bare.length >= 8 && id.replace(/^req_/, '').startsWith(bare)))) return true;
+  const terms = [...new Set(folded.split(/\s+/).filter(Boolean))];
+  if (!terms.length) return true;
+  const people = [
+    item?.owner,
+    item?.agentOwner,
+    item?.agent_owner,
+    ...(Array.isArray(item?.participants) ? item.participants : []),
+  ].filter(Boolean);
+  const hay = fold([
+    item?.name,
+    item?.description,
+    item?.assignee,
+    item?.projectName,
+    ...(Array.isArray(item?.tags) ? item.tags : []),
+    ...people.map((person) => [person.display_name, person.displayName, person.name, person.alias].filter(Boolean).join(' ')),
+  ].filter((part) => typeof part === 'string' && part).join('\n'));
+  return terms.every((term) => hay.includes(term));
 }
 
 /** Monday-start period, local timezone. `all` has no lower bound. */

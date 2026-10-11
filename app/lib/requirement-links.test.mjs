@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  compareRequirements,
+  isRequirementOverdue,
   matchesRequirementQuery,
+  normalizeRequirement,
   periodFromIso,
   personLabel,
   readStats,
   requirementDetailPath,
+  scheduleBucket,
   shortIdLabel,
 } from './requirement-links.mjs';
 
@@ -39,6 +43,48 @@ assert.equal(matchesRequirementQuery({ id: 'req_1', name: 'Write links', seq: 91
 assert.equal(matchesRequirementQuery({ id: 'req_1', name: 'Write links', seq: 918 }, 'link'), true);
 assert.equal(matchesRequirementQuery({ id: 'req_abcdef12', name: 'Write links', seq: 918 }, 'abcdef12'), true);
 assert.equal(matchesRequirementQuery({ id: 'req_1', name: 'Write links', seq: 918 }, '#7'), false);
+assert.equal(matchesRequirementQuery({ id: 'req_1', name: 'Ship the links', tags: ['portal'], description: 'dark theme' }, 'portal theme'), true);
+assert.equal(matchesRequirementQuery({ id: 'req_1', name: 'Ship the links', tags: ['portal'] }, 'portal missing'), false);
+assert.equal(matchesRequirementQuery({ id: 'req_1', name: '全角Ｐｏｒｔａｌ', tags: [] }, 'portal'), true);
+
+const hubRow = normalizeRequirement({
+  id: 'req_row',
+  name: 'Tagged',
+  seq: 12,
+  column: 'doing',
+  priority: 'high',
+  due: '2026-10-01',
+  start: '2026-09-01',
+  assignee: 'Ada',
+  tags: ['api', 'api'],
+  agent_owner: { kind: 'node', id: 'node_1', display_name: '节点甲' },
+  project_id: 'proj_1',
+  participants: [{ kind: 'user', id: 'user_1', name: 'Bea' }],
+  external_url: 'https://example.test/task',
+  archived: true,
+});
+assert.equal(hubRow.tags.length, 1);
+assert.equal(hubRow.tags[0], 'api');
+assert.equal(hubRow.agent_owner.display_name, '节点甲');
+assert.equal(hubRow.projectId, 'proj_1');
+assert.equal(hubRow.participants[0].name, 'Bea');
+assert.equal(hubRow.external_url, 'https://example.test/task');
+assert.equal(hubRow.archived, true);
+assert.deepEqual(normalizeRequirement({ id: 'x', name: 'kept', tags: ['has space is ok', 'bad\ntag'] })?.tags, []);
+assert.equal(normalizeRequirement({ name: 'no id' }), null);
+
+const noon = new Date(2026, 9, 11, 12, 0, 0).getTime();
+assert.equal(isRequirementOverdue({ column: 'doing', due: '2026-10-10' }, noon), true);
+assert.equal(isRequirementOverdue({ column: 'doing', due: '2026-10-11' }, noon), false);
+assert.equal(isRequirementOverdue({ column: 'done', due: '2026-10-01' }, noon), false);
+assert.equal(scheduleBucket({ column: 'doing', due: '2026-10-10' }, noon), 'overdue');
+assert.equal(scheduleBucket({ column: 'doing', due: '2026-10-11' }, noon), 'today');
+assert.equal(scheduleBucket({ column: 'pool', due: '2026-12-01' }, noon), 'later');
+assert.equal(scheduleBucket({ column: 'pool', due: '' }, noon), 'none');
+assert.deepEqual(
+  ['low', 'high'].map((priority) => ({ priority, due: '', createdAt: '' })).sort(compareRequirements).map((row) => row.priority),
+  ['high', 'low'],
+);
 
 const sunday = new Date(2026, 9, 11, 15, 0, 0).getTime();
 const week = new Date(periodFromIso('week', sunday));
