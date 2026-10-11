@@ -37,6 +37,8 @@ const CASES: Array<{ path: string; label: string }> = [
   { path: '/',         label: 'root landing' },
   { path: '/node',     label: 'legacy /node singular' },
   { path: '/tasks',    label: '/tasks index' },
+  { path: '/board',    label: '/board index' },
+  { path: '/teams',    label: '/teams page' },
   { path: '/nodes',    label: '/nodes index' },
   { path: '/messages', label: '/messages page' },
   { path: '/logs',     label: '/logs page' },
@@ -50,6 +52,7 @@ const CASES: Array<{ path: string; label: string }> = [
   { path: '/nodes/node-alpha',   label: '/nodes/<alias> ascii  ← 07-31 regression case' },
   { path: '/nodes/%E6%94%AF%E4%BB%98%E5%8A%A9%E6%89%8B', label: '/nodes/<支付助手> unicode  ← prod-observed alias shape' },
   { path: '/tasks/abc123',       label: '/tasks/<id> hex' },
+  { path: '/board/req_abc-123',  label: '/board/<requirement id>' },
   { path: '/settings/general',   label: '/settings/<subroute>' },
 ];
 
