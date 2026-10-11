@@ -19,7 +19,7 @@ export function columnLabel(column?: string): string {
 
 export function TaskPanel({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3 ${className}`}>
+    <section className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 ${className}`}>
       {children}
     </section>
   );
@@ -27,7 +27,7 @@ export function TaskPanel({ children, className = '' }: { children: ReactNode; c
 
 export function TaskCard({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3.5 py-3 transition-colors hover:border-[var(--border-hover)] ${className}`}>
+    <div className={`rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3.5 py-3.5 transition-colors hover:border-[var(--border-hover)] ${className}`}>
       {children}
     </div>
   );

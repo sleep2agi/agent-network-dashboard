@@ -4,7 +4,7 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PendingNotice } from '../../components/PendingNotice';
-import { MetaChip, PriorityChip, TagList, columnDot, columnLabel } from '../../components/requirement-chrome';
+import { MetaChip, PriorityChip, TagList, TaskPanel, columnDot, columnLabel } from '../../components/requirement-chrome';
 import { useNetworkId } from '../../lib/network-context';
 import { relativeAgo } from '../../lib/time';
 import { isRequirementOverdue, normalizeRequirement, personLabel, shortIdLabel } from '../../lib/requirement-links.mjs';
@@ -95,7 +95,7 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
       style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -10%, color-mix(in srgb, var(--info) 14%, transparent), transparent 60%)' }}
     >
       <div className="mx-auto max-w-3xl space-y-5">
-        <Link href="/board" className="inline-flex text-sm text-cyan-400 hover:text-cyan-300 hover:underline">← Board</Link>
+        <Link href="/board" className="inline-flex text-sm text-[var(--info)] hover:underline">← Board</Link>
         {loading ? <p className="text-sm text-[var(--fg-dim)]">Loading task…</p> : null}
         {!loading && error ? (
           <p className="rounded-xl border border-[var(--danger)]/30 bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--danger)]">{error}</p>
@@ -104,7 +104,7 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
           <>
             <header className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                {seq ? <span className="font-mono text-sm tabular-nums text-cyan-400">{seq}</span> : null}
+                {seq ? <span className="font-mono text-sm tabular-nums text-[var(--info)]">{seq}</span> : null}
                 <span className="inline-flex items-center gap-1.5">
                   <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: columnDot(card.column) }} />
                   <MetaChip>{columnLabel(card.column)}</MetaChip>
@@ -166,20 +166,32 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
                 </ul>
               </section>
             ) : null}
-            {card.tags && card.tags.length > 0 ? <TagList tags={card.tags} /> : null}
-            {card.issues && card.issues.length > 0 ? (
-              <ul className="space-y-1 text-sm">
-                {card.issues.map((issue) => (
-                  <li key={`${issue.repo}#${issue.number}`}>
-                    <a className="text-cyan-400 hover:underline" href={`https://github.com/${issue.repo}/issues/${issue.number}`} target="_blank" rel="noreferrer">
-                      {issue.repo}#{issue.number}{issue.title ? ` ${issue.title}` : ''}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            {(card.tags && card.tags.length > 0) || (card.issues && card.issues.length > 0) ? (
+              <TaskPanel className="space-y-3">
+                {card.tags && card.tags.length > 0 ? (
+                  <div>
+                    <h2 className="text-xs font-medium uppercase tracking-wide text-[var(--fg-dim)]">Tags</h2>
+                    <div className="mt-2"><TagList tags={card.tags} /></div>
+                  </div>
+                ) : null}
+                {card.issues && card.issues.length > 0 ? (
+                  <div>
+                    <h2 className="text-xs font-medium uppercase tracking-wide text-[var(--fg-dim)]">Issues</h2>
+                    <ul className="mt-2 space-y-1.5 text-sm">
+                      {card.issues.map((issue) => (
+                        <li key={`${issue.repo}#${issue.number}`}>
+                          <a className="text-[var(--info)] hover:underline" href={`https://github.com/${issue.repo}/issues/${issue.number}`} target="_blank" rel="noreferrer">
+                            {issue.repo}#{issue.number}{issue.title ? ` ${issue.title}` : ''}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </TaskPanel>
             ) : null}
             {card.external_url && /^https?:\/\//i.test(card.external_url) ? (
-              <a href={card.external_url} className="text-sm text-cyan-400 hover:underline" target="_blank" rel="noreferrer">{card.external_url}</a>
+              <a href={card.external_url} className="text-sm text-[var(--info)] hover:underline" target="_blank" rel="noreferrer">{card.external_url}</a>
             ) : null}
           </>
         ) : null}

@@ -178,7 +178,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
             <h1 className="text-2xl font-semibold tracking-tight text-[var(--fg)] lg:ml-0 ml-10">Tasks</h1>
             {tasks.length < count && (
               <span
-                className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums"
+                className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-0.5 text-xs tabular-nums text-[var(--info)]"
                 title={`Showing ${tasks.length} of ${count} tasks`}
               >
                 {tasks.length} / {count}
@@ -295,7 +295,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           )}
 
           {error && (
-            <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-3 py-1.5 rounded mt-2 text-xs">
+            <div className="mt-2 rounded-xl border border-[var(--danger)]/30 bg-[var(--bg-secondary)] px-3 py-1.5 text-xs text-[var(--danger)]">
               {error}
             </div>
           )}
