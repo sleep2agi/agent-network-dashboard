@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNetworkId } from '../lib/network-context';
 import { PendingNotice } from '../components/PendingNotice';
+import { TaskCard } from '../components/requirement-chrome';
+import { OrgTree, type AgentOrgData } from './OrgTree';
 
 type NodeRef = { node_id?: string; alias?: string | null; display_name?: string | null };
 type Team = {
@@ -14,7 +16,8 @@ type Team = {
   owner?: { user_id?: string; display_name?: string } | null;
   members?: NodeRef[];
 };
-type Department = { id: string; name: string; parent_id?: string | null };
+
+type OrgResult = { status: 'ready'; data: AgentOrgData } | { status: 'missing' } | { status: 'error'; error?: string };
 
 function labelOf(node?: NodeRef | null): string {
   if (!node) return '';
@@ -25,9 +28,9 @@ export default function TeamsPage() {
   const { networkId } = useNetworkId();
   const router = useRouter();
   const [teams, setTeams] = useState<Team[] | null>(null);
-  const [departments, setDepartments] = useState<Department[] | null>(null);
+  const [org, setOrg] = useState<OrgResult | null>(null);
   const [error, setError] = useState('');
-  const [deptError, setDeptError] = useState('');
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -42,76 +45,83 @@ export default function TeamsPage() {
       })
       .then((body) => {
         if (!alive || !body) return;
-        if (body.error && !body.teams && !body.departments) {
-          setError(body.error);
+        if (body.error && !body.teams && !body.org) {
+          setError(typeof body.error === 'string' ? body.error : '读取组织失败');
           setTeams([]);
-          setDepartments([]);
+          setOrg({ status: 'error', error: typeof body.error === 'string' ? body.error : '读取组织失败' });
           return;
         }
         const teamBody = body.teams;
-        const deptBody = body.departments;
         if (teamBody && teamBody.ok === false) setError(typeof teamBody.error === 'string' ? teamBody.error : '读取 Agent 团队失败');
         else setError('');
-        if (deptBody && deptBody.ok === false) setDeptError(typeof deptBody.error === 'string' ? deptBody.error : '读取部门失败');
-        else setDeptError('');
         setTeams(Array.isArray(teamBody?.teams) ? teamBody.teams : []);
-        setDepartments(Array.isArray(deptBody?.departments) ? deptBody.departments : []);
+        const next = body.org;
+        if (next && next.status === 'ready' && next.data) setOrg({ status: 'ready', data: next.data });
+        else if (next && next.status === 'missing') setOrg({ status: 'missing' });
+        else setOrg({ status: 'error', error: typeof next?.error === 'string' ? next.error : '组织架构没有读到，请重试' });
       })
       .catch((e: unknown) => {
         if (!alive) return;
-        setError(e instanceof Error ? e.message : '读取组织失败');
+        const message = e instanceof Error ? e.message : '读取组织失败';
+        setError(message);
         setTeams([]);
-        setDepartments([]);
+        setOrg({ status: 'error', error: message });
       });
     return () => { alive = false; };
-  }, [networkId, router]);
+  }, [attempt, networkId, router]);
 
-  const roots = (teams || []).filter((team) => !team.parent_id);
+  const byId = new Map((teams || []).map((team) => [team.id, team]));
 
   return (
-    <main className="min-h-screen bg-[var(--bg)] px-4 py-5 text-[var(--fg)] sm:px-6">
-      <div className="mx-auto max-w-3xl space-y-4">
-        <header className="space-y-2">
-          <h1 className="text-xl font-semibold">Agent 组织</h1>
-          <p className="text-xs text-[var(--fg-muted)]">
-            Agent 团队和人的部门是两棵树。这里只读 Hub 已经存的结构。
+    <main
+      className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6"
+      style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -10%, color-mix(in srgb, var(--info) 14%, transparent), transparent 60%)' }}
+    >
+      <div className="mx-auto max-w-6xl space-y-5">
+        <header className="space-y-1">
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--fg-dim)]">Organization</p>
+          <h1 className="text-2xl font-semibold tracking-tight">组织架构</h1>
+          <p className="max-w-xl text-sm leading-relaxed text-[var(--fg-muted)]">
+            点开部门查看里面的 Agent。人数含下级。未归属是没有部门的负责人，或没有负责人的 Agent。
           </p>
         </header>
         <PendingNotice>
-          新建团队、调整上级、指定组长还没接到。空列表表示 Hub 没返回团队，不是占位数据。
+          新建部门、改上级和指定负责人还在 Hub 上改。这里的「模拟调整」只改这一页的显示。
         </PendingNotice>
-        {teams === null ? <p className="text-xs text-[var(--fg-dim)]">正在读取…</p> : null}
-        {error ? <p className="text-xs text-red-300">{error}</p> : null}
+        {org === null ? <p className="text-sm text-[var(--fg-dim)]">正在读取组织架构…</p> : null}
+        {org?.status === 'error' ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-[var(--danger)]">{org.error || '组织架构没有读到，请重试'}</p>
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-[var(--border)] px-2.5 py-1 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]">重试</button>
+          </div>
+        ) : null}
+        {org?.status === 'missing' ? <p className="text-sm text-[var(--fg-muted)]">这个 Hub 还没有部门树，也没有人员通讯录。</p> : null}
+        {org?.status === 'ready' ? <OrgTree key={networkId || 'default'} data={org.data} /> : null}
+
         <section className="space-y-2">
           <h2 className="text-sm font-medium">Agent 团队</h2>
-          {teams && teams.length === 0 ? <p className="text-xs text-[var(--fg-dim)]">这个网络还没有 Agent 团队。</p> : null}
+          <p className="text-[11px] text-[var(--fg-dim)]">团队是另一棵树，和上面的部门不是同一份数据。</p>
+          {error ? <p className="text-xs text-[var(--danger)]">{error}</p> : null}
+          {teams && teams.length === 0 ? <p className="text-sm text-[var(--fg-dim)]">这个网络还没有 Agent 团队。</p> : null}
           <ul className="space-y-2">
             {(teams || []).map((team) => (
-              <li key={team.id} className="rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs">
-                <div className="font-medium">
-                  {team.name}
-                  {team.parent_id ? <span className="ml-2 font-normal text-[var(--fg-dim)]">上级 {roots.find((item) => item.id === team.parent_id)?.name || (teams || []).find((item) => item.id === team.parent_id)?.name || ''}</span> : null}
-                </div>
-                <div className="mt-1 text-[var(--fg-dim)]">
-                  {team.lead ? `组长 ${labelOf(team.lead)}` : '没有组长'}
-                  {team.owner?.display_name ? ` · 负责人 ${team.owner.display_name}` : ''}
-                </div>
-                {(team.members || []).length > 0 ? (
-                  <div className="mt-1 text-[var(--fg-muted)]">
-                    {(team.members || []).map((member) => labelOf(member)).filter(Boolean).join('、')}
+              <li key={team.id}>
+                <TaskCard>
+                  <div className="text-sm font-medium">
+                    {team.name}
+                    {team.parent_id ? <span className="ml-2 font-normal text-[var(--fg-dim)]">上级 {byId.get(team.parent_id)?.name || ''}</span> : null}
                   </div>
-                ) : null}
+                  <div className="mt-1 text-xs text-[var(--fg-dim)]">
+                    {team.lead ? `组长 ${labelOf(team.lead)}` : '没有组长'}
+                    {team.owner?.display_name ? ` · 负责人 ${team.owner.display_name}` : ''}
+                  </div>
+                  {(team.members || []).length > 0 ? (
+                    <div className="mt-1 text-xs text-[var(--fg-muted)]">
+                      {(team.members || []).map((member) => labelOf(member)).filter(Boolean).join('、')}
+                    </div>
+                  ) : null}
+                </TaskCard>
               </li>
-            ))}
-          </ul>
-        </section>
-        <section className="space-y-2">
-          <h2 className="text-sm font-medium">人的部门</h2>
-          {deptError ? <p className="text-xs text-red-300">{deptError}</p> : null}
-          {!deptError && departments && departments.length === 0 ? <p className="text-xs text-[var(--fg-dim)]">还没有部门。</p> : null}
-          <ul className="space-y-1">
-            {(departments || []).map((dept) => (
-              <li key={dept.id} className="text-xs text-[var(--fg-muted)]">{dept.name}</li>
             ))}
           </ul>
         </section>

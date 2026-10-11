@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
 /** Shared task-surface chrome so board, list, activity, and the leaderboard match. */
 
@@ -17,17 +17,17 @@ export function columnLabel(column?: string): string {
   return column || '—';
 }
 
-export function TaskPanel({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function TaskPanel({ children, className = '', ...rest }: { children: ReactNode; className?: string } & HTMLAttributes<HTMLElement>) {
   return (
-    <section className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 ${className}`}>
+    <section {...rest} className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 ${className}`}>
       {children}
     </section>
   );
 }
 
-export function TaskCard({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function TaskCard({ children, className = '', ...rest }: { children: ReactNode; className?: string } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3.5 py-3.5 transition-colors hover:border-[var(--border-hover)] ${className}`}>
+    <div {...rest} className={`rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3.5 py-3.5 transition-colors hover:border-[var(--border-hover)] ${className}`}>
       {children}
     </div>
   );
