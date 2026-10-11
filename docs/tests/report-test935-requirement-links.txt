@@ -1,0 +1,43 @@
+Task: Hub #935 / dashboard PR #45 (TEST-ONLY, not a release)
+Date: 2026-10-11, Asia/Shanghai
+Base: 0f9e574a819bb058e5cbfdcf3e36c71ef748cb17 plus this commit's narrow detail-page fix.
+
+Change:
+- Detail readiness is scoped to [networkId, taskId], hiding the previous
+  network's card immediately while the next request is pending.
+- Non-2xx responses and mismatched task IDs cannot become detail cards.
+- Rejected requests clear old card and people state; superseded 401
+  responses cannot redirect the current scope.
+- No service, deployment, credential, database, or production changes.
+
+Reproduce from repository root:
+sg docker -c 'docker build -f tests/test935-requirement-links/Dockerfile -t anet-dashboard:test935-links .'
+sg docker -c 'docker run --rm --network none --shm-size=1g anet-dashboard:test935-links'
+
+Exact tested local image manifest-list SHA256:
+953e7c1f93c936e986eb79c99f29cd7e9eb74b4dc4727b37d70bf62031d99b21
+Pinned base: playwright v1.59.1-noble
+sha256:b0ab6f3cb99aa7803adbc14d9027ec1785fc6e433b97e134e0f8fe61683b6b53
+Dependencies: npm ci --ignore-scripts, repository package-lock.json.
+
+Layered result (commands connected with &&):
+1. requirement-links.test.mjs: PASS.
+2. TypeScript tsc --noEmit: PASS (exit 0, browser layer started).
+3. Browser: 4 passed (13.1s), exit 0:
+   - switch network with same task ID: old detail hidden while pending,
+     then HTTP 503 containing stale card cannot render any old detail;
+   - HTTP 200 for a different task ID: rejected;
+   - board #id/title links open detail and directory-resolved owner;
+   - list/activity/dashboard links remain consistent, raw token IDs hidden.
+
+Boundaries:
+- Browser uses synthetic Hub route fixtures, actual Next dev server and
+  Chromium inside Docker. No live Hub, native package, or release claim.
+- --network none blocks external access; Google fonts fell back with
+  warnings. This validates navigation/state, not typography or visual polish.
+- Dependency installation reported 28 audit findings (9 moderate, 16 high,
+  3 critical); dependencies were not upgraded in this narrow patch.
+- Existing PR45 history credential scan failure is independent and NOT
+  resolved by this patch. No history rewrite or guard relaxation performed.
+- Container used --rm and exited; no host ports, mounts, or production data.
+  Local TEST-ONLY image retained for reproduction.

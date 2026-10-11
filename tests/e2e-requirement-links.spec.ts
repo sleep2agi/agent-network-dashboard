@@ -112,6 +112,46 @@ async function mockRequirements(page: Page) {
 }
 
 test.describe('requirement deep links', () => {
+  test('network switch hides previous detail during loading and after a failed response', async ({ page, context }) => {
+    await login(context);
+    await page.addInitScript(() => sessionStorage.setItem('anet_network_id', 'net_a'));
+    await page.route('**/api/hub/networks', route => route.fulfill({ json: { networks: [
+      { network_id: 'net_a', network_name: 'Network A' },
+      { network_id: 'net_b', network_name: 'Network B' },
+    ] } }));
+    await mockRequirements(page);
+    let release!: () => void;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    await page.route(`**/api/hub/requirements/${REQ_ID}?**`, async route => {
+      if (new URL(route.request().url()).searchParams.get('network_id') !== 'net_b') return route.fallback();
+      await pending;
+      // Even an error response containing an old card must never render it.
+      await route.fulfill({ status: 503, json: { requirement: { id: REQ_ID, name: 'STALE_CARD' } } });
+    });
+    await page.goto(`${BASE}/board/${REQ_ID}`);
+    await expect(page.getByText('DETAIL_BODY_LITERAL')).toBeVisible();
+    await page.getByTestId('network-switcher').click();
+    await page.getByTestId('network-option').filter({ hasText: 'Network B' }).click();
+    try {
+      await expect(page.getByText('Loading task…')).toBeVisible();
+      await expect(page.getByText('DETAIL_BODY_LITERAL')).toHaveCount(0);
+    } finally { release(); }
+    await expect(page.getByText('Could not load this task (HTTP 503)')).toBeVisible();
+    await expect(page.getByText('DETAIL_BODY_LITERAL')).toHaveCount(0);
+    await expect(page.getByText('STALE_CARD')).toHaveCount(0);
+  });
+
+  test('a successful response for the wrong task is not rendered', async ({ page, context }) => {
+    await login(context);
+    await mockRequirements(page);
+    await page.route(`**/api/hub/requirements/${REQ_ID}?**`, route => route.fulfill({
+      json: { ok: true, requirement: { id: 'req_other', name: 'WRONG_TASK' } },
+    }));
+    await page.goto(`${BASE}/board/${REQ_ID}`);
+    await expect(page.getByText('Task not found')).toBeVisible();
+    await expect(page.getByText('WRONG_TASK')).toHaveCount(0);
+  });
+
   test('board title and #id open the task detail route', async ({ page, context }) => {
     await login(context);
     await mockRequirements(page);
