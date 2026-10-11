@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { TaskCard, TaskPanel } from '../components/requirement-chrome';
+import { TaskPanel } from '../components/requirement-chrome';
 import {
   agentCount,
   agentsDirectlyIn,
@@ -171,7 +171,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
             <ul className="mt-3 space-y-2">
               {agents.map((agent) => (
                 <li key={agent.nodeId}>
-                  <TaskCard data-testid={`agent-org-agent-${agent.nodeId}`} className="flex items-center justify-between gap-3">
+                  <div data-testid={`agent-org-agent-${agent.nodeId}`} className="flex items-center justify-between gap-3 rounded-[10px] px-1 py-2">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{agent.alias}</div>
                       <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]">
@@ -181,7 +181,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                       </div>
                     </div>
                     {agent.demo ? <span className="shrink-0 rounded-md border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--warning)]">演示</span> : null}
-                  </TaskCard>
+                  </div>
                 </li>
               ))}
             </ul>
