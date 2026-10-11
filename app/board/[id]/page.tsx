@@ -36,6 +36,7 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
   const [people, setPeople] = useState<Person[]>([]);
   const [error, setError] = useState('');
   const [loadedFor, setLoadedFor] = useState('');
+  const scope = JSON.stringify([networkId, id]);
 
   useEffect(() => {
     let alive = true;
@@ -43,9 +44,10 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
     Promise.all([
       fetch(`/api/hub/requirements/${encodeURIComponent(id)}?${net}`, { cache: 'no-store' }).then(async (res) => {
         if (res.status === 401) {
-          router.push('/login');
+          if (alive) router.push('/login');
           return null;
         }
+        if (!res.ok) throw new Error(`Could not load this task (HTTP ${res.status})`);
         return res.json();
       }),
       fetch(`/api/hub/requirements/people?${net}`, { cache: 'no-store' }).then((res) => res.ok ? res.json() : { people: [] }).catch(() => ({ people: [] })),
@@ -53,23 +55,25 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
       if (!alive || !body) return;
       setPeople(Array.isArray(directory?.people) ? directory.people : []);
       const requirement = body?.requirement;
-      if (!requirement || typeof requirement.id !== 'string') {
+      if (body.ok === false || !requirement || requirement.id !== id) {
         setCard(null);
         setError(body?.error || 'Task not found');
       } else {
         setCard(requirement);
         setError('');
       }
-      setLoadedFor(id);
+      setLoadedFor(scope);
     }).catch((e: unknown) => {
       if (!alive) return;
+      setCard(null);
+      setPeople([]);
       setError(e instanceof Error ? e.message : 'Could not load this task');
-      setLoadedFor(id);
+      setLoadedFor(scope);
     });
     return () => { alive = false; };
-  }, [id, networkId, router]);
+  }, [id, networkId, router, scope]);
 
-  const loading = loadedFor !== id;
+  const loading = loadedFor !== scope;
   const seq = shortIdLabel(card?.seq);
   const checklist = Array.isArray(card?.checklist) ? card.checklist : [];
 
