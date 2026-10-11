@@ -1,5 +1,22 @@
 'use client';
 
+/**
+ * TopoGraph — Dashboard-owned topology (拓扑图).
+ *
+ * Maintained only in agent-network-dashboard. The agent-network-app
+ * client has no equivalent view: do not port this chart from the
+ * client, and do not treat client Tasks or org screens as its source.
+ * Bump TOPO_REVISION when this canvas's contract changes. The package
+ * version stays on data-dashboard-version; the revision is the
+ * separate ownership stamp (data-topo-maintainer="dashboard").
+ *
+ * Data (all Hub, read here or by the overview page):
+ *   sessions  ← /api/hub/status
+ *   sse       ← health.sse_sessions (presence.ts)
+ *   flows     ← /api/hub/messages + /api/hub/tasks (polled below)
+ *   servers   ← /api/hub/servers (useServerHealthMap)
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
@@ -12,6 +29,10 @@ import { parseHubTime, relativeAgo, NODE_STALE_MS } from '../lib/time';
 import { DASHBOARD_VERSION } from '../lib/version';
 import { useChatUnread } from '../lib/chat-unread';
 import { isOnline as presenceIsOnline, sseCountFor as presenceSseCountFor } from '../lib/presence';
+
+/** Canvas contract revision. Independent of DASHBOARD_VERSION so this
+ *  chart can move without a client release. */
+const TOPO_REVISION = 'dashboard-topo-2026-10-11';
 
 /** v0.10.0 Hero 1+2 / §3.F server-health hook — fetches the normalized
  *  /api/hub/servers payload (preview.370 unblocked real-data via the
@@ -145,6 +166,45 @@ const onlineTripleInnerR = 145;
 const onlineTripleMidR = 215;
 const onlineTripleOuterR = 285;
 const offlineRadius = 325;
+
+/** Padded extent of placed node centres. Ring fit uses this so a grown
+ *  offline ring can scale into the viewBox instead of clipping. */
+function contentBoxOf(positions: Record<string, Point>, pad: number): { x: number; y: number; w: number; h: number } | null {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let n = 0;
+  for (const p of Object.values(positions)) {
+    n++;
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  if (n === 0) return null;
+  return {
+    x: minX - pad,
+    y: minY - pad,
+    w: maxX - minX + pad * 2,
+    h: maxY - minY + pad * 2,
+  };
+}
+
+function retargetAlias(value: string | null, from: string, to: string): string | null {
+  return value === from ? to : value;
+}
+
+/** Flow keys are `from->to` (see buildFlowLinks). Follow a rename on
+ *  either endpoint so a pinned or hovered edge does not stick to the
+ *  dead alias. */
+function retargetEdgeKey(key: string | null, from: string, to: string): string | null {
+  if (!key) return key;
+  const sep = '->';
+  const at = key.indexOf(sep);
+  if (at < 0) return key;
+  const a = key.slice(0, at);
+  const b = key.slice(at + sep.length);
+  if (a !== from && b !== from) return key;
+  return `${a === from ? to : a}${sep}${b === from ? to : b}`;
+}
 
 /** Polar coordinate for a node on a ring. `rotateBy` lets the caller offset
  *  the whole ring so two stacked rings don't align radially (round 25: the
@@ -816,6 +876,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     gridContentBottom,
     treeConnectors,
     treeContentBox,
+    ringContentBox,
   } = useMemo(() => {
     // #515: unified with page.tsx / Sidebar.tsx via app/lib/presence.ts.
     const sseCount = (s: { alias: string; network_id?: string }) => presenceSseCountFor(s, sseSessions);
@@ -1032,6 +1093,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         gridContentBottom,
         treeConnectors: { lines: [], synthLabels: [], synthRoot: false } as TreeLayout,
         treeContentBox: null as { x: number; y: number; w: number; h: number } | null,
+        ringContentBox: null as { x: number; y: number; w: number; h: number } | null,
       };
     }
 
@@ -1289,6 +1351,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
         gridContentBottom,
         treeConnectors: { lines: connectors, synthLabels: synthBoxes, synthRoot } as TreeLayout,
         treeContentBox,
+        ringContentBox: null as { x: number; y: number; w: number; h: number } | null,
       };
     }
 
@@ -1371,10 +1434,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       // #111: group boxes are a grid-layout feature only — radially scattered
       // ring nodes can't be cleanly boxed. Ring keeps the #83 prefix hue.
       groupBoxes: [] as { key: string; isOrphan?: boolean; count: number; statuses: { working: number; idle: number; offline: number }; x: number; y: number; w: number; h: number }[],
-      // ring fits within VIEWBOX_H by construction (offlineRadius=325 + centre at y=330)
+      // Base ring (r=325, cy=330) sits inside the 680px viewBox. The
+      // offline radius then grows 6px per node past 4, so large offline
+      // fleets leave the frame. ringContentBox lets fit-to-content scale
+      // that extent instead of clipping labels.
       gridContentBottom: 0,
       treeConnectors: { lines: [], synthLabels: [], synthRoot: false } as TreeLayout,
       treeContentBox: null as { x: number; y: number; w: number; h: number } | null,
+      ringContentBox: contentBoxOf(positions, 64),
     };
   }, [messages, tasks, sessions, sseSessions, layout, nodeScale]);
 
@@ -1451,8 +1518,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   useEffect(() => {
     if (!pinnedGroup) return;
     const known = new Set(Object.values(groupKeys));
-    if (!known.has(pinnedGroup)) setPinnedGroup(null);
-  }, [pinnedGroup, groupKeys]);
+    if (known.has(pinnedGroup)) return;
+    // A rename can arrive before /api/hub/status swaps the alias. Keep
+    // a pin that already followed the new name until the fleet catches up.
+    if (renameSignal && pinnedGroup === renameSignal.to) return;
+    setPinnedGroup(null);
+  }, [pinnedGroup, groupKeys, renameSignal]);
   // Round 49 / Loop: reverse-direction of R40's edge-on-node-hover linkage.
   // R48 widened the flow hitbox to 16 px, so edges are precise enough to
   // serve as a state trigger. When the user hovers a flow edge, light up its
@@ -1758,15 +1829,19 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   const [clickRipple, setClickRipple] = useState<{
     ts: number; x: number; y: number; r0: number; color: string;
   } | null>(null);
-  // #84: when a node is renamed while its chat popover is open, follow the
-  // rename so the conversation keeps targeting a live alias.
+  // #84: a node.renamed event must follow every alias-keyed focus, not
+  // only the open chat. Hover, a singleton group pin, and flow edges
+  // (`from->to`) otherwise keep pointing at the dead name.
   useEffect(() => {
-    if (renameSignal && renameSignal.from === chatAlias) {
-      setChatAlias(renameSignal.to);
-    }
-    // chatAlias intentionally omitted — only react to a new rename signal,
-    // not to the user opening/closing the popover.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!renameSignal) return;
+    const { from, to } = renameSignal;
+    if (!from || from === to) return;
+    setChatAlias(prev => retargetAlias(prev, from, to));
+    setHoveredAlias(prev => retargetAlias(prev, from, to));
+    setHoveredGroupLabel(prev => retargetAlias(prev, from, to));
+    setPinnedGroup(prev => retargetAlias(prev, from, to));
+    setHoveredEdgeKey(prev => retargetEdgeKey(prev, from, to));
+    setPinnedEdgeKey(prev => retargetEdgeKey(prev, from, to));
   }, [renameSignal]);
 
   useEffect(() => { viewRef.current = view; }, [view]);
@@ -1834,6 +1909,30 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       autoFitDoneRef.current = true;
       return;
     }
+    // Ring: only scale when the grown offline ring leaves the viewBox.
+    // A fleet that already fits stays at natural zoom.
+    if (layout === 'ring') {
+      const b = ringContentBox;
+      if (!b || b.w <= 0 || b.h <= 0) {
+        autoFitDoneRef.current = true;
+        return;
+      }
+      const overflows = b.x < 8 || b.y < 8 || b.x + b.w > VIEWBOX_W - 8 || b.y + b.h > VIEWBOX_H - 8;
+      if (!overflows) {
+        autoFitDoneRef.current = true;
+        return;
+      }
+      const pad = 16;
+      const z = Math.max(ZOOM_MIN, Math.min(
+        1, (VIEWBOX_W - 2 * pad) / b.w, (VIEWBOX_H - 2 * pad) / b.h));
+      setView({
+        zoom: z,
+        x: VIEWBOX_W / 2 - (b.x + b.w / 2) * z,
+        y: VIEWBOX_H / 2 - (b.y + b.h / 2) * z,
+      });
+      autoFitDoneRef.current = true;
+      return;
+    }
     if (layout !== 'grid' || !gridContentBottom) return;
     if (gridContentBottom <= VIEWBOX_H) {
       autoFitDoneRef.current = true; // no overflow → no fit needed
@@ -1842,10 +1941,17 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
     const fitZoom = Math.max(ZOOM_MIN, Math.min(1, VIEWBOX_H / gridContentBottom));
     setView({ zoom: fitZoom, x: 0, y: 0 });
     autoFitDoneRef.current = true;
-  }, [layout, sessions.length, gridContentBottom, treeContentBox, hadPersistedViewOnMount]);
+  }, [layout, sessions.length, gridContentBottom, treeContentBox, ringContentBox, hadPersistedViewOnMount]);
 
-  // persist view
+  // Persist pan/zoom once the operator (or auto-fit) has left the
+  // default frame. Writing {1,0,0} on the first effect tick makes a
+  // React strict-mode remount look like a saved view, so the ring
+  // fit never runs in dev and a later larger fleet stays clipped.
+  const viewPersistReady = useRef(false);
   useEffect(() => {
+    const untouched = view.zoom === 1 && view.x === 0 && view.y === 0;
+    if (untouched && !viewPersistReady.current) return;
+    viewPersistReady.current = true;
     try { localStorage.setItem('anet-topo-view', JSON.stringify(view)); } catch {}
   }, [view]);
 
@@ -2002,11 +2108,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
       });
       return;
     }
+    if (layout === 'ring' && ringContentBox && ringContentBox.w > 0 && ringContentBox.h > 0) {
+      const b = ringContentBox;
+      const overflows = b.x < 8 || b.y < 8 || b.x + b.w > VIEWBOX_W - 8 || b.y + b.h > VIEWBOX_H - 8;
+      if (overflows) {
+        const pad = 16;
+        const z = Math.max(ZOOM_MIN, Math.min(
+          1, (VIEWBOX_W - 2 * pad) / b.w, (VIEWBOX_H - 2 * pad) / b.h));
+        setView({
+          zoom: z,
+          x: VIEWBOX_W / 2 - (b.x + b.w / 2) * z,
+          y: VIEWBOX_H / 2 - (b.y + b.h / 2) * z,
+        });
+        return;
+      }
+    }
     const zoom = !gridContentBottom || gridContentBottom <= VIEWBOX_H
       ? 1
       : Math.max(ZOOM_MIN, Math.min(1, VIEWBOX_H / gridContentBottom));
     setView({ zoom, x: 0, y: 0 });
-  }, [gridContentBottom, layout, treeContentBox]);
+  }, [gridContentBottom, layout, treeContentBox, ringContentBox]);
 
   // R74: listen for layout + view palette commands. Sister to R69's
   // pin listener — palette dispatches a CustomEvent, the reducer here
@@ -2106,7 +2227,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
   // the node cluster. Less is more: one fewer arbitrary constraint.
   // Picked option A over a 1536 px cap (option B) per Vincent msg 547.
   return (
-    <section className="w-full mb-8" data-topo-showcase>
+    <section
+      className="w-full mb-8"
+      data-topo-showcase
+      data-topo-maintainer="dashboard"
+      data-topo-revision={TOPO_REVISION}
+    >
       {/* Round 299 / Loop: title block bottom margin mb-3 (12px) →
           mb-4 (16px). After R298 tightened the title-block internal
           gap (12→10px) packing brand-logo + kicker + h2 into a more
@@ -2647,7 +2773,14 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               sibling to R699 .anet-topo-kicker-breath guard).
               data-topo-section-title-breath="10s" attr surfaces the
               cadence for tests. */}
-          <h2 className="anet-topo-section-title-breath text-lg text-white font-semibold group-hover:font-bold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing,font-weight] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter" data-topo-section-title-hover-fw="700" data-topo-section-title-halo-layers="2" data-topo-section-title-breath="10s">Command mesh</h2>
+          <h2 className="anet-topo-section-title-breath text-lg text-[var(--fg)] font-semibold group-hover:font-bold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing,font-weight] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter" data-topo-section-title-hover-fw="700" data-topo-section-title-halo-layers="2" data-topo-section-title-breath="10s">Command mesh</h2>
+          <p
+            className="mt-1 text-[11px] leading-tight tracking-wide"
+            style={{ color: 'var(--fg-dim)' }}
+            data-topo-ownership
+          >
+            Dashboard 单独维护 · v{DASHBOARD_VERSION}
+          </p>
           </div>
         </div>
         {/* Round 328 / Loop: chip-row strip wrapper gap 2 → 2.5
@@ -5020,6 +5153,26 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           transition: 'background-color 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out',
         }}
       >
+        {drawnNodeCount === 0 && sessions.length > 0 && (
+          <div
+            className="absolute inset-0 z-20 flex items-center justify-center px-6 pointer-events-none"
+            data-topo-ghost-empty="true"
+          >
+            <div
+              className="max-w-sm rounded-2xl border px-5 py-4 text-center"
+              style={{
+                background: 'var(--bg-secondary)',
+                borderColor: 'var(--border)',
+                color: 'var(--fg)',
+              }}
+            >
+              <p className="text-sm font-medium">没有可绘制的节点</p>
+              <p className="mt-1 text-xs" style={{ color: 'var(--fg-muted)' }}>
+                {sessions.length} 个会话已超过离线保留时间。新的心跳会把它们带回这张拓扑图。
+              </p>
+            </div>
+          </div>
+        )}
         {/* Round 265 / Loop: top-rail (1px-tall colored line at the top
             of the canvas wrapper) picks up theme-toggle transition.
             Pre-R265 the className `bg-gradient-to-r ${pal.topRail
@@ -5127,7 +5280,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              polish gates like R109 dense-label collapse at 16+ nodes)
              can branch on a stable tier name without re-deriving the
              threshold logic from the raw numeric. Buckets:
-               'empty'      — onlineNodes.length === 0
+               'empty'      — no drawn nodes (online + offline; ghosts excluded)
                'sparse'     — 1-3 nodes
                'normal'     — 4-15 nodes
                'dense'      — 16-30 nodes  (matches R109 collapse gate)
@@ -5144,10 +5297,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              zoom, hover identity. A test harness can snapshot the
              full canvas state with 12 getAttribute calls. */
           data-topo-fleet-density-tier={
-            onlineNodes.length === 0 ? 'empty' :
-            onlineNodes.length <= 3 ? 'sparse' :
-            onlineNodes.length <= 15 ? 'normal' :
-            onlineNodes.length <= 30 ? 'dense' :
+            drawnNodeCount === 0 ? 'empty' :
+            drawnNodeCount <= 3 ? 'sparse' :
+            drawnNodeCount <= 15 ? 'normal' :
+            drawnNodeCount <= 30 ? 'dense' :
             'very-dense'
           }
           data-topo-online-count={onlineNodes.length}
@@ -5847,6 +6000,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
              already consume it from app/lib/version.ts → reads
              package.json pkg.version). No business logic added. */
           data-dashboard-version={DASHBOARD_VERSION}
+          data-topo-maintainer="dashboard"
+          data-topo-revision={TOPO_REVISION}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -11364,12 +11519,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      the same lift). R440 hover 0.45→0.60 light + R12
                      status.halo color + R407 transition list all
                      preserved. */
-                  const haloOpacity = (() => {
-                    if (isOnline) {
-                      return isLight ? (isHaloHovered ? 1   : 0.85) : (isHaloHovered ? 0.80 : 0.65);
-                    }
-                    return isLight ? (isHaloHovered ? 0.60 : 0.50) : (isHaloHovered ? 0.45 : 0.30);
-                  })();
+                  const haloRest = isOnline
+                    ? (isLight ? 0.85 : 0.65)
+                    : (isLight ? 0.50 : 0.30);
+                  const haloHover = isOnline
+                    ? (isLight ? 1 : 0.80)
+                    : (isLight ? 0.60 : 0.45);
+                  const haloOpacity = isHaloHovered ? haloHover : haloRest;
                   return (
                 <circle
                   cx={pos.x}
@@ -11377,7 +11533,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   r={radius + 8}
                   fill={status.halo}
                   opacity={haloOpacity}
-                  data-node-halo-offline-opacity={isOnline ? undefined : (isLight ? 0.45 : 0.30)}
+                  data-node-halo-offline-opacity={isOnline ? undefined : haloRest}
                   data-node-halo-hovered={isHaloHovered ? 'true' : 'false'}
                   data-node-halo-resolved-opacity={haloOpacity}
                   className="transition-[fill,opacity] duration-300 ease-out"
