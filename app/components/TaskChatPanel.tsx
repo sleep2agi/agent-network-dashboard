@@ -1560,23 +1560,23 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
             const senderLabel = fromUser ? 'You' : m.from_name;
             const senderBadge = fromUser
               ? null
-              : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-[11px] text-purple-300 font-medium">↳ {m.from_name}</span>;
+              : <span className="inline-flex h-5 items-center rounded bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium text-[var(--fg-dim)]">↳ {m.from_name}</span>;
             if (event.kind === 'reply') {
               return (
                 <Fragment key={`${m.task_id}:reply`}>
                 {sepEl}
                 <div className="flex justify-start" data-ev={`${m.task_id}:reply`}>
-                  <div title={event.at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-green-500/8 border border-green-500/15 rounded-2xl rounded-bl-md px-3 py-2.5 sm:px-4 shadow-sm ${currentMatchKey === `${m.task_id}:reply` ? 'ring-2 ring-yellow-400/60' : ''}`}>
+                  <div title={event.at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] rounded-[10px] bg-[var(--bg-secondary)] px-3 py-2.5 shadow-[var(--ds-shadow-card)] sm:px-4 ${currentMatchKey === `${m.task_id}:reply` ? 'ring-2 ring-[var(--accent)]' : ''}`}>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {m.to_name && <AliasAvatar alias={m.to_name} size={14} />}
                         <span className="text-[11px] text-[var(--fg)] font-medium truncate">{m.to_name}</span>
-                        <span className="text-[11px] text-green-300/70">replied</span>
+                        <span className="text-[11px] text-[var(--fg-dim)]">replied</span>
                       </div>
                       <CopyButton text={m.result || ''} label={t('复制回复', 'Copy reply')} />
                     </div>
-                    <div className="mb-2 rounded-lg border-l-2 border-cyan-400/40 bg-black/20 px-2.5 py-1.5">
-                      <div className="text-[11px] text-cyan-300/80">
+                    <div className="mb-2 border-l border-[var(--border)] px-2.5 py-1.5">
+                      <div className="text-[11px] text-[var(--fg-muted)]">
                         引用 {senderLabel} 的任务 · {formatTimestamp(m.created_at)}
                       </div>
                       <div className="mt-0.5 max-h-10 overflow-hidden text-[11px] leading-5 text-[var(--fg-muted)]">
@@ -1620,9 +1620,9 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                     !
                   </button>
                 )}
-                <div title={m.created_at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-cyan-500/8 border border-cyan-500/15 rounded-2xl rounded-br-md px-3 py-2.5 sm:px-4 shadow-sm ${currentMatchKey === `${m.task_id}:task` ? 'ring-2 ring-yellow-400/60' : ''}`}>
+                <div title={m.created_at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2.5 sm:px-4 ${currentMatchKey === `${m.task_id}:task` ? 'ring-2 ring-[var(--accent)]' : ''}`}>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[11px] font-medium ${fromUser ? 'text-cyan-400' : 'text-purple-300'}`}>{senderLabel}</span>
+                    <span className="text-[11px] font-medium text-[var(--fg-muted)]">{senderLabel}</span>
                     {!fromUser && <span className="text-[11px] text-[var(--fg-dim)]">forwarded to {m.to_name}</span>}
                     <span className="flex-1" />
                     <CopyButton text={m.content || ''} label={t('复制内容', 'Copy message')} />
@@ -1673,11 +1673,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
               {/* Typing indicator when running */}
               {m.status === 'running' && !m.result && (
                 <div className="flex justify-start">
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="rounded-[10px] bg-[var(--bg-secondary)] px-4 py-3 shadow-[var(--ds-shadow-card)]">
                     <div className="flex gap-1">
-                      <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0s' }} />
-                      <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.15s' }} />
-                      <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.3s' }} />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-[var(--fg-dim)]" style={{ animationDelay: '0s' }} />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-[var(--fg-dim)]" style={{ animationDelay: '0.15s' }} />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-[var(--fg-dim)]" style={{ animationDelay: '0.3s' }} />
                     </div>
                   </div>
                 </div>

@@ -104,7 +104,7 @@ export function Segmented<T extends string>({
   onChange: (id: T) => void;
 }) {
   return (
-    <div aria-label={label} className="flex h-8 max-w-full items-center gap-0.5 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div data-segmented aria-label={label} className="flex h-8 max-w-full items-center gap-0.5 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {options.map((item) => {
         const active = value === item.id;
         return (

@@ -17,8 +17,11 @@ export default function SettingsPage() {
   const [oldPwd, setOldPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [pwdResult, setPwdResult] = useState('');
-  const rowClass = 'flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between';
-  const valueClass = 'break-all sm:max-w-[320px] sm:text-right';
+  const cardClass = 'rounded-[10px] bg-[var(--bg-secondary)] p-4 shadow-[var(--ds-shadow-card)]';
+  const headingClass = 'mb-1 text-[15px] font-semibold text-[var(--fg)]';
+  const rowClass = 'flex min-h-11 flex-col justify-center gap-0.5 border-t border-[var(--border)] py-2 first:border-t-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4';
+  const labelClass = 'shrink-0 text-[13px] font-medium text-[var(--fg-muted)]';
+  const valueClass = 'min-w-0 break-all text-sm text-[var(--fg)] sm:max-w-[60%] sm:text-right';
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
@@ -32,7 +35,7 @@ export default function SettingsPage() {
           as tappable rather than as inert headings on 375–390px. */}
       {/* #209 R36: mb-8 → mb-4 sm:mb-8 — same pattern R31 applied to
           /admin's identical jump-nav. Saves 16 px on phones. */}
-      <nav className="mb-4 sm:mb-8 flex flex-wrap gap-2 text-xs">
+      <nav className="mb-6 flex flex-wrap gap-2">
         {[
           { href: '#appearance', label: 'Appearance' },
           { href: '#connection', label: 'Connection' },
@@ -40,7 +43,7 @@ export default function SettingsPage() {
           { href: '#resources',  label: 'Resources' },
         ].map(a => (
           <a key={a.href} href={a.href}
-            className="inline-flex min-h-[44px] items-center rounded-md border border-[#26262b] bg-[#0e0e10]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+            className="inline-flex h-8 items-center rounded-[10px] bg-[var(--bg-elevated)] px-3 text-[13px] font-medium text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)]">
             {a.label}
           </a>
         ))}
@@ -51,14 +54,11 @@ export default function SettingsPage() {
             优化白色的主题"). The light theme tokens were restored from
             pre-R8 history; this card is the visible owner of the toggle
             (previously theme switching hid inside Cmd+K only). */}
-        <div id="appearance" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Appearance</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
-          <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-gray-300 mb-4">Theme</h2>
-            <div className="grid grid-cols-2 gap-3">
+        <div id="appearance" className="space-y-3 scroll-mt-6">
+          <div className="px-1 text-[13px] font-medium text-[var(--fg-muted)]">Appearance</div>
+          <section className={cardClass}>
+            <h2 className={headingClass}>Theme</h2>
+            <div className="mt-3 grid grid-cols-2 gap-2">
               {([
                 { id: 'cyber', label: 'Dark', swatch: '#0b0b0d' },
                 { id: 'light', label: 'Light', swatch: '#f6f7f9' },
@@ -72,25 +72,20 @@ export default function SettingsPage() {
                     setTheme(t.id);
                   }}
                   aria-pressed={theme === t.id}
-                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-colors ${
+                  className={`flex h-11 items-center gap-3 rounded-[10px] px-3 text-sm transition-colors ${
                     theme === t.id
-                      ? 'border-cyan-500/60 bg-cyan-500/10 text-gray-100'
-                      : 'border-[#26262b] text-gray-400 hover:border-[#3a3a41]'
+                      ? 'bg-[var(--accent-tonal)] font-medium text-[var(--accent)]'
+                      : 'bg-[var(--bg-elevated)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
                   }`}
                 >
                   <span
                     aria-hidden
-                    className="inline-block w-5 h-5 rounded-full border border-black/20 shrink-0"
+                    className="inline-block h-5 w-5 shrink-0 rounded-full border border-[var(--border)]"
                     style={{ backgroundColor: t.swatch }}
                   />
                   {t.label}
-                  {/* R4 (#17): the selected-state marker was a raw "✓" text
-                      glyph — it renders font-dependently and sat a touch off
-                      the row's optical baseline. Swap to the same inline-SVG
-                      check the rest of the dashboard uses (round 59 emoji→SVG
-                      migration), so the icon language is consistent and crisp. */}
                   {theme === t.id && (
-                    <svg aria-hidden className="ml-auto w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg aria-hidden className="ml-auto h-4 w-4 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20 6 9 17l-5-5" />
                     </svg>
                   )}
@@ -101,117 +96,104 @@ export default function SettingsPage() {
         </div>
 
         {/* ── Group: Connection ─────────────────────────────────── */}
-        <div id="connection" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Connection</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
+        <div id="connection" className="space-y-3 scroll-mt-6">
+          <div className="px-1 text-[13px] font-medium text-[var(--fg-muted)]">Connection</div>
 
-        {/* CommHub Connection */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">CommHub Connection</h2>
-          <div className="space-y-3 text-sm">
+        <section className={cardClass}>
+          <h2 className={headingClass}>CommHub Connection</h2>
+          <div className="text-sm">
             <div className={rowClass}>
-              <span className="text-gray-500 shrink-0">Hub URL</span>
-              <span className={`text-cyan-300 ${valueClass}`}>{config?.hub || 'not configured'}</span>
+              <span className={labelClass}>Hub URL</span>
+              <span className={valueClass}>{config?.hub || 'not configured'}</span>
             </div>
             <div className={rowClass}>
-              <span className="text-gray-500">Config Source</span>
-              <span className={`text-gray-300 ${valueClass}`}>
+              <span className={labelClass}>Config Source</span>
+              <span className={valueClass}>
                 {config?.source === 'file' ? 'Local file (~/.anet/config.json)' : config?.source === 'runtime-env' ? 'Vercel env vars' : 'Missing'}
               </span>
             </div>
             <div className={rowClass}>
-              <span className="text-gray-500">Auth Token</span>
-              <span className={`${config?.tokenConfigured ? 'text-green-400' : 'text-red-400'} ${valueClass}`}>
+              <span className={labelClass}>Auth Token</span>
+              <span className={`${config?.tokenConfigured ? 'text-[var(--success)]' : 'text-[var(--error)]'} ${valueClass}`}>
                 {config?.tokenConfigured ? `Configured (${config.tokenPreview})` : 'Not configured'}
               </span>
             </div>
             <div className={rowClass}>
-              <span className="text-gray-500">Server Auth</span>
-              <span className={`${health?.auth === 'enabled' ? 'text-green-400' : 'text-yellow-400'} sm:text-right`}>
+              <span className={labelClass}>Server Auth</span>
+              <span className={`${health?.auth === 'enabled' ? 'text-[var(--success)]' : 'text-[var(--warn)]'} sm:text-right`}>
                 {health?.auth || '--'}
               </span>
             </div>
             {config?.error && (
-              <div className="border-t border-[#26262b] pt-3 text-xs text-gray-500">
+              <div className="border-t border-[var(--border)] pt-3 text-xs text-[var(--fg-dim)]">
                 {config.error}
               </div>
             )}
-            {/* #214 F5: the red HealthBanner's "Open Settings" CTA used to
-                land on a read-only page with no next step. When the hub is
-                unreachable, give the user actual recovery commands. */}
             {(healthError || health?.ok === false) && (
-              <div className="border-t border-red-500/20 pt-3 text-xs space-y-1.5" role="alert">
-                <div className="text-red-300 font-medium">CommHub unreachable — how to recover:</div>
-                <div className="text-gray-400">1. Check the hub process on the server: <code className="font-mono bg-[#0e0e10] border border-[#1c1c1f] rounded px-1.5 py-0.5">anet hub status</code></div>
-                <div className="text-gray-400">2. Start it if stopped: <code className="font-mono bg-[#0e0e10] border border-[#1c1c1f] rounded px-1.5 py-0.5">anet hub start</code></div>
-                <div className="text-gray-400">3. Confirm the Hub URL above matches where the hub actually listens.</div>
+              <div className="space-y-1.5 border-t border-[var(--border)] pt-3 text-xs" role="alert">
+                <div className="font-medium text-[var(--error)]">CommHub unreachable — how to recover:</div>
+                <div className="text-[var(--fg-muted)]">1. Check the hub process on the server: <code className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 font-mono text-[var(--fg)]">anet hub status</code></div>
+                <div className="text-[var(--fg-muted)]">2. Start it if stopped: <code className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 font-mono text-[var(--fg)]">anet hub start</code></div>
+                <div className="text-[var(--fg-muted)]">3. Confirm the Hub URL above matches where the hub actually listens.</div>
               </div>
             )}
           </div>
         </section>
 
-        {/* Server Info */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Server Info</h2>
-          <div className="space-y-3 text-sm">
+        <section className={cardClass}>
+          <h2 className={headingClass}>Server Info</h2>
+          <div className="text-sm">
             <div className={rowClass}>
-              <span className="text-gray-500">Version</span>
-              <span className={`text-gray-300 ${valueClass}`}>{health?.version || '--'}</span>
+              <span className={labelClass}>Version</span>
+              <span className={valueClass}>{health?.version || '--'}</span>
             </div>
             <div className={rowClass}>
-              <span className="text-gray-500">Sessions</span>
-              <span className={`text-gray-300 ${valueClass}`}>{health?.sessions ?? '--'}</span>
+              <span className={labelClass}>Sessions</span>
+              <span className={valueClass}>{health?.sessions ?? '--'}</span>
             </div>
             <div className={rowClass}>
-              <span className="text-gray-500">SSE streams <span className="text-gray-600">· server</span></span>
-              <span className={`text-gray-300 ${valueClass}`}>{health?.sse_connections ?? '--'}</span>
+              <span className={labelClass}>SSE streams <span className="text-[var(--fg-dim)]">· server</span></span>
+              <span className={valueClass}>{health?.sse_connections ?? '--'}</span>
             </div>
             <div className={rowClass}>
-              <span className="text-gray-500">Uptime</span>
-              <span className={`text-gray-300 ${valueClass}`}>{health?.uptime ? `${Math.floor(health.uptime / 3600)}h ${Math.floor((health.uptime % 3600) / 60)}m` : '--'}</span>
+              <span className={labelClass}>Uptime</span>
+              <span className={valueClass}>{health?.uptime ? `${Math.floor(health.uptime / 3600)}h ${Math.floor((health.uptime % 3600) / 60)}m` : '--'}</span>
             </div>
           </div>
         </section>
 
-        {/* Dashboard Info */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Dashboard</h2>
-          <div className="space-y-3 text-sm">
+        <section className={cardClass}>
+          <h2 className={headingClass}>Dashboard</h2>
+          <div className="text-sm">
             <div className={rowClass}>
-              <span className="text-gray-500">Version</span>
-              <span className={`text-gray-300 font-mono ${valueClass}`} title="From package.json @sleep2agi/agent-network-dashboard">
+              <span className={labelClass}>Version</span>
+              <span className={`font-mono ${valueClass}`} title="From package.json @sleep2agi/agent-network-dashboard">
                 {DASHBOARD_VERSION}
               </span>
             </div>
             <div className={rowClass}>
-              <span className="text-gray-500">Data Layer</span>
-              <span className={`text-gray-300 ${valueClass}`}>SWR (5s refresh, 3s dedup)</span>
+              <span className={labelClass}>Data Layer</span>
+              <span className={valueClass}>SWR (5s refresh, 3s dedup)</span>
             </div>
             <div className={rowClass}>
-              <span className="text-gray-500">Pages</span>
-              <span className={`text-gray-300 ${valueClass}`}>Overview, Tasks, Nodes, Messages, Networks, Audit, Server Logs, Admin, Settings</span>
+              <span className={labelClass}>Pages</span>
+              <span className={valueClass}>Overview, Tasks, Nodes, Messages, Networks, Audit, Server Logs, Admin, Settings</span>
             </div>
           </div>
         </section>
         </div>
 
         {/* ── Group: Account ────────────────────────────────────── */}
-        <div id="account" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Account</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
+        <div id="account" className="space-y-3 scroll-mt-6">
+          <div className="px-1 text-[13px] font-medium text-[var(--fg-muted)]">Account</div>
 
-        {/* Change Password */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Change Password</h2>
-          <div className="space-y-3">
+        <section className={cardClass}>
+          <h2 className={headingClass}>Change Password</h2>
+          <div className="mt-3 space-y-3">
             <input type="password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} placeholder="Current password"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] sm:text-sm" />
             <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="New password"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] sm:text-sm" />
             <button onClick={async () => {
               if (!oldPwd || !newPwd) return;
               const saved = sessionStorage.getItem('anet_v3_auth');
@@ -233,17 +215,16 @@ export default function SettingsPage() {
               }
               setTimeout(() => setPwdResult(''), 5000);
             }} disabled={!oldPwd || !newPwd}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm rounded-lg transition-colors">
+              className="h-8 rounded-[10px] bg-[var(--accent)] px-4 text-[13px] font-medium text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-50">
               Change Password
             </button>
           </div>
-          {pwdResult && <div className={`mt-2 text-xs ${pwdResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{pwdResult}</div>}
+          {pwdResult && <div className={`mt-2 text-xs ${pwdResult.startsWith('Failed') ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>{pwdResult}</div>}
         </section>
 
-        {/* Session — tone-neutral, no longer "danger zone" red */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Sign out</h2>
-          <p className="text-xs text-gray-500 mb-3">Signing out clears your dashboard session cookie. You&apos;ll return to the login page.</p>
+        <section className={cardClass}>
+          <h2 className={headingClass}>Sign out</h2>
+          <p className="mb-3 text-xs text-[var(--fg-dim)]">Signing out clears your dashboard session cookie. You&apos;ll return to the login page.</p>
           <button
             onClick={async () => {
               await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
@@ -251,7 +232,7 @@ export default function SettingsPage() {
               sessionStorage.removeItem('anet_v3_auth');
               window.location.assign('/login');
             }}
-            className="px-4 py-2 bg-transparent hover:bg-[#1c1c1f] text-gray-300 text-sm rounded-lg border border-[#26262b] hover:border-[#3a3a41] transition-colors"
+            className="h-8 rounded-[10px] bg-[var(--bg-elevated)] px-4 text-[13px] font-medium text-[var(--fg)] transition-colors hover:text-[var(--fg)]"
           >
             Sign out
           </button>
@@ -259,51 +240,29 @@ export default function SettingsPage() {
         </div>
 
         {/* ── Group: Resources ──────────────────────────────────── */}
-        <div id="resources" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Resources</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
+        <div id="resources" className="space-y-3 scroll-mt-6">
+          <div className="px-1 text-[13px] font-medium text-[var(--fg-muted)]">Resources</div>
 
-        {/* #209 (per Vincent 521/522): the low-frequency pages 通信龙
-            moved out of the sidebar (Messages, Audit Log, Server Logs)
-            need a discovery surface that isn't the primary nav — folded
-            into the Settings/Resources grid alongside Tokens + Networks
-            so the page tree stays the same (pages NOT deleted), the
-            sidebar stays at 6, and users still have a one-tap way to
-            reach them without remembering URLs or opening Cmd+K. */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link href="/settings/tokens" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">API Tokens</h2>
-            <p className="text-xs text-gray-500 mt-2">Create and manage tokens for CLI access.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
-          </Link>
-          <Link href="/settings/networks" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Networks</h2>
-            <p className="text-xs text-gray-500 mt-2">Create, manage, and delete agent networks.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
-          </Link>
-          <Link href="/settings/providers" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Model Providers</h2>
-            <p className="text-xs text-gray-500 mt-2">Configure model providers and per-server reachability.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
-          </Link>
-          <Link href="/messages" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Messages</h2>
-            <p className="text-xs text-gray-500 mt-2">Global timeline of CommHub messages across all agents.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
-          </Link>
-          <Link href="/logs" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Audit Log</h2>
-            <p className="text-xs text-gray-500 mt-2">Authentication, token rotations, and admin actions.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
-          </Link>
-          <Link href="/server-logs" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Server Logs</h2>
-            <p className="text-xs text-gray-500 mt-2">Live stdout / stderr from the CommHub server.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
-          </Link>
-        </div>
+        <section className={cardClass}>
+          <ul>
+            {([
+              { href: '/settings/tokens', title: 'API Tokens', detail: 'Create and manage tokens for CLI access.' },
+              { href: '/settings/networks', title: 'Networks', detail: 'Create, manage, and delete agent networks.' },
+              { href: '/settings/providers', title: 'Model Providers', detail: 'Configure providers and per-server reachability.' },
+              { href: '/messages', title: 'Messages', detail: 'Global timeline of CommHub messages.' },
+              { href: '/logs', title: 'Audit Log', detail: 'Authentication, token rotations, and admin actions.' },
+              { href: '/server-logs', title: 'Server Logs', detail: 'Live stdout / stderr from the CommHub server.' },
+            ] as const).map((item) => (
+              <li key={item.href} className="border-t border-[var(--border)] first:border-t-0">
+                <Link href={item.href} className="flex h-11 min-w-0 items-center gap-3 hover:bg-[var(--bg-elevated)]">
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--fg)]">{item.title}</span>
+                  <span className="hidden min-w-0 max-w-[46%] truncate text-xs text-[var(--fg-dim)] sm:block">{item.detail}</span>
+                  <span aria-hidden className="shrink-0 text-xs text-[var(--fg-dim)]">→</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
         </div>
 
       </div>
