@@ -40,7 +40,7 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
           the fixed hamburger symmetrically, replacing the old ml-10
           indent that read as misalignment. Left-aligned from lg: up. */}
       <div className="mb-4">
-        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] tracking-tight text-center lg:text-left">Agent Network</h1>
+        <h1 className="text-[22px] font-semibold leading-7 tracking-tight text-[var(--fg)]">Agent Network</h1>
       </div>
 
       {fleetEmpty ? (

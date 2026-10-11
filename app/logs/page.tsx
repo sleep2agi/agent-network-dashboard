@@ -79,7 +79,7 @@ export default function LogsPage() {
       {/* #209 R36: mobile vertical rhythm — same R28/R30/R31 pattern,
           mb-6 → mb-4 sm:mb-6 here and on the action-filter strip below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
-        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] lg:ml-0 ml-10">Audit Log</h1>
+        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Audit Log</h1>
         {/* Round 87: dropped {logs.length} header chip — r43 added
             `All <count>` to the action-filter strip below, which
             duplicated this value 40px away. Matches r86 /server-logs. */}

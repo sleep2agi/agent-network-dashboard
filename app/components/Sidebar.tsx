@@ -71,7 +71,13 @@ interface SidebarNetwork {
 
 const ROLE_ICON: Record<string, string> = { owner: '⭐', admin: '🔧', member: '👤', viewer: '👁' };
 
-export function Sidebar() {
+export function Sidebar({
+  mobileOpen,
+  onMobileOpenChange,
+}: {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+}) {
   const pathname = usePathname();
   // Default = 'icon-rail' per Vincent 07-31 "飞书同版体验": nobody clicks
   // a toggle to make their sidebar narrow — the narrow form IS the
@@ -152,7 +158,7 @@ export function Sidebar() {
     try { localStorage.setItem('anet-theme', next); } catch {}
     setTheme(next);
   };
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const setMobileOpen = onMobileOpenChange;
   const [netOpen, setNetOpen] = useState(false);
   const netRef = useRef<HTMLDivElement | null>(null);
   const { networkId, setNetworkId } = useNetworkId();
@@ -318,27 +324,9 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger — R13 of #190: was p-2.5 = ~40px tap target,
-          just below the iOS 44px guideline. Bump padding and add an
-          explicit min-w/min-h so it can never be miss-tapped. */}
-      <button
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-3 left-3 z-50 md:hidden rounded-md border p-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
-        style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--fg-muted)' }}
-        aria-label="Toggle menu"
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          {mobileOpen
-            ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />}
-        </svg>
-      </button>
-
-      {/* Mobile overlay — round 47: fades in via anet-fade-in (150ms ease-out)
-          matching the TaskDrawer / TaskChatPanel backdrop. */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden anet-fade-in"
+          className="fixed inset-x-0 bottom-0 top-12 z-[45] bg-black/50 md:hidden anet-fade-in"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -355,12 +343,12 @@ export function Sidebar() {
         data-sidebar-mode={mode}
         data-total-unread={totalUnread}
         className={`
-        fixed top-0 left-0 h-full z-40 flex flex-col
+        fixed left-0 top-12 z-[46] flex h-[calc(100dvh-3rem)] flex-col
         transition-transform duration-200 ease-out
         w-[232px] border-r border-[var(--border)] bg-[var(--bg-rail)]
         ${mode === 'expanded' ? 'md:w-[232px]' : mode === 'icon-rail' ? 'md:w-14' : 'md:w-16'}
         ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 md:shadow-none' : '-translate-x-full'}
-        md:translate-x-0 md:static md:shrink-0 md:shadow-none
+        md:static md:top-0 md:h-full md:translate-x-0 md:shrink-0 md:shadow-none
       `}>
         {/* Brand header — round 4: 3-node mesh mark matches /login,
             with an inline live "online" pulse so every page surfaces

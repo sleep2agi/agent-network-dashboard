@@ -104,7 +104,7 @@ export function Segmented<T extends string>({
   onChange: (id: T) => void;
 }) {
   return (
-    <div aria-label={label} className="flex h-8 flex-wrap items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5">
+    <div aria-label={label} className="flex h-8 max-w-full items-center gap-0.5 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {options.map((item) => {
         const active = value === item.id;
         return (
@@ -113,7 +113,7 @@ export function Segmented<T extends string>({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(item.id)}
-            className={`h-7 rounded-md px-3 text-[13px] font-medium transition-colors ${
+            className={`h-7 shrink-0 rounded-md px-3 text-[13px] font-medium whitespace-nowrap transition-colors ${
               active
                 ? 'bg-[var(--bg-elevated)] text-[var(--fg)]'
                 : 'text-[var(--fg-muted)] hover:text-[var(--fg)]'

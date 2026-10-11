@@ -375,9 +375,9 @@ export function BoardWorkspace() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-5 lg:px-6">
-      <div className="mx-auto max-w-[1200px] space-y-6 xl:max-w-[1360px]">
-        <header className="flex flex-wrap items-end justify-between gap-4">
+    <main className="min-h-screen min-w-0 overflow-x-hidden bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-5 lg:px-6">
+      <div className="mx-auto min-w-0 max-w-[1200px] space-y-6 xl:max-w-[1360px]">
+        <header className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h1 className="text-[22px] font-semibold leading-7">Board</h1>
@@ -390,7 +390,9 @@ export function BoardWorkspace() {
               {aware ? ' Abandoned is a real column on this Hub.' : ''}
             </p>
           </div>
-          <Segmented label="Task views" value={view} options={VIEWS} onChange={setView} />
+          <div className="min-w-0 max-w-full">
+            <Segmented label="Task views" value={view} options={VIEWS} onChange={setView} />
+          </div>
         </header>
 
         {(view === 'board' || view === 'list' || view === 'schedule' || view === 'activity') && (
@@ -684,7 +686,7 @@ export function BoardWorkspace() {
         )}
 
         {view === 'dashboard' && (
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <Segmented label="Completion period" value={period} options={PERIODS} onChange={setPeriod} />
             {statsNote ? <p className="text-xs text-[var(--fg-dim)]">{statsNote}</p> : null}
             {stats ? (
@@ -730,16 +732,16 @@ export function BoardWorkspace() {
                     </button>
                   ))}
                 </div>
-                <div className="grid gap-4 lg:grid-cols-12">
-                  <TaskPanel className="lg:col-span-8">
+                <div className="grid min-w-0 gap-4 lg:grid-cols-12">
+                  <TaskPanel className="min-w-0 lg:col-span-8">
                     <SectionHeading title="Recent completions" hint={String(Math.min(8, stats.recent.length))} />
                     <ul>
                       {stats.recent.slice(0, 8).map((row) => (
-                        <li key={row.id} className="flex h-11 items-center gap-3 border-t border-[var(--border)] px-1 first:border-t-0">
-                          <div className="min-w-0 flex-1">
+                        <li key={row.id} className="flex h-11 min-w-0 items-center gap-2 overflow-hidden border-t border-[var(--border)] px-1 first:border-t-0">
+                          <div className="min-w-0 flex-1 overflow-hidden">
                             <RequirementRef id={row.id} seq={row.seq} name={row.name} done />
                           </div>
-                          <span className="shrink-0 text-xs text-[var(--fg-dim)]">
+                          <span className="max-w-[38%] shrink-0 truncate text-xs text-[var(--fg-dim)]">
                             {personLabel(row.completed_by, people)}
                           </span>
                         </li>
@@ -752,29 +754,31 @@ export function BoardWorkspace() {
                       </button>
                     ) : null}
                   </TaskPanel>
-                  <TaskPanel className="lg:col-span-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
+                  <TaskPanel className="min-w-0 lg:col-span-4">
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <SectionHeading title="Leaderboard" />
-                      <Segmented
-                        label="Leaderboard filter"
-                        value={leaderKind}
-                        options={[{ id: 'all', label: '全部' }, { id: 'user', label: '人' }, { id: 'node', label: 'Agent' }]}
-                        onChange={setLeaderKind}
-                      />
+                      <div className="min-w-0 max-w-full">
+                        <Segmented
+                          label="Leaderboard filter"
+                          value={leaderKind}
+                          options={[{ id: 'all', label: '全部' }, { id: 'user', label: '人' }, { id: 'node', label: 'Agent' }]}
+                          onChange={setLeaderKind}
+                        />
+                      </div>
                     </div>
                     <ul>
                       {stats.leaders
                         .filter((leader) => leaderKind === 'all' || (leaderKind === 'node' ? leader.kind === 'node' : leader.kind !== 'node'))
                         .slice(0, 8)
                         .map((leader, index) => (
-                          <li key={`${leader.kind || 'x'}:${leader.id || index}`} className="flex h-11 items-center gap-3 border-t border-[var(--border)] first:border-t-0">
+                          <li key={`${leader.kind || 'x'}:${leader.id || index}`} className="flex h-11 min-w-0 items-center gap-2 overflow-hidden border-t border-[var(--border)] first:border-t-0">
                             <span className={`w-4 shrink-0 text-[13px] font-medium tabular-nums ${index < 3 ? 'font-semibold text-[var(--fg)]' : 'text-[var(--fg-dim)]'}`}>
                               {index + 1}
                             </span>
                             <span className="min-w-0 flex-1 truncate text-sm">{personLabel(leader, people)}</span>
-                            <span className="text-[11px] font-medium text-[var(--fg-dim)]">{leader.kind === 'node' ? 'Agent' : '成员'}</span>
+                            <span className="shrink-0 text-[11px] font-medium text-[var(--fg-dim)]">{leader.kind === 'node' ? 'Agent' : '成员'}</span>
                             {Array.isArray(leader.spark) && leader.spark.length > 1 ? (
-                              <span className="flex h-4 w-12 items-end gap-px" aria-hidden>
+                              <span className="hidden h-4 w-12 shrink-0 items-end gap-px sm:flex" aria-hidden>
                                 {leader.spark.slice(-14).map((n, sparkIndex, days) => {
                                   const peak = Math.max(1, ...days);
                                   return (
@@ -790,7 +794,7 @@ export function BoardWorkspace() {
                                 })}
                               </span>
                             ) : null}
-                            <span className="w-8 text-right text-sm font-semibold tabular-nums">{leader.n ?? 0}</span>
+                            <span className="shrink-0 text-right text-sm font-semibold tabular-nums">{leader.n ?? 0}</span>
                           </li>
                         ))}
                       {stats.leaders.length === 0 ? <li className="px-1 py-6 text-sm text-[var(--fg-dim)]">No completions to rank.</li> : null}

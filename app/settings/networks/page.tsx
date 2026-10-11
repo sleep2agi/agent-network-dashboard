@@ -109,7 +109,7 @@ export default function NetworksPage() {
           beside it — the old single row read as an off-balance
           "← Settings   Networks" pair on phones. */}
       <div className="mb-6">
-        <Link href="/settings" className="inline-block text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10 mb-1">&larr; Settings</Link>
+        <Link href="/settings" className="inline-block text-gray-500 hover:text-gray-300 text-sm mb-1">&larr; Settings</Link>
         <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Networks</h1>
       </div>
 
