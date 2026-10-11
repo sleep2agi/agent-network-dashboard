@@ -34,7 +34,7 @@ export function RequirementRef({
           prefetch={false}
           data-testid="requirement-seq"
           aria-label={`Open task ${seqText}`}
-          className="shrink-0 font-mono text-[11px] tabular-nums text-cyan-400 hover:text-cyan-300 hover:underline"
+          className="shrink-0 font-mono text-[11px] tabular-nums text-[var(--info)] hover:underline"
         >
           {seqText}
         </Link>
@@ -44,7 +44,7 @@ export function RequirementRef({
         prefetch={false}
         data-testid="requirement-title"
         title={title}
-        className={`min-w-0 truncate text-[13px] font-medium leading-5 hover:text-cyan-300 hover:underline ${titleClass}`}
+        className={`min-w-0 truncate text-[13px] font-medium leading-5 hover:underline ${titleClass}`}
       >
         {title}
       </Link>

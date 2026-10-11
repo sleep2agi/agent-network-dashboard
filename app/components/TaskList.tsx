@@ -54,7 +54,7 @@ export function TaskList({
           没有匹配的任务
         </div>
       ) : (
-        <ul className="flex flex-col gap-1.5 px-2 py-2">
+        <ul className="flex flex-col gap-2 px-3 py-3">
           {tasks.map((t) => {
             const active = t.task_id === selectedId;
             return (
@@ -70,9 +70,9 @@ export function TaskList({
                     event.preventDefault();
                     onSelect(t.task_id);
                   }}
-                  className={`block w-full rounded-xl border px-3 py-3 text-left transition-colors ${
+                  className={`block w-full rounded-xl border px-3.5 py-3.5 text-left transition-colors ${
                     active
-                      ? 'border-cyan-500/40 bg-cyan-500/10'
+                      ? 'border-[var(--info)] bg-[var(--bg-elevated)]'
                       : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
@@ -92,7 +92,7 @@ export function TaskList({
                       {t.status}
                     </span>
                     {t.priority === 'high' && (
-                      <span className="text-[10px] text-red-400 shrink-0">HIGH</span>
+                      <span className="text-[10px] font-medium text-[var(--danger)] shrink-0">HIGH</span>
                     )}
                     <span className="ml-auto text-[11px] text-[var(--fg-dim)] tabular-nums shrink-0">
                       {timeAgo(t.created_at)}
@@ -108,7 +108,7 @@ export function TaskList({
                   <div className="flex items-baseline gap-2">
                     <span
                       data-testid="task-row-id"
-                      className="shrink-0 font-mono text-[10px] tabular-nums text-cyan-400/90"
+                      className="shrink-0 font-mono text-[10px] tabular-nums text-[var(--info)]"
                     >
                       {t.task_id.slice(0, 8)}
                     </span>

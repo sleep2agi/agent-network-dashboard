@@ -57,6 +57,9 @@ type Card = {
   description?: string;
   archived?: boolean;
   createdAt?: string;
+  updatedAt?: string;
+  parentId?: string;
+  issues?: Array<{ repo: string; number: number; title?: string }>;
 };
 
 type Person = {
@@ -133,6 +136,11 @@ function cardOwner(card: Card, people: Person[]): string {
   return '';
 }
 
+function stamp(value?: string): string {
+  if (!value) return '';
+  return relativeAgo(value) || value;
+}
+
 function DueText({ card }: { card: Card }) {
   if (!card.due) return null;
   const late = isRequirementOverdue(card);
@@ -158,6 +166,8 @@ export function BoardWorkspace() {
   const [tag, setTag] = useState('');
   const [project, setProject] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const [hideDone, setHideDone] = useState(false);
+  const [topLevel, setTopLevel] = useState(false);
   const [includeArchived, setIncludeArchived] = useState(true);
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [events, setEvents] = useState<ActivityEvent[] | null>(null);
@@ -324,15 +334,20 @@ export function BoardWorkspace() {
       if (project === '__none__' && card.projectId) return false;
       if (project && project !== '__none__' && card.projectId !== project) return false;
       if (overdueOnly && !isRequirementOverdue(card)) return false;
+      if (topLevel && card.parentId) return false;
       return matchesRequirementQuery({ ...card, projectName: projectName(card.projectId) }, query);
     }).sort(compareRequirements);
-  }, [cards, overdueOnly, priority, project, projectName, query, tag]);
+  }, [cards, overdueOnly, priority, project, projectName, query, tag, topLevel]);
 
   const abandonedCount = useMemo(
     () => filtered.filter((card) => card.column === 'abandoned').length,
     [filtered],
   );
-  const visible = filtered.filter((card) => showAbandoned || status === 'abandoned' || card.column !== 'abandoned');
+  const visible = filtered.filter((card) => {
+    if (!(showAbandoned || status === 'abandoned' || card.column !== 'abandoned')) return false;
+    if (hideDone && status !== 'done' && card.column === 'done') return false;
+    return true;
+  });
 
   const setView = (next: ViewId) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -360,10 +375,10 @@ export function BoardWorkspace() {
 
   return (
     <main
-      className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6 lg:px-8"
+      className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6 lg:px-10"
       style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -10%, color-mix(in srgb, var(--info) 14%, transparent), transparent 60%)' }}
     >
-      <div className="mx-auto max-w-6xl space-y-5">
+      <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-1">
             <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--fg-dim)]">Requirements</p>
@@ -381,7 +396,7 @@ export function BoardWorkspace() {
         </PendingNotice>
 
         {(view === 'board' || view === 'list' || view === 'schedule' || view === 'activity') && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-2">
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -440,6 +455,30 @@ export function BoardWorkspace() {
                 >
                   Overdue
                 </button>
+                <button
+                  type="button"
+                  aria-pressed={hideDone}
+                  onClick={() => setHideDone((value) => !value)}
+                  className={`h-9 rounded-lg border px-2.5 text-xs ${
+                    hideDone
+                      ? 'border-[var(--info)] bg-[var(--bg-elevated)] text-[var(--fg)]'
+                      : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
+                  }`}
+                >
+                  Hide done
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={topLevel}
+                  onClick={() => setTopLevel((value) => !value)}
+                  className={`h-9 rounded-lg border px-2.5 text-xs ${
+                    topLevel
+                      ? 'border-[var(--info)] bg-[var(--bg-elevated)] text-[var(--fg)]'
+                      : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
+                  }`}
+                >
+                  Top level
+                </button>
               </>
             )}
             {query.trim() ? (
@@ -461,10 +500,10 @@ export function BoardWorkspace() {
                 {showAbandoned ? 'Hide abandoned' : `Show abandoned (${abandonedCount})`}
               </button>
             ) : null}
-            {(query || status || priority || tag || project || overdueOnly) && (
+            {(query || status || priority || tag || project || overdueOnly || hideDone || topLevel) && (
               <button
                 type="button"
-                onClick={() => { setQuery(''); setStatus(''); setPriority(''); setTag(''); setProject(''); setOverdueOnly(false); }}
+                onClick={() => { setQuery(''); setStatus(''); setPriority(''); setTag(''); setProject(''); setOverdueOnly(false); setHideDone(false); setTopLevel(false); }}
                 className="h-9 rounded-lg px-2.5 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]"
               >
                 Clear
@@ -480,8 +519,12 @@ export function BoardWorkspace() {
         {view === 'board' && (
           <>
             {cards === null ? <p className="text-sm text-[var(--fg-dim)]">Loading board…</p> : null}
-            {cards !== null ? <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {COLUMNS.filter((col) => col.id !== 'abandoned' || showAbandoned || status === 'abandoned').map((col) => {
+            {cards !== null ? <div className="grid items-start gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {COLUMNS.filter((col) => {
+                if (col.id === 'abandoned' && !(showAbandoned || status === 'abandoned')) return false;
+                if (col.id === 'done' && hideDone && status !== 'done') return false;
+                return true;
+              }).map((col) => {
                 const rows = visible.filter((card) => card.column === col.id);
                 return (
                   <TaskPanel key={col.id}>
@@ -492,10 +535,10 @@ export function BoardWorkspace() {
                       </h2>
                       <span className="rounded-full bg-[var(--bg)] px-2 py-0.5 text-[11px] tabular-nums text-[var(--fg-muted)]">{rows.length}</span>
                     </div>
-                    <ul className="space-y-2">
+                    <ul className="space-y-2.5">
                       {rows.map((card) => (
                         <li key={card.id}>
-                          <TaskCard>
+                          <TaskCard className="space-y-2.5">
                             <RequirementRef
                               id={card.id}
                               seq={card.seq}
@@ -503,14 +546,18 @@ export function BoardWorkspace() {
                               struck={col.id === 'abandoned'}
                               done={col.id === 'done'}
                             />
-                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <PriorityChip priority={card.priority} />
                               <DueText card={card} />
                               {card.archived ? <MetaChip>Archived</MetaChip> : null}
-                              {projectName(card.projectId) ? <span className="text-[11px] text-[var(--fg-dim)]">{projectName(card.projectId)}</span> : null}
-                              {cardOwner(card, people) ? <span className="text-[11px] text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
-                              <TagList tags={card.tags} />
                             </div>
+                            {(projectName(card.projectId) || cardOwner(card, people) || (card.tags || []).length > 0) ? (
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                {projectName(card.projectId) ? <span className="text-[11px] text-[var(--fg-dim)]">{projectName(card.projectId)}</span> : null}
+                                {cardOwner(card, people) ? <span className="text-[11px] text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
+                                <TagList tags={card.tags} />
+                              </div>
+                            ) : null}
                           </TaskCard>
                         </li>
                       ))}
@@ -528,29 +575,52 @@ export function BoardWorkspace() {
         {view === 'list' && (
           <TaskPanel>
             {cards === null ? <p className="px-2 py-4 text-sm text-[var(--fg-dim)]">Loading list…</p> : null}
-            <ul className="space-y-2">
-              {visible.map((card) => (
-                <li key={card.id}>
-                  <TaskCard className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <div className="min-w-0 flex-1">
-                      <RequirementRef
-                        id={card.id}
-                        seq={card.seq}
-                        name={card.name}
-                        struck={card.column === 'abandoned'}
-                        done={card.column === 'done'}
-                      />
-                    </div>
-                    <MetaChip>{columnLabel(card.column)}</MetaChip>
-                    <PriorityChip priority={card.priority} />
-                    <DueText card={card} />
-                    {card.archived ? <MetaChip>Archived</MetaChip> : null}
-                    {projectName(card.projectId) ? <span className="text-[11px] text-[var(--fg-dim)]">{projectName(card.projectId)}</span> : null}
-                    {cardOwner(card, people) ? <span className="max-w-[10rem] truncate text-xs text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
-                    <TagList tags={card.tags} />
-                  </TaskCard>
-                </li>
-              ))}
+            <ul className="space-y-2.5">
+              {visible.map((card) => {
+                const participants = (card.participants || []).map((person) => personLabel(person, people)).filter(Boolean);
+                return (
+                  <li key={card.id}>
+                    <TaskCard className="space-y-2.5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <RequirementRef
+                            id={card.id}
+                            seq={card.seq}
+                            name={card.name}
+                            struck={card.column === 'abandoned'}
+                            done={card.column === 'done'}
+                          />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <MetaChip>{columnLabel(card.column)}</MetaChip>
+                          <PriorityChip priority={card.priority} />
+                          <DueText card={card} />
+                          {card.archived ? <MetaChip>Archived</MetaChip> : null}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                        {projectName(card.projectId) ? <span className="text-[11px] text-[var(--fg-dim)]">{projectName(card.projectId)}</span> : null}
+                        {cardOwner(card, people) ? <span className="max-w-[12rem] truncate text-xs text-[var(--fg-muted)]">{cardOwner(card, people)}</span> : null}
+                        {participants.length > 0 ? <span className="max-w-[16rem] truncate text-[11px] text-[var(--fg-muted)]">{participants.join(', ')}</span> : null}
+                        {card.createdAt ? <span className="text-[11px] tabular-nums text-[var(--fg-dim)]">Created {stamp(card.createdAt)}</span> : null}
+                        {card.updatedAt ? <span className="text-[11px] tabular-nums text-[var(--fg-dim)]">Updated {stamp(card.updatedAt)}</span> : null}
+                        <TagList tags={card.tags} />
+                        {(card.issues || []).map((issue) => (
+                          <a
+                            key={`${issue.repo}#${issue.number}`}
+                            className="text-[11px] text-[var(--info)] hover:underline"
+                            href={`https://github.com/${issue.repo}/issues/${issue.number}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {issue.repo}#{issue.number}
+                          </a>
+                        ))}
+                      </div>
+                    </TaskCard>
+                  </li>
+                );
+              })}
             </ul>
             {cards !== null && visible.length === 0 ? (
               <p className="px-3 py-10 text-center text-sm text-[var(--fg-dim)]">No tasks match.</p>
@@ -561,7 +631,7 @@ export function BoardWorkspace() {
         {view === 'schedule' && (
           <div className="space-y-4">
             <p className="text-sm text-[var(--fg-muted)]">
-              Due dates on requirement tasks. Agent dispatch schedules stay on <Link href="/scheduled-tasks" className="text-cyan-400 hover:underline">Scheduled tasks</Link>.
+              Due dates on requirement tasks. Agent dispatch schedules stay on <Link href="/scheduled-tasks" className="text-[var(--info)] hover:underline">Scheduled tasks</Link>.
             </p>
             {cards === null ? <p className="text-sm text-[var(--fg-dim)]">Loading schedule…</p> : null}
             {SCHEDULE_BUCKETS.map((bucket) => {
@@ -716,7 +786,7 @@ export function BoardWorkspace() {
         )}
 
         <p className="text-xs text-[var(--fg-dim)]">
-          Message tasks between agents stay on <Link href="/tasks" className="text-cyan-400 hover:underline">Tasks</Link>.
+          Message tasks between agents stay on <Link href="/tasks" className="text-[var(--info)] hover:underline">Tasks</Link>.
         </p>
       </div>
     </main>
