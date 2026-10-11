@@ -21,7 +21,6 @@
   "app/components/TaskChatPanel.tsx": 15,
   "app/components/TaskDetail.tsx": 18,
   "app/components/TaskDrawer.tsx": 14,
-  "app/components/TaskList.tsx": 1,
   "app/components/TopoGraph.tsx": 3,
   "app/components/UserBar.tsx": 9,
   "app/login/page.tsx": 11,
@@ -35,6 +34,5 @@
   "app/servers/page.tsx": 5,
   "app/settings/networks/page.tsx": 15,
   "app/settings/page.tsx": 46,
-  "app/settings/tokens/page.tsx": 9,
-  "app/tasks/TasksView.tsx": 12
+  "app/settings/tokens/page.tsx": 9
 }

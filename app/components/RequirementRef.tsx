@@ -21,13 +21,13 @@ export function RequirementRef({
   const titleClass = struck
     ? 'text-[var(--fg-dim)] line-through'
     : done
-      ? 'text-green-300'
+      ? 'text-[var(--success)]'
       : 'text-[var(--fg)]';
   if (!href) {
-    return <span className={`truncate text-xs ${titleClass}`}>{seqText ? `${seqText} ` : ''}{title}</span>;
+    return <span className={`truncate text-[13px] font-medium leading-5 ${titleClass}`}>{seqText ? `${seqText} ` : ''}{title}</span>;
   }
   return (
-    <div className="flex min-w-0 items-baseline gap-1.5">
+    <div className="flex min-w-0 items-baseline gap-2">
       {seqText ? (
         <Link
           href={href}
@@ -44,7 +44,7 @@ export function RequirementRef({
         prefetch={false}
         data-testid="requirement-title"
         title={title}
-        className={`min-w-0 truncate text-xs hover:text-cyan-300 hover:underline ${titleClass}`}
+        className={`min-w-0 truncate text-[13px] font-medium leading-5 hover:text-cyan-300 hover:underline ${titleClass}`}
       >
         {title}
       </Link>

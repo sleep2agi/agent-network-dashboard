@@ -158,7 +158,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     <div
       data-testid="tasks-layout"
       data-selected-id={selectedId ?? ''}
-      className="min-h-screen max-w-full overflow-x-hidden bg-[#0b0b0d] text-gray-100 flex"
+      className="min-h-screen max-w-full overflow-x-hidden bg-[var(--bg)] text-[var(--fg)] flex"
     >
       {/* Rail — desktop always visible; on mobile it holds the whole
           page (detail becomes a full-screen overlay). No "toggle
@@ -169,13 +169,13 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           layout showing "one thing twice". */}
       <aside
         data-testid="task-list-column"
-        className={`flex flex-col w-full sm:w-[380px] shrink-0 min-h-screen sticky top-0 border-r border-[#1c1c1f] ${
+        className={`flex flex-col w-full sm:w-[400px] shrink-0 min-h-screen sticky top-0 border-r border-[var(--border)] ${
           selectedId && !isDesktop ? 'hidden' : 'flex'
         }`}
       >
-        <div className="px-4 py-3 border-b border-[#1c1c1f]">
-          <div className="flex items-center gap-3 mb-3">
-            <h1 className="text-xl font-bold text-white lg:ml-0 ml-10">Tasks</h1>
+        <div className="px-4 py-4 border-b border-[var(--border)]">
+          <div className="flex items-center gap-3 mb-4">
+            <h1 className="text-2xl font-semibold tracking-tight text-[var(--fg)] lg:ml-0 ml-10">Tasks</h1>
             {tasks.length < count && (
               <span
                 className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums"
@@ -190,7 +190,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
             <>
               {/* Status tab strip */}
               <div className="anet-tabstrip-wrap mb-2">
-                <div className="anet-tabstrip flex flex-wrap gap-1 bg-[#161618] rounded-lg border border-[#26262b] p-1 overflow-x-auto scrollbar-thin">
+                <div className="anet-tabstrip flex flex-wrap gap-1 bg-[var(--bg)] rounded-xl border border-[var(--border)] p-1 overflow-x-auto scrollbar-thin">
                   {['', ...TASK_STATUSES].map((s) => {
                     const cnt = s === '' ? tasks.length : counts[s] || 0;
                     const isActive = filterStatus === s;
@@ -202,7 +202,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         className={`px-2.5 py-1 rounded-md text-xs transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
                           isActive
                             ? `${STATUS_CHIP_CLASS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
-                            : 'text-gray-500 hover:text-gray-300 hover:bg-[#1c1c1f]/40'
+                            : 'text-[var(--fg-dim)] hover:text-[var(--fg)] hover:bg-[var(--hover-tint)]'
                         }`}
                       >
                         {s && (
@@ -215,7 +215,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         <span>{s || 'All'}</span>
                         <span
                           className={`text-[10px] tabular-nums ${
-                            isActive ? 'opacity-80' : 'text-gray-600'
+                            isActive ? 'opacity-80' : 'text-[var(--fg-dim)]'
                           }`}
                         >
                           {cnt}
@@ -227,31 +227,31 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               </div>
 
               {/* From/To filters */}
-              <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                <div className="flex items-center gap-1 rounded border border-[#26262b] bg-[#161618] px-2 py-1 focus-within:border-blue-500/40">
-                  <span className="text-[9px] uppercase tracking-wide text-gray-600">From</span>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 focus-within:border-[var(--info)]">
+                  <span className="text-[10px] uppercase tracking-wide text-[var(--fg-dim)]">From</span>
                   <input
                     type="text"
                     value={filterFrom}
                     onChange={(e) => setFilterFrom(e.target.value)}
                     placeholder="any"
                     data-testid="tasks-filter-from"
-                    className="w-16 bg-transparent text-xs text-white placeholder-gray-700 focus:outline-none"
+                    className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                <div className="flex items-center gap-1 rounded border border-[#26262b] bg-[#161618] px-2 py-1 focus-within:border-blue-500/40">
-                  <span className="text-[9px] uppercase tracking-wide text-gray-600">To</span>
+                <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 focus-within:border-[var(--info)]">
+                  <span className="text-[10px] uppercase tracking-wide text-[var(--fg-dim)]">To</span>
                   <input
                     type="text"
                     value={filterTo}
                     onChange={(e) => setFilterTo(e.target.value)}
                     placeholder="any"
                     data-testid="tasks-filter-to"
-                    className="w-16 bg-transparent text-xs text-white placeholder-gray-700 focus:outline-none"
+                    className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                <div className="flex min-w-[10rem] flex-1 items-center gap-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 focus-within:border-blue-500/40">
-                  <span className="text-[9px] uppercase tracking-wide text-[var(--fg-dim)]">Search</span>
+                <div className="flex min-w-[10rem] flex-1 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 focus-within:border-[var(--info)]">
+                  <span className="text-[10px] uppercase tracking-wide text-[var(--fg-dim)]">Search</span>
                   <input
                     type="search"
                     value={filterQuery}
@@ -259,7 +259,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     placeholder="title or id"
                     aria-label="Search tasks"
                     data-testid="tasks-filter-query"
-                    className="min-w-0 flex-1 bg-transparent text-xs text-white placeholder-gray-700 focus:outline-none"
+                    className="min-w-0 flex-1 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
                 {(filterStatus || filterFrom || filterTo || filterQuery) && (
@@ -271,7 +271,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                       setFilterTo('');
                       setFilterQuery('');
                     }}
-                    className="rounded border border-gray-700 px-2 py-0.5 text-[10px] text-gray-500 hover:text-gray-200 hover:border-gray-600"
+                    className="rounded-lg border border-[var(--border)] px-2 py-1 text-[10px] text-[var(--fg-dim)] hover:text-[var(--fg)] hover:border-[var(--border-hover)]"
                   >
                     Clear
                   </button>
@@ -280,7 +280,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 
               {/* Status distribution bar (only when no status filter) */}
               {!filterStatus && bars.length > 0 && (
-                <div className="flex h-1 rounded-full overflow-hidden bg-gray-800">
+                <div className="flex h-1.5 rounded-full overflow-hidden bg-[var(--bg)]">
                   {bars.map((b) => (
                     <div
                       key={b.key}
@@ -303,9 +303,9 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 
         <div className="flex-1 min-h-0 overflow-y-auto">
           {loading ? (
-            <div className="animate-pulse space-y-1 px-3 py-2">
+            <div className="animate-pulse space-y-2 px-3 py-3">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="h-14 bg-gray-800/40 rounded" />
+                <div key={i} className="h-16 bg-[var(--bg-elevated)] rounded-xl" />
               ))}
             </div>
           ) : tasks.length === 0 ? (
@@ -353,7 +353,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       {selectedId && !isDesktop && (
         <section
           data-testid="task-detail-mobile"
-          className="fixed inset-0 z-40 bg-[#0b0b0d]"
+          className="fixed inset-0 z-40 bg-[var(--bg)]"
         >
           <TaskDetail taskId={selectedId} onClose={closeDetail} onRetried={fetchTasks} />
         </section>
@@ -361,9 +361,11 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       {!selectedId && isDesktop && (
         <section
           data-testid="task-detail-empty"
-          className="flex-1 min-w-0 min-h-screen flex items-center justify-center text-sm text-gray-600"
+          className="flex-1 min-w-0 min-h-screen flex items-center justify-center p-8"
         >
-          请从左侧列表选择一条任务查看详情
+          <div className="max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] px-6 py-8 text-center">
+            <p className="text-sm leading-relaxed text-[var(--fg-muted)]">请从左侧列表选择一条任务查看详情</p>
+          </div>
         </section>
       )}
     </div>
@@ -377,8 +379,8 @@ export function TasksView({ initialSelectedId = null }: { initialSelectedId?: st
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
-          <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading tasks…</div>
+        <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+          <div className="lg:ml-0 ml-10 text-[var(--fg-dim)] text-sm">Loading tasks…</div>
         </div>
       }
     >

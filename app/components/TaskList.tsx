@@ -50,11 +50,11 @@ export function TaskList({
       className="flex flex-col h-full max-h-screen overflow-y-auto"
     >
       {tasks.length === 0 ? (
-        <div className="px-4 py-6 text-xs text-gray-600 text-center">
+        <div className="px-4 py-8 text-sm text-[var(--fg-dim)] text-center">
           没有匹配的任务
         </div>
       ) : (
-        <ul className="flex flex-col divide-y divide-[#1c1c1f]">
+        <ul className="flex flex-col gap-1.5 px-2 py-2">
           {tasks.map((t) => {
             const active = t.task_id === selectedId;
             return (
@@ -70,10 +70,10 @@ export function TaskList({
                     event.preventDefault();
                     onSelect(t.task_id);
                   }}
-                  className={`block w-full text-left px-3 py-2.5 transition-colors ${
+                  className={`block w-full rounded-xl border px-3 py-3 text-left transition-colors ${
                     active
-                      ? 'bg-cyan-500/10 border-l-2 border-cyan-500'
-                      : 'border-l-2 border-transparent hover:bg-[#1c1c1f]/40'
+                      ? 'border-cyan-500/40 bg-cyan-500/10'
+                      : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -94,15 +94,15 @@ export function TaskList({
                     {t.priority === 'high' && (
                       <span className="text-[10px] text-red-400 shrink-0">HIGH</span>
                     )}
-                    <span className="ml-auto text-[10px] text-gray-600 tabular-nums shrink-0">
+                    <span className="ml-auto text-[11px] text-[var(--fg-dim)] tabular-nums shrink-0">
                       {timeAgo(t.created_at)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-300 min-w-0 mb-1">
-                    {t.from_name && <AliasAvatar alias={t.from_name} size={14} />}
+                  <div className="flex items-center gap-1.5 text-sm text-[var(--fg)] min-w-0 mb-1.5">
+                    {t.from_name && <AliasAvatar alias={t.from_name} size={16} />}
                     <span className="truncate max-w-[35%]">{t.from_name || '--'}</span>
-                    <span className="text-gray-600 shrink-0">→</span>
-                    {t.to_name && <AliasAvatar alias={t.to_name} size={14} />}
+                    <span className="text-[var(--fg-dim)] shrink-0">→</span>
+                    {t.to_name && <AliasAvatar alias={t.to_name} size={16} />}
                     <span className="truncate max-w-[35%]">{t.to_name || '--'}</span>
                   </div>
                   <div className="flex items-baseline gap-2">
@@ -113,7 +113,7 @@ export function TaskList({
                       {t.task_id.slice(0, 8)}
                     </span>
                     <div
-                      className="min-w-0 text-[11px] text-gray-500 line-clamp-2 leading-snug"
+                      className="min-w-0 text-xs text-[var(--fg-muted)] line-clamp-2 leading-5"
                       title={t.content}
                     >
                       {previewContent(t.content) || <span className="italic">(no content)</span>}
