@@ -93,7 +93,7 @@ export default function ProvidersPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] lg:ml-0 ml-10">Model Providers</h1>
+        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Model Providers</h1>
         {mock && <span className="text-[11px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/5 text-amber-300">preview fixture</span>}
         <button
           onClick={openCreate}

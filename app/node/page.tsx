@@ -308,7 +308,7 @@ function NodeDetailContent() {
       {/* Header — round 40: avatar joins the alias for cross-page hue
           consistency; agent type lives in a subtitle so users know what
           kind of node they're looking at. */}
-      <div className="flex items-center gap-3 mb-6 lg:ml-0 ml-10">
+      <div className="flex items-center gap-3 mb-6">
         <Link href="/nodes" className="text-gray-500 hover:text-gray-300 text-sm shrink-0">&larr; Nodes</Link>
         <AliasAvatar alias={alias} size={32} />
         <div className="min-w-0 flex-1">
@@ -555,11 +555,11 @@ export default function NodePage() {
       // #209 R36: same pattern R30 fixed on /tasks — bare "Loading..."
       // string used p-6 (no mobile padding tighten) + no left indent,
       // so the fixed top-3 left-3 mobile hamburger covered the "Loa".
-      // Match the loaded layout: p-4 sm:p-6 + lg:ml-0 ml-10 mobile
+      // Match the loaded layout: p-4 sm:p-6 + mobile
       // indent on the text. Loading state now visually maps to the
       // populated /node detail page.
       <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
-        <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading…</div>
+        <div className="text-gray-500 text-sm">Loading…</div>
       </div>
     }>
       <NodeDetailContent />

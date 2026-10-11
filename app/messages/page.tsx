@@ -155,7 +155,7 @@ export default function MessagesPage() {
           collapsible row below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] lg:ml-0 ml-10">Messages</h1>
+          <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Messages</h1>
           {/* Round 89: filter-aware chip. When search/type filter is active
               the visible rows are filtered.length; the total loaded is
               messages.length (the M5 lazy window, newest histLimit). Show

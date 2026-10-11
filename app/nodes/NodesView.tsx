@@ -412,7 +412,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           the title cluster hug left, button hugs right. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] lg:ml-0 ml-10">Nodes</h1>
+          <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Nodes</h1>
           <span className="text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded-full border border-green-800/30 shrink-0">
             {onlineCount} online
           </span>

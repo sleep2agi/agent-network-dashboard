@@ -22,7 +22,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
-      <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] mb-3 lg:ml-0 ml-10">Settings</h1>
+      <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] mb-3">Settings</h1>
 
       {/* Section anchor nav (round 28) — jump to a group instead of scrolling
           through the whole page. Mirrors the section headers below; pages

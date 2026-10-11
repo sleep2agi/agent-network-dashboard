@@ -175,7 +175,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       >
         <div className="px-4 py-4 border-b border-[var(--border)]">
           <div className="flex items-center gap-3 mb-4">
-            <h1 className="text-2xl font-semibold tracking-tight text-[var(--fg)] lg:ml-0 ml-10">Tasks</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-[var(--fg)]">Tasks</h1>
             {tasks.length < count && (
               <span
                 className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-0.5 text-xs tabular-nums text-[var(--info)]"
@@ -380,7 +380,7 @@ export function TasksView({ initialSelectedId = null }: { initialSelectedId?: st
     <Suspense
       fallback={
         <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
-          <div className="lg:ml-0 ml-10 text-[var(--fg-dim)] text-sm">Loading tasks…</div>
+          <div className="text-[var(--fg-dim)] text-sm">Loading tasks…</div>
         </div>
       }
     >

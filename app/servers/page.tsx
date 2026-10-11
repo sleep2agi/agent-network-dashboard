@@ -21,7 +21,7 @@ export default function ServersPage() {
             Zero feature removed; the eyebrow + desc still render where
             there is room. */}
         <header>
-          <div className="flex items-center justify-between gap-3 lg:ml-0 ml-10">
+          <div className="flex items-center justify-between gap-3">
             <h1 className="min-w-0 truncate text-[22px] font-semibold leading-7 text-[var(--fg)]">Servers</h1>
             <div className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-[var(--fg-dim)]">
               <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
@@ -30,7 +30,7 @@ export default function ServersPage() {
             </div>
           </div>
           <p
-            className="mt-1 max-w-2xl truncate text-xs leading-4 text-[var(--fg-dim)] sm:whitespace-normal lg:ml-0 ml-10"
+            className="mt-1 max-w-2xl truncate text-xs leading-4 text-[var(--fg-dim)] sm:whitespace-normal"
             title="Host-level health, disk, memory, CPU history, and agent rollups from CommHub telemetry."
           >
             Host-level health, disk, memory, CPU history, and agent rollups from CommHub telemetry.

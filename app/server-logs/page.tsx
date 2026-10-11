@@ -134,12 +134,12 @@ export default function ServerLogsPage() {
     <div className="p-4 sm:p-6 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          {/* #209 R35: lg:ml-0 ml-10 burger-clearance — without it the
+          {/* #209 R35: burger-clearance — without it the
               fixed top-3 left-3 mobile hamburger sat right on top of the
               "Se" of "Server Logs". Caught by playwright mobile shot. */}
           {/* #217 D8: text-xl + nowrap on phones — at text-2xl the title
               wrapped to two lines under the 4-control toolbar. */}
-          <h1 className="text-xl sm:text-[22px] font-semibold leading-7 text-[var(--fg)] lg:ml-0 ml-10 whitespace-nowrap">Server Logs</h1>
+          <h1 className="text-xl sm:text-[22px] font-semibold leading-7 text-[var(--fg)] whitespace-nowrap">Server Logs</h1>
           {/* Round 86: dropped the {logs.length} header chip — r84 added
               `all <count>` to the filter strip just below, so this duplicated
               the value within 40px of itself. */}

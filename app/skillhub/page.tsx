@@ -116,7 +116,7 @@ export default function SkillHubPage() {
     <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
       <div className="mb-6 flex items-center gap-3">
         <div>
-          <h1 className="ml-10 text-2xl font-bold text-[var(--fg)] lg:ml-0">SkillHub</h1>
+          <h1 className="text-2xl font-bold text-[var(--fg)]">SkillHub</h1>
           <p className="mt-1 text-sm text-[var(--fg-dim)]">节点沉淀可复用能力，审核后供整个网络使用；网络内发布不会自动公开。</p>
         </div>
         <button onClick={() => setShowUpload(true)} className="ml-auto rounded-lg bg-[var(--hl)] px-3 py-2 text-sm font-medium text-[var(--bg)] hover:opacity-90">上传 Skill</button>
