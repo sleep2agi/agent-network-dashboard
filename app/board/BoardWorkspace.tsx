@@ -136,6 +136,11 @@ function cardOwner(card: Card, people: Person[]): string {
   return '';
 }
 
+function dashboardIsEmpty(stats: DashStats): boolean {
+  return stats.done === 0 && stats.doing === 0 && stats.pool === 0 && stats.abandoned === 0
+    && stats.recent.length === 0 && stats.leaders.length === 0;
+}
+
 function stamp(value?: string): string {
   if (!value) return '';
   return relativeAgo(value) || value;
@@ -173,6 +178,7 @@ export function BoardWorkspace() {
   const [events, setEvents] = useState<ActivityEvent[] | null>(null);
   const [stats, setStats] = useState<DashStats | null>(null);
   const [statsNote, setStatsNote] = useState('');
+  const [statsAttempt, setStatsAttempt] = useState(0);
   const [people, setPeople] = useState<Person[]>([]);
   const [period, setPeriod] = useState<PeriodId>('week');
   const [leaderKind, setLeaderKind] = useState<'all' | 'user' | 'node'>('all');
@@ -315,7 +321,7 @@ export function BoardWorkspace() {
         setStatsNote(e instanceof Error ? e.message : 'Could not load the dashboard');
       });
     return () => { alive = false; };
-  }, [networkId, period, router, view]);
+  }, [networkId, period, router, statsAttempt, view]);
 
   const projectName = useMemo(() => {
     const names = new Map(projects.map((item) => [item.id, item.name]));
@@ -688,8 +694,53 @@ export function BoardWorkspace() {
         {view === 'dashboard' && (
           <div className="min-w-0 space-y-6">
             <Segmented label="Completion period" value={period} options={PERIODS} onChange={setPeriod} />
-            {statsNote ? <p className="text-xs text-[var(--fg-dim)]">{statsNote}</p> : null}
-            {stats ? (
+            {!stats && statsNote ? (
+              <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
+                <svg aria-hidden className="h-6 w-6 text-[var(--error)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 8v5" strokeLinecap="round" />
+                  <circle cx="12" cy="16.5" r="0.8" fill="currentColor" stroke="none" />
+                </svg>
+                <p className="max-w-sm text-sm text-[var(--fg)]">{statsNote}</p>
+                <button
+                  type="button"
+                  onClick={() => { setStatsNote(''); setStatsAttempt((n) => n + 1); }}
+                  className="inline-flex h-8 items-center rounded-[10px] bg-[var(--bg-elevated)] px-3 text-[13px] font-medium text-[var(--fg)]"
+                >
+                  重试
+                </button>
+              </div>
+            ) : null}
+            {!stats && !statsNote ? (
+              <div
+                aria-hidden
+                className="space-y-4 opacity-0"
+                style={{ animation: 'anet-skeleton-reveal 1ms linear 300ms forwards' }}
+              >
+                <div className="anet-skeleton-pulse grid grid-cols-2 gap-4 lg:grid-cols-4">
+                  <div className="col-span-2 h-28 rounded-[10px] bg-[var(--bg-elevated)]" />
+                  <div className="h-28 rounded-[10px] bg-[var(--bg-elevated)]" />
+                  <div className="h-28 rounded-[10px] bg-[var(--bg-elevated)]" />
+                </div>
+                <div className="anet-skeleton-pulse grid gap-4 lg:grid-cols-12">
+                  <div className="h-64 rounded-[10px] bg-[var(--bg-elevated)] lg:col-span-8" />
+                  <div className="h-64 rounded-[10px] bg-[var(--bg-elevated)] lg:col-span-4" />
+                </div>
+              </div>
+            ) : null}
+            {stats && dashboardIsEmpty(stats) ? (
+              <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
+                <svg aria-hidden className="h-6 w-6 text-[var(--fg-dim)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                  <rect x="4" y="5" width="16" height="14" rx="2" />
+                  <path d="M8 10h8M8 14h5" strokeLinecap="round" />
+                </svg>
+                <p className="text-sm text-[var(--fg)]">这段时间还没有任务</p>
+                <Link href="/board" className="inline-flex h-8 items-center rounded-[10px] bg-[var(--bg-elevated)] px-3 text-[13px] font-medium text-[var(--fg)]">
+                  打开看板
+                </Link>
+              </div>
+            ) : null}
+            {stats && !dashboardIsEmpty(stats) ? (
               <>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                   <div className="col-span-2 rounded-[10px] bg-[var(--bg-secondary)] p-4 shadow-[var(--ds-shadow-card)] transition-colors hover:bg-[var(--bg-elevated)]">

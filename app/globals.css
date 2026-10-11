@@ -177,6 +177,11 @@ body {
   select, input[type="text"], button {
     min-height: 44px;
   }
+  /* Segmented controls are a fixed 32px track. The 44px touch floor
+     stretches each segment out of the track and into the row below. */
+  [data-segmented] button {
+    min-height: 0;
+  }
 }/* Safe area for notched devices */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   body {
@@ -246,6 +251,9 @@ nothing blurs. */
 @keyframes anet-skeleton-kf {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.55; }
+}
+@keyframes anet-skeleton-reveal {
+  to { opacity: 1; }
 }.anet-skeleton-pulse {
   animation: anet-skeleton-kf 1.6s ease-in-out infinite;
 }
