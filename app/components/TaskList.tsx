@@ -84,7 +84,7 @@ export function TaskList({
                       style={{ backgroundColor: STATUS_DOT_HEX[t.status] || '#6b7280' }}
                     />
                     <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                      className={`text-[11px] px-1.5 py-0.5 rounded border ${
                         STATUS_CHIP_CLASS[t.status] ||
                         'bg-gray-500/10 text-gray-400 border-gray-500/20'
                       }`}
@@ -92,7 +92,7 @@ export function TaskList({
                       {t.status}
                     </span>
                     {t.priority === 'high' && (
-                      <span className="text-[10px] font-medium text-[var(--danger)] shrink-0">HIGH</span>
+                      <span className="text-[11px] font-medium text-[var(--danger)] shrink-0">HIGH</span>
                     )}
                     <span className="ml-auto text-[11px] text-[var(--fg-dim)] tabular-nums shrink-0">
                       {timeAgo(t.created_at)}
@@ -108,7 +108,7 @@ export function TaskList({
                   <div className="flex items-baseline gap-2">
                     <span
                       data-testid="task-row-id"
-                      className="shrink-0 font-mono text-[10px] tabular-nums text-[var(--info)]"
+                      className="shrink-0 font-mono text-[11px] tabular-nums text-[var(--info)]"
                     >
                       {t.task_id.slice(0, 8)}
                     </span>

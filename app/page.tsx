@@ -138,7 +138,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
       <StatsBar online={online} working={working} total={total} presenceUnknown={presenceUnknown} />
 
       {/* #217 S5 (Vincent: "极简极简，这些都可以放到设置里面去"): the
@@ -152,13 +152,13 @@ export default function Dashboard() {
           only two numbers that drive action are running and failed;
           everything else lives on /tasks. */}
       {Object.keys(taskStats).length > 0 && (
-        <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg border border-[#26262b] bg-[#161618] px-4 py-2.5 text-xs">
-          <div className="text-gray-400 tabular-nums">
-            <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} running</span>
-            <span className="text-gray-600"> &middot; </span>
-            <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} failed</span>
+        <section className="mb-4 flex h-8 items-center justify-between rounded-[10px] bg-[var(--bg-secondary)] px-4 text-xs sm:mb-6">
+          <div className="tabular-nums text-[var(--fg-muted)]">
+            <span className={taskStats['running'] ? 'text-[var(--success)]' : ''}>{taskStats['running'] || 0} running</span>
+            <span className="text-[var(--fg-dim)]"> &middot; </span>
+            <span className={taskStats['failed'] ? 'text-[var(--error)]' : ''}>{taskStats['failed'] || 0} failed</span>
           </div>
-          <Link href="/tasks" prefetch={false} className="text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
+          <Link href="/tasks" prefetch={false} className="text-[var(--fg)] hover:text-[var(--accent)] hover:underline">View all &rarr;</Link>
         </section>
       )}
 
@@ -172,14 +172,14 @@ export default function Dashboard() {
           Restore path: git revert this commit. */}
 
       {sessError && (
-        <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-4 py-3 rounded-lg mb-6 text-sm flex items-center justify-between gap-3" role="alert">
+        <div className="mb-6 flex h-8 items-center justify-between gap-3 rounded-[10px] px-4 text-sm text-[var(--error)]" role="alert" style={{ background: 'color-mix(in srgb, var(--error) 14%, transparent)' }}>
           <span className="min-w-0 truncate">{String(sessError)}</span>
           {/* #17 M1: the hub-unreachable hint was inert text. The top
               HealthBanner already turns the same condition into an
               actionable "Open Settings →" link — this makes the Overview
               banner consistent: one tap to the CommHub connection panel
               instead of a dead-end instruction. */}
-          <Link href="/settings" className="shrink-0 text-xs font-medium text-red-300/90 underline-offset-2 hover:underline hover:text-red-200 whitespace-nowrap">
+          <Link href="/settings" className="shrink-0 whitespace-nowrap text-xs font-medium text-[var(--error)] underline-offset-2 hover:underline">
             Check CommHub connection →
           </Link>
         </div>
@@ -245,7 +245,7 @@ export default function Dashboard() {
         const chips: { key: typeof agentFilter; label: string; dot?: string }[] = [
           { key: 'all',     label: 'All' },
           { key: 'working', label: 'Working', dot: '#4ade80' },
-          { key: 'idle',    label: 'Idle',    dot: '#22d3ee' },
+          { key: 'idle',    label: 'Idle',    dot: 'var(--accent)' },
           { key: 'offline', label: 'Offline', dot: '#6b7280' },
         ];
         return (

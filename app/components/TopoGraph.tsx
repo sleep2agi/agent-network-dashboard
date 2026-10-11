@@ -550,7 +550,7 @@ function useTheme(): 'light' | 'dark' {
         return;
       }
       const t = document.documentElement.getAttribute('data-theme') || 'cyber';
-      setTheme(t === 'light' || t === 'mint' ? 'light' : 'dark');
+      setTheme(t === 'light' ? 'light' : 'dark');
     };
     read();
     const obs = new MutationObserver(read);
@@ -3758,7 +3758,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     chip-row 'working / online / active links' unit
                     spans (chip-level font-medium R313). data-fleet-
                     pressure-kicker attr exposes the kicker for tests. */}
-                <span className="text-[10px] tracking-wide font-medium" data-fleet-pressure-kicker>pressure</span>
+                <span className="text-[11px] tracking-wide font-medium" data-fleet-pressure-kicker>pressure</span>
                 {/* Round 374 / Loop: pressure-bar height h-1.5 → h-2
                     (6 → 8 px) — sibling visual-weight bump (8th anchor
                     in the family):

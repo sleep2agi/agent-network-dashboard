@@ -79,6 +79,7 @@ export const viewport: Viewport = {
 const themeBootScript = `
 try {
   var t = localStorage.getItem('anet-theme') || 'cyber';
+  if (t === 'mint' || t === 'sunset') t = 'cyber';
   document.documentElement.setAttribute('data-theme', t);
 } catch (e) {}
 `;

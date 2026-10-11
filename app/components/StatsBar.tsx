@@ -40,7 +40,7 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
           the fixed hamburger symmetrically, replacing the old ml-10
           indent that read as misalignment. Left-aligned from lg: up. */}
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-white tracking-tight text-center lg:text-left">Agent Network</h1>
+        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] tracking-tight text-center lg:text-left">Agent Network</h1>
       </div>
 
       {fleetEmpty ? (
@@ -144,7 +144,7 @@ function StatCard({ value, label, sub, color }: {
     <div className="anet-stat-card rounded-xl border border-[#26262b] bg-[#161618] px-3 sm:px-4 py-2.5 sm:py-3 transition-all">
       <div className={`text-2xl sm:text-3xl font-bold ${color} tabular-nums leading-tight`}>{value}</div>
       <div className="text-xs sm:text-sm text-gray-300 mt-0.5">{label}</div>
-      <div className="text-[10px] sm:text-xs text-gray-500 mt-1">{sub}</div>
+      <div className="text-[11px] sm:text-xs text-gray-500 mt-1">{sub}</div>
     </div>
   );
 }

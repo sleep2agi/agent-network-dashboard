@@ -180,7 +180,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                           : (agent.ownerName ? `负责人 ${agent.ownerName}` : '没有负责人')}
                       </div>
                     </div>
-                    {agent.demo ? <span className="shrink-0 rounded-md border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--warning)]">演示</span> : null}
+                    {agent.demo ? <span className="shrink-0 rounded-md border border-[var(--border)] px-1.5 py-0.5 text-[11px] text-[var(--warning)]">演示</span> : null}
                   </div>
                 </li>
               ))}
