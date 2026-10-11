@@ -22,6 +22,7 @@ Investigated against `sleep2agi/agent-network-app` desktop **0.2.228** (tag `des
 - `/board` lists Hub requirements and asks for the real `abandoned` column (`X-Anet-Accept-Columns: abandoned`). Abandoned cards are hidden until you ask to see them, and they render with a strikethrough. Done stays green and is not struck through.
 - Task titles and short ids (`#918`) on the board, list, activity feed, completion dashboard, and overview strip are links to `/board/<requirement id>`. The message-task list links each row to `/tasks/<id>`. The board list is searchable and can filter by column and priority. Leaderboard rows use a Hub display name when one is present, and do not show a raw `token:tok_…` id.
 - `/teams` is the Agent organization tree: departments indent by parent, a department opens the agents owned there (including an unassigned bucket), and a demo move stays in the browser. Agent teams remain a separate read-only list.
+- The home topology (`TopoGraph`) is a Dashboard-owned chart. The desktop client has no equivalent view, so this canvas is maintained here (`data-topo-maintainer="dashboard"`, revision `dashboard-topo-2026-10-11`). A large offline ring fits the frame, a rename follows hover and pinned edges as well as the open chat, halo probes match the painted rest opacity, and a fleet that has entirely aged out shows an empty state instead of a blank canvas.
 
 ### Still not connected
 
