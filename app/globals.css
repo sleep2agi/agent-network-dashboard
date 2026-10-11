@@ -45,39 +45,122 @@ body {
    See ThemeProvider for runtime selection.
    ──────────────────────────────────────────────────── */
 
+/* Design tokens — spec §8.1. Fonts and shadows use --ds-* names so the
+   @theme block can point at them without a var(--font-sans) cycle. */
 :root,
 [data-theme="cyber"] {
-  --bg:           #0b0b0d;
-  --bg-secondary: #161618;
-  --bg-elevated:  #1f1f24;
-  --fg:           #e5e7eb;
-  --fg-muted:     #9ca3af;
-  --fg-dim:       #6b7280;
-  --border:       #26262b;
-  --border-hover: #3a3a41;
-  --accent:       #8b5cf6;
-  --accent-fg:    #ffffff;
-  --success:      #10b981;
-  --warning:      #f59e0b;
-  --danger:       #ef4444;
-  --info:         #3b82f6;
-  --scrollbar:    #26262b;
+  --bg: #111113;
+  --bg-rail: #0d0d0f;
+  --bg-secondary: #18181b;
+  --bg-elevated: #1f1f23;
+  --bg-overlay: #1c1c20;
+  --border: #242428;
+  --border-strong: #2e2e33;
+  --border-hover: #2e2e33;
+  --fg: #ededef;
+  --fg-muted: #a1a1aa;
+  --fg-dim: #8b8b95;
+
+  --accent: #5e9bff;
+  --accent-fg: #0b0b0d;
+  --accent-tonal: #172a48;
+
+  --success: #22c55e;
+  --online: #22c55e;
+  --offline: #71717a;
+  --warning: #f59e0b;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --error: #ef4444;
+  --info: #5e9bff;
+
+  --prio-high: #f87171;
+  --prio-normal: #a1a1aa;
+  --prio-low: #60a5fa;
+  --prio-lowest: #71717a;
+
+  --ds-font-sans: var(--font-inter), var(--font-geist-sans), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --ds-font-mono: var(--font-geist-mono), "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  --text-display: 32px; --lh-display: 38px;
+  --text-title: 22px;   --lh-title: 28px;
+  --text-heading: 15px; --lh-heading: 22px;
+  --text-body: 14px;    --lh-body: 22px;
+  --text-label: 13px;   --lh-label: 18px;
+  --text-meta: 12px;    --lh-meta: 16px;
+  --text-micro: 11px;   --lh-micro: 14px;
+
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-7: 32px; --space-8: 40px;
+
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-full: 999px;
+
+  --hairline: 1px solid var(--border);
+  --ds-shadow-card: none;
+  --ds-shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border-strong);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  --ease: 150ms cubic-bezier(0.2, 0, 0, 1);
+
+  --nav-width: 232px;
+  --nav-width-collapsed: 64px;
+  --content-max: 1200px;
+  --drawer-width: 560px;
+
+  --scrollbar: #2e2e33;
   --scrollbar-hover: #3a3a41;
-  --code-bg:      #232327;
-  color-scheme:   dark;
-}@theme inline {
+  --code-bg: #1f1f23;
+  color-scheme: dark;
+}
+@theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--fg);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}html,
+  --color-bg: var(--bg);
+  --color-rail: var(--bg-rail);
+  --color-surface: var(--bg-secondary);
+  --color-elevated: var(--bg-elevated);
+  --color-overlay: var(--bg-overlay);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-dim: var(--fg-dim);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-tonal: var(--accent-tonal);
+  --color-success: var(--success);
+  --color-offline: var(--offline);
+  --color-warn: var(--warn);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  --font-sans: var(--ds-font-sans);
+  --font-mono: var(--ds-font-mono);
+
+  --text-display: 32px; --text-display--line-height: 38px; --text-display--font-weight: 600;
+  --text-title: 22px;   --text-title--line-height: 28px;   --text-title--font-weight: 600;
+  --text-heading: 15px; --text-heading--line-height: 22px; --text-heading--font-weight: 600;
+  --text-body: 14px;    --text-body--line-height: 22px;
+  --text-label: 13px;   --text-label--line-height: 18px;   --text-label--font-weight: 500;
+  --text-meta: 12px;    --text-meta--line-height: 16px;
+  --text-micro: 11px;   --text-micro--line-height: 14px;   --text-micro--font-weight: 500;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-card: var(--ds-shadow-card);
+  --shadow-overlay: var(--ds-shadow-overlay);
+}
+html,
 body {
   background: var(--bg);
   color: var(--fg);
-}/* #217 D1: UI text is sans (OpenWebUI-style product feel); mono is
-   opt-in via .font-mono for code, IDs and logs. */
+}/* #217 D1: UI text is sans; mono is opt-in via .font-mono.
+   next/font sets --font-inter and --font-geist-*; --ds-font-sans
+   stacks them so @theme --font-sans does not reference itself. */
 body {
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--ds-font-sans);
+  font-variant-numeric: tabular-nums;
   transition: background-color 0.2s ease, color 0.2s ease;
 }/* Smooth scrollbar — themed */
 .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }.scrollbar-thin::-webkit-scrollbar-thumb {
@@ -1431,24 +1514,43 @@ joining the R145
    ════════════════════════════════════════════════════════════ */
 
 [data-theme="light"] {
-  --bg:           #f6f7f9;
+  --bg: #f6f7f9;
+  --bg-rail: #eceef2;
   --bg-secondary: #ffffff;
-  --bg-elevated:  #eef0f4;
-  --fg:           #0f1419;
-  --fg-muted:     #525a66;
-  --fg-dim:       #8a94a3;
-  --border:       #e3e6eb;
-  --border-hover: #c8cdd6;
-  --accent:       #009e7e;
-  --accent-fg:    #ffffff;
-  --success:      #059669;
-  --warning:      #d97706;
-  --danger:       #dc2626;
-  --info:         #0284c7;
-  --scrollbar:    #d4d8df;
+  --bg-elevated: #f1f2f5;
+  --bg-overlay: #ffffff;
+  --border: #e6e8ec;
+  --border-strong: #d3d7de;
+  --border-hover: #d3d7de;
+  --fg: #1d2026;
+  --fg-muted: #5d6470;
+  --fg-dim: #636a75;
+
+  --accent: #1b65db;
+  --accent-fg: #ffffff;
+  --accent-tonal: #edf3fe;
+
+  --success: #16a34a;
+  --online: #16a34a;
+  --offline: #9ca3af;
+  --warning: #d97706;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --error: #dc2626;
+  --info: #1b65db;
+
+  --prio-high: #dc2626;
+  --prio-normal: #5d6470;
+  --prio-low: #2563eb;
+  --prio-lowest: #9ca3af;
+
+  --ds-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --ds-shadow-overlay: 0 8px 24px rgba(16, 24, 40, 0.12);
+
+  --scrollbar: #d4d8df;
   --scrollbar-hover: #a1a8b5;
-  --code-bg:      #eef0f4;
-  color-scheme:   light;
+  --code-bg: #f1f2f5;
+  color-scheme: light;
 }
 
 /* ────────────────────────────────────────────────────
@@ -1795,84 +1897,32 @@ joining the R145
    v0.4.3 light-theme polish — Phase 3 P0 fixes
    ─────────────────────────────────────────────────────────────────── */
 
-/* P0-1: Sidebar gets its own surface in light themes (not page-colored).
-   In Cyber (dark) the sidebar already feels separate via depth; in
-   light/mint the page bg == sidebar bg so only the right border separates
-   them. Switch sidebar to bg-secondary (white) + a hairline shadow. */
+/* Spec §5.1: the rail is --bg-rail, separated by a hairline, not a card shadow. */
 [data-theme="light"] aside[data-anet-sidebar="true"],
 [data-theme="mint"] aside[data-anet-sidebar="true"] {
-  background-color: var(--bg-secondary) !important;
-  /* Right edge: solid hairline border + a soft 16px halo so the sidebar
-     reads as a card hovering over the page, not "part of the page". */
-  box-shadow:
-    1px 0 0 var(--border),
-    8px 0 20px -10px rgba(15, 23, 42, 0.10),
-    0 0 0 1px rgba(15, 23, 42, 0.02);
-  border-right-color: transparent !important;
+  background-color: var(--bg-rail) !important;
+  box-shadow: none;
+  border-right-color: var(--border) !important;
 }
 
-/* Also tint page bg slightly cooler so the white sidebar pops more */
-[data-theme="light"] {
-  --bg: #f3f5f8; /* was #f6f7f9 — bumped 3pt cooler for sidebar contrast */
-}
-
-/* P0-2: Active nav — collapse the 4-emerald stack (bg + border + text + ring)
-   to a single accent cue: 3px left bar + medium-weight text. Dark themes
-   keep the existing tinted-pill look. */
-/* Active nav = ONE calm cue for ALL themes (design-polish #17 R3): a 4px left
-   bar + brightened text, NO bg billboard. Light/mint override below with their
-   emerald accent; the default-dark + cyber themes previously fell through to
-   the heavier inline cyan tint+border+cyan-text (the "competing surface" the
-   final spec dropped) — this brings them to the same calm treatment, in cyan. */
-.anet-nav-active {
-  background-color: transparent !important;
-  border-color: transparent !important;
-  border-left: 4px solid #22d3ee !important;
-  border-radius: 0 8px 8px 0 !important;
-  padding-left: calc(0.75rem - 4px) !important;
-  color: #e5e7eb !important;
-  font-weight: 600;
-}
-.anet-nav-active:hover {
-  background-color: #1c1c1f !important;
-}
-aside.w-16 .anet-nav-active {
-  border-radius: 8px !important;
-  padding-left: 0 !important;
-  border-left: 0 !important;
-  background-color: rgba(34, 211, 238, 0.08) !important;
-  color: #67e8f9 !important;
-}
-
+/* Spec §5.1: selected nav is a tonal pill. No left bar, no cyan. */
+.anet-nav-active,
 [data-theme="light"] .anet-nav-active,
-[data-theme="mint"] .anet-nav-active {
-  /* 通信龙 final spec (Q1 + 3-piece lockdown): active nav = ONE cue.
-     4px left bar emerald, text in --fg (NOT emerald), NO bg tint.
-     Reads as a calm "current page" indicator without competing emerald
-     surfaces. (Earlier 0.4.3 had 3px + faint tint + emerald text.) */
-  background-color: transparent !important;
-  border-color: transparent !important;
-  border-left: 4px solid var(--accent) !important;
-  border-radius: 0 8px 8px 0 !important;
-  padding-left: calc(0.75rem - 4px) !important;
-  color: var(--fg) !important;
-  font-weight: 600;
-}
-
-[data-theme="light"] .anet-nav-active:hover,
-[data-theme="mint"] .anet-nav-active:hover {
-  background-color: var(--bg-elevated) !important;
-}
-
-/* When sidebar is collapsed (w-16, justify-center) the left bar would look
-   weird against a centered icon — switch to a left-bg accent instead. */
+[data-theme="mint"] .anet-nav-active,
+aside.w-16 .anet-nav-active,
 [data-theme="light"] aside.w-16 .anet-nav-active,
 [data-theme="mint"] aside.w-16 .anet-nav-active {
-  border-radius: 8px !important;
-  padding-left: 0 !important;
+  background-color: var(--accent-tonal) !important;
+  border-color: transparent !important;
   border-left: 0 !important;
-  background-color: var(--bg-elevated) !important;
+  border-radius: 10px !important;
   color: var(--accent) !important;
+  font-weight: 600;
+}
+.anet-nav-active:hover,
+[data-theme="light"] .anet-nav-active:hover,
+[data-theme="mint"] .anet-nav-active:hover {
+  background-color: var(--accent-tonal) !important;
 }
 
 /* Q6: native <select> theming for light/mint.
@@ -2221,7 +2271,7 @@ html[data-skin="slack"] [data-topo-showcase] [class*="bg-cyan"] { background-col
   --col-hairline: #1e1e22;
   --badge-muted-bg: #475569;
   --badge-muted-fg: #CBD5E1;
-  --hl:          #7DD3FC; /* 高亮/选中指示 (SPEC sky) */
+  --hl:          #5e9bff; /* 选中指示 = spec accent */
   --menu-bg:     #1E293B; /* 浮层菜单底 (右键/溢出) */
   --bubble-in:   #1E293B; /* 聊天气泡: 对方 */
   --bubble-out:  #1E3A5F; /* 聊天气泡: 己方 */
@@ -2229,7 +2279,7 @@ html[data-skin="slack"] [data-topo-showcase] [class*="bg-cyan"] { background-col
   /* batch 3: 深色=白薄涂 (与旧 bg-white/5|10 计算值恒等), 浅色=黑薄涂 */
   --hover-tint:        rgba(255, 255, 255, 0.05);
   --hover-tint-strong: rgba(255, 255, 255, 0.10);
-  --code-fg:           #67e8f9; /* = cyan-300, 旧值原样; #232327 上 11.9:1 */
+  --code-fg:           #5e9bff; /* spec accent, not cyan */
 }
 [data-theme="light"] {
   --col-nav:  #F5F6F8;
@@ -2241,16 +2291,14 @@ html[data-skin="slack"] [data-topo-showcase] [class*="bg-cyan"] { background-col
   --col-hairline: #e9ebf0;
   --badge-muted-bg: #CBD5E1;
   --badge-muted-fg: #334155;
-  --hl:          #0284c7; /* sky-600: 浅底上可读的同 hue */
+  --hl:          #1b65db; /* spec accent on light */
   --menu-bg:     #ffffff;
   --bubble-in:   #F1F5F9;
   --bubble-out:  #DBEAFE;
   --control-off: #CBD5E1;
   --hover-tint:        rgba(0, 0, 0, 0.05);
   --hover-tint-strong: rgba(0, 0, 0, 0.10);
-  --code-fg:           #0369a1; /* sky-700: #eef0f4 底上 5.2:1 (cyan-300 系
-                                   同 hue 最近的 ≥4.5 档; shim 的 --accent
-                                   #009e7e 在 code-bg 上只有 2.98:1) */
+  --code-fg:           #1b65db; /* spec accent on the light code surface */
 }
 /* Sidebar shim (file not in this task's scope) */
 [data-theme="light"] .bg-\[\#0A0C14\] { background-color: var(--col-nav) !important; }
