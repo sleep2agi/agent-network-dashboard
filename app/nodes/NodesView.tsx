@@ -58,7 +58,7 @@ function useIsDesktop(): boolean {
 function DraftMark({ alias }: { alias: string }) {
   const hasDraft = useHasDraft(alias);
   if (!hasDraft) return null;
-  return <span className="shrink-0 text-[9px] text-red-400/90" aria-label={t('有未发送草稿', 'Unsent draft')}>{t('[草稿]', '[draft]')}</span>;
+  return <span className="shrink-0 text-[11px] text-red-400/90" aria-label={t('有未发送草稿', 'Unsent draft')}>{t('[草稿]', '[draft]')}</span>;
 }
 
 export function NodesView({ initialAlias = null }: { initialAlias?: string | null }) {
@@ -412,7 +412,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           the title cluster hug left, button hugs right. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Nodes</h1>
+          <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] lg:ml-0 ml-10">Nodes</h1>
           <span className="text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded-full border border-green-800/30 shrink-0">
             {onlineCount} online
           </span>
@@ -558,7 +558,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           })}
           {filterTags.length >= 2 && (
             <span
-              className="text-[10px] text-cyan-300/80 ml-1 tabular-nums"
+              className="text-[11px] text-cyan-300/80 ml-1 tabular-nums"
               data-testid="filter-tags-and-hint"
             >
               {t(`= 同时具有 ${filterTags.length} 个标签`, `= AND of ${filterTags.length} tags`)}
@@ -654,7 +654,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                         <span aria-label={t('有未读（已静音）', 'Unread (muted)')} className="absolute -top-0.5 -right-1 h-2.5 w-2.5 rounded-full bg-red-500/80 ring-2 ring-[var(--bg-secondary)]" />
                       )}
                       {unreadCount(s.alias) > 0 && !isMuted(s.alias) && (
-                        <span aria-label={t(`${unreadCount(s.alias)} 条未读`, `${unreadCount(s.alias)} unread`)} className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-semibold leading-4 text-center ring-2 ring-[var(--bg-secondary)]">
+                        <span aria-label={t(`${unreadCount(s.alias)} 条未读`, `${unreadCount(s.alias)} unread`)} className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[11px] font-semibold leading-4 text-center ring-2 ring-[var(--bg-secondary)]">
                           {unreadCount(s.alias) > 99 ? '99+' : unreadCount(s.alias)}
                         </span>
                       )}
@@ -665,8 +665,8 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                     <div className="flex items-center gap-2">
                       <span className="truncate text-base font-semibold text-white">{s.alias}</span>
                       <DraftMark alias={s.alias} />
-                      {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">New</span>}
-                      <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] uppercase tracking-wide ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
+                      {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-300">New</span>}
+                      <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[11px] uppercase tracking-wide ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
                         {statusKey}
                       </span>
                     </div>
@@ -674,7 +674,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                       {(s.agent || '—')}<span className="text-gray-700 mx-1.5">·</span><span title={s.server || ''}>{shortServer(s.server)}</span>
                     </div>
                   </div>
-                  <span className="hidden shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[10px] text-cyan-300/70 sm:inline">Tap to chat</span>
+                  <span className="hidden shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[11px] text-cyan-300/70 sm:inline">Tap to chat</span>
                   {/* RFC-027 PR2 — per-node ⋮ lifecycle menu. The button stopsPropagation
                       internally so it doesn't open chat. lifecycleByAlias absent → 'active'
                       default, menu renders normal stop/delete options. */}
@@ -690,8 +690,8 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
 
                 <div className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-xs">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-600">Current task</span>
-                    <span className="text-[10px] text-gray-600">{timeAgo(s.last_seen_at || s.updated_at)}</span>
+                    <span className="text-[11px] uppercase tracking-wide text-gray-600">Current task</span>
+                    <span className="text-[11px] text-gray-600">{timeAgo(s.last_seen_at || s.updated_at)}</span>
                   </div>
                   <div className={`mt-1 line-clamp-2 ${s.task ? 'text-gray-300' : 'text-gray-600 italic'}`}>
                     {s.task || 'No current task'}
@@ -750,7 +750,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                             <span aria-label={t('有未读（已静音）', 'Unread (muted)')} className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500/80" />
                           )}
                           {unreadCount(s.alias) > 0 && !isMuted(s.alias) && (
-                            <span aria-label={t(`${unreadCount(s.alias)} 条未读`, `${unreadCount(s.alias)} unread`)} className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-red-500 text-white text-[9px] font-semibold leading-[15px] text-center">
+                            <span aria-label={t(`${unreadCount(s.alias)} 条未读`, `${unreadCount(s.alias)} unread`)} className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-red-500 text-white text-[11px] font-semibold leading-[15px] text-center">
                               {unreadCount(s.alias) > 99 ? '99+' : unreadCount(s.alias)}
                             </span>
                           )}
@@ -759,7 +759,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                       </div>
                       <span className="truncate text-sm font-medium text-white">{s.alias}</span>
                       <DraftMark alias={s.alias} />
-                      {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">New</span>}
+                      {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                     </div>
                   </div>
                   <div className="col-span-2 truncate text-xs text-gray-400" title={s.server || ''}>
@@ -796,9 +796,9 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="truncate text-sm font-medium text-white">{s.alias}</div>
-                        {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">New</span>}
+                        {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                       </div>
-                      <div className="truncate text-[10px] text-gray-500">{s.agent || '—'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
+                      <div className="truncate text-[11px] text-gray-500">{s.agent || '—'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
                     </div>
                     <span className={`shrink-0 text-xs px-2 py-0.5 rounded-md border ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
                       {statusKey}

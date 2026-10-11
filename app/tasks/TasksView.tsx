@@ -214,7 +214,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         )}
                         <span>{s || 'All'}</span>
                         <span
-                          className={`text-[10px] tabular-nums ${
+                          className={`text-[11px] tabular-nums ${
                             isActive ? 'opacity-80' : 'text-[var(--fg-dim)]'
                           }`}
                         >
@@ -229,7 +229,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               {/* From/To filters */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 focus-within:border-[var(--info)]">
-                  <span className="text-[10px] uppercase tracking-wide text-[var(--fg-dim)]">From</span>
+                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">From</span>
                   <input
                     type="text"
                     value={filterFrom}
@@ -240,7 +240,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                   />
                 </div>
                 <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 focus-within:border-[var(--info)]">
-                  <span className="text-[10px] uppercase tracking-wide text-[var(--fg-dim)]">To</span>
+                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">To</span>
                   <input
                     type="text"
                     value={filterTo}
@@ -251,7 +251,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                   />
                 </div>
                 <div className="flex min-w-[10rem] flex-1 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 focus-within:border-[var(--info)]">
-                  <span className="text-[10px] uppercase tracking-wide text-[var(--fg-dim)]">Search</span>
+                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">Search</span>
                   <input
                     type="search"
                     value={filterQuery}
@@ -271,7 +271,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                       setFilterTo('');
                       setFilterQuery('');
                     }}
-                    className="rounded-lg border border-[var(--border)] px-2 py-1 text-[10px] text-[var(--fg-dim)] hover:text-[var(--fg)] hover:border-[var(--border-hover)]"
+                    className="rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg)] hover:border-[var(--border-hover)]"
                   >
                     Clear
                   </button>

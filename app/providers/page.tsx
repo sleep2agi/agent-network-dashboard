@@ -91,10 +91,10 @@ export default function ProvidersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Model Providers</h1>
-        {mock && <span className="text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/5 text-amber-300">preview fixture</span>}
+        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] lg:ml-0 ml-10">Model Providers</h1>
+        {mock && <span className="text-[11px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/5 text-amber-300">preview fixture</span>}
         <button
           onClick={openCreate}
           className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-cyan-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-cyan-500"
@@ -148,10 +148,10 @@ export default function ProvidersPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <span className="text-sm font-semibold text-white truncate">{p.name}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded border border-gray-600/30 text-gray-400 shrink-0" title={p.type}>{typeLabel(p.type)}</span>
+                          <span className="text-[11px] px-1.5 py-0.5 rounded border border-gray-600/30 text-gray-400 shrink-0" title={p.type}>{typeLabel(p.type)}</span>
                           {p.hasKey
-                            ? <span className="text-[10px] px-1.5 py-0.5 rounded border border-green-500/20 bg-green-500/5 text-green-400 shrink-0">key set</span>
-                            : <span className="text-[10px] px-1.5 py-0.5 rounded border border-gray-600/20 text-gray-500 shrink-0">no key</span>}
+                            ? <span className="text-[11px] px-1.5 py-0.5 rounded border border-green-500/20 bg-green-500/5 text-green-400 shrink-0">key set</span>
+                            : <span className="text-[11px] px-1.5 py-0.5 rounded border border-gray-600/20 text-gray-500 shrink-0">no key</span>}
                         </div>
                         <div className="text-[11px] text-gray-500 truncate">
                           {hostOf(p.base_url)} · {(p.models?.length || 0)} model{(p.models?.length || 0) === 1 ? '' : 's'}

@@ -73,21 +73,19 @@ export default function TeamsPage() {
   const byId = new Map((teams || []).map((team) => [team.id, team]));
 
   return (
-    <main
-      className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6"
-      style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -10%, color-mix(in srgb, var(--info) 14%, transparent), transparent 60%)' }}
-    >
-      <div className="mx-auto max-w-6xl space-y-5">
+    <main className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6">
+      <div className="mx-auto max-w-6xl space-y-6">
         <header className="space-y-1">
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--fg-dim)]">Organization</p>
-          <h1 className="text-2xl font-semibold tracking-tight">组织架构</h1>
-          <p className="max-w-xl text-sm leading-relaxed text-[var(--fg-muted)]">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-[22px] font-semibold leading-7">组织架构</h1>
+            <PendingNotice>
+              新建部门、改上级和指定负责人还在 Hub 上改。这里的「模拟调整」只改这一页的显示。
+            </PendingNotice>
+          </div>
+          <p className="max-w-xl text-xs leading-4 text-[var(--fg-dim)]">
             点开部门查看里面的 Agent。人数含下级。未归属是没有部门的负责人，或没有负责人的 Agent。
           </p>
         </header>
-        <PendingNotice>
-          新建部门、改上级和指定负责人还在 Hub 上改。这里的「模拟调整」只改这一页的显示。
-        </PendingNotice>
         {org === null ? <p className="text-sm text-[var(--fg-dim)]">正在读取组织架构…</p> : null}
         {org?.status === 'error' ? (
           <div className="flex flex-wrap items-center gap-3">

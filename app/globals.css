@@ -261,7 +261,7 @@ nothing blurs. */
    shadow (not the dark navy that the CSS shim would normally translate
    `bg-[#111113]` into). */
 .anet-cmdk kbd {
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1;
   padding: 1px 4px;
   border: 1px solid currentColor;
@@ -286,7 +286,7 @@ which we override. */
 }/* Cyber: accent the matched glyph color so it pops on the dark bg. */
 [data-theme="cyber"] .anet-cmdk-mark,
 :root:not([data-theme]) .anet-cmdk-mark {
-  color: #22d3ee;
+  color: var(--accent);
 }/* On the active (cyan-tinted) row,
 the title is already cyan-300 — use
    white-with-underline so the highlight reads as emphasis,
@@ -1571,17 +1571,7 @@ joining the R145
 [data-theme="light"] .bg-\[\#161618\],
 [data-theme="light"] .bg-\[\#161618\],
 [data-theme="light"] .bg-\[\#1f1f24\],
-[data-theme="light"] .bg-\[\#1f1f24\],
-[data-theme="mint"] .bg-\[\#060607\],
-[data-theme="mint"] .bg-\[\#0a0a0c\],
-[data-theme="mint"] .bg-\[\#0e0e10\],
-[data-theme="mint"] .bg-\[\#0e0e10\],
-[data-theme="mint"] .bg-\[\#0b0b0d\],
-[data-theme="mint"] .bg-\[\#111113\],
-[data-theme="mint"] .bg-\[\#161618\],
-[data-theme="mint"] .bg-\[\#161618\],
-[data-theme="mint"] .bg-\[\#1f1f24\],
-[data-theme="mint"] .bg-\[\#1f1f24\] {
+[data-theme="light"] .bg-\[\#1f1f24\] {
   background-color: var(--bg) !important;
 }
 
@@ -1589,17 +1579,12 @@ joining the R145
 [data-theme="light"] .bg-\[\#161618\],
 [data-theme="light"] .bg-\[\#161618\]\/80,
 [data-theme="light"] .bg-\[\#1c1c1f\],
-[data-theme="light"] .bg-\[\#232327\],
-[data-theme="mint"] .bg-\[\#161618\],
-[data-theme="mint"] .bg-\[\#161618\]\/80,
-[data-theme="mint"] .bg-\[\#1c1c1f\],
-[data-theme="mint"] .bg-\[\#232327\] {
+[data-theme="light"] .bg-\[\#232327\] {
   background-color: var(--bg-secondary) !important;
 }
 
 /* hover / input field backgrounds */
-[data-theme="light"] .bg-\[\#26262b\],
-[data-theme="mint"] .bg-\[\#26262b\] {
+[data-theme="light"] .bg-\[\#26262b\] {
   background-color: var(--bg-elevated) !important;
 }
 
@@ -1607,11 +1592,7 @@ joining the R145
 [data-theme="light"] .border-\[\#161618\],
 [data-theme="light"] .border-\[\#1c1c1f\],
 [data-theme="light"] .border-\[\#26262b\],
-[data-theme="light"] .border-\[\#3a3a41\],
-[data-theme="mint"] .border-\[\#161618\],
-[data-theme="mint"] .border-\[\#1c1c1f\],
-[data-theme="mint"] .border-\[\#26262b\],
-[data-theme="mint"] .border-\[\#3a3a41\] {
+[data-theme="light"] .border-\[\#3a3a41\] {
   border-color: var(--border) !important;
 }
 
@@ -1635,36 +1616,24 @@ joining the R145
 [data-theme="light"] .text-gray-100,
 [data-theme="light"] .text-gray-200,
 [data-theme="light"] .text-gray-300,
-[data-theme="light"] .text-gray-100\/90,
-[data-theme="mint"] .text-gray-100,
-[data-theme="mint"] .text-gray-200,
-[data-theme="mint"] .text-gray-300,
-[data-theme="mint"] .text-gray-100\/90 {
+[data-theme="light"] .text-gray-100\/90 {
   color: var(--fg) !important;
 }
 
 [data-theme="light"] .text-gray-400,
 [data-theme="light"] .text-gray-500,
 [data-theme="light"] .text-gray-600,
-[data-theme="light"] .placeholder-gray-600::placeholder,
-[data-theme="mint"] .text-gray-400,
-[data-theme="mint"] .text-gray-500,
-[data-theme="mint"] .text-gray-600,
-[data-theme="mint"] .placeholder-gray-600::placeholder {
+[data-theme="light"] .placeholder-gray-600::placeholder {
   color: var(--fg-muted) !important;
 }
 
-[data-theme="light"] .text-white,
-[data-theme="mint"] .text-white {
+[data-theme="light"] .text-white {
   color: var(--fg) !important;
 }
 
 [data-theme="light"] .text-zinc-100,
 [data-theme="light"] .text-zinc-200,
-[data-theme="light"] .text-white,
-[data-theme="mint"] .text-zinc-100,
-[data-theme="mint"] .text-zinc-200,
-[data-theme="mint"] .text-white {
+[data-theme="light"] .text-white {
   color: var(--fg) !important;
 }
 
@@ -1674,59 +1643,40 @@ joining the R145
    下三连隐形的文字半边); 与 zinc 同档映射 */
 [data-theme="light"] .text-neutral-300,
 [data-theme="light"] .text-neutral-400,
-[data-theme="light"] .text-neutral-500,
-[data-theme="mint"] .text-zinc-400,
-[data-theme="mint"] .text-zinc-500,
-[data-theme="mint"] .text-neutral-300,
-[data-theme="mint"] .text-neutral-400,
-[data-theme="mint"] .text-neutral-500 {
+[data-theme="light"] .text-neutral-500 {
   color: var(--fg-muted) !important;
 }
 
 [data-theme="light"] .bg-zinc-900,
 [data-theme="light"] .bg-zinc-950,
-[data-theme="light"] .bg-black,
-[data-theme="mint"] .bg-zinc-900,
-[data-theme="mint"] .bg-zinc-950,
-[data-theme="mint"] .bg-black {
+[data-theme="light"] .bg-black {
   background-color: var(--bg-secondary) !important;
 }
 
-[data-theme="light"] .bg-zinc-800,
-[data-theme="mint"] .bg-zinc-800 {
+[data-theme="light"] .bg-zinc-800 {
   background-color: var(--bg-elevated) !important;
 }
 
 [data-theme="light"] .border-zinc-700,
 [data-theme="light"] .border-zinc-800,
 [data-theme="light"] .border-white\/10,
-[data-theme="light"] .border-white\/5,
-[data-theme="mint"] .border-zinc-700,
-[data-theme="mint"] .border-zinc-800,
-[data-theme="mint"] .border-white\/10,
-[data-theme="mint"] .border-white\/5 {
+[data-theme="light"] .border-white\/5 {
   border-color: var(--border) !important;
 }
 
 /* Light theme: additional zinc shades + accent colors override */
 [data-theme="light"] .bg-zinc-700,
-[data-theme="light"] .bg-zinc-600,
-[data-theme="mint"] .bg-zinc-700,
-[data-theme="mint"] .bg-zinc-600 {
+[data-theme="light"] .bg-zinc-600 {
   background-color: var(--bg-elevated) !important;
 }
 
 [data-theme="light"] .text-zinc-300,
-[data-theme="light"] .text-zinc-600,
-[data-theme="mint"] .text-zinc-300,
-[data-theme="mint"] .text-zinc-600 {
+[data-theme="light"] .text-zinc-600 {
   color: var(--fg-muted) !important;
 }
 
 [data-theme="light"] .text-zinc-700,
-[data-theme="light"] .text-zinc-800,
-[data-theme="mint"] .text-zinc-700,
-[data-theme="mint"] .text-zinc-800 {
+[data-theme="light"] .text-zinc-800 {
   color: var(--fg) !important;
 }
 
@@ -1745,59 +1695,38 @@ joining the R145
    problem Vincent flagged: "浅色下很多字体看不见"). Map each family to its
    `-700` equivalent so contrast against white card is ≥ AA. */
 [data-theme="light"] .text-green-400,
-[data-theme="light"] .text-green-300,
-[data-theme="mint"]  .text-green-400,
-[data-theme="mint"]  .text-green-300 { color: #047857 !important; }
+[data-theme="light"] .text-green-300 { color: #047857 !important; }
 
 [data-theme="light"] .text-yellow-400,
-[data-theme="light"] .text-yellow-300,
-[data-theme="mint"]  .text-yellow-400,
-[data-theme="mint"]  .text-yellow-300 { color: #92400e !important; }
+[data-theme="light"] .text-yellow-300 { color: #92400e !important; }
 
 [data-theme="light"] .text-amber-400,
-[data-theme="light"] .text-amber-300,
-[data-theme="mint"]  .text-amber-400,
-[data-theme="mint"]  .text-amber-300 { color: #92400e !important; }
+[data-theme="light"] .text-amber-300 { color: #92400e !important; }
 
 [data-theme="light"] .text-red-400,
-[data-theme="light"] .text-red-300,
-[data-theme="mint"]  .text-red-400,
-[data-theme="mint"]  .text-red-300 { color: #b91c1c !important; }
+[data-theme="light"] .text-red-300 { color: #b91c1c !important; }
 
 [data-theme="light"] .text-purple-400,
-[data-theme="light"] .text-purple-300,
-[data-theme="mint"]  .text-purple-400,
-[data-theme="mint"]  .text-purple-300 { color: #6d28d9 !important; }
+[data-theme="light"] .text-purple-300 { color: #6d28d9 !important; }
 
 [data-theme="light"] .text-orange-400,
-[data-theme="light"] .text-orange-300,
-[data-theme="mint"]  .text-orange-400,
-[data-theme="mint"]  .text-orange-300 { color: #c2410c !important; }
+[data-theme="light"] .text-orange-300 { color: #c2410c !important; }
 
 [data-theme="light"] .text-blue-400,
-[data-theme="light"] .text-blue-300,
-[data-theme="mint"]  .text-blue-400,
-[data-theme="mint"]  .text-blue-300 { color: #1d4ed8 !important; }
+[data-theme="light"] .text-blue-300 { color: #1d4ed8 !important; }
 
 [data-theme="light"] .text-pink-400,
-[data-theme="light"] .text-pink-300,
-[data-theme="mint"]  .text-pink-400,
-[data-theme="mint"]  .text-pink-300 { color: #be185d !important; }
+[data-theme="light"] .text-pink-300 { color: #be185d !important; }
 
 [data-theme="light"] .text-violet-400,
-[data-theme="light"] .text-violet-300,
-[data-theme="mint"]  .text-violet-400,
-[data-theme="mint"]  .text-violet-300 { color: #6d28d9 !important; }
+[data-theme="light"] .text-violet-300 { color: #6d28d9 !important; }
 
 [data-theme="light"] .text-teal-400,
-[data-theme="light"] .text-teal-300,
-[data-theme="mint"]  .text-teal-400,
-[data-theme="mint"]  .text-teal-300 { color: #0f766e !important; }
+[data-theme="light"] .text-teal-300 { color: #0f766e !important; }
 
 /* Light theme: text-gray-700 (used in footers / muted body) is too pale
    when sitting on slightly-grey page bg. Bump to fg-muted. */
-[data-theme="light"] .text-gray-700,
-[data-theme="mint"]  .text-gray-700 { color: var(--fg-muted) !important; }
+[data-theme="light"] .text-gray-700 { color: var(--fg-muted) !important; }
 
 [data-theme="light"] .bg-emerald-500\/10,
 [data-theme="light"] .bg-emerald-500\/20,
@@ -1850,19 +1779,7 @@ joining the R145
 [data-theme="light"] .bg-indigo-600,
 [data-theme="light"] .bg-indigo-500,
 [data-theme="light"] .bg-purple-600,
-[data-theme="light"] .bg-purple-500,
-[data-theme="mint"] .bg-blue-600,
-[data-theme="mint"] .bg-blue-500,
-[data-theme="mint"] .bg-cyan-600,
-[data-theme="mint"] .bg-cyan-500,
-[data-theme="mint"] .bg-emerald-600,
-[data-theme="mint"] .bg-emerald-500,
-[data-theme="mint"] .bg-green-600,
-[data-theme="mint"] .bg-green-500,
-[data-theme="mint"] .bg-indigo-600,
-[data-theme="mint"] .bg-indigo-500,
-[data-theme="mint"] .bg-purple-600,
-[data-theme="mint"] .bg-purple-500 {
+[data-theme="light"] .bg-purple-500 {
   background-color: var(--accent) !important;
   color: var(--accent-fg) !important;
 }
@@ -1872,13 +1789,7 @@ joining the R145
 [data-theme="light"] .hover\:bg-emerald-500:hover,
 [data-theme="light"] .hover\:bg-green-500:hover,
 [data-theme="light"] .hover\:bg-indigo-500:hover,
-[data-theme="light"] .hover\:bg-purple-500:hover,
-[data-theme="mint"] .hover\:bg-blue-500:hover,
-[data-theme="mint"] .hover\:bg-cyan-500:hover,
-[data-theme="mint"] .hover\:bg-emerald-500:hover,
-[data-theme="mint"] .hover\:bg-green-500:hover,
-[data-theme="mint"] .hover\:bg-indigo-500:hover,
-[data-theme="mint"] .hover\:bg-purple-500:hover {
+[data-theme="light"] .hover\:bg-purple-500:hover {
   background-color: #00b894 !important;
   filter: brightness(1.05);
 }
@@ -1886,9 +1797,7 @@ joining the R145
 /* Disabled state for the same family — keep contrast against the page bg
    so disabled buttons don't read as "dark and active" in light mode */
 [data-theme="light"] .disabled\:bg-gray-800:disabled,
-[data-theme="light"] .disabled\:bg-zinc-800:disabled,
-[data-theme="mint"] .disabled\:bg-gray-800:disabled,
-[data-theme="mint"] .disabled\:bg-zinc-800:disabled {
+[data-theme="light"] .disabled\:bg-zinc-800:disabled {
   background-color: var(--bg-elevated) !important;
   color: var(--fg-muted) !important;
 }
@@ -1898,8 +1807,7 @@ joining the R145
    ─────────────────────────────────────────────────────────────────── */
 
 /* Spec §5.1: the rail is --bg-rail, separated by a hairline, not a card shadow. */
-[data-theme="light"] aside[data-anet-sidebar="true"],
-[data-theme="mint"] aside[data-anet-sidebar="true"] {
+[data-theme="light"] aside[data-anet-sidebar="true"] {
   background-color: var(--bg-rail) !important;
   box-shadow: none;
   border-right-color: var(--border) !important;
@@ -1908,10 +1816,8 @@ joining the R145
 /* Spec §5.1: selected nav is a tonal pill. No left bar, no cyan. */
 .anet-nav-active,
 [data-theme="light"] .anet-nav-active,
-[data-theme="mint"] .anet-nav-active,
 aside.w-16 .anet-nav-active,
-[data-theme="light"] aside.w-16 .anet-nav-active,
-[data-theme="mint"] aside.w-16 .anet-nav-active {
+[data-theme="light"] aside.w-16 .anet-nav-active {
   background-color: var(--accent-tonal) !important;
   border-color: transparent !important;
   border-left: 0 !important;
@@ -1920,8 +1826,7 @@ aside.w-16 .anet-nav-active,
   font-weight: 600;
 }
 .anet-nav-active:hover,
-[data-theme="light"] .anet-nav-active:hover,
-[data-theme="mint"] .anet-nav-active:hover {
+[data-theme="light"] .anet-nav-active:hover {
   background-color: var(--accent-tonal) !important;
 }
 
@@ -1930,8 +1835,7 @@ aside.w-16 .anet-nav-active,
    the OS default chrome (heavy chevron, off-spec font weight, no border
    radius). We strip the native chrome with appearance-none, then paint our
    own chevron via a background-image SVG. ~10 LOC. */
-[data-theme="light"] select,
-[data-theme="mint"] select {
+[data-theme="light"] select {
   -webkit-appearance: none !important;
   -moz-appearance: none !important;
   appearance: none !important;
@@ -1944,8 +1848,7 @@ aside.w-16 .anet-nav-active,
   border-radius: 8px;
 }
 
-[data-theme="light"] select:focus,
-[data-theme="mint"] select:focus {
+[data-theme="light"] select:focus {
   outline: 2px solid rgba(0, 158, 126, 0.2);
   outline-offset: -1px;
   border-color: var(--accent) !important;
@@ -1971,14 +1874,12 @@ aside.w-16 .anet-nav-active,
 /* KPI stat cards in light mode: kill the gradient wash (which reads as
    pale-mud on white), replace with a 2px top accent strip per color
    family + real elevation shadow. Dark themes keep the gradient. */
-[data-theme="light"] .anet-stat-card,
-[data-theme="mint"] .anet-stat-card {
+[data-theme="light"] .anet-stat-card {
   border-top-width: 2px;
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -8px rgba(15, 23, 42, 0.08);
 }
 
-[data-theme="light"] .anet-stat-card:hover,
-[data-theme="mint"] .anet-stat-card:hover {
+[data-theme="light"] .anet-stat-card:hover {
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06), 0 12px 24px -12px rgba(15, 23, 42, 0.16);
 }
 
@@ -1992,15 +1893,13 @@ aside.w-16 .anet-nav-active,
 [data-theme="light"] .anet-stat-card[data-anet-stat-card="white"] { border-top-color: #3b82f6; }
 
 /* Drop the gradient wash in light themes — looks like dust on white. */
-[data-theme="light"] .anet-stat-card > .pointer-events-none,
-[data-theme="mint"] .anet-stat-card > .pointer-events-none {
+[data-theme="light"] .anet-stat-card > .pointer-events-none {
   display: none;
 }
 
 /* Generic card hover elevation — every white card on light bg gets a
    subtle lift on hover so clickability is obvious. */
-[data-theme="light"] .bg-\[\#161618\]:hover,
-[data-theme="mint"] .bg-\[\#161618\]:hover {
+[data-theme="light"] .bg-\[\#161618\]:hover {
   box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.12);
 }
 
@@ -2017,16 +1916,14 @@ aside.w-16 .anet-nav-active,
   box-shadow: 0 4px 14px -10px rgba(15, 23, 42, 0.14) !important;
 }
 
-[data-theme="light"] .anet-login-bg,
-[data-theme="mint"] .anet-login-bg {
+[data-theme="light"] .anet-login-bg {
   background-image:
     radial-gradient(circle at 50% 35%, rgba(0, 158, 126, 0.06), transparent 60%),
     radial-gradient(circle, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
   background-size: 100% 100%, 24px 24px;
 }
 
-[data-theme="light"] .anet-login-mark,
-[data-theme="mint"] .anet-login-mark {
+[data-theme="light"] .anet-login-mark {
   background: var(--bg-secondary) !important;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px var(--border);
 }
@@ -2035,85 +1932,72 @@ aside.w-16 .anet-nav-active,
    green/amber/red tints. Dark themes use the lower-opacity bg+border
    that come from the component classes directly. Light/mint need
    slightly more saturation so the tint reads on a white surface. */
-[data-theme="light"] .anet-health-banner.bg-emerald-500\/6,
-[data-theme="mint"] .anet-health-banner.bg-emerald-500\/6 {
+[data-theme="light"] .anet-health-banner.bg-emerald-500\/6 {
   background-color: rgba(16, 185, 129, 0.08) !important;
   color: #047857 !important;
   border-color: rgba(16, 185, 129, 0.25) !important;
 }
 
-[data-theme="light"] .anet-health-banner.bg-amber-500\/8,
-[data-theme="mint"] .anet-health-banner.bg-amber-500\/8 {
+[data-theme="light"] .anet-health-banner.bg-amber-500\/8 {
   background-color: rgba(245, 158, 11, 0.12) !important;
   color: #92400e !important;
   border-color: rgba(245, 158, 11, 0.30) !important;
 }
 
-[data-theme="light"] .anet-health-banner.bg-red-500\/8,
-[data-theme="mint"] .anet-health-banner.bg-red-500\/8 {
+[data-theme="light"] .anet-health-banner.bg-red-500\/8 {
   background-color: rgba(220, 38, 38, 0.10) !important;
   color: #b91c1c !important;
   border-color: rgba(220, 38, 38, 0.30) !important;
 }
 
-[data-theme="light"] .anet-skeleton-bar,
-[data-theme="mint"] .anet-skeleton-bar {
+[data-theme="light"] .anet-skeleton-bar {
   background-color: #d4d8df;
 }
 
-[data-theme="light"] .anet-cmdk > div:not([aria-hidden]),
-[data-theme="mint"]  .anet-cmdk > div:not([aria-hidden]) {
+[data-theme="light"] .anet-cmdk > div:not([aria-hidden]) {
   background-color: var(--bg-secondary) !important;
   box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.18),
               0 2px 6px -2px rgba(15, 23, 42, 0.10);
 }
 
-[data-theme="light"] .anet-cmdk-row.bg-cyan-500\/10,
-[data-theme="mint"]  .anet-cmdk-row.bg-cyan-500\/10 {
+[data-theme="light"] .anet-cmdk-row.bg-cyan-500\/10 {
   background-color: rgba(0, 158, 126, 0.08) !important;
 }
 
 /* Light/mint: use the brand teal — undertone matches the active row. */
-[data-theme="light"] .anet-cmdk-mark,
-[data-theme="mint"]  .anet-cmdk-mark {
+[data-theme="light"] .anet-cmdk-mark {
   color: #0d9488;
 }
 
-[data-theme="light"] .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark,
-[data-theme="mint"]  .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark {
+[data-theme="light"] .anet-cmdk-row.bg-cyan-500\/10 .anet-cmdk-mark {
   color: #064e3b;
 }
 
 /* Help overlay — same white-card-with-shadow treatment as cmdk on light */
-[data-theme="light"] .anet-help > div:not([aria-hidden]),
-[data-theme="mint"]  .anet-help > div:not([aria-hidden]) {
+[data-theme="light"] .anet-help > div:not([aria-hidden]) {
   background-color: var(--bg-secondary) !important;
   box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.18),
               0 2px 6px -2px rgba(15, 23, 42, 0.10);
 }
 
-[data-theme="light"] .anet-tabstrip-wrap::before,
-[data-theme="mint"]  .anet-tabstrip-wrap::before {
+[data-theme="light"] .anet-tabstrip-wrap::before {
   background: linear-gradient(to right, var(--bg-secondary), transparent);
 }
 
-[data-theme="light"] .anet-tabstrip-wrap::after,
-[data-theme="mint"]  .anet-tabstrip-wrap::after {
+[data-theme="light"] .anet-tabstrip-wrap::after {
   background: linear-gradient(to left, var(--bg-secondary), transparent);
 }
 
 /* P0-3 baseline: error / warning chip colors for light themes.
    The component-level copy (replacing raw JSON with human text) is fixed
    in the Logs / Server-Logs page components separately. */
-[data-theme="light"] .anet-error-chip,
-[data-theme="mint"] .anet-error-chip {
+[data-theme="light"] .anet-error-chip {
   background-color: rgba(220, 38, 38, 0.06) !important;
   color: #b91c1c !important;
   border-color: rgba(220, 38, 38, 0.25) !important;
 }
 
-[data-theme="light"] .anet-warn-chip,
-[data-theme="mint"] .anet-warn-chip {
+[data-theme="light"] .anet-warn-chip {
   background-color: rgba(217, 119, 6, 0.08) !important;
   color: #92400e !important;
   border-color: rgba(217, 119, 6, 0.28) !important;

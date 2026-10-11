@@ -75,10 +75,10 @@ export default function TokensPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/settings" className="text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10">&larr; Settings</Link>
-        <h1 className="text-2xl font-bold text-white">API Tokens</h1>
+        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">API Tokens</h1>
       </div>
 
       <div className="max-w-2xl space-y-6">
@@ -133,11 +133,11 @@ export default function TokensPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-white font-medium">{t.name}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded border ${
                         t.scope === 'full' ? 'text-cyan-300 border-cyan-500/20 bg-cyan-500/5' : 'text-gray-400 border-gray-600/20'
                       }`}>{t.scope}</span>
                     </div>
-                    <div className="text-[10px] text-gray-500">{t.token_id} · network: {t.network_id?.slice(0, 12) || '--'} · used {timeAgo(t.last_used_at)}</div>
+                    <div className="text-[11px] text-gray-500">{t.token_id} · network: {t.network_id?.slice(0, 12) || '--'} · used {timeAgo(t.last_used_at)}</div>
                   </div>
                   <button onClick={() => revokeToken(t.token_id)}
                     className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded border border-red-800/30 hover:bg-red-500/10 transition-colors">

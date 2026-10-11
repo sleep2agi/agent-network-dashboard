@@ -123,7 +123,7 @@ export function UserBar() {
         </div>
         <div>
           <div className="text-sm text-white font-medium">{auth.user.display_name || auth.user.username}</div>
-          <div className="text-[10px] text-gray-500">{auth.user.role} · {auth.user.user_id}</div>
+          <div className="text-[11px] text-gray-500">{auth.user.role} · {auth.user.user_id}</div>
         </div>
       </div>
 

@@ -305,7 +305,7 @@ export function TaskDetail({
                 {task.to_name && <AliasAvatar alias={task.to_name} size={20} />}
                 <span className="truncate">{task.to_name || '--'}</span>
               </div>
-              <div className="mt-2 text-[10px]">
+              <div className="mt-2 text-[11px]">
                 <span
                   className={priorityClass(task.priority)}
                   data-testid="task-detail-priority"
@@ -403,7 +403,7 @@ export function TaskDetail({
                           </div>
                         )}
                         {isDeliveryStaleObservation(e) && (
-                          <div data-testid="task-event-stale-context" className="mt-0.5 break-words text-[10px] text-[var(--warning)]">
+                          <div data-testid="task-event-stale-context" className="mt-0.5 break-words text-[11px] text-[var(--warning)]">
                             Informational delivery observation; tasks that do not require a reply may also appear here.
                           </div>
                         )}

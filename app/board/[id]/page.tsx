@@ -90,58 +90,55 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
   const checklist = Array.isArray(card?.checklist) ? card.checklist : [];
 
   return (
-    <main
-      className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6"
-      style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -10%, color-mix(in srgb, var(--info) 14%, transparent), transparent 60%)' }}
-    >
-      <div className="mx-auto max-w-3xl space-y-5">
-        <Link href="/board" className="inline-flex text-sm text-[var(--info)] hover:underline">← Board</Link>
+    <main className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <Link href="/board" className="inline-flex text-sm text-[var(--fg-muted)] hover:text-[var(--accent)] hover:underline">← Board</Link>
         {loading ? <p className="text-sm text-[var(--fg-dim)]">Loading task…</p> : null}
         {!loading && error ? (
-          <p className="rounded-xl border border-[var(--danger)]/30 bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--danger)]">{error}</p>
+          <p className="text-sm text-[var(--error)]">{error}</p>
         ) : null}
         {!loading && card ? (
           <>
-            <header className="space-y-3">
+            <header className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                {seq ? <span className="font-mono text-sm tabular-nums text-[var(--info)]">{seq}</span> : null}
-                <span className="inline-flex items-center gap-1.5">
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: columnDot(card.column) }} />
-                  <MetaChip>{columnLabel(card.column)}</MetaChip>
+                {seq ? <span className="font-mono text-xs tabular-nums text-[var(--fg-dim)]">{seq}</span> : null}
+                <span className="inline-flex items-center gap-1.5 text-[13px] text-[var(--fg-muted)]">
+                  <span aria-hidden className="h-2 w-2 rounded-full" style={{ backgroundColor: columnDot(card.column) }} />
+                  {columnLabel(card.column)}
                 </span>
                 <PriorityChip priority={card.priority} />
                 {card.archived ? <MetaChip>Archived</MetaChip> : null}
                 {card.updatedAt ? <span className="text-xs text-[var(--fg-dim)]">{relativeAgo(card.updatedAt) || ''}</span> : null}
+                <PendingNotice>This page is read-only. Editing the card is not wired yet.</PendingNotice>
               </div>
-              <h1 className="text-2xl font-semibold tracking-tight">{card.name || card.id}</h1>
+              <h1 className="text-[22px] font-semibold leading-7">{card.name || card.id}</h1>
             </header>
-            <PendingNotice>This page is read-only. Editing the card is not wired yet.</PendingNotice>
-            <dl className="grid gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 text-sm sm:grid-cols-2">
-              <div className="rounded-xl bg-[var(--bg-elevated)] px-3 py-2.5">
-                <dt className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">Owner</dt>
+            <dl className="grid gap-px overflow-hidden rounded-[10px] bg-[var(--border)] text-sm shadow-[var(--ds-shadow-card)] sm:grid-cols-2">
+              <div className="bg-[var(--bg-secondary)] px-4 py-3">
+                <dt className="text-[13px] font-medium text-[var(--fg-muted)]">Owner</dt>
                 <dd className="mt-1">{card.owner ? personLabel(card.owner, people) : '—'}</dd>
               </div>
-              <div className="rounded-xl bg-[var(--bg-elevated)] px-3 py-2.5">
-                <dt className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">Agent</dt>
+              <div className="bg-[var(--bg-secondary)] px-4 py-3">
+                <dt className="text-[13px] font-medium text-[var(--fg-muted)]">Agent</dt>
                 <dd className="mt-1">{card.agent_owner ? personLabel(card.agent_owner, people) : '—'}</dd>
               </div>
-              <div className="rounded-xl bg-[var(--bg-elevated)] px-3 py-2.5">
-                <dt className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">Assignee</dt>
+              <div className="bg-[var(--bg-secondary)] px-4 py-3">
+                <dt className="text-[13px] font-medium text-[var(--fg-muted)]">Assignee</dt>
                 <dd className="mt-1">{card.assignee || '—'}</dd>
               </div>
-              <div className="rounded-xl bg-[var(--bg-elevated)] px-3 py-2.5">
-                <dt className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">Start / due</dt>
-                <dd className={`mt-1 ${isRequirementOverdue(card) ? 'text-[var(--danger)]' : ''}`}>
+              <div className="bg-[var(--bg-secondary)] px-4 py-3">
+                <dt className="text-[13px] font-medium text-[var(--fg-muted)]">Start / due</dt>
+                <dd className={`mt-1 ${isRequirementOverdue(card) ? 'text-[var(--error)]' : ''}`}>
                   {card.start || '—'} → {card.due || '—'}
                   {isRequirementOverdue(card) ? ' · Overdue' : ''}
                 </dd>
               </div>
-              <div className="rounded-xl bg-[var(--bg-elevated)] px-3 py-2.5">
-                <dt className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">Project</dt>
+              <div className="bg-[var(--bg-secondary)] px-4 py-3">
+                <dt className="text-[13px] font-medium text-[var(--fg-muted)]">Project</dt>
                 <dd className="mt-1">{projectName || '—'}</dd>
               </div>
-              <div className="rounded-xl bg-[var(--bg-elevated)] px-3 py-2.5">
-                <dt className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">Participants</dt>
+              <div className="bg-[var(--bg-secondary)] px-4 py-3">
+                <dt className="text-[13px] font-medium text-[var(--fg-muted)]">Participants</dt>
                 <dd className="mt-1">{card.participants && card.participants.length > 0 ? card.participants.map((person) => personLabel(person, people)).join(', ') : '—'}</dd>
               </div>
             </dl>
@@ -149,17 +146,17 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
               <p className="text-sm text-[var(--fg-muted)]">{card.children.done} / {card.children.total} subtasks done</p>
             ) : null}
             {card.description ? (
-              <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
-                <h2 className="text-xs font-medium uppercase tracking-wide text-[var(--fg-dim)]">Description</h2>
+              <section className="rounded-[10px] bg-[var(--bg-secondary)] p-4 shadow-[var(--ds-shadow-card)]">
+                <h2 className="text-[15px] font-semibold leading-[22px]">Description</h2>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{card.description}</p>
               </section>
             ) : null}
             {checklist.length > 0 ? (
-              <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
-                <h2 className="text-xs font-medium uppercase tracking-wide text-[var(--fg-dim)]">Checklist</h2>
+              <section className="rounded-[10px] bg-[var(--bg-secondary)] p-4 shadow-[var(--ds-shadow-card)]">
+                <h2 className="text-[15px] font-semibold leading-[22px]">Checklist</h2>
                 <ul className="mt-3 space-y-2 text-sm">
                   {checklist.map((item) => (
-                    <li key={item.id || item.text} className={`rounded-xl bg-[var(--bg-elevated)] px-3 py-2 ${item.done ? 'text-[var(--fg-dim)] line-through' : ''}`}>
+                    <li key={item.id || item.text} className={`border-t border-[var(--border)] px-1 py-2 first:border-t-0 ${item.done ? 'text-[var(--fg-dim)] line-through' : ''}`}>
                       {item.done ? '✓' : '○'} {item.text}
                     </li>
                   ))}
@@ -170,17 +167,17 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
               <TaskPanel className="space-y-3">
                 {card.tags && card.tags.length > 0 ? (
                   <div>
-                    <h2 className="text-xs font-medium uppercase tracking-wide text-[var(--fg-dim)]">Tags</h2>
+                    <h2 className="text-[15px] font-semibold leading-[22px]">Tags</h2>
                     <div className="mt-2"><TagList tags={card.tags} /></div>
                   </div>
                 ) : null}
                 {card.issues && card.issues.length > 0 ? (
                   <div>
-                    <h2 className="text-xs font-medium uppercase tracking-wide text-[var(--fg-dim)]">Issues</h2>
+                    <h2 className="text-[15px] font-semibold leading-[22px]">Issues</h2>
                     <ul className="mt-2 space-y-1.5 text-sm">
                       {card.issues.map((issue) => (
                         <li key={`${issue.repo}#${issue.number}`}>
-                          <a className="text-[var(--info)] hover:underline" href={`https://github.com/${issue.repo}/issues/${issue.number}`} target="_blank" rel="noreferrer">
+                          <a className="text-[var(--fg)] hover:text-[var(--accent)] hover:underline" href={`https://github.com/${issue.repo}/issues/${issue.number}`} target="_blank" rel="noreferrer">
                             {issue.repo}#{issue.number}{issue.title ? ` ${issue.title}` : ''}
                           </a>
                         </li>
@@ -191,7 +188,7 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
               </TaskPanel>
             ) : null}
             {card.external_url && /^https?:\/\//i.test(card.external_url) ? (
-              <a href={card.external_url} className="text-sm text-[var(--info)] hover:underline" target="_blank" rel="noreferrer">{card.external_url}</a>
+              <a href={card.external_url} className="text-sm text-[var(--fg)] hover:text-[var(--accent)] hover:underline" target="_blank" rel="noreferrer">{card.external_url}</a>
             ) : null}
           </>
         ) : null}

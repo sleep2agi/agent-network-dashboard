@@ -13,7 +13,7 @@
  */
 export function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
       {/* KPI top strip — 4 cards matching StatsBar.
           #209 R38: mb-8 → mb-4 sm:mb-8 to track the live StatsBar
           wrapper after R29 mobile-tighten. Without this the skeleton
