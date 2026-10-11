@@ -84,7 +84,7 @@ const settings = readFileSync(new URL('../components/NodeSettingsPanel.tsx', imp
 assert.match(settings, /HUB_PERMISSION_MODES/);
 assert.doesNotMatch(settings, /'auto', 'default', 'bypassPermissions'/);
 
-const requirements = readFileSync(new URL('../api/hub/requirements/route.ts', import.meta.url), 'utf8');
+const requirements = readFileSync(new URL('../api/hub/requirements/[[...path]]/route.ts', import.meta.url), 'utf8');
 assert.match(requirements, /X-Anet-Accept-Columns/);
 assert.match(requirements, /abandoned/);
 

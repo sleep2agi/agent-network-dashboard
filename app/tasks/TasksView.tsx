@@ -82,6 +82,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   // needs both prefill directions.
   const [filterFrom, setFilterFrom] = useState(searchParams.get('from_name') || '');
   const [filterTo, setFilterTo] = useState(searchParams.get('to_name') || '');
+  const [filterQuery, setFilterQuery] = useState(searchParams.get('q') || '');
 
   // #Stage-tasks: selection is seeded from /tasks/[id] URL, then plain
   // client state kept in sync with pushState (shallow — no route remount,
@@ -249,13 +250,26 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     className="w-16 bg-transparent text-xs text-white placeholder-gray-700 focus:outline-none"
                   />
                 </div>
-                {(filterStatus || filterFrom || filterTo) && (
+                <div className="flex min-w-[10rem] flex-1 items-center gap-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 focus-within:border-blue-500/40">
+                  <span className="text-[9px] uppercase tracking-wide text-[var(--fg-dim)]">Search</span>
+                  <input
+                    type="search"
+                    value={filterQuery}
+                    onChange={(e) => setFilterQuery(e.target.value)}
+                    placeholder="title or id"
+                    aria-label="Search tasks"
+                    data-testid="tasks-filter-query"
+                    className="min-w-0 flex-1 bg-transparent text-xs text-white placeholder-gray-700 focus:outline-none"
+                  />
+                </div>
+                {(filterStatus || filterFrom || filterTo || filterQuery) && (
                   <button
                     type="button"
                     onClick={() => {
                       setFilterStatus('');
                       setFilterFrom('');
                       setFilterTo('');
+                      setFilterQuery('');
                     }}
                     className="rounded border border-gray-700 px-2 py-0.5 text-[10px] text-gray-500 hover:text-gray-200 hover:border-gray-600"
                   >
@@ -306,7 +320,18 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               />
             </div>
           ) : (
-            <TaskList tasks={tasks} selectedId={selectedId} onSelect={selectTask} />
+            <TaskList
+              tasks={tasks.filter((task) => {
+                const q = filterQuery.trim().toLowerCase();
+                if (!q) return true;
+                return task.task_id.toLowerCase().includes(q)
+                  || (task.content || '').toLowerCase().includes(q)
+                  || (task.from_name || '').toLowerCase().includes(q)
+                  || (task.to_name || '').toLowerCase().includes(q);
+              })}
+              selectedId={selectedId}
+              onSelect={selectTask}
+            />
           )}
         </div>
       </aside>

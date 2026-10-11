@@ -20,6 +20,7 @@ Investigated against `sleep2agi/agent-network-app` desktop **0.2.228** (tag `des
 - Create-node model step reads `runtime_readiness[runtime]` providers and models when the daemon reported them. Keys and credentialed base URLs are dropped. Codex ids that contain `/` are not offered as Codex models.
 - Servers page lists daemon create capability (`can_create_nodes` absent stays "未上报", not "不能建") and per-runtime readiness text.
 - `/board` lists Hub requirements and asks for the real `abandoned` column (`X-Anet-Accept-Columns: abandoned`). Abandoned cards are hidden until you ask to see them, and they render with a strikethrough. Done stays green and is not struck through.
+- Task titles and short ids (`#918`) on the board, list, activity feed, completion dashboard, and overview strip are links to `/board/<requirement id>`. The message-task list links each row to `/tasks/<id>`. The board list is searchable and can filter by column and priority. Leaderboard rows use a Hub display name when one is present, and do not show a raw `token:tok_…` id.
 - `/teams` reads Agent teams and human departments.
 
 ### Still not connected

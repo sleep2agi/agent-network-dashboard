@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { AliasAvatar } from './AliasAvatar';
 import { relativeAgo } from '../lib/time';
 import { previewContent } from './utils';
@@ -58,13 +59,18 @@ export function TaskList({
             const active = t.task_id === selectedId;
             return (
               <li key={t.task_id}>
-                <button
-                  type="button"
+                <Link
+                  href={`/tasks/${encodeURIComponent(t.task_id)}`}
+                  prefetch={false}
                   data-task-row
                   data-task-id={t.task_id}
                   data-selected={active ? 'true' : 'false'}
-                  onClick={() => onSelect(t.task_id)}
-                  className={`w-full text-left px-3 py-2.5 transition-colors ${
+                  onClick={(event) => {
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+                    event.preventDefault();
+                    onSelect(t.task_id);
+                  }}
+                  className={`block w-full text-left px-3 py-2.5 transition-colors ${
                     active
                       ? 'bg-cyan-500/10 border-l-2 border-cyan-500'
                       : 'border-l-2 border-transparent hover:bg-[#1c1c1f]/40'
@@ -99,13 +105,21 @@ export function TaskList({
                     {t.to_name && <AliasAvatar alias={t.to_name} size={14} />}
                     <span className="truncate max-w-[35%]">{t.to_name || '--'}</span>
                   </div>
-                  <div
-                    className="text-[11px] text-gray-500 line-clamp-2 leading-snug"
-                    title={t.content}
-                  >
-                    {previewContent(t.content) || <span className="italic">(no content)</span>}
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      data-testid="task-row-id"
+                      className="shrink-0 font-mono text-[10px] tabular-nums text-cyan-400/90"
+                    >
+                      {t.task_id.slice(0, 8)}
+                    </span>
+                    <div
+                      className="min-w-0 text-[11px] text-gray-500 line-clamp-2 leading-snug"
+                      title={t.content}
+                    >
+                      {previewContent(t.content) || <span className="italic">(no content)</span>}
+                    </div>
                   </div>
-                </button>
+                </Link>
               </li>
             );
           })}

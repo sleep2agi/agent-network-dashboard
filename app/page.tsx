@@ -14,6 +14,7 @@ import { AgentCard } from './components/AgentCard';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { NodesEmptyState as EmptyState } from './components/EmptyState';
 import { CommandCenter, useCommandCenter } from './components/CommandCenter';
+import { RequirementPulse } from './components/RequirementPulse';
 import { useSessions, useHealth, useTasks, useStats } from './lib/hooks';
 import { useChatUnread } from './lib/chat-unread';
 import { isPinned, usePinVersion } from './lib/chat-pin';
@@ -160,6 +161,8 @@ export default function Dashboard() {
           <Link href="/tasks" prefetch={false} className="text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
         </section>
       )}
+
+      <RequirementPulse />
 
       {/* #217 S5 (less is more): Quick Navigation stat cards, the nav
           rail, and Recent Activity are deleted. Every route they linked
