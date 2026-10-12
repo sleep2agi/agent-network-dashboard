@@ -63,6 +63,8 @@ export const config = {
     '/',
     '/node',
     '/tasks', '/tasks/:path*',
+    '/board', '/board/:path*',
+    '/teams',
     '/nodes', '/nodes/:path*',
     '/messages',
     '/logs',

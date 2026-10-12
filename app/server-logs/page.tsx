@@ -134,12 +134,12 @@ export default function ServerLogsPage() {
     <div className="p-4 sm:p-6 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          {/* #209 R35: lg:ml-0 ml-10 burger-clearance — without it the
+          {/* #209 R35: burger-clearance — without it the
               fixed top-3 left-3 mobile hamburger sat right on top of the
               "Se" of "Server Logs". Caught by playwright mobile shot. */}
           {/* #217 D8: text-xl + nowrap on phones — at text-2xl the title
               wrapped to two lines under the 4-control toolbar. */}
-          <h1 className="text-xl sm:text-2xl font-bold text-white lg:ml-0 ml-10 whitespace-nowrap">Server Logs</h1>
+          <h1 className="text-xl sm:text-[22px] font-semibold leading-7 text-[var(--fg)] whitespace-nowrap">Server Logs</h1>
           {/* Round 86: dropped the {logs.length} header chip — r84 added
               `all <count>` to the filter strip just below, so this duplicated
               the value within 40px of itself. */}
@@ -215,7 +215,7 @@ export default function ServerLogsPage() {
                 }`}
               >
                 <span>{lv}</span>
-                <span className={`text-[10px] tabular-nums ${isActive ? 'opacity-80' : 'text-gray-600'}`}>{count}</span>
+                <span className={`text-[11px] tabular-nums ${isActive ? 'opacity-80' : 'text-gray-600'}`}>{count}</span>
               </button>
             );
           })}
@@ -225,7 +225,7 @@ export default function ServerLogsPage() {
             actually narrowing the list. "500 / 500" duplicated the
             `all 500` chip 20px to its left. */}
         {filtered.length < logs.length && (
-          <span className="text-[10px] text-gray-600 ml-auto tabular-nums">
+          <span className="text-[11px] text-gray-600 ml-auto tabular-nums">
             {filtered.length} / {logs.length}
           </span>
         )}
@@ -287,8 +287,8 @@ export default function ServerLogsPage() {
                     at sm. The 2px left rail (LEVEL_STRIPE) already
                     encodes level visually for warn/error, so the LOG badge
                     is redundant on mobile — hide it below sm. */}
-                <span className="text-gray-600 shrink-0 w-[60px] sm:w-[100px] text-[9px] sm:text-[10px] tabular-nums">{shortTime(l.ts)}</span>
-                <span className={`hidden sm:inline shrink-0 px-1.5 rounded border text-[9px] uppercase ${LEVEL_BADGE[l.level]}`}>
+                <span className="text-gray-600 shrink-0 w-[60px] sm:w-[100px] text-[11px] sm:text-[11px] tabular-nums">{shortTime(l.ts)}</span>
+                <span className={`hidden sm:inline shrink-0 px-1.5 rounded border text-[11px] uppercase ${LEVEL_BADGE[l.level]}`}>
                   {l.level}
                 </span>
                 {/* Round 85: CommHub stamps each log line with a `[HH:MM:SS]`

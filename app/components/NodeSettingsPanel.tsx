@@ -8,6 +8,7 @@ import { useNodeLifecycle } from '../lib/hooks';
 import { toggleMute, useMuted } from '../lib/chat-mute';
 import { togglePin, usePinned } from '../lib/chat-pin';
 import { useLifecycleCaps } from './NodeLifecycleMenu';
+import { HUB_PERMISSION_MODES } from '../lib/hub-align.mjs';
 
 /**
  * Per-node settings panel (issue #260 → v0.11 flagship #262, Vincent tg
@@ -50,14 +51,14 @@ const RUNTIME_MODELS: Record<string, string[]> = {
   'grok-build-acp': ['grok-build'],
 };
 
-// C. config.flags contract (per 通信龙). permissionMode is a select; two
-// booleans; three numeric bounds. These six are the entire editable flag set.
-const PERMISSION_MODES = ['auto', 'default', 'bypassPermissions'];
+// C. config.flags contract (per 通信龙). permissionMode is the hub enum
+// (default / acceptEdits / plan / bypassPermissions). `auto` is not a hub value.
 
 // A. Channel bindings — enable/disable is editable; the per-channel secret
 // fields below stay read-only (`StubField`, masked). `roadmap` = greyed "即将
-// 支持". Keep this list in sync with EDITABLE_CHANNELS in
-// app/api/anet/node-config/route.ts (server-side whitelist).
+// 支持". The server allowlist is narrowEditableChannels in
+// app/lib/hub-align.mjs (telegram + feishu). commhub is the RPC transport,
+// not a per-node channel, and is intentionally absent.
 const CHANNELS: { key: string; label: string; roadmap?: boolean; fields: { label: string; value?: string }[] }[] = [
   {
     key: 'telegram', label: 'Telegram',
@@ -181,7 +182,7 @@ function MuteSection({ alias }: { alias: string }) {
           <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${muted ? 'translate-x-4.5' : 'translate-x-0.5'}`} style={{ transform: muted ? 'translateX(18px)' : 'translateX(2px)' }} />
         </span>
       </button>
-      <p className="mt-1.5 text-[10px] text-gray-600">置顶=列表最前；静音=未读只显红点、不计入全局数字（均存本浏览器）</p>
+      <p className="mt-1.5 text-[11px] text-gray-600">置顶=列表最前；静音=未读只显红点、不计入全局数字（均存本浏览器）</p>
     </section>
   );
 }
@@ -270,11 +271,11 @@ function AvatarSection({ alias }: { alias: string }) {
               </button>
             )}
             {saveState === 'error' ? (
-              <span className="text-[10px] text-red-400" data-testid="avatar-save-error">{saveMsg}</span>
+              <span className="text-[11px] text-red-400" data-testid="avatar-save-error">{saveMsg}</span>
             ) : saveState === 'saved' ? (
-              <span className="text-[10px] text-emerald-400" data-testid="avatar-save-ok">已保存，全设备同步</span>
+              <span className="text-[11px] text-emerald-400" data-testid="avatar-save-ok">已保存，全设备同步</span>
             ) : (
-              <span className="text-[10px] text-gray-600">保存后跨设备同步（经 hub）</span>
+              <span className="text-[11px] text-gray-600">保存后跨设备同步（经 hub）</span>
             )}
           </div>
         </div>
@@ -476,7 +477,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
     const m = data?.model ? String(data.model) : initialModel;
     const f = (data?.flags && typeof data.flags === 'object' ? data.flags : {}) as Record<string, unknown>;
     const nextFlags: FlagsForm = {
-      permissionMode: typeof f.permissionMode === 'string' && PERMISSION_MODES.includes(f.permissionMode) ? f.permissionMode : DEFAULT_FLAGS.permissionMode,
+      permissionMode: typeof f.permissionMode === 'string' && HUB_PERMISSION_MODES.includes(f.permissionMode) ? f.permissionMode : DEFAULT_FLAGS.permissionMode,
       dangerouslySkipPermissions: !!f.dangerouslySkipPermissions,
       maxTurns: numStr(f.maxTurns),
       budget: numStr(f.budget),
@@ -794,7 +795,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
               <Select
                 label="权限模式 permissionMode"
                 value={flags.permissionMode}
-                options={PERMISSION_MODES}
+                options={[...HUB_PERMISSION_MODES]}
                 onChange={v => setFlag('permissionMode', v)}
               />
               <Toggle
@@ -860,10 +861,10 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
               );
             })()}
             {snapUnavailable && (
-              <p className="mt-1 text-[10px] text-amber-300/80">无法读取该节点的配置快照（Hub 不可达或节点离线），暂不能保存。</p>
+              <p className="mt-1 text-[11px] text-amber-300/80">无法读取该节点的配置快照（Hub 不可达或节点离线），暂不能保存。</p>
             )}
             {!snapUnavailable && !capable && (
-              <p className="mt-1 text-[10px] text-gray-600">该节点未在 W1 supervisor 下运行，重启类改动可能不生效。</p>
+              <p className="mt-1 text-[11px] text-gray-600">该节点未在 W1 supervisor 下运行，重启类改动可能不生效。</p>
             )}
           </section>
 
@@ -881,7 +882,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
                     <label className={`flex items-center justify-between px-3 py-2 text-sm text-gray-300 ${editable ? 'cursor-pointer hover:bg-[var(--bg-elevated)]' : 'cursor-not-allowed'}`}>
                       <span className="flex items-center gap-2">
                         {ch.label}
-                        {ch.roadmap && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--control-off)] text-gray-400">即将支持</span>}
+                        {ch.roadmap && <span className="text-[11px] px-1.5 py-0.5 rounded bg-[var(--control-off)] text-gray-400">即将支持</span>}
                       </span>
                       <input
                         type="checkbox"

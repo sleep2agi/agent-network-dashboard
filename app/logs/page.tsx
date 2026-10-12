@@ -75,11 +75,11 @@ export default function LogsPage() {
   }, [fetchLogs]);
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
       {/* #209 R36: mobile vertical rhythm — same R28/R30/R31 pattern,
           mb-6 → mb-4 sm:mb-6 here and on the action-filter strip below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
-        <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Audit Log</h1>
+        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Audit Log</h1>
         {/* Round 87: dropped {logs.length} header chip — r43 added
             `All <count>` to the action-filter strip below, which
             duplicated this value 40px away. Matches r86 /server-logs. */}
@@ -118,7 +118,7 @@ export default function LogsPage() {
               >
                 {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}
                 <span>{c.label}</span>
-                <span className={`text-[10px] tabular-nums ${isActive ? 'text-cyan-400' : 'text-gray-600'}`}>{count}</span>
+                <span className={`text-[11px] tabular-nums ${isActive ? 'text-cyan-400' : 'text-gray-600'}`}>{count}</span>
               </button>
             );
           });
@@ -195,7 +195,7 @@ export default function LogsPage() {
                 <span className="text-xs text-gray-600 ml-auto">{timeAgo(log.created_at)}</span>
               </div>
               {log.detail && <div className="text-xs text-gray-500">{log.detail}</div>}
-              {log.ip && log.ip !== 'unknown' && <div className="text-[10px] text-gray-700">IP: {log.ip}</div>}
+              {log.ip && log.ip !== 'unknown' && <div className="text-[11px] text-gray-700">IP: {log.ip}</div>}
             </div>
             );
           })}

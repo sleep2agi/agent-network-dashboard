@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { AliasAvatar } from './AliasAvatar';
 import { relativeAgo } from '../lib/time';
 import { previewContent } from './utils';
@@ -49,25 +50,30 @@ export function TaskList({
       className="flex flex-col h-full max-h-screen overflow-y-auto"
     >
       {tasks.length === 0 ? (
-        <div className="px-4 py-6 text-xs text-gray-600 text-center">
+        <div className="px-4 py-8 text-sm text-[var(--fg-dim)] text-center">
           没有匹配的任务
         </div>
       ) : (
-        <ul className="flex flex-col divide-y divide-[#1c1c1f]">
+        <ul className="flex flex-col gap-2 px-3 py-3">
           {tasks.map((t) => {
             const active = t.task_id === selectedId;
             return (
               <li key={t.task_id}>
-                <button
-                  type="button"
+                <Link
+                  href={`/tasks/${encodeURIComponent(t.task_id)}`}
+                  prefetch={false}
                   data-task-row
                   data-task-id={t.task_id}
                   data-selected={active ? 'true' : 'false'}
-                  onClick={() => onSelect(t.task_id)}
-                  className={`w-full text-left px-3 py-2.5 transition-colors ${
+                  onClick={(event) => {
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+                    event.preventDefault();
+                    onSelect(t.task_id);
+                  }}
+                  className={`block w-full rounded-xl border px-3.5 py-3.5 text-left transition-colors ${
                     active
-                      ? 'bg-cyan-500/10 border-l-2 border-cyan-500'
-                      : 'border-l-2 border-transparent hover:bg-[#1c1c1f]/40'
+                      ? 'border-[var(--info)] bg-[var(--bg-elevated)]'
+                      : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -78,7 +84,7 @@ export function TaskList({
                       style={{ backgroundColor: STATUS_DOT_HEX[t.status] || '#6b7280' }}
                     />
                     <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                      className={`text-[11px] px-1.5 py-0.5 rounded border ${
                         STATUS_CHIP_CLASS[t.status] ||
                         'bg-gray-500/10 text-gray-400 border-gray-500/20'
                       }`}
@@ -86,26 +92,34 @@ export function TaskList({
                       {t.status}
                     </span>
                     {t.priority === 'high' && (
-                      <span className="text-[10px] text-red-400 shrink-0">HIGH</span>
+                      <span className="text-[11px] font-medium text-[var(--danger)] shrink-0">HIGH</span>
                     )}
-                    <span className="ml-auto text-[10px] text-gray-600 tabular-nums shrink-0">
+                    <span className="ml-auto text-[11px] text-[var(--fg-dim)] tabular-nums shrink-0">
                       {timeAgo(t.created_at)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-300 min-w-0 mb-1">
-                    {t.from_name && <AliasAvatar alias={t.from_name} size={14} />}
+                  <div className="flex items-center gap-1.5 text-sm text-[var(--fg)] min-w-0 mb-1.5">
+                    {t.from_name && <AliasAvatar alias={t.from_name} size={16} />}
                     <span className="truncate max-w-[35%]">{t.from_name || '--'}</span>
-                    <span className="text-gray-600 shrink-0">→</span>
-                    {t.to_name && <AliasAvatar alias={t.to_name} size={14} />}
+                    <span className="text-[var(--fg-dim)] shrink-0">→</span>
+                    {t.to_name && <AliasAvatar alias={t.to_name} size={16} />}
                     <span className="truncate max-w-[35%]">{t.to_name || '--'}</span>
                   </div>
-                  <div
-                    className="text-[11px] text-gray-500 line-clamp-2 leading-snug"
-                    title={t.content}
-                  >
-                    {previewContent(t.content) || <span className="italic">(no content)</span>}
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      data-testid="task-row-id"
+                      className="shrink-0 font-mono text-[11px] tabular-nums text-[var(--info)]"
+                    >
+                      {t.task_id.slice(0, 8)}
+                    </span>
+                    <div
+                      className="min-w-0 text-xs text-[var(--fg-muted)] line-clamp-2 leading-5"
+                      title={t.content}
+                    >
+                      {previewContent(t.content) || <span className="italic">(no content)</span>}
+                    </div>
                   </div>
-                </button>
+                </Link>
               </li>
             );
           })}

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "./components/AppShell";
 import { NetworkProvider } from "./lib/network-context";
@@ -8,6 +8,11 @@ import { PwaInstaller } from "./components/PwaInstaller";
 
 // #217 D1 (Vincent: OpenWebUI-style serious-product feel): UI text is
 // sans; mono stays for code blocks, IDs and logs via .font-mono.
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -59,7 +64,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#0b0b0d",
+  themeColor: "#111113",
   // R25 of #190: metadata.appleWebApp.statusBarStyle above is
   // "black-translucent", which renders the iOS status bar as a
   // transparent overlay above the page (rather than reserving its own
@@ -74,6 +79,7 @@ export const viewport: Viewport = {
 const themeBootScript = `
 try {
   var t = localStorage.getItem('anet-theme') || 'cyber';
+  if (t === 'mint' || t === 'sunset') t = 'cyber';
   document.documentElement.setAttribute('data-theme', t);
 } catch (e) {}
 `;
@@ -84,7 +90,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="cyber" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" data-theme="cyber" className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>

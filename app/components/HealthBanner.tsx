@@ -31,8 +31,8 @@ const fetcher = async (url: string) => {
  *   amber  — N failed task(s) in the recent window
  *   red    — CommHub unreachable
  *
- * Dismissible per-session (sessionStorage key `anet-hb-dismissed`).
- * Never blocks content; sits as a 28px-tall sticky strip above page.
+ * Dismissible for 24h, and only for the same problem class.
+ * Never blocks content; sits as a 32px sticky strip above the page.
  */
 export function HealthBanner() {
   const { data: stats, error: statsErr } = useSWR<StatsResponse>('/api/hub/stats', fetcher, {
@@ -61,12 +61,22 @@ export function HealthBanner() {
     { refreshInterval: 60000, dedupingInterval: 30000, shouldRetryOnError: false },
   );
 
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return sessionStorage.getItem('anet-hb-dismissed') === '1';
+  const [dismissedKind, setDismissedKind] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem('anet-hb-dismiss-v2');
+      if (raw) {
+        const parsed = JSON.parse(raw) as { kind?: string; at?: number };
+        if (parsed.kind && typeof parsed.at === 'number' && Date.now() - parsed.at < 24 * 3600 * 1000) {
+          return parsed.kind;
+        }
+      }
+      if (sessionStorage.getItem('anet-hb-dismissed') === '1') return '*';
+    } catch {
+      return null;
+    }
+    return null;
   });
-
-  if (dismissed) return null;
 
   // Determine current state — priority: red > presence-blind > amber > empty > green
   const hubDown = (statsErr && healthErr) || (health && health.ok === false);
@@ -118,30 +128,23 @@ export function HealthBanner() {
     cta = null; // green = no CTA, the banner can be auto-dismissed by user
   }
 
-  // Green state is the calm default — only show it if we haven't yet
-  // confirmed at least one stats response, otherwise it's noise.
-  // (When CommHub returns data, kind stays 'green' and this passes.)
-  if (kind === 'green' && !stats) return null;
+  // Spec §5.13: a healthy fleet does not get a banner. One 32px strip,
+  // and only for a real problem. A dismiss hides that class for 24h.
+  if (kind === 'green' || dismissedKind === '*' || dismissedKind === kind) return null;
 
-  const styles = {
-    red:   'bg-red-500/8   border-red-500/25   text-red-300',
-    amber: 'bg-amber-500/8 border-amber-500/25 text-amber-300',
-    green: 'bg-emerald-500/6 border-emerald-500/20 text-emerald-300',
-  }[kind];
-
-  const dot = {
-    red:   'bg-red-400',
-    amber: 'bg-amber-400 anet-brand-pulse',
-    green: 'bg-emerald-400',
-  }[kind];
+  const tone = kind === 'red' ? 'var(--error)' : 'var(--warn)';
 
   return (
     <div
       role="status"
-      className={`anet-health-banner sticky top-0 z-30 border-b ${styles} pl-14 pr-3 sm:px-6 py-1.5 text-[12px] flex items-center justify-between gap-3 backdrop-blur-sm`}
+      className="anet-health-banner sticky top-12 z-30 flex h-8 items-center justify-between gap-3 px-3 text-[13px] sm:px-6 md:top-0"
+      style={{
+        background: `color-mix(in srgb, ${tone} 14%, transparent)`,
+        color: tone,
+      }}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} aria-hidden />
+        <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: tone }} aria-hidden />
         <span className="truncate">{message}</span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
@@ -172,8 +175,11 @@ export function HealthBanner() {
         )}
         <button
           onClick={() => {
-            setDismissed(true);
-            try { sessionStorage.setItem('anet-hb-dismissed', '1'); } catch {}
+            setDismissedKind(kind);
+            try {
+              sessionStorage.removeItem('anet-hb-dismissed');
+              localStorage.setItem('anet-hb-dismiss-v2', JSON.stringify({ kind, at: Date.now() }));
+            } catch {}
           }}
           aria-label="Dismiss banner"
           className="opacity-60 hover:opacity-100 leading-none px-1.5 text-base relative rounded-md hover:bg-[var(--hover-tint)] before:absolute before:inset-y-[-10px] before:inset-x-[-8px] before:content-['']"

@@ -81,9 +81,9 @@ function timeAgo(dateStr: string): string {
 }
 
 function priorityClass(priority: string) {
-  if (priority === 'high') return 'text-red-400';
-  if (priority === 'low') return 'text-gray-600';
-  return 'text-gray-400';
+  if (priority === 'high') return 'text-[var(--danger)]';
+  if (priority === 'low') return 'text-[var(--fg-dim)]';
+  return 'text-[var(--fg-muted)]';
 }
 
 const fetcher = async (url: string) => {
@@ -148,12 +148,12 @@ export function TaskDetail({
     }
   };
 
-  const timelineSteps: { label: string; time: string; color: string }[] = task
+  const timelineSteps: { label: string; time: string }[] = task
     ? [
-        { label: 'Created', time: task.created_at, color: 'text-gray-400' },
-        { label: 'Delivered', time: task.delivered_at, color: 'text-blue-400' },
-        { label: 'Started', time: task.started_at, color: 'text-green-400' },
-        { label: 'Completed', time: task.completed_at, color: 'text-purple-400' },
+        { label: 'Created', time: task.created_at },
+        { label: 'Delivered', time: task.delivered_at },
+        { label: 'Started', time: task.started_at },
+        { label: 'Completed', time: task.completed_at },
       ]
     : [];
 
@@ -165,11 +165,11 @@ export function TaskDetail({
       data-poll-events-ms={String(POLL_EVENTS_MS)}
       className="flex flex-col h-full max-h-screen overflow-hidden"
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1c1c1f]">
+      <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-3">
         <div className="min-w-0 flex-1 flex items-center gap-2">
-          <div className="text-xs text-gray-500 truncate" title={taskId}>
-            <span className="text-gray-600">Task ID:</span>{' '}
-            <span className="font-mono">{taskId.slice(0, 12)}…</span>
+          <div className="truncate text-xs text-[var(--fg-dim)]" title={taskId}>
+            <span>Task ID:</span>{' '}
+            <span className="font-mono text-[var(--fg-muted)]">{taskId.slice(0, 12)}…</span>
           </div>
           {task && (
             <span
@@ -189,28 +189,28 @@ export function TaskDetail({
             onClick={onClose}
             aria-label="Close detail (返回 tasks 列表)"
             data-testid="task-detail-close"
-            className="shrink-0 rounded-md border border-[#26262b] px-2 py-1 text-xs text-gray-400 hover:text-white hover:border-[#3a3a41]"
+            className="shrink-0 rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--fg-muted)] hover:border-[var(--border-hover)] hover:text-[var(--fg)]"
           >
             ←
           </button>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 space-y-4 overflow-y-auto bg-[var(--bg)] px-4 py-4">
         {isLoading && !task && (
           <div className="animate-pulse space-y-3">
-            <div className="h-6 w-1/3 bg-gray-800/40 rounded" />
-            <div className="h-24 bg-gray-800/40 rounded" />
-            <div className="h-24 bg-gray-800/40 rounded" />
+            <div className="h-6 w-1/3 rounded-lg bg-[var(--bg-elevated)]" />
+            <div className="h-24 rounded-2xl bg-[var(--bg-elevated)]" />
+            <div className="h-24 rounded-2xl bg-[var(--bg-elevated)]" />
           </div>
         )}
         {error && (
-          <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-3 py-2 rounded text-sm">
+          <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--danger)]">
             {error instanceof Error ? error.message : 'fetch failed'}
           </div>
         )}
         {!isLoading && !error && !task && (
-          <div className="text-gray-400 text-sm">Task not found</div>
+          <div className="text-sm text-[var(--fg-muted)]">Task not found</div>
         )}
 
         {task && (
@@ -219,9 +219,9 @@ export function TaskDetail({
             <section
               data-testid="task-detail-timeline"
               data-block="timeline"
-              className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
             >
-              <h2 className="text-sm font-semibold text-gray-300 mb-4">Timeline</h2>
+              <h2 className="mb-4 text-sm font-medium text-[var(--fg)]">Timeline</h2>
               <div className="relative">
                 {timelineSteps.map((step, i) => {
                   const done = !!step.time;
@@ -236,26 +236,26 @@ export function TaskDetail({
                     >
                       <div className="flex flex-col items-center">
                         <div
-                          className={`w-3 h-3 rounded-full border-2 shrink-0 ${
-                            done ? `${step.color} border-current` : 'border-gray-700 bg-transparent'
+                          className={`h-3 w-3 shrink-0 rounded-full border-2 ${
+                            done ? 'border-[var(--info)] bg-[var(--info)]' : 'border-[var(--border)] bg-transparent'
                           }`}
                         />
                         {!isLast && (
                           <div
-                            className={`w-0.5 flex-1 mt-1 ${
+                            className={`mt-1 w-0.5 flex-1 ${
                               done && timelineSteps[i + 1]?.time
-                                ? 'bg-cyan-500/40'
-                                : 'bg-gray-800'
+                                ? 'bg-[var(--info)]'
+                                : 'bg-[var(--border)]'
                             }`}
                           />
                         )}
                       </div>
                       <div className="min-w-0 -mt-0.5">
-                        <div className={`text-sm font-medium ${done ? 'text-gray-200' : 'text-gray-600'}`}>
+                        <div className={`text-sm font-medium ${done ? 'text-[var(--fg)]' : 'text-[var(--fg-dim)]'}`}>
                           {step.label}
                         </div>
                         <div
-                          className="text-xs text-gray-500"
+                          className="text-xs text-[var(--fg-dim)]"
                           title={step.time || undefined}
                         >
                           {step.time ? `${timeAgo(step.time)} — ${step.time}` : 'Pending'}
@@ -271,9 +271,9 @@ export function TaskDetail({
             <section
               data-testid="task-detail-info"
               data-block="info"
-              className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
             >
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">Info</h2>
+              <h2 className="mb-3 text-sm font-medium text-[var(--fg)]">Info</h2>
               <div className="space-y-2 text-xs">
                 {[
                   ['Task ID', task.task_id],
@@ -284,10 +284,10 @@ export function TaskDetail({
                   ['Expires', task.expires_at],
                 ].map(([label, val]) => (
                   <div key={label as string} className="flex justify-between gap-4">
-                    <span className="text-gray-500 shrink-0">{label}</span>
+                    <span className="shrink-0 text-[var(--fg-dim)]">{label}</span>
                     <span
                       data-info-field={String(label).toLowerCase().replace(/\s+/g, '-')}
-                      className="text-gray-300 truncate max-w-[240px] text-right"
+                      className="max-w-[240px] truncate text-right text-[var(--fg)]"
                       title={String(val || '')}
                     >
                       {String(val || '--')}
@@ -296,16 +296,16 @@ export function TaskDetail({
                 ))}
               </div>
               <div
-                className="mt-4 pt-3 border-t border-[#1c1c1f] flex items-center gap-2 text-sm text-gray-300"
+                className="mt-4 flex items-center gap-2 border-t border-[var(--border)] pt-3 text-sm text-[var(--fg)]"
                 data-testid="task-detail-participants"
               >
                 {task.from_name && <AliasAvatar alias={task.from_name} size={20} />}
                 <span className="truncate">{task.from_name || '--'}</span>
-                <span className="text-gray-600 shrink-0">→</span>
+                <span className="shrink-0 text-[var(--fg-dim)]">→</span>
                 {task.to_name && <AliasAvatar alias={task.to_name} size={20} />}
                 <span className="truncate">{task.to_name || '--'}</span>
               </div>
-              <div className="mt-2 text-[10px]">
+              <div className="mt-2 text-[11px]">
                 <span
                   className={priorityClass(task.priority)}
                   data-testid="task-detail-priority"
@@ -319,12 +319,12 @@ export function TaskDetail({
             <section
               data-testid="task-detail-content"
               data-block="content"
-              className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
             >
-              <h2 className="text-sm font-semibold text-gray-300 mb-2">Content</h2>
+              <h2 className="mb-2 text-sm font-medium text-[var(--fg)]">Content</h2>
               <pre
                 data-testid="task-detail-content-body"
-                className="text-xs text-gray-200 whitespace-pre-wrap break-words bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f] max-h-64 overflow-y-auto font-sans"
+                className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 font-sans text-xs leading-relaxed text-[var(--fg)]"
               >
                 {task.content || '--'}
               </pre>
@@ -335,12 +335,12 @@ export function TaskDetail({
               <section
                 data-testid="task-detail-result"
                 data-block="result"
-                className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+                className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
               >
-                <h2 className="text-sm font-semibold text-gray-300 mb-2">Result</h2>
+                <h2 className="mb-2 text-sm font-medium text-[var(--fg)]">Result</h2>
                 <pre
                   data-testid="task-detail-result-body"
-                  className="text-xs text-gray-200 whitespace-pre-wrap break-words bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f] max-h-64 overflow-y-auto font-sans"
+                  className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 font-sans text-xs leading-relaxed text-[var(--fg)]"
                 >
                   {task.result}
                 </pre>
@@ -355,13 +355,13 @@ export function TaskDetail({
               data-testid="task-detail-events"
               data-block="events"
               data-events-count={events.length}
-              className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
             >
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">
-                Events {events.length > 0 && <span className="text-gray-500">({events.length})</span>}
+              <h2 className="mb-3 text-sm font-medium text-[var(--fg)]">
+                Events {events.length > 0 && <span className="text-[var(--fg-dim)]">({events.length})</span>}
               </h2>
               {events.length === 0 ? (
-                <div className="text-xs text-gray-600 italic">No events yet.</div>
+                <div className="text-xs italic text-[var(--fg-dim)]">No events yet.</div>
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {events.map((e, i) => (
@@ -372,44 +372,43 @@ export function TaskDetail({
                     >
                       <span
                         aria-hidden
-                        className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${
-                          e.to_status === 'running'
-                            ? 'bg-green-400'
-                            : e.to_status === 'replied'
-                              ? 'bg-purple-400'
-                              : e.to_status === 'failed'
-                                ? 'bg-red-400'
-                                : 'bg-blue-400'
-                        }`}
+                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor: e.to_status === 'running'
+                            ? 'var(--success)'
+                            : e.to_status === 'failed' || e.to_status === 'expired' || e.to_status === 'cancelled'
+                              ? 'var(--danger)'
+                              : 'var(--fg-dim)',
+                        }}
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span data-testid="task-event-label" className="text-gray-300 font-medium truncate">
+                          <span data-testid="task-event-label" className="truncate font-medium text-[var(--fg)]">
                             {taskEventLabel(e)}
                           </span>
                           {e.from_status && (
-                            <span className="text-gray-600 shrink-0">
+                            <span className="shrink-0 text-[var(--fg-dim)]">
                               {e.from_status} → {e.to_status}
                             </span>
                           )}
                           {e.actor && (
-                            <span data-testid="task-event-actor" className="text-gray-500 truncate">
+                            <span data-testid="task-event-actor" className="truncate text-[var(--fg-muted)]">
                               by {e.actor}
                             </span>
                           )}
                         </div>
                         {e.detail && (
-                          <div data-testid="task-event-detail" className="mt-0.5 text-[11px] text-gray-500 break-words">
+                          <div data-testid="task-event-detail" className="mt-0.5 break-words text-[11px] text-[var(--fg-dim)]">
                             {e.detail}
                           </div>
                         )}
                         {isDeliveryStaleObservation(e) && (
-                          <div data-testid="task-event-stale-context" className="mt-0.5 text-[10px] text-amber-500/80 break-words">
+                          <div data-testid="task-event-stale-context" className="mt-0.5 break-words text-[11px] text-[var(--warning)]">
                             Informational delivery observation; tasks that do not require a reply may also appear here.
                           </div>
                         )}
                       </div>
-                      <span className="text-gray-600 ml-auto shrink-0" title={e.created_at}>
+                      <span className="ml-auto shrink-0 text-[var(--fg-dim)]" title={e.created_at}>
                         {timeAgo(e.created_at)}
                       </span>
                     </div>
@@ -424,7 +423,7 @@ export function TaskDetail({
                   onClick={doRetry}
                   disabled={retrying}
                   data-testid="task-detail-retry"
-                  className="text-xs text-orange-400 hover:text-orange-300 px-3 py-1.5 rounded-md border border-orange-500/30 hover:bg-orange-500/10 disabled:opacity-50 disabled:cursor-wait"
+                  className="rounded-lg border border-[var(--warning)]/40 px-3 py-1.5 text-xs text-[var(--warning)] hover:bg-[var(--hover-tint)] disabled:cursor-wait disabled:opacity-50"
                 >
                   {retrying ? 'Retrying…' : 'Retry task'}
                 </button>

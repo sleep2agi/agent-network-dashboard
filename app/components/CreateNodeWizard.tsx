@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useNetworkId } from '../lib/network-context';
+import { HUB_CREATE_RUNTIMES, HUB_PERMISSION_MODES, readinessSummary, reportedRuntimeCatalog } from '../lib/hub-align.mjs';
+import { PendingNotice } from './PendingNotice';
 import { DaemonOption, HostSupervisorPicker } from './HostSupervisorPicker';
 
 /**
@@ -35,12 +37,8 @@ import { DaemonOption, HostSupervisorPicker } from './HostSupervisorPicker';
 // with `Invalid input: expected string, received undefined`. `defaultModel`
 // gets substituted before submit (and shown in the dropdown label so the
 // operator knows what "默认" will actually become).
-const RUNTIMES: { id: string; label: string; models: string[]; defaultModel: string }[] = [
-  { id: 'claude-agent-sdk', label: 'Claude Agent SDK', models: ['deepseek-v4-pro', 'MiniMax-M3', 'claude-sonnet-4-6', 'claude-opus-4-x'], defaultModel: 'claude-sonnet-4-6' },
-  { id: 'codex-sdk', label: 'Codex SDK', models: ['gpt-5.5'], defaultModel: 'gpt-5.5' },
-  { id: 'grok-build-acp', label: 'Grok (build-acp)', models: ['grok-build'], defaultModel: 'grok-build' },
-];
-const PERMISSION_MODES = ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
+const RUNTIMES = HUB_CREATE_RUNTIMES;
+const PERMISSION_MODES = HUB_PERMISSION_MODES;
 const STEPS = ['服务器', '名字', 'Runtime', '模型', '参数', '确认'];
 
 type Phase = 'form' | 'creating' | 'done' | 'unconfirmed' | 'error';
@@ -70,6 +68,8 @@ export function CreateNodeWizard({
   const [phase, setPhase] = useState<Phase>('form');
   const [msg, setMsg] = useState('');
   const [childUp, setChildUp] = useState(false);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [createStatus, setCreateStatus] = useState('');
   const { networkId: ctxNetworkId } = useNetworkId();
   const netId = networkId || ctxNetworkId;
 
@@ -104,6 +104,36 @@ export function CreateNodeWizard({
     return () => { alive = false; window.clearTimeout(t); };
   }, [phase, childUp, netId, name]);
 
+  // Hub now exposes GET /api/node-create-requests for the user token.
+  // Surface a daemon rejection instead of waiting out the alias poll.
+  useEffect(() => {
+    if (phase !== 'done' || !requestId) return;
+    let alive = true;
+    let tries = 0;
+    const tick = async () => {
+      tries += 1;
+      try {
+        const r = await fetch(`/api/anet/node-create?request_id=${encodeURIComponent(requestId)}`, { cache: 'no-store' });
+        const d = await r.json().catch(() => ({}));
+        const row = d?.request && typeof d.request === 'object' ? d.request : null;
+        const status = typeof row?.status === 'string' ? row.status : '';
+        const error = typeof row?.error === 'string' ? row.error : '';
+        if (!alive) return;
+        if (status) setCreateStatus(status);
+        const failed = status === 'failed' || status === 'rejected' || status === 'runtime_capability_check_failed';
+        if (failed) {
+          setPhase('error');
+          setMsg(`创建失败：${error || status}`);
+          return;
+        }
+        if (status === 'started' || status === 'succeeded') return;
+      } catch { /* keep polling */ }
+      if (alive && tries < 16) window.setTimeout(tick, 1500);
+    };
+    const t = window.setTimeout(tick, 800);
+    return () => { alive = false; window.clearTimeout(t); };
+  }, [phase, requestId]);
+
   const runtime = RUNTIMES.find(r => r.id === runtimeId) || RUNTIMES[0];
   const nameValid = name.trim().length > 0;
   const canNext =
@@ -126,11 +156,16 @@ export function CreateNodeWizard({
     // documented default here. This mirrors what agent-node itself defaults
     // to at boot (see agent-node cli.ts model resolution), so the "默认"
     // dropdown label + this fallback both point at the same model.
-    const effectiveModel = model || runtime.defaultModel;
+    const catalog = reportedRuntimeCatalog(daemon?.runtime_readiness, runtimeId);
+    const reported = catalog.present && catalog.models.length > 0 ? catalog.models : runtime.models;
+    const fallback = runtime.defaultModel && (reported.length === 0 || reported.includes(runtime.defaultModel))
+      ? runtime.defaultModel
+      : (reported[0] || '');
+    const effectiveModel = model || fallback;
     const node_spec = {
       name: name.trim(),
       runtime: runtimeId,
-      model: effectiveModel,
+      ...(effectiveModel ? { model: effectiveModel } : {}),
       flags: {
         permissionMode,
         maxTurns: numOrUndef(maxTurns),
@@ -150,6 +185,11 @@ export function CreateNodeWizard({
       });
       const data = await r.json().catch(() => ({}));
       if (r.ok && data?.ok) {
+        const rid = data?.result && typeof data.result === 'object' && typeof data.result.request_id === 'string'
+          ? data.result.request_id
+          : '';
+        setRequestId(rid || null);
+        setCreateStatus('');
         setPhase('done');
         setMsg('创建请求已下发，节点正在拉起…');
         onCreated?.(data.result);
@@ -194,7 +234,7 @@ export function CreateNodeWizard({
           {STEPS.map((label, i) => (
             <div key={label} className="flex flex-1 flex-col items-center gap-1">
               <div className={`h-1 w-full rounded-full ${i <= step ? 'bg-cyan-500' : 'bg-[#26262b]'}`} />
-              <span className={`text-[10px] ${i === step ? 'text-cyan-300' : 'text-gray-600'}`}>{label}</span>
+              <span className={`text-[11px] ${i === step ? 'text-cyan-300' : 'text-gray-600'}`}>{label}</span>
             </div>
           ))}
         </div>
@@ -217,13 +257,16 @@ export function CreateNodeWizard({
               {phase === 'done' && (childUp ? (
                 <p className="text-[11px] text-green-500/80">节点已注册，已出现在节点列表。</p>
               ) : (
-                <p className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
-                  <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                  </svg>
-                  正在监测 {name.trim()} 注册…（最长 ~24s）
-                </p>
+                <div className="space-y-1">
+                  {createStatus ? <p className="text-[11px] text-gray-500">创建请求：{createStatus}</p> : null}
+                  <p className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
+                    <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    正在监测 {name.trim()} 注册…（最长 ~24s）
+                  </p>
+                </div>
               ))}
             </div>
           ) : (
@@ -295,7 +338,7 @@ export function CreateNodeWizard({
                       >
                         <span>
                           {r.label}
-                          {disabled && <span className="ml-2 text-[10px] text-gray-700">该 daemon 不支持</span>}
+                          {disabled && <span className="ml-2 text-[11px] text-gray-700">该 daemon 不支持</span>}
                         </span>
                         {selected && !disabled && (
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -308,13 +351,13 @@ export function CreateNodeWizard({
                 </div>
               )}
               {step === 3 && (
-                <label className="block space-y-1.5">
-                  <span className="text-xs text-gray-400">模型（{runtime.label}）</span>
-                  <select value={model} onChange={e => setModel(e.target.value)} className={inputCls}>
-                    <option value="">默认（{runtime.defaultModel}）</option>
-                    {runtime.models.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </label>
+                <ModelStep
+                  runtime={runtime}
+                  daemon={daemon}
+                  model={model}
+                  onModel={setModel}
+                  inputCls={inputCls}
+                />
               )}
               {step === 4 && (
                 <div className="space-y-3">
@@ -382,5 +425,74 @@ export function CreateNodeWizard({
         )}
       </div>
     </>
+  );
+}
+
+function ModelStep({
+  runtime,
+  daemon,
+  model,
+  onModel,
+  inputCls,
+}: {
+  runtime: (typeof HUB_CREATE_RUNTIMES)[number];
+  daemon: DaemonOption | null;
+  model: string;
+  onModel: (value: string) => void;
+  inputCls: string;
+}) {
+  const catalog = reportedRuntimeCatalog(daemon?.runtime_readiness, runtime.id);
+  const entry = daemon?.runtime_readiness && typeof daemon.runtime_readiness === 'object'
+    ? daemon.runtime_readiness[runtime.id]
+    : undefined;
+  const summary = readinessSummary(entry);
+  const choices = catalog.present && catalog.models.length > 0 ? catalog.models : [...runtime.models];
+  const fallback = runtime.defaultModel && (choices.length === 0 || choices.includes(runtime.defaultModel))
+    ? runtime.defaultModel
+    : (choices[0] || '');
+  const providerShell = runtime.id === 'codex-sdk' || runtime.id === 'codex-app-server' || runtime.id === 'opencode-cli';
+
+  return (
+    <div className="space-y-3">
+      {summary ? (
+        <p className="text-[11px] text-gray-400">
+          这台 daemon 的自检：{summary.state || 'unknown'}{summary.reason ? ` · ${summary.reason}` : ''}
+        </p>
+      ) : null}
+      {catalog.providers.length > 0 ? (
+        <ul className="space-y-1 text-[11px] text-gray-400">
+          {catalog.providers.map(p => (
+            <li key={p.id}>
+              {p.id}{p.baseUrl ? ` · ${p.baseUrl}` : ''}{p.models.length ? ` · ${p.models.join(', ')}` : ''}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <label className="block space-y-1.5">
+        <span className="text-xs text-gray-400">
+          模型（{runtime.label}）
+          {catalog.present && catalog.models.length > 0 ? ' · 来自这台 daemon 的上报' : ''}
+        </span>
+        <select value={model} onChange={e => onModel(e.target.value)} className={inputCls}>
+          <option value="">{fallback ? `默认（${fallback}）` : '不指定，由 runtime 自己决定'}</option>
+          {choices.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </label>
+      {catalog.present && catalog.models.length === 0 ? (
+        <p className="text-[11px] text-gray-500">这台 daemon 上报了该 runtime 的状态，但没有带模型清单。</p>
+      ) : null}
+      {!catalog.present && (runtime.id === 'codex-app-server' || runtime.id === 'opencode-cli') ? (
+        <p className="text-[11px] text-gray-500">
+          这台 daemon 还没有上报 {runtime.id} 的 provider / 模型。升级 Hub 和 agent-node 之后，这里会列出它自己报上来的清单。
+        </p>
+      ) : null}
+      {providerShell ? (
+        <PendingNotice>
+          {runtime.id === 'opencode-cli'
+            ? 'OpenCode V2 的显式同意和本地工具开关还没接到创建请求。现在只会按 OpenCode V1 下发，不会替你打开 V2。'
+            : 'Codex 的密钥和 provider 预设编辑还没接到。上面能看到的模型来自 daemon 上报；这里不会收集或发送密钥。'}
+        </PendingNotice>
+      ) : null}
+    </div>
   );
 }

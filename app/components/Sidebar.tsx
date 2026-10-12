@@ -12,9 +12,8 @@ import { useChatUnread, badgeLabel } from '../lib/chat-unread';
 import { clearPrivateChatStorage } from '../lib/chat-outbox';
 
 // Sidebar has THREE render modes (通信龙 07-31 brief, dashboard 类飞书):
-//   'expanded'  — w-52, icons + labels. Original default; unchanged.
-//   'collapsed' — w-16, icons only, native `title=` tooltips. Existing
-//                 pre-icon-rail form; kept intact for users on it.
+//   'expanded'  — 232px, icons + labels (spec §5.1).
+//   'collapsed' — 64px, icons only, hover tooltip. Spec default below 1024.
 //   'icon-rail' — w-14, Feishu-style narrow icon-only rail with
 //                 UNREAD BADGES on nav items that can carry them, and
 //                 tighter spacing. Distinguishes from 'collapsed' by
@@ -52,6 +51,8 @@ const NAV_ITEMS = [
   { href: '/scheduled-tasks', label: 'Schedules', icon: 'M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z' },
   { href: '/skillhub', label: 'SkillHub', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253' },
   { href: '/tasks', label: 'Tasks', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
+  { href: '/board', label: 'Board', icon: 'M4 6h7v12H4zM13 6h7v5h-7zM13 13h7v5h-7z' },
+  { href: '/teams', label: 'Organization', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
   { href: '/servers', label: 'Servers', icon: 'M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v1A2.5 2.5 0 0117.5 10h-11A2.5 2.5 0 014 7.5v-1zM4 16.5A2.5 2.5 0 016.5 14h11a2.5 2.5 0 012.5 2.5v1a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-1zM7 7h.01M7 17h.01' },
   { href: '/providers', label: 'Providers', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z' },
   { href: '/admin', label: 'Admin', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
@@ -70,7 +71,13 @@ interface SidebarNetwork {
 
 const ROLE_ICON: Record<string, string> = { owner: '⭐', admin: '🔧', member: '👤', viewer: '👁' };
 
-export function Sidebar() {
+export function Sidebar({
+  mobileOpen,
+  onMobileOpenChange,
+}: {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+}) {
   const pathname = usePathname();
   // Default = 'icon-rail' per Vincent 07-31 "飞书同版体验": nobody clicks
   // a toggle to make their sidebar narrow — the narrow form IS the
@@ -89,8 +96,28 @@ export function Sidebar() {
   useEffect(() => {
     try {
       const v = localStorage.getItem(SIDEBAR_MODE_STORAGE);
-      if (v && (SIDEBAR_MODES as readonly string[]).includes(v)) setMode(v as SidebarMode);
+      if (v && (SIDEBAR_MODES as readonly string[]).includes(v)) {
+        setMode(v as SidebarMode);
+        return;
+      }
     } catch {}
+    // Spec §5.1: below 1024 the first visit is the collapsed rail.
+    if (window.innerWidth < 1024) setMode('collapsed');
+  }, []);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '[' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      e.preventDefault();
+      setMode(current => {
+        const next: SidebarMode = current === 'expanded' ? 'collapsed' : 'expanded';
+        try { localStorage.setItem(SIDEBAR_MODE_STORAGE, next); } catch {}
+        return next;
+      });
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
   const cycleMode = () => {
     setMode(current => {
@@ -131,7 +158,7 @@ export function Sidebar() {
     try { localStorage.setItem('anet-theme', next); } catch {}
     setTheme(next);
   };
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const setMobileOpen = onMobileOpenChange;
   const [netOpen, setNetOpen] = useState(false);
   const netRef = useRef<HTMLDivElement | null>(null);
   const { networkId, setNetworkId } = useNetworkId();
@@ -235,23 +262,14 @@ export function Sidebar() {
               {/* 3px left indicator bar for selected — 20px length, 2px
                   round, matches spec. Positioned absolute so it hangs
                   off the container without moving the icon. */}
-              {active && (
-                <span
-                  aria-hidden
-                  data-nav-active-bar
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-[2px] bg-[var(--hl)]"
-                />
-              )}
-              {/* 40×40 icon background square (selected only) — inner
-                  visual, centered inside the 44×44 tap container. */}
               <span
-                className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
+                className={`flex items-center justify-center w-10 h-10 rounded-[10px] transition-colors ${
                   active
-                    ? 'bg-[rgba(125,211,252,0.12)] text-[var(--hl)]'
-                    : 'text-[var(--fg-dim)] hover:text-[var(--fg)] hover:bg-[rgba(255,255,255,0.04)]'
+                    ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                    : 'text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-elevated)]'
                 }`}
               >
-                <svg className="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                 </svg>
               </span>
@@ -259,7 +277,7 @@ export function Sidebar() {
                 <span
                   aria-label={`${item.label} — ${badgeLabel(badge)} unread`}
                   data-nav-badge
-                  className="absolute top-0 right-0 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-semibold leading-4 text-center pointer-events-none"
+                  className="absolute top-0 right-0 min-w-[16px] h-5 px-1 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] text-[11px] font-medium leading-5 text-center pointer-events-none"
                 >
                   {badgeLabel(badge)}
                 </span>
@@ -279,16 +297,25 @@ export function Sidebar() {
             data-nav-item
             data-nav-href={item.href}
             data-nav-active={active ? 'true' : undefined}
-            className={`relative flex items-center gap-3 rounded-lg text-sm transition-colors active:bg-[#232327] ${
+            className={`group relative flex items-center gap-3 h-9 rounded-[10px] text-sm font-medium transition-colors ${
               active
-                ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 anet-nav-active'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-[#1c1c1f]'
-            } ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-3'}`}
+                ? 'bg-[var(--accent-tonal)] text-[var(--accent)] font-semibold anet-nav-active'
+                : 'text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-elevated)]'
+            } ${collapsed ? 'justify-center px-0' : 'px-3'}`}
           >
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
             </svg>
             {!collapsed && <span>{item.label}</span>}
+            {collapsed && (
+              <span
+                role="tooltip"
+                className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-medium group-hover:block"
+                style={{ background: 'var(--bg-overlay)', color: 'var(--fg)', boxShadow: 'var(--ds-shadow-overlay)' }}
+              >
+                {item.label}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -297,26 +324,9 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger — R13 of #190: was p-2.5 = ~40px tap target,
-          just below the iOS 44px guideline. Bump padding and add an
-          explicit min-w/min-h so it can never be miss-tapped. */}
-      <button
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-3 left-3 z-50 lg:hidden bg-[#161618] border border-[#26262b] rounded-lg p-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-gray-400 hover:text-white active:bg-[#232327]"
-        aria-label="Toggle menu"
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          {mobileOpen
-            ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />}
-        </svg>
-      </button>
-
-      {/* Mobile overlay — round 47: fades in via anet-fade-in (150ms ease-out)
-          matching the TaskDrawer / TaskChatPanel backdrop. */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden anet-fade-in"
+          className="fixed inset-x-0 bottom-0 top-12 z-[45] bg-black/50 md:hidden anet-fade-in"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -333,17 +343,18 @@ export function Sidebar() {
         data-sidebar-mode={mode}
         data-total-unread={totalUnread}
         className={`
-        fixed top-0 left-0 h-full z-40 flex flex-col
+        fixed left-0 top-12 z-[46] flex h-[calc(100dvh-3rem)] flex-col
         transition-transform duration-200 ease-out
-        ${mode === 'expanded' ? 'w-52 bg-[#111113] border-r border-[#26262b]' : mode === 'icon-rail' ? 'w-14 bg-[#0A0C14]' : 'w-16 bg-[#111113] border-r border-[#26262b]'}
-        ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 lg:shadow-none' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:shrink-0 lg:shadow-none
+        w-[232px] border-r border-[var(--border)] bg-[var(--bg-rail)]
+        ${mode === 'expanded' ? 'md:w-[232px]' : mode === 'icon-rail' ? 'md:w-14' : 'md:w-16'}
+        ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 md:shadow-none' : '-translate-x-full'}
+        md:static md:top-0 md:h-full md:translate-x-0 md:shrink-0 md:shadow-none
       `}>
         {/* Brand header — round 4: 3-node mesh mark matches /login,
             with an inline live "online" pulse so every page surfaces
             fleet health without leaving for /nodes. */}
         <SidebarBrand collapsed={collapsed} />
-        <div className={`border-b border-[#26262b]`} />
+        <div className="border-b border-[var(--border)]" />
 
         {/* Scrollable middle: networks + nav grow and scroll together so
             nothing is cut off when there are many networks / short viewports
@@ -352,8 +363,8 @@ export function Sidebar() {
 
         {/* Network list */}
         {!collapsed && networks.length > 0 && (
-          <div className="px-2 py-3 border-b border-[#26262b]">
-            <div className="px-3 text-[10px] text-gray-600 uppercase mb-2">Network</div>
+          <div className="px-2 py-3 border-b border-[var(--border)]">
+            <div className="px-3 mb-2 text-[11px] font-medium" style={{ color: 'var(--fg-dim)' }}>Network</div>
             <div className="relative" ref={netRef}>
               <button
                 type="button"
@@ -362,7 +373,7 @@ export function Sidebar() {
                 aria-haspopup="listbox"
                 aria-expanded={netOpen}
                 title={activeNetwork?.network_id}
-                className="w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 rounded-md text-xs text-left transition-colors bg-[var(--bg-elevated)] text-gray-300 hover:text-gray-100"
+                className="w-full flex items-center gap-3 h-12 px-3 rounded-[10px] text-sm text-left transition-colors bg-[var(--bg-elevated)] text-[var(--fg)]"
               >
                 <span>{ROLE_ICON[activeNetwork?.role || 'member'] || '👤'}</span>
                 <span className="truncate flex-1">
@@ -372,9 +383,9 @@ export function Sidebar() {
                     an admin can still tell at a glance whether the network
                     they are looking at is the one holding the fleet. */}
                 {activeNetwork?.agentCount ? (
-                  <span className="shrink-0 tabular-nums text-[10px] text-gray-600">{activeNetwork.agentCount}</span>
+                  <span className="shrink-0 tabular-nums text-[11px]" style={{ color: 'var(--fg-dim)' }}>{activeNetwork.agentCount}</span>
                 ) : null}
-                <span className={`shrink-0 text-[9px] text-gray-600 transition-transform ${netOpen ? 'rotate-180' : ''}`}>▼</span>
+                <span className={`shrink-0 text-[11px] transition-transform ${netOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--fg-dim)' }}>▾</span>
               </button>
 
               {netOpen && (
@@ -391,16 +402,16 @@ export function Sidebar() {
                       data-testid="network-option"
                       onClick={() => { setNetworkId(n.network_id); setNetOpen(false); setMobileOpen(false); }}
                       title={n.network_id}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 text-xs transition-colors text-left ${
+                      className={`w-full flex items-center gap-3 h-9 px-3 text-sm transition-colors text-left ${
                         networkId === n.network_id
-                          ? 'bg-cyan-500/10 text-cyan-300'
-                          : 'text-gray-500 hover:text-gray-300 hover:bg-[#1c1c1f]'
+                          ? 'bg-[var(--accent-tonal)] text-[var(--accent)] font-semibold'
+                          : 'text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-elevated)]'
                       }`}
                     >
                       <span>{ROLE_ICON[n.role || 'member'] || '👤'}</span>
                       <span className="truncate flex-1">{n.displayName || n.network_name}</span>
                       {n.agentCount ? (
-                        <span className="shrink-0 tabular-nums text-[10px] text-gray-600">{n.agentCount}</span>
+                        <span className="shrink-0 tabular-nums text-[11px]" style={{ color: 'var(--fg-dim)' }}>{n.agentCount}</span>
                       ) : null}
                     </button>
                   ))}
@@ -426,7 +437,7 @@ export function Sidebar() {
             56px width, plus title= tooltips. Pinned bottom of the flex column
             (shrink-0) so it never overlaps content; the middle region above
             scrolls instead of hiding tabs behind it. */}
-        <div className="shrink-0 border-t border-[#26262b] bg-[#111113]">
+        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-rail)]">
           <button
             onClick={cycleTheme}
             title={collapsed ? `主题：${THEME_LABEL[theme]}（点击切换）` : undefined}
@@ -441,7 +452,7 @@ export function Sidebar() {
               </svg>
               {!collapsed && '主题'}
             </span>
-            {!collapsed && <span className="text-[10px] border border-current rounded px-1.5 py-0.5 opacity-70">{THEME_LABEL[theme]}</span>}
+            {!collapsed && <span className="text-[11px] border border-current rounded px-1.5 py-0.5 opacity-70">{THEME_LABEL[theme]}</span>}
           </button>
           <button
             onClick={() => {
@@ -459,7 +470,7 @@ export function Sidebar() {
               </svg>
               {!collapsed && 'Quick search'}
             </span>
-            {!collapsed && <kbd className="text-[10px] border border-current rounded px-1 py-0.5 opacity-60 font-mono">⌘K</kbd>}
+            {!collapsed && <kbd className="text-[11px] border border-current rounded px-1 py-0.5 opacity-60 font-mono">⌘K</kbd>}
           </button>
           <button
             onClick={async () => {
@@ -481,7 +492,7 @@ export function Sidebar() {
           <div className={`flex items-center ${collapsed ? 'flex-col px-0 py-2' : 'px-3 py-2 justify-end'}`}>
             <button
               onClick={cycleMode}
-              title={`当前：${SIDEBAR_MODE_LABEL[mode]} — 点击切换（展开 → 折叠 → 图标）`}
+              title={`当前：${SIDEBAR_MODE_LABEL[mode]} — 点击切换；快捷键 [`}
               data-testid="sidebar-mode-cycle"
               className="hidden lg:flex p-1.5 rounded text-gray-600 hover:text-gray-400 transition-colors items-center gap-1"
               aria-label={`Cycle sidebar mode (current: ${mode})`}
@@ -559,16 +570,16 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
     >
       <BrandMark size={32} />
       <div className="min-w-0">
-        <div className="text-white text-[13px] font-semibold leading-tight">Agent Network</div>
-        <div className="text-[10px] text-gray-500 flex items-center gap-1.5 mt-0.5">
+        <div className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--fg)' }}>Agent Network</div>
+        <div className="text-[11px] flex items-center gap-1.5 mt-0.5" style={{ color: 'var(--fg-dim)' }}>
           <span
-            className={`inline-block w-1.5 h-1.5 rounded-full ${online > 0 ? 'bg-emerald-400 anet-brand-pulse' : 'bg-gray-600'}`}
+            className={`inline-block w-2 h-2 rounded-full ${online > 0 ? 'bg-[var(--online)]' : 'bg-[var(--offline)]'}`}
             aria-hidden
           />
           {total === 0 ? (
             <span>waiting for agents</span>
           ) : (
-            <span><span className="text-gray-300 font-medium tabular-nums">{onlineDisplay}</span><span className="text-gray-600">/{total}</span> online</span>
+            <span><span className="font-medium tabular-nums" style={{ color: 'var(--fg)' }}>{onlineDisplay}</span><span style={{ color: 'var(--fg-dim)' }}>/{total}</span> online</span>
           )}
         </div>
       </div>
@@ -580,13 +591,13 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
 function BrandMark({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="shrink-0">
-      <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.2" className="text-cyan-400" />
-      <line x1="16" y1="10" x2="10" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-cyan-400" />
-      <line x1="16" y1="10" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-cyan-400" />
-      <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-cyan-400" />
-      <circle cx="16" cy="10" r="2.5" fill="currentColor" className="text-cyan-400" />
-      <circle cx="10" cy="20" r="2.5" fill="currentColor" className="text-green-400" />
-      <circle cx="22" cy="20" r="2.5" fill="currentColor" className="text-violet-400" />
+      <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.25" className="text-[var(--accent)]" />
+      <line x1="16" y1="10" x2="10" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-[var(--accent)]" />
+      <line x1="16" y1="10" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-[var(--accent)]" />
+      <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-[var(--accent)]" />
+      <circle cx="16" cy="10" r="2.5" fill="currentColor" className="text-[var(--accent)]" />
+      <circle cx="10" cy="20" r="2.5" fill="currentColor" className="text-[var(--success)]" />
+      <circle cx="22" cy="20" r="2.5" fill="currentColor" className="text-[var(--fg-dim)]" />
     </svg>
   );
 }
