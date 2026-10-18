@@ -90,7 +90,7 @@ export default function TeamsPage() {
         {org?.status === 'error' ? (
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-sm text-[var(--danger)]">{org.error || '组织架构没有读到，请重试'}</p>
-            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-[var(--border)] px-2.5 py-1 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]">重试</button>
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="inline-flex h-8 items-center rounded-[10px] bg-[var(--bg-elevated)] px-3 text-[13px] font-medium text-[var(--fg)]">重试</button>
           </div>
         ) : null}
         {org?.status === 'missing' ? <p className="text-sm text-[var(--fg-muted)]">这个 Hub 还没有部门树，也没有人员通讯录。</p> : null}

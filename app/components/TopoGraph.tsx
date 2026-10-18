@@ -5159,10 +5159,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             data-topo-ghost-empty="true"
           >
             <div
-              className="max-w-sm rounded-2xl border px-5 py-4 text-center"
+              className="max-w-sm rounded-[10px] px-5 py-4 text-center"
               style={{
                 background: 'var(--bg-secondary)',
-                borderColor: 'var(--border)',
                 color: 'var(--fg)',
               }}
             >

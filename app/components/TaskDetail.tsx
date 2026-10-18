@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { relativeAgo } from '../lib/time';
 import useSWR from 'swr';
 import { AliasAvatar } from './AliasAvatar';
+import { TaskPanel } from './requirement-chrome';
 import { STATUS_CHIP_CLASS as STATUS_CHIP } from '../lib/status';
 
 // Detail pane for the /tasks two-column layout.
@@ -189,7 +190,7 @@ export function TaskDetail({
             onClick={onClose}
             aria-label="Close detail (返回 tasks 列表)"
             data-testid="task-detail-close"
-            className="shrink-0 rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--fg-muted)] hover:border-[var(--border-hover)] hover:text-[var(--fg)]"
+            className="inline-flex h-8 shrink-0 items-center rounded-[10px] bg-[var(--bg-elevated)] px-2.5 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]"
           >
             ←
           </button>
@@ -200,12 +201,12 @@ export function TaskDetail({
         {isLoading && !task && (
           <div className="animate-pulse space-y-3">
             <div className="h-6 w-1/3 rounded-lg bg-[var(--bg-elevated)]" />
-            <div className="h-24 rounded-2xl bg-[var(--bg-elevated)]" />
-            <div className="h-24 rounded-2xl bg-[var(--bg-elevated)]" />
+            <div className="h-24 rounded-[10px] bg-[var(--bg-elevated)]" />
+            <div className="h-24 rounded-[10px] bg-[var(--bg-elevated)]" />
           </div>
         )}
         {error && (
-          <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--danger)]">
+          <div className="rounded-[10px] px-3 py-2 text-sm text-[var(--danger)]" style={{ background: 'color-mix(in srgb, var(--danger) 14%, transparent)' }}>
             {error instanceof Error ? error.message : 'fetch failed'}
           </div>
         )}
@@ -216,10 +217,9 @@ export function TaskDetail({
         {task && (
           <>
             {/* Block 1: Timeline card (parity #1) */}
-            <section
+            <TaskPanel
               data-testid="task-detail-timeline"
               data-block="timeline"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
             >
               <h2 className="mb-4 text-sm font-medium text-[var(--fg)]">Timeline</h2>
               <div className="relative">
@@ -265,13 +265,12 @@ export function TaskDetail({
                   );
                 })}
               </div>
-            </section>
+            </TaskPanel>
 
             {/* Block 2: Info card (parity #2) */}
-            <section
+            <TaskPanel
               data-testid="task-detail-info"
               data-block="info"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
             >
               <h2 className="mb-3 text-sm font-medium text-[var(--fg)]">Info</h2>
               <div className="space-y-2 text-xs">
@@ -313,49 +312,46 @@ export function TaskDetail({
                   Priority: {task.priority || 'normal'}
                 </span>
               </div>
-            </section>
+            </TaskPanel>
 
             {/* Block 3: Content (parity #3) */}
-            <section
+            <TaskPanel
               data-testid="task-detail-content"
               data-block="content"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
             >
               <h2 className="mb-2 text-sm font-medium text-[var(--fg)]">Content</h2>
               <pre
                 data-testid="task-detail-content-body"
-                className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 font-sans text-xs leading-relaxed text-[var(--fg)]"
+                className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2.5 font-sans text-xs leading-relaxed text-[var(--fg)]"
               >
                 {task.content || '--'}
               </pre>
-            </section>
+            </TaskPanel>
 
             {/* Block 4: Result (parity #4) */}
             {task.result && (
-              <section
+              <TaskPanel
                 data-testid="task-detail-result"
                 data-block="result"
-                className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
               >
                 <h2 className="mb-2 text-sm font-medium text-[var(--fg)]">Result</h2>
                 <pre
                   data-testid="task-detail-result-body"
-                  className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 font-sans text-xs leading-relaxed text-[var(--fg)]"
+                  className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2.5 font-sans text-xs leading-relaxed text-[var(--fg)]"
                 >
                   {task.result}
                 </pre>
-              </section>
+              </TaskPanel>
             )}
 
             {/* Block 5: Events feed (parity #5) — 10s poll, always rendered
                 even when empty so "no events" state is visible; a silently
                 missing block would hide the difference between "feed
                 gone" and "task has no events yet". */}
-            <section
+            <TaskPanel
               data-testid="task-detail-events"
               data-block="events"
               data-events-count={events.length}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
             >
               <h2 className="mb-3 text-sm font-medium text-[var(--fg)]">
                 Events {events.length > 0 && <span className="text-[var(--fg-dim)]">({events.length})</span>}
@@ -415,7 +411,7 @@ export function TaskDetail({
                   ))}
                 </div>
               )}
-            </section>
+            </TaskPanel>
 
             {(task.status === 'failed' || task.status === 'expired') && (
               <div>
@@ -423,7 +419,8 @@ export function TaskDetail({
                   onClick={doRetry}
                   disabled={retrying}
                   data-testid="task-detail-retry"
-                  className="rounded-lg border border-[var(--warning)]/40 px-3 py-1.5 text-xs text-[var(--warning)] hover:bg-[var(--hover-tint)] disabled:cursor-wait disabled:opacity-50"
+                  className="inline-flex h-8 items-center rounded-[10px] px-3 text-xs font-medium text-[var(--warning)] disabled:cursor-wait disabled:opacity-50"
+                  style={{ background: 'color-mix(in srgb, var(--warning) 14%, transparent)' }}
                 >
                   {retrying ? 'Retrying…' : 'Retry task'}
                 </button>

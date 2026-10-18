@@ -175,10 +175,10 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       >
         <div className="px-4 py-4 border-b border-[var(--border)]">
           <div className="flex items-center gap-3 mb-4">
-            <h1 className="text-2xl font-semibold tracking-tight text-[var(--fg)]">Tasks</h1>
+            <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Tasks</h1>
             {tasks.length < count && (
               <span
-                className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-0.5 text-xs tabular-nums text-[var(--info)]"
+                className="inline-flex h-5 items-center rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium tabular-nums text-[var(--fg-muted)]"
                 title={`Showing ${tasks.length} of ${count} tasks`}
               >
                 {tasks.length} / {count}
@@ -190,7 +190,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
             <>
               {/* Status tab strip */}
               <div className="anet-tabstrip-wrap mb-2">
-                <div className="anet-tabstrip flex flex-wrap gap-1 bg-[var(--bg)] rounded-xl border border-[var(--border)] p-1 overflow-x-auto scrollbar-thin">
+                <div className="anet-tabstrip flex flex-wrap gap-1 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-1 scrollbar-thin">
                   {['', ...TASK_STATUSES].map((s) => {
                     const cnt = s === '' ? tasks.length : counts[s] || 0;
                     const isActive = filterStatus === s;
@@ -228,7 +228,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 
               {/* From/To filters */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 focus-within:border-[var(--info)]">
+                <div className="flex items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:bg-[var(--bg-elevated)]">
                   <span className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">From</span>
                   <input
                     type="text"
@@ -239,7 +239,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 focus-within:border-[var(--info)]">
+                <div className="flex items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:bg-[var(--bg-elevated)]">
                   <span className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">To</span>
                   <input
                     type="text"
@@ -250,7 +250,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                <div className="flex min-w-[10rem] flex-1 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 focus-within:border-[var(--info)]">
+                <div className="flex min-w-[10rem] flex-1 items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:bg-[var(--bg-elevated)]">
                   <span className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">Search</span>
                   <input
                     type="search"
@@ -271,7 +271,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                       setFilterTo('');
                       setFilterQuery('');
                     }}
-                    className="rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg)] hover:border-[var(--border-hover)]"
+                    className="h-7 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
                   >
                     Clear
                   </button>
@@ -295,7 +295,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           )}
 
           {error && (
-            <div className="mt-2 rounded-xl border border-[var(--danger)]/30 bg-[var(--bg-secondary)] px-3 py-1.5 text-xs text-[var(--danger)]">
+            <div className="mt-2 rounded-[10px] px-3 py-1.5 text-xs text-[var(--danger)]" style={{ background: 'color-mix(in srgb, var(--danger) 14%, transparent)' }}>
               {error}
             </div>
           )}
@@ -305,7 +305,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           {loading ? (
             <div className="animate-pulse space-y-2 px-3 py-3">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="h-16 bg-[var(--bg-elevated)] rounded-xl" />
+                <div key={i} className="h-16 rounded-[10px] bg-[var(--bg-elevated)]" />
               ))}
             </div>
           ) : tasks.length === 0 ? (
@@ -363,7 +363,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           data-testid="task-detail-empty"
           className="flex-1 min-w-0 min-h-screen flex items-center justify-center p-8"
         >
-          <div className="max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] px-6 py-8 text-center">
+          <div className="max-w-sm rounded-[10px] bg-[var(--bg-secondary)] px-6 py-8 text-center shadow-[var(--ds-shadow-card)]">
             <p className="text-sm leading-relaxed text-[var(--fg-muted)]">请从左侧列表选择一条任务查看详情</p>
           </div>
         </section>

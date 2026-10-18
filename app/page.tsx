@@ -193,7 +193,7 @@ export default function Dashboard() {
         <div className="hidden lg:flex justify-center mb-4">
           <button
             onClick={() => setShowTopo(!showTopo)}
-            className="text-xs text-gray-500 hover:text-gray-300 border border-gray-700/50 px-4 py-1.5 rounded-lg transition-colors hover:border-gray-600 cursor-pointer"
+            className="cursor-pointer rounded-[10px] bg-[var(--bg-secondary)] px-4 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
           >
             {showTopo ? 'Hide Topology' : 'Show Topology'}
           </button>
@@ -210,7 +210,7 @@ export default function Dashboard() {
         // interactive (the SVG already does its own pan + zoom inside
         // the viewport) while letting the page below stay reachable
         // with a single ordinary scroll past the cap.
-        <div className="lg:max-h-none lg:overflow-visible max-h-[70vh] overflow-y-auto rounded-xl border border-transparent lg:border-0">
+        <div className="max-h-[70vh] overflow-y-auto rounded-[10px] lg:max-h-none lg:overflow-visible">
           <MemoTopoGraph sessions={sessions} sseSessions={sseSessions} renameSignal={renameSignal} />
         </div>
       )}

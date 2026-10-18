@@ -70,10 +70,10 @@ export function TaskList({
                     event.preventDefault();
                     onSelect(t.task_id);
                   }}
-                  className={`block w-full rounded-xl border px-3.5 py-3.5 text-left transition-colors ${
+                  className={`block w-full rounded-[10px] px-3.5 py-3.5 text-left transition-colors ${
                     active
-                      ? 'border-[var(--info)] bg-[var(--bg-elevated)]'
-                      : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-elevated)]'
+                      ? 'bg-[var(--accent-tonal)]'
+                      : 'bg-[var(--bg-secondary)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">

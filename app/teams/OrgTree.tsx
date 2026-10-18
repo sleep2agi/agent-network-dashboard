@@ -102,7 +102,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="搜索部门、Agent 或负责人"
           aria-label="搜索组织架构"
-          className="h-9 w-full max-w-sm rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-[var(--info)] focus:outline-none"
+          className="h-9 w-full max-w-sm rounded-[10px] bg-[var(--bg-secondary)] px-3 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:bg-[var(--bg-elevated)] focus:outline-none"
         />
       </div>
       <div className="grid items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -131,9 +131,9 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                       data-testid={`agent-org-dept-${row.dept.id}`}
                       aria-pressed={active}
                       onClick={() => setFocus(row.dept.id)}
-                      className={`flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
+                      className={`flex min-w-0 flex-1 items-center justify-between gap-2 rounded-[10px] px-2 py-1.5 text-left text-sm ${
                         active
-                          ? 'bg-[var(--bg-elevated)] text-[var(--fg)] shadow-[inset_0_0_0_1px_var(--border)]'
+                          ? 'bg-[var(--accent-tonal)] text-[var(--fg)]'
                           : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
                       }`}
                     >
@@ -151,9 +151,9 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
               data-testid="agent-org-dept-unassigned"
               aria-pressed={focus === null}
               onClick={() => setFocus(null)}
-              className={`mt-1 flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-sm ${
+              className={`mt-1 flex w-full items-center justify-between rounded-[10px] px-2 py-1.5 text-left text-sm ${
                 focus === null
-                  ? 'bg-[var(--bg-elevated)] text-[var(--fg)] shadow-[inset_0_0_0_1px_var(--border)]'
+                  ? 'bg-[var(--accent-tonal)] text-[var(--fg)]'
                   : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
               }`}
             >
@@ -171,7 +171,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
             <ul className="mt-3 space-y-2">
               {agents.map((agent) => (
                 <li key={agent.nodeId}>
-                  <div data-testid={`agent-org-agent-${agent.nodeId}`} className="flex items-center justify-between gap-3 rounded-[10px] px-1 py-2">
+                  <div data-testid={`agent-org-agent-${agent.nodeId}`} className="flex items-center justify-between gap-3 rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{agent.alias}</div>
                       <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]">
@@ -180,7 +180,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                           : (agent.ownerName ? `负责人 ${agent.ownerName}` : '没有负责人')}
                       </div>
                     </div>
-                    {agent.demo ? <span className="shrink-0 rounded-md border border-[var(--border)] px-1.5 py-0.5 text-[11px] text-[var(--warning)]">演示</span> : null}
+                    {agent.demo ? <span className="inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-[11px] font-medium text-[var(--warning)]" style={{ background: 'color-mix(in srgb, var(--warning) 14%, transparent)' }}>演示</span> : null}
                   </div>
                 </li>
               ))}
@@ -202,7 +202,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                 aria-label="选择 Agent"
                 value={pickAgent ?? ''}
                 onChange={(event) => setPickAgent(event.target.value || null)}
-                className="mt-1 h-9 w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2 text-sm text-[var(--fg)]"
+                className="mt-1 h-9 w-full rounded-[10px] bg-[var(--bg-elevated)] px-2 text-sm text-[var(--fg)]"
               >
                 <option value="">未选择</option>
                 {placed.map((agent) => <option key={agent.nodeId} value={agent.nodeId}>{agent.alias}</option>)}
@@ -218,7 +218,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                   else if (event.target.value === '__none__') setPickDept(null);
                   else setPickDept(event.target.value);
                 }}
-                className="mt-1 h-9 w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2 text-sm text-[var(--fg)]"
+                className="mt-1 h-9 w-full rounded-[10px] bg-[var(--bg-elevated)] px-2 text-sm text-[var(--fg)]"
               >
                 <option value="">未选择</option>
                 <option value="__none__">未归属</option>
@@ -243,7 +243,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                 setMoves((current) => [...current.filter((move) => move.nodeId !== nodeId), { nodeId, departmentId }]);
                 setNote('这次没有向 Hub 发请求，也没有写入任何配置。');
               }}
-              className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-xs text-[var(--fg)] hover:border-[var(--border-hover)]"
+              className="inline-flex h-8 items-center rounded-[10px] bg-[var(--bg-elevated)] px-3 text-[13px] font-medium text-[var(--fg)]"
             >
               模拟调整
             </button>
