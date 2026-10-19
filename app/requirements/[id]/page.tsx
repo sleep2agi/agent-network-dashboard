@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { EmptyState } from '../../components/EmptyState';
+import CommentMarkdown from '../../components/CommentMarkdown';
 
 /**
  * One requirement — #1633 (read-only).
@@ -326,7 +327,9 @@ export default function RequirementDetailPage() {
                       <span className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5">{d.label}</span>
                       {ev.at && <span>{String(ev.at).replace('T', ' ').slice(0, 16)}</span>}
                     </div>
-                    {d.body && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-300">{d.body}</p>}
+                    {d.body && (d.label === 'comment'
+                      ? <CommentMarkdown text={d.body} />
+                      : <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-300">{d.body}</p>)}
                   </li>
                 );
               })}
