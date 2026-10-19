@@ -1,9 +1,14 @@
 'use client';
 
+import Link from 'next/link';
+
 interface StatsBarProps {
   online: number;
   working: number;
   total: number;
+  runningTasks?: number;
+  failedTasks?: number;
+  showTaskSummary?: boolean;
   // #53: when true, presence.sseSessions is missing but the hub reports
   // live SSE connections — we're seeing an anonymized/wrong-scope view
   // of /health. `online` is unknowable; render it as '?' with a neutral
@@ -12,7 +17,15 @@ interface StatsBarProps {
   presenceUnknown?: boolean;
 }
 
-export function StatsBar({ online, working, total, presenceUnknown = false }: StatsBarProps) {
+export function StatsBar({
+  online,
+  working,
+  total,
+  presenceUnknown = false,
+  runningTasks = 0,
+  failedTasks = 0,
+  showTaskSummary = false,
+}: StatsBarProps) {
   const onlinePercent = !presenceUnknown && total > 0 ? Math.round((online / total) * 100) : 0;
   // #53: don't render the "fleet is empty" quickstart strip when we
   // literally can't see presence — that state's "0 registered" copy is
@@ -39,8 +52,20 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
           WeChat-style centered title on phones — centering also clears
           the fixed hamburger symmetrically, replacing the old ml-10
           indent that read as misalignment. Left-aligned from lg: up. */}
-      <div className="mb-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <h1 className="text-[22px] font-semibold leading-7 tracking-tight text-[var(--fg)]">Agent Network</h1>
+        {showTaskSummary && (
+          <Link
+            href="/tasks"
+            prefetch={false}
+            className="inline-flex h-9 items-center gap-2 rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] tabular-nums text-[var(--fg-muted)] shadow-[var(--ds-shadow-card)] transition-colors hover:bg-[var(--bg-elevated)]"
+          >
+            <span className={runningTasks ? 'font-medium text-[var(--success)]' : ''}>{runningTasks} running</span>
+            <span className="text-[var(--fg-dim)]" aria-hidden>·</span>
+            <span className={failedTasks ? 'font-medium text-[var(--error)]' : ''}>{failedTasks} failed</span>
+            <span className="text-[var(--fg)]">View all →</span>
+          </Link>
+        )}
       </div>
 
       {fleetEmpty ? (

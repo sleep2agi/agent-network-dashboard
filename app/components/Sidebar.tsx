@@ -348,7 +348,7 @@ export function Sidebar({
         w-[232px] border-r border-[var(--border)] bg-[var(--bg-rail)]
         ${mode === 'expanded' ? 'md:w-[232px]' : mode === 'icon-rail' ? 'md:w-14' : 'md:w-16'}
         ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 md:shadow-none' : '-translate-x-full'}
-        md:static md:top-0 md:h-full md:translate-x-0 md:shrink-0 md:shadow-none
+        md:sticky md:top-0 md:h-[100dvh] md:max-h-[100dvh] md:self-start md:translate-x-0 md:shrink-0 md:shadow-none
       `}>
         {/* Brand header — round 4: 3-node mesh mark matches /login,
             with an inline live "online" pulse so every page surfaces

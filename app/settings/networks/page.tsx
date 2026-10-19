@@ -104,7 +104,7 @@ export default function NetworksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+    <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       {/* #217 D9: back link stacks above the title instead of sitting
           beside it — the old single row read as an off-balance
           "← Settings   Networks" pair on phones. */}

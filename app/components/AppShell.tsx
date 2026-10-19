@@ -22,7 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-[100dvh] max-w-full overflow-x-hidden">
+    <div className="flex min-h-[100dvh] max-w-full">
       <Sidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
       {/* R25 of #190: pair the existing bottom safe-area padding with a
           top one so the HealthBanner clears the iOS status bar when

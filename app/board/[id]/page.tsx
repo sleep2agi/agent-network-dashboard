@@ -90,7 +90,7 @@ export default function RequirementDetailPage({ params }: { params: Promise<{ id
   const checklist = Array.isArray(card?.checklist) ? card.checklist : [];
 
   return (
-    <main className="min-h-screen bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-6">
+    <main className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="mx-auto max-w-3xl space-y-6">
         <Link href="/board" className="inline-flex text-sm text-[var(--fg-muted)] hover:text-[var(--accent)] hover:underline">← Board</Link>
         {loading ? <p className="text-sm text-[var(--fg-dim)]">Loading task…</p> : null}

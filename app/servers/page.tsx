@@ -5,7 +5,7 @@ import { ServersPanel } from '../components/ServersDrawer';
 
 export default function ServersPage() {
   return (
-    <main className="min-h-screen bg-[var(--bg)] px-4 py-5 text-[var(--fg)] sm:px-6 lg:px-8">
+    <main className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="mx-auto max-w-5xl space-y-5">
         {/* #209 R37: header card compressed for mobile. Original layout
             stacked 4 things vertically on phones (INFRASTRUCTURE eyebrow,

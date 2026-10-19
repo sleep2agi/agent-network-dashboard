@@ -131,7 +131,7 @@ export default function ServerLogsPage() {
   return (
     // #209 R35: p-6 → p-4 sm:p-6 mobile-tighten (matches /tasks, /nodes,
     // /messages, /overview convention). Saves 16 px of L/R padding on phones.
-    <div className="p-4 sm:p-6 max-w-[1600px] mx-auto">
+    <div className="anet-page max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-3 min-w-0">
           {/* #209 R35: burger-clearance — without it the

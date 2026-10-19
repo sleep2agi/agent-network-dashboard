@@ -172,7 +172,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           selectedId && !isDesktop ? 'hidden' : 'flex'
         }`}
       >
-        <div className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/95 px-5 py-5 backdrop-blur-md">
+        <div className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/95 px-6 py-6 backdrop-blur-md lg:px-8 lg:py-8">
           <div className="mb-4 flex items-center gap-3">
             <h1 className="text-[22px] font-semibold text-[var(--fg)]">Tasks</h1>
             {tasks.length < count && (
@@ -376,7 +376,7 @@ export function TasksView({ initialSelectedId = null }: { initialSelectedId?: st
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+        <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
           <div className="text-[var(--fg-dim)] text-sm">Loading tasks…</div>
         </div>
       }

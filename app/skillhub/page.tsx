@@ -113,7 +113,7 @@ export default function SkillHubPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
+    <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="mb-6 flex items-center gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--fg)]">SkillHub</h1>

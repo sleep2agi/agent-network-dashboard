@@ -382,7 +382,7 @@ export function BoardWorkspace() {
   };
 
   return (
-    <main className="min-h-screen min-w-0 overflow-x-hidden bg-[var(--bg)] px-4 py-6 text-[var(--fg)] sm:px-5 lg:px-6">
+    <main className="anet-page min-h-screen min-w-0 overflow-x-hidden bg-[var(--bg)] text-[var(--fg)]">
       <div className="mx-auto min-w-0 max-w-[1200px] space-y-6 xl:max-w-[1360px]">
         <header className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4">
           <div className="space-y-1">

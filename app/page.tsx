@@ -140,28 +140,15 @@ export default function Dashboard() {
   return (
     <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="anet-page-inner">
-      <StatsBar online={online} working={working} total={total} presenceUnknown={presenceUnknown} />
-
-      {/* #217 S5 (Vincent: "极简极简，这些都可以放到设置里面去"): the
-          Dispatch button and UserBar row are gone from Overview.
-          Dispatch lives in /admin (Send Task panel); sign-out lives in
-          Settings and the sidebar; network switching lives in the
-          sidebar. */}
-
-      {/* Task summary. #217 S5 (Vincent: "乱七八糟的东西太多"): the
-          9-status colored chip wall is now a single quiet line — the
-          only two numbers that drive action are running and failed;
-          everything else lives on /tasks. */}
-      {Object.keys(taskStats).length > 0 && (
-        <section className="mb-4 flex h-10 items-center justify-between rounded-[10px] bg-[var(--bg-secondary)] px-4 text-[13px] shadow-[var(--ds-shadow-card)] sm:mb-6">
-          <div className="tabular-nums text-[var(--fg-muted)]">
-            <span className={taskStats['running'] ? 'text-[var(--success)]' : ''}>{taskStats['running'] || 0} running</span>
-            <span className="text-[var(--fg-dim)]"> &middot; </span>
-            <span className={taskStats['failed'] ? 'text-[var(--error)]' : ''}>{taskStats['failed'] || 0} failed</span>
-          </div>
-          <Link href="/tasks" prefetch={false} className="text-[var(--fg)] hover:text-[var(--accent)] hover:underline">View all &rarr;</Link>
-        </section>
-      )}
+      <StatsBar
+        online={online}
+        working={working}
+        total={total}
+        presenceUnknown={presenceUnknown}
+        runningTasks={taskStats['running'] || 0}
+        failedTasks={taskStats['failed'] || 0}
+        showTaskSummary={Object.keys(taskStats).length > 0}
+      />
 
       <RequirementPulse />
 
@@ -186,34 +173,24 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* #217 M1: topology toggle is lg-only — on a 390px phone the
-          graph needed a 70vh cap (R41) just to stay scrollable, i.e.
-          it never really worked there. Desktop keeps the full feature;
-          mobile Overview loses its last piece of chrome. */}
       {sessions.length > 0 && (
-        <div className="hidden lg:flex justify-center mb-4">
-          <button
-            onClick={() => setShowTopo(!showTopo)}
-            className="inline-flex h-9 cursor-pointer items-center rounded-[10px] bg-[var(--bg-secondary)] px-4 text-[13px] font-medium text-[var(--fg-muted)] shadow-[var(--ds-shadow-card)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
-          >
-            {showTopo ? 'Hide Topology' : 'Show Topology'}
-          </button>
-        </div>
-      )}
-
-      {showTopo && sessions.length > 0 && (
-        // #209 R41: mobile-only soft cap on the rendered TopoGraph.
-        // Default behaviour on desktop is unchanged (lg: drops the cap
-        // entirely). On phones the SVG card was free to claim ~600+ px
-        // of vertical real-estate, which on a 667-844 px viewport meant
-        // tapping "Show Topology" pushed the agent grid completely off
-        // screen. Capping to 70 vh with overflow-y-auto keeps the graph
-        // interactive (the SVG already does its own pan + zoom inside
-        // the viewport) while letting the page below stay reachable
-        // with a single ordinary scroll past the cap.
-        <div className="max-h-[70vh] overflow-y-auto rounded-[10px] lg:max-h-none lg:overflow-visible">
-          <MemoTopoGraph sessions={sessions} sseSessions={sseSessions} renameSignal={renameSignal} />
-        </div>
+        <section className="mb-6 hidden overflow-hidden rounded-[10px] bg-[var(--bg-secondary)] shadow-[var(--ds-shadow-card)] lg:block">
+          <header className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+            <h2 className="text-[15px] font-semibold text-[var(--fg)]">Topology</h2>
+            <button
+              type="button"
+              onClick={() => setShowTopo(!showTopo)}
+              className="inline-flex h-8 cursor-pointer items-center rounded-md px-3 text-[13px] font-medium text-[var(--fg-muted)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
+            >
+              {showTopo ? 'Hide Topology' : 'Show Topology'}
+            </button>
+          </header>
+          {showTopo && (
+            <div className="border-t border-[var(--border)]">
+              <MemoTopoGraph sessions={sessions} sseSessions={sseSessions} renameSignal={renameSignal} />
+            </div>
+          )}
+        </section>
       )}
 
       {sessions.length === 0 && !sessError && presenceState === 'ready' ? (

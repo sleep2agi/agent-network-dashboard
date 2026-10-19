@@ -137,7 +137,7 @@ export function HealthBanner() {
   return (
     <div
       role="status"
-      className="anet-health-banner sticky top-12 z-30 flex h-8 items-center justify-between gap-3 px-3 text-[13px] sm:px-6 md:top-0"
+      className="anet-health-banner sticky top-16 z-30 mx-6 mt-6 flex h-9 items-center justify-between gap-3 rounded-[10px] px-4 text-[13px] md:top-8 lg:mx-8 lg:mt-8"
       style={{
         background: `color-mix(in srgb, ${tone} 14%, transparent)`,
         color: tone,

@@ -92,7 +92,7 @@ export default function ProvidersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+    <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="flex items-center gap-4 mb-6">
         <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Model Providers</h1>
         {unconfirmed ? <PendingNotice>供应商后端还没接通。这一页是演示壳，不会假装已经保存到 Hub。</PendingNotice> : null}

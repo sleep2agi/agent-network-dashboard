@@ -75,7 +75,7 @@ export default function LogsPage() {
   }, [fetchLogs]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+    <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       {/* #209 R36: mobile vertical rhythm — same R28/R30/R31 pattern,
           mb-6 → mb-4 sm:mb-6 here and on the action-filter strip below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">

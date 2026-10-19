@@ -378,7 +378,7 @@ export default function ScheduledTasksPage() {
     (kind === 'weekly' && weekdays.length === 0);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 pb-24 lg:px-8">
+    <main className="anet-page mx-auto max-w-6xl pb-24">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--fg)]">定时任务</h1>

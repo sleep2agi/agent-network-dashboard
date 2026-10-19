@@ -410,7 +410,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           #209 R32: search affordance moved to top-right magnifier
           button (Vincent WeChat ref msg 563). justify-between makes
           the title cluster hug left, button hugs right. */}
-      <div className="sticky top-0 z-20 -mx-4 -mt-5 mb-6 flex items-center gap-4 border-b border-[var(--border)] bg-[var(--bg)]/90 px-4 py-3 backdrop-blur-md lg:-mx-10 lg:-mt-8 lg:px-10">
+      <div className="sticky top-0 z-20 -mx-6 -mt-6 mb-6 flex items-center gap-4 border-b border-[var(--border)] bg-[var(--bg)]/90 px-6 py-3 backdrop-blur-md lg:-mx-8 lg:-mt-8 lg:px-8">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Nodes</h1>
           <div className="inline-flex h-9 shrink-0 items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5 shadow-[var(--ds-shadow-card)]" aria-label="Fleet counts">

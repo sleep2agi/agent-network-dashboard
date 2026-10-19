@@ -391,12 +391,9 @@ export function ServersDrawer() {
 
   return (
     <aside
-      className="fixed right-0 top-20 z-40 hidden lg:flex flex-col rounded-l-xl border border-r-0 shadow-xl shadow-black/30 anet-fade-in"
+      className="sticky top-0 z-30 hidden h-[100dvh] max-h-[100dvh] shrink-0 flex-col self-start overflow-hidden border-l border-[var(--border)] bg-[var(--bg-secondary)] lg:flex"
       style={{
-        background: 'var(--bg-secondary)',
-        borderColor: 'var(--border)',
-        width: open ? 296 : 40,
-        maxHeight: 'calc(100vh - 6rem)',
+        width: open ? 296 : 48,
         transition: 'width 200ms ease-out',
       }}
       aria-label="Servers panel"
@@ -405,7 +402,7 @@ export function ServersDrawer() {
         onClick={toggle}
         aria-expanded={open}
         aria-label={open ? 'Collapse servers panel' : 'Expand servers panel'}
-        className="flex items-center gap-2 px-2.5 py-2 border-b text-[11px] font-semibold tracking-wide select-none"
+        className={`flex shrink-0 items-center gap-2 border-b px-2.5 py-3 text-[11px] font-semibold tracking-wide select-none ${open ? '' : 'justify-center'}`}
         style={{ color: 'var(--fg)', borderColor: 'var(--border)' }}
       >
         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -423,7 +420,7 @@ export function ServersDrawer() {
       </button>
 
       {open && (
-        <ServersPanel enabled={open} className="flex-1" />
+        <ServersPanel enabled={open} className="min-h-0 flex-1 overflow-y-auto" />
       )}
     </aside>
   );

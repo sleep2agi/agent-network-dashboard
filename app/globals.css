@@ -37,6 +37,10 @@
 html,
 body {
   max-width: 100%;
+}
+/* Only the document scrolls. overflow-x on body forces overflow-y to auto
+   and creates a second scrollport, which lets the sticky rail scroll away. */
+html {
   overflow-x: hidden;
 }* {
   box-sizing: border-box;
@@ -183,11 +187,11 @@ h1, h2 {
   line-height: 1.35;
 }
 .anet-page {
-  padding: 20px 16px 24px;
+  padding: 24px;
 }
 @media (min-width: 1024px) {
   .anet-page {
-    padding: 32px 40px 40px;
+    padding: 32px;
   }
 }
 .anet-page-inner {
@@ -1913,31 +1917,16 @@ aside.w-16 .anet-nav-active,
   transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 .anet-stat-card:hover {
-  border-color: #34343c;
   box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.7);
   transform: translateY(-1px);
 }
 
-/* KPI stat cards in light mode: kill the gradient wash (which reads as
-   pale-mud on white), replace with a 2px top accent strip per color
-   family + real elevation shadow. Dark themes keep the gradient. */
-[data-theme="light"] .anet-stat-card {
-  border-top-width: 2px;
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -8px rgba(15, 23, 42, 0.08);
-}
-
+/* Light KPI cards use the same 1px ring + soft shadow as other cards.
+   A 2px top border inherited currentColor and read as a thick dark stripe. */
 [data-theme="light"] .anet-stat-card:hover {
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06), 0 12px 24px -12px rgba(15, 23, 42, 0.16);
+  box-shadow: 0 8px 20px -14px rgba(16, 24, 40, 0.18), 0 0 0 1px rgba(22, 27, 38, 0.1);
+  transform: translateY(-1px);
 }
-
-/* Top-strip colors per stat family */
-[data-theme="light"] .anet-stat-card[data-anet-stat-card="green"] { border-top-color: #10b981; }
-
-[data-theme="light"] .anet-stat-card[data-anet-stat-card="cyan"] { border-top-color: var(--accent); }
-
-[data-theme="light"] .anet-stat-card[data-anet-stat-card="gray"] { border-top-color: #94a3b8; }
-
-[data-theme="light"] .anet-stat-card[data-anet-stat-card="white"] { border-top-color: #3b82f6; }
 
 /* Drop the gradient wash in light themes — looks like dust on white. */
 [data-theme="light"] .anet-stat-card > .pointer-events-none {

@@ -14900,62 +14900,6 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 </g>
               );
             })}
-            {/* Flow-arrow swatch tracks the offline row — R106 shifted
-                rows down by 8 px to make space for the panel header so
-                this moves from y=72 to y=80. Drop its pointerEvents so
-                the offline legend row stays hoverable (R55). It's
-                decoration, no need to receive events. */}
-            {/* Round 254 / Loop: legend flow-arrow swatch stroke
-                transition for theme toggle (cyber #67e8f9 ↔ light
-                #10b981). Last theme-driven legend element snap. */}
-            {/* Round 277 / Loop: flow-arrow path tracks new offline-row
-                cy=68 after the legend panel compress (was 80 pre-R277).
-                Endpoints follow the offline row to keep the swatch
-                logically tied to the row it demonstrates; control point
-                proportionally shifts so apex stays mid-arc between
-                rows 2 and 3. */}
-            <path
-              d="M140,68 Q164,44 196,68"
-              fill="none"
-              stroke={pal.flowEdge}
-              strokeWidth="3"
-              markerEnd="url(#topo-arrow)"
-              data-legend-flow-arrow
-              data-legend-flow-arrow-glow={hoveredPanel === 'legend' ? 'true' : 'false'}
-              data-legend-flow-arrow-brightness={hoveredPanel === 'legend' ? '1.15' : '1'}
-              style={{
-                pointerEvents: 'none',
-                /* R609 — legend flow-arrow gains stacked drop-shadow +
-                   brightness on hoveredPanel === 'legend'. Banked
-                   R582/R583 stacked-filter pattern at the legend
-                   decoration scope.
-
-                   The arrow is the legend's "what an edge flow looks
-                   like" representation — when user hovers the legend
-                   panel to inspect rows, the demo arrow lights up
-                   too, tying it visually to the panel-wide hover
-                   gesture. Same pal.flowEdge cyan/teal hue as live
-                   edges, so the demo and the real edges share a
-                   coherent visual vocabulary.
-
-                   Pure paint axis: drop-shadow halo + brightness
-                   stack on the same panel-hover gate. transition
-                   list extends with 'filter 200ms ease-out'
-                   alongside the existing stroke 200ms cadence.
-
-                   data-legend-flow-arrow-glow + -brightness attrs
-                   expose the gate for tests. */
-                /* R665 sibling — legend flow-arrow drop-shadow gains a
-                   2nd outer layer at 6px + 0x40 alpha (half inner 0x80).
-                   Same 3+6 stride + 50% falloff. pal.flowEdge tint
-                   (cyber cyan / light emerald) preserved across both
-                   layers. */
-                filter: hoveredPanel === 'legend'
-                  ? `drop-shadow(0 0 3px ${pal.flowEdge}80) drop-shadow(0 0 6px ${pal.flowEdge}40) brightness(1.15)`
-                  : undefined,
-                transition: 'stroke 200ms ease-out, filter 200ms ease-out',
-              }}
-            />
           </g>
 
           {/* Round 282 / Loop: sleep2agi brand watermark per Vincent

@@ -75,7 +75,7 @@ export default function TokensPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+    <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/settings" className="text-sm font-medium text-[var(--fg-muted)] hover:text-[var(--accent)]">&larr; Settings</Link>
         <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">API Tokens</h1>
