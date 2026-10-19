@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { AliasAvatar } from './AliasAvatar';
 import { relativeAgo } from '../lib/time';
 import { previewContent } from './utils';
-import { STATUS_CHIP_CLASS, STATUS_DOT_HEX } from '../lib/status';
+import { STATUS_DOT_HEX } from '../lib/status';
 
 // Task-list rail for the /tasks two-column layout (类飞书 "list + detail").
 // Rendered inside TasksView's <aside> — this file is intentionally small
@@ -84,10 +84,14 @@ export function TaskList({
                       style={{ backgroundColor: STATUS_DOT_HEX[t.status] || '#6b7280' }}
                     />
                     <span
-                      className={`text-[11px] px-1.5 py-0.5 rounded border ${
-                        STATUS_CHIP_CLASS[t.status] ||
-                        'bg-gray-500/10 text-gray-400 border-gray-500/20'
-                      }`}
+                      className="text-[11px] font-medium"
+                      style={{
+                        color: t.status === 'running'
+                          ? 'var(--success)'
+                          : t.status === 'failed'
+                            ? 'var(--danger)'
+                            : 'var(--fg-muted)',
+                      }}
                     >
                       {t.status}
                     </span>

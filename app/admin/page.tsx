@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSessions, useHealth, useStats } from '../lib/hooks';
 import { timeAgo } from '../components/utils';
 import { AliasAvatar } from '../components/AliasAvatar';
-import { SESSION_STATUS_CHIP_CLASS } from '../lib/status';
+import { SectionHeading, TaskPanel } from '../components/requirement-chrome';
 
 export default function AdminPage() {
   const { sessions } = useSessions();
@@ -91,14 +91,14 @@ export default function AdminPage() {
           chip-jump nav was mb-8 (32 px) — biggest single gap on /admin
           above the fold. Drop to mb-4 sm:mb-8 — phones get 16 px, sm:
           up keeps the original breathing room. */}
-      <nav className="mb-4 sm:mb-8 flex flex-wrap gap-2 text-xs">
+      <nav className="mb-4 flex w-fit max-w-full flex-wrap gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5 sm:mb-6">
         {[
           { href: '#status',  label: 'Status' },
           { href: '#actions', label: 'Actions' },
           { href: '#users',   label: 'Users' },
         ].map(a => (
           <a key={a.href} href={a.href}
-            className="inline-flex min-h-[44px] items-center rounded-md border border-[#26262b] bg-[#0e0e10]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+            className="inline-flex h-8 items-center rounded-md px-3 text-[13px] font-medium text-[var(--fg-muted)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]">
             {a.label}
           </a>
         ))}
@@ -108,10 +108,7 @@ export default function AdminPage() {
 
         {/* ── Group: Status ─────────────────────────────────────── */}
         <div id="status" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Status</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
+          <SectionHeading title="Status" />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Server Overview.
@@ -121,26 +118,26 @@ export default function AdminPage() {
             2×2 numeric grid shrinks ~25 % on mobile (~60 px of fold
             reclaimed) while reading identically on desktop. mb-4 on
             the section heading also drops to mb-3 sm:mb-4. */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-4 sm:p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3 sm:mb-4">Server Overview</h2>
+        <TaskPanel className="sm:p-5">
+          <h2 className="mb-3 text-[15px] font-semibold leading-[22px] text-[var(--fg)] sm:mb-4">Server Overview</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-green-400 tabular-nums">{onlineNodes.length}</div>
-              <div className="text-xs text-gray-500">Online</div>
+              <div className="text-2xl font-semibold tabular-nums text-[var(--success)] sm:text-[28px]">{onlineNodes.length}</div>
+              <div className="text-xs text-[var(--fg-dim)]">Online</div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-gray-500 tabular-nums">{offlineNodes.length}</div>
-              <div className="text-xs text-gray-500">Offline</div>
+              <div className="text-2xl font-semibold tabular-nums text-[var(--fg-muted)] sm:text-[28px]">{offlineNodes.length}</div>
+              <div className="text-xs text-[var(--fg-dim)]">Offline</div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-cyan-400 tabular-nums">{health?.sse_connections ?? '--'}</div>
-              <div className="text-xs text-gray-500">
-                SSE Streams <span className="text-gray-600">· server</span>
+              <div className="text-2xl font-semibold tabular-nums text-[var(--accent)] sm:text-[28px]">{health?.sse_connections ?? '--'}</div>
+              <div className="text-xs text-[var(--fg-dim)]">
+                SSE Streams <span>· server</span>
               </div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">{stats?.tasks?.total ?? '--'}</div>
-              <div className="text-xs text-gray-500">Total Tasks</div>
+              <div className="text-2xl font-semibold tabular-nums text-[var(--fg)] sm:text-[28px]">{stats?.tasks?.total ?? '--'}</div>
+              <div className="text-xs text-[var(--fg-dim)]">Total Tasks</div>
             </div>
           </div>
           {stats?.tasks?.by_status && stats.tasks.by_status.length > 0 && (() => {
@@ -150,97 +147,94 @@ export default function AdminPage() {
                only numbers that drive action, the rest is on /tasks. */
             const byStatus = Object.fromEntries(stats.tasks.by_status.map((s: { status: string; count: number }) => [s.status, s.count]));
             return (
-              <div className="mt-4 flex items-center justify-between border-t border-[#26262b] pt-3 text-xs">
-                <div className="text-gray-400 tabular-nums">
-                  <span className={byStatus['running'] ? 'text-green-400' : 'text-gray-500'}>{byStatus['running'] || 0} running</span>
-                  <span className="text-gray-600"> &middot; </span>
-                  <span className={byStatus['failed'] ? 'text-red-400' : 'text-gray-500'}>{byStatus['failed'] || 0} failed</span>
+              <div className="mt-4 flex items-center justify-between pt-1 text-xs">
+                <div className="tabular-nums text-[var(--fg-muted)]">
+                  <span className={byStatus['running'] ? 'text-[var(--success)]' : 'text-[var(--fg-dim)]'}>{byStatus['running'] || 0} running</span>
+                  <span className="text-[var(--fg-dim)]"> &middot; </span>
+                  <span className={byStatus['failed'] ? 'text-[var(--danger)]' : 'text-[var(--fg-dim)]'}>{byStatus['failed'] || 0} failed</span>
                 </div>
-                <Link href="/tasks" prefetch={false} className="text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
+                <Link href="/tasks" prefetch={false} className="font-medium text-[var(--accent)] hover:underline">View all &rarr;</Link>
               </div>
             );
           })()}
-        </section>
+        </TaskPanel>
 
         {/* Online Sessions — pulled into Status group (was below Send Task) */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">
-            Online Sessions <span className="text-gray-600">({onlineNodes.length})</span>
+        <TaskPanel>
+          <h2 className="mb-3 text-[15px] font-semibold leading-[22px] text-[var(--fg)]">
+            Online Sessions <span className="font-medium text-[var(--fg-dim)]">({onlineNodes.length})</span>
           </h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {onlineNodes.length === 0 ? (
-              <div className="text-xs text-gray-600 text-center py-4">No online sessions</div>
+              <div className="py-6 text-center text-sm text-[var(--fg-dim)]">No online sessions</div>
             ) : onlineNodes.map(s => (
-              <div key={s.alias} className="flex items-center gap-3 bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f]">
+              <div key={s.alias} className="flex items-center gap-3 rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2">
                 <AliasAvatar alias={s.alias} size={20} />
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm text-white font-medium truncate">{s.alias}</div>
+                  <div className="truncate text-sm font-medium text-[var(--fg)]">{s.alias}</div>
                   {/* Show the current task only when present; an idle session's
                       status is already on the chip → drop the redundant "· idle". */}
-                  <div className="text-xs text-gray-500 truncate">{s.agent || '--'}{s.task ? ` · ${s.task}` : ''}</div>
+                  <div className="truncate text-xs text-[var(--fg-dim)]">{s.agent || '--'}{s.task ? ` · ${s.task}` : ''}</div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {/* Round 91: 5-state palette via shared
                       SESSION_STATUS_CHIP_CLASS (was working-vs-other, which
                       rendered blocked/error identical to idle). */}
-                  <span className={`text-xs px-2 py-0.5 rounded border ${SESSION_STATUS_CHIP_CLASS[s.status] || SESSION_STATUS_CHIP_CLASS.idle}`}>{s.status}</span>
-                  <span className="text-[11px] text-gray-600">{timeAgo(s.updated_at)}</span>
+                  <span className="inline-flex h-5 items-center rounded-md bg-[var(--bg)] px-1.5 text-[11px] font-medium text-[var(--fg-muted)]">{s.status}</span>
+                  <span className="text-[11px] text-[var(--fg-dim)]">{timeAgo(s.updated_at)}</span>
                 </div>
               </div>
             ))}
           </div>
-        </section>
+        </TaskPanel>
 
           </div>
         </div>
 
         {/* ── Group: Actions ────────────────────────────────────── */}
         <div id="actions" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Actions</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
+          <SectionHeading title="Actions" />
           {sessions.length === 0 ? (
             /* Round 77: Broadcast and Send Task both require at least one
                registered agent. Surfacing the empty cards above an empty
                fleet is the same dead-control class as the Overview
                Dispatch button (r70). Replace with a single inline hint. */
-            <div className="bg-[#161618] border border-[#26262b] rounded-xl px-5 py-4 text-sm text-gray-500">
+            <div className="rounded-[10px] bg-[var(--bg-secondary)] px-5 py-4 text-sm text-[var(--fg-muted)] shadow-[var(--ds-shadow-card)]">
               Broadcast and Send Task become available after the first agent registers.
             </div>
           ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Broadcast */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Broadcast</h2>
+        <TaskPanel>
+          <h2 className="mb-3 text-[15px] font-semibold leading-[22px] text-[var(--fg)]">Broadcast</h2>
           <textarea
             value={broadcastMsg}
             onChange={e => setBroadcastMsg(e.target.value)}
             placeholder="Message to all online nodes..."
             rows={3}
-            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none resize-none"
+            className="w-full resize-none rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none"
           />
           <div className="flex justify-between items-center mt-3">
-            <span className="text-xs text-gray-600">{broadcastMsg.length}/500</span>
+            <span className="text-xs text-[var(--fg-dim)]">{broadcastMsg.length}/500</span>
             <button
               onClick={sendBroadcast}
               disabled={!broadcastMsg.trim()}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm rounded-lg transition-colors"
+              className="inline-flex h-9 items-center rounded-[10px] bg-[var(--accent)] px-4 text-[13px] font-medium text-[var(--accent-fg)] transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] disabled:hover:brightness-100"
             >
               Broadcast
             </button>
           </div>
-          {broadcastResult && <div className={`mt-2 text-xs ${broadcastResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{broadcastResult}</div>}
-        </section>
+          {broadcastResult && <div className={`mt-2 text-xs ${broadcastResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{broadcastResult}</div>}
+        </TaskPanel>
 
         {/* Send Task */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Send Task</h2>
+        <TaskPanel>
+          <h2 className="mb-3 text-[15px] font-semibold leading-[22px] text-[var(--fg)]">Send Task</h2>
           <select
             value={taskTarget}
             onChange={e => setTaskTarget(e.target.value)}
-            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-cyan-500/50 focus:outline-none mb-3"
+            className="mb-3 w-full rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-base text-[var(--fg)] focus:shadow-[var(--focus-ring)] focus:outline-none sm:text-sm"
           >
             <option value="">Select target node...</option>
             {onlineNodes.map(s => (
@@ -257,19 +251,19 @@ export default function AdminPage() {
             onChange={e => setTaskContent(e.target.value)}
             placeholder="Task content..."
             rows={3}
-            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none resize-none"
+            className="w-full resize-none rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none"
           />
           <div className="flex justify-end mt-3">
             <button
               onClick={sendTask}
               disabled={!taskTarget || !taskContent.trim()}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm rounded-lg transition-colors"
+              className="inline-flex h-9 items-center rounded-[10px] bg-[var(--accent)] px-4 text-[13px] font-medium text-[var(--accent-fg)] transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] disabled:hover:brightness-100"
             >
               Send Task
             </button>
           </div>
-          {taskResult && <div className={`mt-2 text-xs ${taskResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{taskResult}</div>}
-        </section>
+          {taskResult && <div className={`mt-2 text-xs ${taskResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{taskResult}</div>}
+        </TaskPanel>
 
           </div>
           )}
@@ -277,40 +271,37 @@ export default function AdminPage() {
 
         {/* ── Group: Users ──────────────────────────────────────── */}
         <div id="users" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Users</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
+          <SectionHeading title="Users" />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* User Management (V3 Auth) */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Register User (V3)</h2>
+        <TaskPanel>
+          <h2 className="mb-3 text-[15px] font-semibold leading-[22px] text-[var(--fg)]">Register User (V3)</h2>
           <div className="space-y-3">
             <input
               type="text"
               value={regUser}
               onChange={e => setRegUser(e.target.value)}
               placeholder="Username"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none"
+              className="w-full rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none"
             />
             <input
               type="password"
               value={regPass}
               onChange={e => setRegPass(e.target.value)}
               placeholder="Password"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none"
+              className="w-full rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none"
             />
             <button
               onClick={registerUser}
               disabled={!regUser.trim() || !regPass.trim()}
-              className="w-full px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm rounded-lg transition-colors"
+              className="inline-flex h-9 w-full items-center justify-center rounded-[10px] bg-[var(--accent)] px-4 text-[13px] font-medium text-[var(--accent-fg)] transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] disabled:hover:brightness-100"
             >
               Register
             </button>
           </div>
-          {regResult && <div className={`mt-2 text-xs ${regResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{regResult}</div>}
-        </section>
+          {regResult && <div className={`mt-2 text-xs ${regResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{regResult}</div>}
+        </TaskPanel>
 
           </div>
         </div>

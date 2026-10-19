@@ -14,6 +14,7 @@ import { isPinned, usePinVersion } from '../lib/chat-pin';
 import { pinyinMatch, usePinyinReady } from '../lib/pinyin-match';
 import { useCollapsibleSearch } from '../components/CollapsibleSearch';
 import { NodeList } from '../components/NodeList';
+import { Segmented } from '../components/requirement-chrome';
 import { ChatPane } from '../components/ChatPane';
 import type { Session } from '../components/types';
 import { useChatUnread } from '../lib/chat-unread';
@@ -378,7 +379,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
             type="button"
             onClick={toggleManageView}
             data-testid="manage-view-toggle"
-            className="shrink-0 border-t border-[var(--col-line)] bg-[var(--col-list)] px-3 py-2 text-left text-[11px] text-gray-500 hover:text-gray-200 transition-colors"
+            className="shrink-0 border-t border-[var(--col-line)] bg-[var(--col-list)] px-3 py-2 text-left text-[11px] font-medium text-[var(--fg-dim)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
           >
             {manageView ? t('≡ 对话视图', '≡ Conversation view') : t('☷ 管理视图', '☷ Manage view')}
           </button>
@@ -396,7 +397,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           type="button"
           onClick={toggleManageView}
           data-testid="manage-view-toggle-mobile"
-          className="md:hidden mb-3 rounded-lg border border-[var(--col-line-strong)] bg-[var(--col-list)] px-3 py-1.5 text-[12px] text-gray-400 hover:text-gray-200"
+          className="mb-3 inline-flex h-8 items-center rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[12px] font-medium text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)] md:hidden"
         >
           {t('≡ 返回对话视图', '≡ Back to conversations')}
         </button>
@@ -412,12 +413,15 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Nodes</h1>
-          <span className="text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded-full border border-green-800/30 shrink-0">
-            {onlineCount} online
-          </span>
-          <span className="text-xs bg-gray-900/30 text-gray-400 px-2 py-0.5 rounded-full border border-gray-800/30 shrink-0">
-            {sessions.length} total
-          </span>
+          <div className="inline-flex h-8 shrink-0 items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5" aria-label="Fleet counts">
+            <span className="inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium tabular-nums text-[var(--fg)]">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
+              {onlineCount} online
+            </span>
+            <span className="inline-flex h-7 items-center rounded-md px-2.5 text-[13px] font-medium tabular-nums text-[var(--fg-muted)]">
+              {sessions.length} total
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {/* #Stage A rail toggle — visible on sm+ (where rail also
@@ -430,7 +434,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
             aria-pressed={showRail}
             data-testid="toggle-rail"
             title={showRail ? t('隐藏节点列表', 'Hide node list') : t('显示节点列表', 'Show node list')}
-            className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:border-[var(--border-hover)] transition-colors"
+            className="hidden h-8 items-center gap-1 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 text-[13px] font-medium text-[var(--fg-muted)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)] sm:inline-flex"
           >
             <span aria-hidden className="text-sm leading-none">{showRail ? '☷' : '☰'}</span>
             <span className="hidden md:inline">{showRail ? t('密视图', 'Dense') : t('分栏', 'Split')}</span>
@@ -440,7 +444,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
             type="button"
             onClick={() => setShowCreate(true)}
             aria-label="新建节点"
-            className="inline-flex items-center gap-1 rounded-lg border border-cyan-700/50 bg-cyan-900/15 px-3 py-1.5 text-sm font-medium text-cyan-300 hover:bg-cyan-900/25 transition-colors"
+            className="inline-flex h-8 items-center gap-1 rounded-[10px] bg-[var(--accent)] px-3 text-[13px] font-medium text-[var(--accent-fg)] transition-colors hover:brightness-110"
           >
             <span aria-hidden className="text-base leading-none">+</span>
             <span className="hidden sm:inline">新建节点</span>
@@ -474,7 +478,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-blue-500/50 focus:outline-none"
+          className="h-8 rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] text-[var(--fg)] focus:outline-none focus:shadow-[var(--focus-ring)]"
         >
           <option value="">All</option>
           <option value="online">Online</option>
@@ -493,7 +497,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
             onChange={e => setFilterTeam(e.target.value)}
             aria-label={t('按 Team 过滤', 'Filter by team')}
             data-testid="filter-team"
-            className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-blue-500/50 focus:outline-none"
+            className="h-8 rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] text-[var(--fg)] focus:outline-none focus:shadow-[var(--focus-ring)]"
           >
             <option value="">{t('全部 Team', 'All teams')}</option>
             <option value="__NO_TEAM__">{t('未分组', '(no team)')}</option>
@@ -506,21 +510,13 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
             grid-cols-1 below `md` and List degrades to the same single
             column, so the toggle has no visual effect under sm and only
             steals a row of vertical space. */}
-        <div className="hidden sm:flex ml-auto rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-1 text-sm">
-          {(['list', 'grid'] as const).map(mode => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setViewMode(mode)}
-              className={`rounded-md px-3 py-1.5 transition-colors ${
-                viewMode === mode
-                  ? 'bg-cyan-500/10 text-cyan-300'
-                  : 'text-gray-500 hover:text-gray-200'
-              }`}
-            >
-              {mode === 'list' ? 'List' : 'Grid'}
-            </button>
-          ))}
+        <div className="ml-auto hidden sm:block">
+          <Segmented
+            label="Nodes layout"
+            value={viewMode}
+            options={[{ id: 'list', label: 'List' }, { id: 'grid', label: 'Grid' }]}
+            onChange={setViewMode}
+          />
         </div>
       </div>
       )}
@@ -532,7 +528,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           reads as bug; the label makes it a deliberate narrow-down). */}
       {sessions.length > 0 && distinctTags.length > 0 && (
         <div className="mb-4 sm:mb-6 flex flex-wrap items-center gap-1.5" data-testid="filter-tags-row">
-          <span className="text-[11px] text-gray-500 mr-1">{t('Tags:', 'Tags:')}</span>
+          <span className="mr-1 text-[11px] font-medium text-[var(--fg-dim)]">{t('Tags', 'Tags')}</span>
           {distinctTags.map((tag, idx) => {
             const selected = filterTags.includes(tag);
             const isNotFirstSelected = selected && filterTags.slice(0, filterTags.indexOf(tag)).length > 0;
@@ -545,10 +541,10 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                 aria-pressed={selected}
                 data-tag={tag}
                 data-selected={selected ? 'true' : 'false'}
-                className={`text-xs rounded-full px-2.5 py-1 border transition-colors ${
+                className={`inline-flex h-7 items-center rounded-full px-2.5 text-[12px] font-medium transition-colors ${
                   selected
-                    ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40'
-                    : 'bg-[var(--bg-secondary)] text-gray-400 border-[var(--border)] hover:text-gray-200 hover:border-[var(--border-hover)]'
+                    ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                    : 'bg-[var(--bg-secondary)] text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]'
                 }`}
               >
                 {tag}
@@ -557,7 +553,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           })}
           {filterTags.length >= 2 && (
             <span
-              className="text-[11px] text-cyan-300/80 ml-1 tabular-nums"
+              className="ml-1 text-[11px] font-medium tabular-nums text-[var(--accent)]"
               data-testid="filter-tags-and-hint"
             >
               {t(`= 同时具有 ${filterTags.length} 个标签`, `= AND of ${filterTags.length} tags`)}
@@ -567,7 +563,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
             <button
               type="button"
               onClick={() => { setFilterTags([]); setFilterTeam(''); }}
-              className="text-[11px] text-gray-500 hover:text-gray-200 underline-offset-2 hover:underline ml-2"
+              className="ml-2 text-[11px] font-medium text-[var(--fg-dim)] underline-offset-2 hover:text-[var(--fg)] hover:underline"
               data-testid="clear-attr-filters"
             >
               {t('清除', 'Clear')}
@@ -577,8 +573,8 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
       )}
 
       {loading ? (
-        <div className="animate-pulse space-y-2">
-          {[1,2,3,4].map(i => <div key={i} className="h-16 bg-gray-800/20 rounded-lg" />)}
+        <div className="animate-pulse space-y-2 rounded-[10px] bg-[var(--bg-secondary)] p-2">
+          {[1,2,3,4].map(i => <div key={i} className="h-16 rounded-[10px] bg-[var(--bg-elevated)]" />)}
         </div>
       ) : filtered.length === 0 ? (
         sessions.length === 0 ? (
@@ -663,8 +659,8 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                         {statusKey}
                       </span>
                     </div>
-                    <div className="mt-0.5 truncate text-xs text-gray-500">
-                      {(s.agent || '—')}<span className="text-gray-700 mx-1.5">·</span><span title={s.server || ''}>{shortServer(s.server)}</span>
+                    <div className="mt-0.5 truncate text-xs text-[var(--fg-dim)]">
+                      {(s.agent || '—')}<span className="mx-1.5 text-[var(--fg-dim)]">·</span><span title={s.server || ''}>{shortServer(s.server)}</span>
                     </div>
                   </div>
                   <span className="hidden shrink-0 text-[11px] text-[var(--fg-dim)] sm:inline">Chat</span>
@@ -702,7 +698,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           })}
         </div>
       ) : (
-        <div className="space-y-1 sm:space-y-2">
+        <div className="overflow-hidden rounded-[10px] bg-[var(--bg-secondary)] p-1 sm:p-2">
           {/* Round 94: AGENT + SERVER merged into one `agent · server`
               cell. Round mobile-command: node row itself opens chat, so
               the old Chat / Send Task action column is gone. */}
@@ -726,7 +722,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                 data-node-alias={s.alias}
                 onClick={() => selectNode(s.alias)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectNode(s.alias); } }}
-                className={`cursor-pointer border-t border-[var(--border)] px-1 py-2.5 transition-colors hover:bg-[var(--bg-elevated)] ${!s.online ? 'opacity-60' : ''}`}
+                className={`cursor-pointer rounded-[10px] px-2 py-2.5 transition-colors hover:bg-[var(--bg-elevated)] ${!s.online ? 'opacity-60' : ''}`}
               >
                 <div className="hidden sm:grid sm:grid-cols-10 gap-2 items-center">
                   <div className="col-span-1">
@@ -756,11 +752,11 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                       {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                     </div>
                   </div>
-                  <div className="col-span-2 truncate text-xs text-gray-400" title={s.server || ''}>
-                    <span className="truncate">{s.agent || '--'}<span className="text-gray-700 mx-1.5">·</span>{shortServer(s.server)}</span>
+                  <div className="col-span-2 truncate text-xs text-[var(--fg-muted)]" title={s.server || ''}>
+                    <span className="truncate">{s.agent || '--'}<span className="mx-1.5 text-[var(--fg-dim)]">·</span>{shortServer(s.server)}</span>
                   </div>
-                  <div className="col-span-4 truncate text-xs text-gray-500" title={s.task || ''}>{s.task || '--'}</div>
-                  <div className="col-span-1 flex items-center justify-between gap-2 text-xs text-gray-500">
+                  <div className="col-span-4 truncate text-xs text-[var(--fg-dim)]" title={s.task || ''}>{s.task || '--'}</div>
+                  <div className="col-span-1 flex items-center justify-between gap-2 text-xs text-[var(--fg-dim)]">
                     <span className="truncate">{timeAgo(s.last_seen_at || s.updated_at)}</span>
                     {/* RFC-027 PR2 ⋮ lifecycle menu — desktop list. Defaults
                         to 'active' when lifecycleByAlias absent. */}
@@ -792,7 +788,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                         <div className="truncate text-sm font-medium text-[var(--fg)]">{s.alias}</div>
                         {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                       </div>
-                      <div className="truncate text-[11px] text-gray-500">{s.agent || '—'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
+                      <div className="truncate text-[11px] text-[var(--fg-dim)]">{s.agent || '—'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
                     </div>
                     <span className="inline-flex h-5 shrink-0 items-center gap-1.5 text-[11px] font-medium text-[var(--fg-muted)]">
                       <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: statusKey === 'working' ? 'var(--success)' : statusKey === 'offline' ? 'var(--offline)' : 'var(--accent)' }} />
@@ -808,7 +804,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                       attrsSnapshot={attrsByAlias[s.alias]}
                     />
                   </div>
-                  {s.task && <div className="truncate text-xs text-gray-500">{s.task}</div>}
+                  {s.task && <div className="truncate text-xs text-[var(--fg-muted)]">{s.task}</div>}
                 </div>
               </div>
             );

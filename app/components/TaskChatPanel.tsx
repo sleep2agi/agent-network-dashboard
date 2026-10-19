@@ -1696,7 +1696,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                   atBottomRef.current = true;
                   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="pointer-events-auto flex items-center gap-1 rounded-full border border-cyan-500/30 bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-cyan-300 shadow-lg shadow-black/40 hover:bg-cyan-500/10"
+                className="pointer-events-auto flex items-center gap-1 rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[11px] font-medium text-[var(--accent)] shadow-[var(--ds-shadow-overlay)] hover:bg-[var(--accent-tonal)]"
               >
                 ↓ {t(`${newBelow} 条新消息`, `${newBelow} new message${newBelow > 1 ? 's' : ''}`)}
               </button>
@@ -1710,12 +1710,12 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
             <div className="flex-1 relative">
               {/* @ mention dropdown */}
               {showMentions && filteredMentions.length > 0 && (
-                <div className="absolute bottom-full left-0 right-0 mb-1 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg shadow-xl shadow-black/50 overflow-hidden z-10 max-h-48 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 z-10 mb-1 max-h-48 overflow-hidden overflow-y-auto rounded-[10px] bg-[var(--bg-elevated)] shadow-[var(--ds-shadow-overlay)]">
                   {filteredMentions.map((node, i) => (
                     <button key={node} onClick={() => insertMention(node)}
                       onMouseEnter={() => setMentionIndex(i)}
                       aria-selected={i === mentionIndex}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${i === mentionIndex ? 'bg-cyan-500/10' : 'hover:bg-cyan-500/10'}`}>
+                      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors ${i === mentionIndex ? 'bg-[var(--accent-tonal)] text-[var(--fg)]' : 'hover:bg-[var(--hover-tint)]'}`}>
                       <AliasAvatar alias={node} size={16} />
                       <span className="text-[var(--fg-muted)]">{node}</span>
                     </button>
@@ -1730,10 +1730,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                 onPaste={handlePaste}
                 placeholder={`Message ${alias}...`}
                 rows={1}
-                className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-3 py-2.5 pr-24 text-base sm:px-4 sm:text-sm text-[var(--fg)] placeholder-[var(--fg-dim)] focus:border-cyan-500/40 focus:outline-none resize-none transition-colors"
+                className="min-h-11 w-full resize-none rounded-[10px] bg-[var(--col-inset)] px-3 py-2.5 pr-24 text-base text-[var(--fg)] transition-shadow placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none sm:px-4 sm:text-sm"
               />
               <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
-                <label className="inline-flex min-h-[44px] min-w-[44px] -my-3 -mx-1.5 items-center justify-center sm:min-h-0 sm:min-w-0 sm:m-0 sm:p-1 text-[var(--fg-dim)] hover:text-cyan-300 cursor-pointer rounded hover:bg-cyan-500/10" title={t('附加文件', 'Attach file')}>
+                <label className="-mx-1.5 -my-3 inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-[10px] text-[var(--fg-dim)] hover:bg-[var(--accent-tonal)] hover:text-[var(--accent)] sm:m-0 sm:min-h-0 sm:min-w-0 sm:p-1" title={t('附加文件', 'Attach file')}>
                   <input
                     type="file"
                     multiple
@@ -1756,9 +1756,9 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                 hit zone, 4 px short of the iOS 44 px guideline on
                 the short axis. Bump to inline-flex + min-h/w 44. */}
             <button onClick={send} aria-label="Send message" disabled={sending || (!input.trim() && attachedFiles.length === 0)}
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center bg-cyan-600 hover:bg-cyan-500 disabled:bg-[var(--border)] disabled:text-[var(--fg-dim)] text-[var(--fg)] rounded-xl transition-all shrink-0 active:scale-95">
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-[var(--accent)] text-[var(--accent-fg)] transition-colors hover:brightness-110 focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none active:brightness-95 disabled:cursor-not-allowed disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] disabled:hover:brightness-100">
               {sending ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-[color-mix(in_srgb,var(--accent-fg)_35%,transparent)] border-t-[var(--accent-fg)]" />
               ) : (
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
@@ -1767,8 +1767,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
             </button>
           </div>
           {uploadProgress && (
-            <div className="mt-1 flex items-center gap-1.5 text-[11px] text-cyan-300" role="status">
-              <span className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
+            <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[var(--accent)]" role="status">
+              <span className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-[color-mix(in_srgb,var(--accent)_30%,transparent)] border-t-[var(--accent)]" />
               {t(`上传附件 ${uploadProgress.done}/${uploadProgress.total}…`, `Uploading ${uploadProgress.done}/${uploadProgress.total}…`)}
             </div>
           )}

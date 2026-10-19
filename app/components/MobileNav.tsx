@@ -87,8 +87,8 @@ export function MobileNav() {
   };
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--bg)] px-1 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 lg:hidden">
-      <div className="mx-auto grid max-w-lg grid-cols-6 gap-1">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--bg-rail)] px-1 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1 lg:hidden">
+      <div className="mx-auto grid max-w-lg grid-cols-6 gap-0.5">
         {MOBILE_NAV_ITEMS.map(item => {
           const active = isActive(item.href);
           return (
@@ -97,12 +97,15 @@ export function MobileNav() {
               href={item.href}
               prefetch={false}
               aria-current={active ? 'page' : undefined}
-              className={`relative flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[11px] transition-colors ${
+              className={`relative flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-[10px] px-1 text-[11px] font-medium transition-colors ${
                 active
-                  ? 'bg-cyan-500/12 text-cyan-300 before:absolute before:top-0 before:left-3 before:right-3 before:h-0.5 before:rounded-full before:bg-cyan-400'
-                  : 'text-gray-500 active:bg-[#232327] active:text-gray-200'
+                  ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                  : 'text-[var(--fg-dim)] active:bg-[var(--bg-elevated)] active:text-[var(--fg)]'
               }`}
             >
+              {active ? (
+                <span aria-hidden className="absolute top-0 left-2.5 right-2.5 h-0.5 rounded-full bg-[var(--accent)]" />
+              ) : null}
               <span className="relative inline-flex">
                 <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />

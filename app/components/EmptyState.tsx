@@ -139,24 +139,24 @@ export function EmptyState({ variant = 'generic', title, sub, cta, compact = fal
 
   return (
     <div className={`text-center ${compact ? 'py-8' : 'py-16'} px-4`} role="status">
-      <div className="anet-empty-glyph inline-flex items-center justify-center mb-4 text-gray-500" aria-hidden>
+      <div className="anet-empty-glyph mb-4 inline-flex items-center justify-center text-[var(--fg-dim)]" aria-hidden>
         <Glyph variant={variant} size={iconSize} />
       </div>
-      <h3 className={`font-medium text-gray-300 ${compact ? 'text-sm' : 'text-base'}`}>{headline}</h3>
+      <h3 className={`font-medium text-[var(--fg)] ${compact ? 'text-sm' : 'text-[15px] leading-[22px]'}`}>{headline}</h3>
       {subcopy && (
-        <p className={`text-gray-500 ${compact ? 'text-xs mt-1.5' : 'text-sm mt-2'} max-w-md mx-auto leading-relaxed`}>
+        <p className={`text-[var(--fg-muted)] ${compact ? 'mt-1.5 text-xs' : 'mt-2 text-sm'} mx-auto max-w-md leading-relaxed`}>
           {subcopy}
         </p>
       )}
       {cta && (
         <div className="mt-4">
           {cta.href ? (
-            <Link href={cta.href} className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300">
+            <Link href={cta.href} className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] hover:underline">
               {cta.label}
               <span aria-hidden>→</span>
             </Link>
           ) : (
-            <button onClick={cta.onClick} className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300">
+            <button onClick={cta.onClick} className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] hover:underline">
               {cta.label}
               <span aria-hidden>→</span>
             </button>
@@ -172,7 +172,7 @@ export function EmptyState({ variant = 'generic', title, sub, cta, compact = fal
  *  floating in the content column. */
 function EmptyCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="max-w-2xl mx-auto rounded-xl border border-[#26262b] bg-[#161618] shadow-lg shadow-black/20">
+    <div className="mx-auto max-w-2xl rounded-[10px] bg-[var(--bg-secondary)] shadow-[var(--ds-shadow-card)]">
       {children}
     </div>
   );
@@ -227,7 +227,7 @@ export function NodesEmptyState({
   return (
     <EmptyCard>
       <div className="text-center py-16 px-4" role="status">
-        <div className="anet-empty-glyph inline-flex items-center justify-center mb-4 text-gray-500" aria-hidden>
+        <div className="anet-empty-glyph mb-4 inline-flex items-center justify-center text-[var(--fg-dim)]" aria-hidden>
           <svg viewBox="0 0 64 64" width={56} height={56}>
             <g stroke="currentColor" strokeWidth="1.5" fill="none">
               <rect x="10" y="20" width="44" height="28" rx="2" />
@@ -239,8 +239,8 @@ export function NodesEmptyState({
             </g>
           </svg>
         </div>
-        <h3 className="font-medium text-gray-300 text-base">Spin up your first agent</h3>
-        <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto leading-relaxed">
+        <h3 className="text-[15px] font-medium leading-[22px] text-[var(--fg)]">Spin up your first agent</h3>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--fg-muted)]">
           Run this in a fresh terminal to register an agent with this CommHub:
         </p>
         <div className="mt-4 inline-block">
@@ -250,7 +250,7 @@ export function NodesEmptyState({
             copy the command and stare at an empty screen not knowing
             what to wait for. The page polls every 5s, so the node
             really does appear by itself. */}
-        <p className="text-gray-600 text-xs mt-3 max-w-md mx-auto">
+        <p className="mx-auto mt-3 max-w-md text-xs text-[var(--fg-dim)]">
           Once the agent connects, it appears here automatically within a
           few seconds — no refresh needed.
         </p>
@@ -259,7 +259,7 @@ export function NodesEmptyState({
             href="https://anet.sh"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-cyan-300"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--fg-muted)] hover:text-[var(--accent)]"
           >
             Full quickstart guide
             <span aria-hidden>→</span>
@@ -282,7 +282,7 @@ function QuickstartCommand({ cmd }: { cmd: string }) {
     } catch {}
   };
   return (
-    <div className="anet-empty-cmd flex items-start sm:items-center gap-2 bg-[#0e0e10] border border-[#26262b] rounded-lg pl-4 pr-1.5 py-1.5 text-xs sm:text-sm">
+    <div className="anet-empty-cmd flex items-start gap-2 rounded-[10px] bg-[var(--col-inset)] py-1.5 pr-1.5 pl-4 text-xs sm:items-center sm:text-sm">
       {/* #209 R44: long quickstart commands (e.g. the `npm install -g …`
           variant) overflowed the empty-state card horizontally on phones
           because <code> defaults to white-space:pre. break-all on mobile
@@ -290,12 +290,12 @@ function QuickstartCommand({ cmd }: { cmd: string }) {
           so desktop monospace lines stay clean. items-start on phones
           aligns the Copy button to the top so a wrapped 2-line command
           doesn't bottom-anchor the button. */}
-      <code className="text-cyan-300 font-mono select-all min-w-0 break-all sm:break-normal">{cmd}</code>
+      <code className="min-w-0 font-mono break-all text-[var(--accent)] select-all sm:break-normal">{cmd}</code>
       <button
         type="button"
         onClick={onCopy}
         aria-label={copied ? 'Copied' : 'Copy command'}
-        className="shrink-0 rounded-md px-2 py-1.5 text-[11px] text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] transition-colors"
+        className="shrink-0 rounded-md px-2 py-1.5 text-[11px] font-medium text-[var(--fg-dim)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
       >
         {copied ? (
           <span className="flex items-center gap-1 text-green-400">

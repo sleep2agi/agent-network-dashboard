@@ -259,9 +259,9 @@ export function Sidebar({
               data-badge={badge > 0 ? String(badge) : undefined}
               className="relative flex items-center justify-center w-11 h-11 group anet-nav-item-rail"
             >
-              {/* 3px left indicator bar for selected — 20px length, 2px
-                  round, matches spec. Positioned absolute so it hangs
-                  off the container without moving the icon. */}
+              {active ? (
+                <span aria-hidden className="pointer-events-none absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-[var(--accent)]" />
+              ) : null}
               <span
                 className={`flex items-center justify-center w-10 h-10 rounded-[10px] transition-colors ${
                   active

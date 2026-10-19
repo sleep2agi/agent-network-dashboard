@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { AliasAvatar } from '../components/AliasAvatar';
 import { TaskPanel } from '../components/requirement-chrome';
 import {
   agentCount,
@@ -172,12 +173,15 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
               {agents.map((agent) => (
                 <li key={agent.nodeId}>
                   <div data-testid={`agent-org-agent-${agent.nodeId}`} className="flex items-center justify-between gap-3 rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2">
-                    <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <AliasAvatar alias={agent.alias} size={28} />
+                      <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{agent.alias}</div>
                       <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]">
                         {agent.demo
                           ? (agent.ownerName ? `仍由 ${agent.ownerName} 负责，没有保存` : '仍然没有负责人，没有保存')
                           : (agent.ownerName ? `负责人 ${agent.ownerName}` : '没有负责人')}
+                      </div>
                       </div>
                     </div>
                     {agent.demo ? <span className="inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-[11px] font-medium text-[var(--warning)]" style={{ background: 'color-mix(in srgb, var(--warning) 14%, transparent)' }}>演示</span> : null}

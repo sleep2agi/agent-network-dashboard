@@ -14,7 +14,6 @@ import { TaskList, type TaskListItem } from '../components/TaskList';
 import { TaskDetail } from '../components/TaskDetail';
 import {
   TASK_STATUSES,
-  STATUS_CHIP_CLASS,
   STATUS_DOT_HEX,
   STATUS_BAR_CLASS,
 } from '../lib/status';
@@ -199,10 +198,10 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         key={s || 'all'}
                         onClick={() => setFilterStatus(s)}
                         disabled={cnt === 0 && s !== '' && !isActive}
-                        className={`px-2.5 py-1 rounded-md text-xs transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
+                        className={`flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
                           isActive
-                            ? `${STATUS_CHIP_CLASS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
-                            : 'text-[var(--fg-dim)] hover:text-[var(--fg)] hover:bg-[var(--hover-tint)]'
+                            ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                            : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
                         }`}
                       >
                         {s && (

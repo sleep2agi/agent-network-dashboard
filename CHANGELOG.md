@@ -24,6 +24,7 @@ Investigated against `sleep2agi/agent-network-app` desktop **0.2.228** (tag `des
 - `/teams` is the Agent organization tree: departments indent by parent, a department opens the agents owned there (including an unassigned bucket), and a demo move stays in the browser. Agent teams remain a separate read-only list.
 - The home topology (`TopoGraph`) is a Dashboard-owned chart. The desktop client has no equivalent view, so this canvas is maintained here (`data-topo-maintainer="dashboard"`, revision `dashboard-topo-2026-10-11`). A large offline ring fits the frame, a rename follows hover and pinned edges as well as the open chat, halo probes match the painted rest opacity, and a fleet that has entirely aged out shows an empty state instead of a blank canvas.
 - Tasks, the organization tree, and the home topology toggle use the same dark card stack as the board: page background, a 10px secondary card with no border, an elevated nested row, and the accent tonal fill for the selected row.
+- The same stack now covers the home fleet chips and KPI cards, the bottom tab and icon-rail active state (accent fill plus an accent indicator), Nodes online/total chips and the List/Grid switch, the chat composer and send button, leaderboard rows (initial avatar, elevated row, name/meta type), and the admin, audit log, providers, and token shells. Surfaces that are not wired to the Hub still carry the「演示数据」tag.
 
 ### Still not connected
 

@@ -50,20 +50,20 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
            presence is unknown, the "0 online" copy would be a false
            assertion — swap to '?' so the row reads honestly and pairs
            with the HealthBanner alert above. */
-        <div className="anet-stat-strip flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 border-t border-b border-[#26262b] py-2">
+        <div className="anet-stat-strip flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-4 py-2 text-xs text-[var(--fg-dim)]">
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
-            <span className="text-gray-300 tabular-nums">{onlineDisplay}</span> online
+            <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--offline)]" />
+            <span className="tabular-nums text-[var(--fg)]">{onlineDisplay}</span> online
           </span>
-          <span className="text-gray-700">·</span>
+          <span className="text-[var(--fg-dim)]">·</span>
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
-            <span className="text-gray-300 tabular-nums">0</span> working
+            <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--offline)]" />
+            <span className="tabular-nums text-[var(--fg)]">0</span> working
           </span>
-          <span className="text-gray-700">·</span>
+          <span className="text-[var(--fg-dim)]">·</span>
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
-            <span className="text-gray-300 tabular-nums">0</span> registered
+            <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--offline)]" />
+            <span className="tabular-nums text-[var(--fg)]">0</span> registered
           </span>
         </div>
       ) : (
@@ -72,28 +72,28 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
             populated state reuses the round-72 thin strip instead of
             the card grid — one quiet line of numbers, ~70px reclaimed.
             Cards return from sm: up where they have room to breathe. */}
-        <div className="sm:hidden anet-stat-strip flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 border-t border-b border-[#26262b] py-2">
+        <div className="anet-stat-strip flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-4 py-2 text-xs text-[var(--fg-dim)] sm:hidden">
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className={`inline-block w-1.5 h-1.5 rounded-full ${presenceUnknown ? 'bg-gray-500' : 'bg-green-400'}`} />
-            <span className="text-gray-200 tabular-nums">{onlineDisplay}</span> online
+            <span aria-hidden className={`inline-block h-1.5 w-1.5 rounded-full ${presenceUnknown ? 'bg-[var(--offline)]' : 'bg-[var(--success)]'}`} />
+            <span className="tabular-nums text-[var(--fg)]">{onlineDisplay}</span> online
           </span>
           {working > 0 && (
             <>
-              <span className="text-gray-700">·</span>
+              <span>·</span>
               <span className="inline-flex items-center gap-1.5">
-                <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 anet-brand-pulse" />
-                <span className="text-gray-200 tabular-nums">{working}</span> working
+                <span aria-hidden className="anet-brand-pulse inline-block h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
+                <span className="tabular-nums text-[var(--fg)]">{working}</span> working
               </span>
             </>
           )}
-          <span className="text-gray-700">·</span>
+          <span>·</span>
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
-            <span className="text-gray-200 tabular-nums">{offlineDisplay}</span> offline
+            <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--offline)]" />
+            <span className="tabular-nums text-[var(--fg)]">{offlineDisplay}</span> offline
           </span>
-          <span className="text-gray-700">·</span>
+          <span>·</span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="text-gray-200 tabular-nums">{total}</span> total
+            <span className="tabular-nums text-[var(--fg)]">{total}</span> total
           </span>
         </div>
         {/* Populated state, sm: up. #217 S2 (less is more): the Working
@@ -104,27 +104,27 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
             value={onlineDisplay}
             label="Online"
             sub={presenceUnknown ? 'presence unavailable' : `${onlinePercent}% of fleet`}
-            color={presenceUnknown ? 'text-gray-400' : 'text-green-400'}
+            color={presenceUnknown ? 'text-[var(--fg-muted)]' : 'text-[var(--success)]'}
           />
           {working > 0 && (
             <StatCard
               value={working}
               label="Working"
               sub={!presenceUnknown && online > 0 ? `${Math.round((working / online) * 100)}% utilization` : '--'}
-              color="text-cyan-400"
+              color="text-[var(--accent)]"
             />
           )}
           <StatCard
             value={offlineDisplay}
             label="Offline"
             sub={presenceUnknown ? 'presence unavailable' : (total - online === 0 ? 'All systems go' : `${total - online} disconnected`)}
-            color="text-gray-400"
+            color="text-[var(--fg-muted)]"
           />
           <StatCard
             value={total}
             label="Total"
             sub="Registered nodes"
-            color="text-white"
+            color="text-[var(--fg)]"
           />
         </div>
         </>
@@ -141,10 +141,10 @@ function StatCard({ value, label, sub, color }: {
   // Surfaces are now neutral (shared border + bg); color survives only
   // on the number itself. Mobile density values are #209 R39.
   return (
-    <div className="anet-stat-card rounded-xl border border-[#26262b] bg-[#161618] px-3 sm:px-4 py-2.5 sm:py-3 transition-all">
-      <div className={`text-2xl sm:text-3xl font-bold ${color} tabular-nums leading-tight`}>{value}</div>
-      <div className="text-xs sm:text-sm text-gray-300 mt-0.5">{label}</div>
-      <div className="text-[11px] sm:text-xs text-gray-500 mt-1">{sub}</div>
+    <div className="anet-stat-card rounded-[10px] bg-[var(--bg-secondary)] px-3 py-2.5 shadow-[var(--ds-shadow-card)] transition-colors hover:bg-[var(--bg-elevated)] sm:px-4 sm:py-3">
+      <div className={`text-2xl font-semibold tabular-nums leading-tight sm:text-[28px] ${color}`}>{value}</div>
+      <div className="mt-0.5 text-[13px] font-medium text-[var(--fg)]">{label}</div>
+      <div className="mt-1 text-[11px] text-[var(--fg-dim)] sm:text-xs">{sub}</div>
     </div>
   );
 }

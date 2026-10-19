@@ -20,11 +20,11 @@ interface AuditLog {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  register: 'bg-green-500/10 text-green-300 border-green-500/20',
-  login: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-  login_failed: 'bg-red-500/10 text-red-300 border-red-500/20',
-  create_network: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
-  send_task: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+  register: 'text-[var(--success)]',
+  login: 'text-[var(--accent)]',
+  login_failed: 'text-[var(--danger)]',
+  create_network: 'text-[var(--fg)]',
+  send_task: 'text-[var(--accent)]',
 };
 
 /** 2px left-rail stripe color per audit action — reuses the r32 server-logs
@@ -32,11 +32,11 @@ const ACTION_COLORS: Record<string, string> = {
  *  registers and logins without users reading every chip. Inline hex
  *  prevents Tailwind v4 from purging dynamic class names. */
 const ACTION_STRIPE: Record<string, string> = {
-  register: '#4ade80',
-  login: '#60a5fa',
-  login_failed: '#ef4444',
-  create_network: '#a78bfa',
-  send_task: '#22d3ee',
+  register: 'var(--success)',
+  login: 'var(--accent)',
+  login_failed: 'var(--danger)',
+  create_network: 'var(--fg-muted)',
+  send_task: 'var(--info)',
 };
 
 export default function LogsPage() {
@@ -89,7 +89,7 @@ export default function LogsPage() {
           status tabs / Overview agent filter. Each chip carries its
           ACTION_STRIPE dot so the visual key matches the per-row left
           rail. Counts come from the currently loaded log set. */}
-      <div className="mb-4 sm:mb-6 flex flex-wrap items-center gap-1 anet-tabstrip-wrap overflow-x-auto sm:overflow-x-visible">
+      <div className="anet-tabstrip-wrap mb-4 flex flex-wrap items-center gap-0.5 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-0.5 sm:mb-6 sm:overflow-x-visible">
         {(() => {
           const counts: Record<string, number> = {};
           logs.forEach(l => { counts[l.action] = (counts[l.action] || 0) + 1; });
@@ -110,15 +110,15 @@ export default function LogsPage() {
                 type="button"
                 onClick={() => setFilterAction(c.key)}
                 disabled={count === 0 && c.key !== ''}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 whitespace-nowrap ${
+                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
                   isActive
-                    ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
-                    : 'text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] border border-transparent'
+                    ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                    : 'text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]'
                 }`}
               >
                 {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}
                 <span>{c.label}</span>
-                <span className={`text-[11px] tabular-nums ${isActive ? 'text-cyan-400' : 'text-gray-600'}`}>{count}</span>
+                <span className={`text-[11px] tabular-nums ${isActive ? 'text-[var(--accent)]' : 'text-[var(--fg-dim)]'}`}>{count}</span>
               </button>
             );
           });
@@ -130,7 +130,7 @@ export default function LogsPage() {
         // and give them a clickable recovery affordance.
         const isAuth = /unauthor|401|forbidden|403|admin/i.test(error);
         return (
-          <div className="anet-warn-chip bg-yellow-900/20 border border-yellow-800/40 text-yellow-300 px-4 py-3 rounded-lg mb-6 text-sm flex items-start gap-3" role="alert">
+          <div className="mb-6 flex items-start gap-3 rounded-[10px] px-4 py-3 text-sm text-[var(--warning)]" role="alert" style={{ background: 'color-mix(in srgb, var(--warning) 14%, transparent)' }}>
             <span aria-hidden className="text-base leading-none">⚠</span>
             <div className="flex-1">
               {isAuth ? (
@@ -159,7 +159,7 @@ export default function LogsPage() {
 
       {loading ? (
         <div className="animate-pulse space-y-2">
-          {[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-gray-800/20 rounded-lg" />)}
+          {[1,2,3,4,5].map(i => <div key={i} className="h-14 rounded-[10px] bg-[var(--bg-secondary)]" />)}
         </div>
       ) : logs.length === 0 ? (
         <EmptyState variant="logs" />
@@ -172,7 +172,7 @@ export default function LogsPage() {
           {logs.map(log => {
             const userName = log.username || log.user_id;
             return (
-            <div key={log.id} className="relative bg-[#161618] border border-[#26262b] rounded-lg pl-3 pr-3 py-2 sm:pl-4 sm:pr-4 sm:py-3 hover:border-[#3a3a41] transition-colors overflow-hidden">
+            <div key={log.id} className="relative overflow-hidden rounded-[10px] bg-[var(--bg-secondary)] py-2 pr-3 pl-3 transition-colors hover:bg-[var(--bg-elevated)] sm:py-3 sm:pr-4 sm:pl-4">
               {/* 2px left rail per action (round 33) — failed logins, token
                   rotations spike out of a wall of register/login rows. */}
               <span
@@ -181,21 +181,21 @@ export default function LogsPage() {
                 style={{ backgroundColor: ACTION_STRIPE[log.action] || 'transparent' }}
               />
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className={`text-xs px-2 py-0.5 rounded-md border ${ACTION_COLORS[log.action] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                <span className={`inline-flex h-5 items-center rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium ${ACTION_COLORS[log.action] || 'text-[var(--fg-muted)]'}`}>
                   {log.action}
                 </span>
                 {userName && <AliasAvatar alias={userName} size={16} />}
-                <span className="text-sm text-gray-200 font-medium">{userName}</span>
+                <span className="text-sm font-medium text-[var(--fg)]">{userName}</span>
                 {log.target_type && (
                   <>
-                    <span className="text-xs text-gray-600">&rarr;</span>
-                    <span className="text-xs text-gray-400">{log.target_type}{log.target_id ? `:${log.target_id.slice(0, 12)}` : ''}</span>
+                    <span className="text-xs text-[var(--fg-dim)]">&rarr;</span>
+                    <span className="text-xs text-[var(--fg-muted)]">{log.target_type}{log.target_id ? `:${log.target_id.slice(0, 12)}` : ''}</span>
                   </>
                 )}
-                <span className="text-xs text-gray-600 ml-auto">{timeAgo(log.created_at)}</span>
+                <span className="ml-auto text-xs text-[var(--fg-dim)]">{timeAgo(log.created_at)}</span>
               </div>
-              {log.detail && <div className="text-xs text-gray-500">{log.detail}</div>}
-              {log.ip && log.ip !== 'unknown' && <div className="text-[11px] text-gray-700">IP: {log.ip}</div>}
+              {log.detail && <div className="text-xs text-[var(--fg-muted)]">{log.detail}</div>}
+              {log.ip && log.ip !== 'unknown' && <div className="text-[11px] text-[var(--fg-dim)]">IP: {log.ip}</div>}
             </div>
             );
           })}

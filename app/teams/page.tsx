@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNetworkId } from '../lib/network-context';
 import { PendingNotice } from '../components/PendingNotice';
-import { TaskCard } from '../components/requirement-chrome';
+import { SectionHeading, TaskPanel } from '../components/requirement-chrome';
 import { OrgTree, type AgentOrgData } from './OrgTree';
 
 type NodeRef = { node_id?: string; alias?: string | null; display_name?: string | null };
@@ -96,16 +96,15 @@ export default function TeamsPage() {
         {org?.status === 'missing' ? <p className="text-sm text-[var(--fg-muted)]">这个 Hub 还没有部门树，也没有人员通讯录。</p> : null}
         {org?.status === 'ready' ? <OrgTree key={networkId || 'default'} data={org.data} /> : null}
 
-        <section className="space-y-2">
-          <h2 className="text-sm font-medium">Agent 团队</h2>
-          <p className="text-[11px] text-[var(--fg-dim)]">团队是另一棵树，和上面的部门不是同一份数据。</p>
-          {error ? <p className="text-xs text-[var(--danger)]">{error}</p> : null}
-          {teams && teams.length === 0 ? <p className="text-sm text-[var(--fg-dim)]">这个网络还没有 Agent 团队。</p> : null}
+        <TaskPanel className="space-y-2">
+          <SectionHeading title="Agent 团队" hint="只读" />
+          <p className="px-1.5 text-[11px] text-[var(--fg-dim)]">团队是另一棵树，和上面的部门不是同一份数据。</p>
+          {error ? <p className="px-1.5 text-xs text-[var(--danger)]">{error}</p> : null}
+          {teams && teams.length === 0 ? <p className="px-1.5 py-4 text-sm text-[var(--fg-dim)]">这个网络还没有 Agent 团队。</p> : null}
           <ul className="space-y-2">
             {(teams || []).map((team) => (
-              <li key={team.id}>
-                <TaskCard>
-                  <div className="text-sm font-medium">
+              <li key={team.id} className="rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2.5">
+                  <div className="text-sm font-medium text-[var(--fg)]">
                     {team.name}
                     {team.parent_id ? <span className="ml-2 font-normal text-[var(--fg-dim)]">上级 {byId.get(team.parent_id)?.name || ''}</span> : null}
                   </div>
@@ -118,11 +117,10 @@ export default function TeamsPage() {
                       {(team.members || []).map((member) => labelOf(member)).filter(Boolean).join('、')}
                     </div>
                   ) : null}
-                </TaskCard>
               </li>
             ))}
           </ul>
-        </section>
+        </TaskPanel>
       </div>
     </main>
   );

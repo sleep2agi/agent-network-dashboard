@@ -250,17 +250,17 @@ export default function Dashboard() {
         ];
         return (
           <>
-            <div className="mb-3 flex flex-wrap items-center gap-1">
+            <div className="mb-3 inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5">
               {chips.map(c => (
                 <button
                   key={c.key}
                   type="button"
                   onClick={() => setAgentFilter(c.key)}
                   disabled={counts[c.key] === 0 && c.key !== 'all'}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                  className={`flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
                     agentFilter === c.key
-                      ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
-                      : 'text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] border border-transparent'
+                      ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                      : 'text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]'
                   }`}
                 >
                   {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}
@@ -282,8 +282,8 @@ export default function Dashboard() {
               ))}
             </div>
             {filtered.length === 0 && (
-              <div className="mt-4 text-center text-xs text-gray-600">
-                No agents match &quot;{agentFilter}&quot; — <button onClick={() => setAgentFilter('all')} className="underline hover:text-gray-400">Show all</button>
+              <div className="mt-4 text-center text-xs text-[var(--fg-dim)]">
+                No agents match &quot;{agentFilter}&quot; — <button onClick={() => setAgentFilter('all')} className="font-medium text-[var(--accent)] hover:underline">Show all</button>
               </div>
             )}
           </>
@@ -295,10 +295,10 @@ export default function Dashboard() {
           and Vincent flagged it as misleading more than once. The SSE /
           polling dot stays: it's a real connection-status indicator, not
           a sales surface. */}
-      <div className="mt-8 text-center text-xs text-gray-600 flex items-center justify-center gap-2 flex-wrap">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-center text-xs text-[var(--fg-dim)]">
         {sseSupported && (
           <>
-            <span className={`w-1.5 h-1.5 rounded-full ${sseConnected ? 'bg-green-400' : 'bg-gray-600'}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${sseConnected ? 'bg-[var(--success)]' : 'bg-[var(--offline)]'}`} />
             {sseConnected ? 'SSE live' : 'SWR polling'}
           </>
         )}
