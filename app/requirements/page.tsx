@@ -74,6 +74,9 @@ function RequirementsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [needsLogin, setNeedsLogin] = useState(false);
+  // #1633 follow-up: the list used to hard-stop at 200 rows with has_more ignored.
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
 
   const status = searchParams.get('status') || '';
   const tag = searchParams.get('tag') || '';
@@ -91,7 +94,9 @@ function RequirementsContent() {
     router.replace(qs ? `/requirements?${qs}` : '/requirements', { scroll: false });
   }, [router, searchParams]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts: { cursor?: string | null; append?: boolean } = {}) => {
+    const nextCursor = opts.cursor ?? null;
+    const append = opts.append === true;
     setLoading(true);
     setError('');
     try {
@@ -100,19 +105,23 @@ function RequirementsContent() {
       if (tag) params.set('tag', tag);
       if (q) params.set('q', q);
       params.set('limit', '200');
+      if (nextCursor) params.set('cursor', nextCursor);
       const res = await fetch(`/api/hub/requirements?${params.toString()}`, { cache: 'no-store' });
-      if (res.status === 401) { setNeedsLogin(true); setRows([]); return; }
+      if (res.status === 401) { setNeedsLogin(true); if (!append) setRows([]); return; }
       const data = await res.json();
       if (!res.ok || !data.ok) {
         setError(data?.error || `hub_${res.status}`);
-        setRows([]);
+        if (!append) setRows([]);
         return;
       }
       setNeedsLogin(false);
-      setRows(data.requirements || []);
+      const incoming = (data.requirements || []) as Requirement[];
+      setRows(prev => (append ? [...prev, ...incoming] : incoming));
+      setCursor(typeof data.next_cursor === 'string' ? data.next_cursor : null);
+      setHasMore(data.has_more === true && typeof data.next_cursor === 'string');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'fetch failed');
-      setRows([]);
+      if (!append) setRows([]);
     } finally {
       setLoading(false);
     }
@@ -264,6 +273,17 @@ function RequirementsContent() {
               );
             })}
           </ul>
+        )}
+
+        {hasMore && (
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => load({ cursor, append: true })}
+            className="mx-auto mt-4 block rounded-lg border border-[var(--border)] px-4 py-2 text-xs text-gray-400 hover:text-gray-200 disabled:opacity-50"
+          >
+            {loading ? '加载中…' : '加载更多'}
+          </button>
         )}
       </div>
     </div>
