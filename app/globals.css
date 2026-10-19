@@ -49,21 +49,21 @@ body {
    @theme block can point at them without a var(--font-sans) cycle. */
 :root,
 [data-theme="cyber"] {
-  --bg: #111113;
-  --bg-rail: #0d0d0f;
-  --bg-secondary: #18181b;
-  --bg-elevated: #1f1f23;
-  --bg-overlay: #1c1c20;
-  --border: #242428;
-  --border-strong: #2e2e33;
-  --border-hover: #2e2e33;
-  --fg: #ededef;
-  --fg-muted: #a1a1aa;
-  --fg-dim: #8b8b95;
+  --bg: #0e0e11;
+  --bg-rail: #121216;
+  --bg-secondary: #1a1a1f;
+  --bg-elevated: #26262d;
+  --bg-overlay: #2c2c34;
+  --border: #2c2c33;
+  --border-strong: #3a3a44;
+  --border-hover: #3a3a44;
+  --fg: #f4f4f6;
+  --fg-muted: #a8a8b3;
+  --fg-dim: #7a7a86;
 
-  --accent: #5e9bff;
-  --accent-fg: #0b0b0d;
-  --accent-tonal: #172a48;
+  --accent: #6aa6ff;
+  --accent-fg: #071018;
+  --accent-tonal: #1c3358;
 
   --success: #22c55e;
   --online: #22c55e;
@@ -72,7 +72,7 @@ body {
   --warn: #f59e0b;
   --danger: #ef4444;
   --error: #ef4444;
-  --info: #5e9bff;
+  --info: #6aa6ff;
 
   --prio-high: #f87171;
   --prio-normal: #a1a1aa;
@@ -96,7 +96,8 @@ body {
   --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-full: 999px;
 
   --hairline: 1px solid var(--border);
-  --ds-shadow-card: none;
+  --ds-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --ds-shadow-bar: 0 -8px 24px rgba(0, 0, 0, 0.35);
   --ds-shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border-strong);
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
   --ease: 150ms cubic-bezier(0.2, 0, 0, 1);
@@ -106,9 +107,9 @@ body {
   --content-max: 1200px;
   --drawer-width: 560px;
 
-  --scrollbar: #2e2e33;
-  --scrollbar-hover: #3a3a41;
-  --code-bg: #1f1f23;
+  --scrollbar: #3a3a44;
+  --scrollbar-hover: #4a4a54;
+  --code-bg: #26262d;
   color-scheme: dark;
 }
 @theme inline {
@@ -1522,42 +1523,43 @@ joining the R145
    ════════════════════════════════════════════════════════════ */
 
 [data-theme="light"] {
-  --bg: #f6f7f9;
-  --bg-rail: #eceef2;
+  --bg: #f3f4f6;
+  --bg-rail: #e7e9ee;
   --bg-secondary: #ffffff;
-  --bg-elevated: #f1f2f5;
+  --bg-elevated: #eef1f5;
   --bg-overlay: #ffffff;
-  --border: #e6e8ec;
-  --border-strong: #d3d7de;
-  --border-hover: #d3d7de;
-  --fg: #1d2026;
-  --fg-muted: #5d6470;
-  --fg-dim: #636a75;
+  --border: #e2e5ea;
+  --border-strong: #cfd3da;
+  --border-hover: #c5cad3;
+  --fg: #16181d;
+  --fg-muted: #5c6370;
+  --fg-dim: #6e7582;
 
-  --accent: #1b65db;
+  --accent: #1d4ed8;
   --accent-fg: #ffffff;
-  --accent-tonal: #edf3fe;
+  --accent-tonal: #e8f0fe;
 
-  --success: #16a34a;
-  --online: #16a34a;
-  --offline: #9ca3af;
-  --warning: #d97706;
-  --warn: #d97706;
+  --success: #15803d;
+  --online: #15803d;
+  --offline: #8b919c;
+  --warning: #b45309;
+  --warn: #b45309;
   --danger: #dc2626;
   --error: #dc2626;
-  --info: #1b65db;
+  --info: #1d4ed8;
 
   --prio-high: #dc2626;
-  --prio-normal: #5d6470;
-  --prio-low: #2563eb;
-  --prio-lowest: #9ca3af;
+  --prio-normal: #5c6370;
+  --prio-low: #1d4ed8;
+  --prio-lowest: #8b919c;
 
-  --ds-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --ds-shadow-overlay: 0 8px 24px rgba(16, 24, 40, 0.12);
+  --ds-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05), 0 0 0 1px rgba(16, 24, 40, 0.06);
+  --ds-shadow-bar: 0 -4px 16px rgba(16, 24, 40, 0.06);
+  --ds-shadow-overlay: 0 12px 32px rgba(16, 24, 40, 0.12), 0 0 0 1px rgba(16, 24, 40, 0.06);
 
-  --scrollbar: #d4d8df;
-  --scrollbar-hover: #a1a8b5;
-  --code-bg: #f1f2f5;
+  --scrollbar: #cfd3da;
+  --scrollbar-hover: #8b919c;
+  --code-bg: #eef1f5;
   color-scheme: light;
 }
 
@@ -2157,13 +2159,13 @@ html[data-skin="slack"] [data-topo-showcase] [class*="bg-cyan"] { background-col
   --col-nav:  #0A0C14;
   --col-list: #0F1320;
   --col-chat: #141826;
-  --col-inset: #0A0D18;
+  --col-inset: #1c2434;
   --col-line:        rgba(255, 255, 255, 0.06);
   --col-line-strong: rgba(255, 255, 255, 0.08);
-  --col-hairline: #1e1e22;
+  --col-hairline: #2a3144;
   --badge-muted-bg: #475569;
   --badge-muted-fg: #CBD5E1;
-  --hl:          #5e9bff; /* 选中指示 = spec accent */
+  --hl:          #6aa6ff; /* 选中指示 = spec accent */
   --menu-bg:     #1E293B; /* 浮层菜单底 (右键/溢出) */
   --bubble-in:   #1E293B; /* 聊天气泡: 对方 */
   --bubble-out:  #1E3A5F; /* 聊天气泡: 己方 */
@@ -2171,26 +2173,26 @@ html[data-skin="slack"] [data-topo-showcase] [class*="bg-cyan"] { background-col
   /* batch 3: 深色=白薄涂 (与旧 bg-white/5|10 计算值恒等), 浅色=黑薄涂 */
   --hover-tint:        rgba(255, 255, 255, 0.05);
   --hover-tint-strong: rgba(255, 255, 255, 0.10);
-  --code-fg:           #5e9bff; /* spec accent, not cyan */
+  --code-fg:           #6aa6ff; /* spec accent, not cyan */
 }
 [data-theme="light"] {
-  --col-nav:  #F5F6F8;
+  --col-nav:  #E7E9EE;
   --col-list: #FAFAFC;
   --col-chat: #FFFFFF;
-  --col-inset: #F1F3F7;
+  --col-inset: #E7EBF1;
   --col-line:        rgba(0, 0, 0, 0.06);
   --col-line-strong: rgba(0, 0, 0, 0.08);
-  --col-hairline: #e9ebf0;
+  --col-hairline: #e2e5ea;
   --badge-muted-bg: #CBD5E1;
   --badge-muted-fg: #334155;
-  --hl:          #1b65db; /* spec accent on light */
+  --hl:          #1d4ed8; /* spec accent on light */
   --menu-bg:     #ffffff;
   --bubble-in:   #F1F5F9;
   --bubble-out:  #DBEAFE;
   --control-off: #CBD5E1;
   --hover-tint:        rgba(0, 0, 0, 0.05);
   --hover-tint-strong: rgba(0, 0, 0, 0.10);
-  --code-fg:           #1b65db; /* spec accent on the light code surface */
+  --code-fg:           #1d4ed8; /* spec accent on the light code surface */
 }
 /* Sidebar shim (file not in this task's scope) */
 [data-theme="light"] .bg-\[\#0A0C14\] { background-color: var(--col-nav) !important; }

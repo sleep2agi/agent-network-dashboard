@@ -60,8 +60,8 @@ export default function SettingsPage() {
             <h2 className={headingClass}>Theme</h2>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {([
-                { id: 'cyber', label: 'Dark', swatch: '#0b0b0d' },
-                { id: 'light', label: 'Light', swatch: '#f6f7f9' },
+                { id: 'cyber', label: 'Dark', swatch: '#0e0e11' },
+                { id: 'light', label: 'Light', swatch: '#f3f4f6' },
                 { id: 'slack', label: 'Slack', swatch: '#3f0e40' },
               ] as const).map(t => (
                 <button

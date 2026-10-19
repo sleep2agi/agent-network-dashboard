@@ -152,7 +152,7 @@ export default function Dashboard() {
           only two numbers that drive action are running and failed;
           everything else lives on /tasks. */}
       {Object.keys(taskStats).length > 0 && (
-        <section className="mb-4 flex h-8 items-center justify-between rounded-[10px] bg-[var(--bg-secondary)] px-4 text-xs sm:mb-6">
+        <section className="mb-4 flex h-10 items-center justify-between rounded-[10px] bg-[var(--bg-secondary)] px-4 text-[13px] shadow-[var(--ds-shadow-card)] sm:mb-6">
           <div className="tabular-nums text-[var(--fg-muted)]">
             <span className={taskStats['running'] ? 'text-[var(--success)]' : ''}>{taskStats['running'] || 0} running</span>
             <span className="text-[var(--fg-dim)]"> &middot; </span>
@@ -193,7 +193,7 @@ export default function Dashboard() {
         <div className="hidden lg:flex justify-center mb-4">
           <button
             onClick={() => setShowTopo(!showTopo)}
-            className="cursor-pointer rounded-[10px] bg-[var(--bg-secondary)] px-4 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
+            className="inline-flex h-9 cursor-pointer items-center rounded-[10px] bg-[var(--bg-secondary)] px-4 text-[13px] font-medium text-[var(--fg-muted)] shadow-[var(--ds-shadow-card)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
           >
             {showTopo ? 'Hide Topology' : 'Show Topology'}
           </button>
@@ -250,14 +250,14 @@ export default function Dashboard() {
         ];
         return (
           <>
-            <div className="mb-3 inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5">
+            <div className="mb-4 inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5 shadow-[var(--ds-shadow-card)]">
               {chips.map(c => (
                 <button
                   key={c.key}
                   type="button"
                   onClick={() => setAgentFilter(c.key)}
                   disabled={counts[c.key] === 0 && c.key !== 'all'}
-                  className={`flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
+                  className={`flex h-8 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
                     agentFilter === c.key
                       ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
                       : 'text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]'

@@ -397,7 +397,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           type="button"
           onClick={toggleManageView}
           data-testid="manage-view-toggle-mobile"
-          className="mb-3 inline-flex h-8 items-center rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[12px] font-medium text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)] md:hidden"
+          className="mb-3 inline-flex h-9 items-center rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] font-medium text-[var(--fg-muted)] shadow-[var(--ds-shadow-card)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)] md:hidden"
         >
           {t('≡ 返回对话视图', '≡ Back to conversations')}
         </button>
@@ -413,12 +413,12 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Nodes</h1>
-          <div className="inline-flex h-8 shrink-0 items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5" aria-label="Fleet counts">
-            <span className="inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium tabular-nums text-[var(--fg)]">
+          <div className="inline-flex h-9 shrink-0 items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5 shadow-[var(--ds-shadow-card)]" aria-label="Fleet counts">
+            <span className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium tabular-nums text-[var(--fg)]">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
               {onlineCount} online
             </span>
-            <span className="inline-flex h-7 items-center rounded-md px-2.5 text-[13px] font-medium tabular-nums text-[var(--fg-muted)]">
+            <span className="inline-flex h-8 items-center rounded-md px-2.5 text-[13px] font-medium tabular-nums text-[var(--fg-muted)]">
               {sessions.length} total
             </span>
           </div>
@@ -434,7 +434,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
             aria-pressed={showRail}
             data-testid="toggle-rail"
             title={showRail ? t('隐藏节点列表', 'Hide node list') : t('显示节点列表', 'Show node list')}
-            className="hidden h-8 items-center gap-1 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 text-[13px] font-medium text-[var(--fg-muted)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)] sm:inline-flex"
+            className="hidden h-9 items-center gap-1 rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] font-medium text-[var(--fg-muted)] shadow-[var(--ds-shadow-card)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)] sm:inline-flex"
           >
             <span aria-hidden className="text-sm leading-none">{showRail ? '☷' : '☰'}</span>
             <span className="hidden md:inline">{showRail ? t('密视图', 'Dense') : t('分栏', 'Split')}</span>
@@ -444,7 +444,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
             type="button"
             onClick={() => setShowCreate(true)}
             aria-label="新建节点"
-            className="inline-flex h-8 items-center gap-1 rounded-[10px] bg-[var(--accent)] px-3 text-[13px] font-medium text-[var(--accent-fg)] transition-colors hover:brightness-110"
+            className="inline-flex h-9 items-center gap-1 rounded-[10px] bg-[var(--accent)] px-3.5 text-[13px] font-medium text-[var(--accent-fg)] shadow-[var(--ds-shadow-card)] transition-colors hover:brightness-110"
           >
             <span aria-hidden className="text-base leading-none">+</span>
             <span className="hidden sm:inline">新建节点</span>
@@ -478,7 +478,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="h-8 rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] text-[var(--fg)] focus:outline-none focus:shadow-[var(--focus-ring)]"
+          className="h-9 rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] text-[var(--fg)] shadow-[var(--ds-shadow-card)] focus:outline-none focus:shadow-[var(--focus-ring)]"
         >
           <option value="">All</option>
           <option value="online">Online</option>
@@ -497,7 +497,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
             onChange={e => setFilterTeam(e.target.value)}
             aria-label={t('按 Team 过滤', 'Filter by team')}
             data-testid="filter-team"
-            className="h-8 rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] text-[var(--fg)] focus:outline-none focus:shadow-[var(--focus-ring)]"
+            className="h-9 rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] text-[var(--fg)] shadow-[var(--ds-shadow-card)] focus:outline-none focus:shadow-[var(--focus-ring)]"
           >
             <option value="">{t('全部 Team', 'All teams')}</option>
             <option value="__NO_TEAM__">{t('未分组', '(no team)')}</option>
@@ -541,7 +541,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                 aria-pressed={selected}
                 data-tag={tag}
                 data-selected={selected ? 'true' : 'false'}
-                className={`inline-flex h-7 items-center rounded-full px-2.5 text-[12px] font-medium transition-colors ${
+                className={`inline-flex h-8 items-center rounded-[10px] px-3 text-[13px] font-medium shadow-[var(--ds-shadow-card)] transition-colors ${
                   selected
                     ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
                     : 'bg-[var(--bg-secondary)] text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]'

@@ -338,7 +338,7 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
           placeholder={t('搜索节点（拼音可）', 'Search nodes (pinyin ok)')}
           aria-label={t('搜索节点', 'Search nodes')}
           data-testid="rail-search"
-          className="h-8 w-full rounded-[10px] bg-[var(--col-inset)] px-2.5 text-[12px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:shadow-[var(--focus-ring)]"
+          className="h-9 w-full rounded-[10px] bg-[var(--col-inset)] px-3 text-[13px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:shadow-[var(--focus-ring)]"
         />
       </div>
       <div className="shrink-0 border-b border-[var(--col-hairline)] px-3 py-2 text-[11px] font-medium tracking-wide text-[var(--fg-dim)]">

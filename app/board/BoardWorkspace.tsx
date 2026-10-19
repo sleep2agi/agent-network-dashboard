@@ -409,7 +409,7 @@ export function BoardWorkspace() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search title, #id, tag, or person"
               aria-label="Search tasks"
-              className="h-9 w-full max-w-xs rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-[var(--info)] focus:outline-none sm:w-72"
+              className="h-9 w-full max-w-xs rounded-[10px] bg-[var(--bg-secondary)] px-3 text-sm text-[var(--fg)] shadow-[var(--ds-shadow-card)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none sm:w-72"
             />
             {(view === 'board' || view === 'list' || view === 'schedule') && (
               <>
@@ -417,7 +417,7 @@ export function BoardWorkspace() {
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   aria-label="Filter by column"
-                  className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-sm text-[var(--fg)]"
+                  className="h-9 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 text-sm text-[var(--fg)] shadow-[var(--ds-shadow-card)] focus:shadow-[var(--focus-ring)] focus:outline-none"
                 >
                   <option value="">All columns</option>
                   {COLUMNS.map((col) => <option key={col.id} value={col.id}>{col.label}</option>)}
@@ -426,7 +426,7 @@ export function BoardWorkspace() {
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
                   aria-label="Filter by priority"
-                  className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-sm text-[var(--fg)]"
+                  className="h-9 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 text-sm text-[var(--fg)] shadow-[var(--ds-shadow-card)] focus:shadow-[var(--focus-ring)] focus:outline-none"
                 >
                   <option value="">Any priority</option>
                   {['high', 'normal', 'low', 'lowest'].map((item) => <option key={item} value={item}>{item}</option>)}
@@ -435,7 +435,7 @@ export function BoardWorkspace() {
                   value={tag}
                   onChange={(e) => setTag(e.target.value)}
                   aria-label="Filter by tag"
-                  className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-sm text-[var(--fg)]"
+                  className="h-9 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 text-sm text-[var(--fg)] shadow-[var(--ds-shadow-card)] focus:shadow-[var(--focus-ring)] focus:outline-none"
                 >
                   <option value="">Any tag</option>
                   {tagOptions.map((item) => <option key={item} value={item}>{item}</option>)}
@@ -444,7 +444,7 @@ export function BoardWorkspace() {
                   value={project}
                   onChange={(e) => setProject(e.target.value)}
                   aria-label="Filter by project"
-                  className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-sm text-[var(--fg)]"
+                  className="h-9 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 text-sm text-[var(--fg)] shadow-[var(--ds-shadow-card)] focus:shadow-[var(--focus-ring)] focus:outline-none"
                 >
                   <option value="">All projects</option>
                   <option value="__none__">No project</option>
@@ -454,10 +454,10 @@ export function BoardWorkspace() {
                   type="button"
                   aria-pressed={overdueOnly}
                   onClick={() => setOverdueOnly((value) => !value)}
-                  className={`h-9 rounded-lg border px-2.5 text-xs ${
+                  className={`h-9 rounded-[10px] px-3 text-[13px] font-medium shadow-[var(--ds-shadow-card)] ${
                     overdueOnly
-                      ? 'border-[var(--danger)]/40 bg-[var(--bg-elevated)] text-[var(--danger)]'
-                      : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
+                      ? 'bg-[color-mix(in_srgb,var(--danger)_14%,transparent)] text-[var(--danger)]'
+                      : 'bg-[var(--bg-secondary)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
                   }`}
                 >
                   Overdue
@@ -466,10 +466,10 @@ export function BoardWorkspace() {
                   type="button"
                   aria-pressed={hideDone}
                   onClick={() => setHideDone((value) => !value)}
-                  className={`h-9 rounded-lg border px-2.5 text-xs ${
+                  className={`h-9 rounded-[10px] px-3 text-[13px] font-medium shadow-[var(--ds-shadow-card)] ${
                     hideDone
-                      ? 'border-[var(--info)] bg-[var(--bg-elevated)] text-[var(--fg)]'
-                      : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
+                      ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                      : 'bg-[var(--bg-secondary)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
                   }`}
                 >
                   Hide done
@@ -478,10 +478,10 @@ export function BoardWorkspace() {
                   type="button"
                   aria-pressed={topLevel}
                   onClick={() => setTopLevel((value) => !value)}
-                  className={`h-9 rounded-lg border px-2.5 text-xs ${
+                  className={`h-9 rounded-[10px] px-3 text-[13px] font-medium shadow-[var(--ds-shadow-card)] ${
                     topLevel
-                      ? 'border-[var(--info)] bg-[var(--bg-elevated)] text-[var(--fg)]'
-                      : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
+                      ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                      : 'bg-[var(--bg-secondary)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
                   }`}
                 >
                   Top level
@@ -502,7 +502,7 @@ export function BoardWorkspace() {
               <button
                 type="button"
                 onClick={() => setShowAbandoned((value) => !value)}
-                className="h-9 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                className="h-9 rounded-[10px] bg-[var(--bg-secondary)] px-3 text-[13px] font-medium text-[var(--fg-muted)] shadow-[var(--ds-shadow-card)] hover:text-[var(--fg)]"
               >
                 {showAbandoned ? 'Hide abandoned' : `Show abandoned (${abandonedCount})`}
               </button>
@@ -825,7 +825,7 @@ export function BoardWorkspace() {
                         .map((leader, index) => {
                           const name = personLabel(leader, people);
                           return (
-                          <li key={`${leader.kind || 'x'}:${leader.id || index}`} className="flex min-h-12 min-w-0 items-center gap-2.5 overflow-hidden rounded-[10px] bg-[var(--bg-elevated)] px-2 py-1.5">
+                          <li key={`${leader.kind || 'x'}:${leader.id || index}`} className="flex min-h-[52px] min-w-0 items-center gap-3 overflow-hidden rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2">
                             <span className={`w-4 shrink-0 text-center text-[13px] font-medium tabular-nums ${index < 3 ? 'font-semibold text-[var(--fg)]' : 'text-[var(--fg-dim)]'}`}>
                               {index + 1}
                             </span>

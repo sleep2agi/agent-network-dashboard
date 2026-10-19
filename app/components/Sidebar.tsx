@@ -441,7 +441,7 @@ export function Sidebar({
           <button
             onClick={cycleTheme}
             title={collapsed ? `主题：${THEME_LABEL[theme]}（点击切换）` : undefined}
-            className={`w-full flex items-center text-[11px] text-gray-600 hover:text-gray-400 hover:bg-[#1c1c1f] transition-colors ${
+            className={`w-full flex items-center text-[11px] text-[var(--fg-dim)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] ${
               collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2 px-5 py-3 lg:py-2'
             }`}
             aria-label={`切换主题（当前：${THEME_LABEL[theme]}）`}
@@ -452,14 +452,14 @@ export function Sidebar({
               </svg>
               {!collapsed && '主题'}
             </span>
-            {!collapsed && <span className="text-[11px] border border-current rounded px-1.5 py-0.5 opacity-70">{THEME_LABEL[theme]}</span>}
+            {!collapsed && <span className="rounded-md bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--fg-muted)]">{THEME_LABEL[theme]}</span>}
           </button>
           <button
             onClick={() => {
               window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
             }}
             title={collapsed ? 'Quick search (⌘K)' : undefined}
-            className={`w-full flex items-center text-[11px] text-gray-600 hover:text-gray-400 hover:bg-[#1c1c1f] transition-colors ${
+            className={`w-full flex items-center text-[11px] text-[var(--fg-dim)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] ${
               collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2 px-5 py-3 lg:py-2'
             }`}
             aria-label="Open command palette"
@@ -470,7 +470,7 @@ export function Sidebar({
               </svg>
               {!collapsed && 'Quick search'}
             </span>
-            {!collapsed && <kbd className="text-[11px] border border-current rounded px-1 py-0.5 opacity-60 font-mono">⌘K</kbd>}
+            {!collapsed && <kbd className="rounded-md bg-[var(--bg-elevated)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--fg-muted)]">⌘K</kbd>}
           </button>
           <button
             onClick={async () => {
@@ -480,7 +480,7 @@ export function Sidebar({
               window.location.assign('/login');
             }}
             title={collapsed ? 'Sign out' : undefined}
-            className={`w-full flex items-center text-xs text-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-colors ${
+            className={`w-full flex items-center text-xs text-[var(--fg-dim)] transition-colors hover:bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] hover:text-[var(--danger)] ${
               collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-5 py-3'
             }`}
           >
@@ -494,7 +494,7 @@ export function Sidebar({
               onClick={cycleMode}
               title={`当前：${SIDEBAR_MODE_LABEL[mode]} — 点击切换；快捷键 [`}
               data-testid="sidebar-mode-cycle"
-              className="hidden lg:flex p-1.5 rounded text-gray-600 hover:text-gray-400 transition-colors items-center gap-1"
+              className="hidden lg:flex items-center gap-1 rounded p-1.5 text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)]"
               aria-label={`Cycle sidebar mode (current: ${mode})`}
             >
               {/* Chevron rotates to hint at direction — expanded →

@@ -1705,7 +1705,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
         </div>
 
         {/* Input area */}
-        <div className="border-t border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-4">
+        <div className="border-t border-[var(--col-line)] bg-[var(--col-chat)] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-4">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               {/* @ mention dropdown */}

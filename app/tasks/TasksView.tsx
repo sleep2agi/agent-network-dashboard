@@ -189,7 +189,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
             <>
               {/* Status tab strip */}
               <div className="anet-tabstrip-wrap mb-2">
-                <div className="anet-tabstrip flex flex-wrap gap-1 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-1 scrollbar-thin">
+                <div className="anet-tabstrip flex flex-wrap gap-0.5 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-1 shadow-[var(--ds-shadow-card)] scrollbar-thin">
                   {['', ...TASK_STATUSES].map((s) => {
                     const cnt = s === '' ? tasks.length : counts[s] || 0;
                     const isActive = filterStatus === s;
@@ -198,7 +198,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         key={s || 'all'}
                         onClick={() => setFilterStatus(s)}
                         disabled={cnt === 0 && s !== '' && !isActive}
-                        className={`flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
+                        className={`flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
                           isActive
                             ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
                             : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
@@ -227,30 +227,30 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 
               {/* From/To filters */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <div className="flex items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:bg-[var(--bg-elevated)]">
-                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">From</span>
+                <div className="flex h-9 items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-3 shadow-[var(--ds-shadow-card)] focus-within:shadow-[var(--focus-ring)]">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--fg-dim)]">From</span>
                   <input
                     type="text"
                     value={filterFrom}
                     onChange={(e) => setFilterFrom(e.target.value)}
                     placeholder="any"
                     data-testid="tasks-filter-from"
-                    className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
+                    className="w-16 bg-transparent text-[13px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                <div className="flex items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:bg-[var(--bg-elevated)]">
-                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">To</span>
+                <div className="flex h-9 items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-3 shadow-[var(--ds-shadow-card)] focus-within:shadow-[var(--focus-ring)]">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--fg-dim)]">To</span>
                   <input
                     type="text"
                     value={filterTo}
                     onChange={(e) => setFilterTo(e.target.value)}
                     placeholder="any"
                     data-testid="tasks-filter-to"
-                    className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
+                    className="w-16 bg-transparent text-[13px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                <div className="flex min-w-[10rem] flex-1 items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:bg-[var(--bg-elevated)]">
-                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-dim)]">Search</span>
+                <div className="flex h-9 min-w-[10rem] flex-1 items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-3 shadow-[var(--ds-shadow-card)] focus-within:shadow-[var(--focus-ring)]">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--fg-dim)]">Search</span>
                   <input
                     type="search"
                     value={filterQuery}
@@ -258,7 +258,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     placeholder="title or id"
                     aria-label="Search tasks"
                     data-testid="tasks-filter-query"
-                    className="min-w-0 flex-1 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
+                    className="min-w-0 flex-1 bg-transparent text-[13px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
                 {(filterStatus || filterFrom || filterTo || filterQuery) && (

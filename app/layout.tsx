@@ -64,7 +64,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#111113",
+  themeColor: "#0e0e11",
   // R25 of #190: metadata.appleWebApp.statusBarStyle above is
   // "black-translucent", which renders the iOS status bar as a
   // transparent overlay above the page (rather than reserving its own
@@ -80,7 +80,14 @@ const themeBootScript = `
 try {
   var t = localStorage.getItem('anet-theme') || 'cyber';
   if (t === 'mint' || t === 'sunset') t = 'cyber';
-  document.documentElement.setAttribute('data-theme', t);
+  var el = document.documentElement;
+  if (t === 'slack') {
+    el.setAttribute('data-theme', 'light');
+    el.setAttribute('data-skin', 'slack');
+  } else {
+    el.setAttribute('data-theme', t);
+    el.removeAttribute('data-skin');
+  }
 } catch (e) {}
 `;
 

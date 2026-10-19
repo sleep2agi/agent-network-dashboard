@@ -48,7 +48,7 @@ export function SectionHeading({ title, hint }: { title: string; hint?: string }
 export function MetaChip({ children, soft = false }: { children: ReactNode; soft?: boolean }) {
   return (
     <span
-      className={`inline-flex h-5 max-w-full items-center rounded-md bg-[var(--bg-elevated)] px-1.5 font-medium text-[var(--fg-muted)] ${
+      className={`inline-flex h-6 max-w-full items-center rounded-md bg-[var(--bg-elevated)] px-2 font-medium text-[var(--fg-muted)] ${
         soft ? 'text-xs' : 'text-[11px]'
       }`}
     >
@@ -104,7 +104,7 @@ export function Segmented<T extends string>({
   onChange: (id: T) => void;
 }) {
   return (
-    <div data-segmented aria-label={label} className="flex h-8 max-w-full items-center gap-0.5 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div data-segmented aria-label={label} className="flex h-9 max-w-full items-center gap-0.5 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-0.5 shadow-[var(--ds-shadow-card)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {options.map((item) => {
         const active = value === item.id;
         return (
@@ -113,9 +113,9 @@ export function Segmented<T extends string>({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(item.id)}
-            className={`h-7 shrink-0 rounded-md px-3 text-[13px] font-medium whitespace-nowrap transition-colors ${
+            className={`h-8 shrink-0 rounded-md px-3 text-[13px] font-medium whitespace-nowrap transition-colors ${
               active
-                ? 'bg-[var(--bg-elevated)] text-[var(--fg)]'
+                ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
                 : 'text-[var(--fg-muted)] hover:text-[var(--fg)]'
             }`}
           >
