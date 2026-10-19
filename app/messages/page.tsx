@@ -155,7 +155,7 @@ export default function MessagesPage() {
           collapsible row below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Messages</h1>
+          <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Messages</h1>
           {/* Round 89: filter-aware chip. When search/type filter is active
               the visible rows are filtered.length; the total loaded is
               messages.length (the M5 lazy window, newest histLimit). Show
@@ -296,7 +296,7 @@ export default function MessagesPage() {
                   <AliasAvatar alias={conv.participants[1]} size={16} />
                   <span className="text-sm text-gray-200 font-medium">{conv.participants[1]}</span>
                 </div>
-                <span className="text-[10px] text-gray-600">{conv.messages.length} messages</span>
+                <span className="text-[11px] text-gray-600">{conv.messages.length} messages</span>
               </div>
               <div className="px-4 py-2 space-y-2 max-h-64 overflow-y-auto">
                 {conv.messages.map(m => (
@@ -304,7 +304,7 @@ export default function MessagesPage() {
                     {m.from_alias && <AliasAvatar alias={m.from_alias} size={14} />}
                     <span className="shrink-0 font-medium text-gray-200">{m.from_alias}</span>
                     <span className="text-gray-400 flex-1 truncate" title={m.content || ''}>{previewContent(m.content).slice(0, 120)}</span>
-                    <span className="text-[9px] text-gray-600 shrink-0">{timeAgo(m.created_at || '')}</span>
+                    <span className="text-[11px] text-gray-600 shrink-0">{timeAgo(m.created_at || '')}</span>
                   </div>
                 ))}
               </div>

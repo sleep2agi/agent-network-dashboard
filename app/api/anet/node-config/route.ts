@@ -1,5 +1,6 @@
 import { requireDashboardAuth } from '@/app/lib/dashboard-auth';
 import { hubFetch } from '@/app/lib/hub';
+import { narrowEditableChannels } from '@/app/lib/hub-align.mjs';
 import { callMcp, parseMcpEnvelope, resolveDefaultNetworkId } from '@/app/lib/hub-mcp';
 
 /**
@@ -22,8 +23,6 @@ const EDITABLE_FLAGS = [
   'budget',
   'timeout',
 ] as const;
-
-const EDITABLE_CHANNELS = ['telegram', 'feishu', 'commhub'] as const;
 
 type ConfigBody = {
   node_id?: string;
@@ -123,17 +122,10 @@ function buildPatch(body: ConfigBody) {
     if (Object.keys(flags).length > 0) patch.flags = flags;
   }
   if (Array.isArray(body.channels)) {
-    const allow = new Set<string>(EDITABLE_CHANNELS);
-    const seen = new Set<string>();
-    const channels: string[] = [];
-    for (const c of body.channels) {
-      if (typeof c !== 'string') continue;
-      const key = c.trim().toLowerCase();
-      if (!allow.has(key) || seen.has(key)) continue;
-      seen.add(key);
-      channels.push(key);
-    }
-    patch.channels = channels;
+    // commhub is not an editable channel. Leaving it in the replace-set
+    // makes "turn the last real channel off" look like ["commhub"], which
+    // the hub rejects as channels_all_invalid instead of storing [].
+    patch.channels = narrowEditableChannels(body.channels) ?? [];
   }
   return patch;
 }

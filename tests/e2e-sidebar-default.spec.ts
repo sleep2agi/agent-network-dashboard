@@ -79,8 +79,8 @@ test.describe('Sidebar default (07-31)', () => {
     // Width = expanded (w-52 = 208px), NOT the 56px icon-rail. Sub-pixel
     // wiggle allowed (rounding / scrollbar).
     const w = await page.locator('[data-anet-sidebar="true"]').first().evaluate(el => el.getBoundingClientRect().width);
-    expect(w).toBeGreaterThan(180);
-    expect(w).toBeLessThanOrEqual(216);
+    expect(w).toBeGreaterThan(220);
+    expect(w).toBeLessThanOrEqual(240);
     // Labels visible — proves it's really expanded, not a render failure.
     await expect(page.locator('[data-nav-item][data-nav-href="/"]')).toContainText('Overview');
   });

@@ -116,7 +116,7 @@ export default function SkillHubPage() {
     <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
       <div className="mb-6 flex items-center gap-3">
         <div>
-          <h1 className="ml-10 text-2xl font-bold text-[var(--fg)] lg:ml-0">SkillHub</h1>
+          <h1 className="text-2xl font-bold text-[var(--fg)]">SkillHub</h1>
           <p className="mt-1 text-sm text-[var(--fg-dim)]">节点沉淀可复用能力，审核后供整个网络使用；网络内发布不会自动公开。</p>
         </div>
         <button onClick={() => setShowUpload(true)} className="ml-auto rounded-lg bg-[var(--hl)] px-3 py-2 text-sm font-medium text-[var(--bg)] hover:opacity-90">上传 Skill</button>
@@ -132,7 +132,7 @@ export default function SkillHubPage() {
           <article key={skill.skill_id} className="flex min-h-40 flex-col rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1"><h2 className="truncate font-semibold text-[var(--fg)]">{skill.name}</h2><code className="text-xs text-[var(--hl)]">{skill.slug}@{skill.version}</code></div>
-              <span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-[10px] ${skill.status === 'published' ? 'text-[var(--success)]' : skill.status === 'pending' ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>{skill.status === 'published' ? '网络内发布' : skill.status === 'pending' ? '待审核' : '已拒绝'}</span>
+              <span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-[11px] ${skill.status === 'published' ? 'text-[var(--success)]' : skill.status === 'pending' ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>{skill.status === 'published' ? '网络内发布' : skill.status === 'pending' ? '待审核' : '已拒绝'}</span>
             </div>
             <p className="mt-3 line-clamp-3 text-sm text-[var(--fg-muted)]">{skill.description || '暂无说明'}</p>
             <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-[var(--fg-dim)]">

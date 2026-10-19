@@ -1,5 +1,6 @@
 import { requireDashboardAuth } from '@/app/lib/dashboard-auth';
 import { hubFetch } from '@/app/lib/hub';
+import { CREATE_FLAG_KEYS, HUB_CREATE_RUNTIME_IDS } from '@/app/lib/hub-align.mjs';
 import { callMcp, parseMcpEnvelope, resolveDefaultNetworkId } from '@/app/lib/hub-mcp';
 
 /**
@@ -64,8 +65,6 @@ async function resolveLocalDaemonNodeId(): Promise<string | null> {
  */
 
 const MCP_TOOL_CREATE = 'create_node';
-const EDITABLE_FLAGS = ['model', 'maxTurns', 'budget', 'timeout', 'permissionMode'] as const;
-const RUNTIMES = ['claude-agent-sdk', 'codex', 'grok'] as const;
 
 interface NodeSpec {
   name: string;
@@ -91,14 +90,15 @@ export async function POST(req: Request) {
   if (!name) return Response.json({ error: 'node_spec.name required' }, { status: 400 });
 
   const runtime = (spec.runtime || 'claude-agent-sdk').toString();
-  if (!RUNTIMES.includes(runtime as (typeof RUNTIMES)[number])) {
-    return Response.json({ error: `runtime must be one of: ${RUNTIMES.join(', ')}` }, { status: 400 });
+  if (!HUB_CREATE_RUNTIME_IDS.includes(runtime)) {
+    return Response.json({ error: `runtime must be one of: ${HUB_CREATE_RUNTIME_IDS.join(', ')}` }, { status: 400 });
   }
 
-  // Whitelist flags — drop anything outside the editable contract (matches PR C).
+  // Hub rejects unknown flag keys (flag_key_unknown). `model` is a node_spec
+  // field, not a flag. OpenCode V2 consent flags are not forwarded here.
   const flags: Record<string, unknown> = {};
   if (spec.flags && typeof spec.flags === 'object') {
-    for (const k of EDITABLE_FLAGS) {
+    for (const k of CREATE_FLAG_KEYS) {
       if (k in spec.flags && spec.flags[k] !== undefined) flags[k] = spec.flags[k];
     }
   }
@@ -148,10 +148,8 @@ export async function POST(req: Request) {
 }
 
 /**
- * Create-request progress poll. ⚠️ BLOCKED on contract Q2 — the polling
- * mechanism for node_create_requests.status is not yet confirmed for the
- * dashboard (get_create_request is daemon-only). Returns a flagged placeholder
- * so the client can wire its progress loop without being told a fake success.
+ * Create-request progress. Hub GET /api/node-create-requests is the user-token
+ * read; get_create_request stays daemon-only. The body is the hub's.
  */
 export async function GET(req: Request) {
   const authFailure = await requireDashboardAuth();
@@ -161,14 +159,11 @@ export async function GET(req: Request) {
   const requestId = searchParams.get('request_id');
   if (!requestId) return Response.json({ error: 'request_id required' }, { status: 400 });
 
-  return Response.json(
-    {
-      ok: false,
-      unconfirmed: true,
-      request_id: requestId,
-      status: 'unknown',
-      error: 'create-request status poll not wired — pending contract Q2 (dashboard poll path for node_create_requests.status)',
-    },
-    { status: 501 },
-  );
+  try {
+    const res = await hubFetch(`/api/node-create-requests?request_id=${encodeURIComponent(requestId)}`);
+    const data = await res.json().catch(() => ({ ok: false, error: 'invalid_hub_response' }));
+    return Response.json(data, { status: res.ok ? 200 : res.status });
+  } catch (e: unknown) {
+    return Response.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, { status: 502 });
+  }
 }

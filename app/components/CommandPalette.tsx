@@ -109,6 +109,12 @@ const COMMANDS: Command[] = [
   { id: 'go-tasks', title: 'Go to Tasks', hint: 'All task statuses', group: 'Navigate',
     icon: <NavIcon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />,
     perform: r => r.push('/tasks') },
+  { id: 'go-board', title: 'Go to Task board', hint: 'Requirements board', group: 'Navigate',
+    icon: <NavIcon d="M4 6h7v12H4zM13 6h7v5h-7zM13 13h7v5h-7z" />,
+    perform: r => r.push('/board') },
+  { id: 'go-board-activity', title: 'Go to Task activity', hint: 'Recent requirement changes', group: 'Navigate',
+    icon: <NavIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+    perform: r => r.push('/board?view=activity') },
   { id: 'go-tasks-failed', title: 'Go to Failed tasks', hint: 'Filter status=failed', group: 'Navigate',
     icon: <NavIcon d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />,
     perform: r => r.push('/tasks?status=failed') },
@@ -445,7 +451,7 @@ export function CommandPalette() {
             placeholder="Type a command or search…"
             className="flex-1 bg-transparent text-base sm:text-sm text-gray-200 placeholder-gray-600 focus:outline-none"
           />
-          <kbd className="text-[10px] text-gray-600 border border-[#26262b] rounded px-1.5 py-0.5 font-mono">esc</kbd>
+          <kbd className="text-[11px] text-gray-600 border border-[#26262b] rounded px-1.5 py-0.5 font-mono">esc</kbd>
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto py-2">
@@ -456,7 +462,7 @@ export function CommandPalette() {
           ) : (
             Object.entries(grouped).map(([groupName, items]) => (
               <div key={groupName} className="mb-2 last:mb-0">
-                <div className="text-[10px] uppercase tracking-[0.12em] text-gray-600 px-3 py-1">{groupName}</div>
+                <div className="text-[11px] uppercase tracking-[0.12em] text-gray-600 px-3 py-1">{groupName}</div>
                 {items.map(c => {
                   const idx = runningIdx++;
                   const isActive = idx === selected;
@@ -480,7 +486,7 @@ export function CommandPalette() {
                           </span>
                         )}
                       </span>
-                      {isActive && <span className="text-[10px] text-gray-500">↵</span>}
+                      {isActive && <span className="text-[11px] text-gray-500">↵</span>}
                     </button>
                   );
                 })}
@@ -489,7 +495,7 @@ export function CommandPalette() {
           )}
         </div>
 
-        <div className="border-t border-[#26262b] px-3 py-1.5 flex items-center justify-between text-[10px] text-gray-600">
+        <div className="border-t border-[#26262b] px-3 py-1.5 flex items-center justify-between text-[11px] text-gray-600">
           <span className="flex items-center gap-3">
             <span><kbd className="font-mono">↑↓</kbd> navigate</span>
             <span><kbd className="font-mono">↵</kbd> select</span>

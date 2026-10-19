@@ -14,6 +14,7 @@ import { AgentCard } from './components/AgentCard';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { NodesEmptyState as EmptyState } from './components/EmptyState';
 import { CommandCenter, useCommandCenter } from './components/CommandCenter';
+import { RequirementPulse } from './components/RequirementPulse';
 import { useSessions, useHealth, useTasks, useStats } from './lib/hooks';
 import { useChatUnread } from './lib/chat-unread';
 import { isPinned, usePinVersion } from './lib/chat-pin';
@@ -137,7 +138,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
       <StatsBar online={online} working={working} total={total} presenceUnknown={presenceUnknown} />
 
       {/* #217 S5 (Vincent: "极简极简，这些都可以放到设置里面去"): the
@@ -151,15 +152,17 @@ export default function Dashboard() {
           only two numbers that drive action are running and failed;
           everything else lives on /tasks. */}
       {Object.keys(taskStats).length > 0 && (
-        <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg border border-[#26262b] bg-[#161618] px-4 py-2.5 text-xs">
-          <div className="text-gray-400 tabular-nums">
-            <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} running</span>
-            <span className="text-gray-600"> &middot; </span>
-            <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} failed</span>
+        <section className="mb-4 flex h-10 items-center justify-between rounded-[10px] bg-[var(--bg-secondary)] px-4 text-[13px] shadow-[var(--ds-shadow-card)] sm:mb-6">
+          <div className="tabular-nums text-[var(--fg-muted)]">
+            <span className={taskStats['running'] ? 'text-[var(--success)]' : ''}>{taskStats['running'] || 0} running</span>
+            <span className="text-[var(--fg-dim)]"> &middot; </span>
+            <span className={taskStats['failed'] ? 'text-[var(--error)]' : ''}>{taskStats['failed'] || 0} failed</span>
           </div>
-          <Link href="/tasks" prefetch={false} className="text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
+          <Link href="/tasks" prefetch={false} className="text-[var(--fg)] hover:text-[var(--accent)] hover:underline">View all &rarr;</Link>
         </section>
       )}
+
+      <RequirementPulse />
 
       {/* #217 S5 (less is more): Quick Navigation stat cards, the nav
           rail, and Recent Activity are deleted. Every route they linked
@@ -169,14 +172,14 @@ export default function Dashboard() {
           Restore path: git revert this commit. */}
 
       {sessError && (
-        <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-4 py-3 rounded-lg mb-6 text-sm flex items-center justify-between gap-3" role="alert">
+        <div className="mb-6 flex h-8 items-center justify-between gap-3 rounded-[10px] px-4 text-sm text-[var(--error)]" role="alert" style={{ background: 'color-mix(in srgb, var(--error) 14%, transparent)' }}>
           <span className="min-w-0 truncate">{String(sessError)}</span>
           {/* #17 M1: the hub-unreachable hint was inert text. The top
               HealthBanner already turns the same condition into an
               actionable "Open Settings →" link — this makes the Overview
               banner consistent: one tap to the CommHub connection panel
               instead of a dead-end instruction. */}
-          <Link href="/settings" className="shrink-0 text-xs font-medium text-red-300/90 underline-offset-2 hover:underline hover:text-red-200 whitespace-nowrap">
+          <Link href="/settings" className="shrink-0 whitespace-nowrap text-xs font-medium text-[var(--error)] underline-offset-2 hover:underline">
             Check CommHub connection →
           </Link>
         </div>
@@ -190,7 +193,7 @@ export default function Dashboard() {
         <div className="hidden lg:flex justify-center mb-4">
           <button
             onClick={() => setShowTopo(!showTopo)}
-            className="text-xs text-gray-500 hover:text-gray-300 border border-gray-700/50 px-4 py-1.5 rounded-lg transition-colors hover:border-gray-600 cursor-pointer"
+            className="inline-flex h-9 cursor-pointer items-center rounded-[10px] bg-[var(--bg-secondary)] px-4 text-[13px] font-medium text-[var(--fg-muted)] shadow-[var(--ds-shadow-card)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
           >
             {showTopo ? 'Hide Topology' : 'Show Topology'}
           </button>
@@ -207,7 +210,7 @@ export default function Dashboard() {
         // interactive (the SVG already does its own pan + zoom inside
         // the viewport) while letting the page below stay reachable
         // with a single ordinary scroll past the cap.
-        <div className="lg:max-h-none lg:overflow-visible max-h-[70vh] overflow-y-auto rounded-xl border border-transparent lg:border-0">
+        <div className="max-h-[70vh] overflow-y-auto rounded-[10px] lg:max-h-none lg:overflow-visible">
           <MemoTopoGraph sessions={sessions} sseSessions={sseSessions} renameSignal={renameSignal} />
         </div>
       )}
@@ -242,22 +245,22 @@ export default function Dashboard() {
         const chips: { key: typeof agentFilter; label: string; dot?: string }[] = [
           { key: 'all',     label: 'All' },
           { key: 'working', label: 'Working', dot: '#4ade80' },
-          { key: 'idle',    label: 'Idle',    dot: '#22d3ee' },
+          { key: 'idle',    label: 'Idle',    dot: 'var(--accent)' },
           { key: 'offline', label: 'Offline', dot: '#6b7280' },
         ];
         return (
           <>
-            <div className="mb-3 flex flex-wrap items-center gap-1">
+            <div className="mb-4 inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5 shadow-[var(--ds-shadow-card)]">
               {chips.map(c => (
                 <button
                   key={c.key}
                   type="button"
                   onClick={() => setAgentFilter(c.key)}
                   disabled={counts[c.key] === 0 && c.key !== 'all'}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                  className={`flex h-8 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
                     agentFilter === c.key
-                      ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
-                      : 'text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] border border-transparent'
+                      ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                      : 'text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]'
                   }`}
                 >
                   {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}
@@ -279,8 +282,8 @@ export default function Dashboard() {
               ))}
             </div>
             {filtered.length === 0 && (
-              <div className="mt-4 text-center text-xs text-gray-600">
-                No agents match &quot;{agentFilter}&quot; — <button onClick={() => setAgentFilter('all')} className="underline hover:text-gray-400">Show all</button>
+              <div className="mt-4 text-center text-xs text-[var(--fg-dim)]">
+                No agents match &quot;{agentFilter}&quot; — <button onClick={() => setAgentFilter('all')} className="font-medium text-[var(--accent)] hover:underline">Show all</button>
               </div>
             )}
           </>
@@ -292,10 +295,10 @@ export default function Dashboard() {
           and Vincent flagged it as misleading more than once. The SSE /
           polling dot stays: it's a real connection-status indicator, not
           a sales surface. */}
-      <div className="mt-8 text-center text-xs text-gray-600 flex items-center justify-center gap-2 flex-wrap">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-center text-xs text-[var(--fg-dim)]">
         {sseSupported && (
           <>
-            <span className={`w-1.5 h-1.5 rounded-full ${sseConnected ? 'bg-green-400' : 'bg-gray-600'}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${sseConnected ? 'bg-[var(--success)]' : 'bg-[var(--offline)]'}`} />
             {sseConnected ? 'SSE live' : 'SWR polling'}
           </>
         )}

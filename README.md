@@ -68,6 +68,14 @@ Browser
 
 The Dashboard is stateless. CommHub owns users, nodes, tasks, messages, and persistence.
 
+## Client alignment
+
+This tree is aligned to the Hub contract on `sleep2agi/agent-network` main as of 2026-10-10, and to the desktop client **0.2.228** (`desktop-v0.2.228`, published 2026-10-10). Package version stays `0.6.3-preview.56`; this note is not a release.
+
+Wired in this pass: the seven create-node runtimes the Hub accepts, channel replace-sets without `commhub`, `permissionMode` values the Hub stores, create-request status from `GET /api/node-create-requests`, daemon-reported models when `runtime_readiness` includes them, a read-only requirements board that declares the `abandoned` column, and a read-only Agent-team / department view. Requirement titles and `#` ids on the board, list, activity, dashboard, and overview open `/board/<id>`.
+
+Not wired, and marked in the UI as「演示数据 · 后端开发中，敬请期待」: OpenCode V2 consent, Codex provider-key editing, per-daemon child lifecycle, and writes on the board and team trees. See CHANGELOG for the gap list.
+
 ## Quality and security gates
 
 ```bash

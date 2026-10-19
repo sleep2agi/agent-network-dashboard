@@ -14,7 +14,6 @@ import { TaskList, type TaskListItem } from '../components/TaskList';
 import { TaskDetail } from '../components/TaskDetail';
 import {
   TASK_STATUSES,
-  STATUS_CHIP_CLASS,
   STATUS_DOT_HEX,
   STATUS_BAR_CLASS,
 } from '../lib/status';
@@ -82,6 +81,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   // needs both prefill directions.
   const [filterFrom, setFilterFrom] = useState(searchParams.get('from_name') || '');
   const [filterTo, setFilterTo] = useState(searchParams.get('to_name') || '');
+  const [filterQuery, setFilterQuery] = useState(searchParams.get('q') || '');
 
   // #Stage-tasks: selection is seeded from /tasks/[id] URL, then plain
   // client state kept in sync with pushState (shallow — no route remount,
@@ -157,7 +157,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     <div
       data-testid="tasks-layout"
       data-selected-id={selectedId ?? ''}
-      className="min-h-screen max-w-full overflow-x-hidden bg-[#0b0b0d] text-gray-100 flex"
+      className="min-h-screen max-w-full overflow-x-hidden bg-[var(--bg)] text-[var(--fg)] flex"
     >
       {/* Rail — desktop always visible; on mobile it holds the whole
           page (detail becomes a full-screen overlay). No "toggle
@@ -168,16 +168,16 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           layout showing "one thing twice". */}
       <aside
         data-testid="task-list-column"
-        className={`flex flex-col w-full sm:w-[380px] shrink-0 min-h-screen sticky top-0 border-r border-[#1c1c1f] ${
+        className={`flex flex-col w-full sm:w-[400px] shrink-0 min-h-screen sticky top-0 border-r border-[var(--border)] ${
           selectedId && !isDesktop ? 'hidden' : 'flex'
         }`}
       >
-        <div className="px-4 py-3 border-b border-[#1c1c1f]">
-          <div className="flex items-center gap-3 mb-3">
-            <h1 className="text-xl font-bold text-white lg:ml-0 ml-10">Tasks</h1>
+        <div className="px-4 py-4 border-b border-[var(--border)]">
+          <div className="flex items-center gap-3 mb-4">
+            <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Tasks</h1>
             {tasks.length < count && (
               <span
-                className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums"
+                className="inline-flex h-5 items-center rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium tabular-nums text-[var(--fg-muted)]"
                 title={`Showing ${tasks.length} of ${count} tasks`}
               >
                 {tasks.length} / {count}
@@ -189,7 +189,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
             <>
               {/* Status tab strip */}
               <div className="anet-tabstrip-wrap mb-2">
-                <div className="anet-tabstrip flex flex-wrap gap-1 bg-[#161618] rounded-lg border border-[#26262b] p-1 overflow-x-auto scrollbar-thin">
+                <div className="anet-tabstrip flex flex-wrap gap-0.5 overflow-x-auto rounded-[10px] bg-[var(--bg-secondary)] p-1 shadow-[var(--ds-shadow-card)] scrollbar-thin">
                   {['', ...TASK_STATUSES].map((s) => {
                     const cnt = s === '' ? tasks.length : counts[s] || 0;
                     const isActive = filterStatus === s;
@@ -198,10 +198,10 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         key={s || 'all'}
                         onClick={() => setFilterStatus(s)}
                         disabled={cnt === 0 && s !== '' && !isActive}
-                        className={`px-2.5 py-1 rounded-md text-xs transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
+                        className={`flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
                           isActive
-                            ? `${STATUS_CHIP_CLASS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
-                            : 'text-gray-500 hover:text-gray-300 hover:bg-[#1c1c1f]/40'
+                            ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                            : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
                         }`}
                       >
                         {s && (
@@ -213,8 +213,8 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         )}
                         <span>{s || 'All'}</span>
                         <span
-                          className={`text-[10px] tabular-nums ${
-                            isActive ? 'opacity-80' : 'text-gray-600'
+                          className={`text-[11px] tabular-nums ${
+                            isActive ? 'opacity-80' : 'text-[var(--fg-dim)]'
                           }`}
                         >
                           {cnt}
@@ -226,38 +226,51 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               </div>
 
               {/* From/To filters */}
-              <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                <div className="flex items-center gap-1 rounded border border-[#26262b] bg-[#161618] px-2 py-1 focus-within:border-blue-500/40">
-                  <span className="text-[9px] uppercase tracking-wide text-gray-600">From</span>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <div className="flex h-9 items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-3 shadow-[var(--ds-shadow-card)] focus-within:shadow-[var(--focus-ring)]">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--fg-dim)]">From</span>
                   <input
                     type="text"
                     value={filterFrom}
                     onChange={(e) => setFilterFrom(e.target.value)}
                     placeholder="any"
                     data-testid="tasks-filter-from"
-                    className="w-16 bg-transparent text-xs text-white placeholder-gray-700 focus:outline-none"
+                    className="w-16 bg-transparent text-[13px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                <div className="flex items-center gap-1 rounded border border-[#26262b] bg-[#161618] px-2 py-1 focus-within:border-blue-500/40">
-                  <span className="text-[9px] uppercase tracking-wide text-gray-600">To</span>
+                <div className="flex h-9 items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-3 shadow-[var(--ds-shadow-card)] focus-within:shadow-[var(--focus-ring)]">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--fg-dim)]">To</span>
                   <input
                     type="text"
                     value={filterTo}
                     onChange={(e) => setFilterTo(e.target.value)}
                     placeholder="any"
                     data-testid="tasks-filter-to"
-                    className="w-16 bg-transparent text-xs text-white placeholder-gray-700 focus:outline-none"
+                    className="w-16 bg-transparent text-[13px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                {(filterStatus || filterFrom || filterTo) && (
+                <div className="flex h-9 min-w-[10rem] flex-1 items-center gap-1.5 rounded-[10px] bg-[var(--bg-secondary)] px-3 shadow-[var(--ds-shadow-card)] focus-within:shadow-[var(--focus-ring)]">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--fg-dim)]">Search</span>
+                  <input
+                    type="search"
+                    value={filterQuery}
+                    onChange={(e) => setFilterQuery(e.target.value)}
+                    placeholder="title or id"
+                    aria-label="Search tasks"
+                    data-testid="tasks-filter-query"
+                    className="min-w-0 flex-1 bg-transparent text-[13px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
+                  />
+                </div>
+                {(filterStatus || filterFrom || filterTo || filterQuery) && (
                   <button
                     type="button"
                     onClick={() => {
                       setFilterStatus('');
                       setFilterFrom('');
                       setFilterTo('');
+                      setFilterQuery('');
                     }}
-                    className="rounded border border-gray-700 px-2 py-0.5 text-[10px] text-gray-500 hover:text-gray-200 hover:border-gray-600"
+                    className="h-7 rounded-[10px] bg-[var(--bg-secondary)] px-2.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]"
                   >
                     Clear
                   </button>
@@ -266,7 +279,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 
               {/* Status distribution bar (only when no status filter) */}
               {!filterStatus && bars.length > 0 && (
-                <div className="flex h-1 rounded-full overflow-hidden bg-gray-800">
+                <div className="flex h-1.5 rounded-full overflow-hidden bg-[var(--bg)]">
                   {bars.map((b) => (
                     <div
                       key={b.key}
@@ -281,7 +294,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           )}
 
           {error && (
-            <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-3 py-1.5 rounded mt-2 text-xs">
+            <div className="mt-2 rounded-[10px] px-3 py-1.5 text-xs text-[var(--danger)]" style={{ background: 'color-mix(in srgb, var(--danger) 14%, transparent)' }}>
               {error}
             </div>
           )}
@@ -289,9 +302,9 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 
         <div className="flex-1 min-h-0 overflow-y-auto">
           {loading ? (
-            <div className="animate-pulse space-y-1 px-3 py-2">
+            <div className="animate-pulse space-y-2 px-3 py-3">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="h-14 bg-gray-800/40 rounded" />
+                <div key={i} className="h-16 rounded-[10px] bg-[var(--bg-elevated)]" />
               ))}
             </div>
           ) : tasks.length === 0 ? (
@@ -306,7 +319,18 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               />
             </div>
           ) : (
-            <TaskList tasks={tasks} selectedId={selectedId} onSelect={selectTask} />
+            <TaskList
+              tasks={tasks.filter((task) => {
+                const q = filterQuery.trim().toLowerCase();
+                if (!q) return true;
+                return task.task_id.toLowerCase().includes(q)
+                  || (task.content || '').toLowerCase().includes(q)
+                  || (task.from_name || '').toLowerCase().includes(q)
+                  || (task.to_name || '').toLowerCase().includes(q);
+              })}
+              selectedId={selectedId}
+              onSelect={selectTask}
+            />
           )}
         </div>
       </aside>
@@ -328,7 +352,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       {selectedId && !isDesktop && (
         <section
           data-testid="task-detail-mobile"
-          className="fixed inset-0 z-40 bg-[#0b0b0d]"
+          className="fixed inset-0 z-40 bg-[var(--bg)]"
         >
           <TaskDetail taskId={selectedId} onClose={closeDetail} onRetried={fetchTasks} />
         </section>
@@ -336,9 +360,11 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       {!selectedId && isDesktop && (
         <section
           data-testid="task-detail-empty"
-          className="flex-1 min-w-0 min-h-screen flex items-center justify-center text-sm text-gray-600"
+          className="flex-1 min-w-0 min-h-screen flex items-center justify-center p-8"
         >
-          请从左侧列表选择一条任务查看详情
+          <div className="max-w-sm rounded-[10px] bg-[var(--bg-secondary)] px-6 py-8 text-center shadow-[var(--ds-shadow-card)]">
+            <p className="text-sm leading-relaxed text-[var(--fg-muted)]">请从左侧列表选择一条任务查看详情</p>
+          </div>
         </section>
       )}
     </div>
@@ -352,8 +378,8 @@ export function TasksView({ initialSelectedId = null }: { initialSelectedId?: st
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
-          <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading tasks…</div>
+        <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+          <div className="text-[var(--fg-dim)] text-sm">Loading tasks…</div>
         </div>
       }
     >

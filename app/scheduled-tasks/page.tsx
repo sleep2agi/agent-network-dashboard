@@ -381,7 +381,7 @@ export default function ScheduledTasksPage() {
     <main className="mx-auto max-w-6xl px-4 py-8 pb-24 lg:px-8">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--fg)] lg:ml-0 ml-10">定时任务</h1>
+          <h1 className="text-2xl font-bold text-[var(--fg)]">定时任务</h1>
           <p className="mt-1 text-sm text-[var(--fg-dim)]">由 Hub 统一调度；节点只接收普通任务，离线时自动排队。</p>
         </div>
         <button type="button" onClick={openCreate} className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-semibold text-[var(--bg)] hover:opacity-90">

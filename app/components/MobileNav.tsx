@@ -87,8 +87,8 @@ export function MobileNav() {
   };
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#26262b] bg-[#111113]/95 px-1 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 backdrop-blur lg:hidden">
-      <div className="mx-auto grid max-w-lg grid-cols-6 gap-1">
+    <nav className="fixed inset-x-0 bottom-0 z-40 bg-[var(--bg-rail)] px-1 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1 shadow-[var(--ds-shadow-bar)] lg:hidden">
+      <div className="mx-auto grid max-w-lg grid-cols-6 gap-0.5">
         {MOBILE_NAV_ITEMS.map(item => {
           const active = isActive(item.href);
           return (
@@ -97,12 +97,15 @@ export function MobileNav() {
               href={item.href}
               prefetch={false}
               aria-current={active ? 'page' : undefined}
-              className={`relative flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[10px] transition-colors ${
+              className={`relative flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-[10px] px-1 text-[11px] font-medium transition-colors ${
                 active
-                  ? 'bg-cyan-500/12 text-cyan-300 before:absolute before:top-0 before:left-3 before:right-3 before:h-0.5 before:rounded-full before:bg-cyan-400'
-                  : 'text-gray-500 active:bg-[#232327] active:text-gray-200'
+                  ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                  : 'text-[var(--fg-muted)] active:bg-[var(--bg-elevated)] active:text-[var(--fg)]'
               }`}
             >
+              {active ? (
+                <span aria-hidden className="absolute top-1 left-3 right-3 h-[3px] rounded-full bg-[var(--accent)]" />
+              ) : null}
               <span className="relative inline-flex">
                 <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
@@ -111,7 +114,7 @@ export function MobileNav() {
                   <span aria-label="有未读（已静音）" className="absolute -top-0.5 right-1 h-2 w-2 rounded-full bg-red-500/80" />
                 )}
                 {item.href === '/nodes' && totalUnread > 0 && (
-                  <span className="absolute -top-1 -right-2.5 min-w-[15px] h-[15px] px-1 rounded-full bg-red-500 text-white text-[9px] font-semibold leading-[15px] text-center">
+                  <span className="absolute -top-1 -right-2.5 min-w-[15px] h-[15px] px-1 rounded-full bg-red-500 text-white text-[11px] font-semibold leading-[15px] text-center">
                     {badgeLabel(totalUnread)}
                   </span>
                 )}

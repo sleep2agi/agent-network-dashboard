@@ -94,11 +94,11 @@ function NodeListRow({ session: s, selected, unread, onSelect, onContextMenu }: 
       // rgba(125,211,252,0.04) (hover 0.08); no pin ICON (Feishu
       // pattern). Selected wins over both.
       style={{ height: NODE_ROW_HEIGHT, minHeight: NODE_ROW_HEIGHT }}
-      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors border-b border-[var(--col-hairline)] ${
+      className={`flex w-full items-center gap-2.5 border-b border-[var(--col-hairline)] px-3 py-2.5 text-left transition-colors ${
         selected
-          ? 'bg-cyan-500/8'
+          ? 'bg-[var(--accent-tonal)]'
           : pinned
-            ? 'bg-[rgba(125,211,252,0.04)] hover:bg-[rgba(125,211,252,0.08)]'
+            ? 'bg-[var(--hover-tint)] hover:bg-[var(--hover-tint-strong)]'
             : 'hover:bg-[var(--bg-elevated)]'
       }`}
     >
@@ -116,7 +116,7 @@ function NodeListRow({ session: s, selected, unread, onSelect, onContextMenu }: 
           {/* SPEC §11: alias + optional bell-slash icon at RIGHT of
               alias when muted (12×12, #64748B). NO pin icon — pinned
               state is signaled by row background per §11.1. */}
-          <span className={`text-[13px] truncate flex items-center gap-1.5 min-w-0 ${selected ? 'text-cyan-200 font-medium' : 'text-gray-200'}`}>
+          <span className={`flex min-w-0 items-center gap-1.5 truncate text-[13px] ${selected ? 'font-medium text-[var(--accent)]' : 'text-[var(--fg)]'}`}>
             <span className="truncate">{s.alias}</span>
             {muted && (
               <svg
@@ -153,7 +153,7 @@ function NodeListRow({ session: s, selected, unread, onSelect, onContextMenu }: 
               }
               data-unread-badge
               data-badge-variant={muted ? 'muted' : 'default'}
-              className={`shrink-0 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-semibold leading-4 text-center ${
+              className={`shrink-0 min-w-[16px] h-4 px-1 rounded-full text-[11px] font-semibold leading-4 text-center ${
                 muted
                   ? 'bg-[var(--badge-muted-bg)] text-[var(--badge-muted-fg)]'
                   : 'bg-[var(--danger)] text-white'
@@ -206,12 +206,12 @@ function LastLine({ alias, session }: { alias: string; session: SessionRow }) {
     );
   }
   if (session.task) {
-    return <span className="text-[11px] text-gray-500 truncate">{session.task}</span>;
+    return <span className="truncate text-[11px] text-[var(--fg-dim)]">{session.task}</span>;
   }
   if (!session.online) {
-    return <span className="text-[11px] text-gray-600 italic">{t('离线', 'offline')}</span>;
+    return <span className="text-[11px] text-[var(--fg-dim)] italic">{t('离线', 'offline')}</span>;
   }
-  return <span className="text-[11px] text-gray-600">{t('空闲', 'idle')}</span>;
+  return <span className="text-[11px] text-[var(--fg-dim)]">{t('空闲', 'idle')}</span>;
 }
 
 export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchChange }: NodeListProps) {
@@ -338,10 +338,10 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
           placeholder={t('搜索节点（拼音可）', 'Search nodes (pinyin ok)')}
           aria-label={t('搜索节点', 'Search nodes')}
           data-testid="rail-search"
-          className="w-full rounded-md bg-[var(--col-inset)] border border-[rgba(255,255,255,0.08)] px-2.5 py-1.5 text-[12px] text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-cyan-500/40"
+          className="h-9 w-full rounded-[10px] bg-[var(--col-inset)] px-3 text-[13px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:shadow-[var(--focus-ring)]"
         />
       </div>
-      <div className="px-3 py-2 text-[11px] text-gray-500 tracking-wide uppercase border-b border-[var(--col-hairline)] shrink-0">
+      <div className="shrink-0 border-b border-[var(--col-hairline)] px-3 py-2 text-[11px] font-medium tracking-wide text-[var(--fg-dim)]">
         {t(`节点 ${sessions.length}`, `Nodes · ${sessions.length}`)}
       </div>
       {menu && (
@@ -365,18 +365,18 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
             /* #Stage D (Vincent ③ 判据): a no-match search MUST look
                different from "search broke and returned nothing" — echo
                the query so the user sees their input was applied. */
-            <div className="p-4 text-[11px] text-gray-500" data-testid="rail-search-empty">
+            <div className="p-4 text-[11px] text-[var(--fg-dim)]" data-testid="rail-search-empty">
               {t(`没有节点匹配 “${search}”`, `No match — no nodes named "${search}"`)}
               <button
                 type="button"
                 onClick={() => onSearchChange('')}
-                className="ml-2 text-cyan-400/80 hover:text-cyan-300 underline-offset-2 hover:underline"
+                className="ml-2 font-medium text-[var(--accent)] underline-offset-2 hover:underline"
               >
                 {t('清除', 'Clear')}
               </button>
             </div>
           ) : (
-          <div className="p-4 text-[11px] text-gray-600">
+          <div className="p-4 text-[11px] text-[var(--fg-dim)]">
             {t('列表为空 —— 右侧的筛选控件或空态说明会告诉你原因。', 'Rail is empty — the filter controls or empty state on the right explain why.')}
           </div>
           )
