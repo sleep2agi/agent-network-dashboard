@@ -42,6 +42,14 @@ const COLUMN_CHIP: Record<string, string> = {
   abandoned: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
 };
 
+const COLUMN_OPTIONS: { key: string; label: string }[] = [
+  { key: 'pool', label: '需求池' },
+  { key: 'doing', label: '进行中' },
+  { key: 'done', label: '完成' },
+  { key: 'abandoned', label: '放弃' },
+];
+const PRIORITY_OPTIONS = ['high', 'normal', 'low', 'lowest'] as const;
+
 function personLabel(p?: Person | null) {
   if (!p) return '—';
   return p.alias || p.id;
@@ -69,6 +77,66 @@ export default function RequirementDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [needsLogin, setNeedsLogin] = useState(false);
+  // #1634 — write surface. Every mutation goes through Hub's own rules; we
+  // only show its error code back to the user instead of failing silently.
+  const [actionError, setActionError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [comment, setComment] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const reload = () => setReloadKey(k => k + 1);
+
+  async function sendPatch(fields: Record<string, unknown>) {
+    if (!id || busy) return;
+    setBusy(true); setActionError('');
+    try {
+      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) { setActionError(data?.error || `hub_${res.status}`); return; }
+      reload();
+    } catch (e: unknown) {
+      setActionError(e instanceof Error ? e.message : 'patch failed');
+    } finally { setBusy(false); }
+  }
+
+  async function toggleItem(itemId: string, done: boolean) {
+    if (!id || busy) return;
+    setBusy(true); setActionError('');
+    try {
+      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}/checklist/${encodeURIComponent(itemId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) { setActionError(data?.error || `hub_${res.status}`); return; }
+      reload();
+    } catch (e: unknown) {
+      setActionError(e instanceof Error ? e.message : 'checklist failed');
+    } finally { setBusy(false); }
+  }
+
+  async function submitComment() {
+    if (!id || busy || !comment.trim()) return;
+    setBusy(true); setActionError('');
+    try {
+      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: comment.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) { setActionError(data?.error || `hub_${res.status}`); return; }
+      setComment('');
+      reload();
+    } catch (e: unknown) {
+      setActionError(e instanceof Error ? e.message : 'comment failed');
+    } finally { setBusy(false); }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -94,7 +162,7 @@ export default function RequirementDetailPage() {
       }
     })();
     return () => { alive = false; };
-  }, [id]);
+  }, [id, reloadKey]);
 
   if (loading) {
     return (
@@ -162,6 +230,51 @@ export default function RequirementDetailPage() {
           </div>
         </header>
 
+        {/* #1634 — write surface. Hub keeps the rules (owner must be human,
+            node tokens may not delete); this bar only sends whitelisted fields. */}
+        <section className="mb-6 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5">
+          <span className="text-[10px] uppercase tracking-wide text-gray-600">Status</span>
+          {COLUMN_OPTIONS.map(opt => (
+            <button
+              key={opt.key}
+              type="button"
+              disabled={busy || req.column === opt.key}
+              onClick={() => sendPatch({ column: opt.key })}
+              className={`rounded-md border px-2.5 py-1 text-xs transition-colors disabled:opacity-60 ${
+                req.column === opt.key
+                  ? (COLUMN_CHIP[opt.key] || COLUMN_CHIP.abandoned)
+                  : 'border-transparent text-gray-500 hover:bg-[var(--bg-elevated)] hover:text-gray-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+          <span className="mx-1 h-4 w-px bg-[var(--border)]" />
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-600">
+            Priority
+            <select
+              value={req.priority}
+              disabled={busy}
+              onChange={e => sendPatch({ priority: e.target.value })}
+              className="rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs normal-case text-gray-200"
+            >
+              {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-600">
+            Due
+            <input
+              type="date"
+              value={req.due ? String(req.due).slice(0, 10) : ''}
+              disabled={busy}
+              onChange={e => sendPatch({ due: e.target.value })}
+              className="rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs normal-case text-gray-200"
+            />
+          </label>
+          {busy && <span className="text-[11px] text-gray-500">saving…</span>}
+          {actionError && <span className="text-[11px] text-red-400">{actionError}</span>}
+        </section>
+
         <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
           <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-500">Description</h2>
           {req.description ? (
@@ -182,9 +295,16 @@ export default function RequirementDetailPage() {
           ) : (
             <ul className="space-y-1.5">
               {checklist.map(item => (
-                <li key={item.id} className="flex items-start gap-2 text-sm">
-                  <span aria-hidden className={item.done ? 'text-emerald-400' : 'text-gray-600'}>{item.done ? '✓' : '○'}</span>
-                  <span className={item.done ? 'text-gray-500 line-through' : 'text-gray-200'}>{item.text}</span>
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => toggleItem(item.id, !item.done)}
+                    className="flex items-start gap-2 text-left text-sm hover:opacity-80 disabled:opacity-60"
+                  >
+                    <span aria-hidden className={item.done ? 'text-emerald-400' : 'text-gray-600'}>{item.done ? '✓' : '○'}</span>
+                    <span className={item.done ? 'text-gray-500 line-through' : 'text-gray-200'}>{item.text}</span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -212,6 +332,28 @@ export default function RequirementDetailPage() {
               })}
             </ul>
           )}
+
+          <div className="mt-3 border-t border-[var(--border)] pt-3">
+            <textarea
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              rows={2}
+              placeholder="写一条进展或评论…（Ctrl/⌘+Enter 发送）"
+              className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-2 text-sm text-gray-200 placeholder-gray-700 focus:border-blue-500/40 focus:outline-none"
+              onKeyDown={e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submitComment(); }}
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                disabled={busy || !comment.trim()}
+                onClick={submitComment}
+                className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs text-blue-300 disabled:opacity-50"
+              >
+                Add comment
+              </button>
+              {actionError && <span className="text-[11px] text-red-400">{actionError}</span>}
+            </div>
+          </div>
         </section>
       </div>
     </div>
