@@ -16,7 +16,6 @@
   "app/components/TaskDrawer.tsx": 12,
   "app/components/TopoGraph.tsx": 3,
   "app/components/UserBar.tsx": 9,
-  "app/login/page.tsx": 10,
   "app/messages/page.tsx": 14,
   "app/node/page.tsx": 22,
   "app/server-logs/page.tsx": 6,

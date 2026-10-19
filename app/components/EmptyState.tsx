@@ -144,7 +144,7 @@ export function EmptyState({ variant = 'generic', title, sub, cta, compact = fal
       </div>
       <h3 className={`font-medium text-[var(--fg)] ${compact ? 'text-sm' : 'text-[15px] leading-[22px]'}`}>{headline}</h3>
       {subcopy && (
-        <p className={`text-[var(--fg-muted)] ${compact ? 'mt-1.5 text-xs' : 'mt-2 text-sm'} mx-auto max-w-md leading-relaxed`}>
+        <p className={`mx-auto max-w-md text-[13px] leading-6 text-[var(--fg-muted)] ${compact ? 'mt-1.5' : 'mt-2'}`}>
           {subcopy}
         </p>
       )}

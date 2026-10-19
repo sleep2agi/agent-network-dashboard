@@ -92,6 +92,40 @@ export function PriorityChip({ priority }: { priority?: string }) {
   );
 }
 
+const STATUS_TONE: Record<string, 'running' | 'online' | 'idle' | 'offline' | 'failed' | 'blocked'> = {
+  working: 'running',
+  running: 'running',
+  online: 'online',
+  idle: 'idle',
+  offline: 'offline',
+  failed: 'failed',
+  error: 'failed',
+  blocked: 'blocked',
+  cancelled: 'offline',
+  expired: 'offline',
+  closed: 'offline',
+};
+
+const STATUS_TONE_CLASS = {
+  running: 'bg-[var(--pill-running-bg)] text-[var(--pill-running-fg)]',
+  online: 'bg-[var(--pill-online-bg)] text-[var(--pill-online-fg)]',
+  idle: 'bg-[var(--pill-idle-bg)] text-[var(--pill-idle-fg)]',
+  offline: 'bg-[var(--pill-offline-bg)] text-[var(--pill-offline-fg)]',
+  failed: 'bg-[var(--pill-failed-bg)] text-[var(--pill-failed-fg)]',
+  blocked: 'bg-[var(--pill-blocked-bg)] text-[var(--pill-blocked-fg)]',
+} as const;
+
+/** Same status capsule on home cards, the node list, and task rows. */
+export function StatusPill({ status, label }: { status: string; label?: string }) {
+  const tone = STATUS_TONE[status] || 'offline';
+  return (
+    <span className={`inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full px-2 text-[11px] font-medium leading-none ${STATUS_TONE_CLASS[tone]}`}>
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+      {label || status}
+    </span>
+  );
+}
+
 export function Segmented<T extends string>({
   label,
   value,

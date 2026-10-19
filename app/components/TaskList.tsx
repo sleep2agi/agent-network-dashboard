@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { AliasAvatar } from './AliasAvatar';
 import { relativeAgo } from '../lib/time';
 import { previewContent } from './utils';
-import { STATUS_DOT_HEX } from '../lib/status';
+import { StatusPill } from './requirement-chrome';
 
 // Task-list rail for the /tasks two-column layout (类飞书 "list + detail").
 // Rendered inside TasksView's <aside> — this file is intentionally small
@@ -76,25 +76,8 @@ export function TaskList({
                       : 'bg-[var(--bg-secondary)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    {/* status dot + label */}
-                    <span
-                      aria-hidden
-                      className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{ backgroundColor: STATUS_DOT_HEX[t.status] || '#6b7280' }}
-                    />
-                    <span
-                      className="text-[11px] font-medium"
-                      style={{
-                        color: t.status === 'running'
-                          ? 'var(--success)'
-                          : t.status === 'failed'
-                            ? 'var(--danger)'
-                            : 'var(--fg-muted)',
-                      }}
-                    >
-                      {t.status}
-                    </span>
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <StatusPill status={t.status} />
                     {t.priority === 'high' && (
                       <span className="text-[11px] font-medium text-[var(--danger)] shrink-0">HIGH</span>
                     )}

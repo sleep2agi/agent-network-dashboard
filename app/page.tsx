@@ -138,7 +138,8 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+    <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
+      <div className="anet-page-inner">
       <StatsBar online={online} working={working} total={total} presenceUnknown={presenceUnknown} />
 
       {/* #217 S5 (Vincent: "极简极简，这些都可以放到设置里面去"): the
@@ -315,6 +316,7 @@ export default function Dashboard() {
           onClose={cmd.closeAll}
         />
       )}
+      </div>
     </div>
   );
 }

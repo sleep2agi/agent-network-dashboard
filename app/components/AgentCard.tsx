@@ -10,6 +10,7 @@ import { useMuted } from '../lib/chat-mute';
 import { usePinned } from '../lib/chat-pin';
 import { NodeSettingsPanel } from './NodeSettingsPanel';
 import { t } from '../lib/ui-lang';
+import { StatusPill } from './requirement-chrome';
 
 interface AgentCardProps {
   session: Session;
@@ -22,15 +23,6 @@ interface AgentCardProps {
   unreadCount?: number;
 }
 
-const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; glow: string }> = {
-  working: { bg: 'bg-green-900/30 border-green-800/30', text: 'text-green-300', dot: 'bg-green-500', glow: 'shadow-green-500/10' },
-  idle: { bg: 'bg-cyan-900/30 border-cyan-800/30', text: 'text-cyan-300', dot: 'bg-cyan-400', glow: 'shadow-cyan-500/5' },
-  blocked: { bg: 'bg-yellow-900/30 border-yellow-800/30', text: 'text-yellow-300', dot: 'bg-yellow-500', glow: '' },
-  error: { bg: 'bg-red-900/30 border-red-800/30', text: 'text-red-300', dot: 'bg-red-500', glow: '' },
-};
-
-const DEFAULT_STATUS = { bg: 'bg-gray-800/50 border-gray-700/30', text: 'text-gray-500', dot: 'bg-gray-500', glow: '' };
-
 function AgentCardInner({ session: s, hasSse, sseCount, onChat, unreadCount = 0 }: AgentCardProps) {
   // R10 微信草稿闭环: list surfaces show which conversation has an unsent
   // draft. Internal subscription (useSyncExternalStore) so the memo
@@ -38,7 +30,6 @@ function AgentCardInner({ session: s, hasSse, sseCount, onChat, unreadCount = 0 
   const hasDraft = useHasDraft(s.alias);
   const muted = useMuted(s.alias);
   const pinned = usePinned(s.alias);
-  const cfg = hasSse ? (STATUS_CONFIG[s.status] || DEFAULT_STATUS) : DEFAULT_STATUS;
   // #260: per-node settings panel (UI-only stub). Local open state — the
   // panel itself is presentational and issues no backend calls.
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -99,10 +90,7 @@ function AgentCardInner({ session: s, hasSse, sseCount, onChat, unreadCount = 0 
           {hasDraft && <span className="shrink-0 text-[11px] text-[var(--error)]" aria-label={t('有未发送草稿', 'Unsent draft')}>{t('[草稿]', '[draft]')}</span>}
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <span className="inline-flex h-5 items-center gap-1.5 rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium text-[var(--fg-muted)]">
-            <span aria-hidden className={`h-2 w-2 rounded-full ${cfg.dot}`} />
-            {hasSse ? s.status : 'offline'}
-          </span>
+          <StatusPill status={hasSse ? s.status : 'offline'} />
           {/* #260: per-node ⋮ menu → settings panel. The card is a <Link>,
               so stop the click from navigating / opening chat. Opens a
               UI-only stub panel (channels / model / mode / restart) — no
@@ -159,8 +147,8 @@ function AgentCardInner({ session: s, hasSse, sseCount, onChat, unreadCount = 0 
       {s.progress > 0 && (
         <div className="hidden sm:block mt-3">
           <div className="flex justify-between text-[11px] mb-1">
-            <span className="text-gray-600">Progress</span>
-            <span className={cfg.text}>{s.progress}%</span>
+            <span className="text-[var(--fg-dim)]">Progress</span>
+            <span className="tabular-nums text-[var(--success)]">{s.progress}%</span>
           </div>
           <div className="h-0.5 w-full overflow-hidden rounded-full bg-[var(--bg-elevated)]">
             <div

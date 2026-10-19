@@ -14,7 +14,7 @@ import { isPinned, usePinVersion } from '../lib/chat-pin';
 import { pinyinMatch, usePinyinReady } from '../lib/pinyin-match';
 import { useCollapsibleSearch } from '../components/CollapsibleSearch';
 import { NodeList } from '../components/NodeList';
-import { Segmented } from '../components/requirement-chrome';
+import { Segmented, StatusPill } from '../components/requirement-chrome';
 import { ChatPane } from '../components/ChatPane';
 import type { Session } from '../components/types';
 import { useChatUnread } from '../lib/chat-unread';
@@ -389,7 +389,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           only when NO node is selected on desktop — see chatOpenDesktop
           note above. Mobile keeps it always (chat is an overlay there). */}
       {(isDesktop ? !chatOpenDesktop : (manageView && !chatAlias)) && (
-      <div data-testid="nodes-main-scroll" className="flex-1 min-w-0 max-w-full h-full overflow-y-auto overflow-x-hidden p-4 sm:p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6">
+      <div data-testid="nodes-main-scroll" className="anet-page h-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto">
       {/* #Mobile manage mode: way back to the conversation list — the rail
           (which hosts the toggle) is hidden at this level on phones. */}
       {!isDesktop && manageView && (
@@ -410,7 +410,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           #209 R32: search affordance moved to top-right magnifier
           button (Vincent WeChat ref msg 563). justify-between makes
           the title cluster hug left, button hugs right. */}
-      <div className="flex items-center gap-4 mb-4 sm:mb-6">
+      <div className="sticky top-0 z-20 -mx-4 -mt-5 mb-6 flex items-center gap-4 border-b border-[var(--border)] bg-[var(--bg)]/90 px-4 py-3 backdrop-blur-md lg:-mx-10 lg:-mt-8 lg:px-10">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Nodes</h1>
           <div className="inline-flex h-9 shrink-0 items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5 shadow-[var(--ds-shadow-card)]" aria-label="Fleet counts">
@@ -654,10 +654,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                       <span className="truncate text-sm font-medium text-[var(--fg)]">{s.alias}</span>
                       <DraftMark alias={s.alias} />
                       {unread && <span className="inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-[11px] font-medium text-[var(--error)]" style={{ background: 'color-mix(in srgb, var(--error) 14%, transparent)' }}>New</span>}
-                      <span className="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium text-[var(--fg-muted)]">
-                        <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: statusKey === 'working' ? 'var(--success)' : statusKey === 'offline' ? 'var(--offline)' : 'var(--accent)' }} />
-                        {statusKey}
-                      </span>
+                      <StatusPill status={statusKey} />
                     </div>
                     <div className="mt-0.5 truncate text-xs text-[var(--fg-dim)]">
                       {(s.agent || '—')}<span className="mx-1.5 text-[var(--fg-dim)]">·</span><span title={s.server || ''}>{shortServer(s.server)}</span>
@@ -702,7 +699,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           {/* Round 94: AGENT + SERVER merged into one `agent · server`
               cell. Round mobile-command: node row itself opens chat, so
               the old Chat / Send Task action column is gone. */}
-          <div className="hidden sm:grid sm:grid-cols-10 gap-2 px-1 py-2 text-[11px] font-medium text-[var(--fg-dim)]">
+          <div className="hidden px-1 py-2 text-[11px] font-medium text-[var(--fg-dim)] sm:grid sm:grid-cols-10 sm:gap-2">
             <div className="col-span-1">Status</div>
             <div className="col-span-2">Alias</div>
             <div className="col-span-2">Agent · Server</div>
@@ -726,10 +723,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
               >
                 <div className="hidden sm:grid sm:grid-cols-10 gap-2 items-center">
                   <div className="col-span-1">
-                    <span className="inline-flex h-5 items-center gap-1.5 text-[11px] font-medium text-[var(--fg-muted)]">
-                      <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: statusKey === 'working' ? 'var(--success)' : statusKey === 'offline' ? 'var(--offline)' : 'var(--accent)' }} />
-                      {statusKey}
-                    </span>
+                    <StatusPill status={statusKey} />
                   </div>
                   <div className="col-span-2 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">

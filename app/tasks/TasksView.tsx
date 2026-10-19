@@ -172,9 +172,9 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           selectedId && !isDesktop ? 'hidden' : 'flex'
         }`}
       >
-        <div className="px-4 py-4 border-b border-[var(--border)]">
-          <div className="flex items-center gap-3 mb-4">
-            <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Tasks</h1>
+        <div className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/95 px-5 py-5 backdrop-blur-md">
+          <div className="mb-4 flex items-center gap-3">
+            <h1 className="text-[22px] font-semibold text-[var(--fg)]">Tasks</h1>
             {tasks.length < count && (
               <span
                 className="inline-flex h-5 items-center rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium tabular-nums text-[var(--fg-muted)]"
@@ -362,9 +362,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           data-testid="task-detail-empty"
           className="flex-1 min-w-0 min-h-screen flex items-center justify-center p-8"
         >
-          <div className="max-w-sm rounded-[10px] bg-[var(--bg-secondary)] px-6 py-8 text-center shadow-[var(--ds-shadow-card)]">
-            <p className="text-sm leading-relaxed text-[var(--fg-muted)]">请从左侧列表选择一条任务查看详情</p>
-          </div>
+          <EmptyState compact variant="tasks" title="选择一条任务" sub="点左侧列表查看内容、状态和参与者。" />
         </section>
       )}
     </div>

@@ -24,8 +24,10 @@ export default function SettingsPage() {
   const valueClass = 'min-w-0 break-all text-sm text-[var(--fg)] sm:max-w-[60%] sm:text-right';
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
-      <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] mb-3">Settings</h1>
+    <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
+      <div className="anet-page-inner max-w-2xl">
+      <h1 className="mb-2 text-[22px] font-semibold text-[var(--fg)]">Settings</h1>
+      <p className="mb-6 text-[13px] leading-6 text-[var(--fg-muted)]">外观、连接和账号。主题会记在这台浏览器里。</p>
 
       {/* Section anchor nav (round 28) — jump to a group instead of scrolling
           through the whole page. Mirrors the section headers below; pages
@@ -265,6 +267,7 @@ export default function SettingsPage() {
         </section>
         </div>
 
+      </div>
       </div>
     </div>
   );

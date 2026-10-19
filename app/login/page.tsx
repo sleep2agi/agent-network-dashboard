@@ -45,71 +45,69 @@ export default function LoginPage() {
     setPending(false);
   };
 
-  return (
-    <main className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex items-center justify-center relative overflow-hidden px-4 py-10 sm:py-16">
-      {/* Subtle off-grid background — restraint over AI-glow.
-          Dark themes get a faint radial wash; light themes show a low-contrast
-          dotted grid for surface texture without noise. */}
-      <div className="absolute inset-0 pointer-events-none anet-login-bg" aria-hidden />
-      {/* Soft brand glow behind the card — adds depth to the flat near-black
-          field without competing with the form (design-polish #17 R1). */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] h-[460px] rounded-full bg-cyan-500/[0.045] blur-[110px] pointer-events-none" aria-hidden />
+  const fieldClass = 'h-11 w-full rounded-[10px] bg-[var(--col-inset)] px-3 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none';
 
-      <div className="relative w-full max-w-sm">
-        <div className="text-center mb-7">
-          {/* Brand mark — uses the favicon 3-node mesh SVG which IS the
-              agent-network concept (nodes + edges). Replaces the previous
-              flat emerald square placeholder. */}
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-[#161618] border border-[#26262b] anet-login-mark">
-            <svg className="w-9 h-9" viewBox="0 0 32 32" aria-hidden>
-              <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.25" className="text-cyan-400 anet-login-mark-ring" />
-              <line x1="16" y1="10" x2="10" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.5" className="text-cyan-400 anet-login-mark-edge" />
-              <line x1="16" y1="10" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.5" className="text-cyan-400 anet-login-mark-edge" />
-              <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.5" className="text-cyan-400 anet-login-mark-edge" />
-              <circle cx="16" cy="10" r="3" fill="currentColor" className="text-cyan-400 anet-login-mark-node-a" />
-              <circle cx="10" cy="20" r="3" fill="currentColor" className="text-green-400 anet-login-mark-node-b" />
-              <circle cx="22" cy="20" r="3" fill="currentColor" className="text-violet-400 anet-login-mark-node-c" />
+  return (
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--bg)] px-4 py-12 text-[var(--fg)]">
+      <div className="anet-login-bg pointer-events-none absolute inset-0" aria-hidden />
+
+      <div className="relative w-full max-w-[400px]">
+        <div className="mb-8 text-center">
+          <div className="anet-login-mark mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-[14px] bg-[var(--bg-secondary)] text-[var(--accent)] shadow-[var(--ds-shadow-card)]">
+            <svg className="h-8 w-8" viewBox="0 0 32 32" aria-hidden>
+              <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.28" />
+              <line x1="16" y1="10" x2="10" y2="20" stroke="currentColor" strokeWidth="1.25" opacity="0.7" />
+              <line x1="16" y1="10" x2="22" y2="20" stroke="currentColor" strokeWidth="1.25" opacity="0.7" />
+              <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1.25" opacity="0.7" />
+              <circle cx="16" cy="10" r="2.4" fill="currentColor" />
+              <circle cx="10" cy="20" r="2.4" fill="var(--success)" />
+              <circle cx="22" cy="20" r="2.4" fill="currentColor" opacity="0.55" />
             </svg>
           </div>
-          <h1 className="text-[22px] sm:text-2xl font-semibold text-white tracking-tight">Agent Network</h1>
-          <p className="text-[13px] text-gray-400 mt-1.5 leading-snug">
+          <h1 className="text-[28px] font-semibold tracking-tight">Agent Network</h1>
+          <p className="mx-auto mt-2 max-w-[18rem] text-[14px] leading-6 text-[var(--fg-muted)]">
             {mode === 'login'
-              ? <>Welcome back · <span className="text-gray-500">Tasks · Mesh · Messages</span></>
-              : <>Create your account · <span className="text-gray-500">Free preview · no credit card</span></>}
+              ? 'One dashboard for agents, tasks, and messages.'
+              : 'Create an account and start from the fleet overview.'}
           </p>
         </div>
 
-        {/* Mode toggle */}
-        <div className="flex rounded-lg border border-[#26262b] bg-[#161618] p-1 mb-4">
+        <div className="mb-3 flex h-10 rounded-[10px] bg-[var(--bg-secondary)] p-1 shadow-[var(--ds-shadow-card)]" role="tablist" aria-label="Account mode">
           {(['login', 'register'] as const).map(m => (
-            <button key={m} type="button" onClick={() => { setMode(m); setError(''); }}
-              className={`flex-1 rounded-md px-3 py-2 text-sm transition-colors ${mode === m ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-500 hover:text-gray-200'}`}>
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => { setMode(m); setError(''); }}
+              className={`flex-1 rounded-md text-[13px] font-medium ${mode === m ? 'bg-[var(--accent-tonal)] text-[var(--accent)]' : 'text-[var(--fg-muted)] hover:text-[var(--fg)]'}`}
+            >
               {m === 'login' ? 'Sign in' : 'Register'}
             </button>
           ))}
         </div>
 
-        <form onSubmit={submit} className="border border-[#26262b] bg-[#161618]/80 backdrop-blur-sm rounded-xl p-6 shadow-2xl shadow-black/30">
-          <label htmlFor="username" className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
+        <form onSubmit={submit} className="rounded-[14px] bg-[var(--bg-secondary)] p-6 shadow-[var(--ds-shadow-card)]">
+          <label htmlFor="username" className="mb-2 block text-[13px] font-medium text-[var(--fg-muted)]">
             Username
           </label>
           <input id="username" type="text" value={username} onChange={e => setUsername(e.target.value)} autoFocus
             placeholder="Enter username"
-            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-4 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all mb-4" />
+            className={`${fieldClass} mb-4`} />
 
-          <label htmlFor="password" className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
+          <label htmlFor="password" className="mb-2 block text-[13px] font-medium text-[var(--fg-muted)]">
             Password
           </label>
           <div className="relative">
             <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
               placeholder="Enter password"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-4 pr-11 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all" />
+              className={`${fieldClass} pr-11`} />
             <button
               type="button"
               onClick={() => setShowPassword(s => !s)}
               tabIndex={-1}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute inset-y-0 right-0 flex items-center justify-center min-w-[44px] px-3 text-gray-600 hover:text-gray-300 transition-colors"
+              className="absolute inset-y-0 right-0 flex min-w-[44px] items-center justify-center px-3 text-[var(--fg-dim)] hover:text-[var(--fg)]"
             >
               {showPassword ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -126,13 +124,13 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="mt-3 text-sm text-red-300 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2">{error}</div>
+            <div className="mt-3 rounded-[10px] px-3 py-2 text-sm text-[var(--danger)]" style={{ background: 'color-mix(in srgb, var(--danger) 12%, transparent)' }}>{error}</div>
           )}
 
           <button type="submit" disabled={pending || !password || !username.trim()}
-            className="mt-5 w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-gray-800 disabled:to-gray-800 disabled:text-gray-600 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/20 disabled:shadow-none">
+            className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[var(--accent)] text-sm font-medium text-[var(--accent-fg)] hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] disabled:hover:brightness-100">
             {pending && (
-              <svg aria-hidden className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <svg aria-hidden className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
                 <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
@@ -141,9 +139,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-[11px] text-gray-700 mt-6">
-          Sleep2AGI · Apache-2.0 · <a href="https://anet.sh" className="hover:text-gray-500 transition-colors">anet.sh</a>
-          <span className="mx-1 text-gray-800">·</span>
+        <p className="mt-6 text-center text-[12px] leading-5 text-[var(--fg-dim)]">
+          Sleep2AGI · Apache-2.0 · <a href="https://anet.sh" className="hover:text-[var(--fg)]">anet.sh</a>
+          <span className="mx-1">·</span>
           <span className="font-mono" title="@sleep2agi/agent-network-dashboard">v{DASHBOARD_VERSION}</span>
         </p>
       </div>
