@@ -24,8 +24,8 @@ test('admin 截图那段评论：标题 / 粗体 / 行内 code 不再是原字�
 
 test('列表渲染成 ul/li，而不是带 - 的文本行', () => {
   const html = render('- 第一条\n- 第二条');
-  assert.match(html, /<ul>/);
-  assert.equal((html.match(/<li>/g) || []).length, 2);
+  assert.match(html, /<ul[\s>]/);
+  assert.equal((html.match(/<li[\s>]/g) || []).length, 2);
   assert.doesNotMatch(html, />\s*-\s*第一条/);
 });
 
