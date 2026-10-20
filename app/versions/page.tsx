@@ -5,7 +5,7 @@ import { useSessions } from '../lib/hooks';
 import type { Session } from '../components/types';
 
 /** Published agent-node preview this page compares against. Not fetched from npm. */
-const PUBLISHED_AGENT_NODE = '2.5.0-preview.150';
+const PUBLISHED_AGENT_NODE = '2.5.0-preview.151';
 
 function online(s: Session) {
   return s.status === 'idle' || s.status === 'working';
