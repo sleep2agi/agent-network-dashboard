@@ -29,8 +29,13 @@ check('component uses react-markdown + remark-gfm',
 check('no raw HTML injection surface', !body.includes('dangerouslySetInnerHTML') && !/from ['"]rehype-raw['"]/.test(body));
 check('external links open in a new tab with noopener',
   body.includes("target=\"_blank\"") && body.includes('rel="noopener noreferrer"'));
-check('styling reuses the repo prose wrapper (Description parity)',
-  body.includes('prose prose-invert prose-sm') && page.includes('prose prose-invert max-w-none prose-sm'));
+// ⚠️ 本仓没装 @tailwindcss/typography：`prose` 是空类，而 Tailwind preflight 会把
+// 标题的 font-size/weight 重置成继承、把列表的 list-style 清掉。评论渲染必须逐个元素给类。
+check('does not rely on the (absent) typography plugin',
+  !/className="[^"]*\bprose\b/.test(body));
+check('headings/lists/code are styled element by element',
+  body.includes('h2:') && body.includes('list-disc') && body.includes('list-decimal')
+  && body.includes('font-mono') && body.includes('text-[var(--fg)]'));
 
 // 描述区仍是同一套渲染，别在改评论时把描述弄回纯文本。
 check('description still renders markdown', page.includes('<ReactMarkdown remarkPlugins={[remarkGfm]}>{req.description}</ReactMarkdown>'));
