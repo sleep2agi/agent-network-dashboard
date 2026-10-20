@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useNetworkId } from '../lib/network-context';
+import { Field, PageHeader, StatusPill, fieldControlClass, primaryButtonClass, quietButtonClass } from '../components/requirement-chrome';
 
 type Skill = {
   skill_id: string; slug: string; name: string; description: string; version: string;
@@ -114,27 +115,25 @@ export default function SkillHubPage() {
 
   return (
     <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-      <div className="mb-6 flex items-center gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--fg)]">SkillHub</h1>
-          <p className="mt-1 text-sm text-[var(--fg-dim)]">节点沉淀可复用能力，审核后供整个网络使用；网络内发布不会自动公开。</p>
-        </div>
-        <button onClick={() => setShowUpload(true)} className="ml-auto rounded-lg bg-[var(--hl)] px-3 py-2 text-sm font-medium text-[var(--bg)] hover:opacity-90">上传 Skill</button>
-      </div>
+      <PageHeader
+        title="SkillHub"
+        description="节点沉淀可复用能力，审核后供整个网络使用；网络内发布不会自动公开。"
+        actions={<button type="button" onClick={() => setShowUpload(true)} className={primaryButtonClass}>上传 Skill</button>}
+      />
 
       <div className="mb-4 max-w-3xl">
-        <input aria-label="搜索 Skills" value={query} onChange={e => setQuery(e.target.value)} placeholder="搜索名称、slug 或说明…" className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-sm outline-none focus:border-[var(--hl)]" />
+        <input aria-label="搜索 Skills" value={query} onChange={e => setQuery(e.target.value)} placeholder="搜索名称、slug 或说明…" className={fieldControlClass} />
       </div>
       {error && <div className="mb-4 max-w-3xl rounded-lg border border-[var(--danger)] bg-[var(--hover-tint)] p-3 text-sm text-[var(--danger)]">{error}</div>}
 
       <div className="grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-3">
         {loading ? [1,2,3].map(i => <div key={i} className="h-40 animate-pulse rounded-xl bg-[var(--bg-elevated)]" />) : skills.map(skill => (
-          <article key={skill.skill_id} className="flex min-h-40 flex-col rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
+          <article key={skill.skill_id} className="flex min-h-40 flex-col rounded-[10px] bg-[var(--bg-secondary)] p-4 shadow-[var(--ds-shadow-card)] transition-shadow hover:shadow-[var(--ds-shadow-overlay)]">
             <div className="flex items-start gap-2">
-              <div className="min-w-0 flex-1"><h2 className="truncate font-semibold text-[var(--fg)]">{skill.name}</h2><code className="text-xs text-[var(--hl)]">{skill.slug}@{skill.version}</code></div>
-              <span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-[11px] ${skill.status === 'published' ? 'text-[var(--success)]' : skill.status === 'pending' ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>{skill.status === 'published' ? '网络内发布' : skill.status === 'pending' ? '待审核' : '已拒绝'}</span>
+              <div className="min-w-0 flex-1"><h2 className="truncate text-[15px] font-semibold text-[var(--fg)]" title={skill.name}>{skill.name}</h2><code className="truncate text-xs text-[var(--accent)]" title={`${skill.slug}@${skill.version}`}>{skill.slug}@{skill.version}</code></div>
+              <StatusPill status={skill.status} label={skill.status === 'published' ? '网络内发布' : skill.status === 'pending' ? '待审核' : '已拒绝'} />
             </div>
-            <p className="mt-3 line-clamp-3 text-sm text-[var(--fg-muted)]">{skill.description || '暂无说明'}</p>
+            <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--fg-muted)]" title={skill.description || '暂无说明'}>{skill.description || '暂无说明'}</p>
             <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-[var(--fg-dim)]">
               <span>{skill.source_type === 'node' ? '节点' : '用户'} · {skill.source_alias || 'unknown'}</span>
               <button onClick={() => openSkill(skill)} className="ml-auto rounded border border-[var(--border-hover)] px-2 py-1 text-[var(--fg-muted)]">查看</button>
@@ -142,20 +141,20 @@ export default function SkillHubPage() {
             </div>
           </article>
         ))}
-        {!loading && skills.length === 0 && <div className="col-span-full rounded-xl border border-dashed border-[var(--border-hover)] p-10 text-center text-sm text-[var(--fg-dim)]">还没有 Skill。让节点总结经验，或上传第一份 SKILL.md。</div>}
+        {!loading && skills.length === 0 && <div className="col-span-full rounded-[10px] bg-[var(--bg-secondary)] p-10 text-center text-sm text-[var(--fg-dim)] shadow-[var(--ds-shadow-card)]">还没有 Skill。让节点总结经验，或上传第一份 SKILL.md。</div>}
       </div>
 
       {showUpload && <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--bg) 70%, transparent)' }} onMouseDown={e => { if (e.target === e.currentTarget) setShowUpload(false); }}>
         <form onSubmit={submit} className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-[var(--border-hover)] bg-[var(--bg-secondary)] p-5 sm:rounded-2xl">
           <div className="mb-4 flex items-center"><h2 className="text-lg font-semibold">上传 Skill</h2><button type="button" onClick={() => setShowUpload(false)} className="ml-auto text-[var(--fg-dim)]">✕</button></div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs text-[var(--fg-muted)]">名称<input required value={draft.name} onChange={e => setDraft({...draft, name:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-2 text-sm" /></label>
-            <label className="text-xs text-[var(--fg-muted)]">Slug<input required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={draft.slug} onChange={e => setDraft({...draft, slug:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-2 font-mono text-sm" /></label>
-            <label className="text-xs text-[var(--fg-muted)] sm:col-span-2">说明<input value={draft.description} onChange={e => setDraft({...draft, description:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-2 text-sm" /></label>
-            <label className="text-xs text-[var(--fg-muted)]">版本<input required value={draft.version} onChange={e => setDraft({...draft, version:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-2 font-mono text-sm" /></label>
-            <label className="text-xs text-[var(--fg-muted)] sm:col-span-2">SKILL.md<textarea required rows={12} value={draft.content} onChange={e => setDraft({...draft, content:e.target.value})} className="mt-1 w-full rounded border border-[var(--border-hover)] bg-[var(--col-inset)] p-3 font-mono text-xs" /></label>
+            <Field label="名称"><input required value={draft.name} onChange={e => setDraft({...draft, name:e.target.value})} className={fieldControlClass} /></Field>
+            <Field label="Slug"><input required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={draft.slug} onChange={e => setDraft({...draft, slug:e.target.value})} className={`${fieldControlClass} font-mono`} /></Field>
+            <div className="sm:col-span-2"><Field label="说明"><input value={draft.description} onChange={e => setDraft({...draft, description:e.target.value})} className={fieldControlClass} /></Field></div>
+            <Field label="版本"><input required value={draft.version} onChange={e => setDraft({...draft, version:e.target.value})} className={`${fieldControlClass} font-mono`} /></Field>
+            <div className="sm:col-span-2"><Field label="SKILL.md"><textarea required rows={12} value={draft.content} onChange={e => setDraft({...draft, content:e.target.value})} className={`${fieldControlClass} h-auto min-h-48 py-2 font-mono text-xs`} /></Field></div>
           </div>
-          <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={() => setShowUpload(false)} className="rounded border border-[var(--border-hover)] px-3 py-2 text-sm">取消</button><button disabled={saving} className="rounded bg-[var(--hl)] px-3 py-2 text-sm font-medium text-[var(--bg)] disabled:opacity-50">{saving ? '上传中…' : '提交审核'}</button></div>
+          <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={() => setShowUpload(false)} className={quietButtonClass}>取消</button><button disabled={saving} className={primaryButtonClass}>{saving ? '上传中…' : '提交审核'}</button></div>
         </form>
       </div>}
       {selected && <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--bg) 70%, transparent)' }} onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null); }}>

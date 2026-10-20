@@ -188,10 +188,39 @@ h1, h2 {
 }
 .anet-page {
   padding: 24px;
+  overflow-x: clip;
 }
 @media (min-width: 1024px) {
   .anet-page {
     padding: 32px;
+  }
+}
+/* History tables become stacked cards on a phone so the page never scrolls sideways. */
+@media (max-width: 640px) {
+  .anet-stack thead { display: none; }
+  .anet-stack,
+  .anet-stack tbody { display: block; width: 100%; }
+  .anet-stack tr {
+    display: block;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    background: var(--bg-elevated);
+    padding: 8px 12px;
+  }
+  .anet-stack td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+    text-align: right;
+    min-width: 0;
+  }
+  .anet-stack td::before {
+    content: attr(data-label);
+    color: var(--fg-dim);
+    font-weight: 500;
+    text-align: left;
+    flex: none;
   }
 }
 .anet-page-inner {

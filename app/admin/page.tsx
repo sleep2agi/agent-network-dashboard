@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSessions, useHealth, useStats } from '../lib/hooks';
 import { timeAgo } from '../components/utils';
 import { AliasAvatar } from '../components/AliasAvatar';
-import { SectionHeading, TaskPanel } from '../components/requirement-chrome';
+import { Field, PageHeader, SectionHeading, StatusPill, TaskPanel, fieldControlClass, primaryButtonClass } from '../components/requirement-chrome';
 
 export default function AdminPage() {
   const { sessions } = useSessions();
@@ -79,7 +79,7 @@ export default function AdminPage() {
 
   return (
     <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-      <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)] mb-3">Admin</h1>
+      <PageHeader title="Admin" description="查看节点状态，向在线节点广播或派发任务，并注册账号。" />
 
       {/* Section anchor nav — same pattern as Settings r28; R2 of #190 mobile
           polish: idle chips were flat text-only with a ~24px tap height (below
@@ -180,7 +180,7 @@ export default function AdminPage() {
                   {/* Round 91: 5-state palette via shared
                       SESSION_STATUS_CHIP_CLASS (was working-vs-other, which
                       rendered blocked/error identical to idle). */}
-                  <span className="inline-flex h-5 items-center rounded-md bg-[var(--bg)] px-1.5 text-[11px] font-medium text-[var(--fg-muted)]">{s.status}</span>
+                  <StatusPill status={s.status} />
                   <span className="text-[11px] text-[var(--fg-dim)]">{timeAgo(s.updated_at)}</span>
                 </div>
               </div>
@@ -208,13 +208,15 @@ export default function AdminPage() {
         {/* Broadcast */}
         <TaskPanel>
           <h2 className="mb-3 text-[15px] font-semibold leading-[22px] text-[var(--fg)]">Broadcast</h2>
-          <textarea
-            value={broadcastMsg}
-            onChange={e => setBroadcastMsg(e.target.value)}
-            placeholder="Message to all online nodes..."
-            rows={3}
-            className="w-full resize-none rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none"
-          />
+          <Field label="广播内容">
+            <textarea
+              value={broadcastMsg}
+              onChange={e => setBroadcastMsg(e.target.value)}
+              placeholder="Message to all online nodes..."
+              rows={3}
+              className={`${fieldControlClass} h-auto min-h-20 resize-none py-2`}
+            />
+          </Field>
           <div className="flex justify-between items-center mt-3">
             <span className="text-xs text-[var(--fg-dim)]">{broadcastMsg.length}/500</span>
             <button
@@ -231,10 +233,12 @@ export default function AdminPage() {
         {/* Send Task */}
         <TaskPanel>
           <h2 className="mb-3 text-[15px] font-semibold leading-[22px] text-[var(--fg)]">Send Task</h2>
+          <div className="space-y-3">
+          <Field label="目标节点">
           <select
             value={taskTarget}
             onChange={e => setTaskTarget(e.target.value)}
-            className="mb-3 w-full rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-base text-[var(--fg)] focus:shadow-[var(--focus-ring)] focus:outline-none sm:text-sm"
+            className={fieldControlClass}
           >
             <option value="">Select target node...</option>
             {onlineNodes.map(s => (
@@ -246,13 +250,17 @@ export default function AdminPage() {
               ))}
             </optgroup>
           </select>
+          </Field>
+          <Field label="任务内容">
           <textarea
             value={taskContent}
             onChange={e => setTaskContent(e.target.value)}
             placeholder="Task content..."
             rows={3}
-            className="w-full resize-none rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none"
+            className={`${fieldControlClass} h-auto min-h-20 resize-none py-2`}
           />
+          </Field>
+          </div>
           <div className="flex justify-end mt-3">
             <button
               onClick={sendTask}
@@ -278,24 +286,28 @@ export default function AdminPage() {
         <TaskPanel>
           <h2 className="mb-3 text-[15px] font-semibold leading-[22px] text-[var(--fg)]">Register User (V3)</h2>
           <div className="space-y-3">
+            <Field label="用户名">
             <input
               type="text"
               value={regUser}
               onChange={e => setRegUser(e.target.value)}
               placeholder="Username"
-              className="w-full rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none"
+              className={fieldControlClass}
             />
+            </Field>
+            <Field label="密码">
             <input
               type="password"
               value={regPass}
               onChange={e => setRegPass(e.target.value)}
               placeholder="Password"
-              className="w-full rounded-[10px] bg-[var(--col-inset)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none"
+              className={fieldControlClass}
             />
+            </Field>
             <button
               onClick={registerUser}
               disabled={!regUser.trim() || !regPass.trim()}
-              className="inline-flex h-9 w-full items-center justify-center rounded-[10px] bg-[var(--accent)] px-4 text-[13px] font-medium text-[var(--accent-fg)] transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] disabled:hover:brightness-100"
+              className={`${primaryButtonClass} w-full`}
             >
               Register
             </button>

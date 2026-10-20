@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAnetConfig, useHealth } from '../lib/hooks';
 import { applyTheme } from '../components/ThemeSwitcher';
+import { Field, PageHeader, fieldControlClass, primaryButtonClass } from '../components/requirement-chrome';
 import { DASHBOARD_VERSION } from '../lib/version';
 import { clearPrivateChatStorage } from '../lib/chat-outbox';
 
@@ -26,8 +27,7 @@ export default function SettingsPage() {
   return (
     <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="anet-page-inner max-w-2xl">
-      <h1 className="mb-2 text-[22px] font-semibold text-[var(--fg)]">Settings</h1>
-      <p className="mb-6 text-[13px] leading-6 text-[var(--fg-muted)]">外观、连接和账号。主题会记在这台浏览器里。</p>
+      <PageHeader title="Settings" description="外观、连接和账号。主题会记在这台浏览器里。" />
 
       {/* Section anchor nav (round 28) — jump to a group instead of scrolling
           through the whole page. Mirrors the section headers below; pages
@@ -192,10 +192,14 @@ export default function SettingsPage() {
         <section className={cardClass}>
           <h2 className={headingClass}>Change Password</h2>
           <div className="mt-3 space-y-3">
+            <Field label="当前密码">
             <input type="password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} placeholder="Current password"
-              className="w-full rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] sm:text-sm" />
+              className={fieldControlClass} />
+            </Field>
+            <Field label="新密码">
             <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="New password"
-              className="w-full rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] sm:text-sm" />
+              className={fieldControlClass} />
+            </Field>
             <button onClick={async () => {
               if (!oldPwd || !newPwd) return;
               const saved = sessionStorage.getItem('anet_v3_auth');
@@ -217,7 +221,7 @@ export default function SettingsPage() {
               }
               setTimeout(() => setPwdResult(''), 5000);
             }} disabled={!oldPwd || !newPwd}
-              className="h-8 rounded-[10px] bg-[var(--accent)] px-4 text-[13px] font-medium text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-50">
+              className={primaryButtonClass}>
               Change Password
             </button>
           </div>

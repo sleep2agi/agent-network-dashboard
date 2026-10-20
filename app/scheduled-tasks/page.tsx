@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNetworkId } from '../lib/network-context';
 import { pinyinMatch, usePinyinReady } from '../lib/pinyin-match';
 import { isHubTimeStale, relativeAgo } from '../lib/time';
+import { Field, PageHeader, StatusPill, fieldControlClass, primaryButtonClass, quietButtonClass } from '../components/requirement-chrome';
 
 type NodeRow = { node_id: string; alias?: string | null; node_name?: string | null; lifecycle_state?: string | null; updated_at?: string | null };
 
@@ -60,14 +61,15 @@ function NodePicker({ nodes, value, onChange }: {
   }, [matches]);
 
   return (
-    <div className="relative mt-1" ref={boxRef}>
+    <div className="relative" ref={boxRef}>
       <input
         data-testid="schedule-node-picker-input"
         value={open ? query : (selected ? nodeLabel(selected) : '')}
         onChange={e => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => { setQuery(''); setOpen(true); }}
         placeholder="搜索节点（别名/拼音/node_id）"
-        className="w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"
+        title={selected ? nodeLabel(selected) : '搜索节点（别名/拼音/node_id）'}
+        className={fieldControlClass}
       />
       {open && (
         <div
@@ -85,7 +87,7 @@ function NodePicker({ nodes, value, onChange }: {
               aria-selected={n.node_id === value}
               data-testid="schedule-node-option"
               onClick={() => { onChange(n.node_id); setQuery(''); setOpen(false); }}
-              className={`block w-full px-3 py-2 text-left text-sm ${
+              className={`block min-h-11 w-full px-3 py-2 text-left text-sm ${
                 n.node_id === value ? 'text-[var(--hl)]' : 'text-[var(--fg)]'
               } hover:bg-[var(--hover-tint)]`}
             >
@@ -379,39 +381,58 @@ export default function ScheduledTasksPage() {
 
   return (
     <main className="anet-page mx-auto max-w-6xl pb-24">
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--fg)]">定时任务</h1>
-          <p className="mt-1 text-sm text-[var(--fg-dim)]">由 Hub 统一调度；节点只接收普通任务，离线时自动排队。</p>
-        </div>
-        <button type="button" onClick={openCreate} className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-semibold text-[var(--bg)] hover:opacity-90">
-          {showForm && !editing ? '收起' : '新建计划'}
-        </button>
-      </div>
+      <PageHeader
+        title="定时任务"
+        description="由 Hub 统一调度；节点只接收普通任务，离线时自动排队。"
+        actions={
+          <button type="button" onClick={openCreate} className={primaryButtonClass}>
+            {showForm && !editing ? '收起' : '新建计划'}
+          </button>
+        }
+      />
 
-      {error && <div className="mb-5 rounded-lg border border-[var(--danger)] bg-[var(--hover-tint)] px-4 py-3 text-sm text-[var(--danger)]">{error}</div>}
+      {error && <div className="mb-5 rounded-[10px] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--danger)] shadow-[var(--ds-shadow-card)]">{error}</div>}
 
       {showForm && (
-        <section className="mb-8 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5">
-          <div className="mb-4 flex items-center justify-between"><h2 className="font-semibold text-[var(--fg)]">{editing ? '编辑计划' : '新建计划'}</h2>{editing && <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="text-sm text-[var(--fg-dim)]">取消编辑</button>}</div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-[var(--fg-muted)]">名称<input value={name} onChange={e => setName(e.target.value)} maxLength={120} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" placeholder="例如：每日发布巡检" /></label>
-            <div className="text-sm text-[var(--fg-muted)]">执行节点<NodePicker nodes={nodes} value={targetNodeId} onChange={setTargetNodeId} /></div>
-            <label className="text-sm text-[var(--fg-muted)] md:col-span-2">任务内容<textarea value={task} onChange={e => setTask(e.target.value)} maxLength={10000} rows={4} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" placeholder="节点收到的具体任务" /></label>
-            <label className="text-sm text-[var(--fg-muted)]">计划类型<select value={kind} onChange={e => setKind(e.target.value as ScheduleSpec['type'])} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="once">单次</option><option value="interval">固定间隔</option><option value="daily">每天</option><option value="weekly">每周</option></select></label>
-            <label className="text-sm text-[var(--fg-muted)]">优先级<select value={priority} onChange={e => setPriority(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="normal">普通</option><option value="high">高</option><option value="low">低</option></select></label>
-            <label className="text-sm text-[var(--fg-muted)]">错过执行<select value={misfirePolicy} onChange={e => setMisfirePolicy(e.target.value as typeof misfirePolicy)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="catch_up_once">恢复后补跑一次（适合新闻抓取）</option><option value="skip">跳过本次，等待下一周期</option></select><span className="mt-1 block text-xs text-[var(--fg-dim)]">Hub 延迟超过 60 秒才视为错过；补跑最多一次，不会集中重放。</span></label>
-            <label className="text-sm text-[var(--fg-muted)]">时区<input value={timezone} onChange={e => setTimezone(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" placeholder="Asia/Shanghai" /><span className="mt-1 block text-xs text-[var(--fg-dim)]">使用 IANA 时区名称，编辑时保留原计划时区。</span></label>
-            {kind === 'once' && <label className="text-sm text-[var(--fg-muted)]">执行时间<input type="datetime-local" value={onceAt} onChange={e => setOnceAt(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" /></label>}
-            {kind === 'interval' && <div className="flex gap-2"><label className="flex-1 text-sm text-[var(--fg-muted)]">间隔<input type="number" min={unit === 'seconds' ? 60 : 1} value={every} onChange={e => setEvery(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" /></label><label className="text-sm text-[var(--fg-muted)]">单位<select value={unit} onChange={e => setUnit(e.target.value as typeof unit)} className="mt-1 rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]"><option value="seconds">秒</option><option value="minutes">分钟</option><option value="hours">小时</option><option value="days">天</option></select></label></div>}
-            {(kind === 'daily' || kind === 'weekly') && <label className="text-sm text-[var(--fg-muted)]">时间<input type="time" value={clock} onChange={e => setClock(e.target.value)} className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2 text-[var(--fg)]" /></label>}
-            {kind === 'weekly' && <div className="flex flex-wrap items-end gap-2">{WEEKDAYS.map((day, index) => <button key={day} type="button" onClick={() => setWeekdays(v => v.includes(index) ? v.filter(x => x !== index) : [...v, index].sort())} className={`h-9 w-9 rounded-full text-sm ${weekdays.includes(index) ? 'bg-[var(--hl)] text-[var(--bg)]' : 'bg-[var(--hover-tint)] text-[var(--fg-muted)]'}`}>{day}</button>)}</div>}
+        <section className="mb-8 rounded-[10px] bg-[var(--bg-secondary)] p-5 shadow-[var(--ds-shadow-card)]">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-[15px] font-semibold text-[var(--fg)]">{editing ? '编辑计划' : '新建计划'}</h2>
+            {editing && <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="text-sm text-[var(--fg-dim)]">取消编辑</button>}
           </div>
-          <div className="mt-5 flex justify-end"><button disabled={saveDisabled} onClick={saveSchedule} className="rounded-lg bg-[var(--hl)] px-5 py-2 text-sm font-semibold text-[var(--bg)] disabled:cursor-not-allowed disabled:opacity-40">{busy ? '保存中…' : editing ? '保存修改' : '创建'}</button></div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="名称">
+              <input value={name} onChange={e => setName(e.target.value)} maxLength={120} className={fieldControlClass} placeholder="例如：每日发布巡检" />
+            </Field>
+            <Field label="执行节点">
+              <NodePicker nodes={nodes} value={targetNodeId} onChange={setTargetNodeId} />
+            </Field>
+            <div className="md:col-span-2">
+              <Field label="任务内容">
+                <textarea value={task} onChange={e => setTask(e.target.value)} maxLength={10000} rows={4} className={`${fieldControlClass} h-auto min-h-24 py-2`} placeholder="节点收到的具体任务" />
+              </Field>
+            </div>
+            <Field label="计划类型">
+              <select value={kind} onChange={e => setKind(e.target.value as ScheduleSpec['type'])} className={fieldControlClass}><option value="once">单次</option><option value="interval">固定间隔</option><option value="daily">每天</option><option value="weekly">每周</option></select>
+            </Field>
+            <Field label="优先级">
+              <select value={priority} onChange={e => setPriority(e.target.value)} className={fieldControlClass}><option value="normal">普通</option><option value="high">高</option><option value="low">低</option></select>
+            </Field>
+            <Field label="错过执行" hint="Hub 延迟超过 60 秒才视为错过；补跑最多一次，不会集中重放。">
+              <select value={misfirePolicy} onChange={e => setMisfirePolicy(e.target.value as typeof misfirePolicy)} className={fieldControlClass}><option value="catch_up_once">恢复后补跑一次（适合新闻抓取）</option><option value="skip">跳过本次，等待下一周期</option></select>
+            </Field>
+            <Field label="时区" hint="使用 IANA 时区名称，编辑时保留原计划时区。">
+              <input value={timezone} onChange={e => setTimezone(e.target.value)} className={fieldControlClass} placeholder="Asia/Shanghai" />
+            </Field>
+            {kind === 'once' && <Field label="执行时间"><input type="datetime-local" value={onceAt} onChange={e => setOnceAt(e.target.value)} className={fieldControlClass} /></Field>}
+            {kind === 'interval' && <div className="flex gap-2"><Field label="间隔" className="min-w-0 flex-1"><input type="number" min={unit === 'seconds' ? 60 : 1} value={every} onChange={e => setEvery(e.target.value)} className={fieldControlClass} /></Field><Field label="单位"><select value={unit} onChange={e => setUnit(e.target.value as typeof unit)} className={fieldControlClass}><option value="seconds">秒</option><option value="minutes">分钟</option><option value="hours">小时</option><option value="days">天</option></select></Field></div>}
+            {(kind === 'daily' || kind === 'weekly') && <Field label="时间"><input type="time" value={clock} onChange={e => setClock(e.target.value)} className={fieldControlClass} /></Field>}
+            {kind === 'weekly' && <div className="flex flex-wrap items-end gap-2">{WEEKDAYS.map((day, index) => <button key={day} type="button" onClick={() => setWeekdays(v => v.includes(index) ? v.filter(x => x !== index) : [...v, index].sort())} className={`h-9 w-9 rounded-full text-sm ${weekdays.includes(index) ? 'bg-[var(--accent)] text-[var(--accent-fg)]' : 'bg-[var(--bg-elevated)] text-[var(--fg-muted)]'}`}>{day}</button>)}</div>}
+          </div>
+          <div className="mt-5 flex justify-end"><button type="button" disabled={saveDisabled} onClick={saveSchedule} className={primaryButtonClass}>{busy ? '保存中…' : editing ? '保存修改' : '创建'}</button></div>
         </section>
       )}
 
-      {loading ? <div className="py-20 text-center text-[var(--fg-dim)]">加载中…</div> : (() => {
+      {loading ? <div className="animate-pulse space-y-2" aria-busy="true" aria-label="加载中…">{[1, 2, 3].map(i => <div key={i} className="h-24 rounded-[10px] bg-[var(--bg-secondary)]" />)}</div> : (() => {
         // Cancelled schedules are terminal — hide them from the default view.
         // Server still stores history for the audit trail, but the list is
         // meant for "what's on the calendar going forward", not "what ever
@@ -420,14 +441,43 @@ export default function ScheduledTasksPage() {
         // was out of scope for this fix.
         const visible = schedules.filter(row => row.status !== 'cancelled');
         return visible.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[var(--border)] py-20 text-center text-[var(--fg-dim)]">还没有 Hub 定时任务</div>
+          <div className="rounded-[10px] bg-[var(--bg-secondary)] px-4 py-16 text-center text-sm text-[var(--fg-dim)] shadow-[var(--ds-shadow-card)]">还没有 Hub 定时任务</div>
         ) : <div className="space-y-3">{visible.map(row => (
-        <section key={row.schedule_id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5">
+        <section key={row.schedule_id} className="rounded-[10px] bg-[var(--bg-secondary)] p-4 shadow-[var(--ds-shadow-card)] sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 className="font-semibold text-[var(--fg)]">{row.name}</h2><span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-xs ${row.status === 'active' ? 'text-[var(--success)]' : row.status === 'paused' ? 'text-[var(--warning)]' : 'text-[var(--fg-dim)]'}`}>{row.status}</span></div><p className="mt-1 text-sm text-[var(--hl)]">{row.target_alias}</p><p className="mt-2 line-clamp-2 text-sm text-[var(--fg-muted)]">{row.task_content}</p><p className="mt-3 text-xs text-[var(--fg-dim)]">{describeSchedule(row.schedule, row.timezone)} · {describeMisfire(row.misfire_policy)} · 下次 {formatTime(row.next_run_at)} · 上次 {formatTime(row.last_run_at)}</p></div>
-            <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => openEdit(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">编辑</button><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => mutate(row, 'toggle')} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">{row.status === 'active' ? '暂停' : '恢复'}</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'run')} className="rounded-md border border-[var(--hl)] px-3 py-1.5 text-xs text-[var(--hl)]">立即执行</button><button type="button" onClick={() => openHistory(row)} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">记录</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'cancel')} className="rounded-md border border-[var(--danger)] px-3 py-1.5 text-xs text-[var(--danger)]">取消</button></div>
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <h2 className="min-w-0 truncate text-[15px] font-semibold text-[var(--fg)]" title={row.name}>{row.name}</h2>
+                <StatusPill status={row.status} />
+              </div>
+              <p className="mt-1 truncate text-sm text-[var(--accent)]" title={row.target_alias}>{row.target_alias}</p>
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--fg-muted)]" title={row.task_content}>{row.task_content}</p>
+              <p className="mt-3 text-xs leading-5 text-[var(--fg-dim)]">{describeSchedule(row.schedule, row.timezone)} · {describeMisfire(row.misfire_policy)} · 下次 {formatTime(row.next_run_at)} · 上次 {formatTime(row.last_run_at)}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => openEdit(row)} className={quietButtonClass}>编辑</button>
+              <button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => mutate(row, 'toggle')} className={quietButtonClass}>{row.status === 'active' ? '暂停' : '恢复'}</button>
+              <button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'run')} className="inline-flex h-9 items-center rounded-[10px] bg-[var(--accent-tonal)] px-3 text-[13px] font-medium text-[var(--accent)] disabled:opacity-40">立即执行</button>
+              <button type="button" onClick={() => openHistory(row)} className={quietButtonClass}>记录</button>
+              <button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'cancel')} className="inline-flex h-9 items-center rounded-[10px] px-3 text-[13px] font-medium text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_14%,transparent)] disabled:opacity-40">取消</button>
+            </div>
           </div>
-          {historyFor === row.schedule_id && <div className="mt-4 overflow-x-auto border-t border-[var(--border)] pt-4"><table className="w-full text-left text-xs"><thead className="text-[var(--fg-dim)]"><tr><th className="pb-2">计划时间</th><th>状态</th><th>Task ID</th><th>错误</th></tr></thead><tbody>{runs.map(run => <tr key={run.run_id} className="border-t border-[var(--col-hairline)] text-[var(--fg-muted)]"><td className="py-2">{formatTime(run.scheduled_for)}</td><td>{run.status}</td><td className="font-mono">{run.task_id?.slice(0, 12) || '—'}</td><td className="text-[var(--danger)]">{run.error_code || '—'}</td></tr>)}</tbody></table>{runs.length === 0 && <p className="text-[var(--fg-dim)]">暂无执行记录</p>}</div>}
+          {historyFor === row.schedule_id && (
+            <div className="mt-4 border-t border-[var(--border)] pt-4">
+              <table className="anet-stack w-full text-left text-xs">
+                <thead className="text-[var(--fg-dim)]"><tr><th className="pb-2 font-medium">计划时间</th><th className="font-medium">状态</th><th className="font-medium">Task ID</th><th className="font-medium">错误</th></tr></thead>
+                <tbody>{runs.map(run => (
+                  <tr key={run.run_id} className="border-t border-[var(--col-hairline)] text-[var(--fg-muted)]">
+                    <td className="py-2.5" data-label="计划时间">{formatTime(run.scheduled_for)}</td>
+                    <td className="py-2.5" data-label="状态"><StatusPill status={run.status} /></td>
+                    <td className="py-2.5 font-mono" data-label="Task ID" title={run.task_id || ''}>{run.task_id?.slice(0, 12) || '—'}</td>
+                    <td className="py-2.5 text-[var(--danger)]" data-label="错误" title={run.error_code || ''}>{run.error_code || '—'}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+              {runs.length === 0 && <p className="text-[var(--fg-dim)]">暂无执行记录</p>}
+            </div>
+          )}
         </section>
       ))}</div>;
       })()}

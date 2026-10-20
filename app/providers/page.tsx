@@ -5,6 +5,7 @@ import { EmptyState } from '../components/EmptyState';
 import { PendingNotice } from '../components/PendingNotice';
 import { ProviderFormModal, type ProviderDraft } from '../components/ProviderFormModal';
 import { ReachabilityMatrix } from '../components/ReachabilityMatrix';
+import { PageHeader, primaryButtonClass } from '../components/requirement-chrome';
 
 /**
  * Model providers (RFC-028 P1 — CRUD). Lists providers from
@@ -93,18 +94,21 @@ export default function ProvidersPage() {
 
   return (
     <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-      <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Model Providers</h1>
-        {unconfirmed ? <PendingNotice>供应商后端还没接通。这一页是演示壳，不会假装已经保存到 Hub。</PendingNotice> : null}
-        {mock && <span className="inline-flex h-5 items-center rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium text-[var(--warning)]">preview fixture</span>}
-        <button
-          onClick={openCreate}
-          className="ml-auto inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-[var(--accent)] px-3 text-[13px] font-medium text-[var(--accent-fg)] hover:brightness-110"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
-          新增供应商
-        </button>
-      </div>
+      <PageHeader
+        title="Model Providers"
+        description="管理模型供应商、API Key 和连通性。密钥只写不回显。"
+        meta={
+          <>
+            {unconfirmed ? <PendingNotice>供应商后端还没接通。这一页是演示壳，不会假装已经保存到 Hub。</PendingNotice> : null}
+            {mock && <span className="inline-flex h-5 items-center rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium text-[var(--warning)]">preview fixture</span>}
+          </>
+        }
+        actions={
+          <button type="button" onClick={openCreate} className={primaryButtonClass}>
+            新增供应商
+          </button>
+        }
+      />
       {toggleError && (
         <div
           data-testid="providers-toggle-error"
@@ -116,10 +120,6 @@ export default function ProvidersPage() {
       )}
 
       <div className="max-w-3xl space-y-4">
-        <p className="text-sm text-[var(--fg-muted)]">
-          Configure model providers and per-server reachability. API keys are stored write-only in the secret vault and never displayed.
-        </p>
-
         {unconfirmed && (
           <div className="rounded-[10px] bg-[var(--bg-secondary)] px-4 py-3 text-xs leading-5 text-[var(--fg-muted)]">
             供应商后端尚未在当前 Hub 就绪：{unconfirmed}。界面可以先看，保存要等后端接上。
@@ -144,12 +144,12 @@ export default function ProvidersPage() {
                 const isOpen = expandedId === rid;
                 return (
                 <div key={rid} className={`rounded-[10px] bg-[var(--bg-elevated)] ${p.enabled ? '' : 'opacity-60'}`} data-provider={p.name}>
-                  <div className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:gap-3">
+                  <div className="flex min-h-14 flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:gap-3">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${p.enabled ? 'bg-[var(--success)]' : 'bg-[var(--offline)]'}`} title={p.enabled ? 'enabled' : 'disabled'} />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <span className="truncate text-sm font-semibold text-[var(--fg)]">{p.name}</span>
+                          <span className="truncate text-sm font-semibold text-[var(--fg)]" title={p.name}>{p.name}</span>
                           <span className="inline-flex h-5 shrink-0 items-center rounded-md bg-[var(--bg)] px-1.5 text-[11px] font-medium text-[var(--fg-muted)]" title={p.type}>{typeLabel(p.type)}</span>
                           {p.hasKey
                             ? <span className="inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-[11px] font-medium text-[var(--success)]" style={{ background: 'color-mix(in srgb, var(--success) 14%, transparent)' }}>key set</span>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { timeAgo } from '../components/utils';
 import { useNetworkId } from '../lib/network-context';
 import { EmptyState } from '../components/EmptyState';
+import { PageHeader } from '../components/requirement-chrome';
 import { AliasAvatar } from '../components/AliasAvatar';
 
 interface AuditLog {
@@ -78,12 +79,7 @@ export default function LogsPage() {
     <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       {/* #209 R36: mobile vertical rhythm — same R28/R30/R31 pattern,
           mb-6 → mb-4 sm:mb-6 here and on the action-filter strip below. */}
-      <div className="flex items-center gap-4 mb-4 sm:mb-6">
-        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Audit Log</h1>
-        {/* Round 87: dropped {logs.length} header chip — r43 added
-            `All <count>` to the action-filter strip below, which
-            duplicated this value 40px away. Matches r86 /server-logs. */}
-      </div>
+      <PageHeader title="Audit Log" description="节点操作记录。按类型筛选后按时间查看。" />
 
       {/* Action filter chips (round 43) — same chip pattern as Tasks
           status tabs / Overview agent filter. Each chip carries its
@@ -172,7 +168,7 @@ export default function LogsPage() {
           {logs.map(log => {
             const userName = log.username || log.user_id;
             return (
-            <div key={log.id} className="relative overflow-hidden rounded-[10px] bg-[var(--bg-secondary)] py-2 pr-3 pl-3 transition-colors hover:bg-[var(--bg-elevated)] sm:py-3 sm:pr-4 sm:pl-4">
+            <div key={log.id} className="relative min-h-14 overflow-hidden rounded-[10px] bg-[var(--bg-secondary)] py-3 pr-3 pl-3 transition-colors hover:bg-[var(--bg-elevated)] sm:pr-4 sm:pl-4">
               {/* 2px left rail per action (round 33) — failed logins, token
                   rotations spike out of a wall of register/login rows. */}
               <span
@@ -185,7 +181,7 @@ export default function LogsPage() {
                   {log.action}
                 </span>
                 {userName && <AliasAvatar alias={userName} size={16} />}
-                <span className="text-sm font-medium text-[var(--fg)]">{userName}</span>
+                <span className="min-w-0 truncate text-sm font-medium text-[var(--fg)]" title={userName || ''}>{userName}</span>
                 {log.target_type && (
                   <>
                     <span className="text-xs text-[var(--fg-dim)]">&rarr;</span>
@@ -194,7 +190,7 @@ export default function LogsPage() {
                 )}
                 <span className="ml-auto text-xs text-[var(--fg-dim)]">{timeAgo(log.created_at)}</span>
               </div>
-              {log.detail && <div className="text-xs text-[var(--fg-muted)]">{log.detail}</div>}
+              {log.detail && <div className="line-clamp-2 text-xs leading-5 text-[var(--fg-muted)]" title={log.detail}>{log.detail}</div>}
               {log.ip && log.ip !== 'unknown' && <div className="text-[11px] text-[var(--fg-dim)]">IP: {log.ip}</div>}
             </div>
             );

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { AliasAvatar } from '../components/AliasAvatar';
-import { TaskPanel } from '../components/requirement-chrome';
+import { TaskPanel, fieldControlClass } from '../components/requirement-chrome';
 import {
   agentCount,
   agentsDirectlyIn,
@@ -132,13 +132,13 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                       data-testid={`agent-org-dept-${row.dept.id}`}
                       aria-pressed={active}
                       onClick={() => setFocus(row.dept.id)}
-                      className={`flex min-w-0 flex-1 items-center justify-between gap-2 rounded-[10px] px-2 py-1.5 text-left text-sm ${
+                      className={`flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-[10px] px-2 py-1.5 text-left text-sm ${
                         active
                           ? 'bg-[var(--accent-tonal)] text-[var(--fg)]'
                           : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
                       }`}
                     >
-                      <span className="truncate">{row.dept.name}</span>
+                      <span className="truncate" title={row.dept.name}>{row.dept.name}</span>
                       <span className="shrink-0 text-[11px] tabular-nums text-[var(--fg-dim)]">{count}</span>
                     </button>
                   </div>
@@ -152,7 +152,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
               data-testid="agent-org-dept-unassigned"
               aria-pressed={focus === null}
               onClick={() => setFocus(null)}
-              className={`mt-1 flex w-full items-center justify-between rounded-[10px] px-2 py-1.5 text-left text-sm ${
+              className={`mt-1 flex min-h-11 w-full items-center justify-between rounded-[10px] px-2 py-1.5 text-left text-sm ${
                 focus === null
                   ? 'bg-[var(--accent-tonal)] text-[var(--fg)]'
                   : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
@@ -165,18 +165,18 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
         </TaskPanel>
 
         <TaskPanel data-testid="agent-org-detail">
-          <h2 className="px-1 text-sm font-medium text-[var(--fg)]">{title}</h2>
+          <h2 className="truncate px-1 text-[15px] font-semibold text-[var(--fg)]" title={title}>{title}</h2>
           {agents.length === 0 ? (
             <p className="px-1 py-6 text-sm text-[var(--fg-dim)]" data-testid="agent-org-no-agents">这个部门下面没有 Agent</p>
           ) : (
             <ul className="mt-3 space-y-2">
               {agents.map((agent) => (
                 <li key={agent.nodeId}>
-                  <div data-testid={`agent-org-agent-${agent.nodeId}`} className="flex items-center justify-between gap-3 rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2">
+                  <div data-testid={`agent-org-agent-${agent.nodeId}`} className="flex min-h-14 items-center justify-between gap-3 rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2 transition-colors hover:bg-[var(--hover-tint)]">
                     <div className="flex min-w-0 items-center gap-2.5">
                       <AliasAvatar alias={agent.alias} size={28} />
                       <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{agent.alias}</div>
+                      <div className="truncate text-sm font-medium" title={agent.alias}>{agent.alias}</div>
                       <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]">
                         {agent.demo
                           ? (agent.ownerName ? `仍由 ${agent.ownerName} 负责，没有保存` : '仍然没有负责人，没有保存')
@@ -195,7 +195,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
 
       <TaskPanel className="space-y-3" data-testid="agent-org-demo">
         <div>
-          <h2 className="text-sm font-medium">调整结构（演示）</h2>
+          <h2 className="text-[15px] font-semibold">调整结构（演示）</h2>
           <p className="mt-1 text-[11px] leading-relaxed text-[var(--fg-dim)]">这些调整只在这台浏览器里模拟，不会向 Hub 发请求，也不会写入配置。</p>
         </div>
         {placed.length === 0 ? <p className="text-sm text-[var(--fg-dim)]">通讯录里还没有可调整的 Agent</p> : (
@@ -206,7 +206,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                 aria-label="选择 Agent"
                 value={pickAgent ?? ''}
                 onChange={(event) => setPickAgent(event.target.value || null)}
-                className="mt-1 h-9 w-full rounded-[10px] bg-[var(--bg-elevated)] px-2 text-sm text-[var(--fg)]"
+                className={fieldControlClass}
               >
                 <option value="">未选择</option>
                 {placed.map((agent) => <option key={agent.nodeId} value={agent.nodeId}>{agent.alias}</option>)}
@@ -222,7 +222,7 @@ export function OrgTree({ data }: { data: AgentOrgData }) {
                   else if (event.target.value === '__none__') setPickDept(null);
                   else setPickDept(event.target.value);
                 }}
-                className="mt-1 h-9 w-full rounded-[10px] bg-[var(--bg-elevated)] px-2 text-sm text-[var(--fg)]"
+                className={fieldControlClass}
               >
                 <option value="">未选择</option>
                 <option value="__none__">未归属</option>

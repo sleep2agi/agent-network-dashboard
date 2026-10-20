@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { TaskChatPanel } from '../components/TaskChatPanel';
 import { timeAgo } from '../components/utils';
-import { AliasAvatar } from '../components/AliasAvatar';
-import { SESSION_STATUS_TEXT_CLASS } from '../lib/status';
+import { PageHeader, StatusPill } from '../components/requirement-chrome';
 import { useChatUnread } from '../lib/chat-unread';
 
 interface SessionDetail {
@@ -83,27 +82,27 @@ function TmuxViewer({ tmuxName }: { tmuxName: string }) {
   };
 
   return (
-    <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
+    <div className="bg-[var(--bg-elevated)] rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-sm font-semibold text-gray-300">Terminal ({tmuxName})</h2>
+        <h2 className="text-sm font-semibold text-[var(--fg)]">Terminal ({tmuxName})</h2>
         <div className="flex gap-2">
           <button onClick={fetchTmux} disabled={loading}
-            className="text-xs text-cyan-400 hover:text-cyan-300 disabled:text-gray-600">
+            className="text-xs text-[var(--accent)] hover:text-[var(--accent)] disabled:text-[var(--fg-dim)]">
             {loading ? 'Loading...' : 'Capture'}
           </button>
           {output && (
-            <button onClick={() => setExpanded(!expanded)} className="text-xs text-gray-500 hover:text-gray-300">
+            <button onClick={() => setExpanded(!expanded)} className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]">
               {expanded ? 'Collapse' : 'Expand'}
             </button>
           )}
         </div>
       </div>
       {output && (
-        <pre className={`text-[11px] text-green-300 bg-[#060607] rounded-lg px-3 py-2 border border-[#1c1c1f] overflow-x-auto whitespace-pre font-mono ${expanded ? 'max-h-96' : 'max-h-32'} overflow-y-auto`}>
+        <pre className={`overflow-x-auto whitespace-pre rounded-lg border border-[var(--border)] bg-[var(--code-bg)] px-3 py-2 font-mono text-[11px] text-[var(--success)] ${expanded ? 'max-h-96' : 'max-h-32'} overflow-y-auto`}>
           {output}
         </pre>
       )}
-      {!output && <p className="text-xs text-gray-600">Click Capture to view terminal output</p>}
+      {!output && <p className="text-xs text-[var(--fg-dim)]">Click Capture to view terminal output</p>}
     </div>
   );
 }
@@ -160,72 +159,72 @@ function ExternalSchedulesCard({ snapshot, nodeId, onQueued }: {
   return (
     <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4" data-testid="external-schedules-card">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="text-sm font-semibold text-gray-300">External schedules</h2>
-        <span className={`text-[11px] ${stale ? 'text-amber-400' : 'text-gray-600'}`} title={snapshot.observed_at}>
+        <h2 className="text-sm font-semibold text-[var(--fg)]">External schedules</h2>
+        <span className={`text-[11px] ${stale ? 'text-[var(--warning)]' : 'text-[var(--fg-dim)]'}`} title={snapshot.observed_at}>
           {stale ? 'stale report' : 'reported'} {reportedAgo}
         </span>
       </div>
       {snapshot.error && (
-        <div className="mb-3 rounded border border-amber-800/50 bg-amber-950/20 px-3 py-2 text-xs text-amber-300">
+        <div className="mb-3 rounded-[10px] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-3 py-2 text-xs text-[var(--warning)]">
           Node could not read a safe external-schedules manifest ({snapshot.error}).
         </div>
       )}
       {snapshot.schedules.length === 0 && !snapshot.error ? (
-        <p className="text-xs text-gray-600">No external schedules reported by this node.</p>
+        <p className="text-xs text-[var(--fg-dim)]">No external schedules reported by this node.</p>
       ) : (
         <div className="space-y-2">
           {snapshot.schedules.map((schedule) => (
             <div key={schedule.id} className="rounded-lg border border-[var(--border)] bg-[var(--col-inset)] px-3 py-2">
               <div className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate text-xs font-medium text-gray-300" title={schedule.name}>{schedule.name}</span>
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-[var(--fg)]" title={schedule.name}>{schedule.name}</span>
                 <span className={`rounded px-1.5 py-0.5 text-[11px] ${
-                  schedule.last_status === 'failed' ? 'bg-red-950/50 text-red-300' :
-                  schedule.last_status === 'running' ? 'bg-blue-950/50 text-blue-300' :
+                  schedule.last_status === 'failed' ? 'bg-[color-mix(in_srgb,var(--danger)_14%,transparent)] text-[var(--danger)]' :
+                  schedule.last_status === 'running' ? 'bg-[var(--accent-tonal)] text-[var(--accent)]' :
                   schedule.last_status === 'success' ? 'bg-emerald-950/50 text-emerald-300' :
-                  'bg-gray-800 text-gray-400'
+                  'bg-[var(--bg)] text-[var(--fg-muted)]'
                 }`}>{schedule.last_status}</span>
-                {!schedule.enabled && <span className="text-[11px] text-gray-600">disabled</span>}
+                {!schedule.enabled && <span className="text-[11px] text-[var(--fg-dim)]">disabled</span>}
                 {schedule.editable === true && Number.isSafeInteger(schedule.revision) && nodeId && (
                   <button
                     type="button"
                     disabled={stale}
                     onClick={() => openEdit(schedule)}
-                    className="rounded border border-cyan-900/70 px-2 py-0.5 text-[11px] text-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-[10px] bg-[var(--accent-tonal)] px-2 py-0.5 text-[11px] text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40"
                     title={stale ? 'Wait for a fresh node report before editing' : 'Edit timing and enabled state'}
                   >Edit</button>
                 )}
               </div>
-              <div className="mt-1 text-[11px] text-gray-500">
+              <div className="mt-1 text-[11px] text-[var(--fg-muted)]">
                 {schedule.kind} · {schedule.frequency}
                 {schedule.next_run_at ? ` · next ${timeAgo(schedule.next_run_at)}` : ''}
               </div>
-              {schedule.last_error && <div className="mt-1 text-[11px] text-red-300 break-words">{schedule.last_error}</div>}
-              {schedule.log_ref && <div className="mt-1 text-[11px] text-gray-600">log: {schedule.log_ref}</div>}
+              {schedule.last_error && <div className="mt-1 text-[11px] text-[var(--danger)] break-words">{schedule.last_error}</div>}
+              {schedule.log_ref && <div className="mt-1 text-[11px] text-[var(--fg-dim)]">log: {schedule.log_ref}</div>}
             </div>
           ))}
         </div>
       )}
       {editing && (
-        <div className="mt-3 rounded-lg border border-cyan-900/60 bg-cyan-950/10 p-3" data-testid="external-schedule-editor">
-          <div className="text-xs font-medium text-gray-300">Edit {editing.name}</div>
-          <p className="mt-1 text-[11px] text-gray-500">Only five-field cron timing and enabled state can change. The command is immutable.</p>
-          <label className="mt-3 block text-[11px] text-gray-500">Five-field cron
+        <div className="mt-3 rounded-[10px] bg-[var(--bg)] p-3" data-testid="external-schedule-editor">
+          <div className="text-xs font-medium text-[var(--fg)]">Edit {editing.name}</div>
+          <p className="mt-1 text-[11px] text-[var(--fg-muted)]">Only five-field cron timing and enabled state can change. The command is immutable.</p>
+          <label className="mt-3 block text-[11px] text-[var(--fg-muted)]">Five-field cron
             <input value={cron} onChange={(event) => setCron(event.target.value)} maxLength={120}
-              className="mt-1 w-full rounded border border-[var(--border)] bg-[var(--col-inset)] px-2 py-1.5 font-mono text-xs text-gray-200" />
+              className="mt-1 w-full rounded border border-[var(--border)] bg-[var(--col-inset)] px-2 py-1.5 font-mono text-xs text-[var(--fg)]" />
           </label>
-          <label className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+          <label className="mt-2 flex items-center gap-2 text-xs text-[var(--fg-muted)]">
             <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} /> Enabled
           </label>
           <div className="mt-3 flex justify-end gap-2">
-            <button type="button" onClick={() => setEditing(null)} className="rounded px-3 py-1 text-xs text-gray-400">Cancel</button>
+            <button type="button" onClick={() => setEditing(null)} className="rounded px-3 py-1 text-xs text-[var(--fg-muted)]">Cancel</button>
             <button type="button" disabled={saving || cron.trim().length < 5} onClick={submitEdit}
-              className="rounded bg-cyan-700 px-3 py-1 text-xs text-white disabled:opacity-40">{saving ? 'Queueing…' : 'Queue edit'}</button>
+              className="rounded-[10px] bg-[var(--accent)] px-3 py-1 text-xs text-[var(--accent-fg)] disabled:opacity-40">{saving ? 'Queueing…' : 'Queue edit'}</button>
           </div>
         </div>
       )}
-      {editError && <p className="mt-2 text-xs text-red-300" role="alert">{editError}</p>}
+      {editError && <p className="mt-2 text-xs text-[var(--danger)]" role="alert">{editError}</p>}
       {editNotice && <p className="mt-2 text-xs text-emerald-300" role="status">{editNotice}</p>}
-      <p className="mt-3 text-[11px] text-gray-600">Reported by the node; Agent Network does not execute or verify these schedules.</p>
+      <p className="mt-3 text-[11px] text-[var(--fg-dim)]">Reported by the node; Agent Network does not execute or verify these schedules.</p>
     </div>
   );
 }
@@ -294,39 +293,22 @@ function NodeDetailContent() {
   if (!alias) {
     return (
       <div className="anet-page flex min-h-screen items-center justify-center bg-[var(--bg)] text-[var(--fg)]">
-        <p className="text-gray-500">No alias specified. <Link href="/" className="text-blue-400 hover:underline">Back to dashboard</Link></p>
+        <p className="text-[var(--fg-muted)]">No alias specified. <Link href="/" className="text-[var(--accent)] hover:underline">Back to dashboard</Link></p>
       </div>
     );
   }
 
-  /* Round 92: shared 5-state palette (was working / idle / other,
-     collapsed blocked + error into gray). */
-  const statusColor = SESSION_STATUS_TEXT_CLASS[session?.status || ''] || SESSION_STATUS_TEXT_CLASS.offline;
-
   return (
     <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-      {/* Header — round 40: avatar joins the alias for cross-page hue
-          consistency; agent type lives in a subtitle so users know what
-          kind of node they're looking at. */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/nodes" className="text-gray-500 hover:text-gray-300 text-sm shrink-0">&larr; Nodes</Link>
-        <AliasAvatar alias={alias} size={32} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-[22px] font-semibold leading-7 text-[var(--fg)] truncate">{alias}</h1>
-            <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${
-              sse > 0 ? (session?.status === 'working' ? 'bg-green-500 animate-pulse' : 'bg-emerald-400') : 'bg-gray-500'
-            }`} />
-            <span className={`text-[11px] uppercase tracking-wide font-semibold ${statusColor}`}>{session?.status || 'unknown'}</span>
-          </div>
-          {session?.agent && (
-            <div className="text-xs text-gray-500 truncate">{session.agent}{session.server ? <> <span className="text-gray-700 mx-1">·</span> {session.server}</> : null}</div>
-          )}
-        </div>
-      </div>
+      <Link href="/nodes" className="mb-3 inline-flex text-sm text-[var(--fg-muted)] hover:text-[var(--fg)]">&larr; Nodes</Link>
+      <PageHeader
+        title={alias}
+        description={session?.agent ? `${session.agent}${session.server ? ` · ${session.server}` : ''}` : '节点详情、对话和事件。'}
+        meta={<StatusPill status={session?.status || 'offline'} />}
+      />
 
       {error && (
-        <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-4 py-2 rounded-lg mb-6 text-sm">{error}</div>
+        <div className="mb-6 rounded-[10px] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] px-4 py-2 text-sm text-[var(--danger)]">{error}</div>
       )}
 
       {/* Full-width tabbed layout */}
@@ -354,10 +336,10 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
   }, [tab, eventsLoaded]);
 
   return (
-    <div className="bg-[#111113] border border-[#26262b] rounded-xl overflow-hidden h-[calc(100vh-140px)] flex flex-col">
+    <div className="bg-[var(--bg-secondary)] shadow-[var(--ds-shadow-card)] rounded-xl overflow-hidden h-[calc(100vh-140px)] flex flex-col">
       {/* Tab bar — round 40: emoji icons (💬 📋 📊) replaced with stroke
           SVG to drop the "AI generated" tell. */}
-      <div className="flex border-b border-[#26262b] bg-[#0e0e10] shrink-0">
+      <div className="flex border-b border-[var(--border)] bg-[var(--bg)] shrink-0">
         {([
           { id: 'chat',   label: 'Chat',   icon: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' },
           { id: 'events', label: 'Events', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
@@ -365,7 +347,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id ? 'border-cyan-400 text-cyan-300' : 'border-transparent text-gray-500 hover:text-gray-300'
+              tab === t.id ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-transparent text-[var(--fg-muted)] hover:text-[var(--fg)]'
             }`}>
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d={t.icon} />
@@ -392,8 +374,8 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
 
         {tab === 'info' && (
           <div className="p-4 overflow-y-auto h-full space-y-4 max-w-2xl">
-            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">Node Info</h2>
+            <div className="bg-[var(--bg-elevated)] rounded-xl p-4">
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">Node Info</h2>
             <div className="space-y-2 text-xs">
               {[
                 { label: 'Node ID', value: session?.node_id, alwaysShow: true },
@@ -418,8 +400,8 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
                 { label: 'Updated', value: session?.updated_at, alwaysShow: true },
               ].map(({ label, value, alwaysShow }) => (value || alwaysShow) ? (
                 <div key={label} className="flex justify-between gap-3">
-                  <span className="text-gray-500 shrink-0">{label}</span>
-                  <span className="text-gray-300 truncate max-w-[200px]" title={value ? String(value) : '--'}>
+                  <span className="text-[var(--fg-muted)] shrink-0">{label}</span>
+                  <span className="text-[var(--fg)] truncate max-w-[200px]" title={value ? String(value) : '--'}>
                     {value ? String(value) : '--'}
                   </span>
                 </div>
@@ -429,25 +411,25 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
 
           {/* Current Task */}
           {session?.task && (
-            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
-              <h2 className="text-sm font-semibold text-gray-300 mb-2">Current Task</h2>
-              <p className="text-xs text-gray-400 whitespace-pre-wrap">{session.task}</p>
+            <div className="bg-[var(--bg-elevated)] rounded-xl p-4">
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-2">Current Task</h2>
+              <p className="text-xs text-[var(--fg-muted)] whitespace-pre-wrap">{session.task}</p>
             </div>
           )}
 
           {/* Output */}
           {session?.output && (
-            <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
-              <h2 className="text-sm font-semibold text-gray-300 mb-2">Last Output</h2>
-              <p className="text-xs text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto">{session.output}</p>
+            <div className="bg-[var(--bg-elevated)] rounded-xl p-4">
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-2">Last Output</h2>
+              <p className="text-xs text-[var(--fg-muted)] whitespace-pre-wrap max-h-48 overflow-y-auto">{session.output}</p>
             </div>
           )}
 
           <ExternalSchedulesCard snapshot={session?.external_schedules} nodeId={session?.node_id} />
 
           {/* Send Task */}
-          <div className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
-            <h2 className="text-sm font-semibold text-gray-300 mb-2">Send Task</h2>
+          <div className="bg-[var(--bg-elevated)] rounded-xl p-4">
+            <h2 className="text-sm font-semibold text-[var(--fg)] mb-2">Send Task</h2>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -455,17 +437,17 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
                 onChange={e => setSendMsg(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendTask()}
                 placeholder={`Send task to ${alias}...`}
-                className="flex-1 bg-[#0e0e10] border border-[#26262b] rounded px-3 py-2 text-base sm:text-xs text-white placeholder-gray-600 focus:border-blue-500 focus:outline-none"
+                className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded px-3 py-2 text-base sm:text-xs text-[var(--accent-fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none"
               />
               <button
                 onClick={sendTask}
                 disabled={sending || !sendMsg.trim()}
-                className="inline-flex min-h-[44px] items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white text-xs rounded transition-colors"
+                className="inline-flex h-10 items-center justify-center rounded-[10px] bg-[var(--accent)] px-4 text-xs font-medium text-[var(--accent-fg)] transition-colors hover:brightness-110 disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)]"
               >
                 {sending ? '...' : 'Send'}
               </button>
             </div>
-            {sendError && <div className="mt-2 text-xs text-red-400">{sendError}</div>}
+            {sendError && <div className="mt-2 text-xs text-[var(--danger)]">{sendError}</div>}
           </div>
 
           {/* Tmux Terminal */}
@@ -492,8 +474,8 @@ const EVENT_COLORS: Record<string, { dot: string; line: string; path: string }> 
 };
 
 function EventsTimeline({ events, loading }: { events: Array<{ id: number; event_type: string; from_status: string; to_status: string; detail: string; created_at: string; task_id?: string }>; loading: boolean }) {
-  if (loading) return <div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" /></div>;
-  if (events.length === 0) return <div className="text-center py-12 text-gray-600 text-xs">No task events yet</div>;
+  if (loading) return <div className="flex justify-center py-8"><div className="h-5 w-5 animate-spin rounded-full border-2 border-[color-mix(in_srgb,var(--accent)_30%,transparent)] border-t-[var(--accent)]" /></div>;
+  if (events.length === 0) return <div className="text-center py-12 text-[var(--fg-dim)] text-xs">No task events yet</div>;
 
   // Group by task_id
   const groups = new Map<string, typeof events>();
@@ -507,11 +489,11 @@ function EventsTimeline({ events, loading }: { events: Array<{ id: number; event
   return (
     <div className="p-4 overflow-y-auto h-full space-y-4">
       {[...groups.entries()].map(([taskId, taskEvents]) => (
-        <div key={taskId} className="bg-[#161618] border border-[#26262b] rounded-xl p-4">
-          <div className="text-[11px] text-gray-600 mb-3 truncate">Task: {taskId.slice(0, 20)}...</div>
+        <div key={taskId} className="bg-[var(--bg-elevated)] rounded-xl p-4">
+          <div className="text-[11px] text-[var(--fg-dim)] mb-3 truncate">Task: {taskId.slice(0, 20)}...</div>
           <div className="relative pl-6">
             {/* Vertical line */}
-            <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-[#1c1c1f]" />
+            <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-[var(--border)]" />
 
             {taskEvents.map((e, i) => {
               const cfg = EVENT_COLORS[e.to_status] || EVENT_COLORS.created;
@@ -519,7 +501,7 @@ function EventsTimeline({ events, loading }: { events: Array<{ id: number; event
                 <div key={e.id} className="relative pb-4 last:pb-0">
                   {/* Dot on line — round 59: emoji icons replaced with
                       a 10px stroke SVG path matching event type. */}
-                  <div className={`absolute -left-6 top-0.5 w-[18px] h-[18px] rounded-full ${cfg.dot} flex items-center justify-center z-10 border-2 border-[#161618]`}>
+                  <div className={`absolute -left-6 top-0.5 w-[18px] h-[18px] rounded-full ${cfg.dot} flex items-center justify-center z-10 border-2 border-[var(--bg-elevated)]`}>
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0e0e10" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <path d={cfg.path} />
                     </svg>
@@ -527,16 +509,16 @@ function EventsTimeline({ events, loading }: { events: Array<{ id: number; event
                   {/* Content */}
                   <div className="ml-2">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-medium ${e.to_status === 'failed' ? 'text-red-400' : e.to_status === 'replied' ? 'text-purple-400' : 'text-gray-300'}`}>
+                      <span className={`text-xs font-medium ${e.to_status === 'failed' ? 'text-[var(--danger)]' : e.to_status === 'replied' ? 'text-purple-400' : 'text-[var(--fg)]'}`}>
                         {e.event_type}
                       </span>
                       {e.from_status && (
-                        <span className="text-[11px] text-gray-600">{e.from_status} → {e.to_status}</span>
+                        <span className="text-[11px] text-[var(--fg-dim)]">{e.from_status} → {e.to_status}</span>
                       )}
-                      <span className="text-[11px] text-gray-600 ml-auto">{timeAgo(e.created_at)}</span>
+                      <span className="text-[11px] text-[var(--fg-dim)] ml-auto">{timeAgo(e.created_at)}</span>
                     </div>
                     {e.detail && (
-                      <div className="text-[11px] text-gray-500 mt-0.5 truncate">{e.detail.slice(0, 50)}{e.detail.length > 50 ? '...' : ''}</div>
+                      <div className="text-[11px] text-[var(--fg-muted)] mt-0.5 truncate">{e.detail.slice(0, 50)}{e.detail.length > 50 ? '...' : ''}</div>
                     )}
                   </div>
                 </div>
@@ -559,7 +541,7 @@ export default function NodePage() {
       // indent on the text. Loading state now visually maps to the
       // populated /node detail page.
       <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-        <div className="text-gray-500 text-sm">Loading…</div>
+        <div className="text-[var(--fg-muted)] text-sm">Loading…</div>
       </div>
     }>
       <NodeDetailContent />

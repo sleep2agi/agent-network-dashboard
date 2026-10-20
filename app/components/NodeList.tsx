@@ -117,7 +117,7 @@ function NodeListRow({ session: s, selected, unread, onSelect, onContextMenu }: 
               alias when muted (12×12, #64748B). NO pin icon — pinned
               state is signaled by row background per §11.1. */}
           <span className={`flex min-w-0 items-center gap-1.5 truncate text-[13px] ${selected ? 'font-medium text-[var(--accent)]' : 'text-[var(--fg)]'}`}>
-            <span className="truncate">{s.alias}</span>
+            <span className="truncate" title={s.alias}>{s.alias}</span>
             {muted && (
               <svg
                 aria-label={t('已免打扰', 'Muted')}

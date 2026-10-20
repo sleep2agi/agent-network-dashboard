@@ -173,11 +173,14 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
         }`}
       >
         <div className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/95 px-6 py-6 backdrop-blur-md lg:px-8 lg:py-8">
-          <div className="mb-4 flex items-center gap-3">
-            <h1 className="text-[22px] font-semibold text-[var(--fg)]">Tasks</h1>
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="truncate text-[22px] font-semibold text-[var(--fg)]" title="Tasks">Tasks</h1>
+              <p className="mt-1 line-clamp-2 text-[13px] leading-6 text-[var(--fg-muted)]" title="任务列表。点一行查看时间线、内容和事件。">任务列表。点一行查看时间线、内容和事件。</p>
+            </div>
             {tasks.length < count && (
               <span
-                className="inline-flex h-5 items-center rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium tabular-nums text-[var(--fg-muted)]"
+                className="inline-flex h-5 shrink-0 items-center rounded-md bg-[var(--bg-elevated)] px-1.5 text-[11px] font-medium tabular-nums text-[var(--fg-muted)]"
                 title={`Showing ${tasks.length} of ${count} tasks`}
               >
                 {tasks.length} / {count}

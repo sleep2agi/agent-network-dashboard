@@ -411,8 +411,9 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
           button (Vincent WeChat ref msg 563). justify-between makes
           the title cluster hug left, button hugs right. */}
       <div className="sticky top-0 z-20 -mx-6 -mt-6 mb-6 flex items-center gap-4 border-b border-[var(--border)] bg-[var(--bg)]/90 px-6 py-3 backdrop-blur-md lg:-mx-8 lg:-mt-8 lg:px-8">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">Nodes</h1>
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-3">
+          <h1 className="truncate text-[22px] font-semibold leading-7 text-[var(--fg)]" title="Nodes">Nodes</h1>
           <div className="inline-flex h-9 shrink-0 items-center gap-0.5 rounded-[10px] bg-[var(--bg-secondary)] p-0.5 shadow-[var(--ds-shadow-card)]" aria-label="Fleet counts">
             <span className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium tabular-nums text-[var(--fg)]">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
@@ -422,6 +423,8 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
               {sessions.length} total
             </span>
           </div>
+          </div>
+          <p className="mt-1 truncate text-[13px] leading-6 text-[var(--fg-muted)]" title="在线节点和会话。点一个节点打开对话，或新建节点。">在线节点和会话。点一个节点打开对话，或新建节点。</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {/* #Stage A rail toggle — visible on sm+ (where rail also

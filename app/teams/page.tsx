@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNetworkId } from '../lib/network-context';
 import { PendingNotice } from '../components/PendingNotice';
-import { SectionHeading, TaskPanel } from '../components/requirement-chrome';
+import { PageHeader, SectionHeading, TaskPanel } from '../components/requirement-chrome';
 import { OrgTree, type AgentOrgData } from './OrgTree';
 
 type NodeRef = { node_id?: string; alias?: string | null; display_name?: string | null };
@@ -75,17 +75,15 @@ export default function TeamsPage() {
   return (
     <main className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="anet-page-inner space-y-8">
-        <header className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-[22px] font-semibold">组织架构</h1>
+        <PageHeader
+          title="组织架构"
+          description="点开部门查看里面的 Agent。人数含下级。未归属是没有部门的负责人，或没有负责人的 Agent。"
+          actions={
             <PendingNotice>
               新建部门、改上级和指定负责人还在 Hub 上改。这里的「模拟调整」只改这一页的显示。
             </PendingNotice>
-          </div>
-          <p className="max-w-xl text-[13px] leading-6 text-[var(--fg-muted)]">
-            点开部门查看里面的 Agent。人数含下级。未归属是没有部门的负责人，或没有负责人的 Agent。
-          </p>
-        </header>
+          }
+        />
         {org === null ? (
           <div className="animate-pulse space-y-2 rounded-[10px] bg-[var(--bg-secondary)] p-3 shadow-[var(--ds-shadow-card)]" aria-hidden>
             {[1, 2, 3].map((i) => <div key={i} className="h-11 rounded-[10px] bg-[var(--bg-elevated)]" />)}
@@ -107,8 +105,8 @@ export default function TeamsPage() {
           {teams && teams.length === 0 ? <p className="px-1.5 py-4 text-sm text-[var(--fg-dim)]">这个网络还没有 Agent 团队。</p> : null}
           <ul className="space-y-2">
             {(teams || []).map((team) => (
-              <li key={team.id} className="rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2.5">
-                  <div className="text-sm font-medium text-[var(--fg)]">
+              <li key={team.id} className="min-h-14 rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2.5 transition-colors hover:bg-[var(--hover-tint)]">
+                  <div className="truncate text-sm font-medium text-[var(--fg)]" title={team.name}>
                     {team.name}
                     {team.parent_id ? <span className="ml-2 font-normal text-[var(--fg-dim)]">上级 {byId.get(team.parent_id)?.name || ''}</span> : null}
                   </div>

@@ -13,6 +13,7 @@ import {
   Segmented,
   TagList,
   TaskCard,
+  PageHeader,
   TaskPanel,
   columnDot,
   columnLabel,
@@ -384,23 +385,18 @@ export function BoardWorkspace() {
   return (
     <main className="anet-page min-h-screen min-w-0 overflow-x-hidden bg-[var(--bg)] text-[var(--fg)]">
       <div className="mx-auto min-w-0 max-w-[1200px] space-y-6 xl:max-w-[1360px]">
-        <header className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-[22px] font-semibold leading-7">Board</h1>
+        <PageHeader
+          title="Board"
+          description={`Requirement tasks. A title or #id opens that task.${aware ? ' Abandoned is a real column on this Hub.' : ''}`}
+          actions={
+            <>
               <PendingNotice>
                 Creating, dragging, and editing cards is not wired yet. Everything below is what the Hub returned.
               </PendingNotice>
-            </div>
-            <p className="max-w-xl text-xs leading-4 text-[var(--fg-dim)]">
-              Requirement tasks. A title or #id opens that task.
-              {aware ? ' Abandoned is a real column on this Hub.' : ''}
-            </p>
-          </div>
-          <div className="min-w-0 max-w-full">
-            <Segmented label="Task views" value={view} options={VIEWS} onChange={setView} />
-          </div>
-        </header>
+              <Segmented label="Task views" value={view} options={VIEWS} onChange={setView} />
+            </>
+          }
+        />
 
         {(view === 'board' || view === 'list' || view === 'schedule' || view === 'activity') && (
           <div className="flex flex-wrap items-center gap-2">

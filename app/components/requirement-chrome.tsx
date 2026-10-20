@@ -95,13 +95,20 @@ export function PriorityChip({ priority }: { priority?: string }) {
 const STATUS_TONE: Record<string, 'running' | 'online' | 'idle' | 'offline' | 'failed' | 'blocked'> = {
   working: 'running',
   running: 'running',
+  active: 'online',
+  published: 'online',
+  done: 'online',
   online: 'online',
   idle: 'idle',
   offline: 'offline',
+  paused: 'blocked',
+  pending: 'blocked',
   failed: 'failed',
   error: 'failed',
+  rejected: 'failed',
   blocked: 'blocked',
   cancelled: 'offline',
+  completed: 'online',
   expired: 'offline',
   closed: 'offline',
 };
@@ -116,13 +123,66 @@ const STATUS_TONE_CLASS = {
 } as const;
 
 /** Same status capsule on home cards, the node list, and task rows. */
-export function StatusPill({ status, label }: { status: string; label?: string }) {
+export function StatusPill({
+  status,
+  label,
+  className = '',
+  ...rest
+}: { status: string; label?: string; className?: string } & HTMLAttributes<HTMLSpanElement>) {
   const tone = STATUS_TONE[status] || 'offline';
+  const text = label || status;
   return (
-    <span className={`inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full px-2 text-[11px] font-medium leading-none ${STATUS_TONE_CLASS[tone]}`}>
+    <span
+      {...rest}
+      title={text}
+      className={`inline-flex h-5 max-w-full shrink-0 items-center gap-1.5 rounded-full px-2 text-[11px] font-medium leading-none ${STATUS_TONE_CLASS[tone]} ${className}`}
+    >
       <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-      {label || status}
+      <span className="truncate">{text}</span>
     </span>
+  );
+}
+
+/** Title, one-line description, and the page's primary action. */
+export function PageHeader({
+  title,
+  description,
+  actions,
+  meta,
+}: {
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+  meta?: ReactNode;
+}) {
+  return (
+    <header className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 space-y-1">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h1 className="min-w-0 truncate text-[22px] font-semibold leading-7 tracking-tight text-[var(--fg)]" title={title}>{title}</h1>
+          {meta}
+        </div>
+        {description ? (
+          <p className="line-clamp-2 max-w-2xl text-[13px] leading-6 text-[var(--fg-muted)]" title={description}>{description}</p>
+        ) : null}
+      </div>
+      {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+    </header>
+  );
+}
+
+export const fieldLabelClass = 'flex min-w-0 flex-col gap-1.5 text-[13px] font-medium text-[var(--fg-muted)]';
+export const fieldControlClass = 'h-10 w-full rounded-[10px] bg-[var(--col-inset)] px-3 text-sm text-[var(--fg)] shadow-[inset_0_0_0_1px_var(--border)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:shadow-[var(--focus-ring)]';
+export const primaryButtonClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[var(--accent)] px-3.5 text-[13px] font-medium text-[var(--accent-fg)] transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40';
+export const quietButtonClass = 'inline-flex h-9 items-center rounded-[10px] bg-[var(--bg-elevated)] px-3 text-[13px] font-medium text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)] disabled:opacity-40';
+
+export function Field({ label, hint, className = '', children }: { label: string; hint?: string; className?: string; children: ReactNode }) {
+  return (
+    <label className={`${fieldLabelClass} ${className}`}>
+      <span className="truncate" title={label}>{label}</span>
+      {children}
+      {hint ? <span className="text-[11px] font-normal leading-5 text-[var(--fg-dim)]">{hint}</span> : null}
+    </label>
   );
 }
 

@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { relativeAgo } from '../lib/time';
 import useSWR from 'swr';
 import { AliasAvatar } from './AliasAvatar';
-import { TaskPanel } from './requirement-chrome';
-import { STATUS_CHIP_CLASS as STATUS_CHIP } from '../lib/status';
+import { StatusPill, TaskPanel } from './requirement-chrome';
 
 // Detail pane for the /tasks two-column layout.
 //
@@ -173,15 +172,7 @@ export function TaskDetail({
             <span className="font-mono text-[var(--fg-muted)]">{taskId.slice(0, 12)}…</span>
           </div>
           {task && (
-            <span
-              data-testid="task-detail-status"
-              className={`text-xs px-2 py-0.5 rounded-md border ${
-                STATUS_CHIP[task.status] ||
-                'bg-gray-500/10 text-gray-400 border-gray-500/20'
-              }`}
-            >
-              {task.status}
-            </span>
+            <StatusPill data-testid="task-detail-status" status={task.status} />
           )}
         </div>
         {onClose && (
@@ -221,7 +212,7 @@ export function TaskDetail({
               data-testid="task-detail-timeline"
               data-block="timeline"
             >
-              <h2 className="mb-4 text-sm font-medium text-[var(--fg)]">Timeline</h2>
+              <h2 className="mb-4 text-[15px] font-semibold text-[var(--fg)]">Timeline</h2>
               <div className="relative">
                 {timelineSteps.map((step, i) => {
                   const done = !!step.time;
@@ -272,7 +263,7 @@ export function TaskDetail({
               data-testid="task-detail-info"
               data-block="info"
             >
-              <h2 className="mb-3 text-sm font-medium text-[var(--fg)]">Info</h2>
+              <h2 className="mb-3 text-[15px] font-semibold text-[var(--fg)]">Info</h2>
               <div className="space-y-2 text-xs">
                 {[
                   ['Task ID', task.task_id],
@@ -319,7 +310,7 @@ export function TaskDetail({
               data-testid="task-detail-content"
               data-block="content"
             >
-              <h2 className="mb-2 text-sm font-medium text-[var(--fg)]">Content</h2>
+              <h2 className="mb-2 text-[15px] font-semibold text-[var(--fg)]">Content</h2>
               <pre
                 data-testid="task-detail-content-body"
                 className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2.5 font-sans text-xs leading-relaxed text-[var(--fg)]"
@@ -334,7 +325,7 @@ export function TaskDetail({
                 data-testid="task-detail-result"
                 data-block="result"
               >
-                <h2 className="mb-2 text-sm font-medium text-[var(--fg)]">Result</h2>
+                <h2 className="mb-2 text-[15px] font-semibold text-[var(--fg)]">Result</h2>
                 <pre
                   data-testid="task-detail-result-body"
                   className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2.5 font-sans text-xs leading-relaxed text-[var(--fg)]"
@@ -353,7 +344,7 @@ export function TaskDetail({
               data-block="events"
               data-events-count={events.length}
             >
-              <h2 className="mb-3 text-sm font-medium text-[var(--fg)]">
+              <h2 className="mb-3 text-[15px] font-semibold text-[var(--fg)]">
                 Events {events.length > 0 && <span className="text-[var(--fg-dim)]">({events.length})</span>}
               </h2>
               {events.length === 0 ? (

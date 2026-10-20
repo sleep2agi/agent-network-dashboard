@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { timeAgo } from '../../components/utils';
 import { EmptyState } from '../../components/EmptyState';
+import { Field, PageHeader, fieldControlClass, primaryButtonClass } from '../../components/requirement-chrome';
 
 interface Token {
   token_id: string;
@@ -76,21 +77,20 @@ export default function TokensPage() {
 
   return (
     <div className="anet-page min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/settings" className="text-sm font-medium text-[var(--fg-muted)] hover:text-[var(--accent)]">&larr; Settings</Link>
-        <h1 className="text-[22px] font-semibold leading-7 text-[var(--fg)]">API Tokens</h1>
-      </div>
+      <Link href="/settings" className="mb-3 inline-flex text-sm font-medium text-[var(--fg-muted)] hover:text-[var(--accent)]">&larr; Settings</Link>
+      <PageHeader title="API Tokens" description="创建访问令牌。明文只在创建时显示一次。" />
 
       <div className="max-w-2xl space-y-6">
         {/* Create token */}
         <section className="rounded-[10px] bg-[var(--bg-secondary)] p-4 shadow-[var(--ds-shadow-card)] sm:p-5">
           <h2 className="mb-3 text-[15px] font-semibold leading-[22px] text-[var(--fg)]">Create Token</h2>
-          <div className="flex gap-2">
-            <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
-              placeholder="Token name (e.g. my-cli)"
-              className="h-11 min-w-0 flex-1 rounded-[10px] bg-[var(--col-inset)] px-3 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:shadow-[var(--focus-ring)] focus:outline-none sm:h-9 sm:text-sm" />
-            <button onClick={createToken} disabled={!newName.trim()}
-              className="inline-flex h-11 items-center rounded-[10px] bg-[var(--accent)] px-4 text-[13px] font-medium text-[var(--accent-fg)] transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] disabled:hover:brightness-100 sm:h-9">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Field label="名称" className="min-w-0 flex-1">
+              <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
+                placeholder="Token name (e.g. my-cli)"
+                className={fieldControlClass} />
+            </Field>
+            <button type="button" onClick={createToken} disabled={!newName.trim()} className={primaryButtonClass}>
               Create
             </button>
           </div>
@@ -129,10 +129,10 @@ export default function TokensPage() {
           ) : (
             <div className="space-y-2">
               {tokens.map(t => (
-                <div key={t.token_id} className="flex items-center justify-between gap-3 rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2">
+                <div key={t.token_id} className="flex min-h-14 items-center justify-between gap-3 rounded-[10px] bg-[var(--bg-elevated)] px-3 py-2.5 transition-colors hover:bg-[var(--hover-tint)]">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-medium text-[var(--fg)]">{t.name}</span>
+                      <span className="truncate text-sm font-medium text-[var(--fg)]" title={t.name}>{t.name}</span>
                       <span className={`inline-flex h-5 items-center rounded-md px-1.5 text-[11px] font-medium ${
                         t.scope === 'full' ? 'bg-[var(--accent-tonal)] text-[var(--accent)]' : 'bg-[var(--bg)] text-[var(--fg-muted)]'
                       }`}>{t.scope}</span>

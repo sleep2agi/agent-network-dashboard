@@ -1,6 +1,7 @@
 'use client';
 
 import { DaemonFleetPanel } from '../components/DaemonFleetPanel';
+import { PageHeader } from '../components/requirement-chrome';
 import { ServersPanel } from '../components/ServersDrawer';
 
 export default function ServersPage() {
@@ -20,22 +21,17 @@ export default function ServersPage() {
             p-5 → p-4 sm:p-5 also tightens the inner padding.
             Zero feature removed; the eyebrow + desc still render where
             there is room. */}
-        <header>
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="min-w-0 truncate text-[22px] font-semibold leading-7 text-[var(--fg)]">Servers</h1>
-            <div className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-[var(--fg-dim)]">
+        <PageHeader
+          title="Servers"
+          description="Host-level health, disk, memory, CPU history, and agent rollups from CommHub telemetry."
+          actions={
+            <span className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-[var(--fg-dim)]">
               <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
               <span className="hidden sm:inline">live · refreshes every 5s</span>
               <span className="sm:hidden">live</span>
-            </div>
-          </div>
-          <p
-            className="mt-1 max-w-2xl truncate text-xs leading-4 text-[var(--fg-dim)] sm:whitespace-normal"
-            title="Host-level health, disk, memory, CPU history, and agent rollups from CommHub telemetry."
-          >
-            Host-level health, disk, memory, CPU history, and agent rollups from CommHub telemetry.
-          </p>
-        </header>
+            </span>
+          }
+        />
 
         <section className="rounded-[10px] bg-[var(--bg-secondary)] p-3 shadow-[var(--ds-shadow-card)]">
           <ServersPanel className="max-h-none overflow-visible" />

@@ -1805,11 +1805,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       <div className="fixed top-0 right-0 h-[100dvh] w-full lg:w-[640px] xl:w-[760px] 2xl:w-[860px] bg-[var(--bg)] border-l border-[var(--border)] z-50 flex flex-col shadow-2xl shadow-black/60 animate-slide-in">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <AliasAvatar alias={alias} size={32} />
-            <div>
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-[var(--fg)]">
-                <span>{alias}</span>
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-[var(--fg)]">
+                <span className="truncate" title={alias}>{alias}</span>
                 {chatMuted && (
                   <svg aria-label={t('已开启免打扰', 'Muted')} role="img" className="h-3.5 w-3.5 text-[var(--fg-dim)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.88 4.12A6 6 0 0118 9v3.6l1.5 2.4H12M6.3 6.3A5.98 5.98 0 006 9v3.6L4.5 15H13M10 19a2 2 0 004 0M3 3l18 18" />

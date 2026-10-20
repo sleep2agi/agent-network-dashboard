@@ -1,5 +1,7 @@
 'use client';
 
+import { PageHeader } from '../components/requirement-chrome';
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useCollapsibleSearch } from '@/app/components/CollapsibleSearch';
 import Link from 'next/link';
@@ -11,17 +13,17 @@ interface LogLine {
 }
 
 const LEVEL_COLOR: Record<LogLine['level'], string> = {
-  log: 'text-gray-300',
-  info: 'text-cyan-300',
-  warn: 'text-amber-400',
-  error: 'text-red-400',
+  log: 'text-[var(--fg-muted)]',
+  info: 'text-[var(--accent)]',
+  warn: 'text-[var(--warning)]',
+  error: 'text-[var(--danger)]',
 };
 
 const LEVEL_BADGE: Record<LogLine['level'], string> = {
-  log: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-  info: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
-  warn: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
-  error: 'bg-red-500/10 text-red-300 border-red-500/30',
+  log: 'bg-[var(--bg-elevated)] text-[var(--fg-muted)]',
+  info: 'bg-[var(--accent-tonal)] text-[var(--accent)]',
+  warn: 'bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]',
+  error: 'bg-[color-mix(in_srgb,var(--danger)_14%,transparent)] text-[var(--danger)]',
 };
 
 /** Left-rail strip color per log level — gives the eye a vertical guide
@@ -132,23 +134,15 @@ export default function ServerLogsPage() {
     // #209 R35: p-6 → p-4 sm:p-6 mobile-tighten (matches /tasks, /nodes,
     // /messages, /overview convention). Saves 16 px of L/R padding on phones.
     <div className="anet-page max-w-[1600px] mx-auto">
-      <div className="flex items-center justify-between mb-4 gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          {/* #209 R35: burger-clearance — without it the
-              fixed top-3 left-3 mobile hamburger sat right on top of the
-              "Se" of "Server Logs". Caught by playwright mobile shot. */}
-          {/* #217 D8: text-xl + nowrap on phones — at text-2xl the title
-              wrapped to two lines under the 4-control toolbar. */}
-          <h1 className="text-xl sm:text-[22px] font-semibold leading-7 text-[var(--fg)] whitespace-nowrap">Server Logs</h1>
-          {/* Round 86: dropped the {logs.length} header chip — r84 added
-              `all <count>` to the filter strip just below, so this duplicated
-              the value within 40px of itself. */}
-          <span className="text-xs text-gray-500 hidden sm:inline">CommHub stdout/stderr</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs shrink-0">
+      <PageHeader
+        title="Server Logs"
+        description="CommHub stdout/stderr"
+        actions={
+        <div className="flex items-center gap-2 text-xs">
           <button
+            type="button"
             onClick={() => setPaused(p => !p)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded border ${paused ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'}`}
+            className={`inline-flex h-9 items-center gap-1.5 rounded-[10px] px-3 ${paused ? 'bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]' : 'bg-[var(--accent-tonal)] text-[var(--accent)]'}`}
           >
             {paused ? (
               <>
@@ -165,11 +159,11 @@ export default function ServerLogsPage() {
               </>
             )}
           </button>
-          <label className="flex items-center gap-1 text-gray-400 select-none">
-            <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="accent-cyan-500" />
+          <label className="flex items-center gap-1 text-[var(--fg-muted)] select-none">
+            <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="accent-[var(--accent)]" />
             <span className="hidden sm:inline">auto-refresh</span>
           </label>
-          <button onClick={() => fetchLogs(true)} className="flex items-center gap-1.5 px-3 py-1 rounded border bg-gray-500/10 text-gray-300 border-gray-500/20 hover:bg-gray-500/20">
+          <button type="button" onClick={() => fetchLogs(true)} className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-[var(--bg-elevated)] px-3 text-[var(--fg)] hover:bg-[var(--hover-tint)]">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8" />
               <path d="M21 3v5h-5" />
@@ -183,7 +177,8 @@ export default function ServerLogsPage() {
               toolbar so it sits at the right edge of the header. */}
           <searchCtl.Button />
         </div>
-      </div>
+        }
+      />
 
       {/* R35: collapsible search row — sits above the filter chip strip
           so toggling it doesn't shift the chip layout. */}
@@ -208,14 +203,14 @@ export default function ServerLogsPage() {
                 key={lv}
                 onClick={() => setFilterLevel(lv)}
                 disabled={isEmpty}
-                className={`px-2.5 py-1 rounded border flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed ${
+                className={`flex min-h-8 items-center gap-1 rounded-md px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-30 ${
                   isActive
-                    ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40'
-                    : 'bg-[#161618] text-gray-400 border-[#26262b] hover:bg-[#1c1c1f]'
+                    ? 'bg-[var(--accent-tonal)] text-[var(--accent)]'
+                    : 'bg-[var(--bg-secondary)] text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg)]'
                 }`}
               >
                 <span>{lv}</span>
-                <span className={`text-[11px] tabular-nums ${isActive ? 'opacity-80' : 'text-gray-600'}`}>{count}</span>
+                <span className={`text-[11px] tabular-nums ${isActive ? 'opacity-80' : 'text-[var(--fg-dim)]'}`}>{count}</span>
               </button>
             );
           })}
@@ -225,7 +220,7 @@ export default function ServerLogsPage() {
             actually narrowing the list. "500 / 500" duplicated the
             `all 500` chip 20px to its left. */}
         {filtered.length < logs.length && (
-          <span className="text-[11px] text-gray-600 ml-auto tabular-nums">
+          <span className="ml-auto text-[11px] tabular-nums text-[var(--fg-dim)]">
             {filtered.length} / {logs.length}
           </span>
         )}
@@ -236,7 +231,7 @@ export default function ServerLogsPage() {
         // Raw error stays in title tooltip for debugging.
         const isAuth = /401|unauthor|forbidden|403|admin/i.test(error);
         return (
-          <div className="anet-error-chip mb-3 p-3 rounded border border-red-500/30 bg-red-500/10 text-red-300 text-sm flex items-start gap-3" role="alert">
+          <div className="anet-error-chip mb-3 flex items-start gap-3 rounded-[10px] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] p-3 text-sm text-[var(--danger)]" role="alert">
             <span aria-hidden className="text-base leading-none">⛔</span>
             <div className="flex-1">
               {isAuth ? (
@@ -263,15 +258,15 @@ export default function ServerLogsPage() {
         );
       })()}
 
-      <div className="rounded border border-[#1c1c1f] bg-[#060607] font-mono text-[11px] leading-relaxed overflow-hidden">
+      <div className="overflow-hidden rounded-[10px] bg-[var(--code-bg)] font-mono text-[11px] leading-relaxed shadow-[var(--ds-shadow-card)]">
         {filtered.length === 0 ? (
-          <div className="p-8 text-center text-gray-600">
+          <div className="p-8 text-center text-[var(--fg-dim)]">
             {error ? '加载失败' : logs.length === 0 ? '加载中...' : '没有匹配的日志'}
           </div>
         ) : (
-          <div className="divide-y divide-[#0d0d18] max-h-[calc(100vh-260px)] overflow-y-auto">
+          <div className="max-h-[calc(100vh-260px)] divide-y divide-[var(--border)] overflow-y-auto">
             {filtered.map((l, i) => (
-              <div key={`${l.ts}-${i}`} className="relative pl-3 pr-3 py-1 hover:bg-[#0e0e10] flex gap-3">
+              <div key={`${l.ts}-${i}`} className="relative flex min-h-8 gap-3 py-1.5 pl-3 pr-3 hover:bg-[var(--hover-tint)]">
                 {/* Round 32: 2px left rail keyed to level. Makes warn/error
                     spike visible in a wall of `log` lines without users having
                     to read the level chip on every row. */}
@@ -287,8 +282,8 @@ export default function ServerLogsPage() {
                     at sm. The 2px left rail (LEVEL_STRIPE) already
                     encodes level visually for warn/error, so the LOG badge
                     is redundant on mobile — hide it below sm. */}
-                <span className="text-gray-600 shrink-0 w-[60px] sm:w-[100px] text-[11px] sm:text-[11px] tabular-nums">{shortTime(l.ts)}</span>
-                <span className={`hidden sm:inline shrink-0 px-1.5 rounded border text-[11px] uppercase ${LEVEL_BADGE[l.level]}`}>
+                <span className="w-[60px] shrink-0 text-[11px] tabular-nums text-[var(--fg-dim)] sm:w-[100px]">{shortTime(l.ts)}</span>
+                <span className={`hidden shrink-0 rounded px-1.5 text-[11px] uppercase sm:inline ${LEVEL_BADGE[l.level]}`}>
                   {l.level}
                 </span>
                 {/* Round 85: CommHub stamps each log line with a `[HH:MM:SS]`
