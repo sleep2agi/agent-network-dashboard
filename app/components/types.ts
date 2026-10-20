@@ -19,6 +19,8 @@ export interface Session {
   // commhub-server 0.8.1-preview.0; null on older nodes / older hubs.
   model?: string | null;
   runtime?: string | null;
+  /** Reported by agent-node. Absent on claude-code and older hubs. */
+  version?: string | null;
   // RFC-027 PR2 — lifecycle_state. Sourced from /api/nodes (preview.12+);
   // merged into Session client-side via useNodeLifecycle hook. Absent →
   // treated as 'active' so older sessions/hubs don't break the menu.
