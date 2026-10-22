@@ -37,6 +37,46 @@ export function initialPagingState<T>(): RequirementsPagingState<T> {
   return { rows: [], cursor: null, hasMore: false, loading: true, loadingMore: false, error: '', needsLogin: false };
 }
 
+/**
+ * 请求闸门 —— 页面上那份 reducer 只管渲染状态，管不住「这一枪要不要打出去」。
+ *
+ * 竞态来自两处（#1636 回归，通信欧只读定位）：
+ *   ① 替换在飞时点「加载更多」：reducer 的 replace start 还留着旧 hasMore/cursor，
+ *      于是会拿**旧 cursor** 去打**新筛选**；
+ *   ② 旧请求的回包比新请求晚到：先到的列表被后到的旧页追加/覆盖，两个筛选的行混在一起。
+ *
+ * 所以：追加只在**完全空闲**时放行；替换永远抢占（换筛选必须生效），
+ * 并用代际号丢弃被取代的迟到回包。代际号不是「防抖」，是让晚到的旧回包一定作废。
+ */
+export interface LoadGate {
+  /** 放行返回本次代际号；拒绝返回 null（调用方不得发起请求）。 */
+  begin(phase: PagingPhase): number | null;
+  /** 本次请求收尾；只有当前代际才清空在飞标记（旧代际不得清掉新请求）。 */
+  settle(gen: number): void;
+  /** 回包是否仍属当前代际。 */
+  isCurrent(gen: number): boolean;
+}
+
+export function createLoadGate(): LoadGate {
+  let generation = 0;
+  let inFlight: PagingPhase | null = null;
+  return {
+    begin(phase) {
+      if (phase === 'append' && inFlight !== null) return null;
+      generation += 1;
+      inFlight = phase;
+      return generation;
+    },
+    settle(gen) {
+      if (gen === generation) inFlight = null;
+    },
+    isCurrent(gen) {
+      return gen === generation;
+    },
+  };
+}
+
+
 export function requirementsPaging<T>(
   state: RequirementsPagingState<T>,
   action: RequirementsPagingAction<T>,

@@ -90,3 +90,34 @@ Expected: 3   Received: 0        # 追加期间列表已被骨架屏顶掉
 - 未发布：本仓 `main` 已到 .60，线上仍是 .56（登录页自报），发布入口与授权仍未确认。
 - 标签页的计数仍是「已加载行」的计数；翻页后与真实总数不同，属另一个待办（需 Hub 聚合），本卡未顺手改。
 - 空态/401/错误态的截图只覆盖了需求量表页；`/tasks`、组织架构页的同类状态仍待走查。
+
+## 6. 回归修复：替换在飞时的 append 竞态（通信欧只读定位，2026-10-22 12:0x）
+
+上一版把「加载更多」按钮的 disabled 从 `loading` 改成只跟 `loadingMore`，而 reducer 的
+replace start 仍保留旧 `hasMore`/`cursor`、append start 又把 `loading` 置 false。结果：
+
+- 换筛选/刷新在飞时按钮重新可点；点下去就拿**旧 cursor** 打**新筛选**；
+- append start 会把 `loading` 置 false，骨架屏被旧行顶回去；
+- replace 与 append 回包乱序时，两个筛选的行混在一张表里。
+
+**修法（同一 PR，最小）**：新增 `createLoadGate()` 请求闸门，包住 reducer 管不到的「这一枪要不要打」：
+
+- 追加只在**完全空闲**时放行（replace 在飞时一律拒绝，事件入口就拒绝，不是只灰按钮）；
+- 替换永远抢占，并用代际号 `isCurrent()` 丢弃被取代的迟到回包；
+- 旧请求收尾不得清掉新请求的在飞标记；
+- 「加载更多」按钮在替换期间不渲染（`hasMore && !loading`），渲染时只跟 `loadingMore`。
+
+**窄负控：同一份 spec 对旧 page.tsx（d379fc3）先红，改后绿**
+
+| 断言 | 旧代码 | 新代码 |
+|---|---|---|
+| 替换在飞时不得发带 cursor 的请求 | **红**：真发 `?status=doing&limit=200&cursor=c2`（旧 cursor 打新筛选） | 0 条 |
+| 替换在飞时按钮态 | **红**：`moreDisabled: false` | 不可点/不渲染 |
+| 旧筛选 append 迟到回包 | **红**：最终 3 行（doing + 旧第二页混入） | 1 行 `doing only` |
+| 同页重复点击只看请求数 | 绿（第一次点击后按钮已 disabled，浏览器层拦住了）——**这条不具分辨力**，如实标注 | 绿 |
+| 加载更多期间行不消失 | 绿（上一版已修） | 绿 |
+
+请求闸门本身由 5 条单测直接证明（`createLoadGate`：replace 在飞时 `begin('append')` 返回 null、
+重复 append 返回 null、旧代际 `isCurrent=false`、旧 settle 不清新在飞标记、收尾后重新放行）。
+
+复跑：`npm test` 16/16（reducer+闸门 13 断言）、`npx tsc --noEmit` 通过、浏览器 5 passed。

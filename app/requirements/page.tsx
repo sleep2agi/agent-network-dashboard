@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useReducer, useState, Suspense } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
-import { initialPagingState, requirementsPaging } from '../lib/requirements-paging';
+import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/requirements-paging';
 
 /**
  * Requirements board — #1633 (read-only first slice).
@@ -82,6 +82,8 @@ function RequirementsContent() {
     initialPagingState<Requirement>,
   );
   const { rows, loading, loadingMore, error, needsLogin, cursor, hasMore } = state;
+  // #1636 回归：追加只在完全空闲时放行；替换抢占旧请求并用代际号丢弃迟到回包。
+  const gate = useRef(createLoadGate());
   const [tagInput, setTagInput] = useState(tag);
   const [qInput, setQInput] = useState(q);
 
@@ -98,6 +100,9 @@ function RequirementsContent() {
   const load = useCallback(async (opts: { cursor?: string | null; append?: boolean } = {}) => {
     const nextCursor = opts.cursor ?? null;
     const phase = opts.append === true ? 'append' as const : 'replace' as const;
+    // 闸门在 dispatch 之前：被拒绝的追加不进入加载态，也不发请求。
+    const gen = gate.current.begin(phase);
+    if (gen === null) return;
     dispatch({ type: 'start', phase });
     try {
       const params = new URLSearchParams();
@@ -107,8 +112,11 @@ function RequirementsContent() {
       params.set('limit', '200');
       if (nextCursor) params.set('cursor', nextCursor);
       const res = await fetch(`/api/hub/requirements?${params.toString()}`, { cache: 'no-store' });
+      // 已被更新的一次加载取代（换筛选/重复刷新）：这个回包整份作废。
+      if (!gate.current.isCurrent(gen)) return;
       if (res.status === 401) { dispatch({ type: 'unauthorized', phase }); return; }
       const data = await res.json();
+      if (!gate.current.isCurrent(gen)) return;
       if (!res.ok || !data.ok) {
         dispatch({ type: 'failed', phase, error: data?.error || `hub_${res.status}` });
         return;
@@ -123,7 +131,10 @@ function RequirementsContent() {
         hasMore: data.has_more === true && nextCursorValue !== null,
       });
     } catch (e: unknown) {
+      if (!gate.current.isCurrent(gen)) return;
       dispatch({ type: 'failed', phase, error: e instanceof Error ? e.message : 'fetch failed' });
+    } finally {
+      gate.current.settle(gen);
     }
   }, [status, tag, q]);
 
@@ -279,7 +290,7 @@ function RequirementsContent() {
           </ul>
         )}
 
-        {hasMore && (
+        {hasMore && !loading && (
           <button
             type="button"
             disabled={loadingMore}

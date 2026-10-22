@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { initialPagingState, requirementsPaging } from './requirements-paging';
+import { createLoadGate, initialPagingState, requirementsPaging } from './requirements-paging';
 
 const page1 = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
 const page2 = [{ id: 'd' }, { id: 'e' }];
@@ -77,5 +77,43 @@ describe('#1636 requirements paging — append must not destroy the loaded page'
     expect(s.hasMore).toBe(false);
     expect(s.loading).toBe(false);
     expect(s.error).toBe('hub_502');
+  });
+});
+
+describe('#1636 load gate — 替换在飞时不放行追加，迟到回包作废', () => {
+  test('replace 在飞时 append 被拒绝（不发请求、不进入加载态）', () => {
+    const gate = createLoadGate();
+    const replaceGen = gate.begin('replace');
+    expect(replaceGen).not.toBeNull();
+    expect(gate.begin('append')).toBeNull();
+  });
+
+  test('同页重复点击：第二次 append 直接被拒绝', () => {
+    const gate = createLoadGate();
+    expect(gate.begin('append')).not.toBeNull();
+    expect(gate.begin('append')).toBeNull();
+  });
+
+  test('append 在飞时换筛选（replace）抢占，旧代际回包不再是最新', () => {
+    const gate = createLoadGate();
+    const appendGen = gate.begin('append');
+    const replaceGen = gate.begin('replace');
+    expect(gate.isCurrent(appendGen)).toBe(false);
+    expect(gate.isCurrent(replaceGen)).toBe(true);
+  });
+
+  test('旧请求收尾不得清掉新请求的在飞标记', () => {
+    const gate = createLoadGate();
+    const appendGen = gate.begin('append');
+    gate.begin('replace');
+    gate.settle(appendGen);                 // 旧 append 迟到收尾
+    expect(gate.begin('append')).toBeNull(); // 新 replace 仍在飞：追加依旧拒绝
+  });
+
+  test('当前请求收尾后追加重新放行', () => {
+    const gate = createLoadGate();
+    const replaceGen = gate.begin('replace');
+    gate.settle(replaceGen);
+    expect(gate.begin('append')).not.toBeNull();
   });
 });
