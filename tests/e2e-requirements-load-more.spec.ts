@@ -25,10 +25,12 @@ const PAGE2 = [
 const DOING_ROWS = [{ id: 'req_doing', seq: 201, name: 'doing only', column: 'doing', priority: 'normal', tags: ['ANet'] }];
 
 const hub = {
+  mode: 'normal' as 'normal' | 'empty' | 'error' | 'unauthorized',
   requests: [] as string[],
   replaceDelay: 100,
   appendDelay: 1200,
   reset(delays: { replace?: number; append?: number } = {}) {
+    this.mode = 'normal';
     this.requests = [];
     this.replaceDelay = delays.replace ?? 100;
     this.appendDelay = delays.append ?? 1200;
@@ -53,6 +55,27 @@ test.beforeAll(async ({ request }) => {
       const status = url.searchParams.get('status') || '';
       hub.requests.push(url.search);
       const delay = cursor ? hub.appendDelay : hub.replaceDelay;
+      if (hub.mode === 'unauthorized') {
+        setTimeout(() => {
+          res.writeHead(401, { 'content-type': 'application/json' });
+          res.end(JSON.stringify({ ok: false, error: 'unauthorized' }));
+        }, delay);
+        return;
+      }
+      if (hub.mode === 'error') {
+        setTimeout(() => {
+          res.writeHead(500, { 'content-type': 'application/json' });
+          res.end(JSON.stringify({ ok: false, error: 'hub_unavailable' }));
+        }, delay);
+        return;
+      }
+      if (hub.mode === 'empty') {
+        setTimeout(() => {
+          res.writeHead(200, { 'content-type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, requirements: [], has_more: false, next_cursor: null }));
+        }, delay);
+        return;
+      }
       const body = cursor
         ? { ok: true, requirements: PAGE2, has_more: false, next_cursor: null }
         : status
@@ -62,6 +85,15 @@ test.beforeAll(async ({ request }) => {
         res.writeHead(200, { 'content-type': 'application/json' });
         res.end(JSON.stringify(body));
       }, delay);
+      return;
+    }
+    // 组织架构页的代理实际打的是 /api/requirements/people/directory（见 app/api/hub/people/route.ts）。
+    if (url.pathname === '/api/requirements/people/directory') {
+      hub.requests.push(url.search);
+      res.writeHead(hub.mode === 'unauthorized' ? 401 : 200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(hub.mode === 'unauthorized'
+        ? { ok: false, error: 'unauthorized' }
+        : { ok: true, people: [], has_more: false, next_offset: null, agents_without_owner: [], total: 0 }));
       return;
     }
     res.writeHead(200, { 'content-type': 'application/json' });
@@ -162,4 +194,93 @@ test('376px 窄屏下需求列表不横向溢出', async ({ page }) => {
   await expect(page.locator('ul li').first()).toBeVisible();
   const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, inner: window.innerWidth }));
   expect(width.scroll).toBeLessThanOrEqual(width.inner);
+});
+
+// ---- 状态面：空 / 401 / 500+重试（截图留档，不画“已通过”的假绿） ----
+
+const SHOT_DIR = '/tmp/opencode/dash-repro/shots/states';
+
+async function shot(page: import('@playwright/test').Page, name: string, width: number) {
+  // 改视口后必须重新加载再拍：侧栏有 translate 过渡，立刻抓帧会拍到滑出动画的中间态
+  // （会看成“正文被侧栏压住”的假缺陷）。reload + 等一拍才是稳定布局。
+  await page.setViewportSize({ width, height: width < 500 ? 812 : 900 });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+  // 拍图前顺手断一次：正文左边界不得被侧栏（off-canvas 时为负 x）压住。
+  const box = await page.locator('h1').first().boundingBox();
+  expect(box?.x ?? 0).toBeGreaterThanOrEqual(0);
+  await page.screenshot({ path: `${SHOT_DIR}/${name}-${width}.png`, fullPage: true });
+}
+
+test('空态：无筛选时是「需求池是空的」，筛选无结果时给清筛选入口', async ({ page }) => {
+  hub.mode = 'empty';
+  await page.goto('/requirements');
+  await expect(page.getByText('需求池是空的')).toBeVisible();
+  await page.setViewportSize({ width: 375, height: 812 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+
+  hub.mode = 'normal';
+  await page.goto('/requirements?status=abandoned');
+  await expect(page.locator('ul li')).toHaveCount(1); // stub：带 status 只回 doing 一行
+  hub.mode = 'empty';
+  await page.goto('/requirements?status=abandoned');
+  await expect(page.getByText('没有符合筛选的需求')).toBeVisible();
+  await expect(page.getByRole('button', { name: '清空筛选' })).toBeVisible();
+  await shot(page, 'empty-filtered', 375);
+  await shot(page, 'empty-filtered', 1280);
+});
+
+test('401：给「会话已过期」与重新登录入口，不显示成空列表', async ({ page }) => {
+  hub.mode = 'unauthorized';
+  await page.goto('/requirements');
+  await expect(page.getByText(/会话已过期/)).toBeVisible();
+  await expect(page.getByText('需求池是空的')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: '重新登录' })).toBeVisible();
+  await shot(page, 'unauthorized', 375);
+  await shot(page, 'unauthorized', 1280);
+});
+
+test('500：错误可见，重试能真的把列表拉回来（追加失败后同样走重试）', async ({ page }) => {
+  hub.mode = 'error';
+  await page.goto('/requirements');
+  await expect(page.getByText(/读取失败：hub_unavailable/)).toBeVisible();
+  await expect(page.getByText('需求池是空的')).toHaveCount(0);
+  await shot(page, 'error', 375);
+
+  hub.mode = 'normal';
+  hub.requests = [];
+  await page.getByRole('button', { name: '重试' }).click();
+  await expect(page.locator('ul li')).toHaveCount(3);
+  expect(hub.requests).toHaveLength(1);
+  expect(hub.requests[0]).not.toContain('cursor=');
+});
+
+test('追加失败：列表保留、按钮回到可重试，重试带 cursor 且不重复发', async ({ page }) => {
+  await page.goto('/requirements');
+  await expect(page.locator('ul li')).toHaveCount(3);
+
+  hub.mode = 'error';
+  hub.requests = [];
+  await page.getByRole('button', { name: /加载更多/ }).click();
+  await expect(page.getByText(/读取失败：hub_unavailable/)).toBeVisible();
+  // 失败不能把已加载的 3 行清掉。
+  await expect(page.locator('ul li')).toHaveCount(3);
+
+  hub.mode = 'normal';
+  hub.replaceDelay = 100;
+  hub.requests = []; // 只数重试这一枪，不含刚才故意失败的那次
+  await page.getByRole('button', { name: '重试' }).click();
+  await expect(page.locator('ul li')).toHaveCount(5, { timeout: 10000 });
+  expect(hub.requests.filter((q) => q.includes('cursor=c2'))).toHaveLength(1);
+});
+
+test('组织架构页：401 时说「会话已过期」，不能说成通讯录为空；真空白时仍要有空态', async ({ page }) => {
+  hub.mode = 'unauthorized';
+  await page.goto('/org');
+  await expect(page.getByText(/会话已过期/)).toBeVisible();
+  await expect(page.getByText('通讯录是空的')).toHaveCount(0);
+
+  hub.mode = 'normal';
+  await page.goto('/org');
+  await expect(page.getByText('通讯录是空的')).toBeVisible();
 });
