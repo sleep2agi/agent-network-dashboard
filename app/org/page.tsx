@@ -150,7 +150,7 @@ function OrgContent() {
               <div key={i} className="h-16 animate-pulse rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]" />
             ))}
           </div>
-        ) : people.length === 0 && !error ? (
+        ) : people.length === 0 && !error && !needsLogin ? (
           <EmptyState
             variant="nodes"
             title={q ? '没有匹配的成员' : '通讯录是空的'}

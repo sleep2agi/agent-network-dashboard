@@ -245,7 +245,9 @@ function RequirementsContent() {
               <div key={i} className="h-12 animate-pulse rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]" />
             ))}
           </div>
-        ) : rows.length === 0 ? (
+        ) : rows.length === 0 && !needsLogin && !error ? (
+          // 空态只代表“这个筛选真的没有数据”。未登录或读失败时 rows 也会是空的，
+          // 那时说「需求池是空的」就是把鉴权/故障说成没数据，用户会以为需求丢了。
           <EmptyState
             variant="generic"
             title={status || tag || q ? '没有符合筛选的需求' : '需求池是空的'}
