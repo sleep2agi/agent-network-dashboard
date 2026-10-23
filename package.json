@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@capacitor/core": "^7.4.4",
+    "@sleep2agi/agent-network": "2.3.0-preview.70",
     "next": "16.3.0",
     "pinyin-pro": "^3.28.1",
     "react": "19.2.4",

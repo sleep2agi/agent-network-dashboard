@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+// #1545 —— 判据(年龄算法 + code→修法映射)只有一个作者,和 `anet daemon list` 共用同一份。
+// 两边各写一份会分叉,而「CLI 说 ready、Dashboard 说 blocked」比两边都沉默更难查。
+import { describeCapability } from '@sleep2agi/agent-network/daemon-capability-display';
 
 /**
  * PR4 #338 — host_supervisor daemon picker (RFC-026 §9.4 locked mockup).
@@ -32,6 +35,12 @@ export interface DaemonOption {
   hostname?: string | null;
   online?: boolean;
   last_seen_at?: string | null;
+  // #1545 —— daemon 自报「当下能不能创建节点」+ 那个判断是多久以前做的。
+  // 🔴 三格都可缺席,而**缺席不是 false**:老 daemon(< preview.55)压根不报。
+  //    把「没报过」当成「不能建」,会让人去修一台其实好好的机器。
+  can_create_nodes?: boolean;
+  create_nodes_blocked_reason?: string;
+  create_capability_observed_ms_ago?: number;
   runtimes_supported?: string[];
   host_telemetry?: {
     alert_level?: 'green' | 'yellow' | 'red' | 'gray';
@@ -267,17 +276,25 @@ function HostCard({
         <>
           <div className="truncate text-[11px] text-gray-500">daemon: {daemon.alias}</div>
           <RuntimeList runtimes={daemon.runtimes_supported} />
+          <CapabilityNote daemon={daemon} />
           <button
             type="button"
             onClick={onPick}
             aria-pressed={selected}
-            className="mt-1 rounded-md px-2.5 py-1.5 text-[11px] font-medium"
+            // 🔴 只在 daemon **自己说了不行** 的时候禁用。
+            //    「没报过」和「不知道多久以前测的」都**保持可选** —— 我们不知道它坏,
+            //    而拦下一台其实好好的机器,比让用户点一次再看到失败更糟。
+            disabled={isBlocked(daemon)}
+            title={isBlocked(daemon) ? '这台 daemon 报告它当前无法创建节点,原因见上' : undefined}
+            className="mt-1 rounded-md px-2.5 py-1.5 text-[11px] font-medium disabled:cursor-not-allowed"
             style={{
-              background: selected ? '#0891b2' : '#1c1c1f',
-              color: selected ? '#ffffff' : '#67e8f9',
+              background: isBlocked(daemon) ? '#1a1a1c' : selected ? '#0891b2' : '#1c1c1f',
+              color: isBlocked(daemon) ? '#6b7280' : selected ? '#ffffff' : '#67e8f9',
             }}
           >
-            {selected ? '已选择这台服务器' : '在这台服务器创建'}
+            {isBlocked(daemon)
+              ? '这台现在不能创建'
+              : selected ? '已选择这台服务器' : '在这台服务器创建'}
           </button>
         </>
       ) : (
@@ -326,5 +343,129 @@ function AlertChip({ level }: { level: 'green' | 'yellow' | 'red' | 'gray' }) {
   const label = { green: '正常', yellow: '注意', red: '警报', gray: '离线' }[level];
   return (
     <span className={`rounded border px-1.5 py-0.5 text-[10px] ${cls}`}>{label}</span>
+  );
+}
+
+// ───── #1545 创建能力 ────────────────────────────────────────────────
+
+/** daemon **自己说了**不行。⚠️ 只有这一种情况才禁用「在这台创建」。 */
+function isBlocked(daemon: DaemonOption): boolean {
+  return daemon.can_create_nodes === false;
+}
+
+/**
+ * #1545 —— 把「这台 daemon 现在能不能建节点」显示出来。
+ *
+ * 在此之前这条链是断的:daemon 从 #1353 起就在上报,hub 也一路存到
+ * `/api/host-supervisors`(这个组件读的就是它)—— 但**没有人念**,
+ * 于是 picker 照常把一台建不了节点的 daemon 列成可选,用户点了才发现。
+ *
+ * 🔴 三种颜色对应三件**不同的**事,不能挤成同一种灰:
+ *   blocked(琥珀,禁用)   它说了不行 —— 给出原因和可粘贴的修法
+ *   未知 / 年龄未知(灰)   **它没告诉我们**(版本太旧)—— 仍然可选
+ *   ready(暗绿)           可用,并说明是多久以前测的
+ *
+ * 把「没报过」渲染成「坏了」,会让人去修一台其实好好的机器 ——
+ * 这是 #1353 定下的 known-blocked ≠ unknown-treated-as-blocked。
+ */
+export type CapabilityKind =
+  | 'ready' | 'blocked' | 'ready-age-unknown' | 'blocked-age-unknown' | 'never-reported';
+export type CapabilityTone = 'blocked' | 'unknown' | 'ready';
+
+/**
+ * kind → (禁用?, 色调)。**纯函数,单独导出就是为了能被测**(这个仓只有 e2e,
+ * 而这三行正是最容易被"顺手统一一下样式"改坏的地方)。
+ *
+ * 🔴 `unknown` 和 `blocked` 必须分开,在**两个维度上都分开**:
+ *    颜色不同(未知是中性灰、不是告警琥珀),**而且未知不禁用**。
+ *    「没报过」的意思是*那台机器太旧、没告诉我们*,不是*它说了不行*。
+ *    把它当成坏的,用户会去修一台其实好好的机器(#1353 的
+ *    known-blocked ≠ unknown-treated-as-blocked)。
+ */
+export function capabilityPresentation(kind: CapabilityKind): { disabled: boolean; tone: CapabilityTone } {
+  if (kind === 'blocked' || kind === 'blocked-age-unknown') return { disabled: true, tone: 'blocked' };
+  if (kind === 'never-reported' || kind === 'ready-age-unknown') return { disabled: false, tone: 'unknown' };
+  if (kind === 'ready') return { disabled: false, tone: 'ready' };
+  // 🔴 兜底走 **unknown**,不是 ready。
+  //
+  //    上游 `describeCapability` 的 kind 联合将来可能新增取值(它在另一个仓的
+  //    另一个包里,升级依赖就会带进来)。原先这里是 `return {tone:'ready'}` 兜底 ——
+  //    也就是说**一个我们没写过的新状态,会被渲染成"可用、暗绿、可点"**。
+  //    落进 default 的那一支,恰好是看起来最正常的那个,而这正是最坏的方向:
+  //    它把"我不认识这个状态"说成了"这台没问题"。
+  //
+  //    兜底成 unknown 是对的那一侧:中性灰、**不禁用**(我们并不知道它坏,
+  //    拦下一台好机器更糟 —— 同 known-blocked ≠ unknown-treated-as-blocked),
+  //    但至少不冒充"可用"。
+  return { disabled: false, tone: 'unknown' };
+}
+
+const TONE_STYLE: Record<CapabilityTone, React.CSSProperties> = {
+  blocked: { borderColor: 'rgb(245 158 11 / 0.35)', background: 'rgb(245 158 11 / 0.10)', color: '#fef3c7' },
+  // 🔴 中性灰,**不是**琥珀:未知不是告警。
+  unknown: { borderColor: '#26262b', background: '#141416', color: '#9ca3af' },
+  ready: { borderColor: 'rgb(16 185 129 / 0.25)', background: 'rgb(16 185 129 / 0.08)', color: '#a7f3d0' },
+};
+
+/**
+ * 🔴 `Date.now()` **不能在 render 里调**。
+ *
+ * 这不是 lint 洁癖:这个组件带 `'use client'`,但 Next 仍然会 SSR 它。
+ * 服务端 render 的那一刻和客户端 hydrate 的那一刻是**两个时间**,
+ * 于是「3s 前测」和「4s 前测」会对不上 —— React 报 hydration mismatch,
+ * 而**这一格恰恰是靠"多久以前"承重的**,它是最容易在两端算出不同值的那种内容。
+ *
+ * 挂载后才取时间:未挂载时不渲染年龄,而不是渲染一个两端会打架的年龄。
+ */
+function useMountedNowMs(): number | null {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    // 🔴 首次取值也走 timeout,不在 effect 里同步 setState ——
+    //    同步 set 会触发级联渲染(eslint `react-hooks/set-state-in-effect`,
+    //    这个仓的 lint 基线是 **0 errors**,不是可以带着走的警告)。
+    const first = setTimeout(() => setNow(Date.now()), 0);
+    // 年龄会随时间变旧。一分钟刷一次,足够把「3s 前」推进到「1m 前」,
+    // 又不至于让一个只读的角标一直重渲染。
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => { clearTimeout(first); clearInterval(t); };
+  }, []);
+  return now;
+}
+
+function CapabilityNote({ daemon }: { daemon: DaemonOption }) {
+  const nowMs = useMountedNowMs();
+  if (nowMs === null) {
+    // 首帧(SSR + hydrate)。占位保持同样的盒子尺寸,避免挂载后跳动。
+    return (
+      <div
+        className="mt-1 rounded-md border px-2 py-1.5 text-[10px] leading-relaxed"
+        style={TONE_STYLE.unknown}
+      >
+        创建能力:读取中…
+      </div>
+    );
+  }
+  const v = describeCapability(daemon, nowMs);
+  const fix = 'fix' in v ? v.fix : undefined;
+
+  return (
+    <div
+      className="mt-1 rounded-md border px-2 py-1.5 text-[10px] leading-relaxed"
+      style={TONE_STYLE[capabilityPresentation(v.kind as CapabilityKind).tone]}
+    >
+      {/* line 里已经把「是什么状态 + 多久以前测的 + 为什么不知道」说全了,
+          和 `anet daemon list` 逐字同源。这里只负责排版。 */}
+      <div className="whitespace-pre-line">{v.line}</div>
+      {fix?.command ? (
+        <button
+          type="button"
+          onClick={() => navigator.clipboard?.writeText(fix.command as string).catch(() => {})}
+          className="mt-1.5 rounded px-1.5 py-0.5 text-[10px] font-medium"
+          style={{ background: 'rgb(217 119 6 / 0.20)', color: '#fde68a' }}
+        >
+          复制修复命令
+        </button>
+      ) : null}
+    </div>
   );
 }
