@@ -10,7 +10,7 @@ import { ChatPopover } from './ChatPopover';
 import { vendorForModel, runtimeIdentity, identityLine } from '../lib/vendorIdentity';
 import { parseHubTime, relativeAgo, NODE_STALE_MS } from '../lib/time';
 import { DASHBOARD_VERSION } from '../lib/version';
-import { useChatUnread } from '../lib/chat-unread';
+import { useChatUnread, badgeLabel } from '../lib/chat-unread';
 import { isOnline as presenceIsOnline, sseCountFor as presenceSseCountFor } from '../lib/presence';
 
 /** v0.10.0 Hero 1+2 / §3.F server-health hook — fetches the normalized
@@ -653,7 +653,7 @@ function buildFlowLinks(messages: MessageFlow[], tasks: TaskFlow[], positions: R
 }
 
 export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProps) {
-  const { hasUnread } = useChatUnread();
+  const { hasUnread, unreadCount } = useChatUnread();
   const theme = useTheme();
   const isLight = theme === 'light';
   const reducedMotion = useReducedMotion();
@@ -12520,27 +12520,53 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     </g>
                   );
                 })()}
-                {hasUnread(session.alias) && (
-                  <g pointerEvents="none" data-node-unread={session.alias}>
-                    <circle
-                      cx={pos.x + radius * 0.74}
-                      cy={pos.y - radius * 0.74}
-                      r={Math.max(5, radius * 0.22)}
-                      fill="#ef4444"
-                      stroke={pal.containerBg}
-                      strokeWidth="2"
-                    />
-                    <circle
-                      cx={pos.x + radius * 0.74}
-                      cy={pos.y - radius * 0.74}
-                      r={Math.max(8, radius * 0.34)}
-                      fill="none"
-                      stroke="#ef4444"
-                      strokeOpacity="0.22"
-                      strokeWidth="1.5"
-                    />
-                  </g>
-                )}
+                {hasUnread(session.alias) && (() => {
+                  // The dot said "something is here"; the count says how
+                  // much. `badgeLabel` caps at 99+ so a busy agent can
+                  // never widen the pill past the node it sits on. The
+                  // radius grows with the label so two digits are not
+                  // clipped, and the label is centred on the same point
+                  // the dot always used.
+                  const label = badgeLabel(unreadCount(session.alias));
+                  const cx = pos.x + radius * 0.74;
+                  const cy = pos.y - radius * 0.74;
+                  const r = Math.max(5, radius * 0.22);
+                  const font = Math.max(7, r * 1.05);
+                  // Pill, not circle, once the label needs the room.
+                  const halfWidth = Math.max(r, font * 0.32 * label.length + r * 0.45);
+                  return (
+                    <g pointerEvents="none" data-node-unread={session.alias} data-node-unread-count={label}>
+                      <rect
+                        x={cx - halfWidth}
+                        y={cy - r}
+                        width={halfWidth * 2}
+                        height={r * 2}
+                        rx={r}
+                        fill="#ef4444"
+                        stroke={pal.containerBg}
+                        strokeWidth="2"
+                      />
+                      <text
+                        x={cx}
+                        y={cy}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={font}
+                        fontWeight="600"
+                        fill="#ffffff"
+                      >{label}</text>
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r={Math.max(8, radius * 0.34)}
+                        fill="none"
+                        stroke="#ef4444"
+                        strokeOpacity="0.22"
+                        strokeWidth="1.5"
+                      />
+                    </g>
+                  );
+                })()}
                 {/* Round 294 / Loop: per-node "working" pulse dot retired.
                     The pulse was R24's per-node working indicator — a
                     small green circle at the top of each working node,

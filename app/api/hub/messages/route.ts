@@ -10,7 +10,14 @@ export async function GET(req: Request) {
   const networkId = searchParams.get('network_id') || '';
   // Show last 7 days by default (server defaults to 1 hour which is too short)
   const since = searchParams.get('since') || new Date(Date.now() - 7 * 86400000).toISOString().replace('T', ' ').slice(0, 19);
+  // Forward `alias` so the hub scopes the query to that inbox — and, only
+  // then, returns `pending_count` (server/src/server.ts computes it solely
+  // for an alias-scoped request). Without it the dashboard could never see
+  // the hub's own unacked total, and every caller had to spend its row
+  // budget on network-wide chatter to find its own mail.
+  const alias = searchParams.get('alias')?.trim() || '';
   const qs = new URLSearchParams({ limit, since });
+  if (alias) qs.set('alias', alias);
   if (networkId) qs.set('network_id', networkId);
   try {
     const res = await hubFetch(`/api/messages?${qs.toString()}`);
@@ -18,6 +25,7 @@ export async function GET(req: Request) {
     // Fallback: if network filter returns empty, retry without filter
     if (networkId && data.ok && (!data.messages || data.messages.length === 0)) {
       const fbQs = new URLSearchParams({ limit, since });
+      if (alias) fbQs.set('alias', alias);
       const fbRes = await hubFetch(`/api/messages?${fbQs.toString()}`);
       const fbData = await fbRes.json();
       if (fbData.ok && fbData.messages?.length > 0) {
