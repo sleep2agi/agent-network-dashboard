@@ -95,41 +95,40 @@ function OrgContent() {
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-lg font-semibold text-white">Organization</h1>
-            <p className="mt-1 text-xs text-gray-500">
-              人、部门与他们名下的 Agent（只读）。数据来自 Hub 通讯录投影，和 MCP <code className="text-gray-400">requirements_people</code> 同源。
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">
+              人、部门与他们名下的 Agent（只读）。
             </p>
           </div>
           <button
             type="button"
             onClick={() => load(offset, true)}
-            className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200"
+            className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200"
           >
             Refresh
           </button>
         </div>
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-blue-500/40">
-            <span className="text-[10px] uppercase tracking-wide text-gray-600">Search</span>
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-[var(--border-hover)]">
             <input
               value={qInput}
               onChange={e => setQInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') setQuery(qInput); }}
               onBlur={() => { if (qInput !== q) setQuery(qInput); }}
               placeholder="人 / 部门 / Agent 别名"
-              className="w-44 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none sm:w-64"
+              className="w-44 bg-transparent text-sm text-white placeholder:text-[var(--fg-dim)] focus:outline-none sm:w-64"
             />
           </div>
           {q && (
             <button
               type="button"
               onClick={() => { setQInput(''); setQuery(''); }}
-              className="rounded-lg border border-gray-700 px-2.5 py-1.5 text-[11px] text-gray-500 hover:border-gray-600 hover:text-gray-200"
+              className="rounded-md px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200"
             >
               Clear
             </button>
           )}
-          {data && <span className="text-[11px] text-gray-600">{data.total} 人 · {departments.length} 个部门</span>}
+          {data && <span className="text-[11px] text-[var(--fg-muted)]">{data.total} 人 · {departments.length} 个部门</span>}
         </div>
 
         {needsLogin && (
@@ -158,17 +157,17 @@ function OrgContent() {
           />
         ) : (
           <>
-            <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+            <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
               {people.map(person => (
                 <li key={person.user_id} className="px-3 py-3 sm:px-4">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-sm text-gray-100">{person.display_name || person.username}</span>
-                    <span className="text-[11px] text-gray-600">@{person.username}</span>
-                    <span className="rounded border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-gray-400">{person.role}</span>
+                    <span className="text-[11px] text-[var(--fg-muted)]">@{person.username}</span>
+                    <span className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)]">{person.role}</span>
                     {person.department && (
                       <span className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-gray-400">{person.department.name}</span>
                     )}
-                    <span className="ml-auto text-[11px] text-gray-600">{person.agents.length} 个 Agent</span>
+                    <span className="ml-auto text-[11px] text-[var(--fg-muted)]">{person.agents.length} 个 Agent</span>
                   </div>
                   {person.agents.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -188,15 +187,15 @@ function OrgContent() {
                 type="button"
                 disabled={loading}
                 onClick={() => load(offset + PAGE, true)}
-                className="mx-auto mt-4 block rounded-lg border border-[var(--border)] px-4 py-2 text-xs text-gray-400 hover:text-gray-200 disabled:opacity-50"
+                className="mx-auto mt-4 block rounded-md px-4 py-2 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200 disabled:opacity-50"
               >
                 {loading ? '加载中…' : '加载更多'}
               </button>
             )}
 
             {offset === 0 && withoutOwner.length > 0 && (
-              <div className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
-                <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-500">Agents without an owner in this network</h2>
+              <div className="mt-6 rounded-xl bg-[var(--bg-secondary)] p-4">
+                <h2 className="mb-2 text-xs text-[var(--fg-muted)]">无 owner 的 Agent</h2>
                 <div className="flex flex-wrap gap-1.5">
                   {withoutOwner.map(agent => (
                     <span key={agent.node_id} className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 py-0.5 text-[11px] text-gray-300">
