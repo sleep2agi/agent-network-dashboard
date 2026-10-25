@@ -31,7 +31,6 @@
   "app/page.tsx": 4,
   "app/providers/page.tsx": 11,
   "app/server-logs/page.tsx": 6,
-  "app/servers/page.tsx": 5,
   "app/settings/networks/page.tsx": 15,
   "app/settings/page.tsx": 46,
   "app/settings/tokens/page.tsx": 9,
