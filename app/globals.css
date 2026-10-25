@@ -2266,3 +2266,16 @@ html[data-skin="slack"] [data-topo-showcase] [class*="bg-cyan"] { background-col
 [data-theme="light"] .text-\[\#CBD5E1\] { color: #334155 !important; }
 /* 绿点 (bg-green-400) 浅底对比度不足 — 状态色属全局定义, 按 issue #70
    单独一节处理, 本批只量报数字不改 (通信龙 判据)。 */
+
+/* ── Legion 组织架构图（#1636）──
+   只有「正在干活」的 Agent 连线流动，其它一律静态：动效是状态信号，
+   不是装饰。prefers-reduced-motion 下整段停掉。 */
+@keyframes legion-flow-kf {
+  to { stroke-dashoffset: -16; }
+}
+.legion-flow {
+  animation: legion-flow-kf 1.1s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .legion-flow { animation: none; }
+}
