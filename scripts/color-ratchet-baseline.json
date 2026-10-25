@@ -29,7 +29,6 @@
   "app/node/page.tsx": 25,
   "app/nodes/NodesView.tsx": 2,
   "app/page.tsx": 4,
-  "app/providers/page.tsx": 11,
   "app/server-logs/page.tsx": 6,
   "app/settings/networks/page.tsx": 15,
   "app/settings/page.tsx": 46,
