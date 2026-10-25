@@ -31,7 +31,7 @@
   "app/page.tsx": 4,
   "app/server-logs/page.tsx": 6,
   "app/settings/networks/page.tsx": 15,
-  "app/settings/page.tsx": 46,
+  "app/settings/page.tsx": 1,
   "app/settings/tokens/page.tsx": 9,
   "app/tasks/TasksView.tsx": 2
 }
