@@ -8,6 +8,13 @@
  * 而「截图里看着还行」不能当断言。所以坐标在这里算，行为在
  * legion-layout.test.mjs 里钉住，组件只负责把它们画出来。
  *
+ * v3（2026-10-25 晚）支持**任意深度的真实部门树**。客户端用的是
+ * `GET /api/networks/{id}/departments`（`src/org-api.ts`），带 parent_id /
+ * leader_user_id / 成员表；只按 `person.department.name` 分组画出来的是
+ * 「人按部门名分堆」，不是编制。现在两种输入共用一套递归分配：
+ *   - 传了 `departments` → 按树递归，半径随深度从 0.30 递增到 0.50；
+ *   - 没传（老 Hub 404）→ 合成一层扁平部门，几何与 v2 一致（回退不是降级）。
+ *
  * 坐标约定：以 (0,0) 为圆心、半径 1 为最外环的归一化平面；
  * angle 从 12 点方向起顺时针（0 = 正上方）。
  *   x = r * sin(angle)
@@ -30,10 +37,29 @@ export interface LegionAgentRef {
   alias: string;
 }
 
+/** Hub `/api/networks/{id}/departments` 的一行（客户端 `src/org-model.ts` 同构）。 */
+export interface LegionDepartment {
+  id: string;
+  name: string;
+  parent_id?: string | null;
+  leader_user_id?: string | null;
+  sort?: number;
+}
+
+/** Hub 成员表的落位（members: [{ user_id, department_id }]）。 */
+export interface LegionMember {
+  user_id: string;
+  department_id: string | null;
+}
+
 export interface LegionInput {
   people: LegionPerson[];
   /** 不属于任何人的 Agent（Hub 的 agents_without_owner）。 */
   orphans?: LegionAgentRef[];
+  /** 真实部门树；缺省或空数组时回退到扁平分组。 */
+  departments?: LegionDepartment[];
+  /** 成员落位表；缺省时用 `person.department.id`。 */
+  members?: LegionMember[];
   /** 圆心标题，默认「军团」。 */
   title?: string;
 }
@@ -45,16 +71,22 @@ export interface LegionNode {
   sublabel?: string;
   /** 0 圆心 / 1 部门 / 2 人 / 3 Agent */
   ring: 0 | 1 | 2 | 3;
+  /** 部门在树里的层级（1 = 顶层部门）；人 / Agent / 圆心为 undefined。 */
+  depth?: number;
   angle: number;
   radius: number;
   x: number;
   y: number;
   parentId: string | null;
-  /** 该人/该部门名下 Agent 数（Agent 节点为 0）。 */
+  /** 该人 / 该部门名下 Agent 数（Agent 节点为 0）。 */
   agentCount: number;
+  /** 该部门子树里的人数（含下级部门）；非部门节点为 0。 */
+  memberCount: number;
+  /** 部门负责人显示名；没配负责人时 undefined。 */
+  leader?: string;
   /** 排序键，保证同一份输入永远得到同一张图。 */
   order: number;
-  /** 仅部门节点：该部门在圆环上占的弧度与起止（顺时针，0 = 12 点）。 */
+  /** 仅部门节点：该部门在圆环上占的弧度与起点（顺时针，0 = 12 点）。 */
   span?: number;
   spanStart?: number;
 }
@@ -68,7 +100,7 @@ export interface LegionEdge {
 export interface LegionLayout {
   nodes: LegionNode[];
   edges: LegionEdge[];
-  stats: { groups: number; people: number; agents: number; orphans: number };
+  stats: { groups: number; people: number; agents: number; orphans: number; depth: number };
   /** 每个环的归一化半径，供组件画参考圆。 */
   rings: { ring: 1 | 2 | 3; radius: number }[];
 }
@@ -78,9 +110,9 @@ export const ORPHAN_GROUP = '无主 Agent';
 
 /** 环半径：部门贴近圆心，人第二层，Agent 在最外。 */
 export const RING_RADIUS = { core: 0, group: 0.5, person: 0.76, agent: 1 } as const;
+/** 多层部门时，最内层（depth 1）到最外层（最深）的半径带。 */
+const DEPT_BAND = { inner: 0.3, outer: RING_RADIUS.group } as const;
 
-/** 一个部门至少占这么多弧度，避免 1 人部门被挤成一条线。 */
-const MIN_GROUP_SPAN = 0.18;
 /** Agent 扇形：相邻 Agent 的角度间隔与最大半宽。 */
 const AGENT_STEP = 0.075;
 const AGENT_MAX_HALF_WIDTH = 0.2;
@@ -99,163 +131,288 @@ function normalize(angle: number): number {
   return a < 0 ? a + TAU : a;
 }
 
-interface Group {
+interface DeptNode {
   id: string;
   label: string;
+  parentId: string | null;
+  depth: number;
+  sort: number;
+  leader?: string;
+  children: DeptNode[];
   people: LegionPerson[];
   orphans: LegionAgentRef[];
   weight: number;
+  memberCount: number;
+  agentCount: number;
 }
 
-function groupKey(person: LegionPerson): { id: string; label: string } {
-  return person.department
-    ? { id: `dept:${person.department.id}`, label: person.department.name }
-    : { id: 'dept:none', label: UNGROUPED };
+function personName(person: LegionPerson): string {
+  return person.display_name || person.username;
+}
+
+/** 深度优先算 weight / memberCount / agentCount（子树口径）。 */
+function measure(node: DeptNode): void {
+  node.memberCount = node.people.length;
+  node.agentCount = node.people.reduce((n, p) => n + p.agents.length, 0) + node.orphans.length;
+  for (const child of node.children) {
+    measure(child);
+    node.memberCount += child.memberCount;
+    node.agentCount += child.agentCount;
+  }
+  // 权重用人数，空部门也占一档，否则它会被挤成看不见的一条线。
+  node.weight = Math.max(node.memberCount + node.orphans.length * 0.5, 1);
 }
 
 /**
- * 按部门分组。顺序固定：有名字的部门按名称排，未分组其次，无主 Agent 最后。
- * 输入顺序不得影响输出（否则同一份数据两次刷新图形会跳）。
+ * 建树。扁平回退时合成一层部门节点，parentId = 'core'。
+ * 输入顺序不影响输出：部门按 sort → 名称排，人按显示名排。
  */
-function buildGroups(input: LegionInput): Group[] {
-  const map = new Map<string, Group>();
+function buildTree(input: LegionInput): { roots: DeptNode[]; depth: number } {
+  const depts = input.departments ?? [];
+  const peopleById = new Map(input.people.map(p => [p.user_id, p]));
+  const placement = new Map<string, string | null>();
+  for (const person of input.people) placement.set(person.user_id, person.department?.id ?? null);
+  for (const m of input.members ?? []) {
+    if (peopleById.has(m.user_id)) placement.set(m.user_id, m.department_id ?? null);
+  }
+
+  let maxDepth = 1;
+
+  if (depts.length > 0) {
+    const byId = new Map<string, DeptNode>();
+    for (const d of depts) {
+      byId.set(d.id, {
+        id: `dept:${d.id}`,
+        label: d.name,
+        parentId: d.parent_id ?? null,
+        depth: 1,
+        sort: d.sort ?? 0,
+        leader: d.leader_user_id
+          ? (() => {
+              const p = input.people.find(x => x.user_id === d.leader_user_id);
+              return p ? personName(p) : undefined;
+            })()
+          : undefined,
+        children: [],
+        people: [],
+        orphans: [],
+        weight: 1,
+        memberCount: 0,
+        agentCount: 0,
+      });
+    }
+    const orphans: DeptNode[] = [];
+    for (const node of byId.values()) {
+      const parent = node.parentId ? byId.get(node.parentId) : undefined;
+      if (parent) parent.children.push(node);
+      else orphans.push(node);
+    }
+    for (const person of input.people) {
+      const deptId = placement.get(person.user_id);
+      const node = deptId ? byId.get(deptId) : undefined;
+      const target =
+        node ??
+        orphans.find(n => n.id === 'dept:none') ??
+        (() => {
+          const created: DeptNode = {
+            id: 'dept:none', label: UNGROUPED, parentId: null, depth: 1, sort: 0,
+            children: [], people: [], orphans: [], weight: 1, memberCount: 0, agentCount: 0,
+          };
+          orphans.push(created);
+          return created;
+        })();
+      target.people.push(person);
+    }
+    // 部门存在但一个人都没有：仍然画出来（编制的空位也是信息）。
+    const roots = [...orphans];
+    // 部门 id 里找不到 parent 的，按顶层处理（Hub 数据脏时不能整棵树消失）。
+    const assignDepth = (node: DeptNode, depth: number) => {
+      node.depth = depth;
+      maxDepth = Math.max(maxDepth, depth);
+      node.children.sort((a, b) => a.sort - b.sort || a.label.localeCompare(b.label, 'zh-Hans-CN'));
+      for (const child of node.children) assignDepth(child, depth + 1);
+    };
+    for (const root of roots) assignDepth(root, 1);
+    for (const root of roots) measure(root);
+    for (const root of roots) {
+      root.people.sort((a, b) => personName(a).localeCompare(personName(b), 'zh-Hans-CN') || a.user_id.localeCompare(b.user_id));
+    }
+    return { roots, depth: maxDepth };
+  }
+
+  // ── 回退：只有通讯录，按 department.name 合成一层 ──
+  const map = new Map<string, DeptNode>();
   for (const person of input.people) {
-    const { id, label } = groupKey(person);
-    const group = map.get(id) ?? { id, label, people: [], orphans: [], weight: 0 };
-    group.people.push(person);
-    map.set(id, group);
+    const id = person.department ? `dept:${person.department.id}` : 'dept:none';
+    const label = person.department?.name ?? UNGROUPED;
+    const node = map.get(id) ?? {
+      id, label, parentId: null, depth: 1, sort: 0,
+      children: [], people: [], orphans: [], weight: 1, memberCount: 0, agentCount: 0,
+    };
+    node.people.push(person);
+    map.set(id, node);
   }
-  const orphans = input.orphans ?? [];
-  if (orphans.length > 0) {
-    map.set('orphans', { id: 'orphans', label: ORPHAN_GROUP, people: [], orphans, weight: 0 });
+  const orphanList = input.orphans ?? [];
+  if (orphanList.length > 0) {
+    map.set('dept:orphans', {
+      id: 'dept:orphans', label: ORPHAN_GROUP, parentId: null, depth: 1, sort: 0,
+      children: [], people: [], orphans: orphanList, weight: 1, memberCount: 0, agentCount: 0,
+    });
   }
-  const groups = [...map.values()];
-  groups.sort((a, b) => {
-    const rank = (g: Group) => (g.id === 'orphans' ? 2 : g.id === 'dept:none' ? 1 : 0);
-    if (rank(a) !== rank(b)) return rank(a) - rank(b);
-    return a.label.localeCompare(b.label, 'zh-Hans-CN');
-  });
-  for (const group of groups) {
-    group.people.sort((a, b) =>
-      (a.display_name || a.username).localeCompare(b.display_name || b.username, 'zh-Hans-CN')
-      || a.user_id.localeCompare(b.user_id));
-    // 权重：一个人算 1，无主 Agent 每个算 0.5（它们只占最外环，不该抢人的角度）。
-    group.weight = Math.max(group.people.length + group.orphans.length * 0.5, 1);
+  const roots = [...map.values()];
+  const rank = (n: DeptNode) => (n.id === 'dept:orphans' ? 2 : n.id === 'dept:none' ? 1 : 0);
+  roots.sort((a, b) => rank(a) - rank(b) || a.label.localeCompare(b.label, 'zh-Hans-CN'));
+  for (const root of roots) {
+    root.people.sort((a, b) => personName(a).localeCompare(personName(b), 'zh-Hans-CN') || a.user_id.localeCompare(b.user_id));
+    measure(root);
   }
-  return groups;
+  return { roots, depth: 1 };
+}
+
+/** 深度 → 半径。一层时保持 v2 的 0.5，多层时在最内 0.30 与 0.50 之间插值。 */
+function deptRadius(depth: number, maxDepth: number): number {
+  if (maxDepth <= 1) return RING_RADIUS.group;
+  const t = (depth - 1) / (maxDepth - 1);
+  return DEPT_BAND.inner + (DEPT_BAND.outer - DEPT_BAND.inner) * t;
+}
+
+interface Slot {
+  weight: number;
+  apply: (start: number, span: number) => void;
+}
+
+/**
+ * 按权重切扇区，但每项保底一小段（0.12 rad）：否则某个 1 人的子部门
+ * 在几十人的网络里会退化成 0.01 弧度，人和标签全部叠死。
+ */
+function distribute(slots: Slot[], start: number, span: number): void {
+  if (slots.length === 0) return;
+  const minShare = Math.min(0.12, (span / slots.length) * 0.6);
+  const reserved = minShare * slots.length;
+  const flexible = Math.max(0, span - reserved);
+  const totalWeight = slots.reduce((n, s) => n + s.weight, 0) || 1;
+  let cursor = start;
+  for (const slot of slots) {
+    const width = minShare + flexible * (slot.weight / totalWeight);
+    slot.apply(cursor, width);
+    cursor += width;
+  }
 }
 
 export function buildLegionLayout(input: LegionInput): LegionLayout {
-  const groups = buildGroups(input);
+  const { roots, depth } = buildTree(input);
   const nodes: LegionNode[] = [];
   const edges: LegionEdge[] = [];
   const title = input.title ?? '军团';
-  const peopleCount = input.people.length;
   const agentCount = input.people.reduce((n, p) => n + p.agents.length, 0);
   const orphanCount = input.orphans?.length ?? 0;
+  let order = 0;
 
   nodes.push({
     id: 'core', kind: 'core', label: title, ring: 0, angle: 0, radius: 0,
-    ...polar(0, 0), parentId: null, agentCount, order: -1,
+    ...polar(0, 0), parentId: null, agentCount, memberCount: input.people.length, order: order++,
   });
 
-  const totalWeight = groups.reduce((n, g) => n + g.weight, 0) || 1;
-  let cursor = 0;            // 顺时针角度游标
-  let order = 0;             // 稳定排序键
-
-  groups.forEach((group) => {
-    const weighted = (group.weight / totalWeight) * TAU;
-    const span = Math.max(weighted, group.people.length > 0 ? MIN_GROUP_SPAN : MIN_GROUP_SPAN / 2);
-    const groupAngle = cursor + span / 2;
-    const groupId = `group:${group.id}`;
-    const groupAgentCount = group.people.reduce((n, p) => n + p.agents.length, 0) + group.orphans.length;
-
+  const emitDept = (node: DeptNode, start: number, span: number, parentId: string) => {
+    const radius = deptRadius(node.depth, depth);
+    const center = start + span / 2;
     nodes.push({
-      id: groupId, kind: 'group', label: group.label,
-      sublabel: group.people.length > 0 ? `${group.people.length} 人 · ${groupAgentCount} Agent` : `${groupAgentCount} Agent`,
-      ring: 1, angle: normalize(groupAngle), radius: RING_RADIUS.group,
-      ...polar(RING_RADIUS.group, groupAngle),
-      parentId: 'core', agentCount: groupAgentCount, order: order++,
-      span, spanStart: normalize(cursor),
+      id: node.id, kind: 'group', label: node.label,
+      sublabel: node.memberCount > 0 ? `${node.memberCount} 人 · ${node.agentCount} Agent` : `${node.agentCount} Agent`,
+      ring: 1, depth: node.depth, angle: normalize(center), radius,
+      ...polar(radius, center),
+      parentId, agentCount: node.agentCount, memberCount: node.memberCount, leader: node.leader,
+      order: order++, span, spanStart: normalize(start),
     });
-    edges.push({ id: `core->${groupId}`, from: 'core', to: groupId });
+    edges.push({ id: `${parentId}->${node.id}`, from: parentId, to: node.id });
 
-    // 人的槽位：部门扇区内部均分；只有一个成员时落在扇区中线。
-    const slots = Math.max(group.people.length, 1);
-    const inner = span * 0.72;                 // 留出扇区边缘空隙（相邻部门的人不能贴在一起）
-    group.people.forEach((person, index) => {
-      const angle = slots === 1
-        ? groupAngle
-        : groupAngle - inner / 2 + (inner * index) / (slots - 1);
-      const personId = `person:${person.user_id}`;
-      nodes.push({
-        id: personId, kind: 'person', label: person.display_name || person.username,
-        sublabel: `@${person.username}`, ring: 2, angle: normalize(angle), radius: RING_RADIUS.person,
-        ...polar(RING_RADIUS.person, angle),
-        parentId: groupId, agentCount: person.agents.length, order: order++,
-      });
-      edges.push({ id: `${groupId}->${personId}`, from: groupId, to: personId });
+    const slots: Slot[] = [];
+    for (const child of node.children) {
+      slots.push({ weight: child.weight, apply: (s, w) => emitDept(child, s, w, node.id) });
+    }
+    // 部门自己的直属成员与人一起切扇区：先子部门、后直属，和客户端列表顺序一致。
+    for (const person of node.people) {
+      slots.push({ weight: 1, apply: (s, w) => emitPerson(person, s + w / 2, node.id) });
+    }
+    for (const agent of node.orphans) {
+      slots.push({ weight: 0.5, apply: (s, w) => emitOrphan(agent, s + w / 2, node.id) });
+    }
+    distribute(slots, start, span);
+  };
 
-      // 名下 Agent：以人的角度为中心的扇形，最多铺满 AGENT_MAX_HALF_WIDTH。
-      const count = person.agents.length;
-      person.agents
-        .slice()
-        .sort((a, b) => a.alias.localeCompare(b.alias, 'zh-Hans-CN') || a.node_id.localeCompare(b.node_id))
-        .forEach((agent, agentIndex) => {
-          const half = Math.min(((count - 1) / 2) * AGENT_STEP, AGENT_MAX_HALF_WIDTH);
-          const offset = count === 1 ? 0 : -half + (2 * half * agentIndex) / (count - 1);
-          const agentAngle = angle + offset;
-          const agentId = `agent:${agent.node_id}`;
-          const agentRadius = RING_RADIUS.agent * (agentIndex % 2 === 0 ? 1 : AGENT_RING_ALT);
-          nodes.push({
-            id: agentId, kind: 'agent', label: agent.alias, ring: 3,
-            angle: normalize(agentAngle), radius: agentRadius,
-            ...polar(agentRadius, agentAngle),
-            parentId: personId, agentCount: 0, order: order++,
-          });
-          edges.push({ id: `${personId}->${agentId}`, from: personId, to: agentId });
-        });
+  const emitPerson = (person: LegionPerson, angle: number, parentId: string) => {
+    const personId = `person:${person.user_id}`;
+    nodes.push({
+      id: personId, kind: 'person', label: personName(person),
+      sublabel: `@${person.username}`, ring: 2, angle: normalize(angle), radius: RING_RADIUS.person,
+      ...polar(RING_RADIUS.person, angle),
+      parentId, agentCount: person.agents.length, memberCount: 0, order: order++,
     });
+    edges.push({ id: `${parentId}->${personId}`, from: parentId, to: personId });
 
-    // 无主 Agent：直接挂在部门环上（它们没有 owner，但确实属于这个网络）。
-    group.orphans
+    const agents = person.agents
       .slice()
-      .sort((a, b) => a.alias.localeCompare(b.alias, 'zh-Hans-CN') || a.node_id.localeCompare(b.node_id))
-      .forEach((agent, index) => {
-        const offset = group.orphans.length === 1
-          ? 0
-          : -Math.min(((group.orphans.length - 1) / 2) * AGENT_STEP, AGENT_MAX_HALF_WIDTH)
-            + (2 * Math.min(((group.orphans.length - 1) / 2) * AGENT_STEP, AGENT_MAX_HALF_WIDTH) * index) / (group.orphans.length - 1);
-        const agentAngle = groupAngle + offset;
-        const agentId = `agent:${agent.node_id}`;
-        const agentRadius = RING_RADIUS.agent * (index % 2 === 0 ? 1 : AGENT_RING_ALT);
-        nodes.push({
-          id: agentId, kind: 'agent', label: agent.alias, ring: 3,
-          angle: normalize(agentAngle), radius: agentRadius,
-          ...polar(agentRadius, agentAngle),
-          parentId: groupId, agentCount: 0, order: order++,
-        });
-        edges.push({ id: `${groupId}->${agentId}`, from: groupId, to: agentId });
+      .sort((a, b) => a.alias.localeCompare(b.alias, 'zh-Hans-CN') || a.node_id.localeCompare(b.node_id));
+    const half = agents.length <= 1 ? 0 : Math.min(((agents.length - 1) / 2) * AGENT_STEP, AGENT_MAX_HALF_WIDTH);
+    agents.forEach((agent, index) => {
+      const offset = agents.length === 1 ? 0 : -half + (2 * half * index) / (agents.length - 1);
+      const agentAngle = angle + offset;
+      const agentRadius = RING_RADIUS.agent * (index % 2 === 0 ? 1 : AGENT_RING_ALT);
+      const agentId = `agent:${agent.node_id}`;
+      nodes.push({
+        id: agentId, kind: 'agent', label: agent.alias, ring: 3,
+        angle: normalize(agentAngle), radius: agentRadius,
+        ...polar(agentRadius, agentAngle),
+        parentId: personId, agentCount: 0, memberCount: 0, order: order++,
       });
+      edges.push({ id: `${personId}->${agentId}`, from: personId, to: agentId });
+    });
+  };
 
-    cursor += span;
-  });
+  const emitOrphan = (agent: LegionAgentRef, angle: number, parentId: string) => {
+    const agentId = `agent:${agent.node_id}`;
+    nodes.push({
+      id: agentId, kind: 'agent', label: agent.alias, ring: 3,
+      angle: normalize(angle), radius: RING_RADIUS.agent,
+      ...polar(RING_RADIUS.agent, angle),
+      parentId, agentCount: 0, memberCount: 0, order: order++,
+    });
+    edges.push({ id: `${parentId}->${agentId}`, from: parentId, to: agentId });
+  };
+
+  distribute(
+    roots.map(root => ({ weight: root.weight, apply: (s: number, w: number) => emitDept(root, s, w, 'core') })),
+    0,
+    TAU,
+  );
 
   return {
     nodes,
     edges,
-    stats: { groups: groups.length, people: peopleCount, agents: agentCount, orphans: orphanCount },
+    stats: { groups: roots.length + countDescendants(roots), people: input.people.length, agents: agentCount, orphans: orphanCount, depth },
     rings: [
-      { ring: 1, radius: RING_RADIUS.group },
+      { ring: 1, radius: deptRadius(1, depth) },
       { ring: 2, radius: RING_RADIUS.person },
       { ring: 3, radius: RING_RADIUS.agent },
     ],
   };
 }
 
+function countDescendants(roots: DeptNode[]): number {
+  let n = 0;
+  const walk = (node: DeptNode) => {
+    for (const child of node.children) {
+      n += 1;
+      walk(child);
+    }
+  };
+  roots.forEach(walk);
+  return n;
+}
+
 /**
  * 归一化坐标 → 像素。组件在 ResizeObserver 里拿到容器尺寸后调用；
- * radiusFactor 留出标签外沿的空白（0.92 意味着最外环贴到 92% 半径）。
+ * radiusFactor 留出标签外沿的空白（0.84 意味着最外环贴到 84% 半径）。
  */
 export function toPixel(
   node: { x: number; y: number },

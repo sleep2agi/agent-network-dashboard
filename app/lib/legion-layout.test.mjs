@@ -21,7 +21,7 @@ describe('#1636 军团布局 — 纯函数，同一份数据必须永远画出�
     const layout = buildLegionLayout({ people: [] });
     expect(layout.nodes).toHaveLength(1);
     expect(layout.nodes[0].kind).toBe('core');
-    expect(layout.stats).toEqual({ groups: 0, people: 0, agents: 0, orphans: 0 });
+    expect(layout.stats).toEqual({ groups: 0, people: 0, agents: 0, orphans: 0, depth: 1 });
     expect(Number.isFinite(layout.nodes[0].x)).toBe(true);
   });
 
@@ -67,7 +67,7 @@ describe('#1636 军团布局 — 纯函数，同一份数据必须永远画出�
     expect(agents).toHaveLength(2);
     for (const a of agents) expect(a.parentId).toBe(owner.id);
     expect(group.agentCount).toBe(2);
-    expect(layout.stats).toEqual({ groups: 1, people: 1, agents: 2, orphans: 0 });
+    expect(layout.stats).toEqual({ groups: 1, people: 1, agents: 2, orphans: 0, depth: 1 });
   });
 
   test('Agent 扇形不会散出 owner 太远（±0.16 弧度内）', () => {
@@ -141,6 +141,75 @@ describe('#1636 军团布局 — 纯函数，同一份数据必须永远画出�
     for (let i = 1; i < sorted.length; i++) {
       expect(sorted[i - 1].spanStart + sorted[i - 1].span).toBeLessThanOrEqual(sorted[i].spanStart + 1e-9);
     }
+  });
+
+  test('真实部门树：子部门更靠外、角度落在父扇区内、人挂到最深层部门', () => {
+    const departments = [
+      { id: 'd1', name: '平台', parent_id: null, sort: 1 },
+      { id: 'd11', name: '前端', parent_id: 'd1', sort: 1 },
+      { id: 'd12', name: '后端', parent_id: 'd1', sort: 2 },
+      { id: 'd2', name: '文档', parent_id: null, sort: 2 },
+    ];
+    const people = [
+      person({ user_id: 'u1', display_name: 'A', department: { id: 'd11', name: '前端' }, agents: [agent(1)] }),
+      person({ user_id: 'u2', display_name: 'B', department: { id: 'd12', name: '后端' } }),
+      person({ user_id: 'u3', display_name: 'C', department: { id: 'd2', name: '文档' } }),
+    ];
+    const layout = buildLegionLayout({ people, departments });
+    const dept = (id) => layout.nodes.find(n => n.id === `dept:${id}`);
+    expect(layout.stats.depth).toBe(2);
+    expect(layout.stats.groups).toBe(4);
+
+    // 半径随深度递增，人比最深的部门更外，Agent 最外
+    expect(dept('d11').radius).toBeGreaterThan(dept('d1').radius);
+    expect(dept('d12').radius).toBeGreaterThan(dept('d1').radius);
+    expect(layout.nodes.find(n => n.id === 'person:u1').radius).toBeGreaterThan(dept('d11').radius);
+
+    // 子部门角度落在父部门扇区内
+    const rel = (a, start) => (((a - start) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    for (const [parent, child] of [['d1', 'd11'], ['d1', 'd12']]) {
+      expect(rel(dept(child).angle, dept(parent).spanStart)).toBeLessThanOrEqual(dept(parent).span + 1e-9);
+    }
+    // 根层扇区铺满 2π
+    const roots = [dept('d1'), dept('d2')];
+    expect(roots.reduce((n, d) => n + d.span, 0)).toBeCloseTo(Math.PI * 2, 6);
+
+    // 人挂到自己的部门，不是顶层
+    expect(layout.nodes.find(n => n.id === 'person:u1').parentId).toBe('dept:d11');
+    expect(layout.nodes.find(n => n.id === 'person:u3').parentId).toBe('dept:d2');
+    // 部门成员数按子树累计
+    expect(dept('d1').memberCount).toBe(2);
+    expect(dept('d1').agentCount).toBe(1);
+  });
+
+  test('成员表覆盖 person.department（调动后以 Hub 落位为准）', () => {
+    const departments = [
+      { id: 'd1', name: '平台', parent_id: null },
+      { id: 'd2', name: '文档', parent_id: null },
+    ];
+    const layout = buildLegionLayout({
+      people: [person({ user_id: 'u1', department: { id: 'd1', name: '平台' } })],
+      departments,
+      members: [{ user_id: 'u1', department_id: 'd2' }],
+    });
+    expect(layout.nodes.find(n => n.id === 'person:u1').parentId).toBe('dept:d2');
+  });
+
+  test('脏数据不丢人：部门不存在 / 父部门缺失时落到未分组或顶层', () => {
+    const departments = [{ id: 'd1', name: '平台', parent_id: 'missing-parent' }];
+    const layout = buildLegionLayout({
+      people: [
+        person({ user_id: 'u1', department: { id: 'ghost', name: '幽灵部门' } }),
+        person({ user_id: 'u2', department: { id: 'd1', name: '平台' } }),
+      ],
+      departments,
+    });
+    const people = layout.nodes.filter(n => n.kind === 'person');
+    expect(people).toHaveLength(2);
+    // 找不到部门的人进「未分组」，父部门缺失的部门当顶层
+    expect(layout.nodes.find(n => n.id === 'person:u1').parentId).toBe('dept:none');
+    expect(layout.nodes.find(n => n.id === 'person:u2').parentId).toBe('dept:d1');
+    expect(layout.nodes.find(n => n.id === 'dept:d1').parentId).toBe('core');
   });
 
   test('toPixel 把归一化坐标映射到容器中心与半径内', () => {

@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { buildLegionLayout, toPixel, type LegionPerson, type LegionAgentRef, type LegionNode } from '../lib/legion-layout';
+import { buildLegionLayout, toPixel, type LegionPerson, type LegionAgentRef, type LegionNode, type LegionDepartment, type LegionMember } from '../lib/legion-layout';
 import { EmptyState } from '../components/EmptyState';
 
 interface PeopleResponse {
@@ -31,6 +31,17 @@ interface PeopleResponse {
 interface StatusResponse {
   sessions?: { alias: string; status: string; node_id?: string }[];
 }
+
+/** 部门树：404 是「这版 Hub 没有这条路由」，属于能力缺失，不是错误。
+ *  返回 null 让页面回退到扁平分组；401 仍然抛，交给统一登录提示。 */
+const deptFetcher = async (url: string) => {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (res.status === 404) return null;
+  if (res.status === 401) throw Object.assign(new Error('unauthorized'), { status: 401 });
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json?.ok) throw Object.assign(new Error(json?.error || `hub_${res.status}`), { status: res.status });
+  return json as { departments?: LegionDepartment[]; members?: LegionMember[] };
+};
 
 const fetcher = async (url: string) => {
   const res = await fetch(url, { cache: 'no-store' });
@@ -107,6 +118,9 @@ export default function LegionPage() {
     shouldRetryOnError: false,
     onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
+  const hierarchy = useSWR<{ departments?: LegionDepartment[]; members?: LegionMember[] } | null>(
+    '/api/hub/departments', deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
+  );
   const status = useSWR<StatusResponse>('/api/hub/status', fetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
@@ -115,8 +129,13 @@ export default function LegionPage() {
   const peopleList = people.data?.people ?? [];
   const orphans = people.data?.agents_without_owner ?? [];
   const layout = useMemo(
-    () => buildLegionLayout({ people: peopleList, orphans }),
-    [peopleList, orphans],
+    () => buildLegionLayout({
+      people: peopleList,
+      orphans,
+      departments: hierarchy.data?.departments,
+      members: hierarchy.data?.members,
+    }),
+    [peopleList, orphans, hierarchy.data],
   );
   const statusByAlias = useMemo(() => {
     const map = new Map<string, string>();
@@ -237,6 +256,11 @@ export default function LegionPage() {
             <p className="mt-1 text-xs text-[var(--fg-muted)]">
               军团编制：圆心是网络，外三环依次是部门、成员与名下 Agent。
             </p>
+            {hierarchy.data === null && (
+              <p className="mt-1 text-[11px] text-[var(--fg-dim)]">
+                当前 Hub 没有部门树接口，编制按通讯录的部门名分组（升级 Hub 后自动变为真实层级）。
+              </p>
+            )}
             {focusGroup && (
               <span className="mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-[var(--fg)]">
                 聚焦：{layout.nodes.find(n => n.id === focusGroup)?.label}
@@ -401,14 +425,8 @@ export default function LegionPage() {
                             <text textAnchor="middle" y={4} className="fill-[var(--fg)] text-[10px]">
                               {node.label.slice(0, 4)}
                             </text>
-                            <text
-                              textAnchor="middle"
-                              x={-Math.sin(node.angle) * (r + 16)}
-                              y={Math.cos(node.angle) * (r + 16) + 3}
-                              className="fill-[var(--fg-muted)] text-[10px] [paint-order:stroke] [stroke:var(--bg-secondary)] [stroke-width:3px]"
-                            >
-                              {node.sublabel}
-                            </text>
+                            {/* 部门不再画「N 人 · M Agent」：多层部门时这行字会压进圆心
+                                （depth1 半径只有 0.30），且右侧面板本来就写着。*/}
                           </>
                         ) : node.kind === 'person' ? (
                           <>
@@ -477,6 +495,12 @@ export default function LegionPage() {
                 <>
                   <p className="mt-2 text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
                   {selectedNode.sublabel && <p className="text-[11px] text-[var(--fg-muted)]">{selectedNode.sublabel}</p>}
+                  {selectedNode.kind === 'group' && (
+                    <p className="mt-1 text-[11px] text-[var(--fg-muted)]">
+                      {selectedNode.leader ? `负责人 ${selectedNode.leader} · ` : '未设负责人 · '}
+                      {selectedNode.memberCount} 人（含下级）· 第 {selectedNode.depth} 层
+                    </p>
+                  )}
 
                   {selectedNode.kind === 'agent' && (
                     <Link

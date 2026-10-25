@@ -43,8 +43,12 @@ Owner 指令：Dashboard 的**审美与功能**都要向客户端对齐，另外
 - Dashboard：`GET /api/requirements/people/directory`（`app/api/hub/people/route.ts`）
   → 只有 `department: { id, name } | null`，**拿不到 parent_id、负责人、成员表**。
 
-**所以「军团图」现在画的是扁平部门，不是军团真实编制。** 要真对齐，必须加一层
-`/api/hub/departments` 代理，并按 `parent_id` 递归；404 时回退到现有扁平版。
+**所以「军团图」原先画的是扁平部门，不是军团真实编制。**
+
+→ 2026-10-25 晚已修：新增 `/api/hub/departments` 代理（状态码原样透传，404 表示
+「这版 Hub 没有这条路由」），`legion-layout` 改为按树递归，半径随深度从 0.30 递增到
+0.50；没接口时仍合成一层扁平部门，几何与旧版一致，页面顶部明写原因，不用“空”掩盖。
+`/org` 列表页**仍是扁平**——按树缩进与负责人徽章在下一轮。
 
 ---
 
