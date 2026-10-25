@@ -74,6 +74,16 @@ function statusTone(status?: string) {
   return 'var(--border-hover)';
 }
 
+/** 部门扇区弧带：angle 0 = 12 点、顺时针，和布局模块同一套坐标约定。 */
+function arcPath(cx: number, cy: number, r: number, start: number, span: number): string {
+  const end = start + span;
+  const ax = cx + r * Math.sin(start);
+  const ay = cy - r * Math.cos(start);
+  const bx = cx + r * Math.sin(end);
+  const by = cy - r * Math.cos(end);
+  return `M ${ax} ${ay} A ${r} ${r} 0 ${span > Math.PI ? 1 : 0} 1 ${bx} ${by}`;
+}
+
 function ringLabel(node: LegionNode): string {
   if (node.kind === 'core') return '圆心';
   if (node.kind === 'group') return '部门';
@@ -84,6 +94,9 @@ function ringLabel(node: LegionNode): string {
 export default function LegionPage() {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
+  // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [focusGroup, setFocusGroup] = useState<string | null>(null);
   const [view, setView] = useState({ k: 1, tx: 0, ty: 0 });
   const [needsLogin, setNeedsLogin] = useState(false);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
@@ -136,10 +149,54 @@ export default function LegionPage() {
     return hit;
   }, [layout, query]);
 
+  const { childrenOf, parentOf } = useMemo(() => {
+    const children = new Map<string, string[]>();
+    const parents = new Map<string, string>();
+    for (const edge of layout.edges) {
+      const arr = children.get(edge.from) ?? [];
+      arr.push(edge.to);
+      children.set(edge.from, arr);
+      parents.set(edge.to, edge.from);
+    }
+    return { childrenOf: children, parentOf: parents };
+  }, [layout]);
+
+  /** 一个节点的「血脉」：向上到圆心，向下到所有子孙。悬停时只点亮这一支。 */
+  const related = useCallback((id: string) => {
+    const set = new Set<string>([id]);
+    for (let cur = parentOf.get(id); cur && !set.has(cur); cur = parentOf.get(cur)) set.add(cur);
+    const stack = [id];
+    while (stack.length > 0) {
+      const cur = stack.pop()!;
+      for (const child of childrenOf.get(cur) ?? []) {
+        if (!set.has(child)) { set.add(child); stack.push(child); }
+      }
+    }
+    return set;
+  }, [childrenOf, parentOf]);
+
+  // 搜索优先于悬停/聚焦：正在找东西时，鼠标划过不该把命中结果盖掉。
+  const activeSet = useMemo(() => {
+    if (matched) return matched;
+    const anchor = hovered ?? focusGroup;
+    return anchor ? related(anchor) : null;
+  }, [matched, hovered, focusGroup, related]);
+
   const selectedNode = layout.nodes.find(n => n.id === selected) ?? null;
   const selectedChildren = selected
     ? layout.nodes.filter(n => n.parentId === selected)
     : [];
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setSelected(null);
+      setFocusGroup(null);
+      setHovered(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number) => {
@@ -167,6 +224,7 @@ export default function LegionPage() {
   };
   const onPointerUp = () => { drag.current = null; };
 
+  const baseRadius = (Math.min(size.width, size.height) / 2) * 0.84;
   const loading = people.isLoading && !people.data;
   const error = people.error as (Error & { status?: number }) | undefined;
 
@@ -179,6 +237,14 @@ export default function LegionPage() {
             <p className="mt-1 text-xs text-[var(--fg-muted)]">
               军团编制：圆心是网络，外三环依次是部门、成员与名下 Agent。
             </p>
+            {focusGroup && (
+              <span className="mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-[var(--fg)]">
+                聚焦：{layout.nodes.find(n => n.id === focusGroup)?.label}
+                <button type="button" onClick={() => setFocusGroup(null)} aria-label="取消聚焦" className="text-[var(--fg-muted)] hover:text-[var(--fg)]">
+                  ✕
+                </button>
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5">
@@ -251,12 +317,31 @@ export default function LegionPage() {
                     />
                   ))}
 
+                  {/* 部门扇区：一条细弧把「这个部门占多大角度」画出来，
+                      比纯圆点更容易看出编制比例，也不用引入新颜色。 */}
+                  {layout.nodes.filter(n => n.kind === 'group' && n.span && n.spanStart !== undefined).map(node => {
+                    const on = !activeSet || activeSet.has(node.id);
+                    const focused = focusGroup === node.id;
+                    return (
+                      <path
+                        key={`sector:${node.id}`}
+                        data-role="sector"
+                        d={arcPath(size.width / 2, size.height / 2, baseRadius * 0.33, node.spanStart!, node.span!)}
+                        fill="none"
+                        stroke={focused ? 'var(--hl)' : 'var(--border-hover)'}
+                        strokeWidth={focused ? 3 : 2}
+                        strokeLinecap="butt"
+                        opacity={on ? (focused ? 0.95 : 0.55) : 0.08}
+                      />
+                    );
+                  })}
+
                   {layout.edges.map(edge => {
                     const a = points.get(edge.from);
                     const b = points.get(edge.to);
                     if (!a || !b) return null;
                     const target = layout.nodes.find(n => n.id === edge.to);
-                    const dim = matched && !(matched.has(edge.from) && matched.has(edge.to));
+                    const dim = activeSet && !(activeSet.has(edge.from) && activeSet.has(edge.to));
                     const working = target?.kind === 'agent' && statusByAlias.get(target.label) === 'working';
                     return (
                       <path
@@ -275,7 +360,7 @@ export default function LegionPage() {
                   {layout.nodes.map(node => {
                     const p = points.get(node.id);
                     if (!p) return null;
-                    const dim = matched ? !matched.has(node.id) : false;
+                    const dim = activeSet ? !activeSet.has(node.id) : false;
                     const isSelected = selected === node.id;
                     const statusValue = node.kind === 'agent' ? statusByAlias.get(node.label) : undefined;
                     const r = node.kind === 'core' ? 42 : node.kind === 'group' ? 22 : node.kind === 'person' ? 13 : 6;
@@ -283,10 +368,14 @@ export default function LegionPage() {
                       <g
                         key={node.id}
                         transform={`translate(${p.x} ${p.y})`}
-                        opacity={dim ? 0.18 : 1}
+                        opacity={dim ? 0.1 : 1}
                         tabIndex={0}
                         role="button"
                         aria-label={`${ringLabel(node)} ${node.label}`}
+                        onMouseEnter={() => setHovered(node.id)}
+                        onMouseLeave={() => setHovered(h => (h === node.id ? null : h))}
+                        onFocus={() => setHovered(node.id)}
+                        onBlur={() => setHovered(h => (h === node.id ? null : h))}
                         onClick={(e) => { e.stopPropagation(); setSelected(node.id); }}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(node.id); } }}
                         className="cursor-pointer outline-none focus-visible:opacity-80"
@@ -388,6 +477,24 @@ export default function LegionPage() {
                 <>
                   <p className="mt-2 text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
                   {selectedNode.sublabel && <p className="text-[11px] text-[var(--fg-muted)]">{selectedNode.sublabel}</p>}
+
+                  {selectedNode.kind === 'agent' && (
+                    <Link
+                      href={`/nodes/${encodeURIComponent(selectedNode.label)}`}
+                      className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                    >
+                      打开会话
+                    </Link>
+                  )}
+                  {selectedNode.kind === 'group' && (
+                    <button
+                      type="button"
+                      onClick={() => setFocusGroup(f => (f === selectedNode.id ? null : selectedNode.id))}
+                      className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                    >
+                      {focusGroup === selectedNode.id ? '取消聚焦' : '只看这个部门'}
+                    </button>
+                  )}
                   {selectedChildren.length > 0 ? (
                     <ul className="mt-3 space-y-1.5">
                       {selectedChildren.map(child => (

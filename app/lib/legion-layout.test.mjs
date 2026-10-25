@@ -116,6 +116,33 @@ describe('#1636 军团布局 — 纯函数，同一份数据必须永远画出�
     }
   });
 
+  test('部门扇区：总弧度 2π、互不重叠、中心角与起点自洽', () => {
+    const layout = buildLegionLayout({
+      people: [
+        person({ user_id: 'u1', department: { id: 'd1', name: '平台' }, agents: [agent(1), agent(2)] }),
+        person({ user_id: 'u2', display_name: 'A', department: { id: 'd1', name: '平台' } }),
+        person({ user_id: 'u3', display_name: 'B', department: { id: 'd2', name: '设计' } }),
+        person({ user_id: 'u4', display_name: 'C', department: null }),
+      ],
+      orphans: [agent(8)],
+    });
+    const groups = layout.nodes.filter(n => n.kind === 'group');
+    expect(groups.length).toBe(4);
+    const total = groups.reduce((n, g) => n + g.span, 0);
+    expect(total).toBeCloseTo(Math.PI * 2, 6);
+    for (const g of groups) {
+      expect(g.spanStart).toBeGreaterThanOrEqual(0);
+      expect(g.spanStart).toBeLessThan(Math.PI * 2);
+      // 中心角 = 起点 + 半跨度（模 2π）
+      expect(angleDelta(g.angle, g.spanStart + g.span / 2)).toBeLessThan(1e-6);
+      expect(g.spanStart + g.span).toBeLessThanOrEqual(Math.PI * 2 + 1e-9);
+    }
+    const sorted = [...groups].sort((a, b) => a.spanStart - b.spanStart);
+    for (let i = 1; i < sorted.length; i++) {
+      expect(sorted[i - 1].spanStart + sorted[i - 1].span).toBeLessThanOrEqual(sorted[i].spanStart + 1e-9);
+    }
+  });
+
   test('toPixel 把归一化坐标映射到容器中心与半径内', () => {
     const size = { width: 800, height: 600 };
     const center = toPixel({ x: 0, y: 0 }, size);

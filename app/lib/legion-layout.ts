@@ -54,6 +54,9 @@ export interface LegionNode {
   agentCount: number;
   /** 排序键，保证同一份输入永远得到同一张图。 */
   order: number;
+  /** 仅部门节点：该部门在圆环上占的弧度与起止（顺时针，0 = 12 点）。 */
+  span?: number;
+  spanStart?: number;
 }
 
 export interface LegionEdge {
@@ -173,6 +176,7 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
       ring: 1, angle: normalize(groupAngle), radius: RING_RADIUS.group,
       ...polar(RING_RADIUS.group, groupAngle),
       parentId: 'core', agentCount: groupAgentCount, order: order++,
+      span, spanStart: normalize(cursor),
     });
     edges.push({ id: `core->${groupId}`, from: 'core', to: groupId });
 
