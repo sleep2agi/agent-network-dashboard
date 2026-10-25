@@ -73,7 +73,7 @@ Owner 指令：Dashboard 的**审美与功能**都要向客户端对齐，另外
 | 定时 | `ScheduledTasksScreen.tsx` + `ScheduleEditor` + 时钟选择器 | `app/scheduled-tasks` | 未逐项比对，编辑器能力待核 |
 | 技能 | SkillHub（客户端有 skill 浏览/安装） | `app/skillhub` | 未逐项比对 |
 | 服务器 / Provider | `ServersDrawer`、Provider 表单 | `app/servers`、`app/providers` | 未逐项比对 |
-| 设置 | `SettingsScreen` + `SettingsEditPages` + `SettingsPhonePages` | `app/settings` | **桌面/手机两套设置有分叉，Dashboard 单套**，需按客户端信息架构重排 |
+| 设置 | `SettingsScreen` + `SettingsEditPages` + `SettingsPhonePages` | `app/settings` | ✅ 已按客户端 `settings-model.ts` 重排六组（账号→连接→成员与组织→外观→资源→关于，2026-10-25 `26b65a2`）。仍缺客户端独有的**通知 / 语音输入 / 快捷键**三组；Dashboard 无对应能力，不画假开关 |
 | 版本 | — | `app/versions` | Dashboard 独有 |
 
 ---
