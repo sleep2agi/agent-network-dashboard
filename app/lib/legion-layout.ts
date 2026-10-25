@@ -62,6 +62,12 @@ export interface LegionInput {
   members?: LegionMember[];
   /** 圆心标题，默认「军团」。 */
   title?: string;
+  /**
+   * 已折叠的部门节点 id（形如 `dept:<department_id>`）。折叠的部门不再
+   * 递归展开下级，扇区只保留最小份额，把角度让给同级的其它部门。
+   * 传的是**布局节点 id**而不是 Hub 的 department_id，避免两个命名空间混用。
+   */
+  collapsed?: string[];
 }
 
 export interface LegionNode {
@@ -89,6 +95,11 @@ export interface LegionNode {
   /** 仅部门节点：该部门在圆环上占的弧度与起点（顺时针，0 = 12 点）。 */
   span?: number;
   spanStart?: number;
+  /** 仅部门节点：下级是否被折叠。 */
+  collapsed?: boolean;
+  /** 折叠时藏起来的子树人数 / Agent 数（用于画「+N」角标）。 */
+  hiddenMembers?: number;
+  hiddenAgents?: number;
 }
 
 export interface LegionEdge {
@@ -100,7 +111,7 @@ export interface LegionEdge {
 export interface LegionLayout {
   nodes: LegionNode[];
   edges: LegionEdge[];
-  stats: { groups: number; people: number; agents: number; orphans: number; depth: number };
+  stats: { groups: number; people: number; agents: number; orphans: number; depth: number; collapsed: number };
   /** 每个环的归一化半径，供组件画参考圆。 */
   rings: { ring: 1 | 2 | 3; radius: number }[];
 }
@@ -110,8 +121,12 @@ export const ORPHAN_GROUP = '无主 Agent';
 
 /** 环半径：部门贴近圆心，人第二层，Agent 在最外。 */
 export const RING_RADIUS = { core: 0, group: 0.5, person: 0.76, agent: 1 } as const;
-/** 多层部门时，最内层（depth 1）到最外层（最深）的半径带。 */
-const DEPT_BAND = { inner: 0.3, outer: RING_RADIUS.group } as const;
+/**
+ * 多层部门时，最内层（depth 1）到最外层（最深）的半径带。0.26→0.54：
+ * 0.30→0.50 在 375px 屏上只留 29px 环差，而部门圆直径 44px，父子部门
+ * 会叠在一起；拉开到 0.28 环差后窄屏才放得下（节点半径同时按屏幕缩放）。
+ */
+const DEPT_BAND = { inner: 0.26, outer: RING_RADIUS.group + 0.04 } as const;
 
 /** Agent 扇形：相邻 Agent 的角度间隔与最大半宽。 */
 const AGENT_STEP = 0.075;
@@ -303,6 +318,7 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
   const { roots, depth } = buildTree(input);
   const nodes: LegionNode[] = [];
   const edges: LegionEdge[] = [];
+  const collapsed = new Set(input.collapsed ?? []);
   const title = input.title ?? '军团';
   const agentCount = input.people.reduce((n, p) => n + p.agents.length, 0);
   const orphanCount = input.orphans?.length ?? 0;
@@ -316,6 +332,7 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
   const emitDept = (node: DeptNode, start: number, span: number, parentId: string) => {
     const radius = deptRadius(node.depth, depth);
     const center = start + span / 2;
+    const isCollapsed = collapsed.has(node.id) && (node.children.length > 0 || node.people.length > 0 || node.orphans.length > 0);
     nodes.push({
       id: node.id, kind: 'group', label: node.label,
       sublabel: node.memberCount > 0 ? `${node.memberCount} 人 · ${node.agentCount} Agent` : `${node.agentCount} Agent`,
@@ -323,12 +340,16 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
       ...polar(radius, center),
       parentId, agentCount: node.agentCount, memberCount: node.memberCount, leader: node.leader,
       order: order++, span, spanStart: normalize(start),
+      ...(isCollapsed ? { collapsed: true, hiddenMembers: node.memberCount, hiddenAgents: node.agentCount } : {}),
     });
     edges.push({ id: `${parentId}->${node.id}`, from: parentId, to: node.id });
+    // 折叠：下钻到此为止。节点本身仍占一个最小扇区（distribute 的 0.12 下限），
+    // 剩下的角度按权重分给同级——否则折叠只是「藏起来」，玻璃般的大空弧还在。
+    if (isCollapsed) return;
 
     const slots: Slot[] = [];
     for (const child of node.children) {
-      slots.push({ weight: child.weight, apply: (s, w) => emitDept(child, s, w, node.id) });
+      slots.push({ weight: collapsed.has(child.id) ? 1 : child.weight, apply: (s, w) => emitDept(child, s, w, node.id) });
     }
     // 部门自己的直属成员与人一起切扇区：先子部门、后直属，和客户端列表顺序一致。
     for (const person of node.people) {
@@ -381,7 +402,10 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
   };
 
   distribute(
-    roots.map(root => ({ weight: root.weight, apply: (s: number, w: number) => emitDept(root, s, w, 'core') })),
+    roots.map(root => ({
+      weight: collapsed.has(root.id) ? 1 : root.weight,
+      apply: (s: number, w: number) => emitDept(root, s, w, 'core'),
+    })),
     0,
     TAU,
   );
@@ -389,7 +413,14 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
   return {
     nodes,
     edges,
-    stats: { groups: roots.length + countDescendants(roots), people: input.people.length, agents: agentCount, orphans: orphanCount, depth },
+    stats: {
+      groups: roots.length + countDescendants(roots),
+      people: input.people.length,
+      agents: agentCount,
+      orphans: orphanCount,
+      depth,
+      collapsed: nodes.filter(n => n.kind === 'group' && n.collapsed).length,
+    },
     rings: [
       { ring: 1, radius: deptRadius(1, depth) },
       { ring: 2, radius: RING_RADIUS.person },

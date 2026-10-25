@@ -21,7 +21,7 @@ describe('#1636 军团布局 — 纯函数，同一份数据必须永远画出�
     const layout = buildLegionLayout({ people: [] });
     expect(layout.nodes).toHaveLength(1);
     expect(layout.nodes[0].kind).toBe('core');
-    expect(layout.stats).toEqual({ groups: 0, people: 0, agents: 0, orphans: 0, depth: 1 });
+    expect(layout.stats).toEqual({ groups: 0, people: 0, agents: 0, orphans: 0, depth: 1, collapsed: 0 });
     expect(Number.isFinite(layout.nodes[0].x)).toBe(true);
   });
 
@@ -67,7 +67,7 @@ describe('#1636 军团布局 — 纯函数，同一份数据必须永远画出�
     expect(agents).toHaveLength(2);
     for (const a of agents) expect(a.parentId).toBe(owner.id);
     expect(group.agentCount).toBe(2);
-    expect(layout.stats).toEqual({ groups: 1, people: 1, agents: 2, orphans: 0, depth: 1 });
+    expect(layout.stats).toEqual({ groups: 1, people: 1, agents: 2, orphans: 0, depth: 1, collapsed: 0 });
   });
 
   test('Agent 扇形不会散出 owner 太远（±0.16 弧度内）', () => {
@@ -222,5 +222,64 @@ describe('#1636 军团布局 — 纯函数，同一份数据必须永远画出�
     const right = toPixel({ x: 1, y: 0 }, size);
     // 半径取 min(w,h)/2 * 0.92 = 276
     expect(right.x).toBeCloseTo(676, 5);
+  });
+});
+
+describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计口径', () => {
+  // 平台（1 人 + 2 Agent，下挂前端 1 人） / 运营（1 人）
+  const depts = [
+    { id: 'd1', name: '平台', parent_id: null, sort: 0 },
+    { id: 'd2', name: '前端', parent_id: 'd1', sort: 0 },
+    { id: 'd3', name: '运营', parent_id: null, sort: 1 },
+    { id: 'd4', name: '空部门', parent_id: null, sort: 2 },
+  ];
+  const people = [
+    person({ user_id: 'u1', username: 'vansin', display_name: 'Vincent', department: { id: 'd1', name: '平台' }, agents: [agent(1), agent(2)] }),
+    person({ user_id: 'u2', username: 'lin', display_name: '林亦', department: { id: 'd2', name: '前端' }, agents: [] }),
+    person({ user_id: 'u3', username: 'meng', display_name: '孟然', department: { id: 'd3', name: '运营' }, agents: [] }),
+  ];
+  const input = { people, departments: depts };
+
+  test('折叠父部门：子部门与成员/Agent 全部不出现，隐藏数如实记录', () => {
+    const full = buildLegionLayout(input);
+    const folded = buildLegionLayout({ ...input, collapsed: ['dept:d1'] });
+    const target = folded.nodes.find(n => n.id === 'dept:d1');
+
+    expect(target.collapsed).toBe(true);
+    expect(target.hiddenMembers).toBe(2);   // 自己 + 前端
+    expect(target.hiddenAgents).toBe(2);
+    expect(folded.nodes.find(n => n.id === 'dept:d2')).toBeUndefined();
+    expect(folded.nodes.find(n => n.id === 'person:u2')).toBeUndefined();
+    expect(folded.nodes.filter(n => n.kind === 'agent')).toHaveLength(0);
+    // 统计仍是全量口径：折叠不该把「军团有多少人」算错
+    expect(folded.stats.people).toBe(full.stats.people);
+    expect(folded.stats.agents).toBe(full.stats.agents);
+    expect(folded.stats.collapsed).toBe(1);
+    // 同级兄弟照常画
+    expect(folded.nodes.find(n => n.id === 'dept:d3')).toBeTruthy();
+  });
+
+  test('折叠把角度让给同级：兄弟扇区变大，且扇区总和仍是整圈', () => {
+    const full = buildLegionLayout(input);
+    const folded = buildLegionLayout({ ...input, collapsed: ['dept:d1'] });
+    const ops = id => folded.nodes.find(n => n.id === `dept:${id}`);
+    const opsFull = full.nodes.find(n => n.id === 'dept:d3');
+    expect(ops('d3').span).toBeGreaterThan(opsFull.span);
+
+    const groups = folded.nodes.filter(n => n.kind === 'group' && n.parentId === 'core');
+    const total = groups.reduce((n, g) => n + (g.span ?? 0), 0);
+    expect(total).toBeCloseTo(Math.PI * 2, 6);
+  });
+
+  test('折叠空部门是空操作（没有下级就没有可折叠的东西）', () => {
+    const folded = buildLegionLayout({ ...input, collapsed: ['dept:d4'] });
+    expect(folded.nodes.find(n => n.id === 'dept:d4')?.collapsed).toBeUndefined();
+    expect(folded.stats.collapsed).toBe(0);
+  });
+
+  test('折叠顺序不影响结果：同一份输入两次构建完全相等', () => {
+    const a = buildLegionLayout({ ...input, collapsed: ['dept:d1', 'dept:d3'] });
+    const b = buildLegionLayout({ ...input, collapsed: ['dept:d3', 'dept:d1'] });
+    expect(a.nodes.map(n => [n.id, n.angle, n.radius])).toEqual(b.nodes.map(n => [n.id, n.angle, n.radius]));
   });
 });

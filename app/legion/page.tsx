@@ -109,8 +109,13 @@ export default function LegionPage() {
   const [hovered, setHovered] = useState<string | null>(null);
   const [focusGroup, setFocusGroup] = useState<string | null>(null);
   const [view, setView] = useState({ k: 1, tx: 0, ty: 0 });
+  // 折叠的是布局节点 id（dept:xxx），不是 Hub 的 department_id。
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
   const [needsLogin, setNeedsLogin] = useState(false);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const { ref, size } = useElementSize<HTMLDivElement>();
 
   const people = useSWR<PeopleResponse>('/api/hub/people?limit=200&offset=0', fetcher, {
@@ -134,8 +139,9 @@ export default function LegionPage() {
       orphans,
       departments: hierarchy.data?.departments,
       members: hierarchy.data?.members,
+      collapsed: [...collapsed],
     }),
-    [peopleList, orphans, hierarchy.data],
+    [peopleList, orphans, hierarchy.data, collapsed],
   );
   const statusByAlias = useMemo(() => {
     const map = new Map<string, string>();
@@ -201,6 +207,22 @@ export default function LegionPage() {
     return anchor ? related(anchor) : null;
   }, [matched, hovered, focusGroup, related]);
 
+  const toggleCollapse = useCallback((id: string) => {
+    setCollapsed(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  /** 只有真的有下级的部门才可折叠；空部门折了也没意义。 */
+  const canCollapse = useCallback((id: string) => {
+    const node = layout.nodes.find(n => n.id === id);
+    if (!node || node.kind !== 'group') return false;
+    return layout.nodes.some(n => n.parentId === id);
+  }, [layout]);
+
   const selectedNode = layout.nodes.find(n => n.id === selected) ?? null;
   const selectedChildren = selected
     ? layout.nodes.filter(n => n.parentId === selected)
@@ -208,6 +230,12 @@ export default function LegionPage() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // 空格折叠当前选中的部门（焦点在节点上时由节点自己处理，避免双触发）。
+      if (e.key === ' ' && selected && canCollapse(selected) && !(e.target instanceof Element && e.target.closest('[role="button"]'))) {
+        e.preventDefault();
+        toggleCollapse(selected);
+        return;
+      }
       if (e.key !== 'Escape') return;
       setSelected(null);
       setFocusGroup(null);
@@ -215,7 +243,7 @@ export default function LegionPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [selected, canCollapse, toggleCollapse]);
 
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number) => {
@@ -226,6 +254,75 @@ export default function LegionPage() {
       // 围绕容器中心缩放：平移量随比例同步，避免缩小时图跑出画布。
       return { k, tx: cx - (cx - v.tx) * (k / v.k), ty: cy - (cy - v.ty) * (k / v.k) };
     });
+  }, [size.height, size.width]);
+
+  /**
+   * 导出当前视图为 PNG。两条坑：
+   *  1. Tailwind 的 `fill-[var(--fg)]` / `text-[10px]` 是类名，独立 SVG 里
+   *     没有那条样式表，直接序列化会变成黑字 16px → 逐节点内联 computed style。
+   *  2. SVG 背景是透明的，深色主题下导出的图上文字独自漂在透明底上 →
+   *     先铺一层 --bg 实底，再 2x 光栅化（ retina 屏不糊）。
+   */
+  const exportPng = useCallback(async () => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    setExporting(true);
+    setExportError('');
+    try {
+      const w = svg.clientWidth || size.width || 900;
+      const h = svg.clientHeight || size.height || 620;
+      const clone = svg.cloneNode(true) as SVGSVGElement;
+      const PROPS = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap', 'font-size', 'font-weight', 'font-family', 'letter-spacing', 'opacity', 'paint-order', 'text-anchor'];
+      const inline = (src: Element, dst: Element) => {
+        const cs = getComputedStyle(src);
+        const style = (dst as SVGElement).style;
+        for (const prop of PROPS) {
+          const value = cs.getPropertyValue(prop);
+          if (value) style.setProperty(prop, value);
+        }
+        const sc = src.children;
+        const dc = dst.children;
+        for (let i = 0; i < sc.length && i < dc.length; i++) inline(sc[i], dc[i]);
+      };
+      inline(svg, clone);
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      clone.setAttribute('width', String(w));
+      clone.setAttribute('height', String(h));
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0b0b0d';
+      const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bgRect.setAttribute('width', String(w));
+      bgRect.setAttribute('height', String(h));
+      bgRect.setAttribute('fill', bg);
+      clone.insertBefore(bgRect, clone.firstChild);
+
+      const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(clone))}`;
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('SVG 转图片失败'));
+        img.src = url;
+      });
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('浏览器不支持 canvas');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('PNG 编码失败');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `legion-${new Date().toISOString().slice(0, 10)}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 0);
+    } catch (e) {
+      setExportError(e instanceof Error ? e.message : '导出失败');
+    } finally {
+      setExporting(false);
+    }
   }, [size.height, size.width]);
 
   const onWheel = (e: React.WheelEvent) => {
@@ -244,6 +341,9 @@ export default function LegionPage() {
   const onPointerUp = () => { drag.current = null; };
 
   const baseRadius = (Math.min(size.width, size.height) / 2) * 0.84;
+  // 节点尺寸随画布缩放：1280 下取 1，375 下约 0.66。不缩的话部门圆直径
+  // 44px 会大于环差，父子部门在窄屏上叠成一坨（实测 375 下圆心只差 29px）。
+  const nodeScale = Math.max(0.62, Math.min(1, Math.min(size.width, size.height) / 520));
   const loading = people.isLoading && !people.data;
   const error = people.error as (Error & { status?: number }) | undefined;
 
@@ -280,7 +380,25 @@ export default function LegionPage() {
                 className="w-40 bg-transparent text-sm text-white placeholder:text-[var(--fg-dim)] focus:outline-none sm:w-56"
               />
             </div>
-            <Link href="/org" className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200">
+            {collapsed.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setCollapsed(new Set())}
+                className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              >
+                全部展开（{collapsed.size}）
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={exportPng}
+              disabled={exporting}
+              data-testid="legion-export"
+              className="rounded-md bg-[var(--bg-elevated)] px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] disabled:opacity-50"
+            >
+              {exporting ? '导出中…' : '导出 PNG'}
+            </button>
+            <Link href="/org" className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
               列表视图
             </Link>
           </div>
@@ -289,6 +407,11 @@ export default function LegionPage() {
         {needsLogin || error?.status === 401 ? (
           <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团编制。
+          </div>
+        ) : null}
+        {exportError ? (
+          <div className="mb-4 rounded-lg bg-[var(--bg-secondary)] px-4 py-2 text-xs text-[var(--danger)]">
+            导出失败：{exportError}
           </div>
         ) : null}
         {error && error.status !== 401 ? (
@@ -320,7 +443,7 @@ export default function LegionPage() {
               onPointerLeave={onPointerUp}
               onDoubleClick={reset}
             >
-              <svg width={size.width || 1} height={size.height || 1} className="block touch-none select-none" role="img" aria-label="军团组织架构图">
+              <svg ref={svgRef} width={size.width || 1} height={size.height || 1} className="block touch-none select-none" role="img" aria-label="军团组织架构图">
                 <defs>
                   <radialGradient id="legion-core" cx="50%" cy="50%" r="50%">
                     <stop offset="0%" stopColor="var(--bg-elevated)" />
@@ -387,7 +510,8 @@ export default function LegionPage() {
                     const dim = activeSet ? !activeSet.has(node.id) : false;
                     const isSelected = selected === node.id;
                     const statusValue = node.kind === 'agent' ? statusByAlias.get(node.label) : undefined;
-                    const r = node.kind === 'core' ? 42 : node.kind === 'group' ? 22 : node.kind === 'person' ? 13 : 6;
+                    const r = (node.kind === 'core' ? 42 : node.kind === 'group' ? 22 : node.kind === 'person' ? 13 : 6) * nodeScale;
+                    const labelScale = Math.max(nodeScale, 0.85);
                     return (
                       <g
                         key={node.id}
@@ -401,44 +525,78 @@ export default function LegionPage() {
                         onFocus={() => setHovered(node.id)}
                         onBlur={() => setHovered(h => (h === node.id ? null : h))}
                         onClick={(e) => { e.stopPropagation(); setSelected(node.id); }}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(node.id); } }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') { e.preventDefault(); setSelected(node.id); return; }
+                          if (e.key === ' ') {
+                            e.preventDefault();
+                            if (node.kind === 'group' && canCollapse(node.id)) toggleCollapse(node.id);
+                            else setSelected(node.id);
+                          }
+                        }}
                         className="cursor-pointer outline-none focus-visible:opacity-80"
                       >
                         {/* 透明命中区：<g> 的包围盒中心常常落在圆与标签之间的空白里，
-                            只靠已绘制的圆去接点击，用户点“名字”是点不中的。 */}
+                            只靠已绘制的圆去接点击，用户点“名字”是点不中的。
+                            部门只放到 r+6：深度 2 时相邻部门圆心最近只有 ~29px，
+                            r+14 会让「平台」的命中圆盖住「后端」，点谁都选后端。 */}
                         <circle
-                          r={node.kind === 'core' ? 50 : node.kind === 'group' ? r + 14 : node.kind === 'person' ? r + 6 : r + 5}
+                          r={node.kind === 'core' ? 50 : node.kind === 'group' ? r + 6 : node.kind === 'person' ? r + 6 : r + 5}
                           fill="transparent"
                           style={{ pointerEvents: 'all' }}
                         />
                         {node.kind === 'core' ? (
                           <>
                             <circle r={r} fill="url(#legion-core)" stroke={isSelected ? 'var(--hl)' : 'var(--border-hover)'} strokeWidth={isSelected ? 2 : 1} />
-                            <text textAnchor="middle" y={-2} className="fill-[var(--fg)] text-[11px] font-semibold">{node.label}</text>
-                            <text textAnchor="middle" y={13} className="fill-[var(--fg-muted)] text-[10px]">
+                            <text textAnchor="middle" y={-2} className="fill-[var(--fg)] font-semibold" style={{ fontSize: 11 * Math.max(nodeScale, 0.9) }}>{node.label}</text>
+                            <text textAnchor="middle" y={13 * Math.max(nodeScale, 0.9)} className="fill-[var(--fg-muted)]" style={{ fontSize: 10 * Math.max(nodeScale, 0.9) }}>
                               {layout.stats.people} 人 · {layout.stats.agents} Agent
                             </text>
                           </>
                         ) : node.kind === 'group' ? (
                           <>
-                            <circle r={r} fill="var(--bg-elevated)" stroke={isSelected ? 'var(--hl)' : 'var(--border)'} strokeWidth={isSelected ? 2 : 1} />
-                            <text textAnchor="middle" y={4} className="fill-[var(--fg)] text-[10px]">
+                            <circle
+                              r={r}
+                              fill="var(--bg-elevated)"
+                              stroke={isSelected ? 'var(--hl)' : 'var(--border)'}
+                              strokeWidth={isSelected ? 2 : 1}
+                              strokeDasharray={node.collapsed ? '3 3' : undefined}
+                            />
+                            <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)]" style={{ fontSize: 10 * labelScale }}>
                               {node.label.slice(0, 4)}
                             </text>
                             {/* 部门不再画「N 人 · M Agent」：多层部门时这行字会压进圆心
                                 （depth1 半径只有 0.30），且右侧面板本来就写着。*/}
+                            {/* 折叠角标：虚线圆 + 「+N」把藏起来的人数说清楚，
+                                点角标即可原地展开，不用先选中再按空格。 */}
+                            {node.collapsed && (
+                              <g
+                                data-role="collapse-badge"
+                                className="cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); toggleCollapse(node.id); }}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); toggleCollapse(node.id); } }}
+                                tabIndex={0}
+                                role="button"
+                                aria-label={`展开 ${node.label}（${node.hiddenMembers ?? 0} 人）`}
+                              >
+                                <circle cx={r + 2} cy={-(r + 2)} r={9} fill="var(--bg)" stroke="var(--hl)" strokeWidth={1} />
+                                <text x={r + 2} y={-(r + 2) + 3} textAnchor="middle" className="fill-[var(--hl)] text-[9px]">
+                                  +{node.hiddenMembers ?? 0}
+                                </text>
+                              </g>
+                            )}
                           </>
                         ) : node.kind === 'person' ? (
                           <>
                             <circle r={r} fill="var(--bg)" stroke={isSelected ? 'var(--hl)' : 'var(--border-hover)'} strokeWidth={isSelected ? 2 : 1} />
-                            <text textAnchor="middle" y={4} className="fill-[var(--fg)] text-[9px] font-medium">
+                            <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)] font-medium" style={{ fontSize: 9 * labelScale }}>
                               {(node.label || '?').slice(0, 1).toUpperCase()}
                             </text>
                             <text
                               textAnchor="middle"
-                              x={-Math.sin(node.angle) * (r + 22)}
-                              y={Math.cos(node.angle) * (r + 22) + 3}
-                              className="fill-[var(--fg)] text-[10px] [paint-order:stroke] [stroke:var(--bg-secondary)] [stroke-width:3px]"
+                              x={-Math.sin(node.angle) * (r + 22 * labelScale)}
+                              y={Math.cos(node.angle) * (r + 22 * labelScale) + 3}
+                              className="fill-[var(--fg)] [paint-order:stroke] [stroke:var(--bg-secondary)] [stroke-width:3px]"
+                              style={{ fontSize: 10 * labelScale }}
                             >
                               {node.label.length > 8 ? `${node.label.slice(0, 8)}…` : node.label}
                             </text>
@@ -451,8 +609,9 @@ export default function LegionPage() {
                             {(view.k >= 1.15 || isSelected) && (
                               <text
                                 textAnchor="middle"
-                                y={r + 14}
-                                className="fill-[var(--fg-muted)] text-[9px]"
+                                y={r + 14 * labelScale}
+                                className="fill-[var(--fg-muted)]"
+                                style={{ fontSize: 9 * labelScale }}
                               >
                                 {node.label.length > 10 ? `${node.label.slice(0, 10)}…` : node.label}
                               </text>
@@ -511,13 +670,27 @@ export default function LegionPage() {
                     </Link>
                   )}
                   {selectedNode.kind === 'group' && (
-                    <button
-                      type="button"
-                      onClick={() => setFocusGroup(f => (f === selectedNode.id ? null : selectedNode.id))}
-                      className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
-                    >
-                      {focusGroup === selectedNode.id ? '取消聚焦' : '只看这个部门'}
-                    </button>
+                    <div className="mt-3 space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setFocusGroup(f => (f === selectedNode.id ? null : selectedNode.id))}
+                        className="inline-flex w-full items-center justify-center rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                      >
+                        {focusGroup === selectedNode.id ? '取消聚焦' : '只看这个部门'}
+                      </button>
+                      {canCollapse(selectedNode.id) && (
+                        <button
+                          type="button"
+                          data-testid="legion-toggle-collapse"
+                          onClick={() => toggleCollapse(selectedNode.id)}
+                          className="inline-flex w-full items-center justify-center rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                        >
+                          {collapsed.has(selectedNode.id)
+                            ? `展开下级（${selectedNode.hiddenMembers ?? selectedNode.memberCount} 人 / ${selectedNode.hiddenAgents ?? selectedNode.agentCount} Agent）`
+                            : '折叠下级'}
+                        </button>
+                      )}
+                    </div>
                   )}
                   {selectedChildren.length > 0 ? (
                     <ul className="mt-3 space-y-1.5">
@@ -538,7 +711,11 @@ export default function LegionPage() {
                     </ul>
                   ) : (
                     <p className="mt-3 text-[11px] text-[var(--fg-muted)]">
-                      {selectedNode.kind === 'agent' ? `状态：${statusByAlias.get(selectedNode.label) ?? '未知'}` : '没有下级节点。'}
+                      {selectedNode.kind === 'agent'
+                        ? `状态：${statusByAlias.get(selectedNode.label) ?? '未知'}`
+                        : selectedNode.collapsed
+                          ? `已折叠 ${selectedNode.hiddenMembers ?? 0} 人 / ${selectedNode.hiddenAgents ?? 0} Agent。展开后可见下级。`
+                          : '没有下级节点。'}
                     </p>
                   )}
                 </>
@@ -549,6 +726,7 @@ export default function LegionPage() {
                     ['成员', layout.stats.people],
                     ['Agent', layout.stats.agents],
                     ['无主 Agent', layout.stats.orphans],
+                    ...(layout.stats.collapsed > 0 ? [['已折叠部门', layout.stats.collapsed] as [string, number]] : []),
                   ].map(([label, value]) => (
                     <div key={label} className="flex items-center justify-between">
                       <dt className="text-[var(--fg-muted)]">{label}</dt>
@@ -556,7 +734,7 @@ export default function LegionPage() {
                     </div>
                   ))}
                   <p className="pt-2 text-[11px] leading-relaxed text-[var(--fg-muted)]">
-                    点击任意节点查看它的下级；滚轮缩放，拖拽平移，双击复位。
+                    点击任意节点查看它的下级；选中部门后按空格折叠/展开；滚轮缩放，拖拽平移，双击复位；右上角可导出 PNG。
                   </p>
                 </dl>
               )}
