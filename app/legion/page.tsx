@@ -424,6 +424,18 @@ export default function LegionPage() {
             <p className="mt-1 text-xs text-[var(--fg-muted)]">
               军团编制：圆心是网络，外三环依次是部门、成员与名下 Agent。
             </p>
+            {matched && matched.size === 0 && (
+              <p className="mt-1 flex items-center gap-2 text-[11px] text-[var(--fg-muted)]">
+                没有匹配的成员或部门
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="rounded px-1.5 py-0.5 text-[10px] text-[var(--accent-text)] hover:bg-[var(--hover-tint)]"
+                >
+                  清空搜索
+                </button>
+              </p>
+            )}
             {!loading && !error && layout.stats.people === 0 && layout.stats.groups > 0 && (
               <p className="mt-1 text-[11px] text-[var(--fg-muted)]" data-testid="legion-empty-members">
                 已有 {layout.stats.groups} 个部门，还没有成员加入 —— 成员绑定 Agent 后会自动出现在环上。

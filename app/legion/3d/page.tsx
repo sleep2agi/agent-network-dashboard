@@ -1059,6 +1059,11 @@ export default function Legion3DPage() {
     setExporting(true);
     setExportError('');
     try {
+      // 交互期背板可能还是 0.6×：导出前先让绘制循环回到全分辨率，
+      // 否则会把降采样的糊图导出去（画质没法事后补救）。
+      interactingUntil.current = 0;
+      await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+
       // 和 2D 页一样，导出图自带标题栏、计数、图例与导出时间 ——
       // 一张裸图存到相册里过几天就说不清是谁的编制。
       const tk2 = readTokens();
@@ -1217,7 +1222,16 @@ export default function Legion3DPage() {
           )}
         </div>
         {noMatch && (
-          <p className="mt-1 text-[11px] text-[var(--fg-muted)]">没有匹配的成员或部门</p>
+          <p className="mt-1 flex items-center gap-2 text-[11px] text-[var(--fg-muted)]">
+            没有匹配的成员或部门
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="rounded px-1.5 py-0.5 text-[10px] text-[var(--accent-text)] hover:bg-[var(--hover-tint)]"
+            >
+              清空搜索
+            </button>
+          </p>
         )}
         {focus && (
           <button
