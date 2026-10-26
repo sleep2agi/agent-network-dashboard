@@ -165,6 +165,7 @@ export default function Legion3DPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const [spin, setSpin] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -267,7 +268,35 @@ export default function Legion3DPage() {
     return set;
   }, [focus, layout.edges]);
 
-  const activeSet = related ?? focusSet;
+  /** 搜索命中：先按名字/子标题命中，再把命中节点的子孙一起点亮 ——
+   *  搜「平台」只亮一个部门点没有意义，要看见这个部门的人和 Agent。 */
+  const matchedSet = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    const hit = new Set<string>();
+    for (const node of layout.nodes) {
+      if (`${node.label} ${node.sublabel ?? ''}`.toLowerCase().includes(q)) hit.add(node.id);
+    }
+    if (hit.size === 0) return hit;
+    const children = new Map<string, string[]>();
+    for (const e of layout.edges) {
+      const arr = children.get(e.from) ?? [];
+      arr.push(e.to);
+      children.set(e.from, arr);
+    }
+    const stack = [...hit];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      for (const child of children.get(cur) ?? []) {
+        if (!hit.has(child)) { hit.add(child); stack.push(child); }
+      }
+    }
+    return hit;
+  }, [query, layout.edges, layout.nodes]);
+
+  // 搜索优先于聚焦/选中：正在找东西时，别让其它高亮盖掉命中结果。
+  const activeSet = matchedSet ?? related ?? focusSet;
+  const noMatch = matchedSet !== null && matchedSet.size === 0;
 
   const ringRadii = useMemo(() => layout.rings.map(r => ({ ring: r.ring, radius: r.radius })), [layout.rings]);
 
@@ -989,8 +1018,10 @@ export default function Legion3DPage() {
         aria-label="军团三维拓扑图，可拖动旋转、滚轮缩放，点击节点查看详情"
       />
 
-      {/* 标题与计数 */}
-      <div className="pointer-events-none absolute left-4 top-4 max-w-[52vw] sm:max-w-sm">
+      {/* 顶部信息区：手机上「标题 → 搜索 → 按钮」竖排，桌面上标题在左、按钮在右。
+          之前按钮绝对定位在 top-16，加了搜索框后正好压住输入框。 */}
+      <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2 sm:inset-x-4 sm:top-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="pointer-events-none min-w-0 max-w-[62vw] sm:max-w-sm">
         <div className="flex items-baseline gap-2">
           <h1 className="text-lg font-semibold text-[var(--fg)]">军团 · 3D</h1>
           <span className="hidden text-[11px] text-[var(--fg-dim)] sm:inline">Legion Topology</span>
@@ -998,6 +1029,29 @@ export default function Legion3DPage() {
         <p className="mt-1 text-xs text-[var(--fg-muted)]">
           {loading ? '正在读取编制…' : `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`}
         </p>
+        <div className="pointer-events-auto mt-2 flex items-center gap-2">
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="搜索成员 / 部门 / Agent"
+            aria-label="搜索军团成员"
+            data-testid="legion-3d-search"
+            className="w-44 rounded-md bg-[var(--bg-secondary)]/85 px-2.5 py-1 text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] sm:w-56"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="清空搜索"
+              className="rounded-md px-1.5 py-0.5 text-[11px] text-[var(--fg-dim)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {noMatch && (
+          <p className="mt-1 text-[11px] text-[var(--fg-dim)]">没有匹配的成员或部门</p>
+        )}
         {focus && (
           <button
             type="button"
@@ -1015,8 +1069,7 @@ export default function Legion3DPage() {
         )}
       </div>
 
-      {/* 右上操作区 */}
-      <div className="absolute right-3 top-16 flex flex-wrap items-center justify-end gap-1.5 sm:top-3">
+      <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5">
         <button
           type="button"
           onClick={() => setSpin(v => !v)}
@@ -1048,6 +1101,7 @@ export default function Legion3DPage() {
         >
           2D 视图
         </Link>
+      </div>
       </div>
 
       {exportError && (

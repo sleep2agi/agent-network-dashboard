@@ -55,6 +55,12 @@ describe('军团 3D 页面契约', () => {
     expect(page).toContain('onKeyDown');
   });
 
+  test('搜索与聚焦共用一套高亮集合（matchedSet 优先于 related/focus）', () => {
+    expect(page).toContain('data-testid="legion-3d-search"');
+    expect(page).toContain('const matchedSet');
+    expect(page).toMatch(/const activeSet = matchedSet \?\? related \?\? focusSet;/);
+  });
+
   test('三态互斥：空 / 登录过期 / 读取失败 各有独立分支', () => {
     expect(page).toContain("fatal === 'login'");
     expect(page).toContain("fatal === 'error'");
