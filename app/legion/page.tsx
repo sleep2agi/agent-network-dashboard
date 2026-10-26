@@ -19,6 +19,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, toPixel, type LegionNode } from '../lib/legion-layout';
+import { LEGION_LABEL_PEOPLE } from '../lib/legion-view-constants';
 import { legionFetcher as fetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
 
@@ -323,6 +324,14 @@ export default function LegionPage() {
         for (let i = 0; i < sc.length && i < dc.length; i++) inline(sc[i], dc[i]);
       };
       inline(svg, clone);
+      // 渐变引用在序列化后可能解析不到（导出图里圆心曾整块变黑，浅色主题尤其明显）。
+      // 把 url(#...) 的填充换成实心底色，保证导出图在任何主题下都可读。
+      const coreFill = getComputedStyle(document.documentElement).getPropertyValue('--bg-elevated').trim() || '#1f1f24';
+      clone.querySelectorAll('[fill*="url("]').forEach(el => {
+        el.setAttribute('fill', coreFill);
+        // inline() 把 fill 写进了 style，属性会被 style 压过 —— 两边都要改。
+        (el as SVGElement).style.fill = coreFill;
+      });
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       clone.setAttribute('width', String(w));
       clone.setAttribute('height', String(h));
@@ -379,8 +388,13 @@ export default function LegionPage() {
       ctx.font = `${px(11)}px ${font}`;
       ctx.fillText(`导出 ${new Date().toLocaleString('zh-CN', { hour12: false })}`, canvas.width - px(16), px(24));
 
-      // 底部图例：颜色含义与页面上一致（绿=运行中、灰=未运行），不另造一套。
-      const legend: Array<[string, string]> = [['#4ade80', '运行中'], ['#6b7280', '空闲 / 离线'], ['#7dd3fc', '聚焦 / 命中']];
+      // 底部图例：颜色读主题 token（之前写死 #4ade80/#7dd3fc，浅色主题导出时
+      // 会和页面上的青绿不一致）。
+      const legend: Array<[string, string]> = [
+        [cssVar('--success', '#4ade80'), '运行中'],
+        [cssVar('--fg-dim', '#6b7280'), '空闲 / 离线'],
+        [cssVar('--accent', '#7dd3fc'), '聚焦 / 命中'],
+      ];
       let lx = px(16);
       const ly = canvas.height - FOOT / 2;
       ctx.textAlign = 'left';
@@ -618,7 +632,7 @@ export default function LegionPage() {
                 >
                   {layout.nodes
                     // 与 3D 一致：成员 ≤60 时把 Agent 也列出来，键盘能直接走到 Agent 详情。
-                    .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= 60)
+                    .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
                     .map(n => (
                       <button
                         key={n.id}
@@ -646,7 +660,7 @@ export default function LegionPage() {
                         <span className="truncate">{n.label}</span>
                       </button>
                     ))}
-                  {layout.stats.people > 60 && (
+                  {layout.stats.people > LEGION_LABEL_PEOPLE && (
                     <p className="px-2 py-1 text-[10px] text-[var(--fg-dim)]">成员超过 60，只列部门与核心；找成员请用搜索或直接点图。</p>
                   )}
                 </div>
@@ -796,12 +810,12 @@ export default function LegionPage() {
                         ) : node.kind === 'person' ? (
                           <>
                             <circle r={r} fill="var(--bg)" stroke={isSelected ? 'var(--hl)' : 'var(--border-hover)'} strokeWidth={isSelected ? 2 : 1} />
-                            {layout.stats.people <= 60 && (
+                            {layout.stats.people <= LEGION_LABEL_PEOPLE && (
                               <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)] font-medium" style={{ fontSize: 9 * labelScale }}>
                                 {(node.label || '?').slice(0, 1).toUpperCase()}
                               </text>
                             )}
-                            {(layout.stats.people <= 60 || view.k >= 1.15 || isSelected || hovered === node.id) && (
+                            {(layout.stats.people <= LEGION_LABEL_PEOPLE || view.k >= 1.15 || isSelected || hovered === node.id) && (
                               <text
                                 textAnchor="middle"
                                 x={-Math.sin(node.angle) * (r + 22 * labelScale)}

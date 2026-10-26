@@ -20,6 +20,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, nearestDept, type LegionNode } from '../../lib/legion-layout';
+import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { EmptyState } from '../../components/EmptyState';
@@ -450,9 +451,9 @@ export default function Legion3DPage() {
 
       // 大网络降级：200 个节点的网络里，逐节点 shadowBlur + 逐边光晕会把
       // 帧率打到个位数。装饰性开销按规模递减，结构和信息一律不减。
-      const heavy = layout.nodes.length > 80;
+      const heavy = layout.nodes.length > LEGION_HEAVY_NODES;
       // 400 级别（100 人 / 300 Agent）再降一档：只留结构和一档动效。
-      const huge = layout.nodes.length > 250;
+      const huge = layout.nodes.length > LEGION_HUGE_NODES;
       // 交互中：大网络先不画标签与数据包，停手后自动恢复（跟手优先）。
       const interacting = huge && now < interactingUntil.current;
       applyResolution(interacting ? RES_LOW : 1);
@@ -1381,7 +1382,7 @@ export default function Legion3DPage() {
         >
           {layout.nodes
             // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
-            .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= 60)
+            .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
             .map(n => (
               <button
                 key={n.id}
@@ -1405,7 +1406,7 @@ export default function Legion3DPage() {
                 <span className="truncate">{n.label}</span>
               </button>
             ))}
-          {layout.stats.people > 60 && (
+          {layout.stats.people > LEGION_LABEL_PEOPLE && (
             <p className="px-2 py-1 text-[10px] text-[var(--fg-dim)]">成员超过 60，列表只列部门与核心（避免上百个 Tab 停点）；找成员请用搜索或点画布。</p>
           )}
         </div>
