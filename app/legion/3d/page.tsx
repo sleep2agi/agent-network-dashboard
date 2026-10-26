@@ -1089,7 +1089,16 @@ export default function Legion3DPage() {
           <input
             ref={searchRef}
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => {
+              const next = e.target.value;
+              setQuery(next);
+              // 搜索和部门聚焦是两种「缩小范围」，同时开会互相打架：
+              // 镜头还对着旧部门，亮的却是搜索结果。开始搜索就退掉聚焦。
+              if (next && focus) {
+                setFocus(null);
+                yawTarget.current = null;
+              }
+            }}
             placeholder="搜索成员 / 部门 / Agent"
             aria-label="搜索军团成员"
             data-testid="legion-3d-search"
@@ -1247,6 +1256,7 @@ export default function Legion3DPage() {
               type="button"
               onClick={() => {
                 const next = focus === selectedNode.id ? null : selectedNode.id;
+                if (next && query) setQuery('');
                 setFocus(next);
                 // 聚焦时把镜头转到该部门所在的扇区（yaw = 节点角度，最短路径）。
                 if (next) {

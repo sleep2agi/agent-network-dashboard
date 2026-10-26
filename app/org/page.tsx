@@ -63,7 +63,7 @@ function GroupSection({ group, depth, counts }: { group: OrgGroup; depth: number
           <Link
             href={`/tasks?department=${encodeURIComponent(group.id.replace(/^dept:/, ''))}`}
             data-testid="org-dept-task-link"
-            title="到任务页按这个部门筛选（通讯录投影口径）"
+            title="到任务页按这个部门筛选：数字是当前这批任务里的通讯录投影命中数，不是部门全量"
             className="rounded-full bg-[var(--accent)]/12 px-1.5 py-0.5 text-[10px] text-[var(--accent)] hover:bg-[var(--accent)]/25"
           >
             {taskCount} 条任务 →
