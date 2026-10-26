@@ -718,7 +718,7 @@ export default function LegionPage() {
                     const dim = activeSet ? !activeSet.has(node.id) : false;
                     const isSelected = selected === node.id;
                     const statusValue = node.kind === 'agent' ? statusByAlias.get(node.label) : undefined;
-                    const r = (node.kind === 'core' ? 42 : node.kind === 'group' ? 22 : node.kind === 'person' ? 13 : 6) * nodeScale;
+                    const r = (node.kind === 'core' ? 48 : node.kind === 'group' ? 26 : node.kind === 'person' ? 16 : 7) * nodeScale;
                     const labelScale = Math.max(nodeScale, 0.85);
                     return (
                       <g
@@ -796,25 +796,29 @@ export default function LegionPage() {
                         ) : node.kind === 'person' ? (
                           <>
                             <circle r={r} fill="var(--bg)" stroke={isSelected ? 'var(--hl)' : 'var(--border-hover)'} strokeWidth={isSelected ? 2 : 1} />
-                            <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)] font-medium" style={{ fontSize: 9 * labelScale }}>
-                              {(node.label || '?').slice(0, 1).toUpperCase()}
-                            </text>
-                            <text
-                              textAnchor="middle"
-                              x={-Math.sin(node.angle) * (r + 22 * labelScale)}
-                              y={Math.cos(node.angle) * (r + 22 * labelScale) + 3}
-                              className="fill-[var(--fg)] [paint-order:stroke] [stroke:var(--bg-secondary)] [stroke-width:3px]"
-                              style={{ fontSize: 10 * labelScale }}
-                            >
-                              {node.label.length > 8 ? `${node.label.slice(0, 8)}…` : node.label}
-                            </text>
+                            {layout.stats.people <= 60 && (
+                              <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)] font-medium" style={{ fontSize: 9 * labelScale }}>
+                                {(node.label || '?').slice(0, 1).toUpperCase()}
+                              </text>
+                            )}
+                            {(layout.stats.people <= 60 || view.k >= 1.15 || isSelected || hovered === node.id) && (
+                              <text
+                                textAnchor="middle"
+                                x={-Math.sin(node.angle) * (r + 22 * labelScale)}
+                                y={Math.cos(node.angle) * (r + 22 * labelScale) + 3}
+                                className="fill-[var(--fg)] [paint-order:stroke] [stroke:var(--bg-secondary)] [stroke-width:3px]"
+                                style={{ fontSize: 10 * labelScale }}
+                              >
+                                {node.label.length > 8 ? `${node.label.slice(0, 8)}…` : node.label}
+                              </text>
+                            )}
 
                           </>
                         ) : (
                           <>
                             <circle r={r + 3} fill="none" stroke="var(--bg-secondary)" strokeWidth={2} />
                             <circle r={r} fill={statusTone(statusValue)} stroke={isSelected ? 'var(--hl)' : 'none'} strokeWidth={isSelected ? 2 : 0} />
-                            {(view.k >= 1.15 || isSelected) && (
+                            {(view.k >= 1.4 || isSelected) && (
                               <text
                                 textAnchor="middle"
                                 y={r + 14 * labelScale}
