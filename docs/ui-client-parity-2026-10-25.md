@@ -166,3 +166,23 @@ Sidebar 的 `statusFetcher` 在非 2xx 时返回 `{ sessions: [] }`；SWR 按 ke
 
 验证：1280 的 list/grid 与 375 的 list 三档，卡片 `border-width` 实测 `0px`、底色
 `rgb(22,22,24)`，两个节点分别渲染 idle / working 圆点+文字，横向溢出 0px。
+
+## 九、节点详情与聊天面板（2026-10-26，`e4c265a`）
+
+| 位置 | 改法 | 说明 |
+| --- | --- | --- |
+| `/node` 六个卡片壳 | 硬编码 `#161618` + `#26262b` 描边 → `bg-[var(--bg-secondary)]` 无描边 | 顺带把 `--code-bg` / `--col-line` / `--col-inset` 等 token 接上 |
+| Terminal `<pre>`、外部计划行、时间线圆点环 | 同上，去同色描边 | 行内保留更浅一档底色做分层 |
+| 聊天气泡（收/发） | 去掉 `border-*` 与 `shadow-sm` | 只留 8% 色调底 + `rounded-bl/br-md` 非对称圆角区分方向 |
+| 「正在输入」提示 | 去描边 | 与气泡同一语言 |
+
+`tab` 栏的 `border-b`、输入框描边、告警条保留 —— 这些是结构分隔与输入可辨性，
+不属于「装饰性描边」。
+
+`color-ratchet` 基线同步从 **376 收紧到 354**（本轮 hex→token 净减少 22 处）。
+不收紧的话，以后新增 22 处硬编码颜色也拦不住。
+
+验证：1280/375 聊天页气泡 `border-width=0px`、`box-shadow=none`、圆角
+`16px 16px 6px`；`/node` 的 Node Info / Send Task 卡片 `border=0px`、
+底色 `rgb(22,22,24)`；两宽度横向溢出均 0px。
+
