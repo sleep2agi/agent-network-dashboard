@@ -58,6 +58,7 @@ function readTokens() {
     muted: v('--fg-muted', '#9ca3af'),
     dim: v('--fg-dim', '#6b7280'),
     border: v('--border', '#26262b'),
+    surface: v('--bg-secondary', '#161618'),
     accent: v('--accent', '#8b5cf6'),
     success: v('--success', '#10b981'),
     warning: v('--warning', '#f59e0b'),
@@ -114,9 +115,10 @@ function nodeColor(node: LegionNode, tk: Tokens, statusByAlias: Map<string, stri
   if (node.kind === 'core') return tk.accent;
   if (node.kind === 'group') return tk.info;
   if (node.kind === 'agent') return statusColor(statusByAlias.get(node.label), tk);
-  // 成员：有任意 Agent 在跑就跟着亮，否则用主文字色。
+  // 成员：有任意 Agent 在跑就跟着亮；否则用次级文字色。
+  // 不能用 --fg —— 白芯 + 白描边等于没有描边。
   const working = node.agentCount > 0 && statusByAlias.get(node.label) === 'working';
-  return working ? tk.success : tk.fg;
+  return working ? tk.success : tk.muted;
 }
 
 /** 确定性星空（同一块画布每次刷新星位一致，不会「闪」成噪点）。 */
@@ -435,104 +437,146 @@ export default function Legion3DPage() {
         ctx.fillRect(0, 0, size.width, size.height);
       }
 
-      // 连线：三层画法（神明参数）——先把所有线铺一层模糊光晕，再压实线，
-      // 最后才是流动光点。只有实线时深底上会「断」，加光晕才有发光感。
-      if (dark) {
-      ctx.save();
-      ctx.shadowColor = tk.accent;
-      ctx.shadowBlur = 9;
-      for (const edge of layout.edges) {
+      // 连线（神明 cover14.mjs 的三层画法，改成 3D 屏幕空间里的二次曲线）：
+      //   宽光晕 18px@.7 blur7 → 实线 5px@.95 → 白色 dash 2/22 流光。
+      //   曲线控制点取法向偏移，双向交替，避免所有线朝同一边鼓成一把弓。
+      const curveOf = (ax: number, ay: number, bx: number, by: number, i: number) => {
+        const dx = bx - ax;
+        const dy = by - ay;
+        const d = Math.hypot(dx, dy) || 1;
+        const off = Math.min(56, d * 0.16) * (i % 2 ? -1 : 1);
+        return { cx: (ax + bx) / 2 - (dy / d) * off, cy: (ay + by) / 2 + (dx / d) * off };
+      };
+      const quadAt = (ax: number, ay: number, cx: number, cy: number, bx: number, by: number, t: number) => {
+        const u = 1 - t;
+        return [u * u * ax + 2 * u * t * cx + t * t * bx, u * u * ay + 2 * u * t * cy + t * t * by];
+      };
+      type EdgeDraw = { a: SceneNode<LegionNode>; b: SceneNode<LegionNode>; cx: number; cy: number; lit: boolean };
+      const edgeDraws: EdgeDraw[] = [];
+      layout.edges.forEach((edge, i) => {
         const a = byId.get(edge.from);
         const b = byId.get(edge.to);
-        if (!a || !b) continue;
+        if (!a || !b) return;
         const lit = !activeSet || (activeSet.has(edge.from) && activeSet.has(edge.to));
-        if (!lit) continue;
-        ctx.beginPath();
-        ctx.moveTo(a.projected.x, a.projected.y);
-        ctx.lineTo(b.projected.x, b.projected.y);
-        ctx.strokeStyle = tk.accent;
-        ctx.globalAlpha = activeSet ? 0.16 : 0.1;
-        ctx.lineWidth = 4;
-        ctx.stroke();
-      }
-      ctx.restore();
-      ctx.globalAlpha = 1;
-      }
+        const { cx, cy } = curveOf(a.projected.x, a.projected.y, b.projected.x, b.projected.y, i);
+        edgeDraws.push({ a, b, cx, cy, lit });
+      });
 
-      for (const edge of layout.edges) {
-        const a = byId.get(edge.from);
-        const b = byId.get(edge.to);
-        if (!a || !b) continue;
-        const lit = !activeSet || (activeSet.has(edge.from) && activeSet.has(edge.to));
+      if (dark) {
+        ctx.save();
+        if ('filter' in ctx) ctx.filter = 'blur(3px)';
+        ctx.strokeStyle = tk.accent;
+        ctx.lineWidth = 9;
+        ctx.globalAlpha = 0.34;
+        for (const e of edgeDraws) {
+          if (!e.lit) continue;
+          ctx.beginPath();
+          ctx.moveTo(e.a.projected.x, e.a.projected.y);
+          ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.filter = 'none';
+      }
+      for (const e of edgeDraws) {
         ctx.beginPath();
-        ctx.moveTo(a.projected.x, a.projected.y);
-        ctx.lineTo(b.projected.x, b.projected.y);
-        ctx.strokeStyle = lit && activeSet ? tk.accent : tk.border;
-        ctx.globalAlpha = lit ? (activeSet ? 0.8 : 0.42) : 0.1;
-        ctx.lineWidth = lit && activeSet ? 1.3 : 1;
+        ctx.moveTo(e.a.projected.x, e.a.projected.y);
+        ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
+        ctx.strokeStyle = e.lit && activeSet ? tk.accent : tk.border;
+        ctx.globalAlpha = e.lit ? (activeSet ? 0.85 : (dark ? 0.5 : 0.6)) : 0.1;
+        ctx.lineWidth = e.lit && activeSet ? 2 : 1.2;
         ctx.stroke();
       }
-      // 部门内部短弧线：同一部门里相邻成员之间连一条向内弯的细弧。
-      // 部门间是径向直线，这里再补一层横向的「编织」，层次才不塌成一把扇骨。
+      // 白色短划流光（dasharray 2 22），沿线跑。
+      ctx.save();
+      ctx.setLineDash([2, 22]);
+      ctx.strokeStyle = tk.fg;
+      ctx.lineWidth = 1.3;
+      ctx.globalAlpha = dark ? 0.75 : 0.55;
+      edgeDraws.forEach((e, i) => {
+        if (!e.lit) return;
+        ctx.lineDashOffset = -((now / 55) % 24) - i * 6;
+        ctx.beginPath();
+        ctx.moveTo(e.a.projected.x, e.a.projected.y);
+        ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
+        ctx.stroke();
+      });
+      ctx.restore();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+
+      // 双向数据包：亮头（白芯 + 彩色描边）+ 6 段渐隐尾巴，两个方向各一个。
+      edgeDraws.forEach((e, i) => {
+        if (!e.lit) return;
+        const speed = 5200;
+        const base = ((now / speed) + i * 0.11) % 1;
+        for (const dir of [1, -1]) {
+          const t = dir === 1 ? 0.12 + base * 0.76 : 0.88 - base * 0.76;
+          for (let k = 6; k >= 1; k--) {
+            const tt = Math.min(1, Math.max(0, t - dir * 0.022 * k));
+            const [tx, ty] = quadAt(e.a.projected.x, e.a.projected.y, e.cx, e.cy, e.b.projected.x, e.b.projected.y, tt);
+            ctx.globalAlpha = Math.max(0, 0.42 - k * 0.06);
+            ctx.fillStyle = tk.accent;
+            ctx.beginPath();
+            ctx.arc(tx, ty, Math.max(0.8, 3.2 - k * 0.35), 0, Math.PI * 2);
+            ctx.fill();
+          }
+          const [hx, hy] = quadAt(e.a.projected.x, e.a.projected.y, e.cx, e.cy, e.b.projected.x, e.b.projected.y, t);
+          ctx.globalAlpha = 0.9;
+          ctx.fillStyle = tk.fg;
+          ctx.beginPath();
+          ctx.arc(hx, hy, 3.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = tk.accent;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      });
+      ctx.globalAlpha = 1;
+
+      // 部门内部短弧线（神明 phalanx18 的 pr 弧）：同部门相邻成员之间一条
+      // 朝圆心收的二次曲线 —— 细彩线打底 + 白色短划，比部门间连线细一档。
       {
         const kids = new Map<string, LegionNode[]>();
         for (const edge of layout.edges) {
           const to = byId.get(edge.to);
-          const from = byId.get(edge.from);
-          if (!to || !from || to.item.kind !== 'person') continue;
+          if (!to || to.item.kind !== 'person') continue;
           const arr = kids.get(edge.from) ?? [];
           arr.push(to.item);
           kids.set(edge.from, arr);
         }
-        ctx.strokeStyle = tk.fg;
-        ctx.lineWidth = 0.7;
         for (const [groupId, members] of kids) {
           if (members.length < 2) continue;
-          const gNode = byId.get(groupId);
-          if (!gNode) continue;
           for (let i = 0; i < members.length - 1; i++) {
             const a = byId.get(members[i].id);
             const b = byId.get(members[i + 1].id);
             if (!a || !b) continue;
             const lit = !activeSet || (activeSet.has(groupId) && activeSet.has(a.item.id) && activeSet.has(b.item.id));
             if (!lit) continue;
-            // 控制点往圆心收 12%，画出来是一段朝内的弧，不是直线。
             const mx = (a.projected.x + b.projected.x) / 2;
             const my = (a.projected.y + b.projected.y) / 2;
             const cx = mx + (size.width / 2 - mx) * 0.12;
             const cy = my + (size.height / 2 - my) * 0.12;
-            ctx.globalAlpha = activeSet ? 0.34 : 0.14;
+            ctx.globalAlpha = activeSet ? 0.34 : 0.18;
+            ctx.strokeStyle = tk.accent;
+            ctx.lineWidth = 0.9;
             ctx.beginPath();
             ctx.moveTo(a.projected.x, a.projected.y);
             ctx.quadraticCurveTo(cx, cy, b.projected.x, b.projected.y);
             ctx.stroke();
+            ctx.globalAlpha = activeSet ? 0.45 : 0.22;
+            ctx.strokeStyle = tk.fg;
+            ctx.lineWidth = 1.1;
+            ctx.setLineDash([1.5, 11]);
+            ctx.beginPath();
+            ctx.moveTo(a.projected.x, a.projected.y);
+            ctx.quadraticCurveTo(cx, cy, b.projected.x, b.projected.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
           }
         }
         ctx.globalAlpha = 1;
       }
-
-      // 数据包流光：白色短划沿线跑（神明给的 dasharray 2 22）。
-      // 用 lineDashOffset 让「点」流动，比每帧算一个点的位置更省也更均匀。
-      ctx.save();
-      ctx.setLineDash([2, 22]);
-      ctx.strokeStyle = tk.fg;
-      ctx.lineWidth = 1.4;
-      ctx.globalAlpha = 0.5;
-      for (let i = 0; i < layout.edges.length; i++) {
-        const edge = layout.edges[i];
-        const a = byId.get(edge.from);
-        const b = byId.get(edge.to);
-        if (!a || !b) continue;
-        if (activeSet && !(activeSet.has(edge.from) && activeSet.has(edge.to))) continue;
-        ctx.lineDashOffset = -((now / 55) % 24) - i * 6;
-        ctx.beginPath();
-        ctx.moveTo(a.projected.x, a.projected.y);
-        ctx.lineTo(b.projected.x, b.projected.y);
-        ctx.stroke();
-      }
-      ctx.restore();
-      ctx.setLineDash([]);
-      ctx.globalAlpha = 1;
 
       // 节点：远→近（projectScene 已排序），近的盖住远的。
       for (const sn of nodes) {
@@ -550,23 +594,38 @@ export default function Legion3DPage() {
         const radiusPx = r * pulse;
 
         ctx.globalAlpha = alpha;
+        const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
         if (dark) {
+          // 深底（神明 cover14 的节点画法）：彩色外晕 → 白芯 → 彩色描边。
+          // 只画实心色块时深底上是一团糊光；白芯给每个节点一个硬边。
           ctx.save();
           ctx.shadowColor = color;
-          ctx.shadowBlur = node.kind === 'core' ? 18 : Math.min(10, Math.max(6, r * 0.9));
-          ctx.fillStyle = color;
+          ctx.shadowBlur = Math.min(18, Math.max(6, radiusPx * 1.6));
+          ctx.fillStyle = hexToRgba(color, 0.5);
           ctx.beginPath();
-          ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, radiusPx * 1.4, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
-        } else {
-          // 浅底：辉光=脏灰。改成半透明实心 + 同色描边，靠轮廓读层级。
-          ctx.fillStyle = hexToRgba(color, 0.28);
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 1.4;
+          ctx.fillStyle = tk.fg;
           ctx.beginPath();
           ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
           ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = ring;
+          ctx.stroke();
+        } else {
+          // 浅底（神明 phalanx18 的参数）：7px 彩色 .18 外圈 + 白芯 + 3.5px 描边。
+          // 浅底不要辉光，靠描边定轮廓。
+          ctx.fillStyle = hexToRgba(color, 0.18);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radiusPx + 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = tk.surface;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = Math.max(1.6, Math.min(3.5, radiusPx * 0.5));
           ctx.stroke();
         }
 
