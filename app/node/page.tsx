@@ -88,7 +88,7 @@ function TmuxViewer({ tmuxName }: { tmuxName: string }) {
         <h2 className="text-sm font-semibold text-gray-300">Terminal ({tmuxName})</h2>
         <div className="flex gap-2">
           <button onClick={fetchTmux} disabled={loading}
-            className="text-xs text-cyan-400 hover:text-cyan-300 disabled:text-gray-600">
+            className="text-xs text-[var(--accent-text)] hover:opacity-80 disabled:text-[var(--fg-dim)]">
             {loading ? 'Loading...' : 'Capture'}
           </button>
           {output && (
@@ -190,7 +190,7 @@ function ExternalSchedulesCard({ snapshot, nodeId, onQueued }: {
                     type="button"
                     disabled={stale}
                     onClick={() => openEdit(schedule)}
-                    className="rounded border border-cyan-900/70 px-2 py-0.5 text-[10px] text-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded border border-[var(--accent)]/40 px-2 py-0.5 text-[10px] text-[var(--accent-text)] disabled:cursor-not-allowed disabled:opacity-40"
                     title={stale ? 'Wait for a fresh node report before editing' : 'Edit timing and enabled state'}
                   >Edit</button>
                 )}
@@ -365,7 +365,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id ? 'border-cyan-400 text-cyan-300' : 'border-transparent text-gray-500 hover:text-gray-300'
+              tab === t.id ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-transparent text-[var(--fg-muted)] hover:text-[var(--fg)]'
             }`}>
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d={t.icon} />
@@ -527,7 +527,7 @@ function EventsTimeline({ events, loading }: { events: Array<{ id: number; event
                   {/* Content */}
                   <div className="ml-2">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-medium ${e.to_status === 'failed' ? 'text-red-400' : e.to_status === 'replied' ? 'text-purple-400' : 'text-gray-300'}`}>
+                      <span className={`text-xs font-medium ${e.to_status === 'failed' ? 'text-[var(--danger)]' : e.to_status === 'replied' ? 'text-[var(--accent-text)]' : 'text-[var(--fg)]'}`}>
                         {e.event_type}
                       </span>
                       {e.from_status && (

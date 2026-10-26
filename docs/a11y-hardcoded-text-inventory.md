@@ -18,7 +18,7 @@ npm run gates                                  # 含 accent-text-ratchet
 node scripts/check-accent-text-ratchet.mjs --update   # 改少了以后收紧基线
 ```
 
-## 当前基线（138 处 / 30 个文件）
+## 当前基线（126 处 / 27 个文件，2026-10-27 第一批迁移后）
 
 | 文件 | 数量 |
 | --- | --- |
@@ -30,13 +30,12 @@ node scripts/check-accent-text-ratchet.mjs --update   # 改少了以后收紧基
 | `app/components/AttachmentBlock.tsx` | 6 |
 | `app/components/EmptyState.tsx` | 6 |
 | `app/nodes/NodesView.tsx` | 5 |
-| `app/node/page.tsx` | 5 |
-| `app/messages/page.tsx` | 4 |
 | `app/admin/page.tsx` | 4 |
 | `app/components/AgentCard.tsx` | 3 |
 | `app/components/CreateNodeWizard.tsx` | 3 |
-| `app/page.tsx` | 3 |
-| 其余 16 个文件 | 各 1–2 |
+| 其余 13 个文件 | 各 1–2 |
+
+已迁移完：`/messages`、`/node`、`/`（12 处），基线从 138 → 126。
 
 ## 迁移指引
 

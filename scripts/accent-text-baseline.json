@@ -1,5 +1,5 @@
 {
-  "total": 138,
+  "total": 126,
   "files": {
     "app/admin/page.tsx": 4,
     "app/components/AgentCard.tsx": 3,
@@ -24,10 +24,7 @@
     "app/components/TopoGraph.tsx": 22,
     "app/login/page.tsx": 7,
     "app/logs/page.tsx": 4,
-    "app/messages/page.tsx": 4,
-    "app/node/page.tsx": 5,
     "app/nodes/NodesView.tsx": 5,
-    "app/page.tsx": 3,
     "app/server-logs/page.tsx": 4,
     "app/settings/networks/page.tsx": 2,
     "app/settings/tokens/page.tsx": 1

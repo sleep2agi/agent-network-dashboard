@@ -157,7 +157,7 @@ export default function Dashboard() {
             <span className="text-gray-600"> &middot; </span>
             <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} failed</span>
           </div>
-          <Link href="/tasks" prefetch={false} className="text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
+          <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:opacity-80">View all &rarr;</Link>
         </section>
       )}
 
@@ -256,7 +256,7 @@ export default function Dashboard() {
                   disabled={counts[c.key] === 0 && c.key !== 'all'}
                   className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                     agentFilter === c.key
-                      ? 'bg-cyan-500/15 text-cyan-300'
+                      ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]'
                       : 'text-gray-500 hover:text-gray-200 hover:bg-[var(--hover-tint)]'
                   }`}
                 >

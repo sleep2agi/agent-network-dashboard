@@ -30,8 +30,8 @@ interface MessageItem {
 const TYPE_COLORS: Record<string, string> = {
   task: 'bg-green-500/10 text-green-300 border-green-500/20',
   message: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-  broadcast: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
-  reply: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+  broadcast: 'bg-[var(--accent)]/10 text-[var(--accent-text)] border-[var(--accent)]/25',
+  reply: 'bg-[var(--info)]/10 text-[var(--info)] border-[var(--info)]/25',
 };
 
 function normalizeDate(value?: string) {
@@ -214,7 +214,7 @@ export default function MessagesPage() {
         <div className="flex rounded-lg border border-[#26262b] bg-[#161618] p-0.5">
           {(['timeline', 'grouped'] as const).map(mode => (
             <button key={mode} type="button" onClick={() => setViewMode(mode)}
-              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${viewMode === mode ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-500 hover:text-gray-200'}`}>
+              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${viewMode === mode ? 'bg-[var(--accent)]/10 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:text-[var(--fg)]'}`}>
               {mode === 'timeline' ? 'Timeline' : 'Grouped'}
             </button>
           ))}
@@ -242,7 +242,7 @@ export default function MessagesPage() {
               onClick={() => setSearch(`from:${alias}`)}
               className={`shrink-0 rounded-full border px-3 py-1 text-xs transition-colors ${
                 search === `from:${alias}`
-                  ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
+                  ? 'border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent-text)]'
                   : 'border-[#26262b] bg-[#161618] text-gray-400 hover:text-gray-200'
               }`}
             >
