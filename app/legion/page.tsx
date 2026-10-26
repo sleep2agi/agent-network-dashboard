@@ -88,6 +88,7 @@ export default function LegionPage() {
   const [listOpen, setListOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const [exportError, setExportError] = useState('');
   const [needsLogin, setNeedsLogin] = useState(false);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
@@ -234,7 +235,9 @@ export default function LegionPage() {
         return;
       }
       // 回车打开选中节点（Agent→节点页，成员/部门→/org）；和 3D 页一致。
-      if (e.key === 'Enter' && selected) {
+      // 焦点在节点列表里时不做（回车 = 选中），避免一按就跳走。
+      const inList = !!(document.activeElement && document.activeElement.closest('[role="listbox"]'));
+      if (e.key === 'Enter' && selected && !inList) {
         const node = layout.nodes.find(n => n.id === selected);
         if (node && (node.kind === 'agent' || node.kind === 'person' || node.kind === 'group')) {
           e.preventDefault();
@@ -502,7 +505,12 @@ export default function LegionPage() {
             </button>
             <button
               type="button"
-              onClick={() => setListOpen(v => !v)}
+              onClick={() => setListOpen(v => {
+                const next = !v;
+                // 打开时把焦点送进列表第一个选项：否则按 Tab 会先走完头部按钮。
+                if (next) requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>('[role="option"]')?.focus());
+                return next;
+              })}
               aria-expanded={listOpen}
               aria-controls="legion-node-list"
               data-testid="legion-list-toggle"
@@ -592,9 +600,18 @@ export default function LegionPage() {
             >
               {listOpen && (
                 <div
+                  ref={listRef}
                   id="legion-node-list"
                   role="listbox"
                   aria-label="军团节点（Tab 浏览，回车选中）"
+          onKeyDown={(e) => {
+            // 列表内方向键移动焦点（标准 listbox 行为），避免几十次 Tab。
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+            const items = [...(e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('[role="option"]')];
+            const i = items.indexOf(document.activeElement as HTMLElement);
+            const next = items[Math.min(items.length - 1, Math.max(0, i + (e.key === 'ArrowDown' ? 1 : -1)))];
+            if (next) { e.preventDefault(); next.focus(); }
+          }}
                   data-testid="legion-node-list"
                   className="absolute left-3 top-3 z-10 max-h-[70%] w-60 overflow-y-auto rounded-xl bg-[var(--bg)]/95 p-1.5 text-xs shadow-lg backdrop-blur"
                 >

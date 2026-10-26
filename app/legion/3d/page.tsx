@@ -174,6 +174,7 @@ export default function Legion3DPage() {
   const [zoomPct, setZoomPct] = useState(Math.round(DEFAULT_VIEW.zoom * 100));
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const [spin, setSpin] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -1022,6 +1023,9 @@ export default function Legion3DPage() {
       case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); setZoomPct(Math.round(v.zoom * 100)); break;
       case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); setZoomPct(Math.round(v.zoom * 100)); break;
       case 'Enter': {
+        // 焦点还在节点列表里时，回车只负责「选中」（按钮自身行为），
+        // 不要在列表里按一下就跳走。
+        if (document.activeElement?.closest('[role="listbox"]')) break;
         // 选中节点后回车 = 打开它的详情页（Agent→节点页，成员/部门→/org）。
         // 省掉「Tab 到详情卡里的链接再回车」这一步。
         const sel = selectedRef.current;
@@ -1291,7 +1295,11 @@ export default function Legion3DPage() {
         </button>
         <button
           type="button"
-          onClick={() => setListOpen(v => !v)}
+          onClick={() => setListOpen(v => {
+            const next = !v;
+            if (next) requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>('[role="option"]')?.focus());
+            return next;
+          })}
           aria-expanded={listOpen}
           aria-controls="legion-3d-node-list"
           data-testid="legion-3d-list-toggle"
@@ -1353,9 +1361,18 @@ export default function Legion3DPage() {
       {/* 键盘/读屏的节点列表：canvas 不可 Tab，靠这张列表选节点 */}
       {listOpen && (
         <div
+          ref={listRef}
           id="legion-3d-node-list"
           role="listbox"
           aria-label="军团节点（方向键/Tab 浏览，回车选中）"
+          onKeyDown={(e) => {
+            // 列表内方向键移动焦点（标准 listbox 行为），避免几十次 Tab。
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+            const items = [...(e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('[role="option"]')];
+            const i = items.indexOf(document.activeElement as HTMLElement);
+            const next = items[Math.min(items.length - 1, Math.max(0, i + (e.key === 'ArrowDown' ? 1 : -1)))];
+            if (next) { e.preventDefault(); next.focus(); }
+          }}
           data-testid="legion-3d-node-list"
           className={`absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28 sm:block ${selectedNode ? 'hidden' : 'block'}`}
         >
