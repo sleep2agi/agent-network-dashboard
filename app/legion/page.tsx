@@ -614,7 +614,7 @@ export default function LegionPage() {
             if (next) { e.preventDefault(); next.focus(); }
           }}
                   data-testid="legion-node-list"
-                  className="absolute left-3 top-3 z-10 max-h-[70%] w-60 overflow-y-auto rounded-xl bg-[var(--bg)]/95 p-1.5 text-xs shadow-lg backdrop-blur"
+                  className="absolute left-3 top-3 z-10 max-h-[70%] w-56 overflow-y-auto rounded-xl bg-[var(--bg)]/95 p-1.5 text-xs shadow-lg backdrop-blur sm:w-60"
                 >
                   {layout.nodes
                     // 与 3D 一致：成员 ≤60 时把 Agent 也列出来，键盘能直接走到 Agent 详情。
