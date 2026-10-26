@@ -60,6 +60,18 @@ canvas && canvas.w > 300 && canvas.bright > 50
   ? pass('3D 画布已渲染', canvas)
   : fail('3D 画布已渲染', canvas);
 
+// 自动取景：默认视角要把整张图收进画面（以前 zoom 固定 1.12，只占画布 40%）。
+// 小网络（stub 3 人）取景后应显著放大；R 重置视角后仍保持取景。
+const zoomOf = async () =>
+  Number(await page.getByTestId('legion-3d-stage').getAttribute('data-zoom').catch(() => '0') || 0);
+const zoomFitted = await zoomOf();
+await page.keyboard.press('r');
+await page.waitForTimeout(600);
+const zoomReset = await zoomOf();
+zoomFitted >= 120 && zoomReset >= 120
+  ? pass('3D 自动取景（首屏/重置后）', { zoomFitted, zoomReset })
+  : fail('3D 自动取景（首屏/重置后）', { zoomFitted, zoomReset });
+
 // 搜索：先命中，再无结果 + 清空
 const search = page.getByTestId('legion-3d-search');
 await search.fill('平台');

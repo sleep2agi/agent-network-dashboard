@@ -194,6 +194,8 @@ export default function Legion3DPage() {
   const yawTarget = useRef<number | null>(null);
   // 交互中（拖动/缩放）先降特效，停手 180ms 后恢复 —— 大网络里保证跟手。
   const interactingUntil = useRef(0);
+  // 首屏 / 重置视角后自动取景（见渲染循环里的 fitPending 分支）。
+  const fitPending = useRef(true);
   const dragRef = useRef<{ x: number; y: number; yaw: number; pitch: number; moved: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ span: number; dist: number } | null>(null);
@@ -227,6 +229,11 @@ export default function Legion3DPage() {
     }),
     [peopleList, orphans, hierarchy.data],
   );
+
+  // 只在「结构变了」（人数/部门数/节点数）时重新取景；30s 轮询刷新同一批人
+  // 不能把用户拖好的视角弹回去。
+  const layoutSig = `${layout.nodes.length}:${layout.rings.length}:${layout.stats.people}`;
+  useEffect(() => { fitPending.current = true; }, [layoutSig]);
 
   const statusByAlias = useMemo(() => {
     const map = new Map<string, string>();
@@ -474,6 +481,33 @@ export default function Legion3DPage() {
       const toPoint = (n: LegionNode) => nodeToVec3({ ...n });
       const nodes = projectScene(layout.nodes, toPoint, cam, size);
       screenRef.current = nodes;
+
+      // 自动取景：默认 zoom=1.12 时整张图只占画布 40% 左右，剩下大半是空的。
+      // 首屏和「重置视角」后按内容包围盒算一次缩放 + 平移，把军团收进画面
+      // 78%，重心放到画布中心。只在结构变化时做，不跟用户的拖动/缩放抢。
+      if (fitPending.current && nodes.length > 0) {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const n of nodes) {
+          if (n.projected.x < minX) minX = n.projected.x;
+          if (n.projected.x > maxX) maxX = n.projected.x;
+          if (n.projected.y < minY) minY = n.projected.y;
+          if (n.projected.y > maxY) maxY = n.projected.y;
+        }
+        const bw = maxX - minX;
+        const bh = maxY - minY;
+        const span = Math.max(bw, bh, 1);
+        const target = Math.min(size.width, size.height) * (narrow ? 0.82 : 0.78);
+        const want = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, view.zoom * (target / span)));
+        const k = want / view.zoom;
+        // 投影 = 画布中心 + pan + zoom·u；pan 也在包围盒里，先减掉再乘 k。
+        const ccx = (minX + maxX) / 2 - size.width / 2 - view.panX;
+        const ccy = (minY + maxY) / 2 - size.height / 2 - view.panY;
+        view.panX = -ccx * k;
+        view.panY = -ccy * k;
+        view.zoom = want;
+        setZoomPct(Math.round(want * 100));
+        fitPending.current = false;
+      }
       const byId = new Map(nodes.map(n => [n.item.id, n]));
       const core = byId.get('core');
       const byIdProbe = () => (core ? { x: core.projected.x, y: core.projected.y } : null);
@@ -887,6 +921,7 @@ export default function Legion3DPage() {
     yawTarget.current = null;
     viewRef.current = { ...DEFAULT_VIEW };
     setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
+    fitPending.current = true;
     lastInteract.current = performance.now();
   }, []);
 
@@ -1177,6 +1212,7 @@ export default function Legion3DPage() {
       className="relative w-full overflow-hidden bg-[var(--bg)] outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
       aria-label="军团 3D 网络拓扑"
       data-testid="legion-3d-stage"
+      data-zoom={zoomPct}
     >
       <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击打开对应页面；按 / 搜索，R 重置视角。</p>
       <canvas
