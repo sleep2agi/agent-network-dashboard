@@ -598,8 +598,10 @@ export default function Legion3DPage() {
 
       // 双向数据包：亮头（白芯 + 彩色描边）+ 6 段渐隐尾巴，两个方向各一个。
       const cometStride = huge ? 12 : heavy ? 6 : 1;
+      // 浅色主题 + 大网络：数据包会变成几百个深绿小点，像噪点。整层关掉。
+      const drawLinkComets = dark || !huge;
       edgeDraws.forEach((e, i) => {
-        if (interacting || !e.lit || i % cometStride !== 0) return;
+        if (!drawLinkComets || interacting || !e.lit || i % cometStride !== 0) return;
         const speed = 5200;
         const base = ((now / speed) + i * 0.11) % 1;
         for (const dir of [1, -1]) {
@@ -833,7 +835,7 @@ export default function Legion3DPage() {
             const pt = projectPoint({ x: Math.sin(a) * ring.radius, y, z: Math.cos(a) * ring.radius }, cam, size);
             if (!pt) continue;
             const t = 1 - seg / 7;
-            ctx.globalAlpha = 0.45 * t * t;
+            ctx.globalAlpha = (dark ? 0.45 : 0.28) * t * t;
             ctx.fillStyle = seg === 0 ? tk.fg : tk.accent;
             ctx.beginPath();
             ctx.arc(pt.x, pt.y, 2.1 * t + 0.5, 0, Math.PI * 2);
