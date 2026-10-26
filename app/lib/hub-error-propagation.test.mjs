@@ -83,3 +83,10 @@ describe('其余代理路由：5xx 不再伪装成空列表', () => {
     expect(src).toMatch(/\{ status: 502 \}/);
   });
 });
+
+describe('移动端空/错状态不能是整屏空白', () => {
+  test('/nodes 在 sessions.length === 0 时也渲染主列（手机没有 manageView 入口）', () => {
+    const src = read('app/nodes/NodesView.tsx');
+    expect(src).toMatch(/sessions\.length === 0\)\)\s*&&\s*\(/);
+  });
+});

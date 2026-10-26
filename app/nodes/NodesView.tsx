@@ -387,8 +387,12 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
       )}
       {/* #Stage C: middle column (header + filters + table/grid) renders
           only when NO node is selected on desktop — see chatOpenDesktop
-          note above. Mobile keeps it always (chat is an overlay there). */}
-      {(isDesktop ? !chatOpenDesktop : (manageView && !chatAlias)) && (
+          note above. Mobile keeps it always (chat is an overlay there).
+          🔴 移动端在 sessions.length === 0 时也必须渲染：此时
+          mobileListLevel 为 false（它要求 sessions>0），如果这里再只认
+          manageView，手机就是一整屏空白——新装看不到「建第一个 Agent」、
+          读失败看不到错误原因，用户只能猜。桌面端本来就走空态分支。 */}
+      {(isDesktop ? !chatOpenDesktop : ((manageView && !chatAlias) || sessions.length === 0)) && (
       <div data-testid="nodes-main-scroll" className="flex-1 min-w-0 max-w-full h-full overflow-y-auto overflow-x-hidden p-4 sm:p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6">
       {/* #Mobile manage mode: way back to the conversation list — the rail
           (which hosts the toggle) is hidden at this level on phones. */}
