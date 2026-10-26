@@ -121,6 +121,30 @@ function nodeColor(node: LegionNode, tk: Tokens, statusByAlias: Map<string, stri
   return working ? tk.success : tk.muted;
 }
 
+/** 光晕精灵缓存：一个颜色一张 128×128 的径向渐变贴图，按需缩放。
+ *  逐帧 shadowBlur 在软件光栅下开销极大（headless 实测 30fps），
+ *  预先画好再 drawImage 是同类效果里最便宜的做法。 */
+const HALO_CACHE = new Map<string, HTMLCanvasElement>();
+function haloFor(color: string): HTMLCanvasElement {
+  const hit = HALO_CACHE.get(color);
+  if (hit) return hit;
+  const S = 128;
+  const cv = document.createElement('canvas');
+  cv.width = S;
+  cv.height = S;
+  const g = cv.getContext('2d');
+  if (g) {
+    const grad = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    grad.addColorStop(0, hexToRgba(color, 0.55));
+    grad.addColorStop(0.45, hexToRgba(color, 0.22));
+    grad.addColorStop(1, hexToRgba(color, 0));
+    g.fillStyle = grad;
+    g.fillRect(0, 0, S, S);
+  }
+  HALO_CACHE.set(color, cv);
+  return cv;
+}
+
 /** 确定性星空（同一块画布每次刷新星位一致，不会「闪」成噪点）。 */
 function makeStars(count: number) {
   let seed = 20261026;
@@ -303,6 +327,36 @@ export default function Legion3DPage() {
     let lastFrame = performance.now();
 
     let frame = 0;
+    let bgLayer: HTMLCanvasElement | null = null;
+    let bgKey = '';
+    const buildBackdrop = () => {
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(size.width * dpr);
+      cv.height = Math.round(size.height * dpr);
+      const g2 = cv.getContext('2d');
+      if (!g2) return null;
+      g2.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g2.fillStyle = tk.bg;
+      g2.fillRect(0, 0, size.width, size.height);
+      const grad = g2.createRadialGradient(
+        size.width / 2, size.height * 0.5, 0,
+        size.width / 2, size.height * 0.5, Math.max(size.width, size.height) * 0.7,
+      );
+      grad.addColorStop(0, hexToRgba(tk.accent, dark ? 0.11 : 0.06));
+      grad.addColorStop(0.55, hexToRgba(tk.accent, dark ? 0.035 : 0.02));
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      g2.fillStyle = grad;
+      g2.fillRect(0, 0, size.width, size.height);
+      g2.fillStyle = tk.fg;
+      for (const st of starsRef.current) {
+        g2.globalAlpha = st.a;
+        g2.beginPath();
+        g2.arc(st.x * size.width, st.y * size.height, st.r, 0, Math.PI * 2);
+        g2.fill();
+      }
+      g2.globalAlpha = 1;
+      return cv;
+    };
     const draw = (now: number) => {
       if (stopped) return;
       // 每 30 帧重读一次 token 就够跟手（主题切换不是逐帧事件）。
@@ -326,62 +380,22 @@ export default function Legion3DPage() {
         focal: Math.min(size.width, size.height) * (narrow ? 2.4 : 1.73) * view.zoom,
       };
 
+      // 大网络降级：200 个节点的网络里，逐节点 shadowBlur + 逐边光晕会把
+      // 帧率打到个位数。装饰性开销按规模递减，结构和信息一律不减。
+      const heavy = layout.nodes.length > 80;
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const key = `${Math.round(size.width)}x${Math.round(size.height)}:${tk.bg}:${tk.accent}:${dark}`;
+      if (!bgLayer || key !== bgKey) {
+        bgLayer = buildBackdrop();
+        bgKey = key;
+      }
+      if (bgLayer) ctx.drawImage(bgLayer, 0, 0);
+      else {
+        ctx.fillStyle = tk.bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, size.width, size.height);
-
-      // 底：径向渐变（圆心略亮，向外沉入底色），不靠纯色块。
-      const g = ctx.createRadialGradient(
-        size.width / 2, size.height * 0.5, 0,
-        size.width / 2, size.height * 0.5, Math.max(size.width, size.height) * 0.7,
-      );
-      // 神明给的「深底 #050B1F→#0B1A44」是同一种思路：底色不是纯黑，
-      // 中心带一点主题色。这里用 accent 染色，主题换了底色跟着换。
-      g.addColorStop(0, hexToRgba(tk.accent, dark ? 0.11 : 0.06));
-      g.addColorStop(0.55, hexToRgba(tk.accent, dark ? 0.035 : 0.02));
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = tk.bg;
-      ctx.fillRect(0, 0, size.width, size.height);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, size.width, size.height);
-
-      // 星野：轻微闪烁，给自转一个参照系。
-      ctx.save();
-      for (const s of starsRef.current) {
-        const tw = 0.65 + 0.35 * Math.sin((now / 1000) * s.speed + s.x * 12);
-        ctx.globalAlpha = s.a * tw;
-        ctx.fillStyle = tk.fg;
-        ctx.beginPath();
-        ctx.arc(s.x * size.width, s.y * size.height, s.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // 轨道环：每层一个，最外层用虚线，观感上更像「边界」而不是实体墙。
-      ctx.lineWidth = 1;
-      for (const ring of ringRadii) {
-        const pts = ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, cam, size, 120);
-        if (pts.length < 2) continue;
-        ctx.beginPath();
-        pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
-        ctx.setLineDash(ring.ring === 3 ? [3, 6] : []);
-        ctx.strokeStyle = ring.ring === 3 ? tk.border : tk.fg;
-        ctx.globalAlpha = ring.ring === 3 ? 0.45 : 0.09;
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
-      ctx.setLineDash([]);
-
-      // 地面网格：最底层再铺三圈同心环，给纵深一个参照（否则上下层会糊在一起）。
-      for (const r of [0.34, 0.67, 1.0]) {
-        const pts = ringPath(r, (RING_HEIGHT[3] ?? 0) - 0.12, cam, size, 96);
-        if (pts.length < 2) continue;
-        ctx.beginPath();
-        pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
-        ctx.strokeStyle = tk.border;
-        ctx.globalAlpha = 0.22;
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
 
       const toPoint = (n: LegionNode) => nodeToVec3({ ...n });
       const nodes = projectScene(layout.nodes, toPoint, cam, size);
@@ -462,12 +476,11 @@ export default function Legion3DPage() {
         edgeDraws.push({ a, b, cx, cy, lit });
       });
 
-      if (dark) {
+      if (dark && (!heavy || activeSet)) {
         ctx.save();
-        if ('filter' in ctx) ctx.filter = 'blur(3px)';
         ctx.strokeStyle = tk.accent;
-        ctx.lineWidth = 9;
-        ctx.globalAlpha = 0.34;
+        ctx.lineWidth = 10;
+        ctx.globalAlpha = activeSet ? 0.14 : 0.07;
         for (const e of edgeDraws) {
           if (!e.lit) continue;
           ctx.beginPath();
@@ -476,7 +489,6 @@ export default function Legion3DPage() {
           ctx.stroke();
         }
         ctx.restore();
-        ctx.filter = 'none';
       }
       for (const e of edgeDraws) {
         ctx.beginPath();
@@ -493,8 +505,9 @@ export default function Legion3DPage() {
       ctx.strokeStyle = tk.fg;
       ctx.lineWidth = 1.3;
       ctx.globalAlpha = dark ? 0.75 : 0.55;
+      const dashStride = heavy ? 3 : 1;
       edgeDraws.forEach((e, i) => {
-        if (!e.lit) return;
+        if (!e.lit || i % dashStride !== 0) return;
         ctx.lineDashOffset = -((now / 55) % 24) - i * 6;
         ctx.beginPath();
         ctx.moveTo(e.a.projected.x, e.a.projected.y);
@@ -506,8 +519,9 @@ export default function Legion3DPage() {
       ctx.globalAlpha = 1;
 
       // 双向数据包：亮头（白芯 + 彩色描边）+ 6 段渐隐尾巴，两个方向各一个。
+      const cometStride = heavy ? 6 : 1;
       edgeDraws.forEach((e, i) => {
-        if (!e.lit) return;
+        if (!e.lit || i % cometStride !== 0) return;
         const speed = 5200;
         const base = ((now / speed) + i * 0.11) % 1;
         for (const dir of [1, -1]) {
@@ -598,14 +612,12 @@ export default function Legion3DPage() {
         if (dark) {
           // 深底（神明 cover14 的节点画法）：彩色外晕 → 白芯 → 彩色描边。
           // 只画实心色块时深底上是一团糊光；白芯给每个节点一个硬边。
-          ctx.save();
-          ctx.shadowColor = color;
-          ctx.shadowBlur = Math.min(18, Math.max(6, radiusPx * 1.6));
-          ctx.fillStyle = hexToRgba(color, 0.5);
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, radiusPx * 1.4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
+          const wantHalo = !heavy || node.kind === 'core' || node.kind === 'group' || activeSet?.has(node.id);
+          if (wantHalo) {
+            const halo = haloFor(color);
+            const hr = radiusPx * 3.4;
+            ctx.drawImage(halo, p.x - hr / 2, p.y - hr / 2, hr, hr);
+          }
           ctx.fillStyle = tk.fg;
           ctx.beginPath();
           ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
@@ -653,7 +665,8 @@ export default function Legion3DPage() {
         const showLabel =
           node.kind === 'core' ||
           node.kind === 'group' ||
-          (node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
+          (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
+          (heavy && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
           hoverRef.current === node.id;
         if (showLabel) {
@@ -821,7 +834,61 @@ export default function Legion3DPage() {
     setExporting(true);
     setExportError('');
     try {
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+      // 和 2D 页一样，导出图自带标题栏、计数、图例与导出时间 ——
+      // 一张裸图存到相册里过几天就说不清是谁的编制。
+      const tk2 = readTokens();
+      const scale = canvas.width / Math.max(1, canvas.clientWidth);
+      const head = Math.round(58 * scale);
+      const foot = Math.round(32 * scale);
+      const out = document.createElement('canvas');
+      out.width = canvas.width;
+      out.height = canvas.height + head + foot;
+      const g = out.getContext('2d');
+      if (!g) throw new Error('浏览器不支持 canvas');
+      g.fillStyle = tk2.bg;
+      g.fillRect(0, 0, out.width, out.height);
+      g.drawImage(canvas, 0, head);
+      const font = 'system-ui, -apple-system, "Segoe UI", "Noto Sans SC", sans-serif';
+      const px = (n: number) => Math.round(n * scale);
+      g.textBaseline = 'middle';
+      g.textAlign = 'left';
+      g.fillStyle = tk2.fg;
+      g.font = `600 ${px(18)}px ${font}`;
+      g.fillText('军团 · 3D 网络拓扑', px(16), px(24));
+      g.fillStyle = tk2.muted;
+      g.font = `${px(12)}px ${font}`;
+      g.fillText(
+        `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`,
+        px(16), px(44),
+      );
+      g.textAlign = 'right';
+      g.font = `${px(11)}px ${font}`;
+      g.fillText(`导出 ${new Date().toLocaleString('zh-CN', { hour12: false })}`, out.width - px(16), px(24));
+
+      // 底部图例：颜色语义与页面一致（深底是发光圆点，浅底是描边圆）。
+      const legend: Array<[string, string]> = [
+        [tk2.success, '运行中'],
+        [tk2.muted, '空闲'],
+        [tk2.warning, '阻塞'],
+        [tk2.danger, '错误'],
+      ];
+      let lx = px(20);
+      const ly = out.height - foot / 2;
+      g.textAlign = 'left';
+      for (const [color, label] of legend) {
+        g.beginPath();
+        g.arc(lx, ly, px(4), 0, Math.PI * 2);
+        g.fillStyle = color;
+        g.fill();
+        g.fillStyle = tk2.muted;
+        g.font = `${px(11)}px ${font}`;
+        g.fillText(label, lx + px(10), ly);
+        lx += px(10 + 11 * label.length + 22);
+      }
+      g.textAlign = 'right';
+      g.fillText('ANet · Legion 3D', out.width - px(16), ly);
+
+      const blob = await new Promise<Blob | null>(resolve => out.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error('PNG 编码失败');
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -833,7 +900,7 @@ export default function Legion3DPage() {
     } finally {
       setExporting(false);
     }
-  }, []);
+  }, [layout.stats]);
 
   /* ── 页面 ───────────────────────────────────────────────────────── */
 
