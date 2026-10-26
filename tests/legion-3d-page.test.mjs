@@ -34,9 +34,11 @@ describe('军团 3D 页面契约', () => {
   test('JSX 里不出现硬编码颜色（颜色只读 CSS 变量）', () => {
     // readTokens() 里的 hex 是「token 读不到时的兜底」，不是样式来源；
     // 真正要守的是渲染层：className / style 不许写死颜色。
-    const jsx = page.slice(page.indexOf('  return ('));
+    // 取最后一个顶层 `return (`：前面的 return 是 useEffect 的清理函数，
+    // 用 indexOf 会把整个渲染循环都算进「JSX」。
+    const jsx = page.slice(page.lastIndexOf('\n  return ('));
     expect(jsx).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
-    expect(jsx).not.toMatch(/style=\{\{[^}]*color:/);
+    expect(jsx).not.toMatch(/style=\{\{[^}]*:\s*['"](?:#|rgb)/);
     expect(page).toContain('readTokens');
     expect(page).toContain('--accent');
   });
