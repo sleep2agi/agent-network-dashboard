@@ -1458,24 +1458,25 @@ export default function Legion3DPage() {
               ✕
             </button>
           </div>
-          {selectedNode.kind !== 'group' && ancestorDept && (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery('');
-                setFocus(ancestorDept.id);
-                if (ancestorDept.kind !== 'core') {
-                  let delta = ancestorDept.angle - viewRef.current.yaw;
-                  while (delta > Math.PI) delta -= Math.PI * 2;
-                  while (delta < -Math.PI) delta += Math.PI * 2;
-                  yawTarget.current = viewRef.current.yaw + delta;
-                }
-              }}
-              className="mt-2 mr-3 rounded-md px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
-            >
-              聚焦所在部门
-            </button>
-          )}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {selectedNode.kind !== 'group' && ancestorDept && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery('');
+                  setFocus(ancestorDept.id);
+                  if (ancestorDept.kind !== 'core') {
+                    let delta = ancestorDept.angle - viewRef.current.yaw;
+                    while (delta > Math.PI) delta -= Math.PI * 2;
+                    while (delta < -Math.PI) delta += Math.PI * 2;
+                    yawTarget.current = viewRef.current.yaw + delta;
+                  }
+                }}
+                className="rounded-md px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              >
+                聚焦所在部门
+              </button>
+            )}
           {selectedNode.kind === 'group' && (
             <button
               type="button"
@@ -1499,14 +1500,15 @@ export default function Legion3DPage() {
               {focus === selectedNode.id ? '取消聚焦' : '聚焦此部门'}
             </button>
           )}
-          {(selectedNode.kind === 'agent' || selectedNode.kind === 'person' || selectedNode.kind === 'group') && (
-            <Link
-              href={detailHref}
-              className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--accent-text)] hover:underline"
-            >
-              {selectedNode.kind === 'agent' ? '打开节点详情' : '在部门列表里看'} →
-            </Link>
-          )}
+            {(selectedNode.kind === 'agent' || selectedNode.kind === 'person' || selectedNode.kind === 'group') && (
+              <Link
+                href={detailHref}
+                className="inline-flex items-center gap-1 text-xs text-[var(--accent-text)] hover:underline"
+              >
+                {selectedNode.kind === 'agent' ? '打开节点详情' : '在部门列表里看'} →
+              </Link>
+            )}
+          </div>
         </div>
       )}
 
