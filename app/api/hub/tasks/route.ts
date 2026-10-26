@@ -63,6 +63,12 @@ export async function GET(req: Request) {
       `${HUB_URL}/api/tasks?${params.toString()}`,
       { headers: await hubHeaders(), next: { revalidate: 0 } },
     );
+    // #1636 —— Hub 说 401 就是 401，**不许**被下面的 completions 兜底吞成
+    // “200 + 空数组”。否则会话过期时用户看到的是“还没有任务”，
+    // 会以为系统正常，而真正原因是登录失效（最难被发现的假空态）。
+    if (tasksRes.status === 401) {
+      return Response.json({ error: 'login required' }, { status: 401 });
+    }
     const contentType = tasksRes.headers.get('content-type') || '';
     if (tasksRes.ok && contentType.includes('application/json')) {
       const data = await tasksRes.json();
@@ -105,6 +111,10 @@ export async function GET(req: Request) {
       `${HUB_URL}/api/completions?limit=${limit}`,
       { headers: await hubHeaders(), next: { revalidate: 0 } },
     );
+    // 同上：兜底路径也会 401，不能当成“没有历史任务”。
+    if (compRes.status === 401) {
+      return Response.json({ error: 'login required' }, { status: 401 });
+    }
     const compData = await compRes.json();
     const completions: Completion[] = compData.completions || [];
 

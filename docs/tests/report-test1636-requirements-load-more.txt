@@ -1,0 +1,153 @@
+# test1636 — 需求列表「加载更多」不得清空已加载的行
+
+日期：2026-10-22（Asia/Shanghai）
+需求：#1636 Dashboard｜视觉与体验收口（移动端/空态/加载态/密度）
+仓库：`sleep2agi/agent-network-dashboard`，基线 `main = db7014d59e74896bafcfdc61457ed646967d086b`（0.6.3-preview.60）
+
+## 1. 缺陷与证据
+
+`app/requirements/page.tsx` 原来只有一条加载路径共用一个 `loading`：
+
+```tsx
+setLoading(true);                        // 追加也走这里
+{loading ? 骨架屏 : 列表}                 // 于是追加时整表让位给 8 行骨架
+disabled={loading}                       // 按钮也跟着整表状态走
+```
+
+用**只读 stub Hub + Playwright**（不连生产、不读真实需求）复现，第二页故意慢 1.2s，让「追加在飞」成为一个可观测窗口：
+
+| 观测点 | 修复前 | 修复后 |
+|---|---|---|
+| 首屏行数 | 3 | 3 |
+| 点「加载更多」后 250–300ms 的行数 | **0** | **3** |
+| 同刻骨架屏行数 | **8** | **0** |
+| 追加结束时行数 | 5 | 5 |
+
+修复前（整表被骨架屏替换）：
+
+```
+{"page1_rows": 3, "rows_during_loadmore": 0, "skeleton_during_loadmore": 8, "rows_after_loadmore": 5}
+```
+
+修复后：
+
+```
+{"page1_rows": 3, "rows_during_loadmore": 3, "skeleton_during_loadmore": 0, "rows_after_loadmore": 5}
+```
+
+负控（把 `app/requirements/page.tsx` 还原成基线、其余不动，跑同一条浏览器断言）：
+
+```
+Expected: 3   Received: 0        # 追加期间列表已被骨架屏顶掉
+1 failed
+```
+
+## 2. 修法（一个状态机，不改视觉语言）
+
+新增 `app/lib/requirements-paging.ts`：把「替换（换筛选/刷新）」与「追加（加载更多）」分成两条迁移，
+并把可判定行为写进 reducer，而不是留在组件里的三个 `useState`：
+
+- 追加开始：`loadingMore = true`，`loading` 保持 false，**rows 原样保留**；
+- 追加成功：`rows = [...prev, ...incoming]`；
+- 追加失败：**不清空**已加载行，保留 `hasMore` 与 `cursor`，重试只重试当前页；
+- 追加 401：保留已加载行 + 提示重新登录，不静默截断；
+- 追加在飞时再次点击：忽略（同一页不会被拼两次）；
+- 替换路径保持原行为：骨架屏 → 成功/失败（失败清空并保留原因）。
+
+页面侧改动：`useReducer` 接入、骨架屏分支仍只看 `loading`、按钮只跟 `loadingMore`，
+错误条的「重试」在列表非空且仍有下一页时按追加重试。
+
+## 3. 测试
+
+| 层 | 命令 | 结果 |
+|---|---|---|
+| reducer 行为（8 条断言） | `npx bun test app/lib/requirements-paging.test.mjs` | 8 pass / 29 expect |
+| 仓库全量单测 | `npm test` | **16/16** 文件通过（基线 15/15 + 本卡 1） |
+| 类型 | `npx tsc --noEmit` | 通过 |
+| 门 | `npm run gates` | 0 error / 25 warning（头像池既有警告） |
+| 生产构建 | `npm run build` | 通过（BUILD_COMMIT=db7014d） |
+| 浏览器正控 | `npx playwright test tests/e2e-requirements-load-more.spec.ts`（本机 config，baseURL localhost:3100） | 2 passed |
+| 浏览器负控 | 同上，`app/requirements/page.tsx` 还原基线 | 1 failed（Received 0），失败原因正确 |
+
+`tests/e2e-requirements-load-more.spec.ts` 自带进程内 stub Hub（9999），
+不依赖真实 Hub、不需要生产凭据；该 spec 与仓库其它 e2e 一样不在 CI 里跑（CI 只跑 `npm test` 与 lint/build 门）。
+
+## 4. 375px 横向溢出核查
+
+同一条浏览器 spec 断言 `document.documentElement.scrollWidth <= innerWidth`：
+
+| 页面 | scrollWidth | innerWidth | 溢出 |
+|---|---|---|---|
+| `/requirements` | 375 | 375 | 否 |
+| `/tasks` | 375 | 375 | 否 |
+
+数据是 stub 的短标题；#1636 里「窄屏无横向溢出」需要长标题/长标签的真实样本再验一次，
+本报告只声明「在当前结构 + 当前样本下不溢出」。
+
+## 5. 边界（未做的部分，别当已交付）
+
+- 未改任何 Hub/daemon 接口，未改生产数据，未连线上 `y.vansin.top:3333`。
+- 未发布：本仓 `main` 已到 .60，线上仍是 .56（登录页自报），发布入口与授权仍未确认。
+- 标签页的计数仍是「已加载行」的计数；翻页后与真实总数不同，属另一个待办（需 Hub 聚合），本卡未顺手改。
+- 空态/401/错误态的截图只覆盖了需求量表页；`/tasks`、组织架构页的同类状态仍待走查。
+
+## 6. 回归修复：替换在飞时的 append 竞态（通信欧只读定位，2026-10-22 12:0x）
+
+上一版把「加载更多」按钮的 disabled 从 `loading` 改成只跟 `loadingMore`，而 reducer 的
+replace start 仍保留旧 `hasMore`/`cursor`、append start 又把 `loading` 置 false。结果：
+
+- 换筛选/刷新在飞时按钮重新可点；点下去就拿**旧 cursor** 打**新筛选**；
+- append start 会把 `loading` 置 false，骨架屏被旧行顶回去；
+- replace 与 append 回包乱序时，两个筛选的行混在一张表里。
+
+**修法（同一 PR，最小）**：新增 `createLoadGate()` 请求闸门，包住 reducer 管不到的「这一枪要不要打」：
+
+- 追加只在**完全空闲**时放行（replace 在飞时一律拒绝，事件入口就拒绝，不是只灰按钮）；
+- 替换永远抢占，并用代际号 `isCurrent()` 丢弃被取代的迟到回包；
+- 旧请求收尾不得清掉新请求的在飞标记；
+- 「加载更多」按钮在替换期间不渲染（`hasMore && !loading`），渲染时只跟 `loadingMore`。
+
+**窄负控：同一份 spec 对旧 page.tsx（d379fc3）先红，改后绿**
+
+| 断言 | 旧代码 | 新代码 |
+|---|---|---|
+| 替换在飞时不得发带 cursor 的请求 | **红**：真发 `?status=doing&limit=200&cursor=c2`（旧 cursor 打新筛选） | 0 条 |
+| 替换在飞时按钮态 | **红**：`moreDisabled: false` | 不可点/不渲染 |
+| 旧筛选 append 迟到回包 | **红**：最终 3 行（doing + 旧第二页混入） | 1 行 `doing only` |
+| 同页重复点击只看请求数 | 绿（第一次点击后按钮已 disabled，浏览器层拦住了）——**这条不具分辨力**，如实标注 | 绿 |
+| 加载更多期间行不消失 | 绿（上一版已修） | 绿 |
+
+请求闸门本身由 5 条单测直接证明（`createLoadGate`：replace 在飞时 `begin('append')` 返回 null、
+重复 append 返回 null、旧代际 `isCurrent=false`、旧 settle 不清新在飞标记、收尾后重新放行）。
+
+复跑：`npm test` 16/16（reducer+闸门 13 断言）、`npx tsc --noEmit` 通过、浏览器 5 passed。
+
+## 7. 状态面走查：空态 / 401 / 500 / 追加失败（提交 efe9c5d 之后）
+
+用同一个 stub Hub 把四种状态各走一遍，先跑出缺陷再改：
+
+| 状态 | 旧行为 | 期望 |
+|---|---|---|
+| 401（会话过期） | 「会话已过期」横幅 **+「需求池是空的」空态同时出现** | 只给会话过期 + 重新登录入口 |
+| 500（Hub 不可用） | 「读取失败：hub_unavailable」**+「需求池是空的」同时出现** | 只给错误 + 重试 |
+| `/org` 401 | 「会话已过期」**+「通讯录是空的」同时出现** | 只给会话过期 |
+| 筛选无结果 / 真空白 | 正常空态 + 清筛选 CTA | 保持 |
+
+缺陷成因：401/失败时 reducer 会清空 `rows`，而空态只判断 `rows.length === 0`，
+于是把「没权限」和「读失败」渲染成了「没有数据」——用户会以为需求丢了。
+
+**修法（两个一行的守卫，不加新组件）**：需求页空态加 `&& !needsLogin && !error`；
+组织架构页空态加 `&& !needsLogin`（该页原本已排除 `error`）。
+
+**负控**：把两处守卫临时去掉，同一组断言 3 条全红（`需求池是空的` 计数 0→1 ×2、
+`通讯录是空的` 0→1 ×1）；恢复后 10 passed。
+
+**追加失败**也补了断言：列表保留 3 行、按钮回到可重试、重试只发 1 次且带 `cursor=c2`。
+
+**截图**：`/tmp/opencode/dash-repro/shots/states/`（empty-filtered / unauthorized / error × 375、1280）。
+容器内**没有中文字体**，截图里的中日韩字符是豆腐块 —— 这批图只作为**布局**证据，
+不能拿来验收文案排版；线上实机需要另拍一张。
+
+**一个被我自己否掉的假缺陷**：改视口后立刻截图，侧栏 `transition-transform` 还在滑出，
+画面看起来像「正文被侧栏压住」。实测 `aside.x = -208`、`h1.x = 16`，布局是对的。
+截图助手已改成「改视口 → reload → 等 400ms → 再断言正文左边界 ≥ 0 → 拍图」。

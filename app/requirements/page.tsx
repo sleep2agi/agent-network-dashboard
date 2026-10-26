@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
+import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/requirements-paging';
 
 /**
  * Requirements board — #1633 (read-only first slice).
@@ -70,17 +71,19 @@ function RequirementsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [rows, setRows] = useState<Requirement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [needsLogin, setNeedsLogin] = useState(false);
-  // #1633 follow-up: the list used to hard-stop at 200 rows with has_more ignored.
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-
   const status = searchParams.get('status') || '';
   const tag = searchParams.get('tag') || '';
   const q = searchParams.get('q') || '';
+
+  // #1636: 替换态与追加态分开，追加时已加载的行不能进骨架屏。
+  const [state, dispatch] = useReducer(
+    requirementsPaging<Requirement>,
+    undefined,
+    initialPagingState<Requirement>,
+  );
+  const { rows, loading, loadingMore, error, needsLogin, cursor, hasMore } = state;
+  // #1636 回归：追加只在完全空闲时放行；替换抢占旧请求并用代际号丢弃迟到回包。
+  const gate = useRef(createLoadGate());
   const [tagInput, setTagInput] = useState(tag);
   const [qInput, setQInput] = useState(q);
 
@@ -96,9 +99,11 @@ function RequirementsContent() {
 
   const load = useCallback(async (opts: { cursor?: string | null; append?: boolean } = {}) => {
     const nextCursor = opts.cursor ?? null;
-    const append = opts.append === true;
-    setLoading(true);
-    setError('');
+    const phase = opts.append === true ? 'append' as const : 'replace' as const;
+    // 闸门在 dispatch 之前：被拒绝的追加不进入加载态，也不发请求。
+    const gen = gate.current.begin(phase);
+    if (gen === null) return;
+    dispatch({ type: 'start', phase });
     try {
       const params = new URLSearchParams();
       if (status) params.set('status', status);
@@ -107,23 +112,29 @@ function RequirementsContent() {
       params.set('limit', '200');
       if (nextCursor) params.set('cursor', nextCursor);
       const res = await fetch(`/api/hub/requirements?${params.toString()}`, { cache: 'no-store' });
-      if (res.status === 401) { setNeedsLogin(true); if (!append) setRows([]); return; }
+      // 已被更新的一次加载取代（换筛选/重复刷新）：这个回包整份作废。
+      if (!gate.current.isCurrent(gen)) return;
+      if (res.status === 401) { dispatch({ type: 'unauthorized', phase }); return; }
       const data = await res.json();
+      if (!gate.current.isCurrent(gen)) return;
       if (!res.ok || !data.ok) {
-        setError(data?.error || `hub_${res.status}`);
-        if (!append) setRows([]);
+        dispatch({ type: 'failed', phase, error: data?.error || `hub_${res.status}` });
         return;
       }
-      setNeedsLogin(false);
       const incoming = (data.requirements || []) as Requirement[];
-      setRows(prev => (append ? [...prev, ...incoming] : incoming));
-      setCursor(typeof data.next_cursor === 'string' ? data.next_cursor : null);
-      setHasMore(data.has_more === true && typeof data.next_cursor === 'string');
+      const nextCursorValue = typeof data.next_cursor === 'string' ? data.next_cursor : null;
+      dispatch({
+        type: 'loaded',
+        phase,
+        incoming,
+        nextCursor: nextCursorValue,
+        hasMore: data.has_more === true && nextCursorValue !== null,
+      });
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'fetch failed');
-      if (!append) setRows([]);
+      if (!gate.current.isCurrent(gen)) return;
+      dispatch({ type: 'failed', phase, error: e instanceof Error ? e.message : 'fetch failed' });
     } finally {
-      setLoading(false);
+      gate.current.settle(gen);
     }
   }, [status, tag, q]);
 
@@ -220,7 +231,11 @@ function RequirementsContent() {
         {error && !needsLogin && (
           <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
             读取失败：{error}
-            <button type="button" onClick={() => load()} className="ml-3 underline">重试</button>
+            <button
+              type="button"
+              onClick={() => (rows.length > 0 && hasMore ? load({ cursor, append: true }) : load())}
+              className="ml-3 underline"
+            >重试</button>
           </div>
         )}
 
@@ -230,7 +245,9 @@ function RequirementsContent() {
               <div key={i} className="h-12 animate-pulse rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]" />
             ))}
           </div>
-        ) : rows.length === 0 ? (
+        ) : rows.length === 0 && !needsLogin && !error ? (
+          // 空态只代表“这个筛选真的没有数据”。未登录或读失败时 rows 也会是空的，
+          // 那时说「需求池是空的」就是把鉴权/故障说成没数据，用户会以为需求丢了。
           <EmptyState
             variant="generic"
             title={status || tag || q ? '没有符合筛选的需求' : '需求池是空的'}
@@ -275,14 +292,14 @@ function RequirementsContent() {
           </ul>
         )}
 
-        {hasMore && (
+        {hasMore && !loading && (
           <button
             type="button"
-            disabled={loading}
+            disabled={loadingMore}
             onClick={() => load({ cursor, append: true })}
             className="mx-auto mt-4 block rounded-lg border border-[var(--border)] px-4 py-2 text-xs text-gray-400 hover:text-gray-200 disabled:opacity-50"
           >
-            {loading ? '加载中…' : '加载更多'}
+            {loadingMore ? '加载中…' : '加载更多'}
           </button>
         )}
       </div>
