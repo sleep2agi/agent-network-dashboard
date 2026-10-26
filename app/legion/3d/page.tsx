@@ -528,13 +528,18 @@ export default function Legion3DPage() {
         edgeDraws.push({ a, b, cx, cy, lit });
       });
 
-      if (dark && (!heavy || activeSet)) {
+      // 光晕层有预算：大网络里高亮（搜索/聚焦）会让几百条边同时「lit」，
+      // 再逐条加宽描边会把帧率打回 30fps。超出预算就只画实线。
+      const glowBudget = huge ? 48 : heavy ? 96 : Number.POSITIVE_INFINITY;
+      let glowDrawn = 0;
+      if (dark && (!heavy || (activeSet && edgeDraws.filter(e => e.lit).length <= glowBudget))) {
         ctx.save();
         ctx.strokeStyle = tk.accent;
         ctx.lineWidth = 6;
         ctx.globalAlpha = activeSet ? 0.1 : 0.04;
         for (const e of edgeDraws) {
           if (!e.lit) continue;
+          if (++glowDrawn > glowBudget) break;
           ctx.beginPath();
           ctx.moveTo(e.a.projected.x, e.a.projected.y);
           ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
@@ -726,7 +731,7 @@ export default function Legion3DPage() {
           node.kind === 'core' ||
           node.kind === 'group' ||
           (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
-          (heavy && activeSet?.has(node.id)) ||
+          (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
           hoverRef.current === node.id;
         if (showLabel) {
@@ -751,7 +756,12 @@ export default function Legion3DPage() {
         const placed: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        // 最多画 N 个标签：搜索命中会一次性点亮几百个节点，逐个 measureText +
+        // roundRect 会把帧率拖回 30fps。少画几个名字不影响「找到它」。
+        const labelBudget = huge ? 16 : heavy ? 40 : Number.POSITIVE_INFINITY;
+        let drawnLabels = 0;
         for (const item of labelQueue) {
+          if (drawnLabels >= labelBudget) break;
           const big = item.node.kind === 'core';
           ctx.font = `${big ? 600 : 400} ${big ? 13 : 11}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
           const w = ctx.measureText(item.text).width;
@@ -771,6 +781,7 @@ export default function Legion3DPage() {
             if (!hit) { placed.push(rect); spot = { x: cx, y: cy }; break; }
           }
           if (!spot) continue;
+          drawnLabels++;
           // 底衬：只有大网络（标签挤在连线里）才垫，小网络保持纯文字。
           if (heavy) {
             ctx.globalAlpha = 0.42 * item.alpha;
