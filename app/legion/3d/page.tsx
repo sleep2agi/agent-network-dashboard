@@ -479,8 +479,8 @@ export default function Legion3DPage() {
       if (dark && (!heavy || activeSet)) {
         ctx.save();
         ctx.strokeStyle = tk.accent;
-        ctx.lineWidth = 10;
-        ctx.globalAlpha = activeSet ? 0.14 : 0.07;
+        ctx.lineWidth = 6;
+        ctx.globalAlpha = activeSet ? 0.1 : 0.04;
         for (const e of edgeDraws) {
           if (!e.lit) continue;
           ctx.beginPath();
@@ -495,16 +495,16 @@ export default function Legion3DPage() {
         ctx.moveTo(e.a.projected.x, e.a.projected.y);
         ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
         ctx.strokeStyle = e.lit && activeSet ? tk.accent : tk.border;
-        ctx.globalAlpha = e.lit ? (activeSet ? 0.85 : (dark ? 0.5 : 0.6)) : 0.1;
-        ctx.lineWidth = e.lit && activeSet ? 2 : 1.2;
+        ctx.globalAlpha = e.lit ? (activeSet ? 0.62 : (dark ? 0.34 : 0.45)) : 0.08;
+        ctx.lineWidth = e.lit && activeSet ? 1.6 : 1;
         ctx.stroke();
       }
       // 白色短划流光（dasharray 2 22），沿线跑。
       ctx.save();
       ctx.setLineDash([2, 22]);
       ctx.strokeStyle = tk.fg;
-      ctx.lineWidth = 1.3;
-      ctx.globalAlpha = dark ? 0.75 : 0.55;
+      ctx.lineWidth = 1.1;
+      ctx.globalAlpha = dark ? 0.48 : 0.4;
       const dashStride = heavy ? 3 : 1;
       edgeDraws.forEach((e, i) => {
         if (!e.lit || i % dashStride !== 0) return;
@@ -529,20 +529,20 @@ export default function Legion3DPage() {
           for (let k = 6; k >= 1; k--) {
             const tt = Math.min(1, Math.max(0, t - dir * 0.022 * k));
             const [tx, ty] = quadAt(e.a.projected.x, e.a.projected.y, e.cx, e.cy, e.b.projected.x, e.b.projected.y, tt);
-            ctx.globalAlpha = Math.max(0, 0.42 - k * 0.06);
+            ctx.globalAlpha = Math.max(0, 0.3 - k * 0.045);
             ctx.fillStyle = tk.accent;
             ctx.beginPath();
             ctx.arc(tx, ty, Math.max(0.8, 3.2 - k * 0.35), 0, Math.PI * 2);
             ctx.fill();
           }
           const [hx, hy] = quadAt(e.a.projected.x, e.a.projected.y, e.cx, e.cy, e.b.projected.x, e.b.projected.y, t);
-          ctx.globalAlpha = 0.9;
+          ctx.globalAlpha = 0.72;
           ctx.fillStyle = tk.fg;
           ctx.beginPath();
-          ctx.arc(hx, hy, 3.4, 0, Math.PI * 2);
+          ctx.arc(hx, hy, 3, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = tk.accent;
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 1.6;
           ctx.stroke();
         }
       });
@@ -697,7 +697,7 @@ export default function Legion3DPage() {
             const pt = projectPoint({ x: Math.sin(a) * ring.radius, y, z: Math.cos(a) * ring.radius }, cam, size);
             if (!pt) continue;
             const t = 1 - seg / 7;
-            ctx.globalAlpha = 0.62 * t * t;
+            ctx.globalAlpha = 0.45 * t * t;
             ctx.fillStyle = seg === 0 ? tk.fg : tk.accent;
             ctx.beginPath();
             ctx.arc(pt.x, pt.y, 2.1 * t + 0.5, 0, Math.PI * 2);
