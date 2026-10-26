@@ -593,6 +593,7 @@ export default function Legion3DPage() {
       }
 
       // 节点：远→近（projectScene 已排序），近的盖住远的。
+      const labelQueue: Array<{ node: LegionNode; text: string; px: number; py: number; r: number; alpha: number; dim: boolean; priority: number }> = [];
       for (const sn of nodes) {
         const node = sn.item;
         const p = sn.projected;
@@ -670,18 +671,59 @@ export default function Legion3DPage() {
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
           hoverRef.current === node.id;
         if (showLabel) {
-          ctx.globalAlpha = Math.min(1, alpha + 0.15);
-          ctx.fillStyle = dim ? tk.dim : tk.fg;
-          ctx.font = `${node.kind === 'core' ? 600 : 400} ${node.kind === 'core' ? 13 : 11}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          const label = node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label;
-          // 标签沿「圆心 → 节点」方向朝外放；统一放正下方会在密集区域糊成一团。
-          const dx = p.x - size.width / 2;
-          const dy = p.y - size.height / 2;
+          labelQueue.push({
+            node,
+            text: node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
+            px: p.x,
+            py: p.y,
+            r: radiusPx,
+            alpha: Math.min(1, alpha + 0.15),
+            dim: !!dim,
+            priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : node.kind === 'group' ? 2 : 3,
+          });
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // 标签统一绘制 + 简单避让：核心/部门/悬停优先占位，其余沿径向往外
+      // 试两档，仍冲突就跳过 —— 宁可少一个名字，也不要两行字叠成一团。
+      {
+        labelQueue.sort((a, b) => a.priority - b.priority);
+        const placed: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (const item of labelQueue) {
+          const big = item.node.kind === 'core';
+          ctx.font = `${big ? 600 : 400} ${big ? 13 : 11}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+          const w = ctx.measureText(item.text).width;
+          const h = big ? 16 : 13;
+          const dx = item.px - size.width / 2;
+          const dy = item.py - size.height / 2;
           const len = Math.hypot(dx, dy) || 1;
-          const off = r + 12;
-          ctx.fillText(label, p.x + (dx / len) * off, p.y + (dy / len) * off);
+          const ux = len > 4 ? dx / len : 0;
+          const uy = len > 4 ? dy / len : 1;
+          let spot: { x: number; y: number } | null = null;
+          for (const extra of [12, 24, 38]) {
+            const off = item.r + extra;
+            const cx = item.px + ux * off;
+            const cy = item.py + uy * off;
+            const rect = { x1: cx - w / 2 - 4, y1: cy - h / 2 - 2, x2: cx + w / 2 + 4, y2: cy + h / 2 + 2 };
+            const hit = placed.some(p => !(rect.x2 < p.x1 || rect.x1 > p.x2 || rect.y2 < p.y1 || rect.y1 > p.y2));
+            if (!hit) { placed.push(rect); spot = { x: cx, y: cy }; break; }
+          }
+          if (!spot) continue;
+          // 底衬：只有大网络（标签挤在连线里）才垫，小网络保持纯文字。
+          if (heavy) {
+            ctx.globalAlpha = 0.42 * item.alpha;
+            ctx.fillStyle = tk.bg;
+            const pad = 3;
+            ctx.beginPath();
+            ctx.roundRect(spot.x - w / 2 - pad, spot.y - h / 2, w + pad * 2, h, 4);
+            ctx.fill();
+          }
+          ctx.globalAlpha = item.alpha;
+          ctx.fillStyle = item.dim ? tk.dim : tk.fg;
+          ctx.fillText(item.text, spot.x, spot.y);
         }
         ctx.globalAlpha = 1;
       }
