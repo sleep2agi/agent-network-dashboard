@@ -564,3 +564,15 @@ CI 里装 Playwright 再起 app 跑对比度太重（3–5 分钟起步）。改
 
 gates 现在四道：color-ratchet → avatars → token-contrast → accent-text-ratchet。
 
+### 第一批写死文字色迁移（`ed18eca`）
+
+迁移自有页面的 12 处（`/messages` 4、`/node` 5、`/` 3）：
+
+- 强调/链接/选中态 → `text-[var(--accent-text)]`
+- 消息类型 `reply` → `text-[var(--info)]`（语义色，不再写 cyan）
+- 失败/已回复状态 → `--danger` / `--accent-text`
+- 次级文字顺手统一到 `--fg-muted` / `--fg-dim`
+
+基线从 **138 处 / 30 文件收紧到 126 / 27**。`/login` 的 7 处是 SVG 品牌标记
+（装饰描边，不是正文），清单里标注保留。
+
