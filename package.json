@@ -26,7 +26,7 @@
     "prepublishOnly": "[ -f .next/BUILD_ID ] || (echo 'prepublishOnly: .next/BUILD_ID missing — run npm run build first (see commit 05c1ebf body for R224 chunk-500 root cause)' >&2 && exit 1)",
     "avatars:check": "node scripts/check-avatars.mjs",
     "ratchet": "node scripts/check-color-ratchet.mjs",
-    "gates": "node scripts/check-color-ratchet.mjs && node scripts/check-avatars.mjs",
+    "gates": "node scripts/check-color-ratchet.mjs && node scripts/check-avatars.mjs && node scripts/check-token-contrast.mjs",
     "a11y:contrast": "node scripts/check-contrast.mjs",
     "test": "node scripts/run-tests.mjs"
   },
