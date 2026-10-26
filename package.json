@@ -29,6 +29,7 @@
     "gates": "node scripts/check-color-ratchet.mjs && node scripts/check-avatars.mjs && node scripts/check-token-contrast.mjs && node scripts/check-accent-text-ratchet.mjs",
     "a11y:contrast": "node scripts/check-contrast.mjs",
     "a11y:canvas": "node scripts/check-canvas-labels.mjs",
+    "smoke:legion": "node scripts/smoke-legion.mjs",
     "test": "node scripts/run-tests.mjs"
   },
   "bin": {
