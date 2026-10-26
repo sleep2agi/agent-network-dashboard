@@ -36,8 +36,12 @@ function walk(dir) {
   return out;
 }
 
+// 固定深色的品牌屏（不跟随主题）不算「写死文字色」债务，先豁免。
+const EXEMPT = new Set(['app/login/page.tsx']);
+
 const counts = {};
 for (const file of walk(APP)) {
+  if (EXEMPT.has(relative(ROOT, file))) continue;
   const src = readFileSync(file, 'utf8');
   const n = (src.match(PATTERN) || []).length;
   if (n > 0) counts[relative(ROOT, file)] = n;

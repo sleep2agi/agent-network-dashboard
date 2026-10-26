@@ -18,14 +18,13 @@ npm run gates                                  # 含 accent-text-ratchet
 node scripts/check-accent-text-ratchet.mjs --update   # 改少了以后收紧基线
 ```
 
-## 当前基线（126 处 / 27 个文件，2026-10-27 第一批迁移后）
+## 当前基线（119 处 / 26 个文件，2026-10-27）
 
 | 文件 | 数量 |
 | --- | --- |
 | `app/components/TaskChatPanel.tsx` | 17 |
 | `app/components/TopoGraph.tsx` | 14 |
 | `app/components/Sidebar.tsx` | 8 |
-| `app/login/page.tsx` | 7 |
 | `app/components/HostSupervisorPicker.tsx` | 7 |
 | `app/components/AttachmentBlock.tsx` | 6 |
 | `app/components/EmptyState.tsx` | 6 |
@@ -35,7 +34,8 @@ node scripts/check-accent-text-ratchet.mjs --update   # 改少了以后收紧基
 | `app/components/CreateNodeWizard.tsx` | 3 |
 | 其余 13 个文件 | 各 1–2 |
 
-已迁移完：`/messages`、`/node`、`/`（12 处），基线从 138 → 126。
+已迁移完：`/messages`、`/node`、`/`（12 处）；`app/login/page.tsx` 已从扫描中
+豁免（固定深色品牌屏，颜色写死是有意的），基线从 138 → 126 → 119。
 
 ## 迁移指引
 
