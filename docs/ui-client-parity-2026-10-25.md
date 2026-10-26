@@ -535,3 +535,19 @@ CI 里装 Playwright 再起 app 跑对比度太重（3–5 分钟起步）。改
 它当场抓到两处深色问题并修掉：`--danger` #ef4444 在 elevated 上 4.36 → #f87171
 （5.93）、`--info` #3b82f6 4.46 → #60a5fa（6.45）。
 
+### `--accent-text` 与门槛升级（`d6bc865`）
+
+`--accent` 在深色主题当文字只有 4.27:1（bg-secondary）/ 3.88（elevated）。
+新增专用文字色：
+
+| 主题 | `--accent`（填充） | `--accent-text`（文字） |
+| --- | --- | --- |
+| 深色 | `#8b5cf6` | `#a78bfa`（6.64 / 6.45） |
+| 浅色 | `#007a61` | `var(--accent)`（跟随；skin 覆盖 accent 时也正确） |
+
+军团两页 4 处 accent 文字（3D 视图入口、自转开关、列表选中项、详情链接）改用
+`--accent-text`；填充/描边仍是 `--accent`，语义不变。
+
+`token-contrast` 把 `--accent-text` 纳入拦门（会解析 `var()` 引用），`--accent`
+保留为警告。结果：文字色全部 ≥4.5:1；浏览器版 2 主题 × 12 页 0 处不达标。
+
