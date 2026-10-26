@@ -863,6 +863,8 @@ export default function Legion3DPage() {
   /** 从列表里选一个节点：和点击画布等价，另外把镜头转过去。 */
   const pickNode = useCallback((node: LegionNode) => {
     setSelected(node.id);
+    // 手机上列表与详情卡会互相压：选完就收起列表，按钮状态也跟着一致。
+    if (typeof window !== 'undefined' && window.innerWidth < 640) setListOpen(false);
     setFocus(null);
     if (node.kind !== 'core') {
       let delta = node.angle - viewRef.current.yaw;
@@ -1355,7 +1357,7 @@ export default function Legion3DPage() {
           role="listbox"
           aria-label="军团节点（方向键/Tab 浏览，回车选中）"
           data-testid="legion-3d-node-list"
-          className="absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28"
+          className={`absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28 sm:block ${selectedNode ? 'hidden' : 'block'}`}
         >
           {layout.nodes
             // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
