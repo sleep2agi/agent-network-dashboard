@@ -502,3 +502,21 @@ canvas 不能被 Tab 遍历，之前只能用鼠标点。新增「节点列表�
 顺带：3D 节点列表的成员阈值 120 → 60。408 节点时列表从 109 个 Tab 停点降到
 9 个（核心 + 8 部门），并提示「找成员请用搜索或点画布」。
 
+### 深色主题复查 + 体检脚本入库（`8c99a78`）
+
+深色主题用同一份扫描跑，还剩 4 处：
+
+| 位置 | 旧 | 新 |
+| --- | --- | --- |
+| `--fg-dim` 压 `--bg-elevated` | 4.35:1 | `#828b9c` → 4.78:1 |
+| `/messages` 气泡箭头/时间戳（`--bubble-in` #1E293B） | 4.26:1 | 改用 `--fg-muted` |
+| `/org` 与 3D 的 accent 徽标文字 | 4.27:1 | 文字改 `--fg`（底色仍 accent 淡染） |
+
+`scripts/check-contrast.mjs`（`npm run a11y:contrast`）：
+- 扫叶子文本，按 WCAG 算比值（大字 3:1、其余 4.5:1）
+- 跳过隐藏元素、`opacity<0.4`、半透明前景（装饰分隔符）
+- 支持 `BASE_URL` / `ANET_DASHBOARD_PASSWORD` / `THEMES` / `PAGES`
+- 有违规退出码 1（可接 CI，但需要跑着的 app + Playwright，暂不进 `gates`）
+
+当前：**2 个主题 × 12 个页面，0 处不达标**。
+
