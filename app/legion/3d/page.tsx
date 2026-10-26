@@ -168,6 +168,8 @@ export default function Legion3DPage() {
   const [query, setQuery] = useState('');
   // 大网络提示条：一次会话里关掉就不再弹（sessionStorage）。
   const [hintDismissed, setHintDismissed] = useState(false);
+  // 键盘/读屏入口：canvas 本身没法被 Tab 遍历，给一个可滚动的节点列表。
+  const [listOpen, setListOpen] = useState(false);
   const [spin, setSpin] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -828,6 +830,19 @@ export default function Legion3DPage() {
 
   /* ── 交互 ───────────────────────────────────────────────────────── */
 
+  /** 从列表里选一个节点：和点击画布等价，另外把镜头转过去。 */
+  const pickNode = useCallback((node: LegionNode) => {
+    setSelected(node.id);
+    setFocus(null);
+    if (node.kind !== 'core') {
+      let delta = node.angle - viewRef.current.yaw;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      yawTarget.current = viewRef.current.yaw + delta;
+    }
+    lastInteract.current = performance.now();
+  }, []);
+
   const resetView = useCallback(() => {
     yawTarget.current = null;
     viewRef.current = { ...DEFAULT_VIEW };
@@ -1180,6 +1195,16 @@ export default function Legion3DPage() {
         >
           {exporting ? '导出中…' : '导出 PNG'}
         </button>
+        <button
+          type="button"
+          onClick={() => setListOpen(v => !v)}
+          aria-expanded={listOpen}
+          aria-controls="legion-3d-node-list"
+          data-testid="legion-3d-list-toggle"
+          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+        >
+          {listOpen ? '收起列表' : '节点列表'}
+        </button>
         <Link
           href="/legion"
           className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
@@ -1192,6 +1217,40 @@ export default function Legion3DPage() {
       {exportError && (
         <div className="absolute left-1/2 top-16 -translate-x-1/2 rounded-lg bg-[var(--danger)]/12 px-3 py-1.5 text-xs text-[var(--danger)]">
           导出失败：{exportError}
+        </div>
+      )}
+
+      {/* 键盘/读屏的节点列表：canvas 不可 Tab，靠这张列表选节点 */}
+      {listOpen && (
+        <div
+          id="legion-3d-node-list"
+          role="listbox"
+          aria-label="军团节点（方向键/Tab 浏览，回车选中）"
+          data-testid="legion-3d-node-list"
+          className="absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28"
+        >
+          {layout.nodes
+            .filter(n => n.kind === 'core' || n.kind === 'group' || (n.kind === 'person' && layout.stats.people <= 120))
+            .map(n => (
+              <button
+                key={n.id}
+                type="button"
+                role="option"
+                aria-selected={selected === n.id}
+                onClick={() => pickNode(n)}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors ${
+                  selected === n.id
+                    ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                    : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
+                }`}
+              >
+                <span className="w-8 shrink-0 text-[10px] text-[var(--fg-dim)]">{KIND_LABEL[n.kind]}</span>
+                <span className="truncate">{n.label}</span>
+              </button>
+            ))}
+          {layout.nodes.some(n => n.kind === 'agent') && layout.stats.people > 120 && (
+            <p className="px-2 py-1 text-[10px] text-[var(--fg-dim)]">成员过多，列表只列部门与核心；成员/Agent 请用搜索或点画布。</p>
+          )}
         </div>
       )}
 
