@@ -21,6 +21,23 @@ export interface OrgPersonLike {
   agents: { node_id: string; alias: string }[];
 }
 
+/**
+ * 组织列表的搜索过滤（纯函数）。
+ *
+ * 为什么单独抽：`buildOrgGroups` 只负责建树，搜索必须在建树前把人员筛掉 ——
+ * 之前页面把 `q` 传给了 `buildOrgGroups` 的 `hideEmpty`，人根本没被过滤，
+ * 「搜成员42 仍然显示 100 人」的 bug 就是这么来的。抽出来才有单测钉住。
+ */
+export function filterOrgPeople<T extends OrgPersonLike>(people: T[], query: string): T[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return people;
+  return people.filter(p =>
+    `${p.display_name ?? ''} ${p.username} ${(p.agents ?? []).map(a => a.alias).join(' ')}`
+      .toLowerCase()
+      .includes(q),
+  );
+}
+
 export interface OrgDeptInput {
   id: string;
   name: string;

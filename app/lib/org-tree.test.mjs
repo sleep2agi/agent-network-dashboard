@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { buildOrgGroups, UNASSIGNED_GROUP } from './org-tree';
+import { buildOrgGroups, filterOrgPeople, UNASSIGNED_GROUP } from './org-tree';
 
 const person = (over = {}) => ({
   user_id: 'u1', username: 'vansin', display_name: 'Vincent', role: 'owner',
@@ -102,5 +102,19 @@ describe('#1636 /org 树形分组 — 真部门树与扁平回退共用一套输
     const b = buildOrgGroups({ departments: [...departments].reverse(), people: [...people].reverse() });
     expect(b.groups.map(g => g.name)).toEqual(a.groups.map(g => g.name));
     expect(b.groups.map(g => g.people.map(p => p.user_id))).toEqual(a.groups.map(g => g.people.map(p => p.user_id)));
+  });
+
+  test('filterOrgPeople：姓名 / 用户名 / 名下 Agent 别名都能搜，空查询返回全部', () => {
+    const people = [
+      { user_id: 'u1', username: 'vincent', display_name: '文森特', role: 'owner', department: { id: 'd1', name: '平台' }, agents: [{ node_id: 'n1', alias: '通信Dash欧' }] },
+      { user_id: 'u2', username: 'lin', display_name: '林工', role: 'member', department: { id: 'd2', name: '客户端' }, agents: [{ node_id: 'n2', alias: '客户端欧' }] },
+      { user_id: 'u3', username: 'zhao', display_name: '赵工', role: 'member', department: null, agents: [] },
+    ];
+    expect(filterOrgPeople(people, '')).toHaveLength(3);
+    expect(filterOrgPeople(people, '   ')).toHaveLength(3);          // 纯空格 = 不过滤
+    expect(filterOrgPeople(people, '林').map(p => p.user_id)).toEqual(['u2']);
+    expect(filterOrgPeople(people, 'VINCENT').map(p => p.user_id)).toEqual(['u1']); // 大小写不敏感
+    expect(filterOrgPeople(people, '客户端欧').map(p => p.user_id)).toEqual(['u2']); // 按 Agent 别名
+    expect(filterOrgPeople(people, '不存在')).toHaveLength(0);
   });
 });

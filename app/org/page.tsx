@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
-import { buildOrgGroups, type OrgGroup, type OrgDeptInput, type OrgMemberInput } from '../lib/org-tree';
+import { buildOrgGroups, filterOrgPeople, type OrgGroup, type OrgDeptInput, type OrgMemberInput } from '../lib/org-tree';
 import { buildAliasUserMap, buildUserDeptMap, collectDeptSubtree, taskInDept } from '../lib/dept-task-filter';
 
 /**
@@ -257,19 +257,11 @@ function OrgContent() {
     return counts;
   }, [people, org, tasksForCount]);
   const tree = useMemo(() => {
-    const ql = q.trim().toLowerCase();
     // 搜索是找人的：按 姓名 / 用户名 / 名下 Agent 别名 过滤，再建树。
-    // 之前只传了 hideEmpty，人根本没被过滤 —— 搜「成员42」还是显示 100 人。
-    const visible = ql
-      ? people.filter(p =>
-          `${p.display_name ?? ''} ${p.username} ${(p.agents ?? []).map(a => a.alias).join(' ')}`
-            .toLowerCase()
-            .includes(ql),
-        )
-      : people;
+    const visible = filterOrgPeople(people, q);
     return buildOrgGroups(
       { people: visible, departments: org?.departments, members: org?.members },
-      { hideEmpty: ql.length > 0 },
+      { hideEmpty: q.trim().length > 0 },
     );
   }, [people, org, q]);
   const deptCount = useMemo(() => {
