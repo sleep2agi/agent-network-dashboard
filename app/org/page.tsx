@@ -41,8 +41,13 @@ interface DirectoryResponse {
 
 const PAGE = 50;
 
-function GroupSection({ group, depth, counts, focusName }: { group: OrgGroup; depth: number; counts: Map<string, number>; focusName?: string }) {
+function GroupSection({ group, depth, counts, focusName, expandAll }: { group: OrgGroup; depth: number; counts: Map<string, number>; focusName?: string; expandAll?: boolean }) {
   const focused = !!focusName && group.name === focusName;
+  // 100 人的网络里，所有成员内联展开会让整页拉得很长。
+  // 默认：≤8 人展开；更大的部门折叠（100 人 / 8 部门时整页能短一半以上）；
+  // 搜索时（expandAll）全展开，避免「搜到了但看不到」。
+  const [open, setOpen] = useState(group.totalPeople <= 8);
+  const isOpen = expandAll || open;
   // 有真实部门树时按 id 命中；老 Hub 回退成扁平分组（id 是合成的）时按部门名命中。
   const taskCount = counts.get(group.id.replace(/^dept:/, '')) ?? counts.get(group.name);
   return (
@@ -61,9 +66,16 @@ function GroupSection({ group, depth, counts, focusName }: { group: OrgGroup; de
             负责人 {group.leader}
           </span>
         )}
-        <span className="text-[11px] text-[var(--fg-muted)]">
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          aria-expanded={isOpen}
+          aria-label={`${isOpen ? '收起' : '展开'} ${group.name} 的成员`}
+          className="inline-flex items-center gap-1 rounded px-1 py-0.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+        >
+          <span aria-hidden className={`inline-block transition-transform ${isOpen ? 'rotate-90' : ''}`}>▸</span>
           {group.totalPeople} 人 · {group.totalAgents} Agent
-        </span>
+        </button>
         <Link
           href={`/legion?focus=${encodeURIComponent(group.name)}`}
           title="在军团图里看这个部门"
@@ -84,7 +96,7 @@ function GroupSection({ group, depth, counts, focusName }: { group: OrgGroup; de
         ) : null}
       </div>
 
-      {group.people.length > 0 && (
+      {isOpen && group.people.length > 0 && (
         <ul>
           {group.people.map(person => (
             <li
@@ -121,7 +133,7 @@ function GroupSection({ group, depth, counts, focusName }: { group: OrgGroup; de
       {group.children.length > 0 && (
         <ul className="border-l border-[var(--border)]" style={{ marginLeft: `${20 + depth * 16}px` }}>
           {group.children.map(child => (
-            <GroupSection key={child.id} group={child} depth={depth + 1} counts={counts} focusName={focusName} />
+            <GroupSection key={child.id} group={child} depth={depth + 1} counts={counts} focusName={focusName} expandAll={expandAll} />
           ))}
         </ul>
       )}
@@ -244,13 +256,22 @@ function OrgContent() {
     }
     return counts;
   }, [people, org, tasksForCount]);
-  const tree = useMemo(
-    () => buildOrgGroups(
-      { people, departments: org?.departments, members: org?.members },
-      { hideEmpty: q.trim().length > 0 },
-    ),
-    [people, org, q],
-  );
+  const tree = useMemo(() => {
+    const ql = q.trim().toLowerCase();
+    // 搜索是找人的：按 姓名 / 用户名 / 名下 Agent 别名 过滤，再建树。
+    // 之前只传了 hideEmpty，人根本没被过滤 —— 搜「成员42」还是显示 100 人。
+    const visible = ql
+      ? people.filter(p =>
+          `${p.display_name ?? ''} ${p.username} ${(p.agents ?? []).map(a => a.alias).join(' ')}`
+            .toLowerCase()
+            .includes(ql),
+        )
+      : people;
+    return buildOrgGroups(
+      { people: visible, departments: org?.departments, members: org?.members },
+      { hideEmpty: ql.length > 0 },
+    );
+  }, [people, org, q]);
   const deptCount = useMemo(() => {
     const count = (groups: OrgGroup[]): number =>
       groups.reduce((n, g) => n + 1 + count(g.children), 0);
@@ -345,7 +366,7 @@ function OrgContent() {
           <>
             <ul className="overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
               {tree.groups.map(group => (
-                <GroupSection key={group.id} group={group} depth={0} counts={deptTaskCounts} focusName={focusName} />
+                <GroupSection key={group.id} group={group} depth={0} counts={deptTaskCounts} focusName={focusName} expandAll={!!q} />
               ))}
             </ul>
 
