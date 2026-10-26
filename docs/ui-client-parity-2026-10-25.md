@@ -97,3 +97,41 @@ Owner 指令：Dashboard 的**审美与功能**都要向客户端对齐，另外
    叶子部门 = 0.5 环），人数仍按子树加权；扁平数据走现有 path，等价于 depth=1。
 3. `/org` 列表按树缩进，负责人徽章、成员数用 `totalMembers` 语义（含下级）。
 4. 部门群 / 按部门任务 / 语音输入单独立卡，等 Hub 接口确认后再接。
+
+---
+
+## 七、三态普查（2026-10-26，`28f54c5`）
+
+写报告前先查了「读失败时页面说什么」。结论不是「某些页面缺 loading」，
+而是**一个共享 SWR key 的吞错污染了全站**：
+
+`/api/hub/status` 同时被 `useSessions()`（页面）和 `Sidebar` 注册。
+Sidebar 的 `statusFetcher` 在非 2xx 时返回 `{ sessions: [] }`；SWR 按 key
+去重，Sidebar 先解析出的「空」写进全局缓存，于是所有页面拿到的都是**空数组
+而不是 error**，空态文案就把「Hub 读不到」说成「本来就没有」：
+
+| 页面 | 读失败时的旧文案 | 实际含义 |
+| --- | --- | --- |
+| `/nodes` | 「Run this in a fresh terminal to register an agent…」 | 不是新装，是没读到 |
+| `/versions` | 「在线 0 / 落后 0」（且画成统计卡） | 不是全对齐，是没读到 |
+| `/tasks` | 「Tasks will appear here when agents send them」 | 不是没任务，是没读到 |
+| `/messages` | 空态（`useMessages` 连 error 都没解构） | 不是没消息，是没读到 |
+
+修法分三层（都在同一个提交里）：
+
+1. **吞错源头**：`Sidebar.statusFetcher` 非 2xx 抛错（401 仍跳登录）；
+   `useSessions` 的共享 `fetcher` 对 `!res.ok` 抛错。
+2. **代理层状态码**：`/api/hub/status`、`/api/hub/messages` 上游非 2xx 不再
+   包成 200；`/api/hub/tasks` 的 `/api/completions` 回退也失败时返回 502，
+   而不是 `{ ok: true, tasks: [] }`。
+3. **页面三态互斥**：四页只在「真·空且没报错」时渲染空态；读失败给错误卡 +
+   重试；已有陈旧数据时给一条「下面是上一次读到的」。`/versions` 读失败时
+   不画 0/0 统计。
+
+验收用 stub Hub 独立制造 500：四页均出现错误卡、无空态引导；切回 200 后四页
+正常且无错误文案。契约写在 `app/lib/hub-error-propagation.test.mjs`（4 条），
+因为这类问题发生在 SWR 缓存去重之前，e2e 很难稳定复现。
+
+**仍未覆盖**：其余约 40 条 `/api/hub/*` 代理仍把上游失败包成 200 的部分路径
+（如 `/api/hub/nodes`、`/api/hub/audit-log` 有 graceful fallback）。它们各自的
+页面目前不把结果当权威数据用，暂不动；等下次碰到具体页面再逐条收。
