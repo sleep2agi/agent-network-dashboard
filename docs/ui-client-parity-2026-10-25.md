@@ -186,3 +186,20 @@ Sidebar 的 `statusFetcher` 在非 2xx 时返回 `{ sessions: [] }`；SWR 按 ke
 `16px 16px 6px`；`/node` 的 Node Info / Send Task 卡片 `border=0px`、
 底色 `rgb(22,22,24)`；两宽度横向溢出均 0px。
 
+## 十、首页 KPI 与定时任务（2026-10-26，`deefe2c`）
+
+| 位置 | 改法 | 备注 |
+| --- | --- | --- |
+| 首页 KPI 卡（`.anet-stat-card`） | `border-[#26262b]` → `border-transparent`，底色 `--bg-secondary` | 保留 1px solid，否则浅色/薄荷主题的 2px 顶部色条规则会失效 |
+| 首页状态条 | 去硬编码描边，底色 token 化 | |
+| 首页 Agent 过滤 chips | 描边胶囊 → 选中淡青底 / 未选悬停底色 | |
+| `/scheduled-tasks` 表单卡与计划卡 | 去描边，改用 `--bg-secondary` 分层 | 空态从虚线框改实底块 |
+| 计划操作按钮（编辑/暂停/立即执行/记录/取消） | 五条描边 → 文字按钮 + 悬停底色 | 危险/主操作仍靠颜色区分 |
+
+表单输入框与告警条保留描边 —— 输入可辨性与错误语义需要边界。
+
+`color-ratchet` 继续收紧：354 → **349**。
+验证：1280/375 下 KPI 卡 `border-top-color = rgba(0,0,0,0)`、`border-width 1px`、
+底色 `rgb(22,22,24)`；`/scheduled-tasks` 仅剩告警条一处描边；
+首页 / 定时任务 / 版本三页横向溢出 0px，无 pageerror。
+
