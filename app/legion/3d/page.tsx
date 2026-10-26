@@ -743,7 +743,10 @@ export default function Legion3DPage() {
             px: p.x,
             py: p.y,
             r: radiusPx,
-            alpha: Math.min(1, alpha + 0.15),
+            // 标签的深度淡出比节点保守，并且有下限 0.8：11px 文字掉到 0.45 时
+            // 对底色的有效对比度会跌破 4.5:1（实测深底 3.67、浅底 3.14）。
+            // 被主动淡出的节点（dim）保持 0.35，那是「这不属于当前筛选」的语义。
+            alpha: dim ? 0.35 : Math.max(0.8, 1 - depthT * 0.35),
             dim: !!dim,
             priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : node.kind === 'group' ? 2 : 3,
           });
@@ -794,7 +797,7 @@ export default function Legion3DPage() {
             ctx.fill();
           }
           ctx.globalAlpha = item.alpha;
-          ctx.fillStyle = item.dim ? tk.dim : tk.fg;
+          ctx.fillStyle = tk.fg;
           ctx.fillText(item.text, spot.x, spot.y);
         }
         ctx.globalAlpha = 1;

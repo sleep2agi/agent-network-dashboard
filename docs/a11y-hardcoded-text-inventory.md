@@ -52,3 +52,18 @@ node scripts/check-accent-text-ratchet.mjs --update   # 改少了以后收紧基
 优先覆盖「会被 a11y:contrast 扫到的页面」：`/messages`、`/node`、`/`；
 其次 `/login`（未登录用户的第一屏）；`TaskChatPanel` / `TopoGraph` 属于
 共享组件，等各自 owner 排期一起做，不在本节点单方面改。
+
+## 固定深色屏白名单
+
+`check-accent-text-ratchet.mjs` 里有一个 `EXEMPT` 集合，目前只有 `app/login/page.tsx`。
+加白名单不是「懒得改」，必须同时满足三条：
+
+1. 这个屏**不跟随主题**（背景、卡片、文字全写死，切到浅色主题也不会变）；
+2. 写死色是**品牌标记/装饰**（SVG 图标、logo），不是需要阅读的正文；
+3. 在文件里写明「为什么这里写死是有意的」，防止下一个人当 bug 修。
+
+反例（不要豁免）：`/messages` 里的类型徽章、`/node` 的 tab 选中态 —— 它们
+跟随主题，浅色下必须换色，这种就该迁移成 token。
+
+新增白名单时同时更新本清单，并在 PR 描述里写一句「为什么它不跟随主题」。
+
