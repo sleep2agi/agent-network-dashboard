@@ -24,6 +24,7 @@ import {
   collectDeptSubtree,
   deptOptions,
   filterTasksByDept,
+  filterUnassignedTasks,
 } from '../lib/dept-task-filter';
 import type { LegionDepartment, LegionPerson } from '../lib/legion-layout';
 
@@ -199,8 +200,15 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     () => filterTasksByDept(tasks, deptAliasUser, deptUserDept, deptIds),
     [tasks, deptAliasUser, deptUserDept, deptIds],
   );
+  // 「未归属」不是一个部门：所有参与者都落不到部门才算。单独给一个选项，
+  // 否则这些任务在任何部门筛选下都人间蒸发。
+  const UNASSIGNED = '__unassigned__';
+  const unassignedTasks = useMemo(
+    () => filterUnassignedTasks(tasks, deptAliasUser, deptUserDept),
+    [tasks, deptAliasUser, deptUserDept],
+  );
 
-  const tasksScoped = deptIds.size > 0 ? deptScopedTasks : tasks;
+  const tasksScoped = filterDept === UNASSIGNED ? unassignedTasks : deptIds.size > 0 ? deptScopedTasks : tasks;
   const counts: Record<string, number> = {};
   tasksScoped.forEach((t) => {
     counts[t.status] = (counts[t.status] || 0) + 1;
@@ -319,6 +327,9 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                       {deptChoices.map(d => (
                         <option key={d.id} value={d.id}>{`${'　'.repeat(d.depth)}${d.name}`}</option>
                       ))}
+                      {unassignedTasks.length > 0 && (
+                        <option value={UNASSIGNED}>未归属（{unassignedTasks.length}）</option>
+                      )}
                     </select>
                   </div>
                 )}
@@ -340,7 +351,9 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 
               {filterDept && (
                 <p className="mb-2 text-[10px] leading-snug text-[var(--fg-dim)]" data-testid="tasks-dept-scope">
-                  按「成员名下 Agent」归属部门筛选，命中数为当前这 {tasks.length} 条任务里的投影结果，不是部门全量。
+                  {filterDept === UNASSIGNED
+                    ? `「未归属」= 参与者都不在通讯录或没有部门；命中数为当前这 ${tasks.length} 条任务里的投影结果。`
+                    : `按「成员名下 Agent」归属部门筛选，命中数为当前这 ${tasks.length} 条任务里的投影结果，不是部门全量。`}
                 </p>
               )}
 
@@ -391,8 +404,10 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               <EmptyState
                 variant="tasks"
                 sub={
-                  filterDept
-                    ? '这个部门在当前这批任务里没有记录。部门筛选是通讯录投影，换一页或清空筛选再看。'
+                  filterDept === UNASSIGNED
+                    ? '这批任务里的参与者都能落到部门，没有未归属的任务。'
+                    : filterDept
+                      ? '这个部门在当前这批任务里没有记录。部门筛选是通讯录投影，换一页或清空筛选再看。'
                     : filterStatus || filterFrom || filterTo
                       ? 'No tasks match the current filters. Try clearing them.'
                       : 'Tasks will appear here when agents send them via CommHub.'

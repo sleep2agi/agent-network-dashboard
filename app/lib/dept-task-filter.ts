@@ -96,6 +96,32 @@ export function taskInDept<T extends TaskLike>(
   return false;
 }
 
+/** 「未归属」任务：所有参与者都落不到任何部门（别名不在通讯录，或人在
+ *  通讯录里但没分配部门）。筛这个分组是为了让「没部门」的任务不至于
+ *  在任何筛选下都人间蒸发。 */
+export function taskUnassigned(
+  task: TaskLike,
+  aliasUser: Map<string, string>,
+  userDept: Map<string, string>,
+): boolean {
+  const aliases = [task.from_name, task.to_name, task.from_alias, task.to_alias].filter(Boolean) as string[];
+  if (aliases.length === 0) return false;
+  for (const alias of aliases) {
+    const user = aliasUser.get(alias);
+    if (!user) continue;
+    if (userDept.has(user)) return false; // 只要有一个参与者有部门，就不算未归属
+  }
+  return true;
+}
+
+export function filterUnassignedTasks<T extends TaskLike>(
+  tasks: T[],
+  aliasUser: Map<string, string>,
+  userDept: Map<string, string>,
+): T[] {
+  return tasks.filter(t => taskUnassigned(t, aliasUser, userDept));
+}
+
 export function filterTasksByDept<T extends TaskLike>(
   tasks: T[],
   aliasUser: Map<string, string>,

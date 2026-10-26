@@ -5,6 +5,8 @@ import {
   collectDeptSubtree,
   deptOptions,
   filterTasksByDept,
+  filterUnassignedTasks,
+  taskUnassigned,
   taskInDept,
 } from './dept-task-filter';
 
@@ -83,5 +85,19 @@ describe('#部门任务投影 — alias→人→部门，子部门要一起算',
     const flat = deptOptions(null, people, null);
     expect(flat.map(o => o.id).sort()).toEqual(['d1', 'd2']);
     expect(flat.every(o => o.depth === 0)).toBe(true);
+  });
+
+  test('未归属：只有所有参与者都落不到部门时才算，未知 alias 也算未归属', () => {
+    const aliasUser = buildAliasUserMap(people);
+    const userDept = buildUserDeptMap(people, null);
+    expect(taskUnassigned({ from_name: '外部', to_name: '外部2' }, aliasUser, userDept)).toBe(true);
+    expect(taskUnassigned({ from_name: '通信欧', to_name: '外部' }, aliasUser, userDept)).toBe(false);
+    // 一行表单都缺时不当成未归属（没信息 ≠ 未分配）
+    expect(taskUnassigned({ from_name: null, to_name: null }, aliasUser, userDept)).toBe(false);
+    const tasks = [
+      { task_id: 't1', from_name: '通信欧', to_name: '外部' },
+      { task_id: 't2', from_name: '外部', to_name: '外部2' },
+    ];
+    expect(filterUnassignedTasks(tasks, aliasUser, userDept).map(x => x.task_id)).toEqual(['t2']);
   });
 });
