@@ -29,6 +29,16 @@ describe('部门任务筛选必须标明投影口径', () => {
     expect(view).toContain('<TaskList tasks={tasksScoped}');
   });
 
+  test('/org 的部门任务徽标走同一套投影口径，并带 ?department= 深链', () => {
+    const org = read('app/org/page.tsx');
+    expect(org).toContain('org-dept-task-link');
+    expect(org).toContain("from '../lib/dept-task-filter'");
+    expect(org).toContain('taskInDept');
+    expect(org).toContain('/tasks?department=');
+    // 扁平回退（老 Hub 没有部门树）要能按部门名对上号
+    expect(org).toMatch(/counts\.get\(group\.name\)/);
+  });
+
   test('口径说明与「这批任务里没有」的空态都在，不能冒充部门全量', () => {
     expect(view).toContain('data-testid="tasks-dept-scope"');
     expect(view).toMatch(/投影结果，不是部门全量/);

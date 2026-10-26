@@ -183,6 +183,7 @@ export default function Legion3DPage() {
   const spinRef = useRef(true);
   const selectedRef = useRef<string | null>(null);
   const lastInteract = useRef(0);
+  const yawTarget = useRef<number | null>(null);
   const dragRef = useRef<{ x: number; y: number; yaw: number; pitch: number; moved: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ span: number; dist: number } | null>(null);
@@ -404,7 +405,15 @@ export default function Legion3DPage() {
       const view = viewRef.current;
       const dt = Math.min(0.05, (now - lastFrame) / 1000);
       lastFrame = now;
-      if (spinRef.current && now - lastInteract.current > IDLE_BEFORE_SPIN) {
+      if (yawTarget.current !== null) {
+        const diff = yawTarget.current - view.yaw;
+        if (Math.abs(diff) < 0.01) {
+          view.yaw = yawTarget.current;
+          yawTarget.current = null;
+        } else {
+          view.yaw += diff * Math.min(1, dt * 4.5);
+        }
+      } else if (spinRef.current && now - lastInteract.current > IDLE_BEFORE_SPIN) {
         view.yaw += SPIN_RAD_PER_SEC * dt;
       }
       // 小屏用更长的焦距把图放大：375 宽时 min(w,h) 只有 375，
@@ -796,12 +805,14 @@ export default function Legion3DPage() {
   /* ── 交互 ───────────────────────────────────────────────────────── */
 
   const resetView = useCallback(() => {
+    yawTarget.current = null;
     viewRef.current = { ...DEFAULT_VIEW };
     lastInteract.current = performance.now();
   }, []);
 
   const onPointerDown = (e: React.PointerEvent) => {
     const target = e.currentTarget as HTMLElement;
+    yawTarget.current = null; // 手动拖动优先，打断自动对准
     target.setPointerCapture?.(e.pointerId);
     pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lastInteract.current = performance.now();
@@ -891,6 +902,7 @@ export default function Legion3DPage() {
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     lastInteract.current = performance.now();
+    yawTarget.current = null;
     const v = viewRef.current;
     switch (e.key) {
       case 'ArrowLeft': e.preventDefault(); v.yaw -= 0.12; break;
@@ -1063,7 +1075,7 @@ export default function Legion3DPage() {
         {focus && (
           <button
             type="button"
-            onClick={() => setFocus(null)}
+            onClick={() => { setFocus(null); yawTarget.current = null; }}
             className="pointer-events-auto mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--accent)]/12 px-3 py-1 text-[11px] text-[var(--accent)]"
           >
             聚焦：{layout.nodes.find(n => n.id === focus)?.label ?? '部门'}
@@ -1196,7 +1208,20 @@ export default function Legion3DPage() {
           {selectedNode.kind === 'group' && (
             <button
               type="button"
-              onClick={() => setFocus(f => (f === selectedNode.id ? null : selectedNode.id))}
+              onClick={() => {
+                const next = focus === selectedNode.id ? null : selectedNode.id;
+                setFocus(next);
+                // 聚焦时把镜头转到该部门所在的扇区（yaw = 节点角度，最短路径）。
+                if (next) {
+                  const target = selectedNode.angle;
+                  let delta = target - viewRef.current.yaw;
+                  while (delta > Math.PI) delta -= Math.PI * 2;
+                  while (delta < -Math.PI) delta += Math.PI * 2;
+                  yawTarget.current = viewRef.current.yaw + delta;
+                } else {
+                  yawTarget.current = null;
+                }
+              }}
               className="mt-2 mr-3 rounded-md px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
               {focus === selectedNode.id ? '取消聚焦' : '聚焦此部门'}

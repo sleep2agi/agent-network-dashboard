@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
 import { buildOrgGroups, type OrgGroup, type OrgDeptInput, type OrgMemberInput } from '../lib/org-tree';
+import { buildAliasUserMap, buildUserDeptMap, collectDeptSubtree, taskInDept } from '../lib/dept-task-filter';
 
 /**
  * Organization — #1635 / #1636（只读）。
@@ -40,7 +41,9 @@ interface DirectoryResponse {
 
 const PAGE = 50;
 
-function GroupSection({ group, depth }: { group: OrgGroup; depth: number }) {
+function GroupSection({ group, depth, counts }: { group: OrgGroup; depth: number; counts: Map<string, number> }) {
+  // 有真实部门树时按 id 命中；老 Hub 回退成扁平分组（id 是合成的）时按部门名命中。
+  const taskCount = counts.get(group.id.replace(/^dept:/, '')) ?? counts.get(group.name);
   return (
     <li>
       <div
@@ -56,6 +59,16 @@ function GroupSection({ group, depth }: { group: OrgGroup; depth: number }) {
         <span className="text-[11px] text-[var(--fg-muted)]">
           {group.totalPeople} 人 · {group.totalAgents} Agent
         </span>
+        {taskCount ? (
+          <Link
+            href={`/tasks?department=${encodeURIComponent(group.id.replace(/^dept:/, ''))}`}
+            data-testid="org-dept-task-link"
+            title="到任务页按这个部门筛选（通讯录投影口径）"
+            className="rounded-full bg-[var(--accent)]/12 px-1.5 py-0.5 text-[10px] text-[var(--accent)] hover:bg-[var(--accent)]/25"
+          >
+            {taskCount} 条任务 →
+          </Link>
+        ) : null}
       </div>
 
       {group.people.length > 0 && (
@@ -95,7 +108,7 @@ function GroupSection({ group, depth }: { group: OrgGroup; depth: number }) {
       {group.children.length > 0 && (
         <ul className="border-l border-[var(--border)]" style={{ marginLeft: `${20 + depth * 16}px` }}>
           {group.children.map(child => (
-            <GroupSection key={child.id} group={child} depth={depth + 1} />
+            <GroupSection key={child.id} group={child} depth={depth + 1} counts={counts} />
           ))}
         </ul>
       )}
@@ -172,6 +185,50 @@ function OrgContent() {
 
   const withoutOwner = data?.agents_without_owner ?? [];
   const people = data?.people ?? [];
+
+  // 任务数徽标：只取一页任务（limit 100），和 /tasks 的部门筛选同口径 ——
+  // 是「当前这批任务里的命中数」，不是部门全量，标题里写明。
+  const [tasksForCount, setTasksForCount] = useState<Array<{ from_name?: string; to_name?: string; from_alias?: string; to_alias?: string }>>([]);
+  useEffect(() => {
+    let alive = true;
+    const load = () => {
+      void fetch('/api/hub/tasks?limit=100', { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : null))
+        .then(json => { if (alive && json?.tasks) setTasksForCount(json.tasks); })
+        .catch(() => { /* 任务读不到就不显示徽标，不影响组织树 */ });
+    };
+    load();
+    const t = setInterval(load, 20000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  const deptTaskCounts = useMemo(() => {
+    const aliasUser = buildAliasUserMap(people);
+    const userDept = buildUserDeptMap(people, org?.members ?? null);
+    const counts = new Map<string, number>();
+    for (const dept of org?.departments ?? []) {
+      const subtree = collectDeptSubtree(org?.departments, dept.id);
+      const n = tasksForCount.filter(t => taskInDept(t, aliasUser, userDept, subtree)).length;
+      if (n > 0) counts.set(dept.id, n);
+    }
+    // 扁平回退：没有部门树时 group.id 是合成的，只能按部门名对上号。
+    if (!org?.departments?.length) {
+      const aliasDeptName = new Map<string, string>();
+      for (const person of people) {
+        const name = person.department?.name;
+        if (!name) continue;
+        for (const agent of person.agents ?? []) aliasDeptName.set(agent.alias, name);
+      }
+      const byName = new Map<string, number>();
+      for (const t of tasksForCount) {
+        const names = new Set([aliasDeptName.get(t.from_name ?? ''), aliasDeptName.get(t.from_alias ?? ''), aliasDeptName.get(t.to_name ?? ''), aliasDeptName.get(t.to_alias ?? '')]);
+        names.delete(undefined);
+        for (const name of names) if (name) byName.set(name, (byName.get(name) ?? 0) + 1);
+      }
+      return byName;
+    }
+    return counts;
+  }, [people, org, tasksForCount]);
   const tree = useMemo(
     () => buildOrgGroups(
       { people, departments: org?.departments, members: org?.members },
@@ -273,7 +330,7 @@ function OrgContent() {
           <>
             <ul className="overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
               {tree.groups.map(group => (
-                <GroupSection key={group.id} group={group} depth={0} />
+                <GroupSection key={group.id} group={group} depth={0} counts={deptTaskCounts} />
               ))}
             </ul>
 
