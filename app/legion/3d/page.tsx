@@ -299,6 +299,8 @@ export default function Legion3DPage() {
 
   // 搜索优先于聚焦/选中：正在找东西时，别让其它高亮盖掉命中结果。
   const activeSet = matchedSet ?? related ?? focusSet;
+  // 只做部门聚焦（没有选中/搜索）时，把其余部门扇区再压低一档。
+  const focusingDept = !!focusSet && !related && !matchedSet;
   const noMatch = matchedSet !== null && matchedSet.size === 0;
 
   const ringRadii = useMemo(() => layout.rings.map(r => ({ ring: r.ring, radius: r.radius })), [layout.rings]);
@@ -477,9 +479,10 @@ export default function Legion3DPage() {
         for (let i = inner.length - 1; i >= 0; i--) ctx.lineTo(inner[i].x, inner[i].y);
         ctx.closePath();
         ctx.fillStyle = lit ? tk.accent : tk.info;
-        ctx.globalAlpha = activeSet ? (lit ? 0.22 : 0.04) : 0.085;
+        const dimAlpha = focusingDept ? 0.015 : 0.04;
+        ctx.globalAlpha = activeSet ? (lit ? (focusingDept ? 0.26 : 0.22) : dimAlpha) : 0.085;
         ctx.fill();
-        ctx.globalAlpha = activeSet ? (lit ? 0.5 : 0.08) : 0.22;
+        ctx.globalAlpha = activeSet ? (lit ? (focusingDept ? 0.55 : 0.5) : (focusingDept ? 0.03 : 0.08)) : 0.22;
         ctx.strokeStyle = lit ? tk.accent : tk.info;
         ctx.lineWidth = 1;
         ctx.stroke();
