@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { buildLegionLayout, type LegionNode } from '../../lib/legion-layout';
+import { buildLegionLayout, nearestDept, type LegionNode } from '../../lib/legion-layout';
 import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { EmptyState } from '../../components/EmptyState';
@@ -853,14 +853,10 @@ export default function Legion3DPage() {
   /* ── 交互 ───────────────────────────────────────────────────────── */
 
   /** 选中节点最近的祖先部门（Agent/成员 → 其所属部门）。 */
-  const ancestorDept = useMemo(() => {
-    if (!selectedNode) return null;
-    const byId = new Map(layout.nodes.map(n => [n.id, n]));
-    for (let cur = selectedNode.parentId ? byId.get(selectedNode.parentId) : null; cur; cur = cur.parentId ? byId.get(cur.parentId) : null) {
-      if (cur.kind === 'group') return cur;
-    }
-    return null;
-  }, [layout.nodes, selectedNode]);
+  const ancestorDept = useMemo(
+    () => (selectedNode ? nearestDept(selectedNode.id, layout.nodes) : null),
+    [layout.nodes, selectedNode],
+  );
 
   /** 从列表里选一个节点：和点击画布等价，另外把镜头转过去。 */
   const pickNode = useCallback((node: LegionNode) => {
@@ -1035,7 +1031,13 @@ export default function Legion3DPage() {
         }
         break;
       }
-      case '?': e.preventDefault(); setHelpOpen(v => !v); break;
+      case '?':
+        // 全站 HelpOverlay 也绑了 `?`（window keydown）。在军团页上让本页速查表
+        // 优先，否则弹出来的是全局英文快捷键表。
+        e.preventDefault();
+        e.stopPropagation();
+        setHelpOpen(v => !v);
+        break;
       case 'r': case 'R': resetView(); break;
       case 'Escape':
         e.preventDefault();

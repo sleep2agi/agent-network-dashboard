@@ -226,7 +226,13 @@ export default function LegionPage() {
         searchRef.current?.focus();
         return;
       }
-      if (e.key === '?') { e.preventDefault(); setHelpOpen(v => !v); return; }
+      // 全站 HelpOverlay 也绑了 `?`；本页在捕获阶段拦截，优先弹本页速查表。
+      if (e.key === '?') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        setHelpOpen(v => !v);
+        return;
+      }
       // 回车打开选中节点（Agent→节点页，成员/部门→/org）；和 3D 页一致。
       if (e.key === 'Enter' && selected) {
         const node = layout.nodes.find(n => n.id === selected);

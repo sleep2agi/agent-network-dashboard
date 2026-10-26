@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { buildLegionLayout, toPixel, RING_RADIUS, ORPHAN_GROUP, UNGROUPED } from './legion-layout';
+import { buildLegionLayout, toPixel, RING_RADIUS, ORPHAN_GROUP, UNGROUPED, nearestDept } from './legion-layout';
 
 const person = (over = {}) => ({
   user_id: 'u1', username: 'vansin', display_name: 'Vincent', role: 'owner',
@@ -281,5 +281,25 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
     const a = buildLegionLayout({ ...input, collapsed: ['dept:d1', 'dept:d3'] });
     const b = buildLegionLayout({ ...input, collapsed: ['dept:d3', 'dept:d1'] });
     expect(a.nodes.map(n => [n.id, n.angle, n.radius])).toEqual(b.nodes.map(n => [n.id, n.angle, n.radius]));
+  });
+
+  test('nearestDept：Agent/成员能找回真实部门；合成分组返回 null', () => {
+    const layout = buildLegionLayout({
+      people: [
+        person({ user_id: 'u1', display_name: 'A', department: { id: 'd1', name: '平台' }, agents: [agent(1)] }),
+        person({ user_id: 'u2', display_name: 'B', department: null, agents: [agent(2)] }),
+      ],
+      orphans: [{ node_id: 'n_99', alias: '野节点' }],
+    });
+    const dept = layout.nodes.find(n => n.kind === 'group' && n.label === '平台');
+    const agentNode = layout.nodes.find(n => n.kind === 'agent' && n.label === 'agent-1');
+    const ungroupedAgent = layout.nodes.find(n => n.kind === 'agent' && n.label === 'agent-2');
+    const orphanAgent = layout.nodes.find(n => n.kind === 'agent' && n.label === '野节点');
+
+    expect(nearestDept(agentNode.id, layout.nodes)?.id).toBe(dept.id);
+    // 未分组 / 无主 Agent 是合成节点，不是部门
+    expect(nearestDept(ungroupedAgent.id, layout.nodes)).toBeNull();
+    expect(nearestDept(orphanAgent.id, layout.nodes)).toBeNull();
+    expect(nearestDept('missing', layout.nodes)).toBeNull();
   });
 });

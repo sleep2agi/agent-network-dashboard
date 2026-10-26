@@ -456,3 +456,22 @@ export function toPixel(
     y: size.height / 2 + node.y * radius,
   };
 }
+
+
+/**
+ * 找某个节点最近的**真实**部门祖先（Agent/成员 → 所属部门）。
+ *
+ * 为什么不直接看 parentId：`未分组` 与 `无主 Agent` 是合成分组，它们不是部门；
+ * 对这两个分组下的节点，UI 不该出现「聚焦所在部门」。
+ */
+export function nearestDept(nodeId: string, nodes: LegionNode[]): LegionNode | null {
+  const byId = new Map(nodes.map(n => [n.id, n]));
+  let cur = byId.get(nodeId);
+  if (!cur) return null;
+  for (let parent = cur.parentId ? byId.get(cur.parentId) : null; parent; parent = parent.parentId ? byId.get(parent.parentId) : null) {
+    if (parent.kind !== 'group') continue;
+    if (parent.label === UNGROUPED || parent.label === ORPHAN_GROUP) return null;
+    return parent;
+  }
+  return null;
+}
