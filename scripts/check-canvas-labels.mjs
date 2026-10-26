@@ -74,6 +74,26 @@ for (const theme of THEMES) {
   await page.addInitScript(t => localStorage.setItem('anet-theme', t), theme);
   await page.goto(`${BASE}/legion/3d`, { waitUntil: 'networkidle' }).catch(() => {});
   await page.waitForTimeout(600);
+  // 先做一遍「画布有没有真的画出来」的烟雾断言：上一轮就是把 canvas 尺寸
+  // 初始化 skip 掉，全新页面渲染成 300×150 空白，而 HMR 后的截图看不出来。
+  await page.waitForTimeout(900);
+  const canvasState = await page.evaluate(() => {
+    const c = document.querySelector('canvas');
+    if (!c) return null;
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let bright = 0;
+    for (let i = 0; i < d.length; i += 4 * 29) {
+      if (d[i] + d[i + 1] + d[i + 2] > 300) bright++;
+    }
+    return { w: c.width, h: c.height, cssW: c.clientWidth, bright };
+  });
+  if (!canvasState || canvasState.w <= 300 || canvasState.bright < 50) {
+    failures++;
+    console.error(`✗ ${theme}: 3D 画布没有正常渲染 —— ${JSON.stringify(canvasState)}（期望 width>300 且亮像素≥50）`);
+  } else {
+    console.log(`✓ ${theme}: 画布 ${canvasState.w}×${canvasState.h}（CSS ${canvasState.cssW}px），亮像素 ${canvasState.bright}`);
+  }
+
   const r = await page.evaluate(probe, { alphaFloor: ALPHA_FLOOR });
   const ok = r.contrast >= MIN;
   if (!ok) failures++;

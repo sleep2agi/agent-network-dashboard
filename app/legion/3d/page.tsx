@@ -942,7 +942,11 @@ export default function Legion3DPage() {
   const onDoubleClick = (e: React.MouseEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
-    if (!hit) return;
+    if (!hit) {
+      // 双击空白 = 复位视角（含缩放锚点），省得再去右上角点按钮。
+      resetView();
+      return;
+    }
     const n = hit.item;
     if (n.kind === 'agent') router.push(`/nodes/${encodeURIComponent(n.label)}`);
     else if (n.kind === 'person' || n.kind === 'group') router.push('/org');
