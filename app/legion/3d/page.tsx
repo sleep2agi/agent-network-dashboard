@@ -1387,7 +1387,7 @@ export default function Legion3DPage() {
 
       {/* 大网络提示：节点多时给一条可关掉的建议，不挡图 */}
       {!hintDismissed && layout.nodes.length > 120 && (
-        <div className="pointer-events-auto absolute bottom-16 left-1/2 flex max-w-[94vw] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-[var(--bg-secondary)]/92 px-3 py-0 text-[11px] sm:py-1 text-[var(--fg-muted)] backdrop-blur sm:bottom-6" data-testid="legion-3d-scale-hint">
+        <div className={`pointer-events-auto absolute bottom-16 left-1/2 max-w-[94vw] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-[var(--bg-secondary)]/92 px-3 py-0 text-[11px] sm:py-1 text-[var(--fg-muted)] backdrop-blur sm:bottom-6 sm:flex ${selectedNode ? 'hidden' : 'flex'}`} data-testid="legion-3d-scale-hint">
           <span>规模较大 · {layout.nodes.length} 节点 · 试试搜索或部门聚焦</span>
           <button
             type="button"
