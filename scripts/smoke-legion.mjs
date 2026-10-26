@@ -32,9 +32,21 @@ const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
 
-/* ── 3D ─────────────────────────────────────────────────────────── */
+/* ── 全站：skip link ──────────────────────────────────────────────── */
 await page.goto(`${BASE}/legion/3d`, { waitUntil: 'networkidle' });
-await page.waitForTimeout(2200);
+await page.waitForTimeout(1800);
+await page.evaluate(() => { const el = document.activeElement; if (el && el.blur) el.blur(); });
+await page.keyboard.press('Tab');
+const skipFirst = await page.evaluate(() => document.activeElement?.getAttribute('data-testid'));
+await page.keyboard.press('Enter');
+await page.waitForTimeout(300);
+const skipLanded = await page.evaluate(() => document.activeElement?.id);
+skipFirst === 'skip-to-content' && skipLanded === 'anet-main-content'
+  ? pass('skip link：Tab 一次到主内容', { skipFirst, skipLanded })
+  : fail('skip link：Tab 一次到主内容', { skipFirst, skipLanded });
+
+/* ── 3D ─────────────────────────────────────────────────────────── */
+await page.waitForTimeout(400);
 
 const canvas = await page.evaluate(() => {
   const c = document.querySelector('canvas');
