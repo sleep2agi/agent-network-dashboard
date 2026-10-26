@@ -1377,7 +1377,7 @@ export default function Legion3DPage() {
             if (next) { e.preventDefault(); next.focus(); }
           }}
           data-testid="legion-3d-node-list"
-          className={`absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28 sm:block ${selectedNode ? 'hidden' : 'block'}`}
+          className={`absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28 sm:block ${listOpen ? 'block' : 'hidden'}`}
         >
           {layout.nodes
             // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
@@ -1453,7 +1453,7 @@ export default function Legion3DPage() {
           data-testid="legion-3d-detail"
           role="status"
           aria-live="polite"
-          className="absolute inset-x-3 bottom-3 rounded-xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72"
+          className={`absolute inset-x-3 bottom-3 rounded-xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72 ${listOpen ? 'hidden sm:block' : 'block'}`}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
