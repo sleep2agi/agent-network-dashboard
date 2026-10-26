@@ -166,6 +166,8 @@ export default function Legion3DPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  // 大网络提示条：一次会话里关掉就不再弹（sessionStorage）。
+  const [hintDismissed, setHintDismissed] = useState(false);
   const [spin, setSpin] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -299,6 +301,12 @@ export default function Legion3DPage() {
   const noMatch = matchedSet !== null && matchedSet.size === 0;
 
   const ringRadii = useMemo(() => layout.rings.map(r => ({ ring: r.ring, radius: r.radius })), [layout.rings]);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('legion3d-hint-dismissed') === '1') setHintDismissed(true);
+    } catch { /* 隐私模式下读不到就每次都提示，无害 */ }
+  }, []);
 
   useEffect(() => { spinRef.current = spin; }, [spin]);
   useEffect(() => { selectedRef.current = selected; }, [selected]);
@@ -1107,6 +1115,24 @@ export default function Legion3DPage() {
       {exportError && (
         <div className="absolute left-1/2 top-16 -translate-x-1/2 rounded-lg bg-[var(--danger)]/12 px-3 py-1.5 text-xs text-[var(--danger)]">
           导出失败：{exportError}
+        </div>
+      )}
+
+      {/* 大网络提示：节点多时给一条可关掉的建议，不挡图 */}
+      {!hintDismissed && layout.nodes.length > 120 && (
+        <div className="pointer-events-auto absolute bottom-16 left-1/2 flex max-w-[92vw] -translate-x-1/2 items-center gap-2 rounded-lg bg-[var(--bg-secondary)]/92 px-3 py-1.5 text-[11px] text-[var(--fg-muted)] backdrop-blur sm:bottom-6" data-testid="legion-3d-scale-hint">
+          <span>军团规模较大（{layout.nodes.length} 个节点）· 用搜索或点部门聚焦可缩小范围</span>
+          <button
+            type="button"
+            onClick={() => {
+              setHintDismissed(true);
+              try { sessionStorage.setItem('legion3d-hint-dismissed', '1'); } catch {}
+            }}
+            aria-label="关闭提示"
+            className="shrink-0 rounded px-1 text-[var(--fg-dim)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+          >
+            ✕
+          </button>
         </div>
       )}
 
