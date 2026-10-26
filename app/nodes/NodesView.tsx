@@ -16,7 +16,8 @@ import { useCollapsibleSearch } from '../components/CollapsibleSearch';
 import { NodeList } from '../components/NodeList';
 import { ChatPane } from '../components/ChatPane';
 import type { Session } from '../components/types';
-import { SESSION_STATUS_CHIP_CLASS as STATUS_COLORS } from '../lib/status';
+import { SESSION_STATUS_TEXT_CLASS } from '../lib/status';
+import { SESSION_STATUS_DOT_HEX } from '../lib/status';
 import { useChatUnread } from '../lib/chat-unread';
 import { t } from '../lib/ui-lang';
 
@@ -29,6 +30,20 @@ function shortServer(server: string | null | undefined): string {
 }
 
 type ViewMode = 'list' | 'grid';
+
+/** 节点状态：圆点 + 文字，不再是带边框的彩色胶囊。
+ *  颜色仍来自 status.ts 的单一事实源（working 绿 / blocked 琥珀 / error 红，
+ *  idle 灰），只是把「胶囊壳」去掉——minimal-2026-09 的准绳是胶囊与描边越少越好。 */
+function StatusLabel({ statusKey }: { statusKey: string }) {
+  const dot = SESSION_STATUS_DOT_HEX[statusKey] || SESSION_STATUS_DOT_HEX.offline;
+  const text = SESSION_STATUS_TEXT_CLASS[statusKey] || SESSION_STATUS_TEXT_CLASS.offline;
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-1.5 text-[11px] ${text}`}>
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: dot }} aria-hidden />
+      {statusKey}
+    </span>
+  );
+}
 type SessionRow = Session & { online: boolean };
 
 // #Stage B (dashboard 3-col): /nodes/[alias] URL routing. Next's app-router
@@ -670,7 +685,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                 data-node-alias={s.alias}
                 onClick={() => selectNode(s.alias)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectNode(s.alias); } }}
-                className={`relative min-w-0 max-w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-60' : ''}`}
+                className={`relative min-w-0 max-w-full overflow-hidden rounded-xl bg-[var(--bg-secondary)] p-4 transition-colors hover:bg-[var(--hover-tint)] cursor-pointer ${!s.online ? 'opacity-60' : ''}`}
               >
                 {!s.online && (
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -699,9 +714,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                       <span className="truncate text-base font-semibold text-white">{s.alias}</span>
                       <DraftMark alias={s.alias} />
                       {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">New</span>}
-                      <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] uppercase tracking-wide ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
-                        {statusKey}
-                      </span>
+                      <StatusLabel statusKey={statusKey} />
                     </div>
                     <div className="mt-0.5 truncate text-xs text-gray-500">
                       {(s.agent || '—')}<span className="text-gray-700 mx-1.5">·</span><span title={s.server || ''}>{shortServer(s.server)}</span>
@@ -721,7 +734,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                   />
                 </div>
 
-                <div className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-xs">
+                <div className="mt-3 rounded-lg bg-[var(--bg)] px-3 py-2 text-xs">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-[10px] uppercase tracking-wide text-gray-600">Current task</span>
                     <span className="text-[10px] text-gray-600">{timeAgo(s.last_seen_at || s.updated_at)}</span>
@@ -766,13 +779,11 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                 data-node-alias={s.alias}
                 onClick={() => selectNode(s.alias)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectNode(s.alias); } }}
-                className={`rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 sm:px-4 sm:py-3 transition-colors hover:border-cyan-500/40 cursor-pointer ${!s.online ? 'opacity-50' : ''}`}
+                className={`rounded-lg bg-[var(--bg-secondary)] px-3 py-2 sm:px-4 sm:py-3 transition-colors hover:bg-[var(--hover-tint)] cursor-pointer ${!s.online ? 'opacity-50' : ''}`}
               >
                 <div className="hidden sm:grid sm:grid-cols-10 gap-2 items-center">
                   <div className="col-span-1">
-                    <span className={`text-xs px-2 py-0.5 rounded-md border ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
-                      {statusKey}
-                    </span>
+                    <StatusLabel statusKey={statusKey} />
                   </div>
                   <div className="col-span-2 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
@@ -833,9 +844,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                       </div>
                       <div className="truncate text-[10px] text-gray-500">{s.agent || '—'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
                     </div>
-                    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-md border ${STATUS_COLORS[statusKey] || STATUS_COLORS.offline}`}>
-                      {statusKey}
-                    </span>
+                    <StatusLabel statusKey={statusKey} />
                     {/* RFC-027 PR2 ⋮ lifecycle menu — mobile list. */}
                     <NodeLifecycleMenu
                       nodeId={nodeIdByAlias[s.alias] || s.node_id || s.alias}

@@ -70,10 +70,23 @@ export const SESSION_STATUS_CHIP_CLASS: Record<string, string> = {
  *  would be too heavy — e.g. /node detail header status label. */
 export const SESSION_STATUS_TEXT_CLASS: Record<string, string> = {
   working: 'text-green-400',
-  idle:    'text-gray-400',
+  // idle/offline 由 gray-400/500 提到 gray-300/400：在 --bg-secondary(#161618)
+  // 上，旧的一组只有 3.7:1，小于 4.5:1 的小字标准。圆点仍保持原来的暗度，
+  // 亮度差靠文字承担，状态强弱读起来不变。
+  idle:    'text-gray-300',
   blocked: 'text-yellow-400',
   error:   'text-red-400',
-  offline: 'text-gray-500',
+  offline: 'text-gray-400',
+};
+
+/** Inline-hex dots for session status (same triad as the text colors).
+ *  Inline hex on purpose: Tailwind would purge a dynamic `bg-${x}-400`. */
+export const SESSION_STATUS_DOT_HEX: Record<string, string> = {
+  working: '#4ade80',
+  idle:    '#9ca3af',
+  blocked: '#facc15',
+  error:   '#f87171',
+  offline: '#6b7280',
 };
 
 /** Solid bar segment background for the Tasks distribution bar. */
