@@ -82,6 +82,8 @@ export default function LegionPage() {
   // 折叠的是布局节点 id（dept:xxx），不是 Hub 的 department_id。
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
   const [exporting, setExporting] = useState(false);
+  // 键盘/读屏入口：SVG 节点虽然可 Tab，但 400 个节点要按 400 次；给一个列表。
+  const [listOpen, setListOpen] = useState(false);
   const [exportError, setExportError] = useState('');
   const [needsLogin, setNeedsLogin] = useState(false);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
@@ -448,6 +450,16 @@ export default function LegionPage() {
             >
               {exporting ? '导出中…' : '导出 PNG'}
             </button>
+            <button
+              type="button"
+              onClick={() => setListOpen(v => !v)}
+              aria-expanded={listOpen}
+              aria-controls="legion-node-list"
+              data-testid="legion-list-toggle"
+              className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              {listOpen ? '收起列表' : '节点列表'}
+            </button>
             <Link
               href="/legion/3d"
               data-testid="legion-3d-link"
@@ -500,6 +512,38 @@ export default function LegionPage() {
               onPointerLeave={onPointerUp}
               onDoubleClick={reset}
             >
+              {listOpen && (
+                <div
+                  id="legion-node-list"
+                  role="listbox"
+                  aria-label="军团节点（Tab 浏览，回车选中）"
+                  data-testid="legion-node-list"
+                  className="absolute left-3 top-3 z-10 max-h-[70%] w-60 overflow-y-auto rounded-xl bg-[var(--bg)]/95 p-1.5 text-xs shadow-lg backdrop-blur"
+                >
+                  {layout.nodes
+                    .filter(n => n.kind === 'core' || n.kind === 'group' || (n.kind === 'person' && layout.stats.people <= 60))
+                    .map(n => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        role="option"
+                        aria-selected={selected === n.id}
+                        onClick={() => { setSelected(n.id); setHovered(null); }}
+                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors ${
+                          selected === n.id
+                            ? 'bg-[var(--accent)]/15 text-[var(--fg)]'
+                            : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
+                        }`}
+                      >
+                        <span className="w-8 shrink-0 text-[10px] text-[var(--fg-dim)]">{ringLabel(n)}</span>
+                        <span className="truncate">{n.label}</span>
+                      </button>
+                    ))}
+                  {layout.stats.people > 60 && (
+                    <p className="px-2 py-1 text-[10px] text-[var(--fg-dim)]">成员超过 60，只列部门与核心；找成员请用搜索或直接点图。</p>
+                  )}
+                </div>
+              )}
               <svg ref={svgRef} width={size.width || 1} height={size.height || 1} className="block touch-none select-none" role="img" aria-label="军团组织架构图">
                 <defs>
                   <radialGradient id="legion-core" cx="50%" cy="50%" r="50%">
