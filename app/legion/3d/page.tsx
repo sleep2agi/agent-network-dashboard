@@ -188,6 +188,7 @@ export default function Legion3DPage() {
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ span: number; dist: number } | null>(null);
   const screenRef = useRef<Array<SceneNode<LegionNode>>>([]);
+  const searchRef = useRef<HTMLInputElement | null>(null);
   const hoverRef = useRef<string | null>(null);
   const starsRef = useRef(makeStars(160));
 
@@ -904,9 +905,25 @@ export default function Legion3DPage() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // 在输入框里打字时，方向键/加减号归输入框，不能拿去转镜头。
+    // 唯一例外是 Esc：清掉搜索词，但保持焦点（用户接着改词）。
+    const target = e.target as HTMLElement | null;
+    if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+      if (e.key === 'Escape' && query) {
+        e.preventDefault();
+        setQuery('');
+      }
+      return;
+    }
     lastInteract.current = performance.now();
     yawTarget.current = null;
     const v = viewRef.current;
+    // 键盘找节点：/ 直接进搜索框（整站的 Quick search 是 ⌘K，别在这里抢键）。
+    if (e.key === '/') {
+      e.preventDefault();
+      searchRef.current?.focus();
+      return;
+    }
     switch (e.key) {
       case 'ArrowLeft': e.preventDefault(); v.yaw -= 0.12; break;
       case 'ArrowRight': e.preventDefault(); v.yaw += 0.12; break;
@@ -915,7 +932,12 @@ export default function Legion3DPage() {
       case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); break;
       case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); break;
       case 'r': case 'R': resetView(); break;
-      case 'Escape': setSelected(null); break;
+      case 'Escape':
+        e.preventDefault();
+        // 先退搜索，再退选中：一次 Esc 只做一件事。
+        if (query) setQuery('');
+        else setSelected(null);
+        break;
       default: break;
     }
   };
@@ -1054,6 +1076,7 @@ export default function Legion3DPage() {
         </p>
         <div className="pointer-events-auto mt-2 flex items-center gap-2">
           <input
+            ref={searchRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="搜索成员 / 部门 / Agent"
@@ -1166,7 +1189,7 @@ export default function Legion3DPage() {
             </span>
           ))}
         </div>
-        <p>拖动环绕 · 滚轮/双指缩放 · 点节点看详情 · R 重置</p>
+        <p>拖动环绕 · 滚轮或双指缩放 · 点节点看详情 · / 搜索 · R 重置</p>
       </div>
 
       {/* 选中节点详情 */}
