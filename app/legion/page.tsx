@@ -268,6 +268,18 @@ export default function LegionPage() {
     return () => window.removeEventListener('keydown', onKey, true);
   }, [selected, canCollapse, toggleCollapse, query, layout.nodes, router, helpOpen]);
 
+  // 从 /org 的「在军团图里看」跳过来：/legion?focus=<部门名>
+  // 用 location.search 而不是 useSearchParams，避免这个客户端页要额外包 Suspense。
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const focus = new URLSearchParams(window.location.search).get('focus');
+    if (!focus) return;
+    const node = layout.nodes.find(n => n.kind === 'group' && n.label === focus);
+    if (!node) return;
+    setFocusGroup(node.id);
+    setSelected(node.id);
+  }, [layout.nodes]);
+
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {
     setView(v => {

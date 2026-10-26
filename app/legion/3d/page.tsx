@@ -597,7 +597,7 @@ export default function Legion3DPage() {
       ctx.globalAlpha = 1;
 
       // 双向数据包：亮头（白芯 + 彩色描边）+ 6 段渐隐尾巴，两个方向各一个。
-      const cometStride = huge ? 12 : heavy ? 6 : 1;
+      const cometStride = huge ? 18 : heavy ? 6 : 1;
       // 浅色主题 + 大网络：数据包会变成几百个深绿小点，像噪点。整层关掉。
       const drawLinkComets = dark || !huge;
       edgeDraws.forEach((e, i) => {

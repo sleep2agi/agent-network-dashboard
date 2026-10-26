@@ -64,6 +64,14 @@ function GroupSection({ group, depth, counts, focusName }: { group: OrgGroup; de
         <span className="text-[11px] text-[var(--fg-muted)]">
           {group.totalPeople} 人 · {group.totalAgents} Agent
         </span>
+        <Link
+          href={`/legion?focus=${encodeURIComponent(group.name)}`}
+          title="在军团图里看这个部门"
+          aria-label={`在军团图里看 ${group.name}`}
+          className="rounded-full bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:text-[var(--fg)]"
+        >
+          看军团
+        </Link>
         {taskCount ? (
           <Link
             href={`/tasks?department=${encodeURIComponent(group.id.replace(/^dept:/, ''))}`}
