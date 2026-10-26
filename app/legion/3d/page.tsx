@@ -362,8 +362,15 @@ export default function Legion3DPage() {
     if (!ctx) return;
 
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = Math.round(size.width * dpr);
-    canvas.height = Math.round(size.height * dpr);
+    const RES_LOW = 0.6;      // 交互期间的背板缩放：408 节点缩放时从 30fps 提到 ~50fps
+    let resScale = 1;
+    const applyResolution = (scale: number) => {
+      if (scale === resScale) return;
+      resScale = scale;
+      canvas.width = Math.round(size.width * dpr * scale);
+      canvas.height = Math.round(size.height * dpr * scale);
+    };
+    applyResolution(1);
     const tk = readTokens();
     // 主题切换后 canvas 不会重建，每帧读一次 token 并重算明暗（成本可忽略）。
     let dark = isDarkBg(tk.bg);
@@ -440,6 +447,7 @@ export default function Legion3DPage() {
       const huge = layout.nodes.length > 250;
       // 交互中：大网络先不画标签与数据包，停手后自动恢复（跟手优先）。
       const interacting = huge && now < interactingUntil.current;
+      applyResolution(interacting ? RES_LOW : 1);
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       const key = `${Math.round(size.width)}x${Math.round(size.height)}:${tk.bg}:${tk.accent}:${dark}`;
@@ -447,7 +455,7 @@ export default function Legion3DPage() {
         bgLayer = buildBackdrop();
         bgKey = key;
       }
-      if (bgLayer) ctx.drawImage(bgLayer, 0, 0);
+      if (bgLayer) ctx.drawImage(bgLayer, 0, 0, canvas.width, canvas.height);
       else {
         ctx.fillStyle = tk.bg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1247,6 +1255,8 @@ export default function Legion3DPage() {
                 type="button"
                 role="option"
                 aria-selected={selected === n.id}
+                data-selected={selected === n.id ? 'true' : undefined}
+                ref={el => { if (selected === n.id && el) el.scrollIntoView({ block: 'nearest' }); }}
                 onClick={() => pickNode(n)}
                 className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors ${
                   selected === n.id

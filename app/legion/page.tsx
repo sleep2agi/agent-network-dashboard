@@ -528,6 +528,8 @@ export default function LegionPage() {
                         type="button"
                         role="option"
                         aria-selected={selected === n.id}
+                        data-selected={selected === n.id ? 'true' : undefined}
+                        ref={el => { if (selected === n.id && el) el.scrollIntoView({ block: 'nearest' }); }}
                         onClick={() => { setSelected(n.id); setHovered(null); }}
                         className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors ${
                           selected === n.id
