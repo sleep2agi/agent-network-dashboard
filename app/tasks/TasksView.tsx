@@ -4,6 +4,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useState,
   useSyncExternalStore,
 } from 'react';
@@ -17,6 +18,14 @@ import {
   STATUS_DOT_HEX,
   STATUS_BAR_CLASS,
 } from '../lib/status';
+import {
+  buildAliasUserMap,
+  buildUserDeptMap,
+  collectDeptSubtree,
+  deptOptions,
+  filterTasksByDept,
+} from '../lib/dept-task-filter';
+import type { LegionDepartment, LegionPerson } from '../lib/legion-layout';
 
 // #Stage-tasks (dashboard 类飞书 two-column, 07-31):
 //
@@ -81,6 +90,12 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   // needs both prefill directions.
   const [filterFrom, setFilterFrom] = useState(searchParams.get('from_name') || '');
   const [filterTo, setFilterTo] = useState(searchParams.get('to_name') || '');
+  // 部门筛选：Hub 的任务接口没有 department_id，这里按「成员名下 Agent」投影。
+  // UI 上必须标明口径，数量也只代表这一页任务的命中数，不能冒充部门全量。
+  const [filterDept, setFilterDept] = useState(searchParams.get('department') || '');
+  const [people, setPeople] = useState<LegionPerson[]>([]);
+  const [depts, setDepts] = useState<LegionDepartment[] | null>(null);
+  const [deptMembers, setDeptMembers] = useState<Array<{ user_id: string; department_id: string | null }>>([]);
 
   // #Stage-tasks: selection is seeded from /tasks/[id] URL, then plain
   // client state kept in sync with pushState (shallow — no route remount,
@@ -148,11 +163,49 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     return () => clearInterval(interval);
   }, [fetchTasks]);
 
+  // 通讯录与部门树：只为了把 alias 落到部门上。失败就让下拉框空着，
+  // 不阻塞任务列表本身（任务能读、部门筛选不可用，是可接受的降级）。
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const res = await fetch('/api/hub/people?limit=200&offset=0', { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (alive) setPeople(json?.people ?? []);
+      } catch { /* 通讯录读不到时部门筛选自然为空 */ }
+      try {
+        const res = await fetch('/api/hub/departments', { cache: 'no-store' });
+        if (res.status === 404) return; // 老 Hub 没这条路由：保持 null，回退扁平部门名
+        if (!res.ok) return;
+        const json = await res.json();
+        if (alive) {
+          setDepts(json?.departments ?? null);
+          setDeptMembers(json?.members ?? []);
+        }
+      } catch { /* 同上 */ }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const deptAliasUser = useMemo(() => buildAliasUserMap(people), [people]);
+  const deptUserDept = useMemo(() => buildUserDeptMap(people, deptMembers), [people, deptMembers]);
+  const deptChoices = useMemo(() => deptOptions(depts, people, deptMembers), [depts, people, deptMembers]);
+  const deptIds = useMemo(
+    () => (filterDept ? collectDeptSubtree(depts, filterDept) : new Set<string>()),
+    [filterDept, depts],
+  );
+  const deptScopedTasks = useMemo(
+    () => filterTasksByDept(tasks, deptAliasUser, deptUserDept, deptIds),
+    [tasks, deptAliasUser, deptUserDept, deptIds],
+  );
+
+  const tasksScoped = deptIds.size > 0 ? deptScopedTasks : tasks;
   const counts: Record<string, number> = {};
-  tasks.forEach((t) => {
+  tasksScoped.forEach((t) => {
     counts[t.status] = (counts[t.status] || 0) + 1;
   });
-  const total = tasks.length || 1;
+  const total = tasksScoped.length || 1;
   const bars = TASK_STATUSES.map((key) => ({ key, color: STATUS_BAR_CLASS[key] })).filter(
     (b) => counts[b.key],
   );
@@ -179,12 +232,12 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
         <div className="px-4 py-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-3 mb-3">
             <h1 className="text-xl font-semibold text-[var(--fg)] lg:ml-0 ml-10">Tasks</h1>
-            {tasks.length < count && (
+            {tasksScoped.length < count && (
               <span
                 className="text-xs bg-[var(--bg-elevated)] text-[var(--fg-muted)] px-2 py-0.5 rounded-full tabular-nums"
-                title={`Showing ${tasks.length} of ${count} tasks`}
+                title={`Showing ${tasksScoped.length} of ${count} tasks`}
               >
-                {tasks.length} / {count}
+                {tasksScoped.length} / {count}
               </span>
             )}
           </div>
@@ -195,7 +248,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               <div className="anet-tabstrip-wrap mb-2">
                 <div className="anet-tabstrip flex flex-wrap gap-1 rounded-lg bg-[var(--bg-secondary)] p-1 overflow-x-auto scrollbar-thin">
                   {['', ...TASK_STATUSES].map((s) => {
-                    const cnt = s === '' ? tasks.length : counts[s] || 0;
+                    const cnt = s === '' ? tasksScoped.length : counts[s] || 0;
                     const isActive = filterStatus === s;
                     return (
                       <button
@@ -253,13 +306,30 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                {(filterStatus || filterFrom || filterTo) && (
+                {deptChoices.length > 0 && (
+                  <div className="flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1">
+                    <span className="text-[9px] uppercase tracking-wide text-[var(--fg-muted)]">Dept</span>
+                    <select
+                      value={filterDept}
+                      onChange={(e) => setFilterDept(e.target.value)}
+                      data-testid="tasks-filter-dept"
+                      className="max-w-[7.5rem] bg-transparent text-xs text-[var(--fg)] focus:outline-none"
+                    >
+                      <option value="">全部</option>
+                      {deptChoices.map(d => (
+                        <option key={d.id} value={d.id}>{`${'　'.repeat(d.depth)}${d.name}`}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {(filterStatus || filterFrom || filterTo || filterDept) && (
                   <button
                     type="button"
                     onClick={() => {
                       setFilterStatus('');
                       setFilterFrom('');
                       setFilterTo('');
+                      setFilterDept('');
                     }}
                     className="rounded px-2 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
                   >
@@ -267,6 +337,12 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                   </button>
                 )}
               </div>
+
+              {filterDept && (
+                <p className="mb-2 text-[10px] leading-snug text-[var(--fg-dim)]" data-testid="tasks-dept-scope">
+                  按「成员名下 Agent」归属部门筛选，命中数为当前这 {tasks.length} 条任务里的投影结果，不是部门全量。
+                </p>
+              )}
 
               {/* Status distribution bar (only when no status filter) */}
               {!filterStatus && bars.length > 0 && (
@@ -310,19 +386,21 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                 重试
               </button>
             </div>
-          ) : tasks.length === 0 ? (
+          ) : tasksScoped.length === 0 ? (
             <div className="px-3 py-6">
               <EmptyState
                 variant="tasks"
                 sub={
-                  filterStatus || filterFrom || filterTo
-                    ? 'No tasks match the current filters. Try clearing them.'
-                    : 'Tasks will appear here when agents send them via CommHub.'
+                  filterDept
+                    ? '这个部门在当前这批任务里没有记录。部门筛选是通讯录投影，换一页或清空筛选再看。'
+                    : filterStatus || filterFrom || filterTo
+                      ? 'No tasks match the current filters. Try clearing them.'
+                      : 'Tasks will appear here when agents send them via CommHub.'
                 }
               />
             </div>
           ) : (
-            <TaskList tasks={tasks} selectedId={selectedId} onSelect={selectTask} />
+            <TaskList tasks={tasksScoped} selectedId={selectedId} onSelect={selectTask} />
           )}
         </div>
       </aside>
