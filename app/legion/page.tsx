@@ -86,6 +86,7 @@ export default function LegionPage() {
   const [needsLogin, setNeedsLogin] = useState(false);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
   const { ref, size } = useElementSize<HTMLDivElement>();
 
   const people = useSWR<PeopleResponse>('/api/hub/people?limit=200&offset=0', fetcher, {
@@ -200,6 +201,25 @@ export default function LegionPage() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inField = !!target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+      // 在搜索框里打字时，空格/方向键都归输入框；只有 Esc 例外（清词保焦点）。
+      if (inField) {
+        if (e.key === 'Escape' && query) {
+          e.preventDefault();
+          setQuery('');
+        }
+        return;
+      }
+      // `/` 聚焦本页搜索。整站 Quick search 也绑了 `/`（CommandPalette），
+      // 所以这里在捕获阶段拦下并 stopImmediatePropagation —— 在军团页上，
+      // 「/」应该是搜军团成员，不是弹全局命令面板；全局面板仍可用 ⌘K。
+      if (e.key === '/') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        searchRef.current?.focus();
+        return;
+      }
       // 空格折叠当前选中的部门（焦点在节点上时由节点自己处理，避免双触发）。
       if (e.key === ' ' && selected && canCollapse(selected) && !(e.target instanceof Element && e.target.closest('[role="button"]'))) {
         e.preventDefault();
@@ -207,13 +227,19 @@ export default function LegionPage() {
         return;
       }
       if (e.key !== 'Escape') return;
+      // 一次 Esc 只退一样：先清搜索，再退选中/聚焦。
+      if (query) {
+        e.preventDefault();
+        setQuery('');
+        return;
+      }
       setSelected(null);
       setFocusGroup(null);
       setHovered(null);
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [selected, canCollapse, toggleCollapse]);
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [selected, canCollapse, toggleCollapse, query]);
 
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number) => {
@@ -391,6 +417,7 @@ export default function LegionPage() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5">
               <input
+                ref={searchRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="搜索成员 / 部门 / Agent"

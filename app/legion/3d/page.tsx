@@ -918,9 +918,11 @@ export default function Legion3DPage() {
     lastInteract.current = performance.now();
     yawTarget.current = null;
     const v = viewRef.current;
-    // 键盘找节点：/ 直接进搜索框（整站的 Quick search 是 ⌘K，别在这里抢键）。
+    // 键盘找节点：/ 直接进本页搜索。整站 Quick search 也绑了 `/`，
+    // 这里 stopPropagation 把它拦在舞台内（全局面板仍可用 ⌘K）。
     if (e.key === '/') {
       e.preventDefault();
+      e.stopPropagation();
       searchRef.current?.focus();
       return;
     }
