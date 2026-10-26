@@ -67,6 +67,18 @@ function readTokens() {
 
 type Tokens = ReturnType<typeof readTokens>;
 
+/** 底色是不是深色。浅底上「辉光」会变成一圈脏灰，必须换画法：
+ *  深底靠 shadowBlur 发光，浅底靠实心 + 描边。 */
+function isDarkBg(hex: string): boolean {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return true;
+  const h = m[1].length === 3 ? m[1].split('').map(c => c + c).join('') : m[1];
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 128;
+}
+
 /** token 颜色 → 带 alpha 的 rgba（Canvas 渐变要 alpha 停靠点）。
  *  token 目前都是 #rrggbb；万一主题换成 rgb()/oklch，退回一个中性紫，
  *  不让一个颜色格式把整张图搞成透明。 */
@@ -256,12 +268,20 @@ export default function Legion3DPage() {
     canvas.width = Math.round(size.width * dpr);
     canvas.height = Math.round(size.height * dpr);
     const tk = readTokens();
+    // 主题切换后 canvas 不会重建，每帧读一次 token 并重算明暗（成本可忽略）。
+    let dark = isDarkBg(tk.bg);
     let raf = 0;
     let stopped = false;
     let lastFrame = performance.now();
 
+    let frame = 0;
     const draw = (now: number) => {
       if (stopped) return;
+      // 每 30 帧重读一次 token 就够跟手（主题切换不是逐帧事件）。
+      if (frame++ % 30 === 0) {
+        Object.assign(tk, readTokens());
+        dark = isDarkBg(tk.bg);
+      }
       const view = viewRef.current;
       const dt = Math.min(0.05, (now - lastFrame) / 1000);
       lastFrame = now;
@@ -286,8 +306,8 @@ export default function Legion3DPage() {
         size.width / 2, size.height * 0.5, 0,
         size.width / 2, size.height * 0.5, Math.max(size.width, size.height) * 0.7,
       );
-      g.addColorStop(0, 'rgba(255,255,255,0.05)');
-      g.addColorStop(0.55, 'rgba(255,255,255,0.012)');
+      g.addColorStop(0, dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.035)');
+      g.addColorStop(0.55, dark ? 'rgba(255,255,255,0.012)' : 'rgba(0,0,0,0.008)');
       g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = tk.bg;
       ctx.fillRect(0, 0, size.width, size.height);
@@ -380,8 +400,8 @@ export default function Legion3DPage() {
       const coreCenter = byIdProbe();
       if (coreCenter) {
         const halo = ctx.createRadialGradient(coreCenter.x, coreCenter.y, 0, coreCenter.x, coreCenter.y, Math.min(size.width, size.height) * 0.34);
-        halo.addColorStop(0, hexToRgba(tk.accent, 0.16));
-        halo.addColorStop(0.45, hexToRgba(tk.accent, 0.05));
+        halo.addColorStop(0, hexToRgba(tk.accent, dark ? 0.16 : 0.08));
+        halo.addColorStop(0.45, hexToRgba(tk.accent, dark ? 0.05 : 0.025));
         halo.addColorStop(1, hexToRgba(tk.accent, 0));
         ctx.fillStyle = halo;
         ctx.fillRect(0, 0, size.width, size.height);
@@ -389,6 +409,7 @@ export default function Legion3DPage() {
 
       // 连线：三层画法（神明参数）——先把所有线铺一层模糊光晕，再压实线，
       // 最后才是流动光点。只有实线时深底上会「断」，加光晕才有发光感。
+      if (dark) {
       ctx.save();
       ctx.shadowColor = tk.accent;
       ctx.shadowBlur = 9;
@@ -408,6 +429,7 @@ export default function Legion3DPage() {
       }
       ctx.restore();
       ctx.globalAlpha = 1;
+      }
 
       for (const edge of layout.edges) {
         const a = byId.get(edge.from);
@@ -457,14 +479,25 @@ export default function Legion3DPage() {
         const radiusPx = r * pulse;
 
         ctx.globalAlpha = alpha;
-        ctx.save();
-        ctx.shadowColor = color;
-        ctx.shadowBlur = Math.min(node.kind === 'core' ? 26 : 16, r * 2.4);
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        if (dark) {
+          ctx.save();
+          ctx.shadowColor = color;
+          ctx.shadowBlur = Math.min(node.kind === 'core' ? 26 : 16, r * 2.4);
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          // 浅底：辉光=脏灰。改成半透明实心 + 同色描边，靠轮廓读层级。
+          ctx.fillStyle = hexToRgba(color, 0.28);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
 
         // 选中/高亮节点加一圈描边，别只靠亮度差（截图上容易看不出来）。
         if (selectedRef.current === node.id) {
