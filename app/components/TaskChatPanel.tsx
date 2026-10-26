@@ -1566,7 +1566,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                 <Fragment key={`${m.task_id}:reply`}>
                 {sepEl}
                 <div className="flex justify-start" data-ev={`${m.task_id}:reply`}>
-                  <div title={event.at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-green-500/8 border border-green-500/15 rounded-2xl rounded-bl-md px-3 py-2.5 sm:px-4 shadow-sm ${currentMatchKey === `${m.task_id}:reply` ? 'ring-2 ring-yellow-400/60' : ''}`}>
+                  <div title={event.at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-green-500/8 rounded-2xl rounded-bl-md px-3 py-2.5 sm:px-4 ${currentMatchKey === `${m.task_id}:reply` ? 'ring-2 ring-yellow-400/60' : ''}`}>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {m.to_name && <AliasAvatar alias={m.to_name} size={14} />}
@@ -1620,7 +1620,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                     !
                   </button>
                 )}
-                <div title={m.created_at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-cyan-500/8 border border-cyan-500/15 rounded-2xl rounded-br-md px-3 py-2.5 sm:px-4 shadow-sm ${currentMatchKey === `${m.task_id}:task` ? 'ring-2 ring-yellow-400/60' : ''}`}>
+                <div title={m.created_at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-cyan-500/8 rounded-2xl rounded-br-md px-3 py-2.5 sm:px-4 ${currentMatchKey === `${m.task_id}:task` ? 'ring-2 ring-yellow-400/60' : ''}`}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-[10px] font-medium ${fromUser ? 'text-cyan-400' : 'text-purple-300'}`}>{senderLabel}</span>
                     {!fromUser && <span className="text-[9px] text-[var(--fg-dim)]">forwarded to {m.to_name}</span>}
@@ -1673,7 +1673,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
               {/* Typing indicator when running */}
               {m.status === 'running' && !m.result && (
                 <div className="flex justify-start">
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="bg-[var(--bg-secondary)] rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex gap-1">
                       <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0s' }} />
                       <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.15s' }} />

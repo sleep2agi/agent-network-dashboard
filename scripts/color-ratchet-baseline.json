@@ -26,7 +26,7 @@
   "app/login/page.tsx": 11,
   "app/logs/page.tsx": 5,
   "app/messages/page.tsx": 14,
-  "app/node/page.tsx": 25,
+  "app/node/page.tsx": 3,
   "app/nodes/NodesView.tsx": 2,
   "app/page.tsx": 4,
   "app/server-logs/page.tsx": 6,
