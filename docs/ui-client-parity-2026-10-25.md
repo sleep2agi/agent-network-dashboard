@@ -474,3 +474,13 @@ measureText 会把帧率拖回 30fps。加两道预算：光晕最多 48 条高�
    运行中的 dev server 弄坏（Turbopack 的 font 虚拟模块解析失败）。
    正确顺序：停 dev → 清 `.next` → build → 再起 dev。
 
+### 3D 键盘选节点（`6b3fd40`）
+
+canvas 不能被 Tab 遍历，之前只能用鼠标点。新增「节点列表」开关：
+
+- 列表列核心 / 部门 / 成员（成员 >120 时只列部门，避免几百个 Tab 停点）；
+- `role=listbox` + `role=option` + `aria-selected`，Tab 进列表、回车选中；
+- 选中与点击画布等价：详情卡出现 + 镜头转向该节点（复用聚焦对准的最短路径）；
+- 开关带 `aria-expanded` / `aria-controls`，桌面与手机都不与顶部按钮重叠
+  （1280 列表 y=143，375 列表 y=233，均无横向溢出）。
+
