@@ -41,13 +41,14 @@ interface DirectoryResponse {
 
 const PAGE = 50;
 
-function GroupSection({ group, depth, counts, focusName, expandAll }: { group: OrgGroup; depth: number; counts: Map<string, number>; focusName?: string; expandAll?: boolean }) {
+function GroupSection({ group, depth, counts, focusName, expandAll, overrides, onToggle }: {
+  group: OrgGroup; depth: number; counts: Map<string, number>; focusName?: string; expandAll?: boolean;
+  overrides: Record<string, boolean>; onToggle: (id: string, next: boolean) => void;
+}) {
   const focused = !!focusName && group.name === focusName;
-  // 100 人的网络里，所有成员内联展开会让整页拉得很长。
-  // 默认：≤8 人展开；更大的部门折叠（100 人 / 8 部门时整页能短一半以上）；
-  // 搜索时（expandAll）全展开，避免「搜到了但看不到」。
-  const [open, setOpen] = useState(group.totalPeople <= 8);
-  const isOpen = expandAll || open;
+  // 默认：≤8 人展开，更大的折叠；用户点过的记在页面级 overrides 里，
+  // 搜索/清空之后展开状态还在。搜索时（expandAll）全展开。
+  const isOpen = expandAll || (overrides[group.id] ?? group.totalPeople <= 8);
   // 有真实部门树时按 id 命中；老 Hub 回退成扁平分组（id 是合成的）时按部门名命中。
   const taskCount = counts.get(group.id.replace(/^dept:/, '')) ?? counts.get(group.name);
   return (
@@ -68,7 +69,7 @@ function GroupSection({ group, depth, counts, focusName, expandAll }: { group: O
         )}
         <button
           type="button"
-          onClick={() => setOpen(v => !v)}
+          onClick={() => onToggle(group.id, !isOpen)}
           aria-expanded={isOpen}
           aria-label={`${isOpen ? '收起' : '展开'} ${group.name} 的成员`}
           className="inline-flex items-center gap-1 rounded px-1 py-0.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
@@ -133,7 +134,7 @@ function GroupSection({ group, depth, counts, focusName, expandAll }: { group: O
       {group.children.length > 0 && (
         <ul className="border-l border-[var(--border)]" style={{ marginLeft: `${20 + depth * 16}px` }}>
           {group.children.map(child => (
-            <GroupSection key={child.id} group={child} depth={depth + 1} counts={counts} focusName={focusName} expandAll={expandAll} />
+            <GroupSection key={child.id} group={child} depth={depth + 1} counts={counts} focusName={focusName} expandAll={expandAll} overrides={overrides} onToggle={onToggle} />
           ))}
         </ul>
       )}
@@ -147,6 +148,12 @@ function OrgContent() {
   const q = searchParams.get('q') || '';
   // 从军团图跳过来时定向到某个部门：/org?focus=<部门名>
   const focusName = searchParams.get('focus') || '';
+
+  // 部门展开状态记在页面级：搜索/清空后不丢（组件级 state 会被建树重建冲掉）。
+  const [expandOverrides, setExpandOverrides] = useState<Record<string, boolean>>({});
+  const toggleGroup = useCallback((id: string, next: boolean) => {
+    setExpandOverrides(prev => ({ ...prev, [id]: next }));
+  }, []);
 
   const [data, setData] = useState<DirectoryResponse | null>(null);
   const [org, setOrg] = useState<{ departments?: OrgDeptInput[]; members?: OrgMemberInput[] } | null>(null);
@@ -358,7 +365,7 @@ function OrgContent() {
           <>
             <ul className="overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
               {tree.groups.map(group => (
-                <GroupSection key={group.id} group={group} depth={0} counts={deptTaskCounts} focusName={focusName} expandAll={!!q} />
+                <GroupSection key={group.id} group={group} depth={0} counts={deptTaskCounts} focusName={focusName} expandAll={!!q} overrides={expandOverrides} onToggle={toggleGroup} />
               ))}
             </ul>
 
