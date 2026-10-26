@@ -108,6 +108,62 @@ landed.startsWith('/nodes/') || landed === '/org'
   ? pass('2D 列表选中 + 回车打开', { counted: count, landed })
   : fail('2D 列表选中 + 回车打开', { counted: count, landed });
 
+/* ── /org：部门聚焦深链 / 折叠 / 搜索 ───────────────────────────── */
+const deptName = await page.evaluate(async () => {
+  const res = await fetch('/api/hub/departments');
+  if (!res.ok) return null;
+  const j = await res.json();
+  return j?.departments?.[0]?.name ?? null;
+});
+if (deptName) {
+  await page.goto(`${BASE}/org?focus=${encodeURIComponent(deptName)}`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1800);
+  const row = await page.evaluate((name) => {
+    const el = document.querySelector(`[data-org-group="${name}"]`);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    const bg = getComputedStyle(el).backgroundColor;
+    return { top: Math.round(r.top), inView: r.top >= 0 && r.bottom <= window.innerHeight, bg };
+  }, deptName);
+  row && row.inView && row.bg !== 'rgba(0, 0, 0, 0)'
+    ? pass('/org focus 深链高亮并滚到可见', { deptName, row })
+    : fail('/org focus 深链高亮并滚到可见', { deptName, row });
+
+  const togglesBefore = await page.locator('button[aria-label*="的成员"]').count();
+  const expandedBefore = await page.locator('button[aria-label*="的成员"][aria-expanded="true"]').count();
+  const collapseOk = togglesBefore > 0 && expandedBefore === 0;
+  if (togglesBefore > 0) {
+    await page.locator('button[aria-label*="的成员"]').first().click();
+    await page.waitForTimeout(300);
+  }
+  const expandedAfter = await page.locator('button[aria-label*="的成员"][aria-expanded="true"]').count();
+  collapseOk && expandedAfter === 1
+    ? pass('/org 默认折叠 + 点开', { togglesBefore, expandedBefore, expandedAfter })
+    : fail('/org 默认折叠 + 点开', { togglesBefore, expandedBefore, expandedAfter });
+
+  const input = page.locator('input').first();
+  const peopleCount = async () => page.evaluate(() => (document.body.innerText.match(/@\w+/g) || []).length);
+  const beforeSearch = await peopleCount();
+  await input.fill('zzz-不存在'); await input.press('Enter');
+  await page.waitForTimeout(800);
+  const afterSearch = await peopleCount();
+  await input.fill(''); await input.press('Enter');
+  await page.waitForTimeout(600);
+  const afterClear = await peopleCount();
+  beforeSearch > 0 && afterSearch === 0
+    ? pass('/org 搜索过滤人员', { beforeSearch, afterSearch, afterClear })
+    : fail('/org 搜索过滤人员', { beforeSearch, afterSearch, afterClear });
+} else {
+  fail('/org focus 深链高亮并滚到可见', '当前 Hub 没有部门树，跳过');
+}
+
+// 375 窄屏：/org 的徽标与折叠按钮不把页面撑宽
+await page.setViewportSize({ width: 375, height: 812 });
+await page.goto(`${BASE}/org`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(1500);
+const narrowOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+narrowOverflow === 0 ? pass('375 /org 无横向溢出', { narrowOverflow }) : fail('375 /org 无横向溢出', { narrowOverflow });
+
 errors.length ? fail('无 pageerror', errors) : pass('无 pageerror');
 
 await browser.close();
