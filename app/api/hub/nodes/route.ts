@@ -30,6 +30,8 @@ export async function GET(req: Request) {
       headers: await hubHeaders(),
       next: { revalidate: 0 },
     });
+    // #1636 —— 上游 401 原样上抛（否则下面会返回 200 + 空节点）
+    if (res.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
     const contentType = res.headers.get('content-type') || '';
     if (res.ok && contentType.includes('application/json')) {
       const data = await res.json();
@@ -37,6 +39,7 @@ export async function GET(req: Request) {
       // nodes table empty — fall back to sessions, map to node shape
       const statusUrl = `${HUB_URL}/api/status${params.toString() ? '?' + params.toString() : ''}`;
       const statusRes = await fetch(statusUrl, { headers: await hubHeaders(), next: { revalidate: 0 } });
+      if (statusRes.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
       if (statusRes.ok) {
         const statusData = await statusRes.json();
         const scopedSessions = (statusData.sessions || []).filter((s: Record<string, unknown>) =>

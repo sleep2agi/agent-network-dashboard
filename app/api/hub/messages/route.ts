@@ -14,6 +14,8 @@ export async function GET(req: Request) {
   if (networkId) qs.set('network_id', networkId);
   try {
     const res = await hubFetch(`/api/messages?${qs.toString()}`);
+    // #1636 —— 401 原样上抛
+    if (res.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
     const data = await res.json();
     // Fallback: if network filter returns empty, retry without filter
     if (networkId && data.ok && (!data.messages || data.messages.length === 0)) {
