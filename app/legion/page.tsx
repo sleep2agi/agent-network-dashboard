@@ -17,39 +17,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { buildLegionLayout, toPixel, type LegionPerson, type LegionAgentRef, type LegionNode, type LegionDepartment, type LegionMember } from '../lib/legion-layout';
+import { buildLegionLayout, toPixel, type LegionNode } from '../lib/legion-layout';
+import { legionFetcher as fetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
-
-interface PeopleResponse {
-  ok: boolean;
-  total: number;
-  people: LegionPerson[];
-  agents_without_owner?: LegionAgentRef[];
-  has_more: boolean;
-}
-
-interface StatusResponse {
-  sessions?: { alias: string; status: string; node_id?: string }[];
-}
-
-/** 部门树：404 是「这版 Hub 没有这条路由」，属于能力缺失，不是错误。
- *  返回 null 让页面回退到扁平分组；401 仍然抛，交给统一登录提示。 */
-const deptFetcher = async (url: string) => {
-  const res = await fetch(url, { cache: 'no-store' });
-  if (res.status === 404) return null;
-  if (res.status === 401) throw Object.assign(new Error('unauthorized'), { status: 401 });
-  const json = await res.json().catch(() => null);
-  if (!res.ok || !json?.ok) throw Object.assign(new Error(json?.error || `hub_${res.status}`), { status: res.status });
-  return json as { departments?: LegionDepartment[]; members?: LegionMember[] };
-};
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url, { cache: 'no-store' });
-  if (res.status === 401) throw Object.assign(new Error('unauthorized'), { status: 401 });
-  const json = await res.json().catch(() => null);
-  if (!res.ok || !json?.ok) throw Object.assign(new Error(json?.error || `hub_${res.status}`), { status: res.status });
-  return json;
-};
 
 /**
  * callback ref + ResizeObserver。
@@ -123,7 +93,7 @@ export default function LegionPage() {
     shouldRetryOnError: false,
     onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
-  const hierarchy = useSWR<{ departments?: LegionDepartment[]; members?: LegionMember[] } | null>(
+  const hierarchy = useSWR<DepartmentsResponse | null>(
     '/api/hub/departments', deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
   );
   const status = useSWR<StatusResponse>('/api/hub/status', fetcher, {
@@ -446,6 +416,13 @@ export default function LegionPage() {
             >
               {exporting ? '导出中…' : '导出 PNG'}
             </button>
+            <Link
+              href="/legion/3d"
+              data-testid="legion-3d-link"
+              className="rounded-md bg-[var(--accent)]/15 px-2.5 py-1.5 text-xs text-[var(--accent)] hover:bg-[var(--accent)]/25"
+            >
+              3D 视图
+            </Link>
             <Link href="/org" className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
               列表视图
             </Link>
