@@ -186,6 +186,8 @@ export default function Legion3DPage() {
   const selectedRef = useRef<string | null>(null);
   const lastInteract = useRef(0);
   const yawTarget = useRef<number | null>(null);
+  // 交互中（拖动/缩放）先降特效，停手 180ms 后恢复 —— 大网络里保证跟手。
+  const interactingUntil = useRef(0);
   const dragRef = useRef<{ x: number; y: number; yaw: number; pitch: number; moved: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ span: number; dist: number } | null>(null);
@@ -436,6 +438,8 @@ export default function Legion3DPage() {
       const heavy = layout.nodes.length > 80;
       // 400 级别（100 人 / 300 Agent）再降一档：只留结构和一档动效。
       const huge = layout.nodes.length > 250;
+      // 交互中：大网络先不画标签与数据包，停手后自动恢复（跟手优先）。
+      const interacting = huge && now < interactingUntil.current;
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       const key = `${Math.round(size.width)}x${Math.round(size.height)}:${tk.bg}:${tk.accent}:${dark}`;
@@ -566,7 +570,7 @@ export default function Legion3DPage() {
       ctx.globalAlpha = dark ? 0.48 : 0.4;
       const dashStride = huge ? 0 : heavy ? 3 : 1;
       edgeDraws.forEach((e, i) => {
-        if (!dashStride || !e.lit || i % dashStride !== 0) return;
+        if (interacting || !dashStride || !e.lit || i % dashStride !== 0) return;
         ctx.lineDashOffset = -((now / 55) % 24) - i * 6;
         ctx.beginPath();
         ctx.moveTo(e.a.projected.x, e.a.projected.y);
@@ -580,7 +584,7 @@ export default function Legion3DPage() {
       // 双向数据包：亮头（白芯 + 彩色描边）+ 6 段渐隐尾巴，两个方向各一个。
       const cometStride = huge ? 12 : heavy ? 6 : 1;
       edgeDraws.forEach((e, i) => {
-        if (!e.lit || i % cometStride !== 0) return;
+        if (interacting || !e.lit || i % cometStride !== 0) return;
         const speed = 5200;
         const base = ((now / speed) + i * 0.11) % 1;
         for (const dir of [1, -1]) {
@@ -669,7 +673,7 @@ export default function Legion3DPage() {
 
         ctx.globalAlpha = alpha;
         const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
-        if (huge && node.kind === 'agent') {
+        if ((huge && node.kind === 'agent') || interacting) {
           // 300 个 Agent 时每个都画「白芯 + 描边」纯属浪费：一个色点足够，
           // 状态色仍然可读，鼠标悬停/命中半径不变。
           ctx.fillStyle = color;
@@ -736,7 +740,7 @@ export default function Legion3DPage() {
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
           hoverRef.current === node.id;
-        if (showLabel) {
+        if (showLabel && !interacting) {
           labelQueue.push({
             node,
             text: node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
@@ -882,6 +886,7 @@ export default function Legion3DPage() {
       const [a, b] = [...pointersRef.current.values()];
       const span = Math.hypot(a.x - b.x, a.y - b.y);
       if (span > 4 && pinchRef.current.span > 4) {
+        interactingUntil.current = performance.now() + 180;
         const ratio = span / pinchRef.current.span;
         viewRef.current.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, pinchRef.current.dist * ratio));
       }
@@ -904,6 +909,7 @@ export default function Legion3DPage() {
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
     drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
+    interactingUntil.current = performance.now() + 180;
     viewRef.current.yaw = drag.yaw + dx * 0.008;
     viewRef.current.pitch = Math.min(1.45, Math.max(0.12, drag.pitch + dy * 0.005));
   };
@@ -938,6 +944,7 @@ export default function Legion3DPage() {
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     lastInteract.current = performance.now();
+    interactingUntil.current = performance.now() + 180;
     const next = viewRef.current.zoom * (e.deltaY > 0 ? 1 / 1.08 : 1.08);
     viewRef.current.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
   };
