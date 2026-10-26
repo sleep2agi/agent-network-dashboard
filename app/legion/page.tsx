@@ -274,15 +274,30 @@ export default function LegionPage() {
 
   // 从 /org 的「在军团图里看」跳过来：/legion?focus=<部门名>
   // 用 location.search 而不是 useSearchParams，避免这个客户端页要额外包 Suspense。
+  // URL 里的 focus 没应用完之前不往回写（StrictMode 重跑 effect 会抹掉参数）。
+  const urlFocusSettled = useRef(false);
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || urlFocusSettled.current) return;
     const focus = new URLSearchParams(window.location.search).get('focus');
-    if (!focus) return;
+    if (!focus) { urlFocusSettled.current = true; return; }
     const node = layout.nodes.find(n => n.kind === 'group' && n.label === focus);
     if (!node) return;
+    urlFocusSettled.current = true;
     setFocusGroup(node.id);
     setSelected(node.id);
   }, [layout.nodes]);
+
+  // 反向同步：选中「只看这个部门」后把 focus 写回 URL，复制地址就能把同一个
+  // 视角发给别人。
+  useEffect(() => {
+    if (typeof window === 'undefined' || !urlFocusSettled.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const label = focusGroup ? layout.nodes.find(n => n.id === focusGroup)?.label : null;
+    if (label) params.set('focus', label);
+    else params.delete('focus');
+    const qs = params.toString();
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+  }, [focusGroup, layout.nodes]);
 
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {

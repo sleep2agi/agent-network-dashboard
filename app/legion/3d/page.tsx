@@ -239,6 +239,37 @@ export default function Legion3DPage() {
   const layoutSig = `${layout.nodes.length}:${layout.rings.length}:${layout.stats.people}`;
   useEffect(() => { fitPending.current = true; }, [layoutSig]);
 
+  // /legion/3d?focus=<部门名>：和 2D、/org 的深链口径一致（按部门名匹配，
+  // 不用 id —— id 是布局内部生成的，换一次数据就变了，链接会失效）。
+  // 注意：URL 里的 focus 没应用完之前，不要往回写 URL —— StrictMode 会重跑
+  // effect，一次性 guard 拦不住，会把 ?focus= 抹掉（踩过）。
+  const urlFocusSettled = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || urlFocusSettled.current) return;
+    const want = new URLSearchParams(window.location.search).get('focus');
+    if (!want) { urlFocusSettled.current = true; return; }
+    const node = layout.nodes.find(n => n.kind === 'group' && n.label === want);
+    if (!node) return;
+    urlFocusSettled.current = true;
+    setFocus(node.id);
+    setSelected(node.id);
+    let delta = node.angle - viewRef.current.yaw;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    while (delta < -Math.PI) delta += Math.PI * 2;
+    yawTarget.current = viewRef.current.yaw + delta;
+  }, [layout.nodes]);
+
+  // 聚焦状态写回 URL，复制地址就能把同一个部门视角发给别人。
+  useEffect(() => {
+    if (typeof window === 'undefined' || !urlFocusSettled.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const label = focus ? layout.nodes.find(n => n.id === focus)?.label : null;
+    if (label) params.set('focus', label);
+    else params.delete('focus');
+    const qs = params.toString();
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+  }, [focus, layout.nodes]);
+
   const statusByAlias = useMemo(() => {
     const map = new Map<string, string>();
     for (const s of status.data?.sessions ?? []) map.set(s.alias, s.status);

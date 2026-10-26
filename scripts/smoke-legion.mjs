@@ -113,7 +113,39 @@ const path = `${process.env.TMPDIR || '/tmp'}/legion-smoke-export.png`;
 await download.saveAs(path);
 const buf = readFileSync(path);
 const pngW = buf.readUInt32BE(16);
+const pngH = buf.readUInt32BE(20);
 pngW >= 1000 ? pass('导出全分辨率', { pngW }) : fail('导出全分辨率', { pngW });
+
+// 导出图必须真的带标题栏与图例（不是一张裸 canvas）：
+// 高度 = canvas + 头 + 尾，且顶部/底部条带里有非背景像素（文字/图例点）。
+const canv = await page.evaluate(() => {
+  const c = document.querySelector('canvas');
+  return { w: c.width, h: c.height, cw: c.clientWidth };
+});
+const scale = canv.w / Math.max(1, canv.cw);
+const head = Math.round(58 * scale);
+const foot = Math.round(32 * scale);
+const bands = await page.evaluate(async ({ b64, head, foot }) => {
+  const img = new Image();
+  img.src = `data:image/png;base64,${b64}`;
+  await img.decode();
+  const cv = document.createElement('canvas');
+  cv.width = img.width; cv.height = img.height;
+  const g = cv.getContext('2d');
+  g.drawImage(img, 0, 0);
+  const count = (y0, y1) => {
+    const h = Math.max(1, y1 - y0);
+    const d = g.getImageData(0, y0, cv.width, h).data;
+    let n = 0;
+    for (let i = 0; i < d.length; i += 4 * 5) if (d[i] + d[i + 1] + d[i + 2] > 150) n++;
+    return n;
+  };
+  return { w: img.width, h: img.height, top: count(0, head), bottom: count(cv.height - foot, cv.height) };
+}, { b64: buf.toString('base64'), head, foot });
+const exportTail = pngH - canv.h;
+exportTail >= head + foot - 2 && bands.top > 20 && bands.bottom > 10 && bands.w === pngW
+  ? pass('导出带标题栏与图例', { exportTail, head, foot, top: bands.top, bottom: bands.bottom })
+  : fail('导出带标题栏与图例', { exportTail, head, foot, top: bands.top, bottom: bands.bottom });
 
 // ? 速查表：曾因全站 HelpOverlay 也绑 ? 而被抢走（弹出的不是本页那张）
 await page.locator('[data-testid="legion-3d-stage"]').focus();
@@ -167,6 +199,23 @@ if (deptName) {
   row && row.inView && row.bg !== 'rgba(0, 0, 0, 0)'
     ? pass('/org focus 深链高亮并滚到可见', { deptName, row })
     : fail('/org focus 深链高亮并滚到可见', { deptName, row });
+
+  // 3D 也要认同一个深链口径，而且不能把 ?focus= 抹掉（StrictMode 重跑 effect
+  // 曾经把参数清空，链接分享出去就是空的）。
+  await page.goto(`${BASE}/legion/3d?focus=${encodeURIComponent(deptName)}`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(2200);
+  const deep3d = await page.evaluate((name) => {
+    const kept = new URLSearchParams(location.search).get('focus');
+    return {
+      chip: document.body.innerText.includes('聚焦：') && document.body.innerText.includes(name),
+      urlKept: kept === name,
+    };
+  }, deptName);
+  deep3d.chip && deep3d.urlKept
+    ? pass('3D 部门深链 ?focus= 生效且不被抹掉', deep3d)
+    : fail('3D 部门深链 ?focus= 生效且不被抹掉', deep3d);
+  await page.goto(`${BASE}/org?focus=${encodeURIComponent(deptName)}`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1600);
 
   const togglesBefore = await page.locator('button[aria-label*="的成员"]').count();
   const expandedBefore = await page.locator('button[aria-label*="的成员"][aria-expanded="true"]').count();
