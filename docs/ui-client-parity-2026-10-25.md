@@ -132,6 +132,17 @@ Sidebar 的 `statusFetcher` 在非 2xx 时返回 `{ sessions: [] }`；SWR 按 ke
 正常且无错误文案。契约写在 `app/lib/hub-error-propagation.test.mjs`（4 条），
 因为这类问题发生在 SWR 缓存去重之前，e2e 很难稳定复现。
 
-**仍未覆盖**：其余约 40 条 `/api/hub/*` 代理仍把上游失败包成 200 的部分路径
-（如 `/api/hub/nodes`、`/api/hub/audit-log` 有 graceful fallback）。它们各自的
-页面目前不把结果当权威数据用，暂不动；等下次碰到具体页面再逐条收。
+**第二轮收口（2026-10-26，`ec6e9c8`）**：把「页面当权威数据用」的代理逐条修了。
+
+| 代理 | 旧行为 | 现在 |
+| --- | --- | --- |
+| `/api/hub/tokens` | 失败 → 200 `{tokens: []}` | 非 2xx 透传（404→502）；设置页命中已有的错误卡 |
+| `/api/hub/networks` | 失败 → 200 `{networks: []}` | 404 标 `unavailable`，其余透传；Sidebar `networkFetcher` 不再吞错（同一个 SWR key 污染模式） |
+| `/api/hub/task-events` | 失败 → 200 `{events: []}` | 404 标 `unavailable`（老 Hub 无端点），其余透传 |
+| `/api/hub/nodes` | 失败 → 200 `{nodes: []}` | 先走 `/api/status` 兜底（老 Hub 无 `/api/nodes` 是设计好的降级），两个上游都挂才 502；兜底映射合并成 `nodesFromSessions()` |
+
+设置页 `/settings/networks` 补了 error / unavailable / loading 三态互斥——
+它的注释早就写着「空列表和读失败无法区分」，但代码里没解构 `error`。
+
+**仍未覆盖**：`/api/hub/audit-log` 等少数路由仍有 graceful fallback，其页面
+不把结果当权威数据（只做附加信息展示），暂不动。
