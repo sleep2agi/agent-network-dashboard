@@ -1139,6 +1139,11 @@ export default function Legion3DPage() {
             <span aria-hidden>✕</span>
           </button>
         )}
+        {!loading && layout.stats.people === 0 && layout.stats.groups > 0 && (
+          <p className="mt-1 text-[11px] text-[var(--fg-dim)]">
+            已有 {layout.stats.groups} 个部门，还没有成员加入 —— 成员绑定 Agent 后会自动出现在环上。
+          </p>
+        )}
         {hierarchy.data === null && (
           <p className="mt-1 text-[11px] text-[var(--fg-dim)]">
             当前 Hub 没有部门树接口，按部门名扁平分组（升级 Hub 后自动分层次）。
