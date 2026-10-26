@@ -172,6 +172,7 @@ export default function Legion3DPage() {
   const [listOpen, setListOpen] = useState(false);
   // 缩放倍率是给用户看的数字：view.zoom 在 ref 里（每帧读），单独镜像一份 state。
   const [zoomPct, setZoomPct] = useState(Math.round(DEFAULT_VIEW.zoom * 100));
+  const [copied, setCopied] = useState(false);
   const [spin, setSpin] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -1359,7 +1360,23 @@ export default function Legion3DPage() {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-[11px] text-[var(--fg-dim)]">{KIND_LABEL[selectedNode.kind]}{path.length > 0 ? ` · ${path.join(' / ')}` : ''}</p>
-              <p className="mt-0.5 truncate text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
+              <div className="mt-0.5 flex items-start gap-2">
+                <p className="min-w-0 truncate text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(selectedNode.label).then(() => {
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1200);
+                    }).catch(() => {});
+                  }}
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+                  aria-label={`复制名称 ${selectedNode.label}`}
+                  data-testid="legion-3d-copy"
+                >
+                  {copied ? '已复制' : '复制'}
+                </button>
+              </div>
               {selectedNode.kind === 'group' && (
                 <p className="mt-1 text-[11px] text-[var(--fg-muted)]">
                   {selectedNode.leader ? `负责人 ${selectedNode.leader} · ` : '未设负责人 · '}

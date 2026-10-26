@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { buildLegionLayout, toPixel, type LegionNode } from '../lib/legion-layout';
 import { legionFetcher as fetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
@@ -73,6 +74,7 @@ function ringLabel(node: LegionNode): string {
 }
 
 export default function LegionPage() {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
@@ -84,6 +86,7 @@ export default function LegionPage() {
   const [exporting, setExporting] = useState(false);
   // 键盘/读屏入口：SVG 节点虽然可 Tab，但 400 个节点要按 400 次；给一个列表。
   const [listOpen, setListOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [exportError, setExportError] = useState('');
   const [needsLogin, setNeedsLogin] = useState(false);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
@@ -222,6 +225,15 @@ export default function LegionPage() {
         searchRef.current?.focus();
         return;
       }
+      // 回车打开选中节点（Agent→节点页，成员/部门→/org）；和 3D 页一致。
+      if (e.key === 'Enter' && selected) {
+        const node = layout.nodes.find(n => n.id === selected);
+        if (node && (node.kind === 'agent' || node.kind === 'person' || node.kind === 'group')) {
+          e.preventDefault();
+          router.push(node.kind === 'agent' ? `/nodes/${encodeURIComponent(node.label)}` : '/org');
+          return;
+        }
+      }
       // 空格折叠当前选中的部门（焦点在节点上时由节点自己处理，避免双触发）。
       if (e.key === ' ' && selected && canCollapse(selected) && !(e.target instanceof Element && e.target.closest('[role="button"]'))) {
         e.preventDefault();
@@ -241,7 +253,7 @@ export default function LegionPage() {
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [selected, canCollapse, toggleCollapse, query]);
+  }, [selected, canCollapse, toggleCollapse, query, layout.nodes, router]);
 
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {
@@ -522,7 +534,8 @@ export default function LegionPage() {
                   className="absolute left-3 top-3 z-10 max-h-[70%] w-60 overflow-y-auto rounded-xl bg-[var(--bg)]/95 p-1.5 text-xs shadow-lg backdrop-blur"
                 >
                   {layout.nodes
-                    .filter(n => n.kind === 'core' || n.kind === 'group' || (n.kind === 'person' && layout.stats.people <= 60))
+                    // 与 3D 一致：成员 ≤60 时把 Agent 也列出来，键盘能直接走到 Agent 详情。
+                    .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= 60)
                     .map(n => (
                       <button
                         key={n.id}
@@ -756,7 +769,22 @@ export default function LegionPage() {
 
               {selectedNode ? (
                 <>
-                  <p className="mt-2 text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
+                  <div className="mt-2 flex items-start gap-2">
+                    <p className="min-w-0 truncate text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard?.writeText(selectedNode.label).then(() => {
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1200);
+                        }).catch(() => {});
+                      }}
+                      className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+                      aria-label={`复制名称 ${selectedNode.label}`}
+                    >
+                      {copied ? '已复制' : '复制'}
+                    </button>
+                  </div>
                   {selectedNode.sublabel && <p className="text-[11px] text-[var(--fg-muted)]">{selectedNode.sublabel}</p>}
                   {selectedNode.kind === 'group' && (
                     <p className="mt-1 text-[11px] text-[var(--fg-muted)]">
