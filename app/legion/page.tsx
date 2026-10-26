@@ -87,6 +87,7 @@ export default function LegionPage() {
   // 键盘/读屏入口：SVG 节点虽然可 Tab，但 400 个节点要按 400 次；给一个列表。
   const [listOpen, setListOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [exportError, setExportError] = useState('');
   const [needsLogin, setNeedsLogin] = useState(false);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
@@ -225,6 +226,7 @@ export default function LegionPage() {
         searchRef.current?.focus();
         return;
       }
+      if (e.key === '?') { e.preventDefault(); setHelpOpen(v => !v); return; }
       // 回车打开选中节点（Agent→节点页，成员/部门→/org）；和 3D 页一致。
       if (e.key === 'Enter' && selected) {
         const node = layout.nodes.find(n => n.id === selected);
@@ -241,6 +243,7 @@ export default function LegionPage() {
         return;
       }
       if (e.key !== 'Escape') return;
+      if (helpOpen) { e.preventDefault(); setHelpOpen(false); return; }
       // 一次 Esc 只退一样：先清搜索，再退选中/聚焦。
       if (query) {
         e.preventDefault();
@@ -253,7 +256,7 @@ export default function LegionPage() {
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [selected, canCollapse, toggleCollapse, query, layout.nodes, router]);
+  }, [selected, canCollapse, toggleCollapse, query, layout.nodes, router, helpOpen]);
 
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {
@@ -491,6 +494,34 @@ export default function LegionPage() {
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团编制。
           </div>
         ) : null}
+        {helpOpen && (
+          <div role="dialog" aria-modal="true" aria-label="键盘快捷键" data-testid="legion-help"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg)]/70 p-4" onClick={() => setHelpOpen(false)}>
+            <div className="w-full max-w-sm rounded-xl bg-[var(--bg-secondary)] p-4 text-sm text-[var(--fg)]" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold">键盘快捷键</h2>
+                <button type="button" onClick={() => setHelpOpen(false)} aria-label="关闭" className="rounded px-1.5 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]">✕</button>
+              </div>
+              <dl className="mt-3 space-y-1.5 text-xs text-[var(--fg-muted)]">
+                {[
+                  ['/ 或 Ctrl/⌘+K', '搜索军团成员'],
+                  ['拖动 / 滚轮', '平移 / 缩放'],
+                  ['点节点', '看详情'],
+                  ['回车', '打开选中节点'],
+                  ['空格', '折叠/展开部门'],
+                  ['? ', '打开/关闭这张表'],
+                  ['Esc', '先清搜索，再取消选中'],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex gap-3">
+                    <dt className="w-32 shrink-0 font-mono text-[var(--fg)]">{k}</dt>
+                    <dd>{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+        )}
+
         {exportError ? (
           <div className="mb-4 rounded-lg bg-[var(--bg-secondary)] px-4 py-2 text-xs text-[var(--danger)]">
             导出失败：{exportError}

@@ -173,6 +173,7 @@ export default function Legion3DPage() {
   // 缩放倍率是给用户看的数字：view.zoom 在 ref 里（每帧读），单独镜像一份 state。
   const [zoomPct, setZoomPct] = useState(Math.round(DEFAULT_VIEW.zoom * 100));
   const [copied, setCopied] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [spin, setSpin] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -851,6 +852,16 @@ export default function Legion3DPage() {
 
   /* ── 交互 ───────────────────────────────────────────────────────── */
 
+  /** 选中节点最近的祖先部门（Agent/成员 → 其所属部门）。 */
+  const ancestorDept = useMemo(() => {
+    if (!selectedNode) return null;
+    const byId = new Map(layout.nodes.map(n => [n.id, n]));
+    for (let cur = selectedNode.parentId ? byId.get(selectedNode.parentId) : null; cur; cur = cur.parentId ? byId.get(cur.parentId) : null) {
+      if (cur.kind === 'group') return cur;
+    }
+    return null;
+  }, [layout.nodes, selectedNode]);
+
   /** 从列表里选一个节点：和点击画布等价，另外把镜头转过去。 */
   const pickNode = useCallback((node: LegionNode) => {
     setSelected(node.id);
@@ -1024,9 +1035,12 @@ export default function Legion3DPage() {
         }
         break;
       }
+      case '?': e.preventDefault(); setHelpOpen(v => !v); break;
       case 'r': case 'R': resetView(); break;
       case 'Escape':
         e.preventDefault();
+        // 速查表开着时先关它，再按一次才动搜索/选中。
+        if (helpOpen) { setHelpOpen(false); break; }
         // 先退搜索，再退选中：一次 Esc 只做一件事。
         if (query) setQuery('');
         else setSelected(null);
@@ -1270,6 +1284,42 @@ export default function Legion3DPage() {
       </div>
       </div>
 
+      {helpOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="键盘快捷键"
+          data-testid="legion-3d-help"
+          className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--bg)]/70 p-4"
+          onClick={() => setHelpOpen(false)}
+        >
+          <div className="w-full max-w-sm rounded-xl bg-[var(--bg-secondary)] p-4 text-sm text-[var(--fg)]" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">键盘快捷键</h2>
+              <button type="button" onClick={() => setHelpOpen(false)} aria-label="关闭" className="rounded px-1.5 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]">✕</button>
+            </div>
+            <dl className="mt-3 space-y-1.5 text-xs text-[var(--fg-muted)]">
+              {[
+                ['/ 或 Ctrl/⌘+K', '搜索军团成员'],
+                ['拖动 / 方向键', '旋转视角'],
+                ['滚轮 / 双指 / + -', '缩放'],
+                ['点节点', '看详情'],
+                ['双击节点 / 回车', '打开详情页'],
+                ['双击空白', '复位视角'],
+                ['? ', '打开/关闭这张表'],
+                ['Esc', '先清搜索，再取消选中'],
+                ['R', '重置视角'],
+              ].map(([k, v]) => (
+                <div key={k} className="flex gap-3">
+                  <dt className="w-32 shrink-0 font-mono text-[var(--fg)]">{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      )}
+
       {exportError && (
         <div className="absolute left-1/2 top-16 -translate-x-1/2 rounded-lg bg-[var(--danger)]/12 px-3 py-1.5 text-xs text-[var(--danger)]">
           导出失败：{exportError}
@@ -1406,6 +1456,24 @@ export default function Legion3DPage() {
               ✕
             </button>
           </div>
+          {selectedNode.kind !== 'group' && ancestorDept && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('');
+                setFocus(ancestorDept.id);
+                if (ancestorDept.kind !== 'core') {
+                  let delta = ancestorDept.angle - viewRef.current.yaw;
+                  while (delta > Math.PI) delta -= Math.PI * 2;
+                  while (delta < -Math.PI) delta += Math.PI * 2;
+                  yawTarget.current = viewRef.current.yaw + delta;
+                }
+              }}
+              className="mt-2 mr-3 rounded-md px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              聚焦所在部门
+            </button>
+          )}
           {selectedNode.kind === 'group' && (
             <button
               type="button"
