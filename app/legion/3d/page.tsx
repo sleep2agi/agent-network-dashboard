@@ -332,8 +332,10 @@ export default function Legion3DPage() {
         size.width / 2, size.height * 0.5, 0,
         size.width / 2, size.height * 0.5, Math.max(size.width, size.height) * 0.7,
       );
-      g.addColorStop(0, dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.035)');
-      g.addColorStop(0.55, dark ? 'rgba(255,255,255,0.012)' : 'rgba(0,0,0,0.008)');
+      // 神明给的「深底 #050B1F→#0B1A44」是同一种思路：底色不是纯黑，
+      // 中心带一点主题色。这里用 accent 染色，主题换了底色跟着换。
+      g.addColorStop(0, hexToRgba(tk.accent, dark ? 0.11 : 0.06));
+      g.addColorStop(0.55, hexToRgba(tk.accent, dark ? 0.035 : 0.02));
       g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = tk.bg;
       ctx.fillRect(0, 0, size.width, size.height);
@@ -470,23 +472,66 @@ export default function Legion3DPage() {
         ctx.lineWidth = lit && activeSet ? 1.3 : 1;
         ctx.stroke();
       }
-      // 流动光点：每条连线上一个小点沿边移动，让静态的图「有心跳」。
-      const phase = (now / 2600) % 1;
+      // 部门内部短弧线：同一部门里相邻成员之间连一条向内弯的细弧。
+      // 部门间是径向直线，这里再补一层横向的「编织」，层次才不塌成一把扇骨。
+      {
+        const kids = new Map<string, LegionNode[]>();
+        for (const edge of layout.edges) {
+          const to = byId.get(edge.to);
+          const from = byId.get(edge.from);
+          if (!to || !from || to.item.kind !== 'person') continue;
+          const arr = kids.get(edge.from) ?? [];
+          arr.push(to.item);
+          kids.set(edge.from, arr);
+        }
+        ctx.strokeStyle = tk.fg;
+        ctx.lineWidth = 0.7;
+        for (const [groupId, members] of kids) {
+          if (members.length < 2) continue;
+          const gNode = byId.get(groupId);
+          if (!gNode) continue;
+          for (let i = 0; i < members.length - 1; i++) {
+            const a = byId.get(members[i].id);
+            const b = byId.get(members[i + 1].id);
+            if (!a || !b) continue;
+            const lit = !activeSet || (activeSet.has(groupId) && activeSet.has(a.item.id) && activeSet.has(b.item.id));
+            if (!lit) continue;
+            // 控制点往圆心收 12%，画出来是一段朝内的弧，不是直线。
+            const mx = (a.projected.x + b.projected.x) / 2;
+            const my = (a.projected.y + b.projected.y) / 2;
+            const cx = mx + (size.width / 2 - mx) * 0.12;
+            const cy = my + (size.height / 2 - my) * 0.12;
+            ctx.globalAlpha = activeSet ? 0.34 : 0.14;
+            ctx.beginPath();
+            ctx.moveTo(a.projected.x, a.projected.y);
+            ctx.quadraticCurveTo(cx, cy, b.projected.x, b.projected.y);
+            ctx.stroke();
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // 数据包流光：白色短划沿线跑（神明给的 dasharray 2 22）。
+      // 用 lineDashOffset 让「点」流动，比每帧算一个点的位置更省也更均匀。
+      ctx.save();
+      ctx.setLineDash([2, 22]);
+      ctx.strokeStyle = tk.fg;
+      ctx.lineWidth = 1.4;
+      ctx.globalAlpha = 0.5;
       for (let i = 0; i < layout.edges.length; i++) {
         const edge = layout.edges[i];
         const a = byId.get(edge.from);
         const b = byId.get(edge.to);
         if (!a || !b) continue;
         if (activeSet && !(activeSet.has(edge.from) && activeSet.has(edge.to))) continue;
-        const t = (phase + (i * 0.37) % 1) % 1;
-        const x = a.projected.x + (b.projected.x - a.projected.x) * t;
-        const y = a.projected.y + (b.projected.y - a.projected.y) * t;
-        ctx.globalAlpha = 0.55;
-        ctx.fillStyle = tk.fg;
+        ctx.lineDashOffset = -((now / 55) % 24) - i * 6;
         ctx.beginPath();
-        ctx.arc(x, y, 1.3, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(a.projected.x, a.projected.y);
+        ctx.lineTo(b.projected.x, b.projected.y);
+        ctx.stroke();
       }
+      ctx.restore();
+      ctx.setLineDash([]);
       ctx.globalAlpha = 1;
 
       // 节点：远→近（projectScene 已排序），近的盖住远的。
@@ -508,7 +553,7 @@ export default function Legion3DPage() {
         if (dark) {
           ctx.save();
           ctx.shadowColor = color;
-          ctx.shadowBlur = Math.min(node.kind === 'core' ? 26 : 16, r * 2.4);
+          ctx.shadowBlur = node.kind === 'core' ? 18 : Math.min(10, Math.max(6, r * 0.9));
           ctx.fillStyle = color;
           ctx.beginPath();
           ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
