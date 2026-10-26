@@ -52,7 +52,7 @@ body {
   --bg-elevated:  #1f1f24;
   --fg:           #e5e7eb;
   --fg-muted:     #9ca3af;
-  --fg-dim:       #6b7280;
+  --fg-dim:       #7b8494; /* was #6b7280 — 4.07:1 on --bg, below 4.5 for small text */
   --border:       #26262b;
   --border-hover: #3a3a41;
   --accent:       #8b5cf6;
@@ -1436,7 +1436,7 @@ joining the R145
   --bg-elevated:  #eef0f4;
   --fg:           #0f1419;
   --fg-muted:     #525a66;
-  --fg-dim:       #8a94a3;
+  --fg-dim:       #6b7280; /* was #8a94a3 — 2.86:1 on white, unreadable */
   --border:       #e3e6eb;
   --border-hover: #c8cdd6;
   --accent:       #009e7e;
