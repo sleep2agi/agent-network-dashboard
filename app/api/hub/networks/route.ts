@@ -12,6 +12,8 @@ export async function GET(req: Request) {
     const path = networkId ? `/api/networks/${networkId}` : '/api/networks';
     const res = await hubFetch(path);
     const ct = res.headers.get('content-type') || '';
+    // #1636 —— 401 原样上抛，不要变成 {ok:true, networks: []}
+    if (res.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
     if (res.ok && ct.includes('application/json')) return Response.json(await res.json());
     return Response.json({ ok: true, networks: [] });
   } catch (e: unknown) {
