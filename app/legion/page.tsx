@@ -299,6 +299,35 @@ export default function LegionPage() {
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
   }, [focusGroup, layout.nodes]);
 
+  // /legion?node=<名字>：和 3D 同口径（成员 display_name、Agent alias），
+  // 打开后直接选中该节点；选中变化也写回地址，链接可转人。
+  const urlNodeSettled = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || urlNodeSettled.current) return;
+    const want = new URLSearchParams(window.location.search).get('node');
+    if (!want) { urlNodeSettled.current = true; return; }
+    const node = layout.nodes.find(n => n.label === want && n.kind !== 'group');
+    const loaded = layout.stats.people + layout.stats.agents > 0;
+    if (!node) {
+      if (loaded) urlNodeSettled.current = true;
+      return;
+    }
+    urlNodeSettled.current = true;
+    setSelected(node.id);
+  }, [layout.nodes]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !urlNodeSettled.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const picked = selected ? layout.nodes.find(n => n.id === selected) : null;
+    // 部门走 ?focus=，这里只写成员/Agent —— 否则写出来的 ?node=部门 读回时
+    // 会被「节点深链不认部门」的规则忽略，变成坏链接。
+    if (picked && picked.kind !== 'group' && picked.kind !== 'core') params.set('node', picked.label);
+    else params.delete('node');
+    const qs = params.toString();
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+  }, [selected, layout.nodes]);
+
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {
     setView(v => {

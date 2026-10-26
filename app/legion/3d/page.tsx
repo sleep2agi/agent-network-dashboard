@@ -297,8 +297,10 @@ export default function Legion3DPage() {
   useEffect(() => {
     if (typeof window === 'undefined' || !urlNodeSettled.current) return;
     const params = new URLSearchParams(window.location.search);
-    const label = selected ? layout.nodes.find(n => n.id === selected)?.label : null;
-    if (label && selected !== 'core') params.set('node', label);
+    const picked = selected ? layout.nodes.find(n => n.id === selected) : null;
+    // 部门走 ?focus=，这里只写成员/Agent —— 否则写出来的 ?node=部门 读回时
+    // 会被「节点深链不认部门」的规则忽略，变成坏链接。
+    if (picked && picked.kind !== 'group' && picked.kind !== 'core') params.set('node', picked.label);
     else params.delete('node');
     const qs = params.toString();
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);

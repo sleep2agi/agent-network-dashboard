@@ -242,6 +242,26 @@ if (deptName) {
     copied.includes('/legion/3d?') && copied.includes('node=')
       ? pass('复制的是分享链接而非名字', { copied: copied.replace(/^https?:\/\/[^/]+/, '') })
       : fail('复制的是分享链接而非名字', { copied });
+
+    // 2D 同口径：?node=<成员名> 打开后直接选中该成员
+    const personName = await page.evaluate(async () => {
+      const res = await fetch('/api/hub/people?limit=200&offset=0');
+      if (!res.ok) return null;
+      const j = await res.json();
+      const p = j?.people?.[0];
+      return p?.display_name || p?.username || null;
+    });
+    if (personName) {
+      await page.goto(`${BASE}/legion?node=${encodeURIComponent(personName)}`, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(1800);
+      const deep2d = await page.evaluate((name) => ({
+        selected: (document.querySelector('[data-testid="legion-panel"]')?.textContent ?? '').includes(name),
+        urlKept: new URLSearchParams(location.search).get('node') === name,
+      }), personName);
+      deep2d.selected && deep2d.urlKept
+        ? pass('2D 节点深链 ?node= 选中该成员', deep2d)
+        : fail('2D 节点深链 ?node= 选中该成员', deep2d);
+    }
   }
   await page.goto(`${BASE}/org?focus=${encodeURIComponent(deptName)}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1600);
