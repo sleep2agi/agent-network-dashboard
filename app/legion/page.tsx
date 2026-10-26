@@ -254,7 +254,7 @@ export default function LegionPage() {
       // 围绕容器中心缩放：平移量随比例同步，避免缩小时图跑出画布。
       return { k, tx: cx - (cx - v.tx) * (k / v.k), ty: cy - (cy - v.ty) * (k / v.k) };
     });
-  }, [size.height, size.width]);
+  }, [layout, size.height, size.width, statusByAlias]);
 
   /**
    * 导出当前视图为 PNG。两条坑：
@@ -303,14 +303,62 @@ export default function LegionPage() {
         img.src = url;
       });
       const scale = 2;
+      const HEAD = Math.round(54 * scale);
+      const FOOT = Math.round(28 * scale);
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(w * scale);
-      canvas.height = Math.round(h * scale);
+      canvas.height = Math.round(h * scale) + HEAD + FOOT;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('浏览器不支持 canvas');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, HEAD, Math.round(w * scale), Math.round(h * scale));
+
+      // 导出图加标题栏/图例/时间：单独存下来也能说清是谁的军团、什么时候导的。
+      const cssVar = (name: string, fallback: string) =>
+        getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+      const fg = cssVar('--fg', '#e5e7eb');
+      const dim = cssVar('--fg-muted', '#9ca3af');
+      const font = 'system-ui, -apple-system, "Segoe UI", "Noto Sans SC", sans-serif';
+      const px = (n: number) => Math.round(n * scale);
+      const personCount = layout.nodes.filter(n => n.kind === 'person').length;
+      const agentCount = layout.nodes.filter(n => n.kind === 'agent').length;
+      const deptCount = layout.nodes.filter(n => n.kind === 'group').length;
+      const workingCount = [...statusByAlias.values()].filter(v => v === 'working').length;
+      const subtitle = deptCount > 0
+        ? `${deptCount} 个部门 · ${personCount} 名成员 · ${agentCount} 个 Agent · ${workingCount} 个运行中`
+        : `${personCount} 名成员 · ${agentCount} 个 Agent · ${workingCount} 个运行中`;
+
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = fg;
+      ctx.font = `600 ${px(17)}px ${font}`;
+      ctx.textAlign = 'left';
+      ctx.fillText('军团组织架构', px(16), px(24));
+      ctx.fillStyle = dim;
+      ctx.font = `${px(12)}px ${font}`;
+      ctx.fillText(subtitle, px(16), px(42));
+      ctx.textAlign = 'right';
+      ctx.font = `${px(11)}px ${font}`;
+      ctx.fillText(`导出 ${new Date().toLocaleString('zh-CN', { hour12: false })}`, canvas.width - px(16), px(24));
+
+      // 底部图例：颜色含义与页面上一致（绿=运行中、灰=未运行），不另造一套。
+      const legend: Array<[string, string]> = [['#4ade80', '运行中'], ['#6b7280', '空闲 / 离线'], ['#7dd3fc', '聚焦 / 命中']];
+      let lx = px(16);
+      const ly = canvas.height - FOOT / 2;
+      ctx.textAlign = 'left';
+      for (const [color, label] of legend) {
+        ctx.beginPath();
+        ctx.arc(lx + px(3), ly, px(3.5), 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.fillStyle = dim;
+        ctx.font = `${px(10.5)}px ${font}`;
+        ctx.fillText(label, lx + px(12), ly);
+        lx += px(12 + 10.5 * label.length + 18);
+      }
+      ctx.textAlign = 'right';
+      ctx.fillText('ANet · Legion', canvas.width - px(16), ly);
+
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error('PNG 编码失败');
       const a = document.createElement('a');
@@ -323,7 +371,7 @@ export default function LegionPage() {
     } finally {
       setExporting(false);
     }
-  }, [size.height, size.width]);
+  }, [layout, size.height, size.width, statusByAlias]);
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
