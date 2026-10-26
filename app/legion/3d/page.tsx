@@ -115,11 +115,16 @@ function statusColor(status: string | undefined, tk: Tokens): string {
 function nodeColor(node: LegionNode, tk: Tokens, statusByAlias: Map<string, string>): string {
   if (node.kind === 'core') return tk.accent;
   if (node.kind === 'group') return tk.info;
-  if (node.kind === 'agent') return statusColor(statusByAlias.get(node.label), tk);
-  // 成员：有任意 Agent 在跑就跟着亮；否则用次级文字色。
-  // 不能用 --fg —— 白芯 + 白描边等于没有描边。
+  // 神明 2026-10-27：层次只靠明度 —— 人环 --fg，Agent 环 --fg-muted，
+  // 不新增颜色。有状态的 Agent 仍然按成功/阻塞/错误上色。
+  if (node.kind === 'agent') {
+    const st = statusByAlias.get(node.label);
+    if (!st || st === 'idle') return tk.muted;
+    return statusColor(st, tk);
+  }
+  // 成员：有任意 Agent 在跑就跟着亮；否则用正文色（比 Agent 环亮一档）。
   const working = node.agentCount > 0 && statusByAlias.get(node.label) === 'working';
-  return working ? tk.success : tk.muted;
+  return working ? tk.success : tk.fg;
 }
 
 /** 光晕精灵缓存：一个颜色一张 128×128 的径向渐变贴图，按需缩放。
@@ -574,7 +579,7 @@ export default function Legion3DPage() {
         const bw = maxX - minX;
         const bh = maxY - minY;
         const span = Math.max(bw, bh, 1);
-        const target = Math.min(size.width, size.height) * (narrow ? 0.82 : 0.78);
+        const target = Math.min(size.width, size.height) * 0.82;
         const want = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, view.zoom * (target / span)));
         const k = want / view.zoom;
         // 投影 = 画布中心 + pan + zoom·u；pan 也在包围盒里，先减掉再乘 k。
