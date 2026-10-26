@@ -34,9 +34,13 @@ interface Member {
 }
 
 export default function NetworksPage() {
-  const { data, mutate } = useSWR('/api/hub/networks', fetcher, { refreshInterval: 10000 });
+  const { data, error, mutate } = useSWR('/api/hub/networks', fetcher, { refreshInterval: 10000 });
   const networks: Network[] = data?.networks || [];
-  const loading = !data;
+  // 读失败不能落到「No networks found + 建一个」：那条文案会让人以为
+  // 自己没有任何网络，从而重复创建。loading 也要排除 error，否则转圈不休。
+  const loadFailed = Boolean(error);
+  const unsupported = Boolean(data?.unavailable);
+  const loading = !data && !loadFailed;
 
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -140,7 +144,25 @@ export default function NetworksPage() {
               <span className="text-[10px] text-gray-600 uppercase tracking-wide">{networks.length} total</span>
             )}
           </div>
-          {loading ? (
+          {loadFailed ? (
+            <div role="alert" data-testid="networks-load-error" className="rounded-lg bg-[var(--bg-secondary)] px-3 py-3 text-sm">
+              <div className="text-[var(--fg)]">读不到网络列表</div>
+              <div className="mt-1 text-xs text-[var(--fg-muted)]">
+                {error instanceof Error ? error.message : String(error)} · 这不代表你没有网络，请先确认 Hub 可达，不要重复创建。
+              </div>
+              <button
+                type="button"
+                onClick={() => mutate()}
+                className="mt-2 rounded-md bg-[var(--bg-elevated)] px-2 py-1 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+              >
+                重试
+              </button>
+            </div>
+          ) : unsupported ? (
+            <div className="rounded-lg bg-[var(--bg-secondary)] px-3 py-3 text-sm text-[var(--fg-muted)]">
+              这版 Hub 没有网络管理接口（`/api/networks` 404），这里不显示网络列表。
+            </div>
+          ) : loading ? (
             <div className="animate-pulse space-y-2">{[1,2].map(i => <div key={i} className="h-14 bg-gray-800/20 rounded" />)}</div>
           ) : networks.length === 0 ? (
             <EmptyState

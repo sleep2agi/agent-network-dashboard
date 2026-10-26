@@ -57,3 +57,29 @@ describe('读失败必须冒泡，不能伪装成空数据', () => {
     expect(messages).toMatch(/error\s*&&\s*messages\.length === 0/);
   });
 });
+
+describe('其余代理路由：5xx 不再伪装成空列表', () => {
+  test('/api/hub/tokens 失败不再返回 200 空 token 列表', () => {
+    // 旧行为正好命中 /settings/tokens 注释里的坑：空列表会让用户重复建 token。
+    const src = read('app/api/hub/tokens/route.ts');
+    expect(src).not.toContain('ok: true, tokens: []');
+    expect(src).toMatch(/status: res\.status === 404 \? 502 : res\.status/);
+  });
+
+  test('/api/hub/networks 与 /api/hub/task-events 的 404 显式标 unavailable', () => {
+    for (const rel of ['app/api/hub/networks/route.ts', 'app/api/hub/task-events/route.ts']) {
+      const src = read(rel);
+      expect(src).toContain('res.status === 404');
+      expect(src).toContain('unavailable: true');
+      expect(src).toMatch(/status: res\.status/);
+    }
+  });
+
+  test('/api/hub/nodes 两个上游都失败时报错，且 status 兜底只有一份映射', () => {
+    const src = read('app/api/hub/nodes/route.ts');
+    expect(src).toContain('function nodesFromSessions');
+    expect(src.match(/nodesFromSessions\(/g).length).toBe(3); // 1 定义 + 2 调用
+    expect(src).toContain('/api/status ${statusRes.status}');
+    expect(src).toMatch(/\{ status: 502 \}/);
+  });
+});

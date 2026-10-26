@@ -39,7 +39,17 @@ const SIDEBAR_MODE_LABEL: Record<SidebarMode, string> = {
   'icon-rail': '图标',
 };
 
-const networkFetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : { networks: [] });
+// 与 /api/hub/status 同一个坑：这个 key 也被设置页共用。吞掉非 2xx 会让
+// 「读不到网络」变成「你没有网络」，并把这份假空写进 SWR 全局缓存。
+const networkFetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (res.status === 401) {
+    window.location.assign('/login');
+    throw new Error('unauthorized');
+  }
+  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  return res.json();
+};
 
 // Cleanup (issue #4): sidebar collapsed to the 6 core destinations. The
 // low-frequency / unverified entries (Messages, Networks, Audit Log,
