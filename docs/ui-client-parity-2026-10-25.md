@@ -576,3 +576,13 @@ gates 现在四道：color-ratchet → avatars → token-contrast → accent-tex
 基线从 **138 处 / 30 文件收紧到 126 / 27**。`/login` 的 7 处是 SVG 品牌标记
 （装饰描边，不是正文），清单里标注保留。
 
+### 登录页豁免与 3D 图例核对（`33a0d11`）
+
+`/login` 是**固定深色的品牌屏**（不跟随主题），其中 7 处 cyan/violet/green 是
+品牌标记 SVG 与登录/注册切换态。换成 `--accent-text` 在浅色主题下会变成深青
+压在深底上，反而更糟 —— 因此在棘轮里显式豁免 `app/login/page.tsx` 并写明理由，
+基线 126 → **119 处 / 26 文件**。
+
+3D 图例核对：标签走 `--fg-dim`（浅底 4.51:1、深底 5.27:1），圆点走
+success / muted / warning / danger，两主题都跟着 token 变，不再写死。
+
