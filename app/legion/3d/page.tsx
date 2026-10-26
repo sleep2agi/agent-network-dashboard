@@ -196,6 +196,10 @@ export default function Legion3DPage() {
   const interactingUntil = useRef(0);
   // 首屏 / 重置视角后自动取景（见渲染循环里的 fitPending 分支）。
   const fitPending = useRef(true);
+  const lastFitSize = useRef<{ w: number; h: number } | null>(null);
+  // 用户自己缩放过就尊重他的视角；只有「还没动过」时，尺寸变化（首帧
+  // 布局落定、窗口缩放）才重新取景。
+  const userAdjusted = useRef(false);
   const dragRef = useRef<{ x: number; y: number; yaw: number; pitch: number; moved: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ span: number; dist: number } | null>(null);
@@ -485,7 +489,10 @@ export default function Legion3DPage() {
       // 自动取景：默认 zoom=1.12 时整张图只占画布 40% 左右，剩下大半是空的。
       // 首屏和「重置视角」后按内容包围盒算一次缩放 + 平移，把军团收进画面
       // 78%，重心放到画布中心。只在结构变化时做，不跟用户的拖动/缩放抢。
-      if (fitPending.current && nodes.length > 0) {
+      const sizeDrift = !lastFitSize.current
+        || Math.abs(size.width - lastFitSize.current.w) > 8
+        || Math.abs(size.height - lastFitSize.current.h) > 8;
+      if ((fitPending.current || (sizeDrift && !userAdjusted.current)) && nodes.length > 0) {
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         for (const n of nodes) {
           if (n.projected.x < minX) minX = n.projected.x;
@@ -507,6 +514,8 @@ export default function Legion3DPage() {
         view.zoom = want;
         setZoomPct(Math.round(want * 100));
         fitPending.current = false;
+        userAdjusted.current = false;
+        lastFitSize.current = { w: size.width, h: size.height };
       }
       const byId = new Map(nodes.map(n => [n.item.id, n]));
       const core = byId.get('core');
@@ -713,11 +722,14 @@ export default function Legion3DPage() {
       for (const sn of nodes) {
         const node = sn.item;
         const p = sn.projected;
-        const r = Math.max(1.4, WORLD_R[node.kind] * p.scale);
+        // 人多的时候成员环会连成一条「白香肠」：100 个人挤在一圈上，半径再大
+        // 就互相吃掉轮廓。>60 人时把成员点收小一档，让环重新变成一颗颗。
+        const crowd = node.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
+        const r = Math.max(1.4, WORLD_R[node.kind] * p.scale * crowd);
         const depthT = Math.min(1, Math.max(0, (p.depth - near) / (far - near)));
         const dim = activeSet && !activeSet.has(node.id);
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
-        let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.5 : 1);
+        let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.42 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
         const color = nodeColor(node, tk, statusByAlias);
         // 核心轻微呼吸，整张图才有「活着」的感觉（幅度 6%，不抢注意力）。
@@ -731,7 +743,7 @@ export default function Legion3DPage() {
           // 状态色仍然可读，鼠标悬停/命中半径不变。
           ctx.fillStyle = color;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, Math.max(1.6, radiusPx * 0.9), 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, Math.max(1.6, radiusPx * 0.82), 0, Math.PI * 2);
           ctx.fill();
         } else if (dark) {
           // 深底（神明 cover14 的节点画法）：彩色外晕 → 白芯 → 彩色描边。
@@ -922,6 +934,7 @@ export default function Legion3DPage() {
     viewRef.current = { ...DEFAULT_VIEW };
     setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
     fitPending.current = true;
+    userAdjusted.current = false;
     lastInteract.current = performance.now();
   }, []);
 
@@ -958,6 +971,7 @@ export default function Legion3DPage() {
         interactingUntil.current = performance.now() + 180;
         const ratio = span / pinchRef.current.span;
         viewRef.current.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, pinchRef.current.dist * ratio));
+        userAdjusted.current = true;
         setZoomPct(Math.round(viewRef.current.zoom * 100));
       }
       return;
@@ -1032,6 +1046,7 @@ export default function Legion3DPage() {
     v.panX = mx - k * (mx - v.panX);
     v.panY = my - k * (my - v.panY);
     v.zoom = next;
+    userAdjusted.current = true;
     setZoomPct(Math.round(next * 100));
   };
 
@@ -1062,8 +1077,8 @@ export default function Legion3DPage() {
       case 'ArrowRight': e.preventDefault(); v.yaw += 0.12; break;
       case 'ArrowUp': e.preventDefault(); v.pitch = Math.min(1.45, v.pitch + 0.08); break;
       case 'ArrowDown': e.preventDefault(); v.pitch = Math.max(0.12, v.pitch - 0.08); break;
-      case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); setZoomPct(Math.round(v.zoom * 100)); break;
-      case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); setZoomPct(Math.round(v.zoom * 100)); break;
+      case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); break;
+      case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); break;
       case 'Enter': {
         // 焦点还在节点列表里时，回车只负责「选中」（按钮自身行为），
         // 不要在列表里按一下就跳走；再按一次才打开（见列表项的 onClick）。
