@@ -551,3 +551,16 @@ CI 里装 Playwright 再起 app 跑对比度太重（3–5 分钟起步）。改
 `token-contrast` 把 `--accent-text` 纳入拦门（会解析 `var()` 引用），`--accent`
 保留为警告。结果：文字色全部 ≥4.5:1；浏览器版 2 主题 × 12 页 0 处不达标。
 
+## 十六、写死文字色棘轮（2026-10-27，`6fe04ec`）
+
+盘点：30 个文件、**138 处**写死的 Tailwind 文字色（`text-cyan-*` 等）。
+一次性全改风险大（`TopoGraph` / `Sidebar` / `TaskChatPanel` 都不在本节点独占），
+所以先上棘轮堵住新增：
+
+- `scripts/check-accent-text-ratchet.mjs`：按文件记基线，**新增即失败**，
+  改少提示 `--update` 收紧；已进 `npm run gates`（纯 Node）。
+- 清单与迁移指引：`docs/a11y-hardcoded-text-inventory.md`
+  （强调色 → `--accent-text`；状态色 → 语义 token；固定深底要写注释）。
+
+gates 现在四道：color-ratchet → avatars → token-contrast → accent-text-ratchet。
+
