@@ -1009,6 +1009,20 @@ export default function Legion3DPage() {
       case 'ArrowDown': e.preventDefault(); v.pitch = Math.max(0.12, v.pitch - 0.08); break;
       case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); setZoomPct(Math.round(v.zoom * 100)); break;
       case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); setZoomPct(Math.round(v.zoom * 100)); break;
+      case 'Enter': {
+        // 选中节点后回车 = 打开它的详情页（Agent→节点页，成员/部门→/org）。
+        // 省掉「Tab 到详情卡里的链接再回车」这一步。
+        const sel = selectedRef.current;
+        if (sel) {
+          const node = layout.nodes.find(n => n.id === sel);
+          if (node) {
+            e.preventDefault();
+            if (node.kind === 'agent') router.push(`/nodes/${encodeURIComponent(node.label)}`);
+            else if (node.kind === 'person' || node.kind === 'group') router.push('/org');
+          }
+        }
+        break;
+      }
       case 'r': case 'R': resetView(); break;
       case 'Escape':
         e.preventDefault();
@@ -1271,7 +1285,8 @@ export default function Legion3DPage() {
           className="absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28"
         >
           {layout.nodes
-            .filter(n => n.kind === 'core' || n.kind === 'group' || (n.kind === 'person' && layout.stats.people <= 60))
+            // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
+            .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= 60)
             .map(n => (
               <button
                 key={n.id}
@@ -1330,7 +1345,7 @@ export default function Legion3DPage() {
             </span>
           ))}
         </div>
-        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 点节点看详情 · / 搜索 · R 重置</p>
+        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 点节点看详情/双击直接打开 · / 搜索 · 回车打开选中 · R 重置</p>
       </div>
 
       {/* 选中节点详情 */}
