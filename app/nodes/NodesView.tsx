@@ -62,7 +62,7 @@ function DraftMark({ alias }: { alias: string }) {
 }
 
 export function NodesView({ initialAlias = null }: { initialAlias?: string | null }) {
-  const { sessions, isLoading: loading } = useSessions();
+  const { sessions, isLoading: loading, error: loadError, mutate: mutateSessions } = useSessions();
   const { health } = useHealth();
   const { lifecycleByAlias, nodeIdByAlias, attrsByAlias } = useNodeLifecycle();
   const { hasUnread, unreadCount, lastActivityAt } = useChatUnread();
@@ -577,7 +577,36 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
         </div>
       )}
 
-      {loading ? (
+      {loadError && sessions.length > 0 && (
+        <div role="status" className="mb-2 flex items-center justify-between gap-3 rounded-lg bg-[var(--bg-secondary)] px-3 py-2 text-xs">
+          <span className="text-[var(--fg-muted)]">{t('刷新失败，下面是上一次读到的节点。', 'Refresh failed — showing the last successful read.')}</span>
+          <button
+            type="button"
+            onClick={() => mutateSessions()}
+            className="shrink-0 rounded-md px-2 py-1 text-[var(--hl)] hover:bg-[var(--hover-tint)]"
+          >
+            {t('重试', 'Retry')}
+          </button>
+        </div>
+      )}
+
+      {/* 读失败不是「没有节点」：旧实现在 error 时继续走 EmptyState，
+          新用户会看到「npx … init」引导，以为队伍还没建起来。 */}
+      {!loading && loadError && sessions.length === 0 ? (
+        <div role="alert" className="rounded-2xl bg-[var(--bg-secondary)] p-6 text-center text-sm">
+          <p className="font-medium text-[var(--danger)]">{t('读不到节点列表', 'Could not load nodes')}</p>
+          <p className="mt-1 text-xs text-[var(--fg-muted)]">
+            {loadError instanceof Error ? loadError.message : String(loadError)}
+          </p>
+          <button
+            type="button"
+            onClick={() => mutateSessions()}
+            className="mt-3 rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+          >
+            {t('重试', 'Retry')}
+          </button>
+        </div>
+      ) : loading ? (
         <div className="animate-pulse space-y-2">
           {[1,2,3,4].map(i => <div key={i} className="h-16 bg-gray-800/20 rounded-lg" />)}
         </div>

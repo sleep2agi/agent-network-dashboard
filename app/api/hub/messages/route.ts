@@ -14,6 +14,14 @@ export async function GET(req: Request) {
   if (networkId) qs.set('network_id', networkId);
   try {
     const res = await hubFetch(`/api/messages?${qs.toString()}`);
+    // 上游失败不能包装成 200 {ok:false, messages:[]}：那会让页面把
+    // 「Hub 读不到」显示成「没有消息」。状态码原样透传（5xx→502）。
+    if (!res.ok) {
+      return Response.json(
+        { ok: false, error: `CommHub /api/messages ${res.status}` },
+        { status: res.status === 404 ? 502 : res.status },
+      );
+    }
     const data = await res.json();
     // Fallback: if network filter returns empty, retry without filter
     if (networkId && data.ok && (!data.messages || data.messages.length === 0)) {

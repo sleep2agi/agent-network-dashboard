@@ -70,7 +70,7 @@ const HISTORY_PAGE = 30;
 
 export default function MessagesPage() {
   const [histLimit, setHistLimit] = useState(HISTORY_PAGE);
-  const { messages, isLoading } = useMessages(histLimit);
+  const { messages, isLoading, error, mutate } = useMessages(histLimit);
   // The hub returned a full page → assume more history exists beyond it.
   const hasOlder = messages.length >= histLimit;
   const loadingOlder = isLoading && messages.length > 0;
@@ -278,9 +278,38 @@ export default function MessagesPage() {
         </div>
       )}
 
+      {/* 读失败不等于「没有消息」。旧实现忽略 error，把失败渲染成空态，
+          用户看到的是「这里很安静」而不是「没读到」。 */}
+      {error && messages.length > 0 && (
+        <div role="status" className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-[var(--bg-secondary)] px-3 py-2 text-xs">
+          <span className="text-[var(--fg-muted)]">刷新失败，下面是上一次读到的消息。</span>
+          <button
+            type="button"
+            onClick={() => mutate()}
+            className="shrink-0 rounded-md px-2 py-1 text-[var(--hl)] hover:bg-[var(--hover-tint)]"
+          >
+            重试
+          </button>
+        </div>
+      )}
+
       {isLoading && messages.length === 0 ? (
         <div className="animate-pulse space-y-3">
           {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 rounded-2xl bg-gray-800/20" />)}
+        </div>
+      ) : error && messages.length === 0 ? (
+        <div role="alert" className="rounded-xl bg-[var(--bg-secondary)] p-6 text-center text-sm">
+          <p className="font-medium text-[var(--danger)]">读不到消息</p>
+          <p className="mt-1 text-xs text-[var(--fg-muted)]">
+            {error instanceof Error ? error.message : String(error)}
+          </p>
+          <button
+            type="button"
+            onClick={() => mutate()}
+            className="mt-3 rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+          >
+            重试
+          </button>
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState variant="messages" />

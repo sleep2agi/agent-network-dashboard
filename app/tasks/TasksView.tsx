@@ -125,6 +125,11 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
         window.location.assign('/login');
         return;
       }
+      // 非 2xx 是失败，不是空列表：不检查 res.ok 会让 502 显示成「暂无任务」。
+      if (!res.ok) {
+        const detail = await res.json().catch(() => null);
+        throw new Error(detail?.error || detail?.message || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       setTasks(data.tasks || []);
       setCount(data.count ?? (data.tasks?.length || 0));
@@ -292,6 +297,18 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <div key={i} className="h-14 rounded bg-[var(--bg-elevated)]" />
               ))}
+            </div>
+          ) : error && tasks.length === 0 ? (
+            <div className="px-3 py-6 text-center text-sm">
+              <p className="font-medium text-[var(--danger)]">读不到任务列表</p>
+              <p className="mt-1 text-xs text-[var(--fg-muted)]">{error}</p>
+              <button
+                type="button"
+                onClick={() => { setLoading(true); setError(''); void fetchTasks(); }}
+                className="mt-3 rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+              >
+                重试
+              </button>
             </div>
           ) : tasks.length === 0 ? (
             <div className="px-3 py-6">

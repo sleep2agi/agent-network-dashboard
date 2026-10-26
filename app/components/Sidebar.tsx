@@ -518,8 +518,20 @@ interface StatusData {
   sessions?: Array<{ status?: string; alias?: string; network_id?: string }>;
 }
 
-const statusFetcher = (url: string) =>
-  fetch(url).then(r => r.ok ? r.json() as Promise<StatusData> : { sessions: [] });
+// 这个 fetcher 与 app/lib/hooks.ts 的 useSessions 共用 SWR key
+// `/api/hub/status`。旧实现把非 2xx 吞成 `{sessions: []}`，于是全局缓存里
+// 存的是一份「读失败但看起来像空」的数据：任何页面（/nodes、/versions…）
+// 拿到的都是空数组而不是 error，空态就把「Hub 读不到」说成「队伍还没建」。
+// 失败必须抛出，让错误沿同一条 key 传下去，各页面自己决定怎么显示。
+const statusFetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (res.status === 401) {
+    window.location.assign('/login');
+    throw new Error('unauthorized');
+  }
+  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  return res.json() as Promise<StatusData>;
+};
 
 function SidebarBrand({ collapsed }: { collapsed: boolean }) {
   // Live online count — re-uses the same /api/hub/status endpoint the

@@ -105,6 +105,14 @@ export async function GET(req: Request) {
       `${HUB_URL}/api/completions?limit=${limit}`,
       { headers: await hubHeaders(), next: { revalidate: 0 } },
     );
+    // 两个上游都失败时必须报错：旧实现会返回 {ok:true, tasks:[]}，
+    // 页面于是把「Hub 挂了我读不到」显示成「暂无任务」。
+    if (!compRes.ok) {
+      return Response.json(
+        { ok: false, error: `CommHub /api/tasks ${tasksRes.status} · /api/completions ${compRes.status}` },
+        { status: 502 },
+      );
+    }
     const compData = await compRes.json();
     const completions: Completion[] = compData.completions || [];
 
