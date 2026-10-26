@@ -432,6 +432,8 @@ export default function Legion3DPage() {
       // 大网络降级：200 个节点的网络里，逐节点 shadowBlur + 逐边光晕会把
       // 帧率打到个位数。装饰性开销按规模递减，结构和信息一律不减。
       const heavy = layout.nodes.length > 80;
+      // 400 级别（100 人 / 300 Agent）再降一档：只留结构和一档动效。
+      const huge = layout.nodes.length > 250;
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       const key = `${Math.round(size.width)}x${Math.round(size.height)}:${tk.bg}:${tk.accent}:${dark}`;
@@ -546,7 +548,7 @@ export default function Legion3DPage() {
         ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
         ctx.strokeStyle = e.lit && activeSet ? tk.accent : tk.border;
         ctx.globalAlpha = e.lit ? (activeSet ? 0.62 : (dark ? 0.34 : 0.45)) : 0.08;
-        ctx.lineWidth = e.lit && activeSet ? 1.6 : 1;
+        ctx.lineWidth = huge ? 0.8 : e.lit && activeSet ? 1.6 : 1;
         ctx.stroke();
       }
       // 白色短划流光（dasharray 2 22），沿线跑。
@@ -555,9 +557,9 @@ export default function Legion3DPage() {
       ctx.strokeStyle = tk.fg;
       ctx.lineWidth = 1.1;
       ctx.globalAlpha = dark ? 0.48 : 0.4;
-      const dashStride = heavy ? 3 : 1;
+      const dashStride = huge ? 0 : heavy ? 3 : 1;
       edgeDraws.forEach((e, i) => {
-        if (!e.lit || i % dashStride !== 0) return;
+        if (!dashStride || !e.lit || i % dashStride !== 0) return;
         ctx.lineDashOffset = -((now / 55) % 24) - i * 6;
         ctx.beginPath();
         ctx.moveTo(e.a.projected.x, e.a.projected.y);
@@ -569,7 +571,7 @@ export default function Legion3DPage() {
       ctx.globalAlpha = 1;
 
       // 双向数据包：亮头（白芯 + 彩色描边）+ 6 段渐隐尾巴，两个方向各一个。
-      const cometStride = heavy ? 6 : 1;
+      const cometStride = huge ? 12 : heavy ? 6 : 1;
       edgeDraws.forEach((e, i) => {
         if (!e.lit || i % cometStride !== 0) return;
         const speed = 5200;
@@ -660,7 +662,14 @@ export default function Legion3DPage() {
 
         ctx.globalAlpha = alpha;
         const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
-        if (dark) {
+        if (huge && node.kind === 'agent') {
+          // 300 个 Agent 时每个都画「白芯 + 描边」纯属浪费：一个色点足够，
+          // 状态色仍然可读，鼠标悬停/命中半径不变。
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, Math.max(1.6, radiusPx * 0.9), 0, Math.PI * 2);
+          ctx.fill();
+        } else if (dark) {
           // 深底（神明 cover14 的节点画法）：彩色外晕 → 白芯 → 彩色描边。
           // 只画实心色块时深底上是一团糊光；白芯给每个节点一个硬边。
           const wantHalo = !heavy || node.kind === 'core' || node.kind === 'group' || activeSet?.has(node.id);
