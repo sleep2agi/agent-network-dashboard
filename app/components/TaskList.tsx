@@ -49,7 +49,7 @@ export function TaskList({
       className="flex flex-col h-full max-h-screen overflow-y-auto"
     >
       {tasks.length === 0 ? (
-        <div className="px-4 py-6 text-xs text-gray-600 text-center">
+        <div className="px-4 py-6 text-xs text-gray-400 text-center">
           没有匹配的任务
         </div>
       ) : (
@@ -88,14 +88,14 @@ export function TaskList({
                     {t.priority === 'high' && (
                       <span className="text-[10px] text-red-400 shrink-0">HIGH</span>
                     )}
-                    <span className="ml-auto text-[10px] text-gray-600 tabular-nums shrink-0">
+                    <span className="ml-auto text-[10px] text-gray-500 tabular-nums shrink-0">
                       {timeAgo(t.created_at)}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-gray-300 min-w-0 mb-1">
                     {t.from_name && <AliasAvatar alias={t.from_name} size={14} />}
                     <span className="truncate max-w-[35%]">{t.from_name || '--'}</span>
-                    <span className="text-gray-600 shrink-0">→</span>
+                    <span className="text-gray-600 shrink-0" aria-hidden="true">→</span>
                     {t.to_name && <AliasAvatar alias={t.to_name} size={14} />}
                     <span className="truncate max-w-[35%]">{t.to_name || '--'}</span>
                   </div>
