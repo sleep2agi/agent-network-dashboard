@@ -193,6 +193,45 @@ await page.waitForTimeout(1500);
 const narrowOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 narrowOverflow === 0 ? pass('375 /org 无横向溢出', { narrowOverflow }) : fail('375 /org 无横向溢出', { narrowOverflow });
 
+// 375 /legion：列表与右侧详情面板不重叠、无横向溢出
+await page.goto(`${BASE}/legion`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(1600);
+await page.getByTestId('legion-list-toggle').click();
+await page.waitForTimeout(300);
+const mobile2d = await page.evaluate(() => {
+  const rect = (sel) => { const el = document.querySelector(sel); if (!el) return null; const r = el.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom) }; };
+  const list = rect('[data-testid="legion-node-list"]');
+  const panel = rect('[data-testid="legion-panel"]');
+  return {
+    overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    overlap: list && panel ? !(list.bottom < panel.top || list.top > panel.bottom) : null,
+  };
+});
+mobile2d.overflow === 0 && mobile2d.overlap === false
+  ? pass('375 2D 列表与详情面板不重叠', mobile2d)
+  : fail('375 2D 列表与详情面板不重叠', mobile2d);
+
+// 375 /legion/3d：列表打开时详情卡让位（互斥），提示条/图例也不叠
+await page.goto(`${BASE}/legion/3d`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(2000);
+await page.getByTestId('legion-3d-list-toggle').click();
+await page.waitForTimeout(400);
+await page.getByTestId('legion-3d-node-list').getByRole('option').nth(1).click();
+await page.waitForTimeout(600);
+await page.getByTestId('legion-3d-list-toggle').click();
+await page.waitForTimeout(400);
+const mobile3d = await page.evaluate(() => {
+  const rect = (sel) => { const el = document.querySelector(sel); if (!el) return null; const r = el.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height) }; };
+  return {
+    detail: rect('[data-testid="legion-3d-detail"]'),
+    hint: rect('[data-testid="legion-3d-scale-hint"]'),
+    overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  };
+});
+const noStack = mobile3d.overflow === 0
+  && (!mobile3d.hint || mobile3d.hint.h === 0 || !mobile3d.detail || mobile3d.hint.bottom < mobile3d.detail.top);
+noStack ? pass('375 3D 详情与提示条不重叠', mobile3d) : fail('375 3D 详情与提示条不重叠', mobile3d);
+
 errors.length ? fail('无 pageerror', errors) : pass('无 pageerror');
 
 await browser.close();
