@@ -385,7 +385,7 @@ export default function MessagesPage() {
                         <span className="text-sm font-medium text-[var(--fg)]">{fromAlias}</span>
                         {message.to_alias && <span className="text-xs text-[#CBD5E1]">to {message.to_alias}</span>}
                         {message.priority === 'high' && <span className="text-xs text-[var(--danger)]">HIGH</span>}
-                        <span className="ml-auto text-[11px] text-[var(--fg-dim)]">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
+                        <span className="ml-auto text-[11px] text-[var(--fg-muted)]">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
                       </div>
                       {/* Round 79: break-words + overflow-wrap:anywhere so
                           long unbroken runs (URLs, ASCII rules like
@@ -419,10 +419,10 @@ export default function MessagesPage() {
                           <span className={`text-sm font-medium ${variant === 'outgoing' ? 'text-[var(--fg)]' : 'text-[var(--fg)]'}`}>
                             {fromAlias}
                           </span>
-                          <span className="text-xs text-[var(--fg-dim)]">&rarr;</span>
+                          <span className="text-xs text-[var(--fg-muted)]">&rarr;</span>
                           <span className="text-sm text-[#CBD5E1]">{message.to_alias || '--'}</span>
                           {message.priority === 'high' && <span className="text-xs text-[var(--danger)]">HIGH</span>}
-                          <span className="ml-auto text-[11px] text-[var(--fg-dim)]">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
+                          <span className="ml-auto text-[11px] text-[var(--fg-muted)]">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
                         </div>
                       )}
 
@@ -446,13 +446,13 @@ export default function MessagesPage() {
 
                       {/* When in a streak, surface the timestamp inline-right so users still know cadence */}
                       {samePrev && (
-                        <div className="mt-1 text-[11px] text-[var(--fg-dim)] text-right">
+                        <div className="mt-1 text-[11px] text-[var(--fg-muted)] text-right">
                           {message.created_at ? timeAgo(message.created_at) : ''}
                         </div>
                       )}
 
                       {debug && (
-                        <div className="mt-3 border-t border-white/10 pt-3 text-[11px] text-[var(--fg-dim)] space-y-1">
+                        <div className="mt-3 border-t border-white/10 pt-3 text-[11px] text-[var(--fg-muted)] space-y-1">
                           <div>ID: {message.id}</div>
                           {message.task_id && <div>Task ID: {message.task_id}</div>}
                           <div>Created: {message.created_at}</div>

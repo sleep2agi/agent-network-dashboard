@@ -52,7 +52,7 @@ body {
   --bg-elevated:  #1f1f24;
   --fg:           #e5e7eb;
   --fg-muted:     #9ca3af;
-  --fg-dim:       #7b8494; /* was #6b7280 — 4.07:1 on --bg, below 4.5 for small text */
+  --fg-dim:       #828b9c; /* #6b7280 → #7b8494 → #828b9c: 5.27:1 on --bg, 4.78:1 on --bg-elevated */
   --border:       #26262b;
   --border-hover: #3a3a41;
   --accent:       #8b5cf6;

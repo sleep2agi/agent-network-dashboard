@@ -88,7 +88,7 @@ export function TaskList({
                   <div className="mb-1 flex min-w-0 items-center gap-1 text-xs text-[var(--fg-muted)]">
                     {t.from_name && <AliasAvatar alias={t.from_name} size={14} />}
                     <span className="truncate max-w-[35%]">{t.from_name || '--'}</span>
-                    <span className="shrink-0 text-[var(--fg-dim)]">→</span>
+                    <span className="shrink-0 text-[var(--fg-muted)]">→</span>
                     {t.to_name && <AliasAvatar alias={t.to_name} size={14} />}
                     <span className="truncate max-w-[35%]">{t.to_name || '--'}</span>
                   </div>

@@ -1151,7 +1151,7 @@ export default function Legion3DPage() {
           <button
             type="button"
             onClick={() => { setFocus(null); yawTarget.current = null; }}
-            className="pointer-events-auto mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--accent)]/12 px-3 py-1 text-[11px] text-[var(--accent)]"
+            className="pointer-events-auto mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--accent)]/12 px-3 py-1 text-[11px] text-[var(--fg)]"
           >
             聚焦：{layout.nodes.find(n => n.id === focus)?.label ?? '部门'}
             <span aria-hidden>✕</span>

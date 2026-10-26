@@ -27,6 +27,7 @@
     "avatars:check": "node scripts/check-avatars.mjs",
     "ratchet": "node scripts/check-color-ratchet.mjs",
     "gates": "node scripts/check-color-ratchet.mjs && node scripts/check-avatars.mjs",
+    "a11y:contrast": "node scripts/check-contrast.mjs",
     "test": "node scripts/run-tests.mjs"
   },
   "bin": {
