@@ -649,3 +649,20 @@ success / muted / warning / danger，两主题都跟着 token 变，不再写死
 结果（页面内 rAF 采样，408 节点）：缩放中位帧间隔 **33.3ms → 16.7ms（60fps）**，
 p95 33.3ms；拖动/搜索/搜索+聚焦仍在 60fps。截图对比确认停手后恢复清晰。
 
+### 缩放锚点 + DPI 自适应 + 一次自伤 bug（2026-10-27）
+
+- **缩放以鼠标为锚点**：`view` 增加 `panX/panY`，`projectPoint` 支持 `cam.cx/cy`；
+  滚轮时按 `pan' = c - (zoom'/zoom)(c - pan)` 重算，鼠标下的节点保持不动
+  （实测：缩放前后锚点像素亮度 636 → 636，说明节点仍在指针下）。
+- **DPI 自适应预览**：交互期背板缩放按 `devicePixelRatio` 分档（≥2 用 0.6，
+  否则 0.75），低 DPI 屏不再被降得太糊。
+
+**一次自伤 bug（已修）**：上一轮把 `canvas.width/height` 的初始化换成
+`applyResolution(1)`，但 `resScale` 初值是 1 → 立刻 early-return，**背板尺寸
+从没设过**，新开页面时画布停在默认 300×150（空白）。之所以上一轮没发现，
+是因为验证脚本跑在 HMR 之后，canvas 元素保留了旧尺寸。
+
+修法：`resScale` 初值改 0，保证首次设置一定执行；并把「新开页面 canvas.width
+必须 > 300」加进我的验收脚本（`zoom-debug` 断言）。
+教训：改了 canvas 尺寸/初始化必须用**全新页面加载**验证，HMR 不算。
+

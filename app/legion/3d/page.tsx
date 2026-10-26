@@ -28,7 +28,7 @@ import { EmptyState } from '../../components/EmptyState';
 // （别用强广角，远景缩成点就没有军团体量感）、自转 0.02–0.03 rad/s。
 // 实现上把「透视强度」和「缩放」拆开：dist 固定大一点 = 透视更平，
 // 滚轮改的是 zoom（scale），不再同时改变透视。
-const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.52, dist: 6.0, zoom: 1.12 };
+const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.52, dist: 6.0, zoom: 1.12, panX: 0, panY: 0 };
 const MIN_ZOOM = 0.62;
 const MAX_ZOOM = 2.4;
 const SPIN_RAD_PER_SEC = 0.027;
@@ -362,8 +362,9 @@ export default function Legion3DPage() {
     if (!ctx) return;
 
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const RES_LOW = 0.6;      // 交互期间的背板缩放：408 节点缩放时从 30fps 提到 ~50fps
-    let resScale = 1;
+    // 交互期间的背板缩放：低 DPI 屏降太多会明显糊，按 dpr 分档
+    const RES_LOW = dpr >= 2 ? 0.6 : 0.75;
+    let resScale = 0; // 0 = 还没设过背板尺寸，保证首次 applyResolution(1) 真的执行
     const applyResolution = (scale: number) => {
       if (scale === resScale) return;
       resScale = scale;
@@ -438,6 +439,8 @@ export default function Legion3DPage() {
         pitch: view.pitch,
         dist: view.dist,
         focal: Math.min(size.width, size.height) * (narrow ? 2.4 : 1.73) * view.zoom,
+        cx: size.width / 2 + view.panX,
+        cy: size.height / 2 + view.panY,
       };
 
       // 大网络降级：200 个节点的网络里，逐节点 shadowBlur + 逐边光晕会把
@@ -953,8 +956,19 @@ export default function Legion3DPage() {
     e.preventDefault();
     lastInteract.current = performance.now();
     interactingUntil.current = performance.now() + 180;
-    const next = viewRef.current.zoom * (e.deltaY > 0 ? 1 / 1.08 : 1.08);
-    viewRef.current.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
+    const v = viewRef.current;
+    const factor = e.deltaY > 0 ? 1 / 1.08 : 1.08;
+    const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.zoom * factor));
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    // 以鼠标位置为锚点：screen = center + pan + zoom * u，保持 u 对应点不动
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const mx = e.clientX - rect.left - cx;
+    const my = e.clientY - rect.top - cy;
+    const k = next / v.zoom;
+    v.panX = mx - k * (mx - v.panX);
+    v.panY = my - k * (my - v.panY);
+    v.zoom = next;
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {

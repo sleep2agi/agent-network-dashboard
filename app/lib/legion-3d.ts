@@ -29,6 +29,9 @@ export interface Camera3D {
   dist: number;
   /** 焦距（像素）。通常取画布短边的一部分。 */
   focal: number;
+  /** 投影中心（像素）。默认画布中心；缩放锚定鼠标时由页面传入偏移。 */
+  cx?: number;
+  cy?: number;
 }
 
 export interface ProjectedPoint {
@@ -88,9 +91,11 @@ export function projectPoint(
   if (!Number.isFinite(depth) || depth <= 0.05) return null;
 
   const scale = cam.focal / depth;
+  const cx = cam.cx ?? size.width / 2;
+  const cy = cam.cy ?? size.height / 2;
   return {
-    x: size.width / 2 + x1 * scale,
-    y: size.height / 2 - y2 * scale,
+    x: cx + x1 * scale,
+    y: cy - y2 * scale,
     scale,
     depth,
   };
