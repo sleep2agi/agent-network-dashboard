@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { buildLegionLayout, type LegionNode } from '../../lib/legion-layout';
 import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
@@ -135,7 +136,9 @@ function makeStars(count: number) {
 }
 
 export default function Legion3DPage() {
+  const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
+  const [focus, setFocus] = useState<string | null>(null);
   const [spin, setSpin] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -155,6 +158,7 @@ export default function Legion3DPage() {
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ span: number; dist: number } | null>(null);
   const screenRef = useRef<Array<SceneNode<LegionNode>>>([]);
+  const hoverRef = useRef<string | null>(null);
   const starsRef = useRef(makeStars(160));
 
   const people = useSWR<PeopleResponse>('/api/hub/people?limit=200&offset=0', legionFetcher, {
@@ -216,6 +220,28 @@ export default function Legion3DPage() {
     }
     return set;
   }, [layout.edges, selected]);
+
+  /** 部门聚焦：只保留该部门子树（含自身），其余淡出。2D 页同款语义。 */
+  const focusSet = useMemo(() => {
+    if (!focus) return null;
+    const children = new Map<string, string[]>();
+    for (const e of layout.edges) {
+      const arr = children.get(e.from) ?? [];
+      arr.push(e.to);
+      children.set(e.from, arr);
+    }
+    const set = new Set<string>([focus]);
+    const stack = [focus];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      for (const child of children.get(cur) ?? []) {
+        if (!set.has(child)) { set.add(child); stack.push(child); }
+      }
+    }
+    return set;
+  }, [focus, layout.edges]);
+
+  const activeSet = related ?? focusSet;
 
   const ringRadii = useMemo(() => layout.rings.map(r => ({ ring: r.ring, radius: r.radius })), [layout.rings]);
 
@@ -381,15 +407,15 @@ export default function Legion3DPage() {
           if (pi) inner.push({ x: pi.x, y: pi.y });
         }
         if (outer.length < 2 || inner.length < 2) continue;
-        const lit = related?.has(node.id) ?? false;
+        const lit = activeSet?.has(node.id) ?? false;
         ctx.beginPath();
         outer.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
         for (let i = inner.length - 1; i >= 0; i--) ctx.lineTo(inner[i].x, inner[i].y);
         ctx.closePath();
         ctx.fillStyle = lit ? tk.accent : tk.info;
-        ctx.globalAlpha = related ? (lit ? 0.22 : 0.04) : 0.085;
+        ctx.globalAlpha = activeSet ? (lit ? 0.22 : 0.04) : 0.085;
         ctx.fill();
-        ctx.globalAlpha = related ? (lit ? 0.5 : 0.08) : 0.22;
+        ctx.globalAlpha = activeSet ? (lit ? 0.5 : 0.08) : 0.22;
         ctx.strokeStyle = lit ? tk.accent : tk.info;
         ctx.lineWidth = 1;
         ctx.stroke();
@@ -417,13 +443,13 @@ export default function Legion3DPage() {
         const a = byId.get(edge.from);
         const b = byId.get(edge.to);
         if (!a || !b) continue;
-        const lit = !related || (related.has(edge.from) && related.has(edge.to));
+        const lit = !activeSet || (activeSet.has(edge.from) && activeSet.has(edge.to));
         if (!lit) continue;
         ctx.beginPath();
         ctx.moveTo(a.projected.x, a.projected.y);
         ctx.lineTo(b.projected.x, b.projected.y);
         ctx.strokeStyle = tk.accent;
-        ctx.globalAlpha = related ? 0.16 : 0.1;
+        ctx.globalAlpha = activeSet ? 0.16 : 0.1;
         ctx.lineWidth = 4;
         ctx.stroke();
       }
@@ -435,13 +461,13 @@ export default function Legion3DPage() {
         const a = byId.get(edge.from);
         const b = byId.get(edge.to);
         if (!a || !b) continue;
-        const lit = !related || (related.has(edge.from) && related.has(edge.to));
+        const lit = !activeSet || (activeSet.has(edge.from) && activeSet.has(edge.to));
         ctx.beginPath();
         ctx.moveTo(a.projected.x, a.projected.y);
         ctx.lineTo(b.projected.x, b.projected.y);
-        ctx.strokeStyle = lit && related ? tk.accent : tk.border;
-        ctx.globalAlpha = lit ? (related ? 0.8 : 0.42) : 0.1;
-        ctx.lineWidth = lit && related ? 1.3 : 1;
+        ctx.strokeStyle = lit && activeSet ? tk.accent : tk.border;
+        ctx.globalAlpha = lit ? (activeSet ? 0.8 : 0.42) : 0.1;
+        ctx.lineWidth = lit && activeSet ? 1.3 : 1;
         ctx.stroke();
       }
       // 流动光点：每条连线上一个小点沿边移动，让静态的图「有心跳」。
@@ -451,7 +477,7 @@ export default function Legion3DPage() {
         const a = byId.get(edge.from);
         const b = byId.get(edge.to);
         if (!a || !b) continue;
-        if (related && !(related.has(edge.from) && related.has(edge.to))) continue;
+        if (activeSet && !(activeSet.has(edge.from) && activeSet.has(edge.to))) continue;
         const t = (phase + (i * 0.37) % 1) % 1;
         const x = a.projected.x + (b.projected.x - a.projected.x) * t;
         const y = a.projected.y + (b.projected.y - a.projected.y) * t;
@@ -469,7 +495,7 @@ export default function Legion3DPage() {
         const p = sn.projected;
         const r = Math.max(1.4, WORLD_R[node.kind] * p.scale);
         const depthT = Math.min(1, Math.max(0, (p.depth - near) / (far - near)));
-        const dim = related && !related.has(node.id);
+        const dim = activeSet && !activeSet.has(node.id);
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
         let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.5 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
@@ -499,6 +525,16 @@ export default function Legion3DPage() {
           ctx.stroke();
         }
 
+        // 悬停：鼠标下的节点描一圈细线，来得及看清「我点的是哪一个」。
+        if (hoverRef.current === node.id && selectedRef.current !== node.id) {
+          ctx.globalAlpha = 0.55;
+          ctx.strokeStyle = tk.accent;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radiusPx + 5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
         // 选中/高亮节点加一圈描边，别只靠亮度差（截图上容易看不出来）。
         if (selectedRef.current === node.id) {
           ctx.globalAlpha = 0.9;
@@ -513,8 +549,9 @@ export default function Legion3DPage() {
         const showLabel =
           node.kind === 'core' ||
           node.kind === 'group' ||
-          (node.kind === 'person' && (p.scale > cam.focal * 0.16 || related?.has(node.id))) ||
-          (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id));
+          (node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
+          (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
+          hoverRef.current === node.id;
         if (showLabel) {
           ctx.globalAlpha = Math.min(1, alpha + 0.15);
           ctx.fillStyle = dim ? tk.dim : tk.fg;
@@ -558,7 +595,7 @@ export default function Legion3DPage() {
 
     raf = requestAnimationFrame(draw);
     return () => { stopped = true; cancelAnimationFrame(raf); };
-  }, [layout, ringRadii, size, statusByAlias, related]);
+  }, [layout, ringRadii, size, statusByAlias, activeSet]);
 
   /* ── 交互 ───────────────────────────────────────────────────────── */
 
@@ -602,8 +639,19 @@ export default function Legion3DPage() {
       return;
     }
 
+    if (!dragRef.current) {
+      // 没按下的移动 = 悬停：只更新 ref，不触发 React 重渲染。
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
+      const next = hit ? hit.item.id : null;
+      if (next !== hoverRef.current) {
+        hoverRef.current = next;
+        (e.currentTarget as HTMLElement).style.cursor = next ? 'pointer' : 'grab';
+      }
+      return;
+    }
+
     const drag = dragRef.current;
-    if (!drag) return;
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
     drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
@@ -623,6 +671,19 @@ export default function Legion3DPage() {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16);
     setSelected(hit ? hit.item.id : null);
+  };
+
+  const onDoubleClick = (e: React.MouseEvent) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
+    if (!hit) return;
+    const n = hit.item;
+    if (n.kind === 'agent') router.push(`/nodes/${encodeURIComponent(n.label)}`);
+    else if (n.kind === 'person' || n.kind === 'group') router.push('/org');
+  };
+
+  const onPointerLeave = () => {
+    hoverRef.current = null;
   };
 
   const onWheel = (e: React.WheelEvent) => {
@@ -708,6 +769,8 @@ export default function Legion3DPage() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onPointerLeave={onPointerLeave}
+        onDoubleClick={onDoubleClick}
         onWheel={onWheel}
         role="img"
         aria-label="军团三维拓扑图，可拖动旋转、滚轮缩放，点击节点查看详情"
@@ -722,6 +785,16 @@ export default function Legion3DPage() {
         <p className="mt-1 text-xs text-[var(--fg-muted)]">
           {loading ? '正在读取编制…' : `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`}
         </p>
+        {focus && (
+          <button
+            type="button"
+            onClick={() => setFocus(null)}
+            className="pointer-events-auto mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--accent)]/12 px-3 py-1 text-[11px] text-[var(--accent)]"
+          >
+            聚焦：{layout.nodes.find(n => n.id === focus)?.label ?? '部门'}
+            <span aria-hidden>✕</span>
+          </button>
+        )}
         {hierarchy.data === null && (
           <p className="mt-1 text-[11px] text-[var(--fg-dim)]">
             当前 Hub 没有部门树接口，按部门名扁平分组（升级 Hub 后自动分层次）。
@@ -827,6 +900,15 @@ export default function Legion3DPage() {
               ✕
             </button>
           </div>
+          {selectedNode.kind === 'group' && (
+            <button
+              type="button"
+              onClick={() => setFocus(f => (f === selectedNode.id ? null : selectedNode.id))}
+              className="mt-2 mr-3 rounded-md px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              {focus === selectedNode.id ? '取消聚焦' : '聚焦此部门'}
+            </button>
+          )}
           {(selectedNode.kind === 'agent' || selectedNode.kind === 'person' || selectedNode.kind === 'group') && (
             <Link
               href={detailHref}
