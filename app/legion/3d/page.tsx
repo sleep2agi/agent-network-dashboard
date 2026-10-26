@@ -1175,7 +1175,7 @@ export default function Legion3DPage() {
           onClick={() => setSpin(v => !v)}
           aria-pressed={spin}
           data-testid="legion-3d-spin"
-          className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${spin ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+          className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${spin ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
         >
           {spin ? '自转中' : '已暂停'}
         </button>
@@ -1240,7 +1240,7 @@ export default function Legion3DPage() {
                 onClick={() => pickNode(n)}
                 className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors ${
                   selected === n.id
-                    ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                    ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]'
                     : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
                 }`}
               >
@@ -1357,7 +1357,7 @@ export default function Legion3DPage() {
           {(selectedNode.kind === 'agent' || selectedNode.kind === 'person' || selectedNode.kind === 'group') && (
             <Link
               href={detailHref}
-              className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--accent)] hover:underline"
+              className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--accent-text)] hover:underline"
             >
               {selectedNode.kind === 'agent' ? '打开节点详情' : '在部门列表里看'} →
             </Link>

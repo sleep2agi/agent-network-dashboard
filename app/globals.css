@@ -15,6 +15,7 @@
      --fg / --fg-muted / --fg-dim            主文字 / 次级 / 三级(时间戳等)
    状态 (status; hue=语义, 只随主题调明度, 不换 hue)
      --success / --warning / --danger / --info
+     --accent-text                           accent 当文字时用（填充仍用 --accent）
      --badge-muted-bg / --badge-muted-fg     免打扰角标 (灰: 不能红,也不能不显示)
      --hl                                    高亮/选中指示 (hue 恒定, 明度随主题)
    浮层与聊天 (batch 2)
@@ -56,6 +57,7 @@ body {
   --border:       #26262b;
   --border-hover: #3a3a41;
   --accent:       #8b5cf6;
+  --accent-text:  #a78bfa; /* accent 当文字时用：深底 6.64:1（accent 本身只有 4.27） */
   --accent-fg:    #ffffff;
   --success:      #10b981;
   --warning:      #f59e0b;
@@ -1440,6 +1442,7 @@ joining the R145
   --border:       #e3e6eb;
   --border-hover: #c8cdd6;
   --accent:       #007a61; /* was #009e7e — 3.39:1 as text on white */
+  --accent-text:  var(--accent); /* 浅底上 accent 本身就够深 */
   --accent-fg:    #ffffff;
   --success:      #047857; /* was #059669 — 3.7:1 as text on white */
   --warning:      #a34708; /* was #d97706 — 3.19:1 as text on white */

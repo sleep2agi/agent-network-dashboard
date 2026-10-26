@@ -451,7 +451,7 @@ export default function LegionPage() {
             <Link
               href="/legion/3d"
               data-testid="legion-3d-link"
-              className="rounded-md bg-[var(--accent)]/15 px-2.5 py-1.5 text-xs text-[var(--accent)] hover:bg-[var(--accent)]/25"
+              className="rounded-md bg-[var(--accent)]/15 px-2.5 py-1.5 text-xs text-[var(--accent-text)] hover:bg-[var(--accent)]/25"
             >
               3D 视图
             </Link>

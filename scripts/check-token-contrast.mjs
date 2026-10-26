@@ -9,9 +9,9 @@
  * 覆盖：每个主题块的 --fg / --fg-muted / --fg-dim / 语义色，对三种底色
  * （bg / bg-secondary / bg-elevated）算 WCAG 对比度，阈值 4.5:1。
  *
- * 例外：--accent 是品牌色，大量用于填充/描边（不是文字），且深色主题下
- * 白字在 accent 上或 accent 字在深底上本来就 4.27 左右 —— 这里只警告、
- * 不拦门，等引入 --accent-text 专用文字色后再收紧。
+ * --accent 只做填充/描边（深色下当文字只有 4.27，这是有意的取舍），所以
+ * 它只警告不拦门；当文字一律用 --accent-text（深色 #a78bfa 6.64:1，
+ * 浅色跟随 accent），那一项按 4.5 拦门。
  */
 
 import { readFileSync } from 'node:fs';
@@ -23,6 +23,7 @@ const css = readFileSync(join(ROOT, 'app/globals.css'), 'utf8');
 
 const TEXT_TOKENS = ['--fg', '--fg-muted', '--fg-dim', '--success', '--warning', '--danger', '--info'];
 const BG_TOKENS = ['--bg', '--bg-secondary', '--bg-elevated'];
+const TEXT_EXTRA = ['--accent-text']; // accent 本身只做填充，文字走 accent-text
 const WARN_TOKENS = ['--accent'];
 const MIN = 4.5;
 
@@ -82,13 +83,25 @@ for (const { selector, tokens } of themes) {
         console.error(`token-contrast: ${selector} ${fgName} on ${bgName} = ${r.toFixed(2)}:1 (< ${MIN})`);
       }
     }
+    for (const fgName of TEXT_EXTRA) {
+      const raw = tokens[fgName] || '';
+      // var(--accent) 这类引用要解析回本主题的 accent
+      const ref = raw.match(/var\((--[a-z-]+)\)/);
+      const fg = hex(ref ? (tokens[ref[1]] || '') : raw);
+      if (!fg) continue;
+      const r = ratio(fg, bg);
+      if (r < MIN) {
+        failures++;
+        console.error(`token-contrast: ${selector} ${fgName} on ${bgName} = ${r.toFixed(2)}:1 (< ${MIN})`);
+      }
+    }
     for (const fgName of WARN_TOKENS) {
       const fg = hex(tokens[fgName] || '');
       if (!fg) continue;
       const r = ratio(fg, bg);
       if (r < MIN) {
         warnings++;
-        console.warn(`token-contrast(warn): ${selector} ${fgName} on ${bgName} = ${r.toFixed(2)}:1 —— 品牌色，等 --accent-text 再收紧`);
+        console.warn(`token-contrast(warn): ${selector} ${fgName} on ${bgName} = ${r.toFixed(2)}:1 —— 品牌色只做填充/描边；当文字请用 --accent-text`);
       }
     }
   }
