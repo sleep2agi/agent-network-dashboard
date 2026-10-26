@@ -573,7 +573,7 @@ export default function LegionPage() {
                       <g
                         key={node.id}
                         transform={`translate(${p.x} ${p.y})`}
-                        opacity={dim ? 0.1 : 1}
+                        opacity={dim ? 0.35 : 1}
                         tabIndex={0}
                         role="button"
                         aria-label={`${ringLabel(node)} ${node.label}`}
