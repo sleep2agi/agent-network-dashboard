@@ -520,3 +520,18 @@ canvas 不能被 Tab 遍历，之前只能用鼠标点。新增「节点列表�
 
 当前：**2 个主题 × 12 个页面，0 处不达标**。
 
+### Token 级对比度门槛（`f663ee8`）
+
+CI 里装 Playwright 再起 app 跑对比度太重（3–5 分钟起步）。改成一个纯 Node
+静态检查 `scripts/check-token-contrast.mjs`：
+
+- 读 `globals.css` 的主题块，对 `--fg` / `--fg-muted` / `--fg-dim` /
+  success / warning / danger / info 在 `bg` / `bg-secondary` / `bg-elevated`
+  三种底色上算 WCAG 比值，阈值 4.5；
+- `--accent` 只警告不拦门：品牌色大量用于填充，深色下 4.27 / 3.88 是有意
+  取舍，等引入 `--accent-text` 再收紧（浏览器版 `a11y:contrast` 仍会报）；
+- 已接进 `npm run gates`（color-ratchet → avatars → token-contrast，全部纯 Node）。
+
+它当场抓到两处深色问题并修掉：`--danger` #ef4444 在 elevated 上 4.36 → #f87171
+（5.93）、`--info` #3b82f6 4.46 → #60a5fa（6.45）。
+
