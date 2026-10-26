@@ -111,6 +111,13 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   // #Stage-tasks: selection is seeded from /tasks/[id] URL, then plain
   // client state kept in sync with pushState (shallow — no route remount,
   // switching tasks swaps the right pane in place).
+  // 浏览器前进/后退会改 URL 但不重挂组件：把 department 参数同步回 state，
+  // 否则会出现「地址栏是 d2、下拉框还停在 d1」。
+  const deptParam = searchParams.get('department') || '';
+  useEffect(() => {
+    setFilterDept(prev => (prev === deptParam ? prev : deptParam));
+  }, [deptParam]);
+
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const isDesktop = useIsDesktop();
 
