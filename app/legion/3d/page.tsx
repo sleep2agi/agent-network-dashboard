@@ -861,6 +861,12 @@ export default function Legion3DPage() {
     [layout.nodes, selectedNode],
   );
 
+  /** 打开节点详情页（Agent→节点页，成员/部门→/org）。列表与画布双击共用。 */
+  const openNode = useCallback((node: LegionNode) => {
+    if (node.kind === 'agent') router.push(`/nodes/${encodeURIComponent(node.label)}`);
+    else if (node.kind === 'person' || node.kind === 'group') router.push('/org');
+  }, [router]);
+
   /** 从列表里选一个节点：和点击画布等价，另外把镜头转过去。 */
   const pickNode = useCallback((node: LegionNode) => {
     setSelected(node.id);
@@ -1024,18 +1030,14 @@ export default function Legion3DPage() {
       case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); setZoomPct(Math.round(v.zoom * 100)); break;
       case 'Enter': {
         // 焦点还在节点列表里时，回车只负责「选中」（按钮自身行为），
-        // 不要在列表里按一下就跳走。
+        // 不要在列表里按一下就跳走；再按一次才打开（见列表项的 onClick）。
         if (document.activeElement?.closest('[role="listbox"]')) break;
         // 选中节点后回车 = 打开它的详情页（Agent→节点页，成员/部门→/org）。
         // 省掉「Tab 到详情卡里的链接再回车」这一步。
         const sel = selectedRef.current;
         if (sel) {
           const node = layout.nodes.find(n => n.id === sel);
-          if (node) {
-            e.preventDefault();
-            if (node.kind === 'agent') router.push(`/nodes/${encodeURIComponent(node.label)}`);
-            else if (node.kind === 'person' || node.kind === 'group') router.push('/org');
-          }
+          if (node) { e.preventDefault(); openNode(node); }
         }
         break;
       }
@@ -1388,7 +1390,11 @@ export default function Legion3DPage() {
                 aria-selected={selected === n.id}
                 data-selected={selected === n.id ? 'true' : undefined}
                 ref={el => { if (selected === n.id && el) el.scrollIntoView({ block: 'nearest' }); }}
-                onClick={() => pickNode(n)}
+                onClick={() => {
+                  // 已经选中过 → 再点一次就是打开（与「回车两次」一致）
+                  if (selected === n.id) openNode(n);
+                  else pickNode(n);
+                }}
                 className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors ${
                   selected === n.id
                     ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]'

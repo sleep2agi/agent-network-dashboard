@@ -91,6 +91,19 @@ const buf = readFileSync(path);
 const pngW = buf.readUInt32BE(16);
 pngW >= 1000 ? pass('导出全分辨率', { pngW }) : fail('导出全分辨率', { pngW });
 
+// ? 速查表：曾因全站 HelpOverlay 也绑 ? 而被抢走（弹出的不是本页那张）
+await page.locator('[data-testid="legion-3d-stage"]').focus();
+await page.keyboard.press('Shift+Slash');
+await page.waitForTimeout(400);
+const helpOwn = await page.getByTestId('legion-3d-help').count();
+const globalHelp = await page.evaluate(() => document.body.innerText.includes('Open command palette'));
+await page.keyboard.press('Escape');
+await page.waitForTimeout(300);
+const helpClosed = (await page.getByTestId('legion-3d-help').count()) === 0;
+helpOwn === 1 && !globalHelp && helpClosed
+  ? pass('3D ? 打开本页速查表（不被全站面板抢）', { helpOwn, globalHelp, helpClosed })
+  : fail('3D ? 打开本页速查表（不被全站面板抢）', { helpOwn, globalHelp, helpClosed });
+
 /* ── 2D ─────────────────────────────────────────────────────────── */
 await page.goto(`${BASE}/legion`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(1800);
@@ -100,7 +113,9 @@ const opts = page.getByTestId('legion-node-list').getByRole('option');
 const count = await opts.count();
 await opts.nth(count - 1).click();
 await page.waitForTimeout(300);
-// 焦点停在列表项上直接回车：页面用捕获阶段处理，不需要先点空白
+// 第一次回车：只选中（列表内回车不跳页）；再按一次才打开
+await page.keyboard.press('Enter');
+await page.waitForTimeout(250);
 await page.keyboard.press('Enter');
 await page.waitForTimeout(1200);
 const landed = new URL(page.url()).pathname;
@@ -131,15 +146,14 @@ if (deptName) {
 
   const togglesBefore = await page.locator('button[aria-label*="的成员"]').count();
   const expandedBefore = await page.locator('button[aria-label*="的成员"][aria-expanded="true"]').count();
-  const collapseOk = togglesBefore > 0 && expandedBefore === 0;
-  if (togglesBefore > 0) {
-    await page.locator('button[aria-label*="的成员"]').first().click();
-    await page.waitForTimeout(300);
-  }
-  const expandedAfter = await page.locator('button[aria-label*="的成员"][aria-expanded="true"]').count();
-  collapseOk && expandedAfter === 1
-    ? pass('/org 默认折叠 + 点开', { togglesBefore, expandedBefore, expandedAfter })
-    : fail('/org 默认折叠 + 点开', { togglesBefore, expandedBefore, expandedAfter });
+  const firstToggle = page.locator('button[aria-label*="的成员"]').first();
+  const wasExpanded = (await firstToggle.getAttribute('aria-expanded')) === 'true';
+  if (togglesBefore > 0) { await firstToggle.click(); await page.waitForTimeout(300); }
+  const flipped = (await firstToggle.getAttribute('aria-expanded')) === 'true';
+  // 小网络（≤8 人/部门）默认展开、大网络默认折叠，两种都允许；关键是点一下能翻转
+  togglesBefore > 0 && flipped !== wasExpanded
+    ? pass('/org 折叠可切换', { togglesBefore, wasExpanded, flipped })
+    : fail('/org 折叠可切换', { togglesBefore, wasExpanded, flipped });
 
   const input = page.locator('input').first();
   const peopleCount = async () => page.evaluate(() => (document.body.innerText.match(/@\w+/g) || []).length);
@@ -156,6 +170,21 @@ if (deptName) {
 } else {
   fail('/org focus 深链高亮并滚到可见', '当前 Hub 没有部门树，跳过');
 }
+
+// 2D 的 ? 同样不被全站抢（先回到 /legion —— 上面几段已经跳到别的页了）
+await page.goto(`${BASE}/legion`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(1600);
+await page.evaluate(() => { const el = document.activeElement; if (el && el.blur) el.blur(); });
+await page.waitForTimeout(300);
+await page.keyboard.press('Shift+Slash');
+await page.waitForTimeout(500);
+const help2dOwn = await page.getByTestId('legion-help').count();
+const globalHelp2d = await page.evaluate(() => document.body.innerText.includes('Open command palette'));
+await page.keyboard.press('Escape');
+await page.waitForTimeout(300);
+help2dOwn === 1 && !globalHelp2d
+  ? pass('2D ? 打开本页速查表', { help2dOwn, globalHelp2d })
+  : fail('2D ? 打开本页速查表', { help2dOwn, globalHelp2d });
 
 // 375 窄屏：/org 的徽标与折叠按钮不把页面撑宽
 await page.setViewportSize({ width: 375, height: 812 });

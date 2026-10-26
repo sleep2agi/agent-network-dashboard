@@ -235,7 +235,7 @@ export default function LegionPage() {
         return;
       }
       // 回车打开选中节点（Agent→节点页，成员/部门→/org）；和 3D 页一致。
-      // 焦点在节点列表里时不做（回车 = 选中），避免一按就跳走。
+      // 焦点在节点列表里时不做（回车 = 选中，再按一次才打开），避免一按就跳走。
       const inList = !!(document.activeElement && document.activeElement.closest('[role="listbox"]'));
       if (e.key === 'Enter' && selected && !inList) {
         const node = layout.nodes.find(n => n.id === selected);
@@ -627,7 +627,15 @@ export default function LegionPage() {
                         aria-selected={selected === n.id}
                         data-selected={selected === n.id ? 'true' : undefined}
                         ref={el => { if (selected === n.id && el) el.scrollIntoView({ block: 'nearest' }); }}
-                        onClick={() => { setSelected(n.id); setHovered(null); }}
+                        onClick={() => {
+                          if (selected === n.id) {
+                            if (n.kind === 'agent') router.push(`/nodes/${encodeURIComponent(n.label)}`);
+                            else if (n.kind === 'person' || n.kind === 'group') router.push('/org');
+                          } else {
+                            setSelected(n.id);
+                            setHovered(null);
+                          }
+                        }}
                         className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors ${
                           selected === n.id
                             ? 'bg-[var(--accent)]/15 text-[var(--fg)]'
