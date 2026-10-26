@@ -244,12 +244,12 @@ export default function LegionPage() {
   }, [selected, canCollapse, toggleCollapse, query]);
 
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
-  const zoomBy = useCallback((factor: number) => {
+  const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {
     setView(v => {
       const k = Math.min(3, Math.max(0.5, v.k * factor));
-      const cx = size.width / 2;
-      const cy = size.height / 2;
-      // 围绕容器中心缩放：平移量随比例同步，避免缩小时图跑出画布。
+      // 有锚点（滚轮）就以指针为准，没有就用容器中心（＋/－ 按钮、键盘）。
+      const cx = anchor?.x ?? size.width / 2;
+      const cy = anchor?.y ?? size.height / 2;
       return { k, tx: cx - (cx - v.tx) * (k / v.k), ty: cy - (cy - v.ty) * (k / v.k) };
     });
   }, [layout, size.height, size.width, statusByAlias]);
@@ -373,7 +373,8 @@ export default function LegionPage() {
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12);
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12, { x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
   const onPointerDown = (e: React.PointerEvent) => {

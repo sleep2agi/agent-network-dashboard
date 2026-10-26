@@ -170,6 +170,8 @@ export default function Legion3DPage() {
   const [hintDismissed, setHintDismissed] = useState(false);
   // 键盘/读屏入口：canvas 本身没法被 Tab 遍历，给一个可滚动的节点列表。
   const [listOpen, setListOpen] = useState(false);
+  // 缩放倍率是给用户看的数字：view.zoom 在 ref 里（每帧读），单独镜像一份 state。
+  const [zoomPct, setZoomPct] = useState(Math.round(DEFAULT_VIEW.zoom * 100));
   const [spin, setSpin] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -864,6 +866,7 @@ export default function Legion3DPage() {
   const resetView = useCallback(() => {
     yawTarget.current = null;
     viewRef.current = { ...DEFAULT_VIEW };
+    setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
     lastInteract.current = performance.now();
   }, []);
 
@@ -900,6 +903,7 @@ export default function Legion3DPage() {
         interactingUntil.current = performance.now() + 180;
         const ratio = span / pinchRef.current.span;
         viewRef.current.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, pinchRef.current.dist * ratio));
+        setZoomPct(Math.round(viewRef.current.zoom * 100));
       }
       return;
     }
@@ -973,6 +977,7 @@ export default function Legion3DPage() {
     v.panX = mx - k * (mx - v.panX);
     v.panY = my - k * (my - v.panY);
     v.zoom = next;
+    setZoomPct(Math.round(next * 100));
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -1002,8 +1007,8 @@ export default function Legion3DPage() {
       case 'ArrowRight': e.preventDefault(); v.yaw += 0.12; break;
       case 'ArrowUp': e.preventDefault(); v.pitch = Math.min(1.45, v.pitch + 0.08); break;
       case 'ArrowDown': e.preventDefault(); v.pitch = Math.max(0.12, v.pitch - 0.08); break;
-      case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); break;
-      case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); break;
+      case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); setZoomPct(Math.round(v.zoom * 100)); break;
+      case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); setZoomPct(Math.round(v.zoom * 100)); break;
       case 'r': case 'R': resetView(); break;
       case 'Escape':
         e.preventDefault();
@@ -1325,7 +1330,7 @@ export default function Legion3DPage() {
             </span>
           ))}
         </div>
-        <p>拖动环绕 · 滚轮或双指缩放 · 点节点看详情 · / 搜索 · R 重置</p>
+        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 点节点看详情 · / 搜索 · R 重置</p>
       </div>
 
       {/* 选中节点详情 */}
