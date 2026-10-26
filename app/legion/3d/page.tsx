@@ -1071,6 +1071,7 @@ export default function Legion3DPage() {
       aria-label="军团 3D 网络拓扑"
       data-testid="legion-3d-stage"
     >
+      <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击打开对应页面；按 / 搜索，R 重置视角。</p>
       <canvas
         ref={canvasRef}
         className="block h-full w-full cursor-grab touch-none active:cursor-grabbing"
@@ -1082,7 +1083,9 @@ export default function Legion3DPage() {
         onDoubleClick={onDoubleClick}
         onWheel={onWheel}
         role="img"
-        aria-label="军团三维拓扑图，可拖动旋转、滚轮缩放，点击节点查看详情"
+        aria-label="军团三维拓扑图"
+        aria-describedby="legion-3d-hint"
+        tabIndex={-1}
       />
 
       {/* 顶部信息区：手机上「标题 → 搜索 → 按钮」竖排，桌面上标题在左、按钮在右。
@@ -1127,7 +1130,7 @@ export default function Legion3DPage() {
           )}
         </div>
         {noMatch && (
-          <p className="mt-1 text-[11px] text-[var(--fg-dim)]">没有匹配的成员或部门</p>
+          <p className="mt-1 text-[11px] text-[var(--fg-muted)]">没有匹配的成员或部门</p>
         )}
         {focus && (
           <button
@@ -1140,12 +1143,12 @@ export default function Legion3DPage() {
           </button>
         )}
         {!loading && layout.stats.people === 0 && layout.stats.groups > 0 && (
-          <p className="mt-1 text-[11px] text-[var(--fg-dim)]">
+          <p className="mt-1 text-[11px] text-[var(--fg-muted)]" data-testid="legion-3d-empty-members">
             已有 {layout.stats.groups} 个部门，还没有成员加入 —— 成员绑定 Agent 后会自动出现在环上。
           </p>
         )}
         {hierarchy.data === null && (
-          <p className="mt-1 text-[11px] text-[var(--fg-dim)]">
+          <p className="mt-1 text-[11px] text-[var(--fg-muted)]">
             当前 Hub 没有部门树接口，按部门名扁平分组（升级 Hub 后自动分层次）。
           </p>
         )}
@@ -1232,6 +1235,8 @@ export default function Legion3DPage() {
       {selectedNode && (
         <div
           data-testid="legion-3d-detail"
+          role="status"
+          aria-live="polite"
           className="absolute inset-x-3 bottom-3 rounded-xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72"
         >
           <div className="flex items-start justify-between gap-2">

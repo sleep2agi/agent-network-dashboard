@@ -400,8 +400,13 @@ export default function LegionPage() {
             <p className="mt-1 text-xs text-[var(--fg-muted)]">
               军团编制：圆心是网络，外三环依次是部门、成员与名下 Agent。
             </p>
+            {!loading && !error && layout.stats.people === 0 && layout.stats.groups > 0 && (
+              <p className="mt-1 text-[11px] text-[var(--fg-muted)]" data-testid="legion-empty-members">
+                已有 {layout.stats.groups} 个部门，还没有成员加入 —— 成员绑定 Agent 后会自动出现在环上。
+              </p>
+            )}
             {hierarchy.data === null && (
-              <p className="mt-1 text-[11px] text-[var(--fg-dim)]">
+              <p className="mt-1 text-[11px] text-[var(--fg-muted)]">
                 当前 Hub 没有部门树接口，编制按通讯录的部门名分组（升级 Hub 后自动变为真实层级）。
               </p>
             )}
@@ -477,7 +482,7 @@ export default function LegionPage() {
           <div className="flex h-[62vh] min-h-[420px] items-center justify-center rounded-xl bg-[var(--bg-secondary)]">
             <div className="h-40 w-40 animate-pulse rounded-full border border-[var(--border)]" />
           </div>
-        ) : !needsLogin && !error && layout.stats.people === 0 && layout.stats.orphans === 0 ? (
+        ) : !needsLogin && !error && layout.stats.people === 0 && layout.stats.orphans === 0 && layout.stats.groups === 0 ? (
           <EmptyState
             variant="nodes"
             title="军团还没有成员"
@@ -680,7 +685,7 @@ export default function LegionPage() {
                 <button type="button" onClick={() => zoomBy(1.2)} aria-label="放大" className="rounded px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">＋</button>
                 <button type="button" onClick={() => zoomBy(1 / 1.2)} aria-label="缩小" className="rounded px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">－</button>
                 <button type="button" onClick={reset} aria-label="重置视图" className="rounded px-2 py-1 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">重置</button>
-                <span className="px-1 text-[10px] tabular-nums text-[var(--fg-dim)]">{Math.round(view.k * 100)}%</span>
+                <span className="px-1 text-[10px] tabular-nums text-[var(--fg-muted)]">{Math.round(view.k * 100)}%</span>
               </div>
 
               <div className="absolute right-3 top-3 flex flex-wrap items-center gap-2 rounded-lg bg-[var(--bg)]/80 px-2 py-1 text-[10px] text-[var(--fg-muted)] backdrop-blur">
@@ -690,7 +695,7 @@ export default function LegionPage() {
               </div>
             </div>
 
-            <aside data-testid="legion-panel" className="rounded-xl bg-[var(--bg-secondary)] p-4">
+            <aside data-testid="legion-panel" role="status" aria-live="polite" className="rounded-xl bg-[var(--bg-secondary)] p-4">
               <div className="flex items-baseline justify-between">
                 <h2 className="text-xs uppercase tracking-wide text-[var(--fg-muted)]">
                   {selectedNode ? ringLabel(selectedNode) : '编制'}
