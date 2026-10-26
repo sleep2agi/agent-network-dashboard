@@ -296,12 +296,27 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
             </div>
           ) : tasks.length === 0 ? (
             <div className="px-3 py-6">
+              {/* #1636 —— 有筛选时的空态必须给**动作**，不能只说“去清一下筛选”。
+                  文案承诺了动作却没有入口，等于让用户自己猜怎么清。 */}
               <EmptyState
                 variant="tasks"
                 sub={
                   filterStatus || filterFrom || filterTo
-                    ? 'No tasks match the current filters. Try clearing them.'
-                    : 'Tasks will appear here when agents send them via CommHub.'
+                    ? '当前筛选没有匹配的任务。'
+                    : '当 Agent 通过 CommHub 派活时，任务会出现在这里。'
+                }
+                cta={
+                  filterStatus || filterFrom || filterTo
+                    ? {
+                        label: '清空筛选',
+                        onClick: () => {
+                          setFilterStatus('');
+                          setFilterFrom('');
+                          setFilterTo('');
+                          try { window.history.replaceState({}, '', '/tasks'); } catch {}
+                        },
+                      }
+                    : undefined
                 }
               />
             </div>
