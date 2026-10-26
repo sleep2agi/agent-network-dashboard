@@ -23,10 +23,15 @@ import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsRespon
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { EmptyState } from '../../components/EmptyState';
 
-const DEFAULT_VIEW = { yaw: 0.62, pitch: 1.02, dist: 2.9 };
-const MIN_DIST = 2.1;
-const MAX_DIST = 7.5;
-const IDLE_BEFORE_SPIN = 2600;
+// 神明给的参数（PPT 首页 3D 图，admin 已认可）：俯仰约 25–30°、柔和透视
+// （别用强广角，远景缩成点就没有军团体量感）、自转 0.02–0.03 rad/s。
+// 实现上把「透视强度」和「缩放」拆开：dist 固定大一点 = 透视更平，
+// 滚轮改的是 zoom（scale），不再同时改变透视。
+const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.52, dist: 6.0, zoom: 1.12 };
+const MIN_ZOOM = 0.62;
+const MAX_ZOOM = 2.4;
+const SPIN_RAD_PER_SEC = 0.027;
+const IDLE_BEFORE_SPIN = 3000;
 
 const KIND_LABEL: Record<LegionNode['kind'], string> = {
   core: '网络',
@@ -87,8 +92,9 @@ function statusColor(status: string | undefined, tk: Tokens): string {
   if (status === 'working') return tk.success;
   if (status === 'blocked') return tk.warning;
   if (status === 'error') return tk.danger;
-  if (status === 'idle') return tk.muted;
-  return tk.dim;
+  // 神明：深底上灰色会「消失」，离线/空闲不要换成灰，改用主色降透明度。
+  if (status === 'idle') return tk.fg;
+  return tk.fg;
 }
 
 function nodeColor(node: LegionNode, tk: Tokens, statusByAlias: Map<string, string>): string {
@@ -252,12 +258,15 @@ export default function Legion3DPage() {
     const tk = readTokens();
     let raf = 0;
     let stopped = false;
+    let lastFrame = performance.now();
 
     const draw = (now: number) => {
       if (stopped) return;
       const view = viewRef.current;
+      const dt = Math.min(0.05, (now - lastFrame) / 1000);
+      lastFrame = now;
       if (spinRef.current && now - lastInteract.current > IDLE_BEFORE_SPIN) {
-        view.yaw += 0.0024;
+        view.yaw += SPIN_RAD_PER_SEC * dt;
       }
       // 小屏用更长的焦距把图放大：375 宽时 min(w,h) 只有 375，
       // 按桌面系数算整张图只有硬币大，留白像坏了。
@@ -266,7 +275,7 @@ export default function Legion3DPage() {
         yaw: view.yaw,
         pitch: view.pitch,
         dist: view.dist,
-        focal: Math.min(size.width, size.height) * (narrow ? 1.32 : 1.05),
+        focal: Math.min(size.width, size.height) * (narrow ? 2.4 : 1.73) * view.zoom,
       };
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -378,7 +387,28 @@ export default function Legion3DPage() {
         ctx.fillRect(0, 0, size.width, size.height);
       }
 
-      // 连线：先画，节点压在上面；被高亮的一支更亮。
+      // 连线：三层画法（神明参数）——先把所有线铺一层模糊光晕，再压实线，
+      // 最后才是流动光点。只有实线时深底上会「断」，加光晕才有发光感。
+      ctx.save();
+      ctx.shadowColor = tk.accent;
+      ctx.shadowBlur = 9;
+      for (const edge of layout.edges) {
+        const a = byId.get(edge.from);
+        const b = byId.get(edge.to);
+        if (!a || !b) continue;
+        const lit = !related || (related.has(edge.from) && related.has(edge.to));
+        if (!lit) continue;
+        ctx.beginPath();
+        ctx.moveTo(a.projected.x, a.projected.y);
+        ctx.lineTo(b.projected.x, b.projected.y);
+        ctx.strokeStyle = tk.accent;
+        ctx.globalAlpha = related ? 0.16 : 0.1;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+      ctx.restore();
+      ctx.globalAlpha = 1;
+
       for (const edge of layout.edges) {
         const a = byId.get(edge.from);
         const b = byId.get(edge.to);
@@ -388,8 +418,8 @@ export default function Legion3DPage() {
         ctx.moveTo(a.projected.x, a.projected.y);
         ctx.lineTo(b.projected.x, b.projected.y);
         ctx.strokeStyle = lit && related ? tk.accent : tk.border;
-        ctx.globalAlpha = lit ? (related ? 0.75 : 0.5) : 0.12;
-        ctx.lineWidth = lit && related ? 1.4 : 1;
+        ctx.globalAlpha = lit ? (related ? 0.8 : 0.42) : 0.1;
+        ctx.lineWidth = lit && related ? 1.3 : 1;
         ctx.stroke();
       }
       // 流动光点：每条连线上一个小点沿边移动，让静态的图「有心跳」。
@@ -418,7 +448,8 @@ export default function Legion3DPage() {
         const r = Math.max(1.4, WORLD_R[node.kind] * p.scale);
         const depthT = Math.min(1, Math.max(0, (p.depth - near) / (far - near)));
         const dim = related && !related.has(node.id);
-        let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1);
+        const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
+        let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.5 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
         const color = nodeColor(node, tk, statusByAlias);
         // 核心轻微呼吸，整张图才有「活着」的感觉（幅度 6%，不抢注意力）。
@@ -428,7 +459,7 @@ export default function Legion3DPage() {
         ctx.globalAlpha = alpha;
         ctx.save();
         ctx.shadowColor = color;
-        ctx.shadowBlur = r * (node.kind === 'core' ? 5 : 3.2);
+        ctx.shadowBlur = Math.min(node.kind === 'core' ? 26 : 16, r * 2.4);
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
@@ -468,18 +499,23 @@ export default function Legion3DPage() {
         ctx.globalAlpha = 1;
       }
 
-      // 环上流光：每层两个「卫星」，纯装饰，给静止的轨道一点运动参照。
+      // 环上彗星：头亮、尾巴 6 段渐隐，双向各一颗（神明参数：比虚线更有「通信」感）。
       for (const ring of ringRadii) {
         const y = RING_HEIGHT[ring.ring] ?? 0;
         for (let k = 0; k < 2; k++) {
-          const a = now / 1000 * (k === 0 ? 0.22 : -0.15) + ring.ring * 1.7 + k * Math.PI;
-          const pt = projectPoint({ x: Math.sin(a) * ring.radius, y, z: Math.cos(a) * ring.radius }, cam, size);
-          if (!pt) continue;
-          ctx.globalAlpha = 0.55;
-          ctx.fillStyle = tk.accent;
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, 1.6, 0, Math.PI * 2);
-          ctx.fill();
+          const dir = k === 0 ? 1 : -1;
+          const head = (now / 1000) * 0.28 * dir + ring.ring * 1.7 + k * Math.PI;
+          for (let seg = 6; seg >= 0; seg--) {
+            const a = head - dir * seg * 0.05;
+            const pt = projectPoint({ x: Math.sin(a) * ring.radius, y, z: Math.cos(a) * ring.radius }, cam, size);
+            if (!pt) continue;
+            const t = 1 - seg / 7;
+            ctx.globalAlpha = 0.62 * t * t;
+            ctx.fillStyle = seg === 0 ? tk.fg : tk.accent;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 2.1 * t + 0.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
       }
       ctx.globalAlpha = 1;
@@ -505,7 +541,7 @@ export default function Legion3DPage() {
     lastInteract.current = performance.now();
     if (pointersRef.current.size === 2) {
       const [a, b] = [...pointersRef.current.values()];
-      pinchRef.current = { span: Math.hypot(a.x - b.x, a.y - b.y), dist: viewRef.current.dist };
+      pinchRef.current = { span: Math.hypot(a.x - b.x, a.y - b.y), dist: viewRef.current.zoom };
       dragRef.current = null;
       return;
     }
@@ -527,8 +563,8 @@ export default function Legion3DPage() {
       const [a, b] = [...pointersRef.current.values()];
       const span = Math.hypot(a.x - b.x, a.y - b.y);
       if (span > 4 && pinchRef.current.span > 4) {
-        const ratio = pinchRef.current.span / span;
-        viewRef.current.dist = Math.min(MAX_DIST, Math.max(MIN_DIST, pinchRef.current.dist * ratio));
+        const ratio = span / pinchRef.current.span;
+        viewRef.current.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, pinchRef.current.dist * ratio));
       }
       return;
     }
@@ -559,8 +595,8 @@ export default function Legion3DPage() {
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     lastInteract.current = performance.now();
-    const next = viewRef.current.dist * (e.deltaY > 0 ? 1.08 : 1 / 1.08);
-    viewRef.current.dist = Math.min(MAX_DIST, Math.max(MIN_DIST, next));
+    const next = viewRef.current.zoom * (e.deltaY > 0 ? 1 / 1.08 : 1.08);
+    viewRef.current.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -571,8 +607,8 @@ export default function Legion3DPage() {
       case 'ArrowRight': e.preventDefault(); v.yaw += 0.12; break;
       case 'ArrowUp': e.preventDefault(); v.pitch = Math.min(1.45, v.pitch + 0.08); break;
       case 'ArrowDown': e.preventDefault(); v.pitch = Math.max(0.12, v.pitch - 0.08); break;
-      case '+': case '=': e.preventDefault(); v.dist = Math.max(MIN_DIST, v.dist / 1.1); break;
-      case '-': e.preventDefault(); v.dist = Math.min(MAX_DIST, v.dist * 1.1); break;
+      case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); break;
+      case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); break;
       case 'r': case 'R': resetView(); break;
       case 'Escape': setSelected(null); break;
       default: break;
