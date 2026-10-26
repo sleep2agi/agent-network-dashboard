@@ -23,7 +23,8 @@ describe('部门任务筛选必须标明投影口径', () => {
   });
 
   test('状态计数与列表都基于筛选后的集合', () => {
-    expect(view).toContain('const tasksScoped = deptIds.size > 0 ? deptScopedTasks : tasks;');
+    // 未归属是单独一支，其余按部门子树过滤；两条路径都必须落到 tasksScoped。
+    expect(view).toContain("const tasksScoped = filterDept === UNASSIGNED ? unassignedTasks : deptIds.size > 0 ? deptScopedTasks : tasks;");
     expect(view).toContain('tasksScoped.forEach');
     expect(view).toContain('<TaskList tasks={tasksScoped}');
   });
