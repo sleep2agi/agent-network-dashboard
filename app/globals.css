@@ -1436,15 +1436,15 @@ joining the R145
   --bg-elevated:  #eef0f4;
   --fg:           #0f1419;
   --fg-muted:     #525a66;
-  --fg-dim:       #6b7280; /* was #8a94a3 — 2.86:1 on white, unreadable */
+  --fg-dim:       #5f6875; /* was #8a94a3 (2.86:1) → #6b7280 (4.24:1) → #5f6875 (4.94:1 on elevated) */
   --border:       #e3e6eb;
   --border-hover: #c8cdd6;
-  --accent:       #009e7e;
+  --accent:       #007a61; /* was #009e7e — 3.39:1 as text on white */
   --accent-fg:    #ffffff;
-  --success:      #059669;
-  --warning:      #d97706;
-  --danger:       #dc2626;
-  --info:         #0284c7;
+  --success:      #047857; /* was #059669 — 3.7:1 as text on white */
+  --warning:      #a34708; /* was #d97706 — 3.19:1 as text on white */
+  --danger:       #b91c1c; /* was #dc2626 — 4.42:1 on #f3f5f8 */
+  --info:         #0369a1; /* was #0284c7 — 4.1:1 as text on white */
   --scrollbar:    #d4d8df;
   --scrollbar-hover: #a1a8b5;
   --code-bg:      #eef0f4;
@@ -2241,7 +2241,7 @@ html[data-skin="slack"] [data-topo-showcase] [class*="bg-cyan"] { background-col
   --col-hairline: #e9ebf0;
   --badge-muted-bg: #CBD5E1;
   --badge-muted-fg: #334155;
-  --hl:          #0284c7; /* sky-600: 浅底上可读的同 hue */
+  --hl:          #0369a1; /* was #0284c7 — 4.1:1 as text/按钮上白字在浅底不够 */
   --menu-bg:     #ffffff;
   --bubble-in:   #F1F5F9;
   --bubble-out:  #DBEAFE;

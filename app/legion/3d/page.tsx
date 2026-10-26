@@ -1230,7 +1230,7 @@ export default function Legion3DPage() {
           className="absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28"
         >
           {layout.nodes
-            .filter(n => n.kind === 'core' || n.kind === 'group' || (n.kind === 'person' && layout.stats.people <= 120))
+            .filter(n => n.kind === 'core' || n.kind === 'group' || (n.kind === 'person' && layout.stats.people <= 60))
             .map(n => (
               <button
                 key={n.id}
@@ -1248,8 +1248,8 @@ export default function Legion3DPage() {
                 <span className="truncate">{n.label}</span>
               </button>
             ))}
-          {layout.nodes.some(n => n.kind === 'agent') && layout.stats.people > 120 && (
-            <p className="px-2 py-1 text-[10px] text-[var(--fg-dim)]">成员过多，列表只列部门与核心；成员/Agent 请用搜索或点画布。</p>
+          {layout.stats.people > 60 && (
+            <p className="px-2 py-1 text-[10px] text-[var(--fg-dim)]">成员超过 60，列表只列部门与核心（避免上百个 Tab 停点）；找成员请用搜索或点画布。</p>
           )}
         </div>
       )}
