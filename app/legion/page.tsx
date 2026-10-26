@@ -238,7 +238,11 @@ export default function LegionPage() {
         const node = layout.nodes.find(n => n.id === selected);
         if (node && (node.kind === 'agent' || node.kind === 'person' || node.kind === 'group')) {
           e.preventDefault();
-          router.push(node.kind === 'agent' ? `/nodes/${encodeURIComponent(node.label)}` : '/org');
+          router.push(node.kind === 'agent'
+            ? `/nodes/${encodeURIComponent(node.label)}`
+            : node.kind === 'group'
+              ? `/org?focus=${encodeURIComponent(node.label)}`
+              : '/org');
           return;
         }
       }

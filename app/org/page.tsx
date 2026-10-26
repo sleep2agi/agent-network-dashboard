@@ -41,14 +41,19 @@ interface DirectoryResponse {
 
 const PAGE = 50;
 
-function GroupSection({ group, depth, counts }: { group: OrgGroup; depth: number; counts: Map<string, number> }) {
+function GroupSection({ group, depth, counts, focusName }: { group: OrgGroup; depth: number; counts: Map<string, number>; focusName?: string }) {
+  const focused = !!focusName && group.name === focusName;
   // 有真实部门树时按 id 命中；老 Hub 回退成扁平分组（id 是合成的）时按部门名命中。
   const taskCount = counts.get(group.id.replace(/^dept:/, '')) ?? counts.get(group.name);
   return (
     <li>
       <div
-        className="flex flex-wrap items-center gap-x-2 gap-y-1 border-[var(--border)] px-3 py-2 sm:px-4"
+        className={`flex flex-wrap items-center gap-x-2 gap-y-1 border-[var(--border)] px-3 py-2 transition-colors sm:px-4 ${
+          focused ? 'bg-[var(--accent)]/10' : ''
+        }`}
         style={{ paddingLeft: `${12 + depth * 16}px` }}
+        data-org-group={group.name}
+        ref={el => { if (focused && el) el.scrollIntoView({ block: 'center' }); }}
       >
         <span className="text-[13px] font-medium text-[var(--fg)]">{group.name}</span>
         {group.leader && (
@@ -108,7 +113,7 @@ function GroupSection({ group, depth, counts }: { group: OrgGroup; depth: number
       {group.children.length > 0 && (
         <ul className="border-l border-[var(--border)]" style={{ marginLeft: `${20 + depth * 16}px` }}>
           {group.children.map(child => (
-            <GroupSection key={child.id} group={child} depth={depth + 1} counts={counts} />
+            <GroupSection key={child.id} group={child} depth={depth + 1} counts={counts} focusName={focusName} />
           ))}
         </ul>
       )}
@@ -120,6 +125,8 @@ function OrgContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const q = searchParams.get('q') || '';
+  // 从军团图跳过来时定向到某个部门：/org?focus=<部门名>
+  const focusName = searchParams.get('focus') || '';
 
   const [data, setData] = useState<DirectoryResponse | null>(null);
   const [org, setOrg] = useState<{ departments?: OrgDeptInput[]; members?: OrgMemberInput[] } | null>(null);
@@ -330,7 +337,7 @@ function OrgContent() {
           <>
             <ul className="overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
               {tree.groups.map(group => (
-                <GroupSection key={group.id} group={group} depth={0} counts={deptTaskCounts} />
+                <GroupSection key={group.id} group={group} depth={0} counts={deptTaskCounts} focusName={focusName} />
               ))}
             </ul>
 

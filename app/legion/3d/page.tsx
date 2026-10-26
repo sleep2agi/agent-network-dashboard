@@ -1153,7 +1153,11 @@ export default function Legion3DPage() {
     return out;
   }, [layout.nodes, selectedNode]);
 
-  const detailHref = selectedNode?.kind === 'agent' ? `/nodes/${encodeURIComponent(selectedNode.label)}` : '/org';
+  const detailHref = selectedNode?.kind === 'agent'
+    ? `/nodes/${encodeURIComponent(selectedNode.label)}`
+    : selectedNode?.kind === 'group'
+      ? `/org?focus=${encodeURIComponent(selectedNode.label)}`
+      : '/org';
 
   return (
     <div
