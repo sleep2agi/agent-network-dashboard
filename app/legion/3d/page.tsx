@@ -249,7 +249,13 @@ export default function Legion3DPage() {
     const want = new URLSearchParams(window.location.search).get('focus');
     if (!want) { urlFocusSettled.current = true; return; }
     const node = layout.nodes.find(n => n.kind === 'group' && n.label === want);
-    if (!node) return;
+    // 首帧布局里只有 core（nodes.length 1），不能据此判定「部门不存在」，
+    // 否则一上来就把 ?focus= 判死、参数被清掉。
+    const loaded = layout.stats.people + layout.stats.agents > 0;
+    if (!node) {
+      if (loaded) urlFocusSettled.current = true;
+      return;
+    }
     urlFocusSettled.current = true;
     setFocus(node.id);
     setSelected(node.id);
@@ -258,6 +264,40 @@ export default function Legion3DPage() {
     while (delta < -Math.PI) delta += Math.PI * 2;
     yawTarget.current = viewRef.current.yaw + delta;
   }, [layout.nodes]);
+
+  // /legion/3d?node=<名字>：从节点页/通知点进来时直接选中那个 Agent 或成员，
+  // 并把镜头转到它所在的扇区。名字口径与节点页一致（Agent 用 alias）。
+  const urlNodeSettled = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || urlNodeSettled.current) return;
+    const want = new URLSearchParams(window.location.search).get('node');
+    if (!want) { urlNodeSettled.current = true; return; }
+    const node = layout.nodes.find(n => n.label === want && n.kind !== 'group');
+    const loaded = layout.stats.people + layout.stats.agents > 0;
+    if (!node) {
+      // 数据到位还找不到 → 节点没了/拼错了，别把死参数一直挂在地址上。
+      if (loaded) urlNodeSettled.current = true;
+      return;
+    }
+    urlNodeSettled.current = true;
+    setSelected(node.id);
+    setFocus(null);
+    let delta = node.angle - viewRef.current.yaw;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    while (delta < -Math.PI) delta += Math.PI * 2;
+    yawTarget.current = viewRef.current.yaw + delta;
+  }, [layout.nodes]);
+
+  // 选中节点写回 URL（?node=），这样「这个 Agent 在军团里」的地址也能直接发人。
+  useEffect(() => {
+    if (typeof window === 'undefined' || !urlNodeSettled.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const label = selected ? layout.nodes.find(n => n.id === selected)?.label : null;
+    if (label && selected !== 'core') params.set('node', label);
+    else params.delete('node');
+    const qs = params.toString();
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+  }, [selected, layout.nodes]);
 
   // 聚焦状态写回 URL，复制地址就能把同一个部门视角发给别人。
   useEffect(() => {
@@ -1546,16 +1586,21 @@ export default function Legion3DPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    void navigator.clipboard?.writeText(selectedNode.label).then(() => {
+                    // 复制的是「能直接发人的地址」，不是光秃秃一个名字 ——
+                    // 收到链接的人打开就落在同一个节点上（?node= 由本页读取）。
+                    const params = new URLSearchParams(window.location.search);
+                    params.set('node', selectedNode.label);
+                    const share = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+                    void navigator.clipboard?.writeText(share).then(() => {
                       setCopied(true);
                       setTimeout(() => setCopied(false), 1200);
                     }).catch(() => {});
                   }}
                   className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
-                  aria-label={`复制名称 ${selectedNode.label}`}
+                  aria-label={`复制 ${selectedNode.label} 的分享链接`}
                   data-testid="legion-3d-copy"
                 >
-                  {copied ? '已复制' : '复制'}
+                  {copied ? '已复制' : '复制链接'}
                 </button>
               </div>
               {selectedNode.kind === 'group' && (

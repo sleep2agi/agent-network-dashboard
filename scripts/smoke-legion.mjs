@@ -22,7 +22,7 @@ const fail = (name, detail) => results.push({ name, ok: false, detail });
 const pass = (name, detail) => results.push({ name, ok: true, detail });
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true, permissions: ['clipboard-read', 'clipboard-write'] });
 const login = await ctx.request.post(`${BASE}/api/auth/login`, { data: { password: PASSWORD } });
 if (!login.ok()) {
   console.error(`login failed: ${login.status()}`);
@@ -214,6 +214,35 @@ if (deptName) {
   deep3d.chip && deep3d.urlKept
     ? pass('3D 部门深链 ?focus= 生效且不被抹掉', deep3d)
     : fail('3D 部门深链 ?focus= 生效且不被抹掉', deep3d);
+
+  // 节点级深链 + 复制分享链接：?node=<alias> 打开后直接选中该 Agent。
+  const deepAgentAlias = await page.evaluate(async () => {
+    const res = await fetch('/api/hub/people?limit=200&offset=0');
+    if (!res.ok) return null;
+    const j = await res.json();
+    return j?.people?.find(p => p.agents?.length)?.agents?.[0]?.alias ?? null;
+  });
+  if (deepAgentAlias) {
+    await page.goto(`${BASE}/legion/3d?node=${encodeURIComponent(deepAgentAlias)}`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2200);
+    const nodeDeep = await page.evaluate((alias) => {
+      const detail = document.querySelector('[data-testid="legion-3d-detail"]')?.textContent ?? '';
+      return {
+        selected: detail.includes(alias),
+        urlKept: new URLSearchParams(location.search).get('node') === alias,
+      };
+    }, deepAgentAlias);
+    nodeDeep.selected && nodeDeep.urlKept
+      ? pass('3D 节点深链 ?node= 选中该 Agent', nodeDeep)
+      : fail('3D 节点深链 ?node= 选中该 Agent', nodeDeep);
+
+    await page.getByTestId('legion-3d-copy').click();
+    await page.waitForTimeout(300);
+    const copied = await page.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+    copied.includes('/legion/3d?') && copied.includes('node=')
+      ? pass('复制的是分享链接而非名字', { copied: copied.replace(/^https?:\/\/[^/]+/, '') })
+      : fail('复制的是分享链接而非名字', { copied });
+  }
   await page.goto(`${BASE}/org?focus=${encodeURIComponent(deptName)}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1600);
 
