@@ -94,6 +94,16 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   // 部门筛选：Hub 的任务接口没有 department_id，这里按「成员名下 Agent」投影。
   // UI 上必须标明口径，数量也只代表这一页任务的命中数，不能冒充部门全量。
   const [filterDept, setFilterDept] = useState(searchParams.get('department') || '');
+  // 部门筛选写回 URL：筛选结果能直接分享给别人，刷新也不会丢。
+  const setDeptAndUrl = (value: string) => {
+    setFilterDept(value);
+    try {
+      const url = new URL(window.location.href);
+      if (value) url.searchParams.set('department', value);
+      else url.searchParams.delete('department');
+      window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+    } catch { /* pushState 被禁用时只是不写 URL，筛选本身照常 */ }
+  };
   const [people, setPeople] = useState<LegionPerson[]>([]);
   const [depts, setDepts] = useState<LegionDepartment[] | null>(null);
   const [deptMembers, setDeptMembers] = useState<Array<{ user_id: string; department_id: string | null }>>([]);
@@ -319,7 +329,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     <span className="text-[9px] uppercase tracking-wide text-[var(--fg-muted)]">Dept</span>
                     <select
                       value={filterDept}
-                      onChange={(e) => setFilterDept(e.target.value)}
+                      onChange={(e) => setDeptAndUrl(e.target.value)}
                       data-testid="tasks-filter-dept"
                       className="max-w-[7.5rem] bg-transparent text-xs text-[var(--fg)] focus:outline-none"
                     >
@@ -340,7 +350,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                       setFilterStatus('');
                       setFilterFrom('');
                       setFilterTo('');
-                      setFilterDept('');
+                      setDeptAndUrl('');
                     }}
                     className="rounded px-2 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
                   >
