@@ -31,8 +31,10 @@ import { getAvatarUrl } from '../../lib/avatars';
 // 实现上把「透视强度」和「缩放」拆开：dist 固定大一点 = 透视更平，
 // 滚轮改的是 zoom（scale），不再同时改变透视。
 const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.52, dist: 6.0, zoom: 1.12, panX: 0, panY: 0 };
-const MIN_ZOOM = 0.62;
-const MAX_ZOOM = 2.4;
+// 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
+// admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 8;
 const SPIN_RAD_PER_SEC = 0.027;
 const IDLE_BEFORE_SPIN = 3000;
 
@@ -1337,7 +1339,7 @@ export default function Legion3DPage() {
     interactingUntil.current = performance.now() + 180;
     introRef.current = null;
     const v = viewRef.current;
-    const factor = e.deltaY > 0 ? 1 / 1.08 : 1.08;
+    const factor = e.deltaY > 0 ? 1 / 1.12 : 1.12;
     const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.zoom * factor));
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     // 以鼠标位置为锚点：screen = center + pan + zoom * u，保持 u 对应点不动

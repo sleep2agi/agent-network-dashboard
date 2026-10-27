@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.94 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D：缩放范围放宽
+
+- `MIN_ZOOM/MAX_ZOOM` 0.62–2.4 → **0.25–8**（自动取景在 1.5× 左右时，之前往外只剩 1.6×
+  可用，admin 反馈「滚轮能滚动的幅度太少」）。
+- 每格滚轮 8% → 12%，滚起来更快；缩放锚点仍是鼠标位置。
+
 ## 0.6.3-preview.93 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
