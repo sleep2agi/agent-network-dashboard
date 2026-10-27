@@ -21,7 +21,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, nearestDept, deptWorldRadius, type LegionNode } from '../../lib/legion-layout';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
-import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
+import { legionFetcher, deptFetcher, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
+import { useNetworkId } from '../../lib/network-context';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
@@ -189,6 +190,8 @@ function makeStars(count: number) {
 }
 
 export default function Legion3DPage() {
+  // #1636-P1 —— 当前选中网络拼进 SWR key（切网即换 key，避免串网）。
+  const { networkId } = useNetworkId();
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
@@ -249,16 +252,16 @@ export default function Legion3DPage() {
   const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
 
-  const people = useSWR<PeopleResponse>('/api/hub/people?limit=200&offset=0', legionFetcher, {
+  const people = useSWR<PeopleResponse>(scopedUrl('/api/hub/people?limit=200&offset=0', networkId), legionFetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
     onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
-  const hierarchy = useSWR<DepartmentsResponse | null>('/api/hub/departments', deptFetcher, {
+  const hierarchy = useSWR<DepartmentsResponse | null>(scopedUrl('/api/hub/departments', networkId), deptFetcher, {
     refreshInterval: 60000,
     shouldRetryOnError: false,
   });
-  const status = useSWR<StatusResponse>('/api/hub/status', legionFetcher, {
+  const status = useSWR<StatusResponse>(scopedUrl('/api/hub/status', networkId), legionFetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });

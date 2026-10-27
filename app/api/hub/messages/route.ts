@@ -23,15 +23,10 @@ export async function GET(req: Request) {
       );
     }
     const data = await res.json();
-    // Fallback: if network filter returns empty, retry without filter
-    if (networkId && data.ok && (!data.messages || data.messages.length === 0)) {
-      const fbQs = new URLSearchParams({ limit, since });
-      const fbRes = await hubFetch(`/api/messages?${fbQs.toString()}`);
-      const fbData = await fbRes.json();
-      if (fbData.ok && fbData.messages?.length > 0) {
-        return Response.json({ ...fbData, source: 'global' });
-      }
-    }
+    // #1636-P1 —— 显式指定了 network_id 时，「空」就是答案。
+    // 旧实现在这里撤掉 network_id 再查一次，把别的网络的命中以 `source: 'global'`
+    // 返回给调用方；如果那次兜底是 401，还会被吞成「200 + 原空集合」。
+    // 作用域不能因为「结果为空」被放宽 —— 要跨网络看，由调用方显式切换。
     return Response.json(data);
   } catch (e: unknown) {
     return Response.json({ ok: false, messages: [] }, { status: 502 });
