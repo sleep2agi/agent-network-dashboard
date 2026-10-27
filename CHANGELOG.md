@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.96 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团：三层环整体外移
+
+- 部门环 0.56–0.74（原 0.34–0.54）、成员环 0.84（原 0.76）：生产 13 个部门原来全挤在
+  顶部一小圈，圆心文字互相压；现在三层在画面上是三个明显的环。
+
 ## 0.6.3-preview.95 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

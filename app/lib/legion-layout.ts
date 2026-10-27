@@ -120,13 +120,14 @@ export const UNGROUPED = '未分组';
 export const ORPHAN_GROUP = '无主 Agent';
 
 /** 环半径：部门贴近圆心，人第二层，Agent 在最外。 */
-export const RING_RADIUS = { core: 0, group: 0.5, person: 0.76, agent: 1 } as const;
+export const RING_RADIUS = { core: 0, group: 0.5, person: 0.84, agent: 1 } as const;
 /**
  * 多层部门时，最内层（depth 1）到最外层（最深）的半径带。0.26→0.54：
  * 0.30→0.50 在 375px 屏上只留 29px 环差，而部门圆直径 44px，父子部门
  * 会叠在一起；拉开到 0.28 环差后窄屏才放得下（节点半径同时按屏幕缩放）。
  */
-const DEPT_BAND = { inner: 0.34, outer: RING_RADIUS.group + 0.04 } as const;
+// 部门环整体外移：生产 13 个部门，内圈 0.34 会被压成「顶部一团」。
+const DEPT_BAND = { inner: 0.56, outer: 0.74 } as const;
 
 /** Agent 扇形：相邻 Agent 的角度间隔与最大半宽。 */
 const AGENT_STEP = 0.075;
