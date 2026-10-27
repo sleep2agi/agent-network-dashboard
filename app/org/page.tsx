@@ -360,14 +360,14 @@ function OrgContent() {
           </div>
         )}
 
-        {loading && !data ? (
+        {networkReady && !networkId ? (
+          <NetworkRequiredNotice />
+        ) : loading && !data ? (
           <div className="space-y-2">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="h-16 animate-pulse rounded-lg bg-[var(--bg-secondary)]" />
             ))}
           </div>
-        ) : networkReady && !networkId ? (
-          <NetworkRequiredNotice />
         ) : people.length === 0 && !error && !needsLogin ? (
           <EmptyState
             variant="nodes"

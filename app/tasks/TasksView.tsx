@@ -411,15 +411,15 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto">
-          {loading ? (
+          {networkReady && !networkId ? (
+            <div className="px-3 py-6">
+              <NetworkRequiredNotice />
+            </div>
+          ) : loading ? (
             <div className="animate-pulse space-y-1 px-3 py-2">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <div key={i} className="h-14 rounded bg-[var(--bg-elevated)]" />
               ))}
-            </div>
-          ) : networkReady && !networkId ? (
-            <div className="px-3 py-6">
-              <NetworkRequiredNotice />
             </div>
           ) : error && tasks.length === 0 ? (
             <div className="px-3 py-6 text-center text-sm">
