@@ -827,7 +827,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
                   onClick={handleSave}
                   disabled={btnDisabled}
                   className={`flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                    btnDisabled ? 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed' : 'bg-[var(--accent)] text-[var(--fg)] hover:bg-cyan-500'
+                    btnDisabled ? 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed' : 'bg-[var(--accent)] text-[var(--accent-fg)] hover:opacity-90'
                   }`}
                 >
                   {busy && (

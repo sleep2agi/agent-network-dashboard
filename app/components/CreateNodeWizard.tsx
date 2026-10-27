@@ -167,7 +167,7 @@ export function CreateNodeWizard({
   }
 
   const inputCls =
-    'w-full rounded-md border border-[#26262b] bg-[#0e0e10] px-3 py-2 text-sm text-gray-200 focus:border-cyan-600 focus:outline-none';
+    'w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-cyan-600 focus:outline-none';
 
   return (
     <>
@@ -177,12 +177,12 @@ export function CreateNodeWizard({
         aria-label="新建节点"
         // RFC-026 §9.4 responsive: mobile single-screen (full width minus
         // gutter, taller); desktop ~3-col-friendly width when picker is shown.
-        className="fixed left-1/2 top-1/2 z-50 w-[min(94vw,440px)] md:w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#26262b] bg-[#161618] shadow-2xl"
+        className="fixed left-1/2 top-1/2 z-50 w-[min(94vw,440px)] md:w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] shadow-2xl"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#26262b] px-4 py-3">
-          <div className="text-sm font-semibold text-white">新建节点</div>
-          <button onClick={onClose} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+          <div className="text-sm font-semibold text-[var(--fg)]">新建节点</div>
+          <button onClick={onClose} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
@@ -193,8 +193,8 @@ export function CreateNodeWizard({
         <div className="flex items-center gap-1.5 px-4 pt-3">
           {STEPS.map((label, i) => (
             <div key={label} className="flex flex-1 flex-col items-center gap-1">
-              <div className={`h-1 w-full rounded-full ${i <= step ? 'bg-cyan-500' : 'bg-[#26262b]'}`} />
-              <span className={`text-[10px] ${i === step ? 'text-cyan-300' : 'text-gray-600'}`}>{label}</span>
+              <div className={`h-1 w-full rounded-full ${i <= step ? 'bg-[var(--accent)]' : 'bg-[var(--bg-elevated)]'}`} />
+              <span className={`text-[10px] ${i === step ? 'text-[var(--accent-text)]' : 'text-[var(--fg-dim)]'}`}>{label}</span>
             </div>
           ))}
         </div>
@@ -204,12 +204,12 @@ export function CreateNodeWizard({
           {phase !== 'form' ? (
             <div className="flex h-[180px] flex-col items-center justify-center gap-3 text-center">
               {busy && (
-                <svg className="h-7 w-7 animate-spin text-cyan-400" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <svg className="h-7 w-7 animate-spin text-[var(--accent-text)]" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
               )}
-              <div className={`text-sm ${phase === 'done' ? 'text-green-300' : phase === 'error' ? 'text-red-300' : phase === 'unconfirmed' ? 'text-amber-300' : 'text-gray-300'}`}>
+              <div className={`text-sm ${phase === 'done' ? 'text-green-300' : phase === 'error' ? 'text-red-300' : phase === 'unconfirmed' ? 'text-[var(--warning)]' : 'text-[var(--fg)]'}`}>
                 {busy ? '正在创建…' : phase === 'done' && childUp ? `✓ ${name.trim()} 已上线` : msg}
               </div>
               {/* Real progress: poll the node list for the child to register
@@ -217,7 +217,7 @@ export function CreateNodeWizard({
               {phase === 'done' && (childUp ? (
                 <p className="text-[11px] text-green-500/80">节点已注册，已出现在节点列表。</p>
               ) : (
-                <p className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
+                <p className="inline-flex items-center gap-1.5 text-[11px] text-[var(--fg-muted)]">
                   <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -230,7 +230,7 @@ export function CreateNodeWizard({
             <>
               {step === 0 && (
                 <div className="space-y-2">
-                  <span className="text-xs text-gray-400">在哪台机器上创建</span>
+                  <span className="text-xs text-[var(--fg-muted)]">在哪台机器上创建</span>
                   <HostSupervisorPicker
                     networkId={netId || undefined}
                     value={daemonNodeId}
@@ -251,7 +251,7 @@ export function CreateNodeWizard({
                     }}
                   />
                   {!daemonNodeId && (
-                    <p className="text-[11px] text-gray-600">
+                    <p className="text-[11px] text-[var(--fg-dim)]">
                       没选服务器之前无法继续；如果列表是空的，按提示在目标机器上跑 <code className="rounded bg-[var(--code-bg)] px-1 py-0.5">anet daemon up &lt;name&gt;</code>。
                     </p>
                   )}
@@ -259,14 +259,14 @@ export function CreateNodeWizard({
               )}
               {step === 1 && (
                 <label className="block space-y-1.5">
-                  <span className="text-xs text-gray-400">节点名字</span>
+                  <span className="text-xs text-[var(--fg-muted)]">节点名字</span>
                   <input autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="例如 my-agent-1" className={inputCls} />
-                  {!nameValid && <span className="text-[11px] text-gray-600">名字不能为空</span>}
+                  {!nameValid && <span className="text-[11px] text-[var(--fg-dim)]">名字不能为空</span>}
                 </label>
               )}
               {step === 2 && (
                 <div className="space-y-2">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-[var(--fg-muted)]">
                     Runtime{daemon ? `（${daemon.alias} 支持）` : ''}
                   </span>
                   {RUNTIMES.map(r => {
@@ -287,10 +287,10 @@ export function CreateNodeWizard({
                         title={disabled ? `${daemon?.alias || '该 daemon'} 未声明支持此 runtime` : undefined}
                         className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
                           disabled
-                            ? 'border-[#1c1c1f] bg-[#0a0a0c] text-gray-600 cursor-not-allowed'
+                            ? 'border-[var(--border)] bg-[#0a0a0c] text-[var(--fg-dim)] cursor-not-allowed'
                             : selected
                               ? 'border-cyan-600 bg-cyan-900/15 text-cyan-200'
-                              : 'border-[#26262b] bg-[#0e0e10] text-gray-300 hover:border-[#3a3a41]'
+                              : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg)] hover:border-[#3a3a41]'
                         }`}
                       >
                         <span>
@@ -309,7 +309,7 @@ export function CreateNodeWizard({
               )}
               {step === 3 && (
                 <label className="block space-y-1.5">
-                  <span className="text-xs text-gray-400">模型（{runtime.label}）</span>
+                  <span className="text-xs text-[var(--fg-muted)]">模型（{runtime.label}）</span>
                   <select value={model} onChange={e => setModel(e.target.value)} className={inputCls}>
                     <option value="">默认（{runtime.defaultModel}）</option>
                     {runtime.models.map(m => <option key={m} value={m}>{m}</option>)}
@@ -319,21 +319,21 @@ export function CreateNodeWizard({
               {step === 4 && (
                 <div className="space-y-3">
                   <label className="block space-y-1.5">
-                    <span className="text-xs text-gray-400">permissionMode</span>
+                    <span className="text-xs text-[var(--fg-muted)]">permissionMode</span>
                     <select value={permissionMode} onChange={e => setPermissionMode(e.target.value)} className={inputCls}>
                       {PERMISSION_MODES.map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                   </label>
                   <div className="grid grid-cols-3 gap-2">
-                    <label className="space-y-1"><span className="text-[11px] text-gray-500">maxTurns</span><input inputMode="numeric" value={maxTurns} onChange={e => setMaxTurns(e.target.value)} className={inputCls} /></label>
-                    <label className="space-y-1"><span className="text-[11px] text-gray-500">budget</span><input inputMode="numeric" value={budget} onChange={e => setBudget(e.target.value)} className={inputCls} /></label>
-                    <label className="space-y-1"><span className="text-[11px] text-gray-500">timeout</span><input inputMode="numeric" value={timeout} onChange={e => setTimeout(e.target.value)} className={inputCls} /></label>
+                    <label className="space-y-1"><span className="text-[11px] text-[var(--fg-muted)]">maxTurns</span><input inputMode="numeric" value={maxTurns} onChange={e => setMaxTurns(e.target.value)} className={inputCls} /></label>
+                    <label className="space-y-1"><span className="text-[11px] text-[var(--fg-muted)]">budget</span><input inputMode="numeric" value={budget} onChange={e => setBudget(e.target.value)} className={inputCls} /></label>
+                    <label className="space-y-1"><span className="text-[11px] text-[var(--fg-muted)]">timeout</span><input inputMode="numeric" value={timeout} onChange={e => setTimeout(e.target.value)} className={inputCls} /></label>
                   </div>
                 </div>
               )}
               {step === 5 && (
                 <div className="space-y-2 text-sm">
-                  <div className="rounded-md border border-[#26262b] bg-[#0e0e10] divide-y divide-[#1c1c1f]">
+                  <div className="rounded-md border border-[var(--border)] bg-[var(--bg)] divide-y divide-[#1c1c1f]">
                     {[
                       ['服务器', daemonNodeId ? `${daemonNodeId.slice(0, 24)}…` : '—'],
                       ['名字', name.trim() || '—'],
@@ -343,8 +343,8 @@ export function CreateNodeWizard({
                       ['maxTurns / budget / timeout', `${maxTurns || '—'} / ${budget || '—'} / ${timeout || '—'}`],
                     ].map(([k, v]) => (
                       <div key={k} className="flex items-start justify-between gap-3 px-3 py-2">
-                        <span className="shrink-0 text-gray-500 text-xs">{k}</span>
-                        <span className="text-right text-gray-200 text-xs break-all">{v}</span>
+                        <span className="shrink-0 text-[var(--fg-muted)] text-xs">{k}</span>
+                        <span className="text-right text-[var(--fg)] text-xs break-all">{v}</span>
                       </div>
                     ))}
                   </div>
@@ -356,27 +356,27 @@ export function CreateNodeWizard({
 
         {/* Footer nav */}
         {phase === 'form' ? (
-          <div className="flex items-center justify-between border-t border-[#26262b] px-4 py-3">
-            <button type="button" onClick={() => (step === 0 ? onClose() : setStep(step - 1))} className="rounded-md px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200">
+          <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
+            <button type="button" onClick={() => (step === 0 ? onClose() : setStep(step - 1))} className="rounded-md px-3 py-1.5 text-sm text-[var(--fg-muted)] hover:text-[var(--fg)]">
               {step === 0 ? '取消' : '上一步'}
             </button>
             {step < STEPS.length - 1 ? (
-              <button type="button" disabled={!canNext} onClick={() => setStep(step + 1)} className={`rounded-md px-4 py-1.5 text-sm font-medium ${canNext ? 'bg-cyan-600 text-white hover:bg-cyan-500' : 'bg-[#1c1c1f] text-gray-600 cursor-not-allowed'}`}>
+              <button type="button" disabled={!canNext} onClick={() => setStep(step + 1)} className={`rounded-md px-4 py-1.5 text-sm font-medium ${canNext ? 'bg-[var(--accent)] text-[var(--accent-fg)] hover:opacity-90' : 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed'}`}>
                 下一步
               </button>
             ) : (
-              <button type="button" onClick={handleCreate} className="rounded-md bg-green-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-500">
+              <button type="button" onClick={handleCreate} className="rounded-md bg-[var(--success)] px-4 py-1.5 text-sm font-medium text-[var(--accent-fg)] hover:opacity-90">
                 创建节点
               </button>
             )}
           </div>
         ) : (
-          <div className="flex items-center justify-end border-t border-[#26262b] px-4 py-3">
-            <button type="button" onClick={onClose} className="rounded-md bg-[#1c1c1f] px-4 py-1.5 text-sm text-gray-200 hover:bg-[#26262b]">
+          <div className="flex items-center justify-end border-t border-[var(--border)] px-4 py-3">
+            <button type="button" onClick={onClose} className="rounded-md bg-[var(--bg-elevated)] px-4 py-1.5 text-sm text-[var(--fg)] hover:bg-[var(--bg-elevated)]">
               {phase === 'done' ? '完成' : '关闭'}
             </button>
             {(phase === 'error' || phase === 'unconfirmed') && (
-              <button type="button" onClick={() => setPhase('form')} className="ml-2 rounded-md bg-cyan-600 px-4 py-1.5 text-sm text-white hover:bg-cyan-500">返回修改</button>
+              <button type="button" onClick={() => setPhase('form')} className="ml-2 rounded-md bg-[var(--accent)] px-4 py-1.5 text-sm text-[var(--accent-fg)] hover:opacity-90">返回修改</button>
             )}
           </div>
         )}

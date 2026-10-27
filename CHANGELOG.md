@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.69 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 任务 / 消息 / 建节点向导
+
+- `TaskDetail`、`TaskDrawer`、`/messages`、`CreateNodeWizard` 的写死颜色换主题 token。
+- 顺手修主按钮文字色：实心 accent/success 底上用 `--accent-fg`（原来在浅色主题下是
+  深色字压深色底）；建节点向导的「下一步 / 创建节点 / 返回修改」一并统一。
+- 硬编码颜色类 **262 → 201**（累计 349 → 201，−42%）。
+
 ## 0.6.3-preview.68 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
