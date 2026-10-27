@@ -55,6 +55,19 @@ try {
   bad('登录页 200 + 版本匹配', String(e).slice(0, 120));
 }
 
+// 1b) 健康检查：/api/health 给出运行中的版本与构建提交（运维/监控用）
+try {
+  const res = await fetch(`${BASE}/api/health`);
+  const body = await res.json().catch(() => ({}));
+  const want = EXPECT || pkgVersion;
+  const good = res.status === 200 && body.ok === true && (!want || body.version === want);
+  good
+    ? ok('/api/health 版本与构建提交', { version: body.version, commit: (body.commit || '').slice(0, 8), uptimeSec: body.uptimeSec })
+    : bad('/api/health 版本与构建提交', { status: res.status, body });
+} catch (e) {
+  bad('/api/health 版本与构建提交', String(e).slice(0, 120));
+}
+
 // 2) 关键路径：/legion、/legion/3d、/org（未登录也应返回页面，不是 500）
 for (const [path, marker] of [['/legion', null], ['/legion/3d', 'legion-3d-stage'], ['/org', null], ['/tasks', null]]) {
   try {

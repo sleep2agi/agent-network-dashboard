@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.82 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 运维
+
+- 新增 `GET /api/health`（免登录）：返回 `{ ok, version, commit, uptimeSec }`。
+  发布后不用再从 `/login` 的 HTML 里 grep 版本；监控/脚本可直接读 JSON。
+- `verify-prod` 增加健康检查项（版本 + 构建提交），现有 8 项。
+
 ## 0.6.3-preview.81 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
