@@ -769,9 +769,8 @@ export default function Legion3DPage() {
       }
 
       const sizeReady = size.width > 240 && size.height > 300;
-      // 还只有 core 的时候（members/agents 都是 0）取景会算出 span=1 → 顶到 240%，
-      // 等数据到位再跳回 151%（实测）。等真有数据再取景。
-      const dataReady = layout.stats.people + layout.stats.agents > 0;
+      // 只有 core 时不取景；仅有部门的编制也有真实实体和轨道，需要避让展开控件。
+      const dataReady = layout.stats.groups + layout.stats.people + layout.stats.agents > 0;
       if (sizeReady && dataReady && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
         const fit = fitProjectedBodies(framingBodies, view, size, fitBounds, { min: MIN_ZOOM, max: MAX_ZOOM });
         // If controls exhaust the usable area, keep drawing the current scene.

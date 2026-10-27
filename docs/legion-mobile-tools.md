@@ -21,6 +21,8 @@ already-reviewed #78/#79 integration or a release-version change.
 - The disclosure is inside the measured header. Its real dimensions participate
   in existing label/control avoidance and initial/explicit-reset framing.
   Opening and closing controls must preserve a manually rotated camera.
+  Department-only networks also take part in framing; the core-only loading
+  placeholder still waits for real layout data.
 - Labels avoid Agent dots as well as departments and members. The compact
   expanded view exposed the previous omission of Agents from body avoidance;
   priority, shared anchors and no-space omission stay in the common label path.
