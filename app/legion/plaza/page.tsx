@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, scopedUrl } from '../../lib/legion-data';
+import { legionFetcher, deptFetcher, legionReadError, type PeopleResponse, type DepartmentsResponse, scopedUrl } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
+import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { buildLegionLayout } from '../../lib/legion-layout';
 import { getAvatarUrl, useAvatarsVersion } from '../../lib/avatars';
 
@@ -44,11 +45,11 @@ interface Platform {
 
 export default function LegionPlazaPage() {
   // #1636-P1 —— 当前选中网络拼进 SWR key。
-  const { networkId } = useNetworkId();
-  const { data: peopleData, error: peopleError, isLoading } = useSWR<PeopleResponse>(
-    scopedUrl('/api/hub/people?limit=200&offset=0', networkId), legionFetcher, { refreshInterval: 30000, shouldRetryOnError: false },
+  const { networkId, ready: networkReady } = useNetworkId();
+  const { data: peopleData, error: peopleError, isLoading, mutate: mutatePeople } = useSWR<PeopleResponse>(
+    networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, { refreshInterval: 30000, shouldRetryOnError: false },
   );
-  const { data: hierarchy } = useSWR<DepartmentsResponse | null>(scopedUrl('/api/hub/departments', networkId), deptFetcher, {
+  const { data: hierarchy, error: hierarchyError, isLoading: hierarchyLoading, mutate: mutateHierarchy } = useSWR<DepartmentsResponse | null>(networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000, shouldRetryOnError: false,
   });
   // manifest 拉完会派发事件；订阅后头像才会从首字母换成图片。
@@ -119,8 +120,12 @@ export default function LegionPlazaPage() {
     return { platform: p, x, y, scale };
   });
 
-  const fatal = (peopleError as { status?: number } | undefined)?.status === 401 ? 'login' : peopleError ? 'error' : null;
-  const isEmpty = !isLoading && !fatal && peopleData != null && platforms.length === 0;
+  const loading = !networkReady || isLoading || hierarchyLoading;
+  const readError = legionReadError(peopleError, hierarchyError);
+  const fatal = readError?.status === 401 ? 'login'
+    : networkReady && !networkId ? 'no-network'
+    : readError ? 'error' : null;
+  const isEmpty = !loading && !fatal && peopleData != null && platforms.length === 0;
 
   return (
     <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
@@ -132,7 +137,7 @@ export default function LegionPlazaPage() {
               <span className="hidden text-[11px] text-[var(--fg-dim)] sm:inline">Legion Plaza</span>
             </div>
             <p className="mt-1 text-xs text-[var(--fg-muted)]">
-              {isLoading
+              {loading
                 ? '正在读取编制…'
                 : `${platforms.length} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`
                   + (emptyDeptCount > 0 ? ` · ${emptyDeptCount} 个部门暂无成员（已淡显）` : '')}
@@ -151,14 +156,16 @@ export default function LegionPlazaPage() {
           </div>
         </div>
 
+        {fatal === 'no-network' && <NetworkRequiredNotice />}
         {fatal === 'login' && (
-          <p className="rounded-lg bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--warning)]">
+          <p role="alert" className="rounded-lg bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--warning)]">
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团。
           </p>
         )}
         {fatal === 'error' && (
-          <p className="rounded-lg bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--danger)]">
-            读取军团编制失败：{String((peopleError as Error)?.message ?? '未知错误')}
+          <p role="alert" className="rounded-lg bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--danger)]">
+            读取军团编制失败：{readError?.message ?? '未知错误'}
+            <button type="button" onClick={() => { void mutatePeople(); void mutateHierarchy(); }} className="ml-3 underline">重试</button>
           </p>
         )}
         {isEmpty && (

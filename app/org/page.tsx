@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
 import { useNetworkId } from '../lib/network-context';
+import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { buildOrgGroups, filterOrgPeople, type OrgGroup, type OrgDeptInput, type OrgMemberInput } from '../lib/org-tree';
 import { buildAliasUserMap, buildUserDeptMap, collectDeptSubtree, taskInDept } from '../lib/dept-task-filter';
 
@@ -146,7 +147,7 @@ function GroupSection({ group, depth, counts, focusName, expandAll, overrides, o
 function OrgContent() {
   // #1636-P1 —— 通讯录/部门树都按当前网络读；切网要重取，
   // 否则会把上一个网络的人当成这个网络的（部门筛选会跟着错）。
-  const { networkId } = useNetworkId();
+  const { networkId, ready: networkReady } = useNetworkId();
   const router = useRouter();
   const searchParams = useSearchParams();
   const q = searchParams.get('q') || '';
@@ -193,10 +194,12 @@ function OrgContent() {
     }
   }, [q, networkId]);
 
-  useEffect(() => { load(0, false); }, [load]);
+  // 网络解析完成之前不发请求：否则首帧会发一次没有 scope 的请求（多网络账号会 400）。
+  useEffect(() => { if (!networkReady || !networkId) return; load(0, false); }, [load, networkReady, networkId]);
 
   // 部门树单独拉：404 = 这版 Hub 没有这条路由（能力缺失），不是错误。
   useEffect(() => {
+    if (!networkReady || !networkId) return;
     let alive = true;
     (async () => {
       try {
@@ -217,7 +220,7 @@ function OrgContent() {
       }
     })();
     return () => { alive = false; };
-  }, [networkId]);
+  }, [networkId, networkReady]);
 
   const setQuery = (value: string) => {
     const next = new URLSearchParams(searchParams.toString());
@@ -363,6 +366,8 @@ function OrgContent() {
               <div key={i} className="h-16 animate-pulse rounded-lg bg-[var(--bg-secondary)]" />
             ))}
           </div>
+        ) : networkReady && !networkId ? (
+          <NetworkRequiredNotice />
         ) : people.length === 0 && !error && !needsLogin ? (
           <EmptyState
             variant="nodes"

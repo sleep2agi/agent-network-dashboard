@@ -21,9 +21,10 @@ import { useRouter } from 'next/navigation';
 import { buildLegionLayout, toPixel, type LegionNode } from '../lib/legion-layout';
 import { LEGION_LABEL_PEOPLE } from '../lib/legion-view-constants';
 import { getAvatarUrl, useAvatarsVersion } from '../lib/avatars';
-import { legionFetcher as fetcher, deptFetcher, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
+import { legionFetcher as fetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
 import { useNetworkId } from '../lib/network-context';
+import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 
 /**
  * callback ref + ResizeObserver。
@@ -78,7 +79,7 @@ function ringLabel(node: LegionNode): string {
 
 export default function LegionPage() {
   // #1636-P1 —— 当前选中网络。拼进 SWR key：切网 = 换 key = 重新取数，不会串上一个网络的数据。
-  const { networkId } = useNetworkId();
+  const { networkId, ready: networkReady } = useNetworkId();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
@@ -112,15 +113,15 @@ export default function LegionPage() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const { ref, size } = useElementSize<HTMLDivElement>();
 
-  const people = useSWR<PeopleResponse>(scopedUrl('/api/hub/people?limit=200&offset=0', networkId), fetcher, {
+  const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, fetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
     onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
   const hierarchy = useSWR<DepartmentsResponse | null>(
-    scopedUrl('/api/hub/departments', networkId), deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
+    networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
   );
-  const status = useSWR<StatusResponse>(scopedUrl('/api/hub/status', networkId), fetcher, {
+  const status = useSWR<StatusResponse>(networkReady && networkId ? scopedUrl('/api/hub/status', networkId) : null, fetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });
@@ -567,8 +568,10 @@ export default function LegionPage() {
   // 节点尺寸随画布缩放：1280 下取 1，375 下约 0.66。不缩的话部门圆直径
   // 44px 会大于环差，父子部门在窄屏上叠成一坨（实测 375 下圆心只差 29px）。
   const nodeScale = Math.max(0.62, Math.min(1, Math.min(size.width, size.height) / 520));
-  const loading = people.isLoading && !people.data;
-  const error = people.error as (Error & { status?: number }) | undefined;
+  // 网络还没确定时也计入 loading：否则 SWR 的 null key 让 isLoading=false，
+  // 页面会误显示「军团还没有成员」。
+  const loading = !networkReady || (people.isLoading && !people.data) || hierarchy.isLoading;
+  const error = legionReadError(people.error, hierarchy.error);
 
   return (
     <div ref={pageRef} className={`min-h-screen bg-[var(--bg)] text-[var(--fg)] ${isFullscreen ? 'h-[100dvh] overflow-auto' : ''}`}>
@@ -695,7 +698,7 @@ export default function LegionPage() {
         </div>
 
         {needsLogin || error?.status === 401 ? (
-          <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
+          <div role="alert" className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团编制。
           </div>
         ) : null}
@@ -734,9 +737,9 @@ export default function LegionPage() {
           </div>
         ) : null}
         {error && error.status !== 401 ? (
-          <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+          <div role="alert" className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
             读取失败：{error.message}
-            <button type="button" onClick={() => people.mutate()} className="ml-3 underline">重试</button>
+            <button type="button" onClick={() => { void people.mutate(); void hierarchy.mutate(); }} className="ml-3 underline">重试</button>
           </div>
         ) : null}
 
@@ -744,6 +747,8 @@ export default function LegionPage() {
           <div className="flex h-[62vh] min-h-[420px] items-center justify-center rounded-xl bg-[var(--bg-secondary)]">
             <div className="h-40 w-40 animate-pulse rounded-full border border-[var(--border)]" />
           </div>
+        ) : networkReady && !networkId ? (
+          <NetworkRequiredNotice />
         ) : !needsLogin && !error && layout.stats.people === 0 && layout.stats.orphans === 0 && layout.stats.groups === 0 ? (
           <EmptyState
             variant="nodes"

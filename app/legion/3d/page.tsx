@@ -21,8 +21,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, nearestDept, deptWorldRadius, type LegionNode } from '../../lib/legion-layout';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
-import { legionFetcher, deptFetcher, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
+import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
+import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
@@ -191,7 +192,7 @@ function makeStars(count: number) {
 
 export default function Legion3DPage() {
   // #1636-P1 —— 当前选中网络拼进 SWR key（切网即换 key，避免串网）。
-  const { networkId } = useNetworkId();
+  const { networkId, ready: networkReady } = useNetworkId();
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
@@ -252,16 +253,16 @@ export default function Legion3DPage() {
   const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
 
-  const people = useSWR<PeopleResponse>(scopedUrl('/api/hub/people?limit=200&offset=0', networkId), legionFetcher, {
+  const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
     onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
-  const hierarchy = useSWR<DepartmentsResponse | null>(scopedUrl('/api/hub/departments', networkId), deptFetcher, {
+  const hierarchy = useSWR<DepartmentsResponse | null>(networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000,
     shouldRetryOnError: false,
   });
-  const status = useSWR<StatusResponse>(scopedUrl('/api/hub/status', networkId), legionFetcher, {
+  const status = useSWR<StatusResponse>(networkReady && networkId ? scopedUrl('/api/hub/status', networkId) : null, legionFetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });
@@ -1567,9 +1568,12 @@ export default function Legion3DPage() {
 
   /* ── 页面 ───────────────────────────────────────────────────────── */
 
-  const loading = people.isLoading || status.isLoading;
-  const peopleError = people.error as (Error & { status?: number }) | undefined;
-  const fatal = needsLogin || peopleError?.status === 401 ? 'login' : peopleError ? 'error' : null;
+  // 网络未确定 ⇒ 也算 loading（null key 时 SWR 的 isLoading 是 false，会把等待误判成「空」）
+  const loading = !networkReady || people.isLoading || hierarchy.isLoading || status.isLoading;
+  const readError = legionReadError(people.error, hierarchy.error);
+  const fatal = needsLogin || readError?.status === 401 ? 'login'
+    : networkReady && !networkId ? 'no-network'
+    : readError ? 'error' : null;
   const isEmpty = !loading && !fatal && people.data != null && layout.nodes.length <= 1;
 
   const path = useMemo(() => {
@@ -2032,17 +2036,22 @@ export default function Legion3DPage() {
       )}
 
       {/* 三态：只在真·空/真·错时覆盖画布，不用空态掩盖故障 */}
+      {fatal === 'no-network' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6">
+          <NetworkRequiredNotice className="max-w-md" />
+        </div>
+      )}
       {fatal === 'login' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6 text-center">
+        <div role="alert" className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6 text-center">
           <p className="text-sm text-[var(--warning)]">
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团。
           </p>
         </div>
       )}
       {fatal === 'error' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6">
+        <div role="alert" className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6">
           <div className="max-w-sm text-center">
-            <p className="text-sm text-[var(--danger)]">读取军团编制失败：{peopleError?.message ?? '未知错误'}</p>
+            <p className="text-sm text-[var(--danger)]">读取军团编制失败：{readError?.message ?? '未知错误'}</p>
             <button
               type="button"
               onClick={() => { void people.mutate(); void hierarchy.mutate(); void status.mutate(); }}
