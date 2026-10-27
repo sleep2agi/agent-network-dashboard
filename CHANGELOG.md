@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.73 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 聊天面板 / 令牌 / 用户资料
+
+- `TaskChatPanel`、`ProviderFormModal`、`UserBar`、`/settings/tokens` 的写死颜色 → token。
+  聊天面板原先用 cyan 作强调色，现与全站同一套 `--accent`（深色主题紫、浅色主题青）。
+- 实心 accent 按钮统一 `--accent-fg`，hover 用透明度（原来 hover 写成同一个 accent，等于没有反馈）。
+- 硬编码颜色类 **170 → 137**（累计 349 → 137，−61%）。
+
 ## 0.6.3-preview.72 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

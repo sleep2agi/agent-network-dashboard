@@ -66,7 +66,7 @@ function detectPreset(baseUrl?: string): string {
 type Phase = 'form' | 'saving' | 'done' | 'unconfirmed' | 'error';
 
 const inputCls =
-  'w-full rounded-md border border-[#26262b] bg-[#0e0e10] px-3 py-2 text-sm text-gray-200 focus:border-cyan-600 focus:outline-none';
+  'w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-cyan-600 focus:outline-none';
 
 function parseModels(text: string): string[] {
   return text.split(',').map(m => m.trim()).filter(Boolean);
@@ -182,11 +182,11 @@ export function ProviderFormModal({
       <div
         role="dialog"
         aria-label={editing ? '编辑供应商' : '新增供应商'}
-        className="fixed left-1/2 top-1/2 z-50 max-h-[92vh] w-[min(94vw,480px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-[#26262b] bg-[#161618] shadow-2xl"
+        className="fixed left-1/2 top-1/2 z-50 max-h-[92vh] w-[min(94vw,480px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] shadow-2xl"
       >
-        <div className="sticky top-0 flex items-center justify-between border-b border-[#26262b] bg-[#161618] px-4 py-3">
-          <div className="text-sm font-semibold text-white">{editing ? '编辑供应商' : '新增供应商'}</div>
-          <button onClick={onClose} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
+        <div className="sticky top-0 flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-3">
+          <div className="text-sm font-semibold text-[var(--fg)]">{editing ? '编辑供应商' : '新增供应商'}</div>
+          <button onClick={onClose} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
@@ -195,7 +195,7 @@ export function ProviderFormModal({
 
         <div className="space-y-3 px-4 py-4">
           {phase === 'unconfirmed' || phase === 'error' ? (
-            <div className={`rounded-md border px-3 py-2 text-xs ${phase === 'unconfirmed' ? 'border-amber-500/30 bg-amber-500/5 text-amber-300' : 'border-red-500/30 bg-red-500/5 text-red-300'}`}>
+            <div className={`rounded-md border px-3 py-2 text-xs ${phase === 'unconfirmed' ? 'border-amber-500/30 bg-amber-500/5 text-[var(--warning)]' : 'border-red-500/30 bg-[var(--danger)]/5 text-red-300'}`}>
               {msg}
             </div>
           ) : null}
@@ -203,23 +203,23 @@ export function ProviderFormModal({
           {/* #393 preset provider picker (hidden while editing — base_url/vendor are immutable) */}
           {!editing && (
             <label className="block space-y-1">
-              <span className="text-xs text-gray-400">供应商 <span className="text-red-400/70">*</span></span>
+              <span className="text-xs text-[var(--fg-muted)]">供应商 <span className="text-[var(--danger)]/70">*</span></span>
               <select value={presetId} onChange={e => selectPreset(e.target.value)} className={inputCls}>
                 {PRESETS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
               </select>
-              {!isCustom && <span className="text-[11px] text-gray-600">已选官方供应商：Base URL 自动填好，勾选模型 + 填 API Key 即可。</span>}
+              {!isCustom && <span className="text-[11px] text-[var(--fg-dim)]">已选官方供应商：Base URL 自动填好，勾选模型 + 填 API Key 即可。</span>}
             </label>
           )}
 
           <label className="block space-y-1">
-            <span className="text-xs text-gray-400">名称 <span className="text-red-400/70">*</span></span>
+            <span className="text-xs text-[var(--fg-muted)]">名称 <span className="text-[var(--danger)]/70">*</span></span>
             <input autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="例如 DeepSeek-V4-Pro" className={inputCls} />
           </label>
 
           {/* 类型 only surfaces in custom / edit — presets imply anthropic. */}
           {(isCustom || editing) && (
             <label className="block space-y-1">
-              <span className="text-xs text-gray-400">类型{editing ? '（不可修改）' : ''}</span>
+              <span className="text-xs text-[var(--fg-muted)]">类型{editing ? '（不可修改）' : ''}</span>
               <select value={type} onChange={e => setType(e.target.value)} disabled={editing} className={`${inputCls} ${editing ? 'opacity-60 cursor-not-allowed' : ''}`}>
                 {TYPES.map(t => <option key={t.id} value={t.id} disabled={t.disabled}>{t.label}</option>)}
               </select>
@@ -227,7 +227,7 @@ export function ProviderFormModal({
           )}
 
           <label className="block space-y-1">
-            <span className="text-xs text-gray-400">Base URL <span className="text-red-400/70">*</span>{!isCustom && !editing && <span className="text-gray-600">（已自动填充）</span>}</span>
+            <span className="text-xs text-[var(--fg-muted)]">Base URL <span className="text-[var(--danger)]/70">*</span>{!isCustom && !editing && <span className="text-[var(--fg-dim)]">（已自动填充）</span>}</span>
             <input
               value={baseUrl}
               onChange={e => setBaseUrl(e.target.value)}
@@ -235,13 +235,13 @@ export function ProviderFormModal({
               disabled={!isCustom && !editing}
               className={`${inputCls} ${(!isCustom && !editing) ? 'opacity-60 cursor-not-allowed' : ''}`}
             />
-            {isCustom && !editing && <span className="text-[11px] text-gray-600">Anthropic 兼容端点：Claude <span className="font-mono">api.anthropic.com</span> · DeepSeek <span className="font-mono">api.deepseek.com/anthropic</span> · MiniMax <span className="font-mono">api.minimax.chat/anthropic</span>。</span>}
+            {isCustom && !editing && <span className="text-[11px] text-[var(--fg-dim)]">Anthropic 兼容端点：Claude <span className="font-mono">api.anthropic.com</span> · DeepSeek <span className="font-mono">api.deepseek.com/anthropic</span> · MiniMax <span className="font-mono">api.minimax.chat/anthropic</span>。</span>}
           </label>
 
           {/* Models: preset → checkbox list + extras; custom → comma text. */}
           {!isCustom && !editing ? (
             <div className="block space-y-1">
-              <span className="text-xs text-gray-400">模型 <span className="text-red-400/70">*</span><span className="text-gray-600">（勾选，可多选）</span></span>
+              <span className="text-xs text-[var(--fg-muted)]">模型 <span className="text-[var(--danger)]/70">*</span><span className="text-[var(--fg-dim)]">（勾选，可多选）</span></span>
               <div className="flex flex-wrap gap-2">
                 {preset.models.map(m => {
                   const on = checkedModels.includes(m);
@@ -250,7 +250,7 @@ export function ProviderFormModal({
                       type="button"
                       key={m}
                       onClick={() => toggleModel(m)}
-                      className={`rounded-md border px-2.5 py-1 text-xs font-mono transition-colors ${on ? 'border-cyan-600 bg-cyan-600/15 text-cyan-300' : 'border-[#26262b] bg-[#0e0e10] text-gray-400 hover:border-gray-600'}`}
+                      className={`rounded-md border px-2.5 py-1 text-xs font-mono transition-colors ${on ? 'border-cyan-600 bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:border-gray-600'}`}
                     >
                       {on ? '✓ ' : ''}{m}
                     </button>
@@ -261,13 +261,13 @@ export function ProviderFormModal({
             </div>
           ) : (
             <label className="block space-y-1">
-              <span className="text-xs text-gray-400">模型（逗号分隔）{editing ? '' : <span className="text-red-400/70"> *</span>}</span>
+              <span className="text-xs text-[var(--fg-muted)]">模型（逗号分隔）{editing ? '' : <span className="text-[var(--danger)]/70"> *</span>}</span>
               <input value={modelsText} onChange={e => setModelsText(e.target.value)} placeholder="claude-sonnet-4-6, deepseek-chat" className={inputCls} />
             </label>
           )}
 
           <label className="block space-y-1">
-            <span className="text-xs text-gray-400">API Key {editing ? <span className="text-gray-600">（不可在此修改）</span> : <span className="text-red-400/70">*</span>}</span>
+            <span className="text-xs text-[var(--fg-muted)]">API Key {editing ? <span className="text-[var(--fg-dim)]">（不可在此修改）</span> : <span className="text-[var(--danger)]/70">*</span>}</span>
             <input
               type="password"
               value={apiKey}
@@ -277,22 +277,22 @@ export function ProviderFormModal({
               autoComplete="off"
               disabled={editing}
             />
-            <span className="text-[11px] text-gray-600">{editing ? '密钥不可在此改；如需轮换 key 走单独的密钥库流程。' : '写入即存入密钥库，UI 不回显 key 值。'}</span>
+            <span className="text-[11px] text-[var(--fg-dim)]">{editing ? '密钥不可在此改；如需轮换 key 走单独的密钥库流程。' : '写入即存入密钥库，UI 不回显 key 值。'}</span>
           </label>
 
           <label className="flex items-center gap-2 pt-1">
             <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="accent-cyan-500" />
-            <span className="text-xs text-gray-300">启用</span>
+            <span className="text-xs text-[var(--fg)]">启用</span>
           </label>
         </div>
 
-        <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-[#26262b] bg-[#161618] px-4 py-3">
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200">取消</button>
+        <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-3">
+          <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-[var(--fg-muted)] hover:text-[var(--fg)]">取消</button>
           <button
             type="button"
             disabled={!canSave}
             onClick={handleSave}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium ${canSave ? 'bg-cyan-600 text-white hover:bg-cyan-500' : 'bg-[#1c1c1f] text-gray-600 cursor-not-allowed'}`}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium ${canSave ? 'bg-[var(--accent)] text-[var(--fg)] hover:bg-[var(--accent)]' : 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed'}`}
           >
             {phase === 'saving' ? '保存中…' : phase === 'done' ? '✓ 已保存' : editing ? '保存' : '新增'}
           </button>
