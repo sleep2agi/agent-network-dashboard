@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.86 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团：默认视图去掉标签堆叠
+
+- 部门名默认只画**扇区最宽的那一个**（生产里是 TMWork）；其余部门名在悬停、选中、
+  放大到 1.25× 以上，或点图例聚焦时出现。12 个部门的名字同时画，必然糊成一团。
+- 内层部门环外移（0.26 → 0.34），深一层部门节点缩小（0.05 → 0.036 世界半径）：
+  6 个一级部门不再互相叠住。
+
 ## 0.6.3-preview.85 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

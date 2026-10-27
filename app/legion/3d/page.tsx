@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { buildLegionLayout, nearestDept, type LegionNode } from '../../lib/legion-layout';
+import { buildLegionLayout, nearestDept, deptWorldRadius, type LegionNode } from '../../lib/legion-layout';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
@@ -861,7 +861,8 @@ export default function Legion3DPage() {
         // 人多的时候成员环会连成一条「白香肠」：100 个人挤在一圈上，半径再大
         // 就互相吃掉轮廓。>60 人时把成员点收小一档，让环重新变成一颗颗。
         const crowd = node.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
-        const r = Math.max(1.4, WORLD_R[node.kind] * p.scale * crowd);
+        const worldR = node.kind === 'group' ? deptWorldRadius(node.depth ?? 1) : WORLD_R[node.kind];
+        const r = Math.max(1.4, worldR * p.scale * crowd);
         const depthT = Math.min(1, Math.max(0, (p.depth - near) / (far - near)));
         const st = node.kind === 'agent' ? (statusByAlias.get(node.label) ?? 'offline') : null;
         const statusMiss = statusOnly !== null && node.kind === 'agent' && st !== statusOnly;
@@ -943,7 +944,7 @@ export default function Legion3DPage() {
           // 部门标签只给「扇区够宽」的部门：小部门在环上只有很窄一段，名字
           // 一定会压到邻居身上（生产截图里 6 个部门名叠成一团）。窄扇区在
           // 悬停/选中/放大时才出名字。
-          (node.kind === 'group' && ((node.span ?? 0) >= 0.28 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55)) ||
+          (node.kind === 'group' && ((node.span ?? 0) >= 1.0 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55)) ||
           (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||

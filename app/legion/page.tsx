@@ -870,7 +870,8 @@ export default function LegionPage() {
                     // 人多时把成员点收小：100 个 16px 圆挤在同一圈会连成一条白带，
                     // 看不出「一个个的人」；和 3D 的 crowd 缩放同一个思路。
                     const crowd = node.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.72 : 1;
-                    const r = (node.kind === 'core' ? 48 : node.kind === 'group' ? 26 : node.kind === 'person' ? 16 : 7) * nodeScale * crowd;
+                    const deptR = node.kind === 'group' ? ((node.depth ?? 1) <= 1 ? 24 : 16) : 0;
+                    const r = (node.kind === 'core' ? 48 : node.kind === 'group' ? deptR : node.kind === 'person' ? 16 : 7) * nodeScale * crowd;
                     const labelScale = Math.max(nodeScale, 0.85);
                     return (
                       <g
@@ -921,9 +922,11 @@ export default function LegionPage() {
                               strokeWidth={isSelected ? 2 : 1}
                               strokeDasharray={node.collapsed ? '3 3' : undefined}
                             />
-                            <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)]" style={{ fontSize: 10 * labelScale }}>
-                              {node.label.slice(0, 4)}
-                            </text>
+                            {((node.span ?? 0) >= 1.0 || isSelected || hovered === node.id || view.k >= 1.25) && (
+                              <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)]" style={{ fontSize: 10 * labelScale }}>
+                                {node.label.slice(0, 4)}
+                              </text>
+                            )}
                             {/* 部门不再画「N 人 · M Agent」：多层部门时这行字会压进圆心
                                 （depth1 半径只有 0.30），且右侧面板本来就写着。*/}
                             {/* 折叠角标：虚线圆 + 「+N」把藏起来的人数说清楚，

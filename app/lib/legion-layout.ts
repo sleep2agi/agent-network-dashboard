@@ -126,7 +126,7 @@ export const RING_RADIUS = { core: 0, group: 0.5, person: 0.76, agent: 1 } as co
  * 0.30→0.50 在 375px 屏上只留 29px 环差，而部门圆直径 44px，父子部门
  * 会叠在一起；拉开到 0.28 环差后窄屏才放得下（节点半径同时按屏幕缩放）。
  */
-const DEPT_BAND = { inner: 0.26, outer: RING_RADIUS.group + 0.04 } as const;
+const DEPT_BAND = { inner: 0.34, outer: RING_RADIUS.group + 0.04 } as const;
 
 /** Agent 扇形：相邻 Agent 的角度间隔与最大半宽。 */
 const AGENT_STEP = 0.075;
@@ -288,6 +288,11 @@ function buildTree(input: LegionInput): { roots: DeptNode[]; depth: number } {
 }
 
 /** 深度 → 半径。一层时保持 v2 的 0.5，多层时在最内 0.30 与 0.50 之间插值。 */
+/** 部门节点在世界坐标里的半径：层级越深越小（内层环会挤，必须收）。 */
+export function deptWorldRadius(depth: number): number {
+  return depth <= 1 ? 0.05 : 0.036;
+}
+
 function deptRadius(depth: number, maxDepth: number): number {
   if (maxDepth <= 1) return RING_RADIUS.group;
   const t = (depth - 1) / (maxDepth - 1);
