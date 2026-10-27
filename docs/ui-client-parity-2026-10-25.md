@@ -1003,7 +1003,7 @@ skip link 上线后复走一遍，全程只用键盘：
 
 ### 任务 / 消息 / 向导 token 化（2026-10-27）
 
-- 四个文件 55 处写死颜色 → token；color-ratchet **262 → 201**（累计 −42%）。
+- 四个文件 55 处写死颜色 → token；color-ratchet **262 → 207**（累计 349 → 207，−41%）。
 - 主按钮统一 `bg-[var(--accent)] text-[var(--accent-fg)]`：之前 `text-white` 被机械替换
   成 `--fg`，浅色主题下会变成深字压深底。
 
