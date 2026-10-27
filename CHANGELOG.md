@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.64 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 2D
+
+- 新增全屏：把整页（含头部按钮）铺满视口，2D 环图跟着放大，会议室投屏用；再点退出。
+- 坑：全屏只包住画布时，头部按钮不在全屏元素里 → 进去就出不来；改成全屏页面根。
+
 ## 0.6.3-preview.63 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

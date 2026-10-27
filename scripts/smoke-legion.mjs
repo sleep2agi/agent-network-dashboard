@@ -358,6 +358,20 @@ w2d >= 1000 && h2d >= 600 && b2d.length > 20000
   ? pass('2D 导出 2x PNG', { w: w2d, h: h2d, bytes: b2d.length })
   : fail('2D 导出 2x PNG', { w: w2d, h: h2d, bytes: b2d.length });
 
+// 2D 全屏（和 3D 同口径）：进入后页面根全屏，头部按钮仍可点退出
+await page.getByTestId('legion-fullscreen').click();
+await page.waitForTimeout(700);
+const fs2dOn = await page.evaluate(() => ({
+  on: !!document.fullscreenElement,
+  label: document.querySelector('[data-testid="legion-fullscreen"]')?.textContent ?? '',
+}));
+await page.getByTestId('legion-fullscreen').click();
+await page.waitForTimeout(700);
+const fs2dOff = await page.evaluate(() => !!document.fullscreenElement);
+fs2dOn.on && fs2dOn.label.includes('退出') && !fs2dOff
+  ? pass('2D 全屏进入/退出', fs2dOn)
+  : fail('2D 全屏进入/退出', { fs2dOn, fs2dOff });
+
 // 375 窄屏：/org 的徽标与折叠按钮不把页面撑宽
 await page.setViewportSize({ width: 375, height: 812 });
 await page.goto(`${BASE}/org`, { waitUntil: 'networkidle' });

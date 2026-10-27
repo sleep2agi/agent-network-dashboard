@@ -78,6 +78,10 @@ export default function LegionPage() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
+  // 全屏演示（和 3D 页同口径）：把 2D 图铺满视口，会议室/PPT 用。
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const pageRef = useRef<HTMLDivElement | null>(null);
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
   const [hovered, setHovered] = useState<string | null>(null);
   const [focusGroup, setFocusGroup] = useState<string | null>(null);
@@ -328,6 +332,30 @@ export default function LegionPage() {
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
   }, [selected, layout.nodes]);
 
+  // 合并 callback ref 必须是稳定引用：每次渲染新建函数会让 React 反复
+  // detach/attach，measure → setSize → 重渲染 → 死循环（实测 Maximum update depth）。
+  const stageCallbackRef = useCallback((el: HTMLDivElement | null) => {
+    ref(el);
+    stageRef.current = el;
+  }, [ref]);
+
+  const toggleFullscreen = useCallback(async () => {
+    const el = pageRef.current;
+    if (!el) return;
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await el.requestFullscreen();
+    } catch {
+      // 被浏览器/iframe 拒绝时保持原样
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {
     setView(v => {
@@ -493,7 +521,7 @@ export default function LegionPage() {
   const error = people.error as (Error & { status?: number }) | undefined;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
+    <div ref={pageRef} className={`min-h-screen bg-[var(--bg)] text-[var(--fg)] ${isFullscreen ? 'h-[100dvh] overflow-auto' : ''}`}>
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -552,6 +580,16 @@ export default function LegionPage() {
                 全部展开（{collapsed.size}）
               </button>
             )}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              aria-pressed={isFullscreen}
+              aria-label={isFullscreen ? '退出全屏' : '全屏查看'}
+              data-testid="legion-fullscreen"
+              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${isFullscreen ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+            >
+              {isFullscreen ? '退出全屏' : '全屏'}
+            </button>
             <button
               type="button"
               onClick={exportPng}
@@ -648,8 +686,8 @@ export default function LegionPage() {
         ) : needsLogin || error ? null : (
           <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
             <div
-              ref={ref}
-              className="relative h-[62vh] min-h-[420px] overflow-hidden rounded-xl bg-[var(--bg-secondary)]"
+              ref={stageCallbackRef}
+              className={`relative overflow-hidden rounded-xl bg-[var(--bg-secondary)] ${isFullscreen ? 'h-[calc(100dvh-10rem)] min-h-[420px]' : 'h-[62vh] min-h-[420px]'}`}
               onWheel={onWheel}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}

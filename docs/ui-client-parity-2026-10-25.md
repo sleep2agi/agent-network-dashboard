@@ -974,3 +974,10 @@ skip link 上线后复走一遍，全程只用键盘：
   净屏时仍显示 → 改成条件里直接给 `hidden`，不再依赖顺序。
 - 冒烟新增「3D 净屏隐藏界面 / Esc 恢复」，当前 **24/24**。
 
+### 2D 全屏（2026-10-27）
+
+- 全屏对象是**页面根**而不是画布：否则头部「退出全屏」按钮不在全屏元素里，进去就出不来。
+- 合并 callback ref 必须是稳定引用（`useCallback`）：每次渲染新建函数会让 React
+  反复 detach/attach → measure → setSize → 重渲染，直接 `Maximum update depth exceeded`。
+- 冒烟新增「2D 全屏进入/退出」，当前 **25/25**。
+
