@@ -536,11 +536,20 @@ export default function Legion3DPage() {
       const footer = footerRef.current;
       const bottom = footer && footer.offsetHeight > 0 ? rect(footer) : null;
       labelUiRectsRef.current = cleanView ? [] : [top, ...(bottom ? [bottom] : [])];
-      fitBoundsRef.current = {
+      const previous = fitBoundsRef.current;
+      const bounds = {
         x1: 24, x2: stage.width - 24,
         y1: cleanView ? 24 : top.y2 + 16,
         y2: cleanView ? stage.height - 24 : (bottom?.y1 ?? stage.height - 24) - 24,
       };
+      fitBoundsRef.current = bounds;
+      // Restoring controls can shrink the safe area without resizing the canvas.
+      // Expanding it alone must not move a manually positioned camera.
+      if (previous && !userAdjusted.current && (
+        bounds.x1 > previous.x1 + 1 || bounds.y1 > previous.y1 + 1
+        || bounds.x2 < previous.x2 - 1 || bounds.y2 < previous.y2 - 1
+        || previous.x2 <= previous.x1 || previous.y2 <= previous.y1
+      )) fitPending.current = true;
     };
     // Responsive controls are measured on resize, never during Canvas frames.
     const observer = new ResizeObserver(measure);
@@ -691,6 +700,22 @@ export default function Legion3DPage() {
       const sizeDrift = !lastFitSize.current
         || Math.abs(size.width - lastFitSize.current.w) > 8
         || Math.abs(size.height - lastFitSize.current.h) > 8;
+      const fitBounds = fitBoundsRef.current ?? { x1: 24, y1: 24, x2: size.width - 24, y2: size.height - 24 };
+      const framingBodies = () => {
+        const bodies = nodes.map(({ item, projected: p }) => {
+          const crowd = item.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
+          const worldR = item.kind === 'group' ? deptWorldRadius(item.depth ?? 1) : WORLD_R[item.kind];
+          return { x: p.x, y: p.y, radius: Math.max(1.4, worldR * p.scale * crowd) + 4 };
+        });
+        // Sparse nodes cover only one side of an orbit; include the visible
+        // tracks and packets both in initial fitting and in recovery checks.
+        for (const ring of ringRadii) {
+          for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, cam, size, 64)) {
+            bodies.push({ x: p.x, y: p.y, radius: 4 });
+          }
+        }
+        return bodies;
+      };
       // 入场动画期间不要重新取景：动画会让 view.zoom 每一帧都变，
       // 再按当前 zoom 算包围盒会滚雪球（实测直接顶到 MAX_ZOOM）。
       // 画布还没量到真实尺寸时不要取景：首帧 stage 只有几十像素，
@@ -700,14 +725,14 @@ export default function Legion3DPage() {
       // 检查一次内容包围盒，占画面不到 35% 就重新取景。
       if (!userAdjusted.current && !introRef.current && !fitPending.current && frame % 60 === 0 && nodes.length > 3) {
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        for (const n of nodes) {
-          if (n.projected.x < minX) minX = n.projected.x;
-          if (n.projected.x > maxX) maxX = n.projected.x;
-          if (n.projected.y < minY) minY = n.projected.y;
-          if (n.projected.y > maxY) maxY = n.projected.y;
+        for (const body of framingBodies()) {
+          minX = Math.min(minX, body.x - body.radius);
+          maxX = Math.max(maxX, body.x + body.radius);
+          minY = Math.min(minY, body.y - body.radius);
+          maxY = Math.max(maxY, body.y + body.radius);
         }
         const spanNow = Math.max(maxX - minX, maxY - minY, 1);
-        if (spanNow < Math.min(size.width, size.height) * 0.35) fitPending.current = true;
+        if (spanNow < Math.min(fitBounds.x2 - fitBounds.x1, fitBounds.y2 - fitBounds.y1) * 0.35) fitPending.current = true;
       }
 
       const sizeReady = size.width > 240 && size.height > 300;
@@ -715,42 +740,31 @@ export default function Legion3DPage() {
       // 等数据到位再跳回 151%（实测）。等真有数据再取景。
       const dataReady = layout.stats.people + layout.stats.agents > 0;
       if (sizeReady && dataReady && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
-        const bodies = nodes.map(({ item, projected: p }) => {
-          const crowd = item.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
-          const worldR = item.kind === 'group' ? deptWorldRadius(item.depth ?? 1) : WORLD_R[item.kind];
-          return { x: p.x, y: p.y, radius: Math.max(1.4, worldR * p.scale * crowd) + 4 };
-        });
-        // Sparse nodes cover only one side of an orbit; keep the visible tracks
-        // and moving packets inside the frame as well, especially on mobile.
-        for (const ring of ringRadii) {
-          for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, cam, size, 64)) {
-            bodies.push({ x: p.x, y: p.y, radius: 4 });
+        const fit = fitProjectedBodies(framingBodies(), view, size, fitBounds, { min: MIN_ZOOM, max: MAX_ZOOM });
+        // If controls exhaust the usable area, keep drawing the current scene.
+        // A later valid bounds measurement will request another fit.
+        if (fit) {
+          const want = fit.zoom;
+          Object.assign(view, fit);
+          setZoomPct(Math.round(want * 100));
+          // 首次进入：先落在 62% 处，再缓动到目标（镜头推近的感觉）。
+          if (!introDone.current) {
+            introDone.current = true;
+            const reduce = typeof window !== 'undefined'
+              && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            let seen = false;
+            try { seen = sessionStorage.getItem('legion3d-intro') === '1'; } catch {}
+            if (!reduce && !seen) {
+              view.zoom = want * 0.62;
+              // 动画期间也别让「尺寸漂移」触发重算。
+              userAdjusted.current = true;
+              introRef.current = { t0: now, from: want * 0.62, to: want };
+              try { sessionStorage.setItem('legion3d-intro', '1'); } catch {}
+            }
           }
-        }
-        const fit = fitProjectedBodies(bodies, view, size,
-        fitBoundsRef.current ?? { x1: 24, y1: 24, x2: size.width - 24, y2: size.height - 24 },
-        { min: MIN_ZOOM, max: MAX_ZOOM });
-        if (!fit) { raf = requestAnimationFrame(draw); return; }
-        const want = fit.zoom;
-        Object.assign(view, fit);
-        setZoomPct(Math.round(want * 100));
-        // 首次进入：先落在 62% 处，再缓动到目标（镜头推近的感觉）。
-        if (!introDone.current) {
-          introDone.current = true;
-          const reduce = typeof window !== 'undefined'
-            && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-          let seen = false;
-          try { seen = sessionStorage.getItem('legion3d-intro') === '1'; } catch {}
-          if (!reduce && !seen) {
-            view.zoom = want * 0.62;
-            // 动画期间也别让「尺寸漂移」触发重算。
-            userAdjusted.current = true;
-            introRef.current = { t0: now, from: want * 0.62, to: want };
-            try { sessionStorage.setItem('legion3d-intro', '1'); } catch {}
-          }
+          userAdjusted.current = false;
         }
         fitPending.current = false;
-        userAdjusted.current = false;
         lastFitSize.current = { w: size.width, h: size.height };
       }
       const byId = new Map(nodes.map(n => [n.item.id, n]));
@@ -998,7 +1012,7 @@ export default function Legion3DPage() {
           : node.kind === 'agent'
             ? getAvatarUrl(node.label)
             : '';
-        const face = avatarUrl && radiusPx >= (node.kind === 'agent' ? 4.5 : 5.5) ? avatarImage(avatarUrl) : null;
+        const face = avatarUrl && radiusPx >= 4.5 ? avatarImage(avatarUrl) : null;
         if (node.kind === 'core') {
           drawLegionCore(ctx, p.x, p.y, radiusPx, tk, corePhaseRef.current, !interacting);
         } else if (face) {
@@ -1365,6 +1379,7 @@ export default function Legion3DPage() {
         const ratio = span / pinchRef.current.span;
         viewRef.current.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, pinchRef.current.dist * ratio));
         userAdjusted.current = true;
+        fitPending.current = false;
         setZoomPct(Math.round(viewRef.current.zoom * 100));
       }
       return;
@@ -1387,6 +1402,10 @@ export default function Legion3DPage() {
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
     drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
+    if (dx !== 0 || dy !== 0) {
+      userAdjusted.current = true;
+      fitPending.current = false;
+    }
     interactingUntil.current = performance.now() + 180;
     viewRef.current.yaw = drag.yaw + dx * 0.008;
     viewRef.current.pitch = Math.min(1.45, Math.max(0.12, drag.pitch + dy * 0.005));
@@ -1443,6 +1462,7 @@ export default function Legion3DPage() {
     v.panY = my - k * (my - v.panY);
     v.zoom = next;
     userAdjusted.current = true;
+    fitPending.current = false;
     setZoomPct(Math.round(next * 100));
   };
 
@@ -1468,11 +1488,16 @@ export default function Legion3DPage() {
       searchRef.current?.focus();
       return;
     }
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-'].includes(e.key)) {
+      introRef.current = null;
+      userAdjusted.current = true;
+      fitPending.current = false;
+    }
     switch (e.key) {
-      case 'ArrowLeft': e.preventDefault(); v.yaw -= 0.12; break;
-      case 'ArrowRight': e.preventDefault(); v.yaw += 0.12; break;
-      case 'ArrowUp': e.preventDefault(); v.pitch = Math.min(1.45, v.pitch + 0.08); break;
-      case 'ArrowDown': e.preventDefault(); v.pitch = Math.max(0.12, v.pitch - 0.08); break;
+      case 'ArrowLeft': e.preventDefault(); v.yaw -= 0.12; userAdjusted.current = true; break;
+      case 'ArrowRight': e.preventDefault(); v.yaw += 0.12; userAdjusted.current = true; break;
+      case 'ArrowUp': e.preventDefault(); v.pitch = Math.min(1.45, v.pitch + 0.08); userAdjusted.current = true; break;
+      case 'ArrowDown': e.preventDefault(); v.pitch = Math.max(0.12, v.pitch - 0.08); userAdjusted.current = true; break;
       case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); break;
       case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); break;
       case 'Enter': {
