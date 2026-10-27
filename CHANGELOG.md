@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.99 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 · 平台视角：空部门也上台
+
+- 没有成员的部门以 55% 透明度的空展台呈现（标注 0 人），页头不再写「另有 N 个部门
+  暂无成员」——这是组织架构图，空编制也要看得见。
+
 ## 0.6.3-preview.98 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

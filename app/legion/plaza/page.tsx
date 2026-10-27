@@ -84,10 +84,18 @@ export default function LegionPlazaPage() {
       for (const a of p.agents) plat.bubbles.push({ key: `a:${a.node_id}`, alias: a.alias, label: a.alias, kind: 'agent' });
     }
 
+    // 没有成员的部门也上台：这是「组织架构图」，空部门同样属于编制
+    // （只是台面空着、标注 0 人），否则 13 个部门只看到 2 块展台。
+    for (const d of depts) {
+      if (!byDept.has(d.id)) {
+        byDept.set(d.id, { id: d.id, name: d.name, hue: HUES[byDept.size % HUES.length], people: [], bubbles: [] });
+      }
+    }
+
     return [...byDept.values()].sort((a, b) => b.people.length - a.people.length);
   }, [peopleData, hierarchy]);
 
-  const emptyDeptCount = Math.max(0, (hierarchy?.departments?.length ?? 0) - platforms.length);
+  const emptyDeptCount = platforms.filter(p => p.people.length === 0).length;
 
   const [hoverDept, setHoverDept] = useState<string | null>(null);
 
@@ -209,6 +217,7 @@ export default function LegionPlazaPage() {
                   <g
                     key={platform.id}
                     transform={`translate(${x} ${y}) scale(${scale})`}
+                    opacity={platform.people.length === 0 ? 0.55 : 1}
                     onMouseEnter={() => setHoverDept(platform.id)}
                     onMouseLeave={() => setHoverDept(h => (h === platform.id ? null : h))}
                   >
