@@ -92,6 +92,8 @@ const publicRootScripts = new Set([
   // 不读任何凭据、不发网络请求、不写仓外路径。
   'scripts/run-tests.mjs',
   'scripts/stamp-build-commit.mjs',
+  // Local-only synthetic rendering checks; password is supplied by the caller.
+  'scripts/smoke-legion-labels.mjs',
 ]);
 const unexpectedRootScripts = trackedPaths.filter((path) => path.startsWith('scripts/') && !publicRootScripts.has(path));
 check(unexpectedRootScripts.length === 0, `unreviewed root scripts: ${unexpectedRootScripts.join(', ')}`);
