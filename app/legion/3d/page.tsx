@@ -1096,7 +1096,7 @@ export default function Legion3DPage() {
         // 远看全是「白饼」（admin 截图里最扎眼的就是这个）。
         if (!dim) {
           const textColor = dark ? tk.bg : tk.fg;
-          if (node.kind === 'group') {
+          if (node.kind === 'group' && radiusPx >= 11) {
             const short = Array.from(node.label.replace(/[*+\s]/g, '')).slice(0, rx >= 28 ? 3 : 2).join('');
             if (short) {
               const fs = Math.min(13, Math.max(11, ry * 1.25));

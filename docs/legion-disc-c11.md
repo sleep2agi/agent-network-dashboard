@@ -20,7 +20,9 @@ bump. The parent dependency chain and final brand/merge decisions require owner 
   fixed-pixel outline clearance and full orbits. Rendering and picking receive
   the final fitted projection in the same frame. Manual rotation still suppresses
   automatic recovery until reset.
-- Short names use the foreground token on the translucent disc in both themes.
+- Short names use the foreground token on the translucent disc in both themes,
+  preserving the original projected-radius ≥11px gate to avoid overprinting
+  narrow/deep neighbors when their parent is selected.
 
 ## Verification
 
@@ -52,8 +54,9 @@ All browser API calls are fixtures; external-origin requests are blocked.
 Coverage:
 
 - 1440×900 / 390×844, dark/light themes, sparse/empty/deep/dense departments.
-- Painted fixture portraits, short names, full wrapped names, label/body and
-  toolbar/footer clearance, leaders attached to the ellipse edge.
+- Painted fixture portraits, short names (including selected-parent clearance),
+  full wrapped names, label/body and toolbar/footer clearance. The hierarchy
+  fixture requires visible leaders, then checks their ellipse-edge attachments.
 - Wide-edge hover, selection and double click; blank space above the ellipse;
   selected contour axes and all four updated text sizes.
 - Non-origin department movement after dragging, stability across **130 RAFs**,

@@ -146,7 +146,10 @@ async function capture(page, tag, fixture) {
   check(`${tag}:noOverflow`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   if (fixture.people.length && tag.includes('sparse')) check(`${tag}:portrait`, frame.portraits.length > 0);
   const shorts = frame.texts.filter(t => discs.some(d => Math.abs(t.x - d.x) < 1 && Math.abs(t.y - d.y - 0.5) < 1));
-  check(`${tag}:shortNames`, shorts.length === discs.length && shorts.every(t => t.color === colors.fg));
+  // Preserve the pre-disc short-name size gate: small/deep discs use the
+  // collision-routed full label instead of overprinting their close neighbors.
+  const readable = discs.filter(d => d.rx >= 2.1 * 11);
+  check(`${tag}:shortNames`, shorts.length === readable.length && shorts.every(t => t.color === colors.fg));
   // Full labels (12/14px) are tested against actual ellipse and circular bodies,
   // including departments with no full label, rather than against old radii.
   const labels = frame.texts.filter(t => /^(?:400 )?12px|^600 14px/.test(t.font));
@@ -251,6 +254,23 @@ try {
     if (name === 'dense') {
       await page.getByTestId('legion-3d-list-toggle').click();
       check(`${tag}:largeListFont11`, await page.getByText(/^成员超过 60/).evaluate(el => getComputedStyle(el).fontSize === '11px'));
+    }
+    if (name === 'hierarchy') {
+      check(`${tag}:leadersPresent`, frame.leaders.length > 0);
+      await page.getByTestId('legion-3d-list-toggle').click();
+      await page.getByRole('option', { name: '部门 协同中心', exact: true }).click();
+      if (await page.getByTestId('legion-3d-list-toggle').getAttribute('aria-expanded') === 'true') {
+        await page.getByTestId('legion-3d-list-toggle').click();
+      }
+      await page.mouse.move(1, 1);
+      await frames(page, 130);
+      const active = await page.evaluate(() => window.__discFrame);
+      const discs = active.shapes.filter(s => s.method === 'ellipse' && Math.abs(s.width - 1.4) < 0.001);
+      const shorts = active.texts.filter(t => discs.some(d => Math.abs(t.x - d.x) < 1 && Math.abs(t.y - d.y - 0.5) < 1));
+      check(`${tag}:selectedParentShortsClear`, shorts.every((a, i) => shorts.slice(i + 1).every(b =>
+        Math.abs(a.x - b.x) > (a.width + b.width) / 2 || Math.abs(a.y - b.y) > 13)));
+      if (width === 1440) check(`${tag}:selectedParentShowsShortName`, shorts.length > 0);
+      await page.screenshot({ path: path.join(output, `${tag}-parent-selected.png`) });
     }
     await context.close();
   }
