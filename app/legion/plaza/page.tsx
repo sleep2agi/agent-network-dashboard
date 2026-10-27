@@ -132,7 +132,7 @@ export default function LegionPlazaPage() {
               {isLoading
                 ? '正在读取编制…'
                 : `${platforms.length} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`
-                  + (emptyDeptCount > 0 ? ` · 另有 ${emptyDeptCount} 个部门暂无成员` : '')}
+                  + (emptyDeptCount > 0 ? ` · ${emptyDeptCount} 个部门暂无成员（已淡显）` : '')}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
