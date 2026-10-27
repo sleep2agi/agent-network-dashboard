@@ -80,26 +80,22 @@ export async function GET(req: Request) {
           { status: 502 },
         );
       }
-      if (Array.isArray(data.tasks) && data.tasks.length > 0) {
-        return Response.json(data);
-      }
-      // #1636-P1 —— **显式指定了 network_id 时，「空」就是答案**。
-      // 旧实现会撤掉 network_id 再查一次，第二次的命中被打上 `source: 'global'` 返回：
-      // 调用方以为自己看的是 net_A，实际看到的是别的网络的数据。
-      // 作用域不能被「结果为空」这件事放宽；要跨网络看，得由调用方显式切换。
-      if (networkId) {
-        return Response.json(data);
-      }
-      // For targeted queries (chat history by to_name, or a single task_id),
-      // a valid empty v2 result is authoritative — return it immediately
-      // instead of falling through to a global /api/completions scan.
-      // (Vincent tg923: 转圈加载太久)
-      if (filterTo || filterTaskId) {
-        return Response.json(data);
-      }
-      // 广查询（没有 network_id、没有定向过滤）拿到合法空列表：
-      // 这是**正常响应**，与「上游故障」无关 —— 继续走下面的 completions 兜底，
-      // 把历史完成记录补上（旧行为）。2026-10-28 回放：这里曾经错误地落到 502。
+      // #1636-P1 —— **主接口的合法 200（含空数组）就是答案，直接返回**。
+      //
+      // 旧实现在这里分三种情况绕过：
+      //   1. 有 network_id 且为空 ⇒ 撤掉 network_id 再查一次（跨网络串数据）；
+      //   2. 广查询为空 ⇒ 继续去 /api/completions 捞历史，命中就带上
+      //      `source: 'completions'` 返回 —— 主接口说的「这个网络/这批筛选下没有任务」
+      //      被悄悄替换成另一份数据的投影；
+      //   3. 定向查询为空 ⇒ 直接返回（这一条本来就是对的）。
+      //
+      // 共同的问题是：**调用方无法从响应里看出答案来自哪个接口**。
+      // 「没有任务」和「我换了个数据源给你看历史」必须由调用方自己决定，
+      // 不能由代理层替它决定。所以这里统一直接返回。
+      //
+      // 产品口径：任务的「当前列表」= /api/tasks；历史完成记录是**另一个视图**
+      // （要的话应由页面显式发起 /api/completions，而不是被代理层替换）。
+      return Response.json(data);
     } else {
       // 非 2xx，或 2xx 但不是 JSON。
       //   · 404/405/501 = 旧 Hub 没有 /api/tasks ⇒ 允许走 completions 兜底；
