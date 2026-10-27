@@ -23,6 +23,7 @@ import { buildLegionLayout, nearestDept, type LegionNode } from '../../lib/legio
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { groupDiscRadii, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
+import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { EmptyState } from '../../components/EmptyState';
 
 // 神明给的参数（PPT 首页 3D 图，admin 已认可）：俯仰约 25–30°、柔和透视
@@ -220,6 +221,8 @@ export default function Legion3DPage() {
   const pinchRef = useRef<{ span: number; dist: number } | null>(null);
   const screenRef = useRef<Array<SceneNode<LegionNode>>>([]);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const labelUiRectsRef = useRef<LabelRect[]>([]);
   const hoverRef = useRef<string | null>(null);
   const hoverPointRef = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
@@ -461,6 +464,25 @@ export default function Legion3DPage() {
     return () => ro.disconnect();
   }, []);
 
+  useEffect(() => {
+    const header = headerRef.current;
+    const wrap = wrapRef.current;
+    if (!header || !wrap) return;
+    const measure = () => {
+      if (cleanView) { labelUiRectsRef.current = []; return; }
+      const stage = wrap.getBoundingClientRect();
+      const rect = header.getBoundingClientRect();
+      labelUiRectsRef.current = [{ x1: rect.left - stage.left - 4, y1: rect.top - stage.top - 4,
+        x2: rect.right - stage.left + 4, y2: rect.bottom - stage.top + 4 }];
+    };
+    // Measure only when responsive controls resize, never during Canvas frames.
+    const ro = new ResizeObserver(measure);
+    ro.observe(header);
+    ro.observe(wrap);
+    measure();
+    return () => ro.disconnect();
+  }, [cleanView]);
+
   /* ── 渲染循环 ───────────────────────────────────────────────────── */
 
   useEffect(() => {
@@ -489,6 +511,7 @@ export default function Legion3DPage() {
 
     let frame = 0;
     let bgLayer: HTMLCanvasElement | null = null;
+    const labelMetrics = new Map<string, { lines: string[]; width: number; height: number; lineHeight: number }>();
     let bgKey = '';
     const buildBackdrop = () => {
       const cv = document.createElement('canvas');
@@ -817,7 +840,8 @@ export default function Legion3DPage() {
       }
 
       // 节点：远→近（projectScene 已排序），近的盖住远的。
-      const labelQueue: Array<{ node: LegionNode; text: string; px: number; py: number; r: number; alpha: number; dim: boolean; priority: number }> = [];
+      const labelQueue: Array<{ node: LegionNode; text: string; anchor: LabelEllipse; alpha: number; dim: boolean; priority: number }> = [];
+      const labelBodies: LabelEllipse[] = [];
       for (const sn of nodes) {
         const node = sn.item;
         const p = sn.projected;
@@ -836,6 +860,11 @@ export default function Legion3DPage() {
         const radiusPx = r * pulse;
         const disc = node.kind === 'group' ? groupDiscRadii(radiusPx) : null;
         const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
+        // Reserve the core's maximum breathing radius so its label does not
+        // change sides every pulse. Tiny Agent dots do not consume label space.
+        const bodyR = node.kind === 'core' ? r * 1.06 : radiusPx;
+        const anchor = { x: p.x, y: p.y, rx: (disc?.rx ?? bodyR) + 3, ry: (disc?.ry ?? bodyR) + 3 };
+        if (node.kind !== 'agent') labelBodies.push(anchor);
 
         ctx.globalAlpha = alpha;
         // 部门用盘面区分层级；绘制后继续共用悬停、选中与标签逻辑。
@@ -925,9 +954,7 @@ export default function Legion3DPage() {
           labelQueue.push({
             node,
             text: node.kind !== 'group' && node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
-            px: p.x,
-            py: p.y,
-            r: disc ? disc.rx * 0.55 : radiusPx,
+            anchor,
             // 标签的深度淡出比节点保守，并且有下限 0.8：11px 文字掉到 0.45 时
             // 对底色的有效对比度会跌破 4.5:1（实测深底 3.67、浅底 3.14）。
             // 被主动淡出的节点（dim）保持 0.35，那是「这不属于当前筛选」的语义。
@@ -939,51 +966,66 @@ export default function Legion3DPage() {
         ctx.globalAlpha = 1;
       }
 
-      // 标签统一绘制 + 简单避让：核心/部门/悬停优先占位，其余沿径向往外
-      // 试两档，仍冲突就跳过 —— 宁可少一个名字，也不要两行字叠成一团。
+      // 核心/悬停/部门优先。完整部门名换行，并避让中枢、部门盘和成员；
+      // 没有可读位置时保持留白，节点仍可点击查看完整详情。
       {
         labelQueue.sort((a, b) => a.priority - b.priority);
-        const placed: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+        const placed: LabelRect[] = [...labelUiRectsRef.current];
+        const leaders: Array<{ anchor: LabelEllipse; rect: LabelRect; alpha: number }> = [];
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         // 最多画 N 个标签：搜索命中会一次性点亮几百个节点，逐个 measureText +
         // roundRect 会把帧率拖回 30fps。少画几个名字不影响「找到它」。
         const labelBudget = huge ? 16 : heavy ? 40 : Number.POSITIVE_INFINITY;
+        // Failed placements also cost CPU: bound attempts, not only labels drawn.
+        const attemptBudget = labelBudget * 2;
         let drawnLabels = 0;
+        let attemptedLabels = 0;
         for (const item of labelQueue) {
-          if (drawnLabels >= labelBudget) break;
+          if (drawnLabels >= labelBudget || attemptedLabels >= attemptBudget) break;
+          attemptedLabels++;
           const big = item.node.kind === 'core';
           ctx.font = `${big ? 600 : 400} ${big ? 14 : 12}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
-          const w = ctx.measureText(item.text).width;
-          const h = big ? 16 : 13;
-          const dx = item.px - size.width / 2;
-          const dy = item.py - size.height / 2;
-          const len = Math.hypot(dx, dy) || 1;
-          const ux = len > 4 ? dx / len : 0;
-          const uy = len > 4 ? dy / len : 1;
-          let spot: { x: number; y: number } | null = null;
-          for (const extra of [12, 24, 38]) {
-            const off = item.r + extra;
-            const cx = item.px + ux * off;
-            const cy = item.py + uy * off;
-            const rect = { x1: cx - w / 2 - 4, y1: cy - h / 2 - 2, x2: cx + w / 2 + 4, y2: cy + h / 2 + 2 };
-            const hit = placed.some(p => !(rect.x2 < p.x1 || rect.x1 > p.x2 || rect.y2 < p.y1 || rect.y1 > p.y2));
-            if (!hit) { placed.push(rect); spot = { x: cx, y: cy }; break; }
+          const maxTextWidth = Math.min(240, Math.max(120, (size.width - 32) / 2));
+          const metricKey = `${ctx.font}:${maxTextWidth}:${item.text}`;
+          let metric = labelMetrics.get(metricKey);
+          if (!metric) {
+            const lines = item.node.kind === 'group' ? wrapLegionLabel(item.text, maxTextWidth, text => ctx.measureText(text).width) : [item.text];
+            const lineHeight = big ? 16 : 14;
+            metric = { lines, width: Math.max(0, ...lines.map(text => ctx.measureText(text).width)) + 8, height: lines.length * lineHeight + 6, lineHeight };
+            labelMetrics.set(metricKey, metric);
           }
+          const spot = placeLegionLabel({ anchor: item.anchor, width: metric.width, height: metric.height,
+            bounds: { x1: 12, y1: 12, x2: size.width - 12, y2: size.height - 12 }, occupied: placed, bodies: labelBodies });
           if (!spot) continue;
+          placed.push(spot);
           drawnLabels++;
+          if (item.node.kind === 'group') leaders.push({ anchor: item.anchor, rect: spot, alpha: item.alpha });
           // 部门名始终垫底衬，避免完整名称与盘面或连线混在一起。
           if (heavy || item.node.kind === 'group') {
             ctx.globalAlpha = 0.42 * item.alpha;
             ctx.fillStyle = tk.bg;
-            const pad = 3;
             ctx.beginPath();
-            ctx.roundRect(spot.x - w / 2 - pad, spot.y - h / 2, w + pad * 2, h, 4);
+            ctx.roundRect(spot.x1, spot.y1, metric.width, metric.height, 4);
             ctx.fill();
           }
           ctx.globalAlpha = item.alpha;
           ctx.fillStyle = tk.fg;
-          ctx.fillText(item.text, spot.x, spot.y);
+          for (const [index, line] of metric.lines.entries()) {
+            ctx.fillText(line, (spot.x1 + spot.x2) / 2, spot.y1 + 3 + metric.lineHeight * (index + 0.5));
+          }
+        }
+        // All label rectangles are known now, including lower-priority ones.
+        for (const item of leaders) {
+          const leader = legionLabelLeader(item.anchor, item.rect, placed, labelBodies);
+          if (!leader) continue;
+          ctx.globalAlpha = 0.45 * item.alpha;
+          ctx.strokeStyle = tk.dim;
+          ctx.lineWidth = 0.75;
+          ctx.beginPath();
+          ctx.moveTo(leader.from.x, leader.from.y);
+          ctx.lineTo(leader.to.x, leader.to.y);
+          ctx.stroke();
         }
         ctx.globalAlpha = 1;
       }
@@ -1408,7 +1450,7 @@ export default function Legion3DPage() {
 
       {/* 顶部信息区：手机上「标题 → 搜索 → 按钮」竖排，桌面上标题在左、按钮在右。
           之前按钮绝对定位在 top-16，加了搜索框后正好压住输入框。 */}
-      <div className={`pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2 transition-opacity duration-300 sm:inset-x-4 sm:top-4 sm:flex-row sm:items-start sm:justify-between ${cleanView ? 'invisible' : 'visible'}`}>
+      <div ref={headerRef} data-testid="legion-3d-header" className={`pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2 transition-opacity duration-300 sm:inset-x-4 sm:top-4 sm:flex-row sm:items-start sm:justify-between ${cleanView ? 'invisible' : 'visible'}`}>
       <div className="pointer-events-none min-w-0 max-w-[62vw] sm:max-w-sm">
         <div className="flex items-baseline gap-2">
           <h1 className="text-lg font-semibold text-[var(--fg)]">军团 · 3D</h1>
@@ -1693,7 +1735,7 @@ export default function Legion3DPage() {
             <div className="min-w-0">
               <p className="text-[11px] text-[var(--fg-dim)]">{KIND_LABEL[selectedNode.kind]}{path.length > 0 ? ` · ${path.join(' / ')}` : ''}</p>
               <div className="mt-0.5 flex items-start gap-2">
-                <p className="min-w-0 truncate text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
+                <p className="min-w-0 flex-1 [overflow-wrap:anywhere] text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
                 <button
                   type="button"
                   onClick={() => {
