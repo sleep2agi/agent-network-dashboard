@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.88 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D：悬停与命中修复
+
+- **悬停从来没生效过**：`onPointerMove` 一上来要求「指针已在按下登记表里」，导致光标不变、
+  悬停高亮不亮、提示框不出。改为只区分按下/未按下。
+- **大节点点不中**：命中半径固定在 16–18px，核心/部门直径 40–60px，属于「看得见、点不着」。
+  `hitTest()` 新增可选 `radiusOf`，页面按 `世界半径 × 透视缩放 + 6` 判定。
+- 新增悬停提示：鼠标停留显示「名字 · 状态」，不点也能认人。
+
 ## 0.6.3-preview.87 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

@@ -136,12 +136,15 @@ export function hitTest<T>(
   x: number,
   y: number,
   radius: number,
+  // 节点自身的屏幕半径：核心/部门直径 40–60px，只按固定 18px 判会「看得见点不着」。
+  radiusOf?: (node: SceneNode<T>) => number,
 ): SceneNode<T> | null {
   for (let i = nodes.length - 1; i >= 0; i--) {
     const n = nodes[i];
+    const r = radiusOf ? Math.max(radius, radiusOf(n)) : radius;
     const dx = n.projected.x - x;
     const dy = n.projected.y - y;
-    if (dx * dx + dy * dy <= radius * radius) return n;
+    if (dx * dx + dy * dy <= r * r) return n;
   }
   return null;
 }

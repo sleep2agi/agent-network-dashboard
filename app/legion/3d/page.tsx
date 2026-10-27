@@ -237,6 +237,8 @@ export default function Legion3DPage() {
   const screenRef = useRef<Array<SceneNode<LegionNode>>>([]);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const hoverRef = useRef<string | null>(null);
+  // 悬停提示需要指针位置（canvas 坐标），只存在 ref 里，避免每帧 setState。
+  const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
 
   const people = useSWR<PeopleResponse>('/api/hub/people?limit=200&offset=0', legionFetcher, {
@@ -1060,6 +1062,39 @@ export default function Legion3DPage() {
           ctx.fillText(item.text, spot.x, spot.y);
         }
         ctx.globalAlpha = 1;
+
+        // 悬停提示：不点也能知道「这是谁、什么状态」。
+        // 选中时不画（右侧详情卡已经有完整信息）。
+        const hv = hoverRef.current;
+        const hp = hoverPos.current;
+        if (hv && hp && !selectedRef.current && !interacting) {
+          const hitNode = nodes.find(n => n.item.id === hv);
+          if (hitNode) {
+            const nd = hitNode.item;
+            const status = nd.kind === 'agent' ? (statusByAlias.get(nd.label) ?? '未上报') : nd.kind === 'person' ? `${nd.agentCount} 个 Agent` : '';
+            const text = status ? `${nd.label} · ${status}` : nd.label;
+            ctx.font = '400 11px system-ui, -apple-system, "Noto Sans SC", sans-serif';
+            const w = ctx.measureText(text).width;
+            const padX = 6;
+            const boxW = w + padX * 2;
+            const boxH = 20;
+            const x = Math.max(6, Math.min(size.width - boxW - 6, hp.x + 14));
+            const y = Math.max(6, hp.y - boxH - 8);
+            ctx.globalAlpha = 0.94;
+            ctx.fillStyle = tk.surface;
+            ctx.beginPath();
+            ctx.roundRect(x, y, boxW, boxH, 5);
+            ctx.fill();
+            ctx.strokeStyle = tk.border;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = tk.fg;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x + padX, y + boxH / 2);
+            ctx.globalAlpha = 1;
+          }
+        }
       }
 
       // 环上彗星：头亮、尾巴 6 段渐隐，双向各一颗（神明参数：比虚线更有「通信」感）。
@@ -1182,11 +1217,13 @@ export default function Legion3DPage() {
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!pointersRef.current.has(e.pointerId)) return;
-    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    // 之前这里一上来就要求「指针已在 map 里」（按下时才登记），导致**悬停永远不会触发**：
+    // 光标不变、悬停高亮不亮、提示框也不出。现在只区分「按下」与「未按下」。
+    const down = pointersRef.current.has(e.pointerId);
+    if (down) pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lastInteract.current = performance.now();
 
-    if (pointersRef.current.size === 2 && pinchRef.current) {
+    if (down && pointersRef.current.size === 2 && pinchRef.current) {
       const [a, b] = [...pointersRef.current.values()];
       const span = Math.hypot(a.x - b.x, a.y - b.y);
       if (span > 4 && pinchRef.current.span > 4) {
@@ -1202,8 +1239,9 @@ export default function Legion3DPage() {
     if (!dragRef.current) {
       // 没按下的移动 = 悬停：只更新 ref，不触发 React 重渲染。
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
+      const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18, n => WORLD_R[n.item.kind] * n.projected.scale + 6);
       const next = hit ? hit.item.id : null;
+      hoverPos.current = next ? { x: e.clientX - rect.left, y: e.clientY - rect.top } : null;
       if (next !== hoverRef.current) {
         hoverRef.current = next;
         (e.currentTarget as HTMLElement).style.cursor = next ? 'pointer' : 'grab';
@@ -1230,13 +1268,13 @@ export default function Legion3DPage() {
     if (drag.moved > 6) return; // 拖动不是点击
 
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16);
+    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16, n => WORLD_R[n.item.kind] * n.projected.scale + 6);
     setSelected(hit ? hit.item.id : null);
   };
 
   const onDoubleClick = (e: React.MouseEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
+    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18, n => WORLD_R[n.item.kind] * n.projected.scale + 6);
     if (!hit) {
       // 双击空白 = 复位视角（含缩放锚点），省得再去右上角点按钮。
       resetView();
@@ -1249,6 +1287,7 @@ export default function Legion3DPage() {
 
   const onPointerLeave = () => {
     hoverRef.current = null;
+    hoverPos.current = null;
   };
 
   const onWheel = (e: React.WheelEvent) => {
