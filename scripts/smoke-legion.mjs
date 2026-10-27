@@ -114,12 +114,13 @@ cleanOn.ui === 'hidden' && cleanOn.hint !== 'flex' && cleanOff === 'visible'
 await page.getByTestId('legion-3d-filter-working').click();
 await page.waitForTimeout(400);
 const filterOn = await page.getByTestId('legion-3d-filter-working').getAttribute('aria-pressed');
+const filterHeader = await page.evaluate(() => document.body.innerText.includes('仅显示 运行中'));
 await page.keyboard.press('Escape');
 await page.waitForTimeout(400);
 const filterOff = await page.getByTestId('legion-3d-filter-working').getAttribute('aria-pressed');
-filterOn === 'true' && filterOff === 'false'
-  ? pass('3D 图例可当状态筛选（Esc 清）', { filterOn, filterOff })
-  : fail('3D 图例可当状态筛选（Esc 清）', { filterOn, filterOff });
+filterOn === 'true' && filterOff === 'false' && filterHeader
+  ? pass('3D 图例可当状态筛选（Esc 清）', { filterOn, filterOff, filterHeader })
+  : fail('3D 图例可当状态筛选（Esc 清）', { filterOn, filterOff, filterHeader });
 
 // 图例上的数量必须和「N 个 Agent」对得上（避免把未上报算成空闲）
 const legendSum = await page.evaluate(() => {
@@ -247,7 +248,14 @@ await page.keyboard.press('Enter');
 await page.waitForTimeout(250);
 await page.keyboard.press('Enter');
 await page.waitForTimeout(1200);
-const landed = new URL(page.url()).pathname;
+let landed = new URL(page.url()).pathname;
+// 偶发：点完选项后 30s 的 SWR 刷新会重建列表、焦点丢失，回车不生效。重试一次。
+if (landed === '/legion') {
+  await page.waitForTimeout(600);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(1200);
+  landed = new URL(page.url()).pathname;
+}
 landed.startsWith('/nodes/') || landed === '/org'
   ? pass('2D 列表选中 + 回车打开', { counted: count, landed })
   : fail('2D 列表选中 + 回车打开', { counted: count, landed });

@@ -1327,8 +1327,10 @@ export default function Legion3DPage() {
       g.fillText('军团 · 3D 网络拓扑', px(16), px(24));
       g.fillStyle = tk2.muted;
       g.font = `${px(12)}px ${font}`;
+      const filterLabel = statusOnly ? ({ working: '运行中', idle: '空闲', blocked: '阻塞', error: '错误', offline: '未上报' } as const)[statusOnly] : null;
       g.fillText(
-        `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`,
+        `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`
+          + (filterLabel ? ` · 仅显示 ${filterLabel}` : ''),
         px(16), px(44),
       );
       g.textAlign = 'right';
@@ -1434,7 +1436,10 @@ export default function Legion3DPage() {
           <span className="hidden text-[11px] text-[var(--fg-dim)] sm:inline">Legion Topology</span>
         </div>
         <p className="mt-1 text-xs text-[var(--fg-muted)]">
-          {loading ? '正在读取编制…' : `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`}
+          {loading
+            ? '正在读取编制…'
+            : `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`
+              + (statusOnly ? ` · 仅显示 ${({ working: '运行中', idle: '空闲', blocked: '阻塞', error: '错误', offline: '未上报' } as const)[statusOnly]}` : '')}
         </p>
         <div className="pointer-events-auto mt-2 flex items-center gap-2">
           <input

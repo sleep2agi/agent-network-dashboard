@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.79 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团
+
+- 状态筛选写进页头与导出图：抬头显示「仅显示 运行中」，导出 PNG 的副标题同样带上，
+  截图/分享出去不用再靠人记忆当时筛了什么。
+- 冒烟里「2D 列表回车打开」加了重试：SWR 每 30s 刷新会重建列表并丢焦点，偶发不过。
+
 ## 0.6.3-preview.78 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
