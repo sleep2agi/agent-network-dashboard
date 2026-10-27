@@ -24,6 +24,7 @@ import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../.
 import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { EmptyState } from '../../components/EmptyState';
+import { getAvatarUrl } from '../../lib/avatars';
 
 // 神明给的参数（PPT 首页 3D 图，admin 已认可）：俯仰约 25–30°、柔和透视
 // （别用强广角，远景缩成点就没有军团体量感）、自转 0.02–0.03 rad/s。
@@ -130,6 +131,21 @@ function nodeColor(node: LegionNode, tk: Tokens, statusByAlias: Map<string, stri
 /** 光晕精灵缓存：一个颜色一张 128×128 的径向渐变贴图，按需缩放。
  *  逐帧 shadowBlur 在软件光栅下开销极大（headless 实测 30fps），
  *  预先画好再 drawImage 是同类效果里最便宜的做法。 */
+/** 头像图片缓存：同一个 URL 只 new 一次 Image，加载完由渲染循环自动画出来
+ *  （循环每帧都在跑，不需要额外的 re-render）。 */
+const AVATAR_IMAGES = new Map<string, HTMLImageElement>();
+function avatarImage(url: string): HTMLImageElement | null {
+  if (!url) return null;
+  let img = AVATAR_IMAGES.get(url);
+  if (!img) {
+    img = new Image();
+    img.decoding = 'async';
+    img.src = url;
+    AVATAR_IMAGES.set(url, img);
+  }
+  return img.complete && img.naturalWidth > 0 ? img : null;
+}
+
 const HALO_CACHE = new Map<string, HTMLCanvasElement>();
 function haloFor(color: string): HTMLCanvasElement {
   const hit = HALO_CACHE.get(color);
@@ -877,7 +893,33 @@ export default function Legion3DPage() {
 
         ctx.globalAlpha = alpha;
         const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
-        if ((huge && node.kind === 'agent') || interacting) {
+
+        // 头像：成员用 display_name、Agent 用 alias 取头像（和列表页同一套解析链）。
+        // 半径太小时照片必然糊成噪点，所以 Agent 只在近处（>5px）才换头像。
+        const avatarUrl = node.kind === 'person'
+          ? getAvatarUrl(node.sublabel?.replace(/^@/, '') || node.label)
+          : node.kind === 'agent'
+            ? getAvatarUrl(node.label)
+            : '';
+        const face = avatarUrl && radiusPx >= (node.kind === 'agent' ? 5 : 7) ? avatarImage(avatarUrl) : null;
+        if (face) {
+          if (dark) {
+            const halo = haloFor(color);
+            const hr = radiusPx * 3.4;
+            ctx.drawImage(halo, p.x - hr / 2, p.y - hr / 2, hr, hr);
+          }
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(face, p.x - radiusPx, p.y - radiusPx, radiusPx * 2, radiusPx * 2);
+          ctx.restore();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = ring;
+          ctx.stroke();
+        } else if ((huge && node.kind === 'agent') || interacting) {
           // 300 个 Agent 时每个都画「白芯 + 描边」纯属浪费：一个色点足够，
           // 状态色仍然可读，鼠标悬停/命中半径不变。
           ctx.fillStyle = color;

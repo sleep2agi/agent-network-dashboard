@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, toPixel, type LegionNode } from '../lib/legion-layout';
 import { LEGION_LABEL_PEOPLE } from '../lib/legion-view-constants';
+import { getAvatarUrl, useAvatarsVersion } from '../lib/avatars';
 import { legionFetcher as fetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
 
@@ -84,6 +85,9 @@ export default function LegionPage() {
   const [cleanView, setCleanView] = useState(false);
   // 与 3D 一致：图例即筛选，只看某个状态的 Agent。
   const [statusOnly, setStatusOnly] = useState<'working' | 'idle' | 'offline' | null>(null);
+  // manifest 拉完会派发 avatar 事件；订阅它才能在拿到头像 URL 后重渲染 SVG。
+  const avatarsVersion = useAvatarsVersion();
+  void avatarsVersion;
   const stageRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
@@ -951,6 +955,22 @@ export default function LegionPage() {
                         ) : node.kind === 'person' ? (
                           <>
                             <circle r={r} fill="var(--bg)" stroke={isSelected ? 'var(--hl)' : 'var(--fg)'} strokeWidth={isSelected ? 2 : 1} />
+                            {(() => {
+                              const url = getAvatarUrl(node.sublabel?.replace(/^@/, '') || node.label);
+                              if (!url || r < 7) return null;
+                              return (
+                                <image
+                                  href={url}
+                                  x={-r}
+                                  y={-r}
+                                  width={r * 2}
+                                  height={r * 2}
+                                  preserveAspectRatio="xMidYMid slice"
+                                  style={{ clipPath: 'circle(50%)' }}
+                                  aria-hidden
+                                />
+                              );
+                            })()}
                             {layout.stats.people <= LEGION_LABEL_PEOPLE && (
                               <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)] font-medium" style={{ fontSize: 9 * labelScale }}>
                                 {(node.label || '?').slice(0, 1).toUpperCase()}

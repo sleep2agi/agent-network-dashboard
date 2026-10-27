@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.87 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团：成员/Agent 显示头像
+
+- 3D 与 2D 的成员节点改为头像（同一套解析链：Hub avatar_url → localStorage
+  → `public/avatars/manifest.json` 池 → 首字母兜底）；Agent 节点在半径 ≥5px 时也换头像。
+- 修 `getAvatarUrl()`：非 hook 调用（canvas 渲染循环）之前不会触发 manifest 拉取，
+  所以军团图永远拿不到默认头像池；现在它会自己触发一次。
+- 2D 订阅 `useAvatarsVersion()`，manifest 到位后重渲染 SVG（否则图里没有 `<image>`）。
+
 ## 0.6.3-preview.86 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
