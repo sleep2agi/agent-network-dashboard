@@ -295,6 +295,17 @@ if (deptName) {
       deep2d.selected && deep2d.urlKept
         ? pass('2D 节点深链 ?node= 选中该成员', deep2d)
         : fail('2D 节点深链 ?node= 选中该成员', deep2d);
+
+      // 2D 详情卡也要能复制「可发人的地址」（和 3D 一致）
+      const copy2d = page.getByRole('button', { name: /的分享链接/ }).first();
+      if (await copy2d.count()) {
+        await copy2d.click();
+        await page.waitForTimeout(300);
+        const clip2d = await page.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+        clip2d.includes('/legion?') && clip2d.includes('node=')
+          ? pass('2D 复制的是分享链接', { copied: clip2d.replace(/^https?:\/\/[^/]+/, '') })
+          : fail('2D 复制的是分享链接', { copied: clip2d });
+      }
     }
   }
   await page.goto(`${BASE}/org?focus=${encodeURIComponent(deptName)}`, { waitUntil: 'networkidle' });

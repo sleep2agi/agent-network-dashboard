@@ -964,9 +964,18 @@ export default function LegionPage() {
               </div>
 
               <div className="absolute right-3 top-3 flex flex-wrap items-center gap-2 rounded-lg bg-[var(--bg)]/80 px-2 py-1 text-[10px] text-[var(--fg-muted)] backdrop-blur">
-                <span className="inline-flex items-center gap-1"><i className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'var(--success)' }} />working</span>
-                <span className="inline-flex items-center gap-1"><i className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'var(--info)' }} />idle</span>
-                <span className="inline-flex items-center gap-1"><i className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'var(--fg-dim)' }} />offline</span>
+                {/* 和 3D 页、导出图用同一套中文图例（之前这里是 working/idle/offline，
+                    同一张图在页面上是英文、导出后是中文）。 */}
+                {([
+                  ['运行中', 'var(--success)'],
+                  ['空闲', 'var(--info)'],
+                  ['离线 / 未上报', 'var(--fg-dim)'],
+                ] as const).map(([label, color]) => (
+                  <span key={label} className="inline-flex items-center gap-1">
+                    <i aria-hidden className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+                    {label}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -989,15 +998,19 @@ export default function LegionPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        void navigator.clipboard?.writeText(selectedNode.label).then(() => {
+                        // 和 3D 一致：复制可直接发给别人的地址（?node=），不是光秃秃一个名字。
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('node', selectedNode.label);
+                        const share = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+                        void navigator.clipboard?.writeText(share).then(() => {
                           setCopied(true);
                           setTimeout(() => setCopied(false), 1200);
                         }).catch(() => {});
                       }}
                       className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
-                      aria-label={`复制名称 ${selectedNode.label}`}
+                      aria-label={`复制 ${selectedNode.label} 的分享链接`}
                     >
-                      {copied ? '已复制' : '复制'}
+                      {copied ? '已复制' : '复制链接'}
                     </button>
                   </div>
                   {selectedNode.sublabel && <p className="text-[11px] text-[var(--fg-muted)]">{selectedNode.sublabel}</p>}

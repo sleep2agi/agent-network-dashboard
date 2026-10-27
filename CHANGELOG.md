@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.66 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 2D
+
+- 图例改中文（运行中 / 空闲 / 离线 · 未上报）：之前页面上是 working/idle/offline，
+  导出图却是中文，同一张图两套说法。
+- 详情卡「复制」→「复制链接」：和 3D 一致，复制的是 `…/legion?node=<名字>`。
+
 ## 0.6.3-preview.65 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
