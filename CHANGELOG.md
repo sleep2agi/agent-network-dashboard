@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.67 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 节点设置抽屉
+
+- 颜色全部改走主题 token（`--bg/--bg-secondary/--bg-elevated/--border/--fg/--fg-muted/--fg-dim`
+  与 `--accent/--accent-fg/--success/--warning/--danger`）：之前写死 `#161618`/`#26262b`/
+  `gray-500..600`，浅色主题下抽屉仍是深色块，与页面割裂。
+- 硬编码颜色类 **349 → 311**（color-ratchet 基线同步收紧，只降不升）。
+
 ## 0.6.3-preview.66 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
