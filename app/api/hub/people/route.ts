@@ -23,7 +23,9 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const params = new URLSearchParams();
-  for (const key of ['q', 'limit', 'offset']) {
+  // 透传 network_id：多网络账号必须显式指定，否则 Hub 侧
+  // resolveRestReadNetworkId 只会回落到「恰好一个成员关系」。
+  for (const key of ['q', 'limit', 'offset', 'network_id']) {
     const value = searchParams.get(key);
     if (value) params.set(key, value);
   }
