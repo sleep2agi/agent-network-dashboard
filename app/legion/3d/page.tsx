@@ -24,6 +24,7 @@ import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../.
 import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
+import { drawLegionCore } from '../../lib/legion-core';
 import { EmptyState } from '../../components/EmptyState';
 import { getAvatarUrl } from '../../lib/avatars';
 
@@ -65,6 +66,7 @@ function readTokens() {
     border: v('--border', '#26262b'),
     surface: v('--bg-secondary', '#161618'),
     accent: v('--accent', '#8b5cf6'),
+    accentFg: v('--accent-fg', '#ffffff'),
     success: v('--success', '#10b981'),
     warning: v('--warning', '#f59e0b'),
     danger: v('--danger', '#ef4444'),
@@ -218,6 +220,7 @@ export default function Legion3DPage() {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const labelUiRectsRef = useRef<LabelRect[]>([]);
+  const corePhaseRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const viewRef = useRef({ ...DEFAULT_VIEW });
   const spinRef = useRef(true);
@@ -537,6 +540,7 @@ export default function Legion3DPage() {
     let dark = isDarkBg(tk.bg);
     let raf = 0;
     let stopped = false;
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const labelMetrics = new Map<string, { lines: string[]; width: number; height: number; lineHeight: number }>();
     let lastFrame = performance.now();
 
@@ -625,6 +629,8 @@ export default function Legion3DPage() {
       const huge = layout.nodes.length > LEGION_HUGE_NODES;
       // 交互中：大网络先不画标签与数据包，停手后自动恢复（跟手优先）。
       const interacting = huge && now < interactingUntil.current;
+      // Pause also freezes the new core ornament; reduced-motion is read live.
+      if (!motionPreference.matches && spinRef.current && !interacting) corePhaseRef.current += dt * 0.24;
       applyResolution(interacting ? RES_LOW : 1);
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -941,9 +947,8 @@ export default function Legion3DPage() {
           * (emptyDept ? 0.3 : deepDept ? 0.12 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
         const color = nodeColor(node, tk, statusByAlias);
-        // 核心轻微呼吸，整张图才有「活着」的感觉（幅度 6%，不抢注意力）。
-        const pulse = node.kind === 'core' ? 1 + 0.06 * Math.sin(now / 620) : 1;
-        const radiusPx = r * pulse;
+        // Stable core size keeps the logo crisp and its labels still.
+        const radiusPx = r;
         // Reuse the current renderer's circle/portrait geometry, including depth
         // and crowd scaling. The 2px pad includes the node's visible stroke.
         const anchor = { x: p.x, y: p.y, rx: radiusPx + 2, ry: radiusPx + 2 };
@@ -960,7 +965,9 @@ export default function Legion3DPage() {
             ? getAvatarUrl(node.label)
             : '';
         const face = avatarUrl && radiusPx >= (node.kind === 'agent' ? 4.5 : 5.5) ? avatarImage(avatarUrl) : null;
-        if (face) {
+        if (node.kind === 'core') {
+          drawLegionCore(ctx, p.x, p.y, radiusPx, tk, corePhaseRef.current, !interacting);
+        } else if (face) {
           if (dark) {
             const halo = haloFor(color);
             const hr = radiusPx * 3.4;
@@ -987,7 +994,7 @@ export default function Legion3DPage() {
         } else if (dark) {
           // 深底（神明 cover14 的节点画法）：彩色外晕 → 白芯 → 彩色描边。
           // 只画实心色块时深底上是一团糊光；白芯给每个节点一个硬边。
-          const wantHalo = !heavy || node.kind === 'core' || node.kind === 'group' || activeSet?.has(node.id);
+          const wantHalo = !heavy || node.kind === 'group' || activeSet?.has(node.id);
           if (wantHalo) {
             const halo = haloFor(color);
             const hr = radiusPx * 3.4;
