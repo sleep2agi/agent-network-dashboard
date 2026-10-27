@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation';
 import { buildLegionLayout, nearestDept, type LegionNode } from '../../lib/legion-layout';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
-import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
+import { groupDiscRadii, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { EmptyState } from '../../components/EmptyState';
 
 // 神明给的参数（PPT 首页 3D 图，admin 已认可）：俯仰约 25–30°、柔和透视
@@ -49,6 +49,12 @@ const WORLD_R: Record<LegionNode['kind'], number> = {
   person: 0.033,
   agent: 0.021,
 };
+
+function hitSceneNode(nodes: Array<SceneNode<LegionNode>>, x: number, y: number, radius: number) {
+  return hitTest(nodes, x, y, radius, node => node.item.kind === 'group'
+    ? groupDiscRadii(Math.max(1.4, WORLD_R.group * node.projected.scale))
+    : undefined);
+}
 
 function readTokens() {
   const cs = getComputedStyle(document.documentElement);
@@ -215,6 +221,7 @@ export default function Legion3DPage() {
   const screenRef = useRef<Array<SceneNode<LegionNode>>>([]);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const hoverRef = useRef<string | null>(null);
+  const hoverPointRef = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
 
   const people = useSWR<PeopleResponse>('/api/hub/people?limit=200&offset=0', legionFetcher, {
@@ -446,6 +453,8 @@ export default function Legion3DPage() {
     const ro = new ResizeObserver(entries => {
       const box = entries[0]?.contentRect;
       if (!box) return;
+      hoverPointRef.current = null;
+      hoverRef.current = null;
       setSize({ width: Math.max(1, Math.round(box.width)), height: Math.max(1, Math.round(box.height)) });
     });
     ro.observe(wrap);
@@ -567,6 +576,14 @@ export default function Legion3DPage() {
       const toPoint = (n: LegionNode) => nodeToVec3({ ...n });
       const nodes = projectScene(layout.nodes, toPoint, cam, size);
       screenRef.current = nodes;
+      // 自转、键盘或缩放会移动盘面，悬停必须跟随当前投影，不能粘在旧节点上。
+      const hoverPoint = hoverPointRef.current;
+      const hovered = hoverPoint && pointersRef.current.size === 0
+        ? hitSceneNode(nodes, hoverPoint.x, hoverPoint.y, 18)
+        : null;
+      hoverRef.current = hovered?.item.id ?? null;
+      const cursor = pointersRef.current.size > 0 ? 'grabbing' : hovered ? 'pointer' : 'grab';
+      if (canvas.style.cursor !== cursor) canvas.style.cursor = cursor;
 
       // 自动取景：默认 zoom=1.12 时整张图只占画布 40% 左右，剩下大半是空的。
       // 首屏和「重置视角」后按内容包围盒算一次缩放 + 平移，把军团收进画面
@@ -817,14 +834,13 @@ export default function Legion3DPage() {
         // 核心轻微呼吸，整张图才有「活着」的感觉（幅度 6%，不抢注意力）。
         const pulse = node.kind === 'core' ? 1 + 0.06 * Math.sin(now / 620) : 1;
         const radiusPx = r * pulse;
+        const disc = node.kind === 'group' ? groupDiscRadii(radiusPx) : null;
+        const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
 
         ctx.globalAlpha = alpha;
-        // 部门 = **等距盘**（椭圆），不是球。
-        // 理由：整张图里球太多了（中枢/部门/成员/Agent 都是球），只能靠大小和颜色区分；
-        // 形状一分，拥挤感立刻下降，也更接近产品里「编队平台」的意象。
-        if (node.kind === 'group') {
-          const rx = Math.max(16, radiusPx * 2.1);
-          const ry = rx * 0.42;
+        // 部门用盘面区分层级；绘制后继续共用悬停、选中与标签逻辑。
+        if (disc) {
+          const { rx, ry } = disc;
           ctx.globalAlpha = Math.min(1, alpha) * 0.32;
           ctx.fillStyle = color;
           ctx.beginPath();
@@ -836,23 +852,7 @@ export default function Legion3DPage() {
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
           ctx.stroke();
-          ctx.globalAlpha = alpha;
-          // 部门标签不能跟着 continue 一起丢：这里单独入队（优先级 2，仅次中枢/悬停）
-          labelQueue.push({
-            node,
-            text: node.label,
-            px: p.x,
-            py: p.y,
-            r: rx * 0.55,
-            alpha: Math.max(0.8, 1 - depthT * 0.35),
-            dim: !!dim,
-            priority: 2,
-          });
-          ctx.globalAlpha = 1;
-          continue;
-        }
-        const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
-        if ((huge && node.kind === 'agent') || interacting) {
+        } else if ((huge && node.kind === 'agent') || interacting) {
           // 300 个 Agent 时每个都画「白芯 + 描边」纯属浪费：一个色点足够，
           // 状态色仍然可读，鼠标悬停/命中半径不变。
           ctx.fillStyle = color;
@@ -897,7 +897,8 @@ export default function Legion3DPage() {
           ctx.strokeStyle = tk.accent;
           ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, radiusPx + 5, 0, Math.PI * 2);
+          if (disc) ctx.ellipse(p.x, p.y, disc.rx + 5, disc.ry + 5, 0, 0, Math.PI * 2);
+          else ctx.arc(p.x, p.y, radiusPx + 5, 0, Math.PI * 2);
           ctx.stroke();
         }
 
@@ -907,13 +908,15 @@ export default function Legion3DPage() {
           ctx.strokeStyle = tk.fg;
           ctx.lineWidth = 1.2;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, radiusPx + 4, 0, Math.PI * 2);
+          if (disc) ctx.ellipse(p.x, p.y, disc.rx + 4, disc.ry + 4, 0, 0, Math.PI * 2);
+          else ctx.arc(p.x, p.y, radiusPx + 4, 0, Math.PI * 2);
           ctx.stroke();
         }
 
         // 标签：Agent 太多，只有近处或高亮时才画，避免糊成一片。
         const showLabel =
           node.kind === 'core' ||
+          node.kind === 'group' ||
           (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
@@ -921,16 +924,16 @@ export default function Legion3DPage() {
         if (showLabel && !interacting) {
           labelQueue.push({
             node,
-            text: node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
+            text: node.kind !== 'group' && node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
             px: p.x,
             py: p.y,
-            r: radiusPx,
+            r: disc ? disc.rx * 0.55 : radiusPx,
             // 标签的深度淡出比节点保守，并且有下限 0.8：11px 文字掉到 0.45 时
             // 对底色的有效对比度会跌破 4.5:1（实测深底 3.67、浅底 3.14）。
             // 被主动淡出的节点（dim）保持 0.35，那是「这不属于当前筛选」的语义。
             alpha: dim ? 0.35 : Math.max(0.8, 1 - depthT * 0.35),
             dim: !!dim,
-            priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : 3,
+            priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : node.kind === 'group' ? 2 : 3,
           });
         }
         ctx.globalAlpha = 1;
@@ -969,8 +972,8 @@ export default function Legion3DPage() {
           }
           if (!spot) continue;
           drawnLabels++;
-          // 底衬：只有大网络（标签挤在连线里）才垫，小网络保持纯文字。
-          if (heavy) {
+          // 部门名始终垫底衬，避免完整名称与盘面或连线混在一起。
+          if (heavy || item.node.kind === 'group') {
             ctx.globalAlpha = 0.42 * item.alpha;
             ctx.fillStyle = tk.bg;
             const pad = 3;
@@ -1084,6 +1087,9 @@ export default function Legion3DPage() {
 
   const onPointerDown = (e: React.PointerEvent) => {
     const target = e.currentTarget as HTMLElement;
+    hoverRef.current = null;
+    hoverPointRef.current = null;
+    target.style.cursor = 'grabbing';
     yawTarget.current = null; // 手动拖动优先，打断自动对准
     target.setPointerCapture?.(e.pointerId);
     pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -1104,7 +1110,18 @@ export default function Legion3DPage() {
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!pointersRef.current.has(e.pointerId)) return;
+    if (!pointersRef.current.has(e.pointerId)) {
+      // 普通鼠标悬停没有 pointerdown，不能被「仅跟踪按下指针」的守卫挡掉。
+      if (pointersRef.current.size > 0) return;
+      const target = e.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      hoverPointRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      const hit = hitSceneNode(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
+      hoverRef.current = hit?.item.id ?? null;
+      target.style.cursor = hit ? 'pointer' : 'grab';
+      lastInteract.current = performance.now();
+      return;
+    }
     pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lastInteract.current = performance.now();
 
@@ -1121,17 +1138,7 @@ export default function Legion3DPage() {
       return;
     }
 
-    if (!dragRef.current) {
-      // 没按下的移动 = 悬停：只更新 ref，不触发 React 重渲染。
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
-      const next = hit ? hit.item.id : null;
-      if (next !== hoverRef.current) {
-        hoverRef.current = next;
-        (e.currentTarget as HTMLElement).style.cursor = next ? 'pointer' : 'grab';
-      }
-      return;
-    }
+    if (!dragRef.current) return;
 
     const drag = dragRef.current;
     const dx = e.clientX - drag.x;
@@ -1147,18 +1154,22 @@ export default function Legion3DPage() {
     pointersRef.current.delete(e.pointerId);
     if (pointersRef.current.size < 2) pinchRef.current = null;
     lastInteract.current = performance.now();
+    const target = e.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const cancelled = e.type === 'pointercancel';
+    hoverPointRef.current = !cancelled && e.pointerType !== 'touch' ? point : null;
+    const hit = cancelled ? null : hitSceneNode(screenRef.current, point.x, point.y, 16);
+    target.style.cursor = pointersRef.current.size > 0 ? 'grabbing' : hit && hoverPointRef.current ? 'pointer' : 'grab';
     if (!drag) return;
     dragRef.current = null;
-    if (drag.moved > 6) return; // 拖动不是点击
-
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16);
+    if (cancelled || drag.moved > 6) return; // 取消手势、拖动都不是点击
     setSelected(hit ? hit.item.id : null);
   };
 
   const onDoubleClick = (e: React.MouseEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
+    const hit = hitSceneNode(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
     if (!hit) {
       // 双击空白 = 复位视角（含缩放锚点），省得再去右上角点按钮。
       resetView();
@@ -1169,8 +1180,10 @@ export default function Legion3DPage() {
     else if (n.kind === 'person' || n.kind === 'group') router.push('/org');
   };
 
-  const onPointerLeave = () => {
+  const onPointerLeave = (e: React.PointerEvent) => {
     hoverRef.current = null;
+    hoverPointRef.current = null;
+    if (pointersRef.current.size === 0) (e.currentTarget as HTMLElement).style.cursor = 'grab';
   };
 
   const onWheel = (e: React.WheelEvent) => {
