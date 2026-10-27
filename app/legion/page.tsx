@@ -112,6 +112,18 @@ export default function LegionPage() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const { ref, size } = useElementSize<HTMLDivElement>();
 
+  // 节点 id 属于当前网络；换 SWR key 不会自动清掉旧网络的选中/聚焦状态。
+  // 和 AliasAvatar 一样在渲染时调整，避免新网络先提交一帧旧节点高亮。
+  const [viewNetworkId, setViewNetworkId] = useState(networkId);
+  if (viewNetworkId !== networkId) {
+    setViewNetworkId(networkId);
+    setSelected(null);
+    setFocusGroup(null);
+    setHovered(null);
+    setCollapsed(new Set());
+    setView({ k: 1, tx: 0, ty: 0 });
+  }
+
   const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, fetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
