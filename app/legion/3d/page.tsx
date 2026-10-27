@@ -24,7 +24,7 @@ import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../.
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
-import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
+import { fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
 import { EmptyState } from '../../components/EmptyState';
@@ -222,6 +222,8 @@ export default function Legion3DPage() {
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
+  const fitBoundsRef = useRef<LabelRect | null>(null);
   const labelUiRectsRef = useRef<LabelRect[]>([]);
   const corePhaseRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -524,15 +526,26 @@ export default function Legion3DPage() {
     const wrap = wrapRef.current;
     if (!header || !wrap) return;
     const measure = () => {
-      if (cleanView) { labelUiRectsRef.current = []; return; }
       const stage = wrap.getBoundingClientRect();
-      const rect = header.getBoundingClientRect();
-      labelUiRectsRef.current = [{ x1: rect.left - stage.left - 4, y1: rect.top - stage.top - 4,
-        x2: rect.right - stage.left + 4, y2: rect.bottom - stage.top + 4 }];
+      const rect = (el: HTMLElement) => {
+        const box = el.getBoundingClientRect();
+        return { x1: box.left - stage.left - 4, y1: box.top - stage.top - 4,
+          x2: box.right - stage.left + 4, y2: box.bottom - stage.top + 4 };
+      };
+      const top = rect(header);
+      const footer = footerRef.current;
+      const bottom = footer && footer.offsetHeight > 0 ? rect(footer) : null;
+      labelUiRectsRef.current = cleanView ? [] : [top, ...(bottom ? [bottom] : [])];
+      fitBoundsRef.current = {
+        x1: 24, x2: stage.width - 24,
+        y1: cleanView ? 24 : top.y2 + 16,
+        y2: cleanView ? stage.height - 24 : (bottom?.y1 ?? stage.height - 24) - 24,
+      };
     };
     // Responsive controls are measured on resize, never during Canvas frames.
     const observer = new ResizeObserver(measure);
     observer.observe(header);
+    if (footerRef.current) observer.observe(footerRef.current);
     observer.observe(wrap);
     measure();
     return () => observer.disconnect();
@@ -673,8 +686,8 @@ export default function Legion3DPage() {
       screenRef.current = nodes;
 
       // 自动取景：默认 zoom=1.12 时整张图只占画布 40% 左右，剩下大半是空的。
-      // 首屏和「重置视角」后按内容包围盒算一次缩放 + 平移，把军团收进画面
-      // 78%，重心放到画布中心。只在结构变化时做，不跟用户的拖动/缩放抢。
+      // 首屏和「重置视角」后按节点实体包围盒取景，留出实测标题/工具栏和图例。
+      // 只在结构/尺寸变化时做，不跟用户的拖动/缩放抢。
       const sizeDrift = !lastFitSize.current
         || Math.abs(size.width - lastFitSize.current.w) > 8
         || Math.abs(size.height - lastFitSize.current.h) > 8;
@@ -697,30 +710,20 @@ export default function Legion3DPage() {
         if (spanNow < Math.min(size.width, size.height) * 0.35) fitPending.current = true;
       }
 
-      const sizeReady = size.width > 400 && size.height > 300;
+      const sizeReady = size.width > 240 && size.height > 300;
       // 还只有 core 的时候（members/agents 都是 0）取景会算出 span=1 → 顶到 240%，
       // 等数据到位再跳回 151%（实测）。等真有数据再取景。
       const dataReady = layout.stats.people + layout.stats.agents > 0;
       if (sizeReady && dataReady && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        for (const n of nodes) {
-          if (n.projected.x < minX) minX = n.projected.x;
-          if (n.projected.x > maxX) maxX = n.projected.x;
-          if (n.projected.y < minY) minY = n.projected.y;
-          if (n.projected.y > maxY) maxY = n.projected.y;
-        }
-        const bw = maxX - minX;
-        const bh = maxY - minY;
-        const span = Math.max(bw, bh, 1);
-        const target = Math.min(size.width, size.height) * 0.82;
-        const want = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, view.zoom * (target / span)));
-        const k = want / view.zoom;
-        // 投影 = 画布中心 + pan + zoom·u；pan 也在包围盒里，先减掉再乘 k。
-        const ccx = (minX + maxX) / 2 - size.width / 2 - view.panX;
-        const ccy = (minY + maxY) / 2 - size.height / 2 - view.panY;
-        view.panX = -ccx * k;
-        view.panY = -ccy * k;
-        view.zoom = want;
+        const fit = fitProjectedBodies(nodes.map(({ item, projected: p }) => {
+          const crowd = item.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
+          const worldR = item.kind === 'group' ? deptWorldRadius(item.depth ?? 1) : WORLD_R[item.kind];
+          return { x: p.x, y: p.y, radius: Math.max(1.4, worldR * p.scale * crowd) + 4 };
+        }), view, size, fitBoundsRef.current ?? { x1: 24, y1: 24, x2: size.width - 24, y2: size.height - 24 },
+        { min: MIN_ZOOM, max: MAX_ZOOM });
+        if (!fit) { raf = requestAnimationFrame(draw); return; }
+        const want = fit.zoom;
+        Object.assign(view, fit);
         setZoomPct(Math.round(want * 100));
         // 首次进入：先落在 62% 处，再缓动到目标（镜头推近的感觉）。
         if (!introDone.current) {
@@ -1841,7 +1844,7 @@ export default function Legion3DPage() {
       )}
 
       {/* 底部左：图例与操作提示 */}
-      <div className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
+      <div ref={footerRef} className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {/* 图例即筛选：点一下只看这个状态，再点取消（Esc 也能清）。 */}
           {([

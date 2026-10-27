@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   RING_HEIGHT,
+  fitProjectedBodies,
   fog,
   hitTest,
   jitterHeight,
@@ -9,6 +10,7 @@ import {
   projectScene,
   ringPath,
 } from './legion-3d';
+import { buildLegionLayout, deptWorldRadius } from './legion-layout';
 
 const SIZE = { width: 800, height: 600 };
 const CAM = { yaw: 0, pitch: 0, dist: 4, focal: 600 };
@@ -114,5 +116,44 @@ describe('#3D 军团拓扑 — 投影/深度/命中必须可断言，不能靠�
       expect(Number.isFinite(p.x)).toBe(true);
       expect(Math.abs(p.x - SIZE.width / 2)).toBeLessThan(SIZE.width);
     }
+  });
+
+  test('单成员自动取景将完整中枢与头像留在工具栏和图例之间，桌面与手机均成立', () => {
+    const layout = buildLegionLayout({ people: [{ user_id: 'sparse', username: 'sparse', display_name: 'Sparse',
+      role: 'owner', department: null, agents: [] }] });
+    const radius = (n) => (n.item.kind === 'group' ? deptWorldRadius(n.item.depth ?? 1)
+      : n.item.kind === 'core' ? 0.085 : 0.033) * n.projected.scale;
+    for (const size of [{ width: 1232, height: 870 }, { width: 390, height: 720 }]) {
+      const bounds = { x1: 24, x2: size.width - 24, y1: size.width < 640 ? 208 : 116, y2: size.height - 96 };
+      for (const yaw of [0.62, 1.8, 3.1]) {
+        for (const pan of [0, 175]) {
+          const view = { zoom: 1.12, panX: pan, panY: -pan };
+          const camera = v => ({ yaw, pitch: 0.52, dist: 6,
+            focal: Math.min(size.width, size.height) * (size.width < 640 ? 2.4 : 1.73) * v.zoom,
+            cx: size.width / 2 + v.panX, cy: size.height / 2 + v.panY });
+          const nodes = projectScene(layout.nodes, n => nodeToVec3(n), camera(view), size);
+          const fit = fitProjectedBodies(nodes.map(n => ({ ...n.projected, radius: radius(n) + 4 })),
+            view, size, bounds, { min: 0.25, max: 8 });
+          expect(fit).not.toBeNull();
+          const framed = projectScene(layout.nodes, n => nodeToVec3(n), camera(fit), size);
+          for (const n of framed) {
+            expect(n.projected.x - radius(n)).toBeGreaterThanOrEqual(bounds.x1);
+            expect(n.projected.x + radius(n)).toBeLessThanOrEqual(bounds.x2);
+            expect(n.projected.y - radius(n)).toBeGreaterThanOrEqual(bounds.y1);
+            expect(n.projected.y + radius(n)).toBeLessThanOrEqual(bounds.y2);
+          }
+        }
+      }
+    }
+  });
+
+  test('取景跳过空场景/控件占满画布，且遵守缩放上限', () => {
+    const view = { zoom: 1, panX: 0, panY: 0 };
+    const bounds = { x1: 24, y1: 100, x2: 776, y2: 520 };
+    const limits = { min: 0.25, max: 8 };
+    expect(fitProjectedBodies([], view, SIZE, bounds, limits)).toBeNull();
+    const body = [{ x: 400, y: 300, radius: 1 }];
+    expect(fitProjectedBodies(body, view, SIZE, { ...bounds, y1: 520 }, limits)).toBeNull();
+    expect(fitProjectedBodies(body, view, SIZE, bounds, limits).zoom).toBe(8);
   });
 });

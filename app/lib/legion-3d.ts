@@ -127,6 +127,34 @@ export function projectScene<T>(
   return out;
 }
 
+/** Fit visible node bodies into the space left by the stage controls.
+ * Projected positions include the old pan, so remove it before scaling. */
+export function fitProjectedBodies(
+  bodies: ReadonlyArray<{ x: number; y: number; radius: number }>,
+  view: { zoom: number; panX: number; panY: number },
+  size: { width: number; height: number },
+  bounds: { x1: number; y1: number; x2: number; y2: number },
+  limits: { min: number; max: number },
+): { zoom: number; panX: number; panY: number } | null {
+  if (!bodies.length || view.zoom <= 0 || bounds.x2 <= bounds.x1 || bounds.y2 <= bounds.y1) return null;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const body of bodies) {
+    minX = Math.min(minX, body.x - body.radius);
+    maxX = Math.max(maxX, body.x + body.radius);
+    minY = Math.min(minY, body.y - body.radius);
+    maxY = Math.max(maxY, body.y + body.radius);
+  }
+  const scale = Math.min((bounds.x2 - bounds.x1) / Math.max(1, maxX - minX),
+    (bounds.y2 - bounds.y1) / Math.max(1, maxY - minY));
+  const zoom = Math.min(limits.max, Math.max(limits.min, view.zoom * scale));
+  const k = zoom / view.zoom;
+  return {
+    zoom,
+    panX: (bounds.x1 + bounds.x2 - size.width) / 2 - ((minX + maxX - size.width) / 2 - view.panX) * k,
+    panY: (bounds.y1 + bounds.y2 - size.height) / 2 - ((minY + maxY - size.height) / 2 - view.panY) * k,
+  };
+}
+
 /**
  * 命中测试：屏幕点周围 radius 像素内、**离相机最近**的那个节点。
  * 传的是已排序（远→近）的数组，所以从后往前找第一个命中即可。
