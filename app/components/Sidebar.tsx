@@ -48,6 +48,8 @@ const networkFetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : {
 // were just cluttering the main rail. Restore here if usage warrants.
 const NAV_ITEMS = [
   { href: '/nodes', label: 'Nodes', icon: 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01' },
+  // 军团拓扑（等距平台版）。2D 版仍在首页 Overview，两者并存。
+  { href: '/topology3d', label: 'Topology 3D', icon: 'M4 7l8-4 8 4-8 4-8-4zm0 5l8 4 8-4M4 17l8 4 8-4' },
   { href: '/versions', label: 'Versions', icon: 'M7 7h10M7 12h10M7 17h6' },
   { href: '/', label: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
   { href: '/scheduled-tasks', label: 'Schedules', icon: 'M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z' },
