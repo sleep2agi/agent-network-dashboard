@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.72 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D
+
+- **入场镜头**：第一次打开 `/legion/3d` 时，拓扑从 62% 缓动推近到取景比例（约 0.9 秒），
+  再进入自转。尊重 `prefers-reduced-motion`，同一会话只播一次；任何拖动/滚轮会立刻接管。
+- 取景修两处「先跳错再跳回」：画布尺寸没量到之前不取景（曾算出 240% 再跳回 151%）；
+  只有 core 时（成员/Agent 都是 0）不取景，等数据到位再算。
+
 ## 0.6.3-preview.71 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

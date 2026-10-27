@@ -209,6 +209,10 @@ export default function Legion3DPage() {
   // 用户自己缩放过就尊重他的视角；只有「还没动过」时，尺寸变化（首帧
   // 布局落定、窗口缩放）才重新取景。
   const userAdjusted = useRef(false);
+  // 首次进入的「镜头推近」：从 0.62× 缓动到取景比例，约 0.9 秒。
+  // 只在第一次打开时跑一次（sessionStorage 记住），并尊重 prefers-reduced-motion。
+  const introRef = useRef<{ t0: number; from: number; to: number } | null>(null);
+  const introDone = useRef(false);
   const dragRef = useRef<{ x: number; y: number; yaw: number; pitch: number; moved: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ span: number; dist: number } | null>(null);
@@ -532,6 +536,18 @@ export default function Legion3DPage() {
       }
       // 小屏用更长的焦距把图放大：375 宽时 min(w,h) 只有 375，
       // 按桌面系数算整张图只有硬币大，留白像坏了。
+      if (introRef.current) {
+        const a = introRef.current;
+        const t = Math.min(1, (now - a.t0) / 900);
+        const ease = 1 - Math.pow(1 - t, 3);
+        view.zoom = a.from + (a.to - a.from) * ease;
+        if (t >= 1) {
+          view.zoom = a.to;
+          introRef.current = null;
+          setZoomPct(Math.round(a.to * 100));
+        }
+      }
+
       const narrow = size.width < 640;
       const cam = {
         yaw: view.yaw,
@@ -574,7 +590,15 @@ export default function Legion3DPage() {
       const sizeDrift = !lastFitSize.current
         || Math.abs(size.width - lastFitSize.current.w) > 8
         || Math.abs(size.height - lastFitSize.current.h) > 8;
-      if ((fitPending.current || (sizeDrift && !userAdjusted.current)) && nodes.length > 0) {
+      // 入场动画期间不要重新取景：动画会让 view.zoom 每一帧都变，
+      // 再按当前 zoom 算包围盒会滚雪球（实测直接顶到 MAX_ZOOM）。
+      // 画布还没量到真实尺寸时不要取景：首帧 stage 只有几十像素，
+      // 按那个尺寸算出来会被 MAX_ZOOM 夹到 240%，随后再跳回正常值（实测）。
+      const sizeReady = size.width > 400 && size.height > 300;
+      // 还只有 core 的时候（members/agents 都是 0）取景会算出 span=1 → 顶到 240%，
+      // 等数据到位再跳回 151%（实测）。等真有数据再取景。
+      const dataReady = layout.stats.people + layout.stats.agents > 0;
+      if (sizeReady && dataReady && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         for (const n of nodes) {
           if (n.projected.x < minX) minX = n.projected.x;
@@ -595,6 +619,21 @@ export default function Legion3DPage() {
         view.panY = -ccy * k;
         view.zoom = want;
         setZoomPct(Math.round(want * 100));
+        // 首次进入：先落在 62% 处，再缓动到目标（镜头推近的感觉）。
+        if (!introDone.current) {
+          introDone.current = true;
+          const reduce = typeof window !== 'undefined'
+            && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+          let seen = false;
+          try { seen = sessionStorage.getItem('legion3d-intro') === '1'; } catch {}
+          if (!reduce && !seen) {
+            view.zoom = want * 0.62;
+            // 动画期间也别让「尺寸漂移」触发重算。
+            userAdjusted.current = true;
+            introRef.current = { t0: now, from: want * 0.62, to: want };
+            try { sessionStorage.setItem('legion3d-intro', '1'); } catch {}
+          }
+        }
         fitPending.current = false;
         userAdjusted.current = false;
         lastFitSize.current = { w: size.width, h: size.height };
@@ -1052,6 +1091,7 @@ export default function Legion3DPage() {
   }, []);
 
   const onPointerDown = (e: React.PointerEvent) => {
+    introRef.current = null; // 手动交互优先，别跟用户的拖动抢
     const target = e.currentTarget as HTMLElement;
     yawTarget.current = null; // 手动拖动优先，打断自动对准
     target.setPointerCapture?.(e.pointerId);
@@ -1146,6 +1186,7 @@ export default function Legion3DPage() {
     e.preventDefault();
     lastInteract.current = performance.now();
     interactingUntil.current = performance.now() + 180;
+    introRef.current = null;
     const v = viewRef.current;
     const factor = e.deltaY > 0 ? 1 / 1.08 : 1.08;
     const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.zoom * factor));

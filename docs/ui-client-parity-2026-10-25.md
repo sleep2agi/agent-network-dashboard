@@ -1014,3 +1014,10 @@ skip link 上线后复走一遍，全程只用键盘：
 - `NodeAttrsEditor` 正则里的字面控制字符改 `\u0000-\u001f\u007f`（原文件被 git 判为 binary）。
 - color-ratchet **207 → 170**（累计 −51%）。
 
+### 3D 入场镜头（2026-10-27）
+
+- 首开：镜头 62% → 100%（900ms，easeOutCubic），之后自转；`prefers-reduced-motion`
+  直接落位；同一会话只播一次（`sessionStorage`）。
+- 两个取景 bug：① 画布未量到尺寸就取景 → 算出 240% 再跳回 151%；② 只有 core 时
+  span=1（成员/Agent 都还是 0）→ 同样顶到 240%。现在都等「尺寸就绪 + 有数据」再取景。
+
