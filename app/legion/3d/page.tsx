@@ -213,7 +213,6 @@ export default function Legion3DPage() {
   const [helpOpen, setHelpOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [spin, setSpin] = useState(true);
-  const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -256,7 +255,6 @@ export default function Legion3DPage() {
   const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
-    onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
   const hierarchy = useSWR<DepartmentsResponse | null>(networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000,
@@ -1571,7 +1569,9 @@ export default function Legion3DPage() {
   // 网络未确定 ⇒ 也算 loading（null key 时 SWR 的 isLoading 是 false，会把等待误判成「空」）
   const loading = !networkReady || people.isLoading || hierarchy.isLoading || status.isLoading;
   const readError = legionReadError(people.error, hierarchy.error);
-  const fatal = needsLogin || readError?.status === 401 ? 'login'
+  // #73 —— 不再维护 needsLogin 这个「只置位不清零」的 state：SWR 成功后 error 会自己清掉，
+  // 直接派生就能「登录恢复后立刻收起过期提示」。no-network 分支是 #72 的网络就绪判定。
+  const fatal = readError?.status === 401 ? 'login'
     : networkReady && !networkId ? 'no-network'
     : readError ? 'error' : null;
   const isEmpty = !loading && !fatal && people.data != null && layout.nodes.length <= 1;

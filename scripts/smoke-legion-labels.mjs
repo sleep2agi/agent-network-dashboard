@@ -38,6 +38,7 @@ try {
     value: createHash('sha256').update(`anet-dashboard:${process.env.DASHBOARD_TEST_PASSWORD}`).digest('hex') }]);
   await context.addInitScript(theme => {
     localStorage.setItem('anet-theme', theme);
+    sessionStorage.setItem('anet_network_id', 'fixture');
     sessionStorage.setItem('anet_v3_auth', JSON.stringify({ user: { username: 'fixture', role: 'owner' }, token: 'fixture-token',
       networks: [{ network_id: 'fixture', network_name: 'Fixture' }], currentNetwork: 'fixture' }));
     // Observe draw commands, without adding test hooks to product code.
@@ -77,7 +78,8 @@ try {
   }, theme);
   await context.route('**/api/**', route => {
     const url = new URL(route.request().url());
-    const json = url.pathname === '/api/hub/departments' ? { ok: true, departments, members: people.map(p => ({ user_id: p.user_id, department_id: p.department.id })) }
+    const json = url.pathname === '/api/hub/networks' ? { ok: true, networks: [{ network_id: 'fixture', network_name: 'Fixture' }] }
+      : url.pathname === '/api/hub/departments' ? { ok: true, departments, members: people.map(p => ({ user_id: p.user_id, department_id: p.department.id })) }
       : url.pathname === '/api/hub/people' ? { ok: true, network_id: 'fixture', people, total: people.length, has_more: false, agents_without_owner: [] }
         : url.pathname === '/api/hub/status' ? { ok: true, sessions: agents.map((a, i) => ({ ...a, status: i % 10 === 0 ? 'working' : 'idle' })) }
           : url.pathname === '/api/hub/nodes' ? { ok: true, nodes: agents }

@@ -107,7 +107,6 @@ export default function LegionPage() {
   const [helpOpen, setHelpOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [exportError, setExportError] = useState('');
-  const [needsLogin, setNeedsLogin] = useState(false);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -116,7 +115,6 @@ export default function LegionPage() {
   const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, fetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
-    onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
   const hierarchy = useSWR<DepartmentsResponse | null>(
     networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
@@ -697,7 +695,7 @@ export default function LegionPage() {
           </div>
         </div>
 
-        {needsLogin || error?.status === 401 ? (
+        {error?.status === 401 ? (
           <div role="alert" className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团编制。
           </div>
@@ -749,13 +747,13 @@ export default function LegionPage() {
           </div>
         ) : networkReady && !networkId ? (
           <NetworkRequiredNotice />
-        ) : !needsLogin && !error && layout.stats.people === 0 && layout.stats.orphans === 0 && layout.stats.groups === 0 ? (
+        ) : !error && layout.stats.people === 0 && layout.stats.orphans === 0 && layout.stats.groups === 0 ? (
           <EmptyState
             variant="nodes"
             title="军团还没有成员"
             sub="成员加入网络并绑定 Agent 后，这里会自动长出编制。"
           />
-        ) : needsLogin || error ? null : (
+        ) : error ? null : (
           <div className={`grid gap-4 ${cleanView ? 'lg:grid-cols-1' : 'lg:grid-cols-[1fr_280px]'}`}>
             <div
               ref={stageCallbackRef}
