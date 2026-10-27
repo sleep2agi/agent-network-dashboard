@@ -263,7 +263,7 @@ export default function AdminPage() {
             <button
               onClick={sendTask}
               disabled={!taskTarget || !taskContent.trim()}
-              className="px-4 py-2 bg-cyan-600 hover:bg-[var(--accent)] disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] text-white text-sm rounded-lg transition-colors"
+              className="px-4 py-2 bg-cyan-600 enabled:hover:bg-[var(--accent)] enabled:hover:text-[var(--accent-fg)] disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] text-white text-sm rounded-lg transition-colors"
             >
               Send Task
             </button>

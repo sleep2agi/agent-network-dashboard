@@ -48,18 +48,19 @@ body {
 
 :root,
 [data-theme="cyber"] {
-  --bg:           #0b0b0d;
-  --bg-secondary: #161618;
-  --bg-elevated:  #1f1f24;
-  --fg:           #e5e7eb;
-  --fg-muted:     #9ca3af;
-  --fg-dim:       #828b9c; /* #6b7280 → #7b8494 → #828b9c: 5.27:1 on --bg, 4.78:1 on --bg-elevated */
-  --border:       #26262b;
+  /* Existing ANet client palette, adopted from Dashboard #62. See DESIGN.md. */
+  --bg:           #111113;
+  --bg-secondary: #18181b;
+  --bg-elevated:  #222227;
+  --fg:           #ededef;
+  --fg-muted:     #a1a1aa;
+  --fg-dim:       #8b8b95;
+  --border:       #242428;
   --border-hover: #3a3a41;
-  --accent:       #8b5cf6;
-  --accent-text:  #a78bfa; /* accent 当文字时用：深底 6.64:1（accent 本身只有 4.27） */
-  --accent-fg:    #ffffff;
-  --success:      #10b981;
+  --accent:       #5e9bff;
+  --accent-text:  var(--accent);
+  --accent-fg:    #0b0b0d; /* Paired foreground for the client's light-blue fill. */
+  --success:      #22c55e;
   --warning:      #f59e0b;
   --danger:       #f87171; /* was #ef4444 — 4.36:1 on --bg-elevated */
   --info:         #60a5fa; /* was #3b82f6 — 4.46:1 on --bg-elevated */

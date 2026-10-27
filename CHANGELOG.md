@@ -6,6 +6,12 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## Unreleased
+
+### Design-language alignment
+
+- The deployed 3D renderer can now use the client's dark surfaces and blue accent alongside its ANet core and label clearance. Accent text and solid-fill foregrounds migrate as a pair, including Provider save and admin task-button hover states.
+
 ## 0.6.3-preview.101 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
