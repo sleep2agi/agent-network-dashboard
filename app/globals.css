@@ -47,17 +47,17 @@ body {
 
 :root,
 [data-theme="cyber"] {
-  --bg:           #0b0b0d;
-  --bg-secondary: #161618;
-  --bg-elevated:  #1f1f24;
-  --fg:           #e5e7eb;
-  --fg-muted:     #9ca3af;
-  --fg-dim:       #6b7280;
-  --border:       #26262b;
+  --bg:           #111113;
+  --bg-secondary: #18181b;
+  --bg-elevated:  #222227;
+  --fg:           #ededef;
+  --fg-muted:     #a1a1aa;
+  --fg-dim:       #8b8b95;
+  --border:       #242428;
   --border-hover: #3a3a41;
-  --accent:       #8b5cf6;
-  --accent-fg:    #ffffff;
-  --success:      #10b981;
+  --accent:       #5e9bff;
+  --accent-fg:    #0b0b0d;
+  --success:      #22c55e;
   --warning:      #f59e0b;
   --danger:       #ef4444;
   --info:         #3b82f6;
