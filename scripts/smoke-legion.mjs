@@ -60,6 +60,21 @@ canvas && canvas.w > 300 && canvas.bright > 50
   ? pass('3D 画布已渲染', canvas)
   : fail('3D 画布已渲染', canvas);
 
+// 全屏演示：点一下铺满视口（会议室/PPT 用），再点一下退出
+await page.getByTestId('legion-3d-fullscreen').click();
+await page.waitForTimeout(700);
+const fsOn = await page.evaluate(() => ({
+  on: !!document.fullscreenElement && document.fullscreenElement.getAttribute('data-testid') === 'legion-3d-stage',
+  canvas: (() => { const c = document.querySelector('canvas'); return c ? `${c.clientWidth}x${c.clientHeight}` : null; })(),
+  label: document.querySelector('[data-testid="legion-3d-fullscreen"]')?.textContent ?? '',
+}));
+await page.getByTestId('legion-3d-fullscreen').click();
+await page.waitForTimeout(700);
+const fsOff = await page.evaluate(() => !!document.fullscreenElement);
+fsOn.on && fsOn.label.includes('退出') && !fsOff
+  ? pass('3D 全屏进入/退出', fsOn)
+  : fail('3D 全屏进入/退出', { fsOn, fsOff });
+
 // 自动取景：默认视角要把整张图收进画面（以前 zoom 固定 1.12，只占画布 40%）。
 // 小网络（stub 3 人）取景后应显著放大；R 重置视角后仍保持取景。
 const zoomOf = async () =>

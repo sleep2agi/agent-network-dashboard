@@ -178,6 +178,8 @@ export default function Legion3DPage() {
   const [listOpen, setListOpen] = useState(false);
   // 缩放倍率是给用户看的数字：view.zoom 在 ref 里（每帧读），单独镜像一份 state。
   const [zoomPct, setZoomPct] = useState(Math.round(DEFAULT_VIEW.zoom * 100));
+  // 全屏演示：给会议室/PPT 用 —— 把整张拓扑铺满屏幕，只剩画布与图例。
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -1016,6 +1018,23 @@ export default function Legion3DPage() {
     lastInteract.current = performance.now();
   }, []);
 
+  const toggleFullscreen = useCallback(async () => {
+    const el = wrapRef.current;
+    if (!el) return;
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await el.requestFullscreen();
+    } catch {
+      // 浏览器拒绝（iframe / 权限策略）时保持原样，不做假动作
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+
   const onPointerDown = (e: React.PointerEvent) => {
     const target = e.currentTarget as HTMLElement;
     yawTarget.current = null; // 手动拖动优先，打断自动对准
@@ -1178,6 +1197,7 @@ export default function Legion3DPage() {
         setHelpOpen(v => !v);
         break;
       case 'r': case 'R': resetView(); break;
+      case 'f': case 'F': e.preventDefault(); void toggleFullscreen(); break;
       case 'Escape':
         e.preventDefault();
         // 速查表开着时先关它，再按一次才动搜索/选中。
@@ -1301,7 +1321,7 @@ export default function Legion3DPage() {
       ref={wrapRef}
       tabIndex={0}
       onKeyDown={onKeyDown}
-      style={{ height: stageHeight ?? 'calc(100dvh - 7.5rem)' }}
+      style={{ height: isFullscreen ? '100dvh' : (stageHeight ?? 'calc(100dvh - 7.5rem)') }}
       className="relative w-full overflow-hidden bg-[var(--bg)] outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
       aria-label="军团 3D 网络拓扑"
       data-testid="legion-3d-stage"
@@ -1415,6 +1435,16 @@ export default function Legion3DPage() {
           className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
         >
           重置视角
+        </button>
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          aria-pressed={isFullscreen}
+          aria-label={isFullscreen ? '退出全屏' : '全屏查看'}
+          data-testid="legion-3d-fullscreen"
+          className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${isFullscreen ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+        >
+          {isFullscreen ? '退出全屏' : '全屏'}
         </button>
         <button
           type="button"

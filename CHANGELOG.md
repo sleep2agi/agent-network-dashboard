@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.62 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D
+
+- 新增全屏演示：按钮或 `F` 键把拓扑铺满整个屏幕（只剩画布、标题、图例），
+  适合会议室投屏与 PPT 取材；再点一次或 `Esc` 退出。全屏时画布随视口重新取景。
+
 ## 0.6.3-preview.61 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**，本条目在合并后应折叠进下一个稳定版）。
