@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
 import { useNetworkId } from '../lib/network-context';
+import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { buildOrgGroups, filterOrgPeople, type OrgGroup, type OrgDeptInput, type OrgMemberInput } from '../lib/org-tree';
 import { buildAliasUserMap, buildUserDeptMap, collectDeptSubtree, taskInDept } from '../lib/dept-task-filter';
 
@@ -194,11 +195,11 @@ function OrgContent() {
   }, [q, networkId]);
 
   // 网络解析完成之前不发请求：否则首帧会发一次没有 scope 的请求（多网络账号会 400）。
-  useEffect(() => { if (!networkReady) return; load(0, false); }, [load, networkReady]);
+  useEffect(() => { if (!networkReady || !networkId) return; load(0, false); }, [load, networkReady, networkId]);
 
   // 部门树单独拉：404 = 这版 Hub 没有这条路由（能力缺失），不是错误。
   useEffect(() => {
-    if (!networkReady) return;
+    if (!networkReady || !networkId) return;
     let alive = true;
     (async () => {
       try {
@@ -365,6 +366,8 @@ function OrgContent() {
               <div key={i} className="h-16 animate-pulse rounded-lg bg-[var(--bg-secondary)]" />
             ))}
           </div>
+        ) : networkReady && !networkId ? (
+          <NetworkRequiredNotice />
         ) : people.length === 0 && !error && !needsLogin ? (
           <EmptyState
             variant="nodes"
