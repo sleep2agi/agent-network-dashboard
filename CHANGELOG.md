@@ -6,6 +6,28 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.61 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**，本条目在合并后应折叠进下一个稳定版）。
+
+### 军团（Legion）
+
+- 新增 `/legion`（2D 同心环）与 `/legion/3d`（Canvas 3D 网络拓扑）：部门树任意层级、折叠/展开、血脉高亮、部门聚焦、缩放平移、导出 PNG（标题/图例/时间）。
+- 3D：星野/部门扇区/地面网格/核心呼吸/双向数据包/环上彗星/深度雾化；拖动、滚轮、双指、键盘、双击、`/` 搜索、`R` 重置；>80 / >250 节点两档降级，408 节点交互仍 60fps。
+- 自动取景：首屏/重置/结构变化时按投影包围盒取景 82%（手机 82%），408 节点不再被裁掉。
+- 深链：`?focus=<部门名>`、`?node=<名字>` 两页同口径，聚焦/选中写回地址；详情卡「复制链接」复制可直接发给别人的地址。
+- 明度分层：人环 `--fg`、Agent 环 `--fg-muted`，不新增颜色。
+
+### 可访问性与一致性
+
+- 全站 skip link「跳到主内容」；`:focus-visible` 可见焦点；键盘可达军团两页（8 次 Tab + 4 次按键到部门详情）。
+- 对比度：`--fg-dim` 深/浅、浅色语义色全部提到 AA；四道纯 Node 门禁（color-ratchet / avatars / token-contrast / accent-text-ratchet）。
+- 主题化：Tasks / SkillHub / Servers / Providers / 设置 / 节点列表与详情 / 聊天面板 / 首页 KPI / 定时任务去装饰描边，颜色只走 token。
+
+### 任务与组织
+
+- `/tasks` 按部门筛选（通讯录投影，UI 标注「当前这批任务里的命中数」）；`/org` 真实部门树缩进、`?focus=` 深链、默认折叠与搜索全量过滤。
+
 ## 0.6.3 — 2026-07-31
 
 **156 commits across 51 previews (0.6.3-preview.0 … 0.6.3-preview.52), plus 2 skipped preview minors (0.6.1, 0.6.2 — never had a stable release, all their preview.N was folded into 0.6.3).**
