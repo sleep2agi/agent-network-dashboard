@@ -24,6 +24,7 @@ import { getAvatarUrl, useAvatarsVersion } from '../lib/avatars';
 import { legionFetcher as fetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
 import { useNetworkId } from '../lib/network-context';
+import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 
 /**
  * callback ref + ResizeObserver。
@@ -111,14 +112,14 @@ export default function LegionPage() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const { ref, size } = useElementSize<HTMLDivElement>();
 
-  const people = useSWR<PeopleResponse>(networkReady ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, fetcher, {
+  const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, fetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
   });
   const hierarchy = useSWR<DepartmentsResponse | null>(
-    networkReady ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
+    networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
   );
-  const status = useSWR<StatusResponse>(networkReady ? scopedUrl('/api/hub/status', networkId) : null, fetcher, {
+  const status = useSWR<StatusResponse>(networkReady && networkId ? scopedUrl('/api/hub/status', networkId) : null, fetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });
@@ -565,7 +566,9 @@ export default function LegionPage() {
   // 节点尺寸随画布缩放：1280 下取 1，375 下约 0.66。不缩的话部门圆直径
   // 44px 会大于环差，父子部门在窄屏上叠成一坨（实测 375 下圆心只差 29px）。
   const nodeScale = Math.max(0.62, Math.min(1, Math.min(size.width, size.height) / 520));
-  const loading = (people.isLoading && !people.data) || hierarchy.isLoading;
+  // 网络还没确定时也计入 loading：否则 SWR 的 null key 让 isLoading=false，
+  // 页面会误显示「军团还没有成员」。
+  const loading = !networkReady || (people.isLoading && !people.data) || hierarchy.isLoading;
   const error = legionReadError(people.error, hierarchy.error);
 
   return (
@@ -742,6 +745,8 @@ export default function LegionPage() {
           <div className="flex h-[62vh] min-h-[420px] items-center justify-center rounded-xl bg-[var(--bg-secondary)]">
             <div className="h-40 w-40 animate-pulse rounded-full border border-[var(--border)]" />
           </div>
+        ) : networkReady && !networkId ? (
+          <NetworkRequiredNotice />
         ) : !error && layout.stats.people === 0 && layout.stats.orphans === 0 && layout.stats.groups === 0 ? (
           <EmptyState
             variant="nodes"

@@ -23,6 +23,7 @@ import { buildLegionLayout, nearestDept, deptWorldRadius, type LegionNode } from
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
+import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
@@ -251,15 +252,15 @@ export default function Legion3DPage() {
   const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
 
-  const people = useSWR<PeopleResponse>(networkReady ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
+  const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
   });
-  const hierarchy = useSWR<DepartmentsResponse | null>(networkReady ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
+  const hierarchy = useSWR<DepartmentsResponse | null>(networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000,
     shouldRetryOnError: false,
   });
-  const status = useSWR<StatusResponse>(networkReady ? scopedUrl('/api/hub/status', networkId) : null, legionFetcher, {
+  const status = useSWR<StatusResponse>(networkReady && networkId ? scopedUrl('/api/hub/status', networkId) : null, legionFetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });
@@ -1565,9 +1566,14 @@ export default function Legion3DPage() {
 
   /* ── 页面 ───────────────────────────────────────────────────────── */
 
-  const loading = people.isLoading || hierarchy.isLoading || status.isLoading;
+  // 网络未确定 ⇒ 也算 loading（null key 时 SWR 的 isLoading 是 false，会把等待误判成「空」）
+  const loading = !networkReady || people.isLoading || hierarchy.isLoading || status.isLoading;
   const readError = legionReadError(people.error, hierarchy.error);
-  const fatal = readError?.status === 401 ? 'login' : readError ? 'error' : null;
+  // #73 —— 不再维护 needsLogin 这个「只置位不清零」的 state：SWR 成功后 error 会自己清掉，
+  // 直接派生就能「登录恢复后立刻收起过期提示」。no-network 分支是 #72 的网络就绪判定。
+  const fatal = readError?.status === 401 ? 'login'
+    : networkReady && !networkId ? 'no-network'
+    : readError ? 'error' : null;
   const isEmpty = !loading && !fatal && people.data != null && layout.nodes.length <= 1;
 
   const path = useMemo(() => {
@@ -2030,6 +2036,11 @@ export default function Legion3DPage() {
       )}
 
       {/* 三态：只在真·空/真·错时覆盖画布，不用空态掩盖故障 */}
+      {fatal === 'no-network' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6">
+          <NetworkRequiredNotice className="max-w-md" />
+        </div>
+      )}
       {fatal === 'login' && (
         <div role="alert" className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6 text-center">
           <p className="text-sm text-[var(--warning)]">

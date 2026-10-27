@@ -5,6 +5,7 @@ import Link from 'next/link';
 import useSWR from 'swr';
 import { legionFetcher, deptFetcher, legionReadError, type PeopleResponse, type DepartmentsResponse, scopedUrl } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
+import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { buildLegionLayout } from '../../lib/legion-layout';
 import { getAvatarUrl, useAvatarsVersion } from '../../lib/avatars';
 
@@ -46,9 +47,9 @@ export default function LegionPlazaPage() {
   // #1636-P1 —— 当前选中网络拼进 SWR key。
   const { networkId, ready: networkReady } = useNetworkId();
   const { data: peopleData, error: peopleError, isLoading, mutate: mutatePeople } = useSWR<PeopleResponse>(
-    networkReady ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, { refreshInterval: 30000, shouldRetryOnError: false },
+    networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, { refreshInterval: 30000, shouldRetryOnError: false },
   );
-  const { data: hierarchy, error: hierarchyError, isLoading: hierarchyLoading, mutate: mutateHierarchy } = useSWR<DepartmentsResponse | null>(networkReady ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
+  const { data: hierarchy, error: hierarchyError, isLoading: hierarchyLoading, mutate: mutateHierarchy } = useSWR<DepartmentsResponse | null>(networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000, shouldRetryOnError: false,
   });
   // manifest 拉完会派发事件；订阅后头像才会从首字母换成图片。
@@ -119,9 +120,11 @@ export default function LegionPlazaPage() {
     return { platform: p, x, y, scale };
   });
 
-  const loading = isLoading || hierarchyLoading;
+  const loading = !networkReady || isLoading || hierarchyLoading;
   const readError = legionReadError(peopleError, hierarchyError);
-  const fatal = readError?.status === 401 ? 'login' : readError ? 'error' : null;
+  const fatal = readError?.status === 401 ? 'login'
+    : networkReady && !networkId ? 'no-network'
+    : readError ? 'error' : null;
   const isEmpty = !loading && !fatal && peopleData != null && platforms.length === 0;
 
   return (
@@ -153,6 +156,7 @@ export default function LegionPlazaPage() {
           </div>
         </div>
 
+        {fatal === 'no-network' && <NetworkRequiredNotice />}
         {fatal === 'login' && (
           <p role="alert" className="rounded-lg bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--warning)]">
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团。

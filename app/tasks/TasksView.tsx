@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useNetworkId } from '../lib/network-context';
+import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { EmptyState } from '../components/EmptyState';
 import { TaskList, type TaskListItem } from '../components/TaskList';
 import { TaskDetail } from '../components/TaskDetail';
@@ -145,9 +146,13 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   }, []);
 
   const fetchTasks = useCallback(async () => {
+    // #1636-P1 —— 网络没确定（解析中，或解析完但为空）就**不发请求**：
+    // 原来这里没 gate，首帧会发 /api/hub/tasks?limit=100（无 scope），
+    // 多网络账号会 400、单网络账号会先渲染出无 scope 的数据。
+    if (!networkReady || !networkId) return;
     try {
       const params = new URLSearchParams();
-      if (networkId) params.set('network_id', networkId);
+      params.set('network_id', networkId);
       if (filterStatus) params.set('status', filterStatus);
       if (filterFrom) params.set('from_name', filterFrom);
       if (filterTo) params.set('to_name', filterTo);
@@ -172,36 +177,33 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterFrom, filterTo, networkId]);
+  }, [filterStatus, filterFrom, filterTo, networkId, networkReady]);
 
   useEffect(() => {
+    if (!networkReady || !networkId) return;   // 等网络确定再拉，避免无 scope 请求
     setLoading(true);
     fetchTasks();
     const interval = setInterval(fetchTasks, 5000);
     return () => clearInterval(interval);
-  }, [fetchTasks]);
+  }, [fetchTasks, networkReady, networkId]);
 
   // 通讯录与部门树：只为了把 alias 落到部门上。失败就让下拉框空着，
   // 不阻塞任务列表本身（任务能读、部门筛选不可用，是可接受的降级）。
   useEffect(() => {
-    if (!networkReady) return;   // 网络未解析完先不发请求（否则首帧是无 scope 请求）
+    if (!networkReady || !networkId) return;   // 网络未确定就不发（空 id 也会退化成无 scope 请求）
     let alive = true;
     void (async () => {
       try {
         // #1636-P1 —— people 也要按当前网络读：不带 network_id 时多网络账号会被 400，
         // 而且部门筛选会用上一个网络的通讯录投影。
-        const url = networkId
-          ? `/api/hub/people?limit=200&offset=0&network_id=${encodeURIComponent(networkId)}`
-          : '/api/hub/people?limit=200&offset=0';
+        const url = `/api/hub/people?limit=200&offset=0&network_id=${encodeURIComponent(networkId)}`;
         const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) return;
         const json = await res.json();
         if (alive) setPeople(json?.people ?? []);
       } catch { /* 通讯录读不到时部门筛选自然为空 */ }
       try {
-        const deptUrl = networkId
-          ? `/api/hub/departments?network_id=${encodeURIComponent(networkId)}`
-          : '/api/hub/departments';
+        const deptUrl = `/api/hub/departments?network_id=${encodeURIComponent(networkId)}`;
         const res = await fetch(deptUrl, { cache: 'no-store' });
         if (res.status === 404) return; // 老 Hub 没这条路由：保持 null，回退扁平部门名
         if (!res.ok) return;
@@ -409,7 +411,11 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto">
-          {loading ? (
+          {networkReady && !networkId ? (
+            <div className="px-3 py-6">
+              <NetworkRequiredNotice />
+            </div>
+          ) : loading ? (
             <div className="animate-pulse space-y-1 px-3 py-2">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <div key={i} className="h-14 rounded bg-[var(--bg-elevated)]" />
