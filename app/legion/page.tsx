@@ -82,6 +82,8 @@ export default function LegionPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   // 净屏（和 3D 同口径）：隐掉头部与右侧面板，只留环图；Esc 恢复。
   const [cleanView, setCleanView] = useState(false);
+  // 与 3D 一致：图例即筛选，只看某个状态的 Agent。
+  const [statusOnly, setStatusOnly] = useState<'working' | 'idle' | 'offline' | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
@@ -276,7 +278,7 @@ export default function LegionPage() {
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [selected, canCollapse, toggleCollapse, query, layout.nodes, router, helpOpen]);
+  }, [selected, canCollapse, toggleCollapse, query, layout.nodes, router, helpOpen, statusOnly]);
 
   // 从 /org 的「在军团图里看」跳过来：/legion?focus=<部门名>
   // 用 location.search 而不是 useSearchParams，避免这个客户端页要额外包 Suspense。
@@ -357,6 +359,20 @@ export default function LegionPage() {
     document.addEventListener('fullscreenchange', onFs);
     return () => document.removeEventListener('fullscreenchange', onFs);
   }, []);
+
+  // 筛选开着时单独挂 Esc：主键盘处理器是 capture 阶段注册的，和全站
+  // （HelpOverlay / CommandPalette）的 Esc 抢事件，实测收不到。
+  useEffect(() => {
+    if (!statusOnly) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      setStatusOnly(null);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [statusOnly]);
 
   useEffect(() => {
     if (!cleanView) return;
@@ -844,7 +860,7 @@ export default function LegionPage() {
                       <g
                         key={node.id}
                         transform={`translate(${p.x} ${p.y})`}
-                        opacity={dim ? 0.35 : 1}
+                        opacity={dim || (statusOnly && node.kind === 'agent' && (statusValue ?? 'offline') !== statusOnly) ? 0.18 : 1}
                         tabIndex={0}
                         role="button"
                         aria-label={`${ringLabel(node)} ${node.label}`}
@@ -967,15 +983,25 @@ export default function LegionPage() {
                 {/* 和 3D 页、导出图用同一套中文图例（之前这里是 working/idle/offline，
                     同一张图在页面上是英文、导出后是中文）。 */}
                 {([
-                  ['运行中', 'var(--success)'],
-                  ['空闲', 'var(--info)'],
-                  ['离线 / 未上报', 'var(--fg-dim)'],
-                ] as const).map(([label, color]) => (
-                  <span key={label} className="inline-flex items-center gap-1">
-                    <i aria-hidden className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: color }} />
-                    {label}
-                  </span>
-                ))}
+                  ['working', '运行中', 'var(--success)'],
+                  ['idle', '空闲', 'var(--info)'],
+                  ['offline', '离线 / 未上报', 'var(--fg-dim)'],
+                ] as const).map(([key, label, color]) => {
+                  const active = statusOnly === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setStatusOnly(active ? null : key)}
+                      aria-pressed={active}
+                      data-testid={`legion-filter-${key}`}
+                      className={`inline-flex items-center gap-1 rounded px-1 py-0.5 transition-colors ${active ? 'bg-[var(--accent)]/15 text-[var(--fg)]' : 'hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+                    >
+                      <i aria-hidden className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.76 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 2D
+
+- 图例同样可点筛选（运行中 / 空闲 / 离线 · 未上报），未命中的 Agent 压到 0.18；
+  与 3D 同口径，`Esc` 清除。2D 的 Esc 单独挂了监听（主键盘处理器与全站 Esc 抢事件，
+  实测收不到）。
+
 ## 0.6.3-preview.75 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

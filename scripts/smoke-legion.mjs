@@ -431,6 +431,20 @@ clean2dOn.h === 'hidden' && clean2dOn.panel === 0 && clean2dOff === 'visible'
   ? pass('2D 净屏隐藏界面 / Esc 恢复', clean2dOn)
   : fail('2D 净屏隐藏界面 / Esc 恢复', { clean2dOn, clean2dOff });
 
+// 2D 图例同样可筛选：点「运行中」→ 有节点被压到 0.18；Esc 清
+const dim2d = () => page.evaluate(() => [...document.querySelectorAll('svg g[role="button"]')]
+  .map(g => Number(getComputedStyle(g).opacity)).filter(v => Math.abs(v - 0.18) < 0.01).length);
+await page.getByTestId('legion-filter-working').click();
+await page.waitForTimeout(400);
+const dimmedOn = await dim2d();
+const pressed2d = await page.getByTestId('legion-filter-working').getAttribute('aria-pressed');
+await page.keyboard.press('Escape');
+await page.waitForTimeout(400);
+const dimmedOff = await dim2d();
+dimmedOn > 0 && dimmedOff === 0 && pressed2d === 'true'
+  ? pass('2D 图例可当状态筛选（Esc 清）', { dimmedOn, dimmedOff })
+  : fail('2D 图例可当状态筛选（Esc 清）', { dimmedOn, dimmedOff, pressed2d });
+
 // 375 窄屏：/org 的徽标与折叠按钮不把页面撑宽
 await page.setViewportSize({ width: 375, height: 812 });
 await page.goto(`${BASE}/org`, { waitUntil: 'networkidle' });
