@@ -8,24 +8,22 @@
  *   而自由旋转的 3D 会让人丢方向感。所以这里用 SVG 手工投影，不引 three.js
  *   （体积从 736 KB → 约 70 KB，文字永远清晰）。
  *
- * 分组口径与 2D 一致：按 alias 公共前缀（≥2 字符）聚合，不引新接口。
- *   → 等 Hub 提供部门接口后，这里换成 department_id 即可，组件形状不变。
+ * 几何与分组逻辑在 `app/lib/topology-3d.ts`（纯函数，有单测）：
+ *   布局按 label 字典序排，不按人数——dashboard 每 15s 刷新，按人数排会让整张图跳。
  *
  * 颜色规则（两套色不混用）：
  *   面 = 编队色（区分军团）   环 = 状态色（区分死活）
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Session } from './types';
+import { computeUnits, initialOf, iso, planGrid } from '../lib/topology-3d';
 
-const ISO_X = 0.866;
-const ISO_Y = 0.5;
-
-/** 编队底色（低饱和）与其标签色（高饱和） */
-const PALETTE: Array<[string, string]> = [
-  ['#e8f2ec', '#3fae7d'], ['#e7effc', '#5b8dfa'], ['#fdeaf3', '#e573a8'], ['#e6f4f2', '#3fb3a6'],
-  ['#eef0fd', '#7b7bf0'], ['#f3ecfb', '#a978f2'], ['#fdf0e6', '#e09a3c'], ['#e9f3fb', '#4f9bc4'],
-  ['#f0f4e8', '#8ba845'], ['#fbeaf6', '#d46a9c'], ['#eaf0f4', '#6d879c'], ['#f2f2f5', '#9aa1ad'],
+/** 编队色（深色底上用作描边/标签；面用同色 10% 填充） */
+const PALETTE: string[] = [
+  '#3fae7d', '#5b8dfa', '#e573a8', '#3fb3a6',
+  '#7b7bf0', '#a978f2', '#e09a3c', '#4f9bc4',
+  '#8ba845', '#d46a9c', '#6d879c', '#9aa1ad',
 ];
 
 const STATUS_RING: Record<string, string> = {
@@ -42,82 +40,31 @@ const STATUS_CN: Record<string, string> = {
 
 interface Props {
   sessions: Session[];
-  /** 平台每行头像数（默认 5） */
   perRow?: number;
-  /** 每个平台最多展示的头像数，其余折叠为 +N（默认 20） */
   maxPerUnit?: number;
 }
 
-interface Unit {
-  key: string;
-  label: string;
-  members: Session[];
-  color: [string, string];
-}
-
-function commonPrefix(a: string, b: string): string {
-  let i = 0;
-  while (i < a.length && i < b.length && a[i] === b[i]) i++;
-  return a.slice(0, i);
-}
-
-/** 与 2D 版一致的公共前缀聚合：前缀 ≥2 字符才并组 */
-export function computeUnits(sessions: Session[]): Unit[] {
-  const order = sessions
-    .map((s, i) => ({ s, i }))
-    .sort((x, y) => String(x.s.alias).localeCompare(String(y.s.alias)));
-  const parent = new Map<number, number>();
-  const find = (x: number): number => {
-    const p = parent.get(x) ?? x;
-    return p === x ? x : (parent.set(x, find(p)), find(p));
-  };
-  const union = (a: number, b: number) => {
-    const ra = find(a), rb = find(b);
-    if (ra !== rb) parent.set(ra, rb);
-  };
-
-  for (let k = 0; k + 1 < order.length; k++) {
-    const a = String(order[k].s.alias), b = String(order[k + 1].s.alias);
-    if (commonPrefix(a, b).length >= 2) union(order[k].i, order[k + 1].i);
-  }
-
-  const groups = new Map<number, Session[]>();
-  sessions.forEach((s, i) => {
-    const root = find(i);
-    const arr = groups.get(root) ?? [];
-    arr.push(s);
-    groups.set(root, arr);
-  });
-
-  const units: Unit[] = [];
-  let n = 0;
-  for (const members of groups.values()) {
-    const sorted = members.slice().sort((x, y) => String(x.alias).localeCompare(String(y.alias)));
-    let label = '未编队';
-    if (sorted.length > 1) label = commonPrefix(String(sorted[0].alias), String(sorted[sorted.length - 1].alias)) || '未编队';
-    else label = String(sorted[0].alias).slice(0, 4) || '未编队';
-    units.push({ key: `${label}#${n}`, label, members: sorted, color: PALETTE[n % PALETTE.length] as [string, string] });
-    n++;
-  }
-  units.sort((a, b) => b.members.length - a.members.length);
-  return units;
-}
-
-function initialOf(alias: string): string {
-  const s = String(alias || '?').trim();
-  const cjk = s.match(/[\u4e00-\u9fa5]/);
-  if (cjk) return cjk[0];
-  return s[0] ? s[0].toUpperCase() : '?';
+/** 系统级"减少动态效果"偏好：呼吸动画必须可关（前庭敏感用户） */
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setReduced(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+  return reduced;
 }
 
 export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
   const [selected, setSelected] = useState<Session | null>(null);
+  const reducedMotion = useReducedMotion();
 
   const layout = useMemo(() => {
     const units = computeUnits(sessions);
     const COLS = 4, STEP = 330, ORIGIN = { x: 800, y: 360 };
     const W = 250, D = 190;
-    const iso = (x: number, y: number) => ({ x: (x - y) * ISO_X, y: (x + y) * ISO_Y });
 
     const bound = { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity };
     const grow = (p: { x: number; y: number }, pad = 0) => {
@@ -136,19 +83,19 @@ export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
       quad.forEach((q) => grow(q, 10));
       const center = iso(gx, gy);
 
-      const shown = u.members.slice(0, maxPerUnit);
-      const extra = u.members.length - shown.length;
-      const dots = shown.map((s, i) => {
-        const cx = gx - W / 2 + 40 + (i % perRow) * 34;
-        const cy = gy - D / 2 + 38 + Math.floor(i / perRow) * 32;
-        const p = iso(cx, cy);
+      const plan = planGrid(u.members.length, perRow, maxPerUnit);
+      const dots = u.members.slice(0, plan.shown).map((s, i) => {
+        const p = iso(
+          gx - W / 2 + 40 + (i % perRow) * 34,
+          gy - D / 2 + 38 + Math.floor(i / perRow) * 32,
+        );
         grow(p, 18);
         return { s, p };
       });
       const labelPos = iso(gx, gy + D / 2 + 26);
       grow(labelPos, 24);
 
-      return { unit: u, quad, center, dots, extra, labelPos };
+      return { unit: u, quad, center, dots, extra: plan.extra, labelPos, color: PALETTE[u.colorIndex % PALETTE.length] };
     });
 
     const hubX = (bound.x1 + bound.x2) / 2;
@@ -167,6 +114,15 @@ export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
 
   const working = sessions.filter((s) => s.status === 'working').length;
   const online = sessions.filter((s) => s.status !== 'offline').length;
+
+  if (sessions.length === 0) {
+    return (
+      <div className="flex h-[calc(100vh-56px)] flex-col items-center justify-center gap-1 bg-[var(--bg)]">
+        <div className="text-sm font-medium text-[var(--fg)]">还没有可展示的 Agent</div>
+        <div className="text-xs text-[var(--fg-muted)]">连上 Hub 并启动节点后，这里会自动出现军团拓扑</div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-[calc(100vh-56px)] w-full overflow-hidden bg-[var(--bg)]">
@@ -188,10 +144,10 @@ export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
         <div className="mt-1 text-xs text-[var(--fg-muted)]">面 = 编队 · 环 = 状态</div>
       </div>
 
-      <svg viewBox={layout.viewBox} className="h-full w-full" role="img" aria-label="Agent 军团拓扑（等距）">
+      <svg viewBox={layout.viewBox} className="h-full w-full" role="img" aria-label="Agent 军团拓扑（等距平台）">
         <defs>
           <filter id="tg3d-soft" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="10" stdDeviation="14" floodColor="#1a2233" floodOpacity="0.10" />
+            <feDropShadow dx="0" dy="10" stdDeviation="14" floodColor="#000000" floodOpacity="0.45" />
           </filter>
           <linearGradient id="tg3d-hub" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#2f6bf6" /><stop offset="100%" stopColor="#1a4fd6" />
@@ -205,9 +161,9 @@ export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
             <g key={`l-${p.unit.key}`}>
               <path
                 d={`M${layout.hub.x} ${layout.hub.y} Q${mid.x.toFixed(0)} ${mid.y.toFixed(0)} ${p.center.x.toFixed(0)} ${(p.center.y - 30).toFixed(0)}`}
-                fill="none" stroke={p.unit.color[1]} strokeOpacity={0.38} strokeWidth={1.6}
+                fill="none" stroke={p.color} strokeOpacity={0.38} strokeWidth={1.6}
               />
-              <circle cx={p.center.x} cy={p.center.y - 30} r={3} fill={p.unit.color[1]} fillOpacity={0.8} />
+              <circle cx={p.center.x} cy={p.center.y - 30} r={3} fill={p.color} fillOpacity={0.8} />
             </g>
           );
         })}
@@ -218,13 +174,13 @@ export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
           const pts = p.quad.map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ');
           return (
             <g key={`p-${p.unit.key}`}>
-              <polygon points={`${q1.x},${q1.y} ${q2.x},${q2.y} ${q2.x},${q2.y + 10} ${q1.x},${q1.y + 10}`} fill={p.unit.color[1]} fillOpacity={0.16} />
-              <polygon points={`${q2.x},${q2.y} ${q3.x},${q3.y} ${q3.x},${q3.y + 10} ${q2.x},${q2.y + 10}`} fill={p.unit.color[1]} fillOpacity={0.26} />
-              <polygon points={pts} fill={p.unit.color[1]} fillOpacity={0.10} stroke={p.unit.color[1]} strokeOpacity={0.55} strokeWidth={1.2} filter="url(#tg3d-soft)" />
+              <polygon points={`${q1.x},${q1.y} ${q2.x},${q2.y} ${q2.x},${q2.y + 10} ${q1.x},${q1.y + 10}`} fill={p.color} fillOpacity={0.16} />
+              <polygon points={`${q2.x},${q2.y} ${q3.x},${q3.y} ${q3.x},${q3.y + 10} ${q2.x},${q2.y + 10}`} fill={p.color} fillOpacity={0.26} />
+              <polygon points={pts} fill={p.color} fillOpacity={0.1} stroke={p.color} strokeOpacity={0.55} strokeWidth={1.2} filter="url(#tg3d-soft)" />
               {p.dots.map(({ s, p: pos }) => (
-                <g key={s.alias + (s.node_id ?? '')} onClick={() => setSelected(s)} style={{ cursor: 'pointer' }}>
+                <g key={`${s.alias}-${s.node_id ?? ''}`} onClick={() => setSelected(s)} style={{ cursor: 'pointer' }}>
                   <circle cx={pos.x} cy={pos.y} r={14} fill="var(--bg-elevated)" stroke={STATUS_RING[s.status] ?? '#b8bec9'} strokeWidth={2.5}>
-                    {s.status === 'working' && (
+                    {s.status === 'working' && !reducedMotion && (
                       <animate attributeName="opacity" values="0.55;1;0.55" dur="2.2s" repeatCount="indefinite" />
                     )}
                   </circle>
@@ -240,9 +196,9 @@ export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
                 x={p.labelPos.x - Math.max(48, p.unit.label.length * 15 + 14)}
                 y={p.labelPos.y - 13}
                 width={Math.max(96, p.unit.label.length * 15 + 28)}
-                height={26} rx={13} fill={p.unit.color[1]}
+                height={26} rx={13} fill={p.color}
               />
-              <text x={p.labelPos.x} y={p.labelPos.y + 4} textAnchor="middle" fontSize={12} fontWeight={600} fill="#fff">
+              <text x={p.labelPos.x} y={p.labelPos.y + 4} textAnchor="middle" fontSize={12} fontWeight={600} fill="#ffffff">
                 {p.unit.label} · {p.unit.members.length}
               </text>
             </g>
@@ -256,7 +212,7 @@ export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
           <text x={layout.hub.x} y={layout.hub.y - 87} textAnchor="middle" fontSize={10.5} fill="var(--fg-muted)">下达目标 · 把关交付</text>
           <line x1={layout.hub.x} y1={layout.hub.y - 86} x2={layout.hub.x} y2={layout.hub.y - 60} stroke="var(--border)" strokeWidth={1.6} />
           <circle cx={layout.hub.x} cy={layout.hub.y} r={42} fill="url(#tg3d-hub)" filter="url(#tg3d-soft)" />
-          <text x={layout.hub.x} y={layout.hub.y + 7} textAnchor="middle" fontSize={17} fontWeight={700} fill="#fff">ANet</text>
+          <text x={layout.hub.x} y={layout.hub.y + 7} textAnchor="middle" fontSize={17} fontWeight={700} fill="#ffffff">ANet</text>
           <text x={layout.hub.x} y={layout.hub.y + 64} textAnchor="middle" fontSize={12} fontWeight={600} fill="var(--fg)">ANet 调度中枢</text>
         </g>
       </svg>
@@ -266,7 +222,7 @@ export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
           <div className="mb-1 break-all font-semibold text-[var(--fg)]">{selected.alias}</div>
           <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-xs">
             <dt className="text-[var(--fg-muted)]">状态</dt>
-            <dd style={{ color: STATUS_RING[selected.status] ?? '#666' }}>{STATUS_CN[selected.status] ?? '未知'}</dd>
+            <dd style={{ color: STATUS_RING[selected.status] ?? 'var(--fg-muted)' }}>{STATUS_CN[selected.status] ?? '未知'}</dd>
             <dt className="text-[var(--fg-muted)]">运行时</dt>
             <dd className="break-all">{selected.runtime || selected.agent || '—'}</dd>
             <dt className="text-[var(--fg-muted)]">最后心跳</dt>
