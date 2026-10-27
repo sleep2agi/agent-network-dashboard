@@ -170,6 +170,12 @@ function OrgContent() {
   const [qInput, setQInput] = useState(q);
 
   const load = useCallback(async (nextOffset = 0, merge = false) => {
+    // #1636-P1 —— 代际保护：同一个 load 会写 data / offset / loading / error / needsLogin 五个状态，
+    // 旧响应（切网前的 A、或上一次搜索词）迟到时若直接落库，会把当前网络的列表**覆盖**成旧网络的人
+    // （实测：挂起 A 的 people 响应 → 切到 B → 放行 A ⇒ Person B 消失、B 的徽标也消失，且 20s 轮询救不回来）。
+    // 每次发起 +1，只有最新一代允许写状态；成功 / 401 / 错误 / 分页旧响应一视同仁。
+    const gen = ++peopleGen.current;
+    const isCurrent = () => peopleGen.current === gen;
     setLoading(true);
     setError('');
     try {
@@ -179,8 +185,10 @@ function OrgContent() {
       params.set('limit', String(PAGE));
       params.set('offset', String(nextOffset));
       const res = await fetch(`/api/hub/people?${params.toString()}`, { cache: 'no-store' });
+      if (!isCurrent()) return;
       if (res.status === 401) { setNeedsLogin(true); setData(null); return; }
       const json = await res.json();
+      if (!isCurrent()) return;
       if (!res.ok || !json.ok) { setError(json?.error || `hub_${res.status}`); return; }
       setNeedsLogin(false);
       setOffset(nextOffset);
@@ -188,9 +196,11 @@ function OrgContent() {
         ? { ...json, people: [...prev.people, ...json.people] }
         : json));
     } catch (e: unknown) {
+      if (!isCurrent()) return;
       setError(e instanceof Error ? e.message : 'fetch failed');
     } finally {
-      setLoading(false);
+      // 旧代际不能把 loading 关掉（新请求还在飞）；否则会闪一下骨架
+      if (isCurrent()) setLoading(false);
     }
   }, [q, networkId]);
 
@@ -235,6 +245,8 @@ function OrgContent() {
   // 是「当前这批任务里的命中数」，不是部门全量，标题里写明。
   // 切网时用于丢弃旧网络的在途响应（每次换网 +1）。
   const tasksCountGen = useRef(0);
+  // people 列表的代际号：切网 / 换搜索词会让旧响应作废（见 load 注释）。
+  const peopleGen = useRef(0);
   const [tasksForCount, setTasksForCount] = useState<Array<{ from_name?: string; to_name?: string; from_alias?: string; to_alias?: string }>>([]);
   useEffect(() => {
     // #1636-P1（P1）—— 这页的任务数徽标也必须按当前网络读：
