@@ -6,6 +6,21 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.65 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 2D
+
+- 新增**净屏**：隐藏头部与右侧面板，只留环图，`Esc` 恢复（与 3D 同口径）。
+- 人环描边改用 `--fg`：与 3D 的「人环亮、Agent 环淡」一致；之前用 `--border-hover`，
+  100 人时内圈是一圈黑点，看不出「人」这一层。
+
+### 门禁
+
+- 新增 `check-no-build-artifacts`：被 git 跟踪的路径里不允许出现 `.next*` /
+  `node_modules` 等构建产物（2026-10-27 那次「`.next.prev-*` 进仓库导致构建失败」的防回归）。
+
 ## 0.6.3-preview.64 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

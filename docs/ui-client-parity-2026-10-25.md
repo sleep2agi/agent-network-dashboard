@@ -981,3 +981,10 @@ skip link 上线后复走一遍，全程只用键盘：
   反复 detach/attach → measure → setSize → 重渲染，直接 `Maximum update depth exceeded`。
 - 冒烟新增「2D 全屏进入/退出」，当前 **25/25**。
 
+### 2D 净屏 + 人环明度（2026-10-27）
+
+- 净屏：头部 `invisible`、面板 `hidden`、图例隐藏，舞台拉到 `100dvh-3rem`；`Esc` 恢复。
+- 人环描边 `--border-hover → --fg`：和 3D 的明度分层一致（人环亮、Agent 环淡），
+  100 人时内圈不再是一圈黑点。
+- 冒烟新增「2D 净屏隐藏界面 / Esc 恢复」，当前 **26/26**。
+

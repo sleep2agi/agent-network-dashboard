@@ -80,6 +80,8 @@ export default function LegionPage() {
   const [selected, setSelected] = useState<string | null>(null);
   // 全屏演示（和 3D 页同口径）：把 2D 图铺满视口，会议室/PPT 用。
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // 净屏（和 3D 同口径）：隐掉头部与右侧面板，只留环图；Esc 恢复。
+  const [cleanView, setCleanView] = useState(false);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
@@ -356,6 +358,18 @@ export default function LegionPage() {
     return () => document.removeEventListener('fullscreenchange', onFs);
   }, []);
 
+  useEffect(() => {
+    if (!cleanView) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      setCleanView(false);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [cleanView]);
+
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {
     setView(v => {
@@ -523,7 +537,7 @@ export default function LegionPage() {
   return (
     <div ref={pageRef} className={`min-h-screen bg-[var(--bg)] text-[var(--fg)] ${isFullscreen ? 'h-[100dvh] overflow-auto' : ''}`}>
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className={`mb-4 flex flex-wrap items-end justify-between gap-3 ${cleanView ? 'invisible' : 'visible'}`}>
           <div>
             <h1 className="text-lg font-semibold text-white">Legion</h1>
             <p className="mt-1 text-xs text-[var(--fg-muted)]">
@@ -589,6 +603,16 @@ export default function LegionPage() {
               className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${isFullscreen ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
             >
               {isFullscreen ? '退出全屏' : '全屏'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCleanView(v => !v)}
+              aria-pressed={cleanView}
+              aria-label={cleanView ? '恢复界面' : '净屏（隐藏界面）'}
+              data-testid="legion-clean"
+              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+            >
+              {cleanView ? '恢复界面' : '净屏'}
             </button>
             <button
               type="button"
@@ -684,10 +708,10 @@ export default function LegionPage() {
             sub="成员加入网络并绑定 Agent 后，这里会自动长出编制。"
           />
         ) : needsLogin || error ? null : (
-          <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+          <div className={`grid gap-4 ${cleanView ? 'lg:grid-cols-1' : 'lg:grid-cols-[1fr_280px]'}`}>
             <div
               ref={stageCallbackRef}
-              className={`relative overflow-hidden rounded-xl bg-[var(--bg-secondary)] ${isFullscreen ? 'h-[calc(100dvh-10rem)] min-h-[420px]' : 'h-[62vh] min-h-[420px]'}`}
+              className={`relative overflow-hidden rounded-xl bg-[var(--bg-secondary)] ${cleanView ? 'h-[calc(100dvh-3rem)]' : isFullscreen ? 'h-[calc(100dvh-10rem)] min-h-[420px]' : 'h-[62vh] min-h-[420px]'}`}
               onWheel={onWheel}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
@@ -891,7 +915,7 @@ export default function LegionPage() {
                           </>
                         ) : node.kind === 'person' ? (
                           <>
-                            <circle r={r} fill="var(--bg)" stroke={isSelected ? 'var(--hl)' : 'var(--border-hover)'} strokeWidth={isSelected ? 2 : 1} />
+                            <circle r={r} fill="var(--bg)" stroke={isSelected ? 'var(--hl)' : 'var(--fg)'} strokeWidth={isSelected ? 2 : 1} />
                             {layout.stats.people <= LEGION_LABEL_PEOPLE && (
                               <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)] font-medium" style={{ fontSize: 9 * labelScale }}>
                                 {(node.label || '?').slice(0, 1).toUpperCase()}
@@ -932,7 +956,7 @@ export default function LegionPage() {
                 </g>
               </svg>
 
-              <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-lg bg-[var(--bg)]/80 p-1 backdrop-blur">
+              <div className={`absolute bottom-3 left-3 flex items-center gap-1 rounded-lg bg-[var(--bg)]/80 p-1 backdrop-blur ${cleanView ? 'hidden' : ''}`}>
                 <button type="button" onClick={() => zoomBy(1.2)} aria-label="放大" className="rounded px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">＋</button>
                 <button type="button" onClick={() => zoomBy(1 / 1.2)} aria-label="缩小" className="rounded px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">－</button>
                 <button type="button" onClick={reset} aria-label="重置视图" className="rounded px-2 py-1 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">重置</button>
@@ -946,7 +970,7 @@ export default function LegionPage() {
               </div>
             </div>
 
-            <aside data-testid="legion-panel" role="status" aria-live="polite" className="rounded-xl bg-[var(--bg-secondary)] p-4">
+            <aside data-testid="legion-panel" data-clean={cleanView ? '1' : '0'} role="status" aria-live="polite" className={`rounded-xl bg-[var(--bg-secondary)] p-4 ${cleanView ? 'hidden' : ''}`}>
               <div className="flex items-baseline justify-between">
                 <h2 className="text-xs uppercase tracking-wide text-[var(--fg-muted)]">
                   {selectedNode ? ringLabel(selectedNode) : '编制'}

@@ -372,6 +372,27 @@ fs2dOn.on && fs2dOn.label.includes('退出') && !fs2dOff
   ? pass('2D 全屏进入/退出', fs2dOn)
   : fail('2D 全屏进入/退出', { fs2dOn, fs2dOff });
 
+// 2D 净屏：头部与右侧面板隐藏，Esc 恢复
+await page.getByTestId('legion-clean').click();
+await page.waitForTimeout(500);
+const clean2dOn = await page.evaluate(() => {
+  const h = document.querySelector('h1');
+  const panel = document.querySelector('[data-testid="legion-panel"]');
+  return {
+    h: h ? getComputedStyle(h).visibility : null,
+    panel: panel ? Math.round(panel.getBoundingClientRect().width) : null,
+  };
+});
+await page.keyboard.press('Escape');
+await page.waitForTimeout(500);
+const clean2dOff = await page.evaluate(() => {
+  const h = document.querySelector('h1');
+  return h ? getComputedStyle(h).visibility : null;
+});
+clean2dOn.h === 'hidden' && clean2dOn.panel === 0 && clean2dOff === 'visible'
+  ? pass('2D 净屏隐藏界面 / Esc 恢复', clean2dOn)
+  : fail('2D 净屏隐藏界面 / Esc 恢复', { clean2dOn, clean2dOff });
+
 // 375 窄屏：/org 的徽标与折叠按钮不把页面撑宽
 await page.setViewportSize({ width: 375, height: 812 });
 await page.goto(`${BASE}/org`, { waitUntil: 'networkidle' });
