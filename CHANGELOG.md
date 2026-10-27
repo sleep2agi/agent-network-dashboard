@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.101 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 · 平台视角
+
+- 头像变成「黑长条」：每行头像的背景圆把上一行盖住了（行距小于圆径）。去掉有头像时的
+  背景圆、台面加深（150→190）、单台上限 72→48，头像不再互相压。
+
 ## 0.6.3-preview.100 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

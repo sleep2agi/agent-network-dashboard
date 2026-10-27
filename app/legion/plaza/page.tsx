@@ -21,7 +21,7 @@ import { getAvatarUrl, useAvatarsVersion } from '../../lib/avatars';
 
 const COLS = 6;
 const PLATFORM_W = 340;
-const PLATFORM_D = 150;
+const PLATFORM_D = 190;
 const SKEW = 54;
 const THICK = 16;
 const GAP_X = 22;
@@ -204,7 +204,7 @@ export default function LegionPlazaPage() {
 
               {slots.map(({ platform, x, y, scale }) => {
                 // 台面显示上限：一块台面最多 48 个头像，多出来的用「+N」标注。
-                const CAP = 72;
+                const CAP = 48;
                 const shown = platform.bubbles.slice(0, CAP);
                 const rest = platform.bubbles.length - shown.length;
                 const cols = Math.min(8, Math.max(3, Math.ceil(Math.sqrt(shown.length * 1.5))));
@@ -259,7 +259,6 @@ export default function LegionPlazaPage() {
                       return (
                         <a key={m.key} href={`/org?focus=${encodeURIComponent(platform.name)}`} aria-label={`${m.label}（${platform.name}）`}>
                           <g transform={`translate(${px} ${py})`}>
-                            <circle r={rAvatar + 1.5} fill="var(--bg)" opacity="0.85" />
                             {url ? (
                               <image
                                 href={url}
@@ -271,9 +270,12 @@ export default function LegionPlazaPage() {
                                 style={{ clipPath: 'circle(50%)' }}
                               />
                             ) : (
-                              <text textAnchor="middle" y={3} fill="var(--fg)" style={{ fontSize: rAvatar }}>
-                                {(m.label || '?').slice(0, 1)}
-                              </text>
+                              <>
+                                <circle r={rAvatar + 1.5} fill="var(--bg)" opacity="0.85" />
+                                <text textAnchor="middle" y={3} fill="var(--fg)" style={{ fontSize: rAvatar }}>
+                                  {(m.label || '?').slice(0, 1)}
+                                </text>
+                              </>
                             )}
                           </g>
                         </a>
