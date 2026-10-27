@@ -69,9 +69,18 @@ export async function GET(req: Request) {
       return Response.json({ ok: false, error: 'login required' }, { status: 401 });
     }
     const contentType = tasksRes.headers.get('content-type') || '';
-    if (tasksRes.ok && contentType.includes('application/json')) {
+    const tasksJson = tasksRes.ok && contentType.includes('application/json');
+
+    if (tasksJson) {
       const data = await tasksRes.json();
-      if (data.ok && data.tasks && data.tasks.length > 0) {
+      // 200 + ok:false 也是上游故障（Hub 自己说没给成结果），不能当成空列表。
+      if (data.ok === false) {
+        return Response.json(
+          { ok: false, error: `CommHub /api/tasks ${tasksRes.status} (ok:false)` },
+          { status: 502 },
+        );
+      }
+      if (Array.isArray(data.tasks) && data.tasks.length > 0) {
         return Response.json(data);
       }
       // #1636-P1 —— **显式指定了 network_id 时，「空」就是答案**。
@@ -83,32 +92,40 @@ export async function GET(req: Request) {
       }
       // For targeted queries (chat history by to_name, or a single task_id),
       // a valid empty v2 result is authoritative — return it immediately
-      // instead of falling through to a global /api/completions scan. That
-      // extra round-trip is what kept the chat-history spinner turning on a
-      // node with no tasks yet, and its substring to_name match could surface
-      // unrelated rows. Broad list queries keep the legacy fallback below.
+      // instead of falling through to a global /api/completions scan.
       // (Vincent tg923: 转圈加载太久)
-      if (data.ok && Array.isArray(data.tasks) && (filterTo || filterTaskId)) {
+      if (filterTo || filterTaskId) {
         return Response.json(data);
       }
-    }
-
-    // #1636-P1 —— 到这里说明 /api/tasks 没用上：
-    //   · 401 已在上面处理；
-    //   · 404/405/501 = 旧 Hub 没有这个接口 ⇒ 可以走 completions 兜底；
-    //   · 其它（500、502、非 JSON）都是**上游故障**，必须是非 2xx，
-    //     绝不能落进兜底变成「200 + 空列表」。
-    const endpointMissing = tasksRes.status === 404 || tasksRes.status === 405 || tasksRes.status === 501;
-    if (!endpointMissing) {
-      return Response.json(
-        { ok: false, error: `CommHub /api/tasks ${tasksRes.status}` },
-        { status: 502 },
-      );
-    }
-    // 旧 Hub 没有 /api/tasks 且调用方指定了网络：completions 不支持按网络过滤，
-    // 用它兜底等于跨网络返回数据 ⇒ 宁可返回空，也不越权。
-    if (networkId) {
-      return Response.json({ ok: true, tasks: [], source: 'unsupported-endpoint' });
+      // 广查询（没有 network_id、没有定向过滤）拿到合法空列表：
+      // 这是**正常响应**，与「上游故障」无关 —— 继续走下面的 completions 兜底，
+      // 把历史完成记录补上（旧行为）。2026-10-28 回放：这里曾经错误地落到 502。
+    } else {
+      // 非 2xx，或 2xx 但不是 JSON。
+      //   · 404/405/501 = 旧 Hub 没有 /api/tasks ⇒ 允许走 completions 兜底；
+      //   · 其它（401 已在上面、500/502/HTML）= **上游故障**，必须非 2xx。
+      const endpointMissing =
+        tasksRes.status === 404 || tasksRes.status === 405 || tasksRes.status === 501;
+      if (!endpointMissing) {
+        return Response.json(
+          { ok: false, error: `CommHub /api/tasks ${tasksRes.status}` },
+          { status: 502 },
+        );
+      }
+      // 旧 Hub 没有 /api/tasks，而调用方指定了网络：completions 不支持按网络过滤，
+      // 用它兜底等于跨网络返回数据。但也**不能伪装成 200 空列表** —— 那是假空态，
+      // 用户会以为「这个网络真的没任务」。返回一个可识别的能力错误，让调用方
+      // 能显示「当前 Hub 不支持按网络查询任务」。
+      if (networkId) {
+        return Response.json(
+          {
+            ok: false,
+            error: 'hub_tasks_scope_unsupported',
+            detail: `CommHub /api/tasks ${tasksRes.status}: 该 Hub 不支持按网络查询任务，无法在保持 network_id 作用域的前提下返回结果`,
+          },
+          { status: 501 },
+        );
+      }
     }
 
     // Fallback: map /api/completions to tasks shape
