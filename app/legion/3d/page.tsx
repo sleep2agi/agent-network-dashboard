@@ -182,6 +182,8 @@ export default function Legion3DPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   // 净屏：把标题/按钮/图例/提示全隐掉，只留拓扑 —— 截屏、做 PPT 用。
   const [cleanView, setCleanView] = useState(false);
+  // 图例即筛选：点「运行中」只看在跑的 Agent，再看部门/人环做背景。
+  const [statusOnly, setStatusOnly] = useState<'working' | 'idle' | 'blocked' | 'error' | null>(null);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -848,7 +850,9 @@ export default function Legion3DPage() {
         const crowd = node.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
         const r = Math.max(1.4, WORLD_R[node.kind] * p.scale * crowd);
         const depthT = Math.min(1, Math.max(0, (p.depth - near) / (far - near)));
-        const dim = activeSet && !activeSet.has(node.id);
+        const st = node.kind === 'agent' ? (statusByAlias.get(node.label) ?? 'idle') : null;
+        const statusMiss = statusOnly !== null && node.kind === 'agent' && st !== statusOnly;
+        const dim = (activeSet && !activeSet.has(node.id)) || statusMiss;
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
         let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.42 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
@@ -926,7 +930,10 @@ export default function Legion3DPage() {
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
           hoverRef.current === node.id;
-        if (showLabel && !interacting) {
+        // 状态筛选开着时，不匹配的 Agent 不要标签（否则压暗了还在喊自己）。
+        const filteredOut = statusOnly !== null && node.kind === 'agent' && statusByAlias.get(node.label ?? '') !== statusOnly
+          && (statusByAlias.get(node.label ?? '') ?? 'idle') !== statusOnly;
+        if (showLabel && !interacting && !filteredOut) {
           labelQueue.push({
             node,
             text: node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
@@ -1261,6 +1268,8 @@ export default function Legion3DPage() {
         if (helpOpen) { setHelpOpen(false); break; }
         // 净屏优先退出：隐掉界面后 Esc 是唯一「回来的路」。
         if (cleanView) { setCleanView(false); break; }
+        // 状态筛选次之，然后才是搜索/选中。
+        if (statusOnly) { setStatusOnly(null); break; }
         // 先退搜索，再退选中：一次 Esc 只做一件事。
         if (query) setQuery('');
         else setSelected(null);
@@ -1663,17 +1672,28 @@ export default function Legion3DPage() {
       {/* 底部左：图例与操作提示 */}
       <div className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {/* 图例即筛选：点一下只看这个状态，再点取消（Esc 也能清）。 */}
           {([
-            ['运行中', 'var(--success)'],
-            ['空闲', 'var(--fg-muted)'],
-            ['阻塞', 'var(--warning)'],
-            ['错误', 'var(--danger)'],
-          ] as const).map(([label, color]) => (
-            <span key={label} className="inline-flex items-center gap-1.5">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
-              {label}
-            </span>
-          ))}
+            ['working', '运行中', 'var(--success)'],
+            ['idle', '空闲', 'var(--fg-muted)'],
+            ['blocked', '阻塞', 'var(--warning)'],
+            ['error', '错误', 'var(--danger)'],
+          ] as const).map(([key, label, color]) => {
+            const active = statusOnly === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setStatusOnly(active ? null : key)}
+                aria-pressed={active}
+                data-testid={`legion-3d-filter-${key}`}
+                className={`pointer-events-auto inline-flex items-center gap-1.5 rounded px-1 py-0.5 transition-colors ${active ? 'bg-[var(--accent)]/15 text-[var(--fg)]' : 'hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+              >
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+                {label}
+              </button>
+            );
+          })}
         </div>
         <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 点节点看详情/双击直接打开 · / 搜索 · 回车打开选中 · R 重置</p>
       </div>

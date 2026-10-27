@@ -110,6 +110,17 @@ cleanOn.ui === 'hidden' && cleanOn.hint !== 'flex' && cleanOff === 'visible'
   ? pass('3D 净屏隐藏界面 / Esc 恢复', cleanOn)
   : fail('3D 净屏隐藏界面 / Esc 恢复', { cleanOn, cleanOff });
 
+// 图例即筛选：点「运行中」→ 该图例进入按下态；Esc 清掉
+await page.getByTestId('legion-3d-filter-working').click();
+await page.waitForTimeout(400);
+const filterOn = await page.getByTestId('legion-3d-filter-working').getAttribute('aria-pressed');
+await page.keyboard.press('Escape');
+await page.waitForTimeout(400);
+const filterOff = await page.getByTestId('legion-3d-filter-working').getAttribute('aria-pressed');
+filterOn === 'true' && filterOff === 'false'
+  ? pass('3D 图例可当状态筛选（Esc 清）', { filterOn, filterOff })
+  : fail('3D 图例可当状态筛选（Esc 清）', { filterOn, filterOff });
+
 // 自动取景：默认视角要把整张图收进画面（以前 zoom 固定 1.12，只占画布 40%）。
 // 小网络（stub 3 人）取景后应显著放大；R 重置视角后仍保持取景。
 const zoomOf = async () =>

@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.75 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D
+
+- **图例即筛选**：点「运行中 / 空闲 / 阻塞 / 错误」只看该状态的 Agent，其余压暗
+  （部门与成员保持可见作为背景），再点取消，`Esc` 也能清。用于回答「现在谁在跑」。
+
 ## 0.6.3-preview.74 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
