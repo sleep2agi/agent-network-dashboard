@@ -292,7 +292,7 @@ export function ProviderFormModal({
             type="button"
             disabled={!canSave}
             onClick={handleSave}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium ${canSave ? 'bg-[var(--accent)] text-[var(--fg)] hover:bg-[var(--accent)]' : 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed'}`}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium ${canSave ? 'bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent)]' : 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed'}`}
           >
             {phase === 'saving' ? '保存中…' : phase === 'done' ? '✓ 已保存' : editing ? '保存' : '新增'}
           </button>
