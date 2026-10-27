@@ -867,7 +867,10 @@ export default function LegionPage() {
                     const dim = activeSet ? !activeSet.has(node.id) : false;
                     const isSelected = selected === node.id;
                     const statusValue = node.kind === 'agent' ? statusByAlias.get(node.label) : undefined;
-                    const r = (node.kind === 'core' ? 48 : node.kind === 'group' ? 26 : node.kind === 'person' ? 16 : 7) * nodeScale;
+                    // 人多时把成员点收小：100 个 16px 圆挤在同一圈会连成一条白带，
+                    // 看不出「一个个的人」；和 3D 的 crowd 缩放同一个思路。
+                    const crowd = node.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.72 : 1;
+                    const r = (node.kind === 'core' ? 48 : node.kind === 'group' ? 26 : node.kind === 'person' ? 16 : 7) * nodeScale * crowd;
                     const labelScale = Math.max(nodeScale, 0.85);
                     return (
                       <g

@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.83 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 2D
+
+- 人多的网络（>60 人）把成员点收小到 0.72：100 个 16px 圆挤在同一圈会连成一条白带，
+  收小之后能看出「一个个的人」，和 3D 的 crowd 缩放同一套思路。
+
 ## 0.6.3-preview.82 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
