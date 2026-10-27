@@ -91,6 +91,9 @@ const publicRootScripts = new Set([
   // 按文件是否 import node:test/bun:test 分派给 `node` 或 `bun test`、聚合退出码。
   // 不读任何凭据、不发网络请求、不写仓外路径。
   'scripts/run-tests.mjs',
+  // Local-only Canvas interaction regression: synthetic Hub data; screenshots go
+  // to SCREENSHOT_DIR, and the test password is supplied through the environment.
+  'scripts/smoke-legion-disc.mjs',
   'scripts/stamp-build-commit.mjs',
 ]);
 const unexpectedRootScripts = trackedPaths.filter((path) => path.startsWith('scripts/') && !publicRootScripts.has(path));

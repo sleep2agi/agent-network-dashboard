@@ -107,6 +107,12 @@ export interface SceneNode<T> {
   projected: ProjectedPoint;
 }
 
+/** 部门盘的屏幕尺寸，绘制与命中测试共用，缩放后也能点中盘面边缘。 */
+export function groupDiscRadii(radiusPx: number): { rx: number; ry: number } {
+  const rx = Math.max(16, radiusPx * 2.1);
+  return { rx, ry: rx * 0.42 };
+}
+
 /**
  * 整场景投影 + 远→近排序。画家算法在这里够用：节点之间不重叠成
  * 互相穿插的实体，先画远的再画近的就不会被盖穿。
@@ -128,7 +134,8 @@ export function projectScene<T>(
 }
 
 /**
- * 命中测试：屏幕点周围 radius 像素内、**离相机最近**的那个节点。
+ * 命中测试：取覆盖屏幕点、**离相机最近**的节点。
+ * radius 是最小命中半径；可选的椭圆尺寸让部门盘的命中区域跟随绘制尺寸。
  * 传的是已排序（远→近）的数组，所以从后往前找第一个命中即可。
  */
 export function hitTest<T>(
@@ -136,12 +143,18 @@ export function hitTest<T>(
   x: number,
   y: number,
   radius: number,
+  ellipse?: (node: SceneNode<T>) => { rx: number; ry: number } | undefined,
 ): SceneNode<T> | null {
   for (let i = nodes.length - 1; i >= 0; i--) {
     const n = nodes[i];
     const dx = n.projected.x - x;
     const dy = n.projected.y - y;
-    if (dx * dx + dy * dy <= radius * radius) return n;
+    const shape = ellipse?.(n);
+    if (shape) {
+      const rx = Math.max(radius, shape.rx);
+      const ry = Math.max(radius, shape.ry);
+      if ((dx / rx) ** 2 + (dy / ry) ** 2 <= 1) return n;
+    } else if (dx * dx + dy * dy <= radius * radius) return n;
   }
   return null;
 }
