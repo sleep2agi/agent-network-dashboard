@@ -151,6 +151,10 @@ export default function LegionPlazaPage() {
               data-testid="legion-plaza-svg"
             >
               <defs>
+                <radialGradient id="plaza-shadow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#000" stopOpacity="0.55" />
+                  <stop offset="100%" stopColor="#000" stopOpacity="0" />
+                </radialGradient>
                 {platforms.map(p => (
                   <g key={`g-${p.id}`}>
                     <linearGradient id={`plate-${p.id}`} x1="0" y1="0" x2="1" y2="1">
@@ -194,6 +198,14 @@ export default function LegionPlazaPage() {
                     onMouseEnter={() => setHoverDept(platform.id)}
                     onMouseLeave={() => setHoverDept(h => (h === platform.id ? null : h))}
                   >
+                    {/* 台面底部柔光：没有阴影时台面像贴纸，浮不起来 */}
+                    <ellipse
+                      cx={PLATFORM_W / 2 - SKEW / 2}
+                      cy={PLATFORM_D + THICK + 26}
+                      rx={PLATFORM_W * 0.55}
+                      ry={26}
+                      fill="url(#plaza-shadow)"
+                    />
                     {/* 台面厚度（前立面） */}
                     <path
                       d={`M ${SKEW} ${PLATFORM_D} L ${PLATFORM_W} ${PLATFORM_D} L ${PLATFORM_W} ${PLATFORM_D + THICK} L ${SKEW} ${PLATFORM_D + THICK} Z`}
