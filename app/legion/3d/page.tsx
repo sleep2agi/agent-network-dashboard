@@ -252,6 +252,26 @@ export default function Legion3DPage() {
   const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
 
+  // 换数据 key 不会重置本地状态；旧节点 id 会让新网络所有节点落进淡出分支。
+  // 只在网络身份改变时清理，同网络轮询/重新验证保留当前选择。
+  const [viewNetworkId, setViewNetworkId] = useState(networkId);
+  if (viewNetworkId !== networkId) {
+    setViewNetworkId(networkId);
+    setSelected(null);
+    setFocus(null);
+    setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
+  }
+  useEffect(() => {
+    hoverRef.current = null;
+    hoverPos.current = null;
+    yawTarget.current = null;
+    introRef.current = null;
+    viewRef.current = { ...DEFAULT_VIEW };
+    fitPending.current = true;
+    userAdjusted.current = false;
+    lastFitSize.current = null;
+  }, [networkId]);
+
   const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
