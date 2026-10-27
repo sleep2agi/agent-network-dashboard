@@ -30,7 +30,8 @@
     "a11y:contrast": "node scripts/check-contrast.mjs",
     "a11y:canvas": "node scripts/check-canvas-labels.mjs",
     "smoke:legion": "node scripts/smoke-legion.mjs",
-    "test": "node scripts/run-tests.mjs"
+    "test": "node scripts/run-tests.mjs",
+    "verify:prod": "node scripts/verify-prod.mjs"
   },
   "bin": {
     "agent-network-dashboard": "./bin/start.js"
