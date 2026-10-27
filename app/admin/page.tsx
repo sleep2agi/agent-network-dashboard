@@ -78,7 +78,7 @@ export default function AdminPage() {
   const offlineNodes = sessions.filter(s => !sseFor(s));
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-[var(--fg)] p-4 sm:p-6">
       <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Admin</h1>
 
       {/* Section anchor nav — same pattern as Settings r28; R2 of #190 mobile
@@ -98,7 +98,7 @@ export default function AdminPage() {
           { href: '#users',   label: 'Users' },
         ].map(a => (
           <a key={a.href} href={a.href}
-            className="inline-flex min-h-[44px] items-center rounded-md border border-[#26262b] bg-[#0e0e10]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+            className="inline-flex min-h-[44px] items-center rounded-md border border-[var(--border)] bg-[var(--bg)]/60 px-3 py-2 text-[var(--fg-muted)] hover:border-[var(--accent)]/50 hover:text-[var(--accent-text)] hover:bg-[var(--accent)]/10 transition-colors">
             {a.label}
           </a>
         ))}
@@ -109,8 +109,8 @@ export default function AdminPage() {
         {/* ── Group: Status ─────────────────────────────────────── */}
         <div id="status" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Status</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
+            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-muted)] font-semibold">Status</div>
+            <div className="flex-1 h-px bg-[var(--bg-elevated)]" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
@@ -121,26 +121,26 @@ export default function AdminPage() {
             2×2 numeric grid shrinks ~25 % on mobile (~60 px of fold
             reclaimed) while reading identically on desktop. mb-4 on
             the section heading also drops to mb-3 sm:mb-4. */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-4 sm:p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3 sm:mb-4">Server Overview</h2>
+        <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4 sm:p-5">
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-3 sm:mb-4">Server Overview</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-green-400 tabular-nums">{onlineNodes.length}</div>
-              <div className="text-xs text-gray-500">Online</div>
+              <div className="text-2xl sm:text-3xl font-bold text-[var(--success)] tabular-nums">{onlineNodes.length}</div>
+              <div className="text-xs text-[var(--fg-muted)]">Online</div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-gray-500 tabular-nums">{offlineNodes.length}</div>
-              <div className="text-xs text-gray-500">Offline</div>
+              <div className="text-2xl sm:text-3xl font-bold text-[var(--fg-muted)] tabular-nums">{offlineNodes.length}</div>
+              <div className="text-xs text-[var(--fg-muted)]">Offline</div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-cyan-400 tabular-nums">{health?.sse_connections ?? '--'}</div>
-              <div className="text-xs text-gray-500">
-                SSE Streams <span className="text-gray-600">· server</span>
+              <div className="text-2xl sm:text-3xl font-bold text-[var(--accent-text)] tabular-nums">{health?.sse_connections ?? '--'}</div>
+              <div className="text-xs text-[var(--fg-muted)]">
+                SSE Streams <span className="text-[var(--fg-dim)]">· server</span>
               </div>
             </div>
             <div>
               <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">{stats?.tasks?.total ?? '--'}</div>
-              <div className="text-xs text-gray-500">Total Tasks</div>
+              <div className="text-xs text-[var(--fg-muted)]">Total Tasks</div>
             </div>
           </div>
           {stats?.tasks?.by_status && stats.tasks.by_status.length > 0 && (() => {
@@ -150,41 +150,41 @@ export default function AdminPage() {
                only numbers that drive action, the rest is on /tasks. */
             const byStatus = Object.fromEntries(stats.tasks.by_status.map((s: { status: string; count: number }) => [s.status, s.count]));
             return (
-              <div className="mt-4 flex items-center justify-between border-t border-[#26262b] pt-3 text-xs">
-                <div className="text-gray-400 tabular-nums">
-                  <span className={byStatus['running'] ? 'text-green-400' : 'text-gray-500'}>{byStatus['running'] || 0} running</span>
-                  <span className="text-gray-600"> &middot; </span>
-                  <span className={byStatus['failed'] ? 'text-red-400' : 'text-gray-500'}>{byStatus['failed'] || 0} failed</span>
+              <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-3 text-xs">
+                <div className="text-[var(--fg-muted)] tabular-nums">
+                  <span className={byStatus['running'] ? 'text-[var(--success)]' : 'text-[var(--fg-muted)]'}>{byStatus['running'] || 0} running</span>
+                  <span className="text-[var(--fg-dim)]"> &middot; </span>
+                  <span className={byStatus['failed'] ? 'text-[var(--danger)]' : 'text-[var(--fg-muted)]'}>{byStatus['failed'] || 0} failed</span>
                 </div>
-                <Link href="/tasks" prefetch={false} className="text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
+                <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:text-[var(--accent-text)]">View all &rarr;</Link>
               </div>
             );
           })()}
         </section>
 
         {/* Online Sessions — pulled into Status group (was below Send Task) */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">
-            Online Sessions <span className="text-gray-600">({onlineNodes.length})</span>
+        <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">
+            Online Sessions <span className="text-[var(--fg-dim)]">({onlineNodes.length})</span>
           </h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {onlineNodes.length === 0 ? (
-              <div className="text-xs text-gray-600 text-center py-4">No online sessions</div>
+              <div className="text-xs text-[var(--fg-dim)] text-center py-4">No online sessions</div>
             ) : onlineNodes.map(s => (
-              <div key={s.alias} className="flex items-center gap-3 bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f]">
+              <div key={s.alias} className="flex items-center gap-3 bg-[var(--bg)] rounded-lg px-3 py-2 border border-[var(--border)]">
                 <AliasAvatar alias={s.alias} size={20} />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-white font-medium truncate">{s.alias}</div>
                   {/* Show the current task only when present; an idle session's
                       status is already on the chip → drop the redundant "· idle". */}
-                  <div className="text-xs text-gray-500 truncate">{s.agent || '--'}{s.task ? ` · ${s.task}` : ''}</div>
+                  <div className="text-xs text-[var(--fg-muted)] truncate">{s.agent || '--'}{s.task ? ` · ${s.task}` : ''}</div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {/* Round 91: 5-state palette via shared
                       SESSION_STATUS_CHIP_CLASS (was working-vs-other, which
                       rendered blocked/error identical to idle). */}
                   <span className={`text-xs px-2 py-0.5 rounded border ${SESSION_STATUS_CHIP_CLASS[s.status] || SESSION_STATUS_CHIP_CLASS.idle}`}>{s.status}</span>
-                  <span className="text-[10px] text-gray-600">{timeAgo(s.updated_at)}</span>
+                  <span className="text-[10px] text-[var(--fg-dim)]">{timeAgo(s.updated_at)}</span>
                 </div>
               </div>
             ))}
@@ -197,50 +197,50 @@ export default function AdminPage() {
         {/* ── Group: Actions ────────────────────────────────────── */}
         <div id="actions" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Actions</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
+            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-muted)] font-semibold">Actions</div>
+            <div className="flex-1 h-px bg-[var(--bg-elevated)]" />
           </div>
           {sessions.length === 0 ? (
             /* Round 77: Broadcast and Send Task both require at least one
                registered agent. Surfacing the empty cards above an empty
                fleet is the same dead-control class as the Overview
                Dispatch button (r70). Replace with a single inline hint. */
-            <div className="bg-[#161618] border border-[#26262b] rounded-xl px-5 py-4 text-sm text-gray-500">
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-5 py-4 text-sm text-[var(--fg-muted)]">
               Broadcast and Send Task become available after the first agent registers.
             </div>
           ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Broadcast */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Broadcast</h2>
+        <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">Broadcast</h2>
           <textarea
             value={broadcastMsg}
             onChange={e => setBroadcastMsg(e.target.value)}
             placeholder="Message to all online nodes..."
             rows={3}
-            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none resize-none"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none resize-none"
           />
           <div className="flex justify-between items-center mt-3">
-            <span className="text-xs text-gray-600">{broadcastMsg.length}/500</span>
+            <span className="text-xs text-[var(--fg-dim)]">{broadcastMsg.length}/500</span>
             <button
               onClick={sendBroadcast}
               disabled={!broadcastMsg.trim()}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm rounded-lg transition-colors"
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] text-white text-sm rounded-lg transition-colors"
             >
               Broadcast
             </button>
           </div>
-          {broadcastResult && <div className={`mt-2 text-xs ${broadcastResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{broadcastResult}</div>}
+          {broadcastResult && <div className={`mt-2 text-xs ${broadcastResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{broadcastResult}</div>}
         </section>
 
         {/* Send Task */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Send Task</h2>
+        <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">Send Task</h2>
           <select
             value={taskTarget}
             onChange={e => setTaskTarget(e.target.value)}
-            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-cyan-500/50 focus:outline-none mb-3"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-[var(--accent)]/50 focus:outline-none mb-3"
           >
             <option value="">Select target node...</option>
             {onlineNodes.map(s => (
@@ -257,18 +257,18 @@ export default function AdminPage() {
             onChange={e => setTaskContent(e.target.value)}
             placeholder="Task content..."
             rows={3}
-            className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none resize-none"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none resize-none"
           />
           <div className="flex justify-end mt-3">
             <button
               onClick={sendTask}
               disabled={!taskTarget || !taskContent.trim()}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm rounded-lg transition-colors"
+              className="px-4 py-2 bg-cyan-600 hover:bg-[var(--accent)] disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] text-white text-sm rounded-lg transition-colors"
             >
               Send Task
             </button>
           </div>
-          {taskResult && <div className={`mt-2 text-xs ${taskResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{taskResult}</div>}
+          {taskResult && <div className={`mt-2 text-xs ${taskResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{taskResult}</div>}
         </section>
 
           </div>
@@ -278,38 +278,38 @@ export default function AdminPage() {
         {/* ── Group: Users ──────────────────────────────────────── */}
         <div id="users" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Users</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
+            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-muted)] font-semibold">Users</div>
+            <div className="flex-1 h-px bg-[var(--bg-elevated)]" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* User Management (V3 Auth) */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Register User (V3)</h2>
+        <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">Register User (V3)</h2>
           <div className="space-y-3">
             <input
               type="text"
               value={regUser}
               onChange={e => setRegUser(e.target.value)}
               placeholder="Username"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none"
             />
             <input
               type="password"
               value={regPass}
               onChange={e => setRegPass(e.target.value)}
               placeholder="Password"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none"
             />
             <button
               onClick={registerUser}
               disabled={!regUser.trim() || !regPass.trim()}
-              className="w-full px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm rounded-lg transition-colors"
+              className="w-full px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] text-white text-sm rounded-lg transition-colors"
             >
               Register
             </button>
           </div>
-          {regResult && <div className={`mt-2 text-xs ${regResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{regResult}</div>}
+          {regResult && <div className={`mt-2 text-xs ${regResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{regResult}</div>}
         </section>
 
           </div>

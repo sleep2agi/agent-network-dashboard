@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.68 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### Admin / 侧栏
+
+- `/admin` 与 `Sidebar` 的写死颜色换成主题 token（`--bg*`、`--border`、`--fg*`、
+  `--accent*`、语义色）；浅色主题下侧栏与页头不再残留深色块。
+- 硬编码颜色类 **311 → 262**（两轮共 349 → 262，降 25%），基线同步收紧。
+
 ## 0.6.3-preview.67 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
