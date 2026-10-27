@@ -316,11 +316,12 @@ function distribute(slots: Slot[], start: number, span: number): void {
   const minShare = Math.min(0.45, (span / slots.length) * 0.6);
   const reserved = minShare * slots.length;
   const flexible = Math.max(0, span - reserved);
-  const totalWeight = slots.reduce((n, s) => n + s.weight, 0) || 1;
+  const roots = slots.map(s => Math.sqrt(Math.max(0, s.weight)));
+  const totalWeight = roots.reduce((n, w) => n + w, 0) || 1;
   let cursor = start;
-  for (const slot of slots) {
-    const width = minShare + flexible * (slot.weight / totalWeight);
-    slot.apply(cursor, width);
+  for (let i = 0; i < slots.length; i++) {
+    const width = minShare + flexible * (roots[i] / totalWeight);
+    slots[i].apply(cursor, width);
     cursor += width;
   }
 }
@@ -420,6 +421,29 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
     0,
     TAU,
   );
+
+  // Agent 外层均匀铺满整圈：按所属成员方位排序后再均分。否则一个部门占
+  // 9/16 人时，它的几百个 Agent 会全挤在同一侧（admin 截图里的「半边糊、半边空」）。
+  // 半径保留 3 档交错，外层仍有一点纹理。
+  const agentNodes = nodes.filter(n => n.kind === 'agent');
+  if (agentNodes.length > 1) {
+    const byIdMap = new Map(nodes.map(n => [n.id, n]));
+    agentNodes.sort((a, b) => {
+      const pa = byIdMap.get(a.parentId ?? '')?.angle ?? 0;
+      const pb = byIdMap.get(b.parentId ?? '')?.angle ?? 0;
+      return pa - pb || a.order - b.order;
+    });
+    const bands = [1, 0.93, 0.86];
+    agentNodes.forEach((agent, i) => {
+      const angle = ((i + 0.5) / agentNodes.length) * TAU;
+      const radius = RING_RADIUS.agent * bands[i % bands.length];
+      agent.angle = angle;
+      agent.radius = radius;
+      const pt = polar(radius, angle);
+      agent.x = pt.x;
+      agent.y = pt.y;
+    });
+  }
 
   return {
     nodes,

@@ -70,22 +70,29 @@ describe('#1636 军团布局 — 纯函数，同一份数据必须永远画出�
     expect(layout.stats).toEqual({ groups: 1, people: 1, agents: 2, orphans: 0, depth: 1, collapsed: 0 });
   });
 
-  // 2026-10-27：上限从 0.2 放到 0.42 —— 生产里一个人名下 20–40 个 Agent，
-  // 0.2 弧度会挤成一坨（admin 截图实锤）。扇形仍以 owner 为中心。
-  test('Agent 扇形不会散出 owner 太远（±0.43 弧度内）', () => {
-    const layout = buildLegionLayout({
-      people: [person({ agents: Array.from({ length: 12 }, (_, i) => agent(i)) })],
-    });
-    const owner = layout.nodes.find(n => n.kind === 'person');
+  // 2026-10-27（admin 第二轮反馈「半边糊、半边空」）：Agent 不再挤在 owner 的小扇形里，
+  // 而是**按 owner 方位排序后均分整圈**。契约：
+  //   1) 同一 owner 的 Agent 连续；2) 相邻间隔 ≈ 2π/n；3) 半径交错。
+  test('Agent 环按成员方位均分整圈（同一 owner 连续）', () => {
+    const people = [
+      person({ user_id: 'u1', agents: Array.from({ length: 8 }, (_, i) => agent(i)) }),
+      person({ user_id: 'u2', agents: Array.from({ length: 4 }, (_, i) => agent(100 + i)) }),
+    ];
+    const layout = buildLegionLayout({ people });
     const agents = layout.nodes.filter(n => n.kind === 'agent');
-    for (const a of agents) {
-      expect(angleDelta(a.angle, owner.angle)).toBeLessThanOrEqual(0.4301);
+    expect(agents).toHaveLength(12);
+    const owners = agents.map(a => a.parentId);
+    for (const owner of new Set(owners)) {
+      const idx = owners.map((o, i) => (o === owner ? i : -1)).filter(i => i >= 0);
+      expect(Math.max(...idx) - Math.min(...idx) + 1).toBe(idx.length);
     }
-    // 多环交错：相邻 Agent 不能落在同一半径上，否则窄屏会叠成一点
+    const step = (Math.PI * 2) / agents.length;
+    for (let i = 1; i < agents.length; i++) {
+      expect(Math.abs(angleDelta(agents[i].angle, agents[i - 1].angle) - step)).toBeLessThan(0.02);
+    }
     for (let i = 1; i < agents.length; i++) {
       expect(agents[i].radius).not.toBe(agents[i - 1].radius);
     }
-    expect(Math.max(...agents.map(a => a.radius))).toBe(1);
   });
 
   test('节点 id 唯一，角标归一化到 [0, 2π)', () => {

@@ -929,8 +929,8 @@ export default function LegionPage() {
                             <circle
                               r={r}
                               fill="var(--bg-elevated)"
-                              stroke={isSelected ? 'var(--hl)' : 'var(--border)'}
-                              strokeWidth={isSelected ? 2 : 1}
+                              stroke={isSelected ? 'var(--hl)' : 'var(--border-hover)'}
+                              strokeWidth={isSelected ? 2 : 1.4}
                               strokeDasharray={node.collapsed ? '3 3' : undefined}
                             />
                             {((node.span ?? 0) >= 1.0 || isSelected || hovered === node.id || view.k >= 1.25) && (

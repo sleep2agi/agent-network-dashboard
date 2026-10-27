@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.93 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团：Agent 环均匀铺满整圈
+
+- 之前 Agent 的角度跟各自成员绑定，一个部门占 9/16 人时，它的几百个 Agent 会全挤在
+  同一侧（admin 截图里的「半边糊、半边空」）。现在按成员方位排序后**均分整圈**：
+  同一成员的 Agent 仍连续，外层三档半径交错。
+- 契约测试同步改写：同一 owner 连续 + 相邻间隔 ≈ 2π/n + 半径交错。
+- 2D 部门节点描边加深（--border-hover），深色主题下不再像黑块。
+
 ## 0.6.3-preview.92 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
