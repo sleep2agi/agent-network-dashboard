@@ -938,7 +938,9 @@ export default function Legion3DPage() {
         // 标签：Agent 太多，只有近处或高亮时才画，避免糊成一片。
         const showLabel =
           node.kind === 'core' ||
-          node.kind === 'group' ||
+          // 一级部门常显；二级组在默认缩放下不画名字（两层部门树时会挤成一团），
+          // 放大到 1.3× 左右、选中或悬停时才出。
+          (node.kind === 'group' && ((node.depth ?? 1) <= 1 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55)) ||
           (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
@@ -958,7 +960,8 @@ export default function Legion3DPage() {
             // 被主动淡出的节点（dim）保持 0.35，那是「这不属于当前筛选」的语义。
             alpha: dim ? 0.35 : Math.max(0.8, 1 - depthT * 0.35),
             dim: !!dim,
-            priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : node.kind === 'group' ? 2 : 3,
+            // 一级部门优先占位：两层部门树时，二级组的标签会把一级部门挤开、看起来更乱。
+            priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : node.kind === 'group' ? ((node.depth ?? 1) <= 1 ? 2 : 2.5) : 3,
           });
         }
         ctx.globalAlpha = 1;

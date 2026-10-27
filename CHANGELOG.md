@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.84 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D
+
+- 两层部门树时，二级组的名字默认不画（放大到约 1.3×、选中或悬停才出）：生产形状是
+  4 个一级 + 8 个二级，所有名字都画会挤成一团；一级部门始终保留。
+- 标签避让优先级按部门层级：一级（2）> 二级（2.5）> 成员/Agent（3）。
+
 ## 0.6.3-preview.83 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
