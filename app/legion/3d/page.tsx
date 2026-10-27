@@ -578,6 +578,8 @@ export default function Legion3DPage() {
           view.zoom = a.to;
           introRef.current = null;
           setZoomPct(Math.round(a.to * 100));
+          // 动画结束就把「保护标记」放下：之后尺寸/结构变化可以正常重新取景。
+          userAdjusted.current = false;
         }
       }
 
@@ -627,6 +629,21 @@ export default function Legion3DPage() {
       // 再按当前 zoom 算包围盒会滚雪球（实测直接顶到 MAX_ZOOM）。
       // 画布还没量到真实尺寸时不要取景：首帧 stage 只有几十像素，
       // 按那个尺寸算出来会被 MAX_ZOOM 夹到 240%，随后再跳回正常值（实测）。
+      // 自愈：出现过「取景算早了 → 内容缩成一小坨、之后再也不重算」的情况
+      // （admin 截图里 240% 却只有中间一小团）。用户没手动缩放过时，每 ~1 秒
+      // 检查一次内容包围盒，占画面不到 35% 就重新取景。
+      if (!userAdjusted.current && !introRef.current && !fitPending.current && frame % 60 === 0 && nodes.length > 3) {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const n of nodes) {
+          if (n.projected.x < minX) minX = n.projected.x;
+          if (n.projected.x > maxX) maxX = n.projected.x;
+          if (n.projected.y < minY) minY = n.projected.y;
+          if (n.projected.y > maxY) maxY = n.projected.y;
+        }
+        const spanNow = Math.max(maxX - minX, maxY - minY, 1);
+        if (spanNow < Math.min(size.width, size.height) * 0.35) fitPending.current = true;
+      }
+
       const sizeReady = size.width > 400 && size.height > 300;
       // 还只有 core 的时候（members/agents 都是 0）取景会算出 span=1 → 顶到 240%，
       // 等数据到位再跳回 151%（实测）。等真有数据再取景。

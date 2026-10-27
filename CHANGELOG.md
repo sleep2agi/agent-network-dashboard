@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.91 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D：修「缩成一坨」
+
+admin 截图：127 节点却只占中间一小团、抬头显示 240%。根因是取景在数据到位前算过一次
+（span≈0 → 被夹到 MAX_ZOOM），入场动画又把「用户已缩放」标记留下，之后再也不重算。
+
+- 入场动画结束后解除保护标记，允许后续重新取景。
+- 新增自愈：用户没手动缩放过时，每 ~1 秒检查内容包围盒，占画面不到 35% 就重新取景。
+
 ## 0.6.3-preview.90 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
