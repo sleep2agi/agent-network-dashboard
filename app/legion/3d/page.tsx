@@ -819,6 +819,38 @@ export default function Legion3DPage() {
         const radiusPx = r * pulse;
 
         ctx.globalAlpha = alpha;
+        // 部门 = **等距盘**（椭圆），不是球。
+        // 理由：整张图里球太多了（中枢/部门/成员/Agent 都是球），只能靠大小和颜色区分；
+        // 形状一分，拥挤感立刻下降，也更接近产品里「编队平台」的意象。
+        if (node.kind === 'group') {
+          const rx = Math.max(16, radiusPx * 2.1);
+          const ry = rx * 0.42;
+          ctx.globalAlpha = Math.min(1, alpha) * 0.32;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = Math.min(1, alpha) * 0.85;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = alpha;
+          // 部门标签不能跟着 continue 一起丢：这里单独入队（优先级 2，仅次中枢/悬停）
+          labelQueue.push({
+            node,
+            text: node.label,
+            px: p.x,
+            py: p.y,
+            r: rx * 0.55,
+            alpha: Math.max(0.8, 1 - depthT * 0.35),
+            dim: !!dim,
+            priority: 2,
+          });
+          ctx.globalAlpha = 1;
+          continue;
+        }
         const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
         if ((huge && node.kind === 'agent') || interacting) {
           // 300 个 Agent 时每个都画「白芯 + 描边」纯属浪费：一个色点足够，
@@ -830,7 +862,7 @@ export default function Legion3DPage() {
         } else if (dark) {
           // 深底（神明 cover14 的节点画法）：彩色外晕 → 白芯 → 彩色描边。
           // 只画实心色块时深底上是一团糊光；白芯给每个节点一个硬边。
-          const wantHalo = !heavy || node.kind === 'core' || node.kind === 'group' || activeSet?.has(node.id);
+          const wantHalo = !heavy || node.kind === 'core' || activeSet?.has(node.id);
           if (wantHalo) {
             const halo = haloFor(color);
             const hr = radiusPx * 3.4;
@@ -882,7 +914,6 @@ export default function Legion3DPage() {
         // 标签：Agent 太多，只有近处或高亮时才画，避免糊成一片。
         const showLabel =
           node.kind === 'core' ||
-          node.kind === 'group' ||
           (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
@@ -899,7 +930,7 @@ export default function Legion3DPage() {
             // 被主动淡出的节点（dim）保持 0.35，那是「这不属于当前筛选」的语义。
             alpha: dim ? 0.35 : Math.max(0.8, 1 - depthT * 0.35),
             dim: !!dim,
-            priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : node.kind === 'group' ? 2 : 3,
+            priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : 3,
           });
         }
         ctx.globalAlpha = 1;
