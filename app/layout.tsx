@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AppShell } from "./components/AppShell";
 import { NetworkProvider } from "./lib/network-context";
@@ -8,14 +8,22 @@ import { PwaInstaller } from "./components/PwaInstaller";
 
 // #217 D1 (Vincent: OpenWebUI-style serious-product feel): UI text is
 // sans; mono stays for code blocks, IDs and logs via .font-mono.
-const geistSans = Geist({
+// 字体自托管：Geist / Geist Mono 的 latin 子集（可变字重 100–900）随仓库走。
+// 原来是 next/font/google —— 构建时必须能访问 fonts.googleapis.com 与
+// fonts.gstatic.com；本机 DNS 把 gstatic 指到不可达的 IP 时 `next build` 直接失败。
+// 自托管后构建不依赖外网，产物与线上用同一份文件。
+const geistSans = localFont({
+  src: "./fonts/geist-latin.woff2",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/geist-mono-latin.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
 });
 
 export const metadata: Metadata = {

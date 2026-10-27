@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.71 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 构建
+
+- **字体改为自托管**：`Geist` / `Geist Mono` 的 latin 子集（可变字重 100–900）放进
+  `app/fonts/`，用 `next/font/local` 加载。之前走 `next/font/google`，构建必须访问
+  `fonts.googleapis.com` + `fonts.gstatic.com`；本机 DNS 把 gstatic 指到不可达 IP 时
+  `next build` 直接失败（今天为了构建绕了两次本地代理）。现在 `npm run build`
+  不依赖外网，离线也能出包，产物与线上用同一份字体文件。
+
 ## 0.6.3-preview.70 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
