@@ -66,3 +66,6 @@ docs/screenshots/
 # next build 会生成这两个 agent 规则文件，别进仓库
 /AGENTS.md
 /CLAUDE.md
+
+# 发版备份目录（.next.prev-*）不要进仓库
+/.next.prev-*
