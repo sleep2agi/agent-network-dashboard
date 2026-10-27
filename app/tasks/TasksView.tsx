@@ -105,6 +105,27 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       window.history.replaceState({}, '', `${url.pathname}${url.search}`);
     } catch { /* pushState 被禁用时只是不写 URL，筛选本身照常 */ }
   };
+  /**
+   * 清空筛选的唯一入口：state 与 URL 必须一起清。
+   *
+   * 为什么不能只调 setDeptAndUrl('')：那只删 department，
+   * status / from_name / to_name 还留在地址栏里 —— 刷新一次筛选就复活了
+   * （实测：清空后输入框是空的，但 reload 又发出三条旧过滤）。
+   * 两个清空入口（筛选条的「清空」与空态 CTA）都走这里。
+   * 不改变选中策略：selectedId 不受影响。
+   */
+  const clearAllFilters = () => {
+    setFilterStatus('');
+    setFilterFrom('');
+    setFilterTo('');
+    setFilterDept('');
+    try {
+      const url = new URL(window.location.href);
+      for (const key of ['department', 'status', 'from_name', 'to_name']) url.searchParams.delete(key);
+      window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+    } catch { /* URL 不可写时只清 state，筛选本身照常 */ }
+  };
+
   const [people, setPeople] = useState<LegionPerson[]>([]);
   const [depts, setDepts] = useState<LegionDepartment[] | null>(null);
   const [deptMembers, setDeptMembers] = useState<Array<{ user_id: string; department_id: string | null }>>([]);
@@ -366,12 +387,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                 {(filterStatus || filterFrom || filterTo || filterDept) && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setFilterStatus('');
-                      setFilterFrom('');
-                      setFilterTo('');
-                      setDeptAndUrl('');
-                    }}
+                    onClick={clearAllFilters}
                     className="rounded px-2 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
                   >
                     Clear
@@ -452,14 +468,8 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                   filterStatus || filterFrom || filterTo || filterDept
                     ? {
                         label: '清空筛选',
-                        onClick: () => {
-                          setFilterStatus('');
-                          setFilterFrom('');
-                          setFilterTo('');
-                          // 部门走 setDeptAndUrl：它有 URL 回写 + 一个
-                          // 「URL→state」的 effect，只改 state 会被 effect 立刻改回来。
-                          setDeptAndUrl('');
-                        },
+                        // 与筛选条上的「清空」共用同一语义：state + 四个 URL 参数一起清。
+                        onClick: clearAllFilters,
                       }
                     : undefined
                 }

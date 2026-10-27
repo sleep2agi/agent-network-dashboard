@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
@@ -233,19 +233,33 @@ function OrgContent() {
 
   // 任务数徽标：只取一页任务（limit 100），和 /tasks 的部门筛选同口径 ——
   // 是「当前这批任务里的命中数」，不是部门全量，标题里写明。
+  // 切网时用于丢弃旧网络的在途响应（每次换网 +1）。
+  const tasksCountGen = useRef(0);
   const [tasksForCount, setTasksForCount] = useState<Array<{ from_name?: string; to_name?: string; from_alias?: string; to_alias?: string }>>([]);
   useEffect(() => {
-    let alive = true;
+    // #1636-P1（P1）—— 这页的任务数徽标也必须按当前网络读：
+    //   ① 网络还没确定（解析中或为空）时**一个请求都不发**；
+    //   ② 每次请求都带 network_id；
+    //   ③ 切网重建轮询，并丢掉上一个网络的在途响应（generation 计数）。
+    // 原来这里是 fetch('/api/hub/tasks?limit=100') + deps=[] + 20s 轮询，
+    // 网络待定 / 无网络 / 已选 A 三种状态下都发**无 scope** 请求，会串网或 400。
+    if (!networkReady || !networkId) { setTasksForCount([]); return; }
+    const gen = ++tasksCountGen.current;
+    const url = `/api/hub/tasks?limit=100&network_id=${encodeURIComponent(networkId)}`;
     const load = () => {
-      void fetch('/api/hub/tasks?limit=100', { cache: 'no-store' })
+      void fetch(url, { cache: 'no-store' })
         .then(r => (r.ok ? r.json() : null))
-        .then(json => { if (alive && json?.tasks) setTasksForCount(json.tasks); })
+        .then(json => {
+          if (tasksCountGen.current !== gen) return;   // 旧网络的在途响应，丢弃
+          if (json?.tasks) setTasksForCount(json.tasks);
+        })
         .catch(() => { /* 任务读不到就不显示徽标，不影响组织树 */ });
     };
+    setTasksForCount([]);          // 切网先清旧计数，避免用 A 的数字渲染 B 的部门
     load();
     const t = setInterval(load, 20000);
-    return () => { alive = false; clearInterval(t); };
-  }, []);
+    return () => { clearInterval(t); };
+  }, [networkReady, networkId]);
 
   const deptTaskCounts = useMemo(() => {
     const aliasUser = buildAliasUserMap(people);
