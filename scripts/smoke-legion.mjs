@@ -45,6 +45,26 @@ skipFirst === 'skip-to-content' && skipLanded === 'anet-main-content'
   ? pass('skip link：Tab 一次到主内容', { skipFirst, skipLanded })
   : fail('skip link：Tab 一次到主内容', { skipFirst, skipLanded });
 
+// 从主内容出发，键盘能在 15 次 Tab 内摸到状态筛选并切换（不需要鼠标）
+let kbdTabs = 0, kbdReached = false;
+for (let i = 0; i < 15 && !kbdReached; i++) {
+  await page.keyboard.press('Tab');
+  kbdTabs++;
+  kbdReached = await page.evaluate(() =>
+    document.activeElement?.getAttribute('data-testid') === 'legion-3d-filter-working');
+}
+let kbdPressed = null;
+if (kbdReached) {
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  kbdPressed = await page.getByTestId('legion-3d-filter-working').getAttribute('aria-pressed');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+}
+kbdReached && kbdPressed === 'true'
+  ? pass('键盘可从主内容摸到状态筛选', { kbdTabs })
+  : fail('键盘可从主内容摸到状态筛选', { kbdReached, kbdTabs, kbdPressed });
+
 // 主题首帧：pre-paint 脚本要在 hydration 前就把 data-theme 设好（不许闪白/报 hydration）
 const themeHydration = [];
 page.on('console', m => { const t = m.text(); if (/hydrat|did not match/i.test(t)) themeHydration.push(t.slice(0, 80)); });

@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.81 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 可访问性
+
+- 3D 图例（状态筛选）在 DOM 里提前到节点列表之前：从「跳到主内容」出发，**11 次 Tab**
+  就能摸到并回车切换（之前 32 次）。视觉位置不变（绝对定位）。
+- 冒烟新增「键盘可从主内容摸到状态筛选」，当前 32/32。
+
 ## 0.6.3-preview.80 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

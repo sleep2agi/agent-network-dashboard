@@ -1619,6 +1619,37 @@ export default function Legion3DPage() {
         </div>
       )}
 
+      {/* 底部左：图例与操作提示 */}
+      <div className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {/* 图例即筛选：点一下只看这个状态，再点取消（Esc 也能清）。 */}
+          {([
+            ['working', '运行中', 'var(--success)'],
+            ['idle', '空闲', 'var(--fg-muted)'],
+            ['blocked', '阻塞', 'var(--warning)'],
+            ['error', '错误', 'var(--danger)'],
+            ['offline', '未上报', 'var(--fg-dim)'],
+          ] as const).map(([key, label, color]) => {
+            const active = statusOnly === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setStatusOnly(active ? null : key)}
+                aria-pressed={active}
+                data-testid={`legion-3d-filter-${key}`}
+                className={`pointer-events-auto inline-flex items-center gap-1.5 rounded px-1 py-0.5 transition-colors ${active ? 'bg-[var(--accent)]/15 text-[var(--fg)]' : 'hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+              >
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+                {label}
+                <span className="tabular-nums text-[var(--fg-dim)]">{statusCounts[key]}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 点节点看详情/双击直接打开 · / 搜索 · 回车打开选中 · R 重置</p>
+      </div>
+
       {/* 键盘/读屏的节点列表：canvas 不可 Tab，靠这张列表选节点 */}
       {listOpen && (
         <div
@@ -1686,37 +1717,6 @@ export default function Legion3DPage() {
           </button>
         </div>
       )}
-
-      {/* 底部左：图例与操作提示 */}
-      <div className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          {/* 图例即筛选：点一下只看这个状态，再点取消（Esc 也能清）。 */}
-          {([
-            ['working', '运行中', 'var(--success)'],
-            ['idle', '空闲', 'var(--fg-muted)'],
-            ['blocked', '阻塞', 'var(--warning)'],
-            ['error', '错误', 'var(--danger)'],
-            ['offline', '未上报', 'var(--fg-dim)'],
-          ] as const).map(([key, label, color]) => {
-            const active = statusOnly === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setStatusOnly(active ? null : key)}
-                aria-pressed={active}
-                data-testid={`legion-3d-filter-${key}`}
-                className={`pointer-events-auto inline-flex items-center gap-1.5 rounded px-1 py-0.5 transition-colors ${active ? 'bg-[var(--accent)]/15 text-[var(--fg)]' : 'hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
-              >
-                <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
-                {label}
-                <span className="tabular-nums text-[var(--fg-dim)]">{statusCounts[key]}</span>
-              </button>
-            );
-          })}
-        </div>
-        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 点节点看详情/双击直接打开 · / 搜索 · 回车打开选中 · R 重置</p>
-      </div>
 
       {/* 选中节点详情 */}
       {selectedNode && (
