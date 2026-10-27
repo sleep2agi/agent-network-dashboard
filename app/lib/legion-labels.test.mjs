@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { labelOverlapsBody, legionLabelLeader, placeLegionLabel, wrapLegionLabel } from './legion-labels';
+import { departmentDisc } from './legion-3d';
 
 const bounds = { x1: 12, y1: 12, x2: 388, y2: 588 };
 const anchor = { x: 240, y: 170, rx: 36, ry: 15 };
@@ -82,5 +83,21 @@ describe('军团标签：完整名称与节点留白', () => {
     expect(rect.y1).toBeGreaterThan(header.y2);
     expect(labelOverlapsBody(rect, person)).toBe(false);
     expect(labelOverlapsBody(rect, core)).toBe(false);
+  });
+
+  test('盘外沿避让和引线共享实体引用，未标名的盘仍挡住文字', () => {
+    const axes = departmentDisc(24);
+    const disc = { x: 100, y: 100, rx: axes.rx + 2, ry: axes.ry + 2 };
+    const label = { x1: 210, y1: 90, x2: 270, y2: 110 };
+    const leader = legionLabelLeader(disc, label, [label], [disc]);
+    expect(leader).not.toBeNull();
+    expect(leader.from.x).toBeCloseTo(disc.x + disc.rx);
+    expect(leader.from.y).toBe(100);
+    const unlabeled = { x: 200, y: 180, ...departmentDisc(30) };
+    const placed = placeLegionLabel({ anchor: disc, width: 180, height: 34, bounds,
+      occupied: [], bodies: [disc, unlabeled] });
+    expect(placed).not.toBeNull();
+    expect(labelOverlapsBody(placed, unlabeled)).toBe(false);
+    expect(labelOverlapsBody(placed, disc)).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   RING_HEIGHT,
+  departmentDisc,
   fitProjectedBodies,
   fog,
   hitTest,
@@ -168,5 +169,55 @@ describe('#3D 军团拓扑 — 投影/深度/命中必须可断言，不能靠�
     const body = [{ x: 400, y: 300, radius: 1 }];
     expect(fitProjectedBodies(body, view, SIZE, { ...bounds, y1: 520 }, limits)).toBeNull();
     expect(fitProjectedBodies(body, view, SIZE, bounds, limits).zoom).toBe(8);
+  });
+
+  test('部门盘双轴命中保留近景优先与容差，不把盘上下空白当成大圆', () => {
+    const scene = projectScene([{ id: 'near', z: 1 }, { id: 'far', z: -1 }], n => ({ x: 0, y: 0, z: n.z }), CAM, SIZE);
+    const shape = () => { const { rx, ry } = departmentDisc(20); return { rx: rx + 6, ry: ry + 6 }; };
+    expect(hitTest(scene, 441, 300, 18, shape)?.item.id).toBe('near');
+    expect(hitTest(scene, 400, 330, 18, shape)).toBeNull();
+    expect(hitTest(scene, 447, 300, 18, shape)?.item.id).toBe('near');
+    expect(hitTest(scene, 449, 300, 18, shape)).toBeNull();
+    expect(hitTest(scene, 400, 317, 18, () => departmentDisc(1))?.item.id).toBe('near');
+    expect(hitTest(scene, 400, 319, 18, () => departmentDisc(1))).toBeNull();
+  });
+
+  test('最终zoom重投影保持16px盘下限、双轴描边及完整轨道，并移除旧pan', () => {
+    const layout = buildLegionLayout({ people: [{ user_id: 'p', username: 'p', display_name: 'Person', role: 'owner',
+      department: { id: 'deep', name: 'Deep' }, agents: [{ node_id: 'a', alias: 'Agent' }] }],
+      departments: [{ id: 'root', name: 'Root' }, { id: 'deep', name: 'Deep', parent_id: 'root' }, { id: 'empty', name: 'Empty' }] });
+    for (const size of [{ width: 1232, height: 870 }, { width: 390, height: 520 }]) {
+      const bounds = { x1: 24, y1: 170, x2: size.width - 24, y2: size.height - 110 };
+      for (const yaw of [0.62, 2.1]) for (const pitch of [0.12, 0.52, 1.4]) for (const zoom of [0.25, 8]) {
+        const view = { zoom, panX: 173, panY: -92 };
+        const bodiesAt = v => {
+          const camera = { yaw, pitch, dist: 6, focal: Math.min(size.width, size.height) * 2.4 * v.zoom,
+            cx: size.width / 2 + v.panX, cy: size.height / 2 + v.panY };
+          const bodies = projectScene(layout.nodes, nodeToVec3, camera, size).map(sn => {
+            const radius = Math.max(1.4, (sn.item.kind === 'group' ? deptWorldRadius(sn.item.depth ?? 1)
+              : sn.item.kind === 'core' ? 0.085 : sn.item.kind === 'person' ? 0.033 : 0.021) * sn.projected.scale);
+            const axes = sn.item.kind === 'group' ? departmentDisc(radius) : { rx: radius, ry: radius };
+            if (sn.item.kind === 'group') { expect(axes.rx).toBeGreaterThanOrEqual(16); expect(axes.ry).toBeCloseTo(axes.rx * 0.42); }
+            return { x: sn.projected.x, y: sn.projected.y, rx: axes.rx + 6, ry: axes.ry + 6 };
+          });
+          for (const ring of layout.rings) bodies.push(...ringPath(ring.radius, RING_HEIGHT[ring.ring], camera, size, 64)
+            .map(p => ({ ...p, rx: 4, ry: 4 })));
+          return bodies;
+        };
+        const fit = fitProjectedBodies(z => bodiesAt({ ...view, zoom: z }), view, size, bounds, { min: 0.25, max: 8 });
+        expect(fit).not.toBeNull();
+        for (const b of bodiesAt(fit)) {
+          expect(b.x - b.rx).toBeGreaterThanOrEqual(bounds.x1);
+          expect(b.x + b.rx).toBeLessThanOrEqual(bounds.x2);
+          expect(b.y - b.ry).toBeGreaterThanOrEqual(bounds.y1);
+          expect(b.y + b.ry).toBeLessThanOrEqual(bounds.y2);
+        }
+      }
+    }
+  });
+
+  test('只靠zoom无法容纳盘最小实体时返回null，不假报取景成功', () => {
+    expect(fitProjectedBodies(() => [{ x: 100, y: 100, ...departmentDisc(1) }],
+      { zoom: 1, panX: 0, panY: 0 }, SIZE, { x1: 0, y1: 0, x2: 30, y2: 12 }, { min: 0.25, max: 8 })).toBeNull();
   });
 });

@@ -24,7 +24,7 @@ import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../.
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
-import { fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
+import { departmentDisc, fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
 import { EmptyState } from '../../components/EmptyState';
@@ -56,6 +56,13 @@ const WORLD_R: Record<LegionNode['kind'], number> = {
   person: 0.033,
   agent: 0.021,
 };
+
+function nodeBody({ item, projected: p }: SceneNode<LegionNode>, people: number) {
+  const crowd = item.kind === 'person' && people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
+  const worldR = item.kind === 'group' ? deptWorldRadius(item.depth ?? 1) : WORLD_R[item.kind];
+  const radius = Math.max(1.4, worldR * p.scale * crowd);
+  return { radius, ...(item.kind === 'group' ? departmentDisc(radius) : { rx: radius, ry: radius }) };
+}
 
 function readTokens() {
   const cs = getComputedStyle(document.documentElement);
@@ -691,8 +698,7 @@ export default function Legion3DPage() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const toPoint = (n: LegionNode) => nodeToVec3({ ...n });
-      const nodes = projectScene(layout.nodes, toPoint, cam, size);
-      screenRef.current = nodes;
+      let nodes = projectScene(layout.nodes, toPoint, cam, size);
 
       // 自动取景：默认 zoom=1.12 时整张图只占画布 40% 左右，剩下大半是空的。
       // 首屏和「重置视角」后按节点实体包围盒取景，留出实测标题/工具栏和图例。
@@ -701,17 +707,20 @@ export default function Legion3DPage() {
         || Math.abs(size.width - lastFitSize.current.w) > 8
         || Math.abs(size.height - lastFitSize.current.h) > 8;
       const fitBounds = fitBoundsRef.current ?? { x1: 24, y1: 24, x2: size.width - 24, y2: size.height - 24 };
-      const framingBodies = () => {
-        const bodies = nodes.map(({ item, projected: p }) => {
-          const crowd = item.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
-          const worldR = item.kind === 'group' ? deptWorldRadius(item.depth ?? 1) : WORLD_R[item.kind];
-          return { x: p.x, y: p.y, radius: Math.max(1.4, worldR * p.scale * crowd) + 4 };
+      const initialZoom = view.zoom;
+      const framingBodies = (zoom = initialZoom) => {
+        const fittingCam = { ...cam, focal: cam.focal * zoom / initialZoom };
+        const projected = zoom === initialZoom ? nodes : projectScene(layout.nodes, toPoint, fittingCam, size);
+        const bodies = projected.map(sn => {
+          const { rx, ry } = nodeBody(sn, layout.stats.people);
+          // Includes the widest hover/selection stroke, also at the pixel floor.
+          return { x: sn.projected.x, y: sn.projected.y, rx: rx + 6, ry: ry + 6 };
         });
         // Sparse nodes cover only one side of an orbit; include the visible
         // tracks and packets both in initial fitting and in recovery checks.
         for (const ring of ringRadii) {
-          for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, cam, size, 64)) {
-            bodies.push({ x: p.x, y: p.y, radius: 4 });
+          for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, fittingCam, size, 64)) {
+            bodies.push({ x: p.x, y: p.y, rx: 4, ry: 4 });
           }
         }
         return bodies;
@@ -726,10 +735,10 @@ export default function Legion3DPage() {
       if (!userAdjusted.current && !introRef.current && !fitPending.current && frame % 60 === 0 && nodes.length > 3) {
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         for (const body of framingBodies()) {
-          minX = Math.min(minX, body.x - body.radius);
-          maxX = Math.max(maxX, body.x + body.radius);
-          minY = Math.min(minY, body.y - body.radius);
-          maxY = Math.max(maxY, body.y + body.radius);
+          minX = Math.min(minX, body.x - body.rx);
+          maxX = Math.max(maxX, body.x + body.rx);
+          minY = Math.min(minY, body.y - body.ry);
+          maxY = Math.max(maxY, body.y + body.ry);
         }
         const spanNow = Math.max(maxX - minX, maxY - minY, 1);
         if (spanNow < Math.min(fitBounds.x2 - fitBounds.x1, fitBounds.y2 - fitBounds.y1) * 0.35) fitPending.current = true;
@@ -740,7 +749,7 @@ export default function Legion3DPage() {
       // 等数据到位再跳回 151%（实测）。等真有数据再取景。
       const dataReady = layout.stats.people + layout.stats.agents > 0;
       if (sizeReady && dataReady && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
-        const fit = fitProjectedBodies(framingBodies(), view, size, fitBounds, { min: MIN_ZOOM, max: MAX_ZOOM });
+        const fit = fitProjectedBodies(framingBodies, view, size, fitBounds, { min: MIN_ZOOM, max: MAX_ZOOM });
         // If controls exhaust the usable area, keep drawing the current scene.
         // A later valid bounds measurement will request another fit.
         if (fit) {
@@ -766,7 +775,13 @@ export default function Legion3DPage() {
         }
         fitPending.current = false;
         lastFitSize.current = { w: size.width, h: size.height };
+        // Render and hit-test the final zoom in this frame, not the pre-fit scene.
+        cam.focal *= view.zoom / initialZoom;
+        cam.cx = size.width / 2 + view.panX;
+        cam.cy = size.height / 2 + view.panY;
+        nodes = projectScene(layout.nodes, toPoint, cam, size);
       }
+      screenRef.current = nodes;
       const byId = new Map(nodes.map(n => [n.item.id, n]));
       const core = byId.get('core');
       const byIdProbe = () => (core ? { x: core.projected.x, y: core.projected.y } : null);
@@ -975,9 +990,7 @@ export default function Legion3DPage() {
         const p = sn.projected;
         // 人多的时候成员环会连成一条「白香肠」：100 个人挤在一圈上，半径再大
         // 就互相吃掉轮廓。>60 人时把成员点收小一档，让环重新变成一颗颗。
-        const crowd = node.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
-        const worldR = node.kind === 'group' ? deptWorldRadius(node.depth ?? 1) : WORLD_R[node.kind];
-        const r = Math.max(1.4, worldR * p.scale * crowd);
+        const { radius: r, rx, ry } = nodeBody(sn, layout.stats.people);
         const depthT = Math.min(1, Math.max(0, (p.depth - near) / (far - near)));
         const st = node.kind === 'agent' ? (statusByAlias.get(node.label) ?? 'offline') : null;
         const statusMiss = statusOnly !== null && node.kind === 'agent' && st !== statusOnly;
@@ -997,9 +1010,9 @@ export default function Legion3DPage() {
         const color = nodeColor(node, tk, statusByAlias);
         // Stable core size keeps the logo crisp and its labels still.
         const radiusPx = r;
-        // Reuse the current renderer's circle/portrait geometry, including depth
-        // and crowd scaling. The 2px pad includes the node's visible stroke.
-        const anchor = { x: p.x, y: p.y, rx: radiusPx + 2, ry: radiusPx + 2 };
+        // This same object must reach bodies, labelQueue and the leader: the
+        // leader router excludes its own body by reference, not by coordinates.
+        const anchor = { x: p.x, y: p.y, rx: rx + 2, ry: ry + 2 };
         if (node.kind !== 'agent') labelBodies.push(anchor);
 
         ctx.globalAlpha = alpha;
@@ -1015,6 +1028,14 @@ export default function Legion3DPage() {
         const face = avatarUrl && radiusPx >= 4.5 ? avatarImage(avatarUrl) : null;
         if (node.kind === 'core') {
           drawLegionCore(ctx, p.x, p.y, radiusPx, tk, corePhaseRef.current, !interacting);
+        } else if (node.kind === 'group') {
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fillStyle = hexToRgba(color, dark ? 0.24 : 0.12);
+          ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
         } else if (face) {
           if (dark) {
             const halo = haloFor(color);
@@ -1042,7 +1063,7 @@ export default function Legion3DPage() {
         } else if (dark) {
           // 深底（神明 cover14 的节点画法）：彩色外晕 → 白芯 → 彩色描边。
           // 只画实心色块时深底上是一团糊光；白芯给每个节点一个硬边。
-          const wantHalo = !heavy || node.kind === 'group' || activeSet?.has(node.id);
+          const wantHalo = !heavy || activeSet?.has(node.id);
           if (wantHalo) {
             const halo = haloFor(color);
             const hr = radiusPx * 3.4;
@@ -1075,12 +1096,12 @@ export default function Legion3DPage() {
         // 远看全是「白饼」（admin 截图里最扎眼的就是这个）。
         if (!dim) {
           const textColor = dark ? tk.bg : tk.fg;
-          if (node.kind === 'group' && radiusPx >= 11) {
-            const short = node.label.replace(/[*+\s]/g, '').slice(0, radiusPx >= 20 ? 3 : 2);
+          if (node.kind === 'group') {
+            const short = Array.from(node.label.replace(/[*+\s]/g, '')).slice(0, rx >= 28 ? 3 : 2).join('');
             if (short) {
-              const fs = Math.min(radiusPx * 0.85, 13);
+              const fs = Math.min(13, Math.max(11, ry * 1.25));
               ctx.font = `600 ${fs}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
-              ctx.fillStyle = textColor;
+              ctx.fillStyle = tk.fg;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.fillText(short, p.x, p.y + 0.5);
@@ -1101,7 +1122,7 @@ export default function Legion3DPage() {
           ctx.strokeStyle = tk.accent;
           ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, radiusPx + 5, 0, Math.PI * 2);
+          ctx.ellipse(p.x, p.y, rx + 5, ry + 5, 0, 0, Math.PI * 2);
           ctx.stroke();
         }
 
@@ -1111,7 +1132,7 @@ export default function Legion3DPage() {
           ctx.strokeStyle = tk.fg;
           ctx.lineWidth = 1.2;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, radiusPx + 4, 0, Math.PI * 2);
+          ctx.ellipse(p.x, p.y, rx + 4, ry + 4, 0, 0, Math.PI * 2);
           ctx.stroke();
         }
 
@@ -1342,6 +1363,11 @@ export default function Legion3DPage() {
     return () => document.removeEventListener('fullscreenchange', onFs);
   }, []);
 
+  const hitBody = (sn: SceneNode<LegionNode>) => {
+    const { rx, ry } = nodeBody(sn, layout.stats.people);
+    return { rx: rx + 6, ry: ry + 6 };
+  };
+
   const onPointerDown = (e: React.PointerEvent) => {
     introRef.current = null; // 手动交互优先，别跟用户的拖动抢
     const target = e.currentTarget as HTMLElement;
@@ -1388,7 +1414,7 @@ export default function Legion3DPage() {
     if (!dragRef.current) {
       // 没按下的移动 = 悬停：只更新 ref，不触发 React 重渲染。
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18, n => WORLD_R[n.item.kind] * n.projected.scale + 6);
+      const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18, hitBody);
       const next = hit ? hit.item.id : null;
       hoverPos.current = next ? { x: e.clientX - rect.left, y: e.clientY - rect.top } : null;
       if (next !== hoverRef.current) {
@@ -1421,13 +1447,13 @@ export default function Legion3DPage() {
     if (drag.moved > 6) return; // 拖动不是点击
 
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16, n => WORLD_R[n.item.kind] * n.projected.scale + 6);
+    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16, hitBody);
     setSelected(hit ? hit.item.id : null);
   };
 
   const onDoubleClick = (e: React.MouseEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18, n => WORLD_R[n.item.kind] * n.projected.scale + 6);
+    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18, hitBody);
     if (!hit) {
       // 双击空白 = 复位视角（含缩放锚点），省得再去右上角点按钮。
       resetView();
@@ -1729,7 +1755,7 @@ export default function Legion3DPage() {
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="rounded px-1.5 py-0.5 text-[10px] text-[var(--accent-text)] hover:bg-[var(--hover-tint)]"
+              className="rounded px-1.5 py-0.5 text-[11px] text-[var(--accent-text)] hover:bg-[var(--hover-tint)]"
             >
               清空搜索
             </button>
@@ -1948,12 +1974,12 @@ export default function Legion3DPage() {
                     : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
                 }`}
               >
-                <span className="w-8 shrink-0 text-[10px] text-[var(--fg-dim)]">{KIND_LABEL[n.kind]}</span>
+                <span className="w-8 shrink-0 text-[11px] text-[var(--fg-dim)]">{KIND_LABEL[n.kind]}</span>
                 <span className="truncate">{n.label}</span>
               </button>
             ))}
           {layout.stats.people > LEGION_LABEL_PEOPLE && (
-            <p className="px-2 py-1 text-[10px] text-[var(--fg-dim)]">成员超过 60，列表只列部门与核心（避免上百个 Tab 停点）；找成员请用搜索或点画布。</p>
+            <p className="px-2 py-1 text-[11px] text-[var(--fg-dim)]">成员超过 60，列表只列部门与核心（避免上百个 Tab 停点）；找成员请用搜索或点画布。</p>
           )}
         </div>
       )}
@@ -2002,7 +2028,7 @@ export default function Legion3DPage() {
                       setTimeout(() => setCopied(false), 1200);
                     }).catch(() => {});
                   }}
-                  className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
                   aria-label={`复制 ${selectedNode.label} 的分享链接`}
                   data-testid="legion-3d-copy"
                 >
