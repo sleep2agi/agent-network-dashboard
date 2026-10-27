@@ -6,6 +6,22 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.78 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 修复
+
+- **`/settings` 在浅色主题下 hydration 不匹配**：主题选择器在首帧直接读
+  `localStorage`（服务端渲染 cyber、客户端首帧 light），React 判定不一致并整棵树重渲染。
+  改为首帧固定 cyber，挂载后再同步真实选择。
+
+### 测试
+
+- 新增 `scripts/smoke-routes.mjs`（`npm run smoke:routes`）：18 条路由 × 2 套主题，
+  断言 200/307、无 pageerror、无异常子资源、无 error boundary；带 stub 已知端点豁免。
+  首次运行就抓到上面的 hydration 问题。
+
 ## 0.6.3-preview.77 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

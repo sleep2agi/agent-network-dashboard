@@ -1,7 +1,7 @@
 {
   "name": "@sleep2agi/agent-network-dashboard",
   "desktopName": "agent-network.desktop",
-  "version": "0.6.3-preview.77",
+  "version": "0.6.3-preview.78",
   "description": "Agent Network Dashboard — Web UI for managing AI Agent networks",
   "main": "apps/desktop/electron/main.cjs",
   "scripts": {
@@ -31,7 +31,8 @@
     "a11y:canvas": "node scripts/check-canvas-labels.mjs",
     "smoke:legion": "node scripts/smoke-legion.mjs",
     "test": "node scripts/run-tests.mjs",
-    "verify:prod": "node scripts/verify-prod.mjs"
+    "verify:prod": "node scripts/verify-prod.mjs",
+    "smoke:routes": "node scripts/smoke-routes.mjs"
   },
   "bin": {
     "agent-network-dashboard": "./bin/start.js"

@@ -18,7 +18,7 @@
 // 边框（信息卡不描边）、字重上限 600、选中态用中性 rowActive 而不是
 // 强调色块。
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAnetConfig, useHealth } from '../lib/hooks';
 import { applyTheme } from '../components/ThemeSwitcher';
@@ -40,10 +40,16 @@ function GroupHeading({ id, label }: { id: string; label: string }) {
 export default function SettingsPage() {
   const { config } = useAnetConfig();
   const { health, error: healthError } = useHealth();
-  const [theme, setTheme] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'cyber';
-    try { return localStorage.getItem('anet-theme') || 'cyber'; } catch { return 'cyber'; }
-  });
+  // 首帧必须和 SSR 一致（cyber），否则浅色/Slack 用户一进 /settings 就报
+  // hydration 不匹配：服务端渲染 cyber，客户端首帧读 localStorage 得到 light。
+  // 挂载后再同步到真实选择（这时已经 hydrate 完，不会打架）。
+  const [theme, setTheme] = useState<string>('cyber');
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('anet-theme');
+      if (saved) setTheme(saved);
+    } catch {}
+  }, []);
   const [oldPwd, setOldPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [pwdResult, setPwdResult] = useState('');
