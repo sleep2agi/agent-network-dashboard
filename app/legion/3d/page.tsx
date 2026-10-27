@@ -816,7 +816,9 @@ export default function Legion3DPage() {
         const color = nodeColor(node, tk, statusByAlias);
         // 核心轻微呼吸，整张图才有「活着」的感觉（幅度 6%，不抢注意力）。
         const pulse = node.kind === 'core' ? 1 + 0.06 * Math.sin(now / 620) : 1;
-        const radiusPx = r * pulse;
+        // 部门节点放大 25%：截图里部门球和成员球一样大，名字一挤就成了
+        // 「一堆写着 TMW/TM0 的小球」，看不出这是编队。
+        const radiusPx = r * pulse * (node.kind === 'group' ? 1.25 : 1);
 
         ctx.globalAlpha = alpha;
         const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
@@ -890,7 +892,7 @@ export default function Legion3DPage() {
         if (showLabel && !interacting) {
           labelQueue.push({
             node,
-            text: node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
+            text: node.kind === 'group' || node.label.length <= 12 ? node.label : `${node.label.slice(0, 11)}…`,
             px: p.x,
             py: p.y,
             r: radiusPx,
@@ -939,7 +941,7 @@ export default function Legion3DPage() {
           if (!spot) continue;
           drawnLabels++;
           // 底衬：只有大网络（标签挤在连线里）才垫，小网络保持纯文字。
-          if (heavy) {
+          if (heavy || item.node.kind === 'group') {
             ctx.globalAlpha = 0.42 * item.alpha;
             ctx.fillStyle = tk.bg;
             const pad = 3;
