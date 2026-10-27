@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, nearestDept, deptWorldRadius, type LegionNode } from '../../lib/legion-layout';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
-import { legionFetcher, deptFetcher, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
+import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
 import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
@@ -1567,9 +1567,9 @@ export default function Legion3DPage() {
 
   /* ── 页面 ───────────────────────────────────────────────────────── */
 
-  const loading = people.isLoading || status.isLoading;
-  const peopleError = people.error as (Error & { status?: number }) | undefined;
-  const fatal = needsLogin || peopleError?.status === 401 ? 'login' : peopleError ? 'error' : null;
+  const loading = people.isLoading || hierarchy.isLoading || status.isLoading;
+  const readError = legionReadError(people.error, hierarchy.error);
+  const fatal = needsLogin || readError?.status === 401 ? 'login' : readError ? 'error' : null;
   const isEmpty = !loading && !fatal && people.data != null && layout.nodes.length <= 1;
 
   const path = useMemo(() => {
@@ -2033,16 +2033,16 @@ export default function Legion3DPage() {
 
       {/* 三态：只在真·空/真·错时覆盖画布，不用空态掩盖故障 */}
       {fatal === 'login' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6 text-center">
+        <div role="alert" className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6 text-center">
           <p className="text-sm text-[var(--warning)]">
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团。
           </p>
         </div>
       )}
       {fatal === 'error' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6">
+        <div role="alert" className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6">
           <div className="max-w-sm text-center">
-            <p className="text-sm text-[var(--danger)]">读取军团编制失败：{peopleError?.message ?? '未知错误'}</p>
+            <p className="text-sm text-[var(--danger)]">读取军团编制失败：{readError?.message ?? '未知错误'}</p>
             <button
               type="button"
               onClick={() => { void people.mutate(); void hierarchy.mutate(); void status.mutate(); }}

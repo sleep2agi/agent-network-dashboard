@@ -29,6 +29,13 @@ export interface StatusResponse {
 
 const unauthorized = () => Object.assign(new Error('unauthorized'), { status: 401 });
 
+type LegionReadError = Error & { status?: number };
+
+/** 多路编制读取共用错误呈现；任一路登录失效都优先显示重新登录。 */
+export function legionReadError(...errors: (LegionReadError | undefined)[]): LegionReadError | undefined {
+  return errors.find(error => error?.status === 401) ?? errors.find(error => error != null);
+}
+
 /**
  * #1636-P1 —— 把当前网络拼进请求 URL。
  *
