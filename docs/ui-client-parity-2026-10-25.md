@@ -1007,3 +1007,10 @@ skip link 上线后复走一遍，全程只用键盘：
 - 主按钮统一 `bg-[var(--accent)] text-[var(--accent-fg)]`：之前 `text-white` 被机械替换
   成 `--fg`，浅色主题下会变成深字压深底。
 
+### 崩溃修复 + 一批 token 化（2026-10-27）
+
+- `/settings/networks` 整页崩溃根因：`aliasAvatarColors(alias)` 读 `alias.length`，
+  网络条目缺 `name` 时 undefined → 整页 error boundary。已加空值占位。
+- `NodeAttrsEditor` 正则里的字面控制字符改 `\u0000-\u001f\u007f`（原文件被 git 判为 binary）。
+- color-ratchet **207 → 170**（累计 −51%）。
+

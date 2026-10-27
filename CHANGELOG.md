@@ -6,6 +6,23 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.70 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 修复
+
+- **`/settings/networks` 整页崩溃**：`AliasAvatar` 的 `aliasAvatarColors()` 直接读
+  `alias.length`，遇到缺 `name` 的网络条目就抛错，整页只剩 “This page couldn't load”。
+  现在缺名字只画占位，不再打崩整页。
+- `NodeAttrsEditor` 的正则里是字面控制字符（文件被 git 当 binary），改成
+  `\u0000-\u001f\u007f` 转义。
+
+### 主题一致性
+
+- `TaskChatPanel`、`/settings/networks`、`LoadingSkeleton`、`NodeAttrsEditor` 的写死颜色
+  → 主题 token；硬编码颜色类 **207 → 170**（累计 349 → 170，−51%）。
+
 ## 0.6.3-preview.69 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
