@@ -58,23 +58,36 @@ export default function LegionPlazaPage() {
   }), [peopleData, hierarchy]);
 
   const platforms = useMemo<Platform[]>(() => {
+    // 部门归属以 Hub 的部门树为准（members 映射），person.department 只是兜底：
+    // 生产上 13 个部门、8 个人，只看 person.department 会只剩 2 块展台。
+    const depts = hierarchy?.departments ?? [];
+    const deptById = new Map(depts.map(d => [d.id, d]));
+    const memberDept = new Map((hierarchy?.members ?? []).map(m => [m.user_id, m.department_id]));
+
     const byDept = new Map<string, Platform>();
-    for (const p of peopleData?.people ?? []) {
-      const name = p.department?.name || '未分组';
-      const id = p.department?.id || 'ungrouped';
-      if (!byDept.has(name)) {
-        byDept.set(name, { id, name, hue: HUES[byDept.size % HUES.length], people: [], bubbles: [] });
+    const ensure = (id: string, name: string) => {
+      if (!byDept.has(id)) {
+        byDept.set(id, { id, name, hue: HUES[byDept.size % HUES.length], people: [], bubbles: [] });
       }
-      const plat = byDept.get(name)!;
+      return byDept.get(id)!;
+    };
+
+    for (const p of peopleData?.people ?? []) {
+      const deptId = memberDept.get(p.user_id) || p.department?.id || 'ungrouped';
+      const deptName = deptById.get(deptId)?.name || p.department?.name || '未分组';
+      const plat = ensure(deptId, deptName);
       plat.people.push({
         id: p.user_id, name: p.display_name || p.username, username: p.username, agents: p.agents.length,
       });
-      // 先放本人，再放他名下的 Agent：台面上才有「一层层的人」。
+      // 先本人，再名下 Agent：台面上才有「一层层的人」。
       plat.bubbles.push({ key: `p:${p.user_id}`, alias: p.username, label: p.display_name || p.username, kind: 'person' });
       for (const a of p.agents) plat.bubbles.push({ key: `a:${a.node_id}`, alias: a.alias, label: a.alias, kind: 'agent' });
     }
+
     return [...byDept.values()].sort((a, b) => b.people.length - a.people.length);
-  }, [peopleData]);
+  }, [peopleData, hierarchy]);
+
+  const emptyDeptCount = Math.max(0, (hierarchy?.departments?.length ?? 0) - platforms.length);
 
   const [hoverDept, setHoverDept] = useState<string | null>(null);
 
@@ -109,7 +122,8 @@ export default function LegionPlazaPage() {
             <p className="mt-1 text-xs text-[var(--fg-muted)]">
               {isLoading
                 ? '正在读取编制…'
-                : `${platforms.length} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`}
+                : `${platforms.length} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`
+                  + (emptyDeptCount > 0 ? ` · 另有 ${emptyDeptCount} 个部门暂无成员` : '')}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">

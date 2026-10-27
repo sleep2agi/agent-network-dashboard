@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.98 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 · 平台视角：按部门树分组
+
+- 之前按 `person.department.name` 分组，生产上 13 个部门只剩 2 块展台。现在以 Hub
+  部门树 + `members` 映射为准（`person.department` 仅兜底），并在页头标注
+  「另有 N 个部门暂无成员」。
+
 ## 0.6.3-preview.97 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
