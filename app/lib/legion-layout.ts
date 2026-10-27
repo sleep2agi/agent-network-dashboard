@@ -342,7 +342,9 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
   });
 
   const emitDept = (node: DeptNode, start: number, span: number, parentId: string) => {
-    const radius = deptRadius(node.depth, depth);
+    // 部门多的时候（生产 13 个）挤在内层环上会互相压：同层交替错开一点半径，
+    // 形成两条细环，圆心文字不再叠在一起。
+    const radius = deptRadius(node.depth, depth) + (node.depth === 1 && order % 2 === 1 ? 0.11 : 0);
     const center = start + span / 2;
     const isCollapsed = collapsed.has(node.id) && (node.children.length > 0 || node.people.length > 0 || node.orphans.length > 0);
     nodes.push({

@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.95 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D：部门多时双层错开
+
+- 生产有 13 个部门，全挤在内层环（0.34）上会互相压、圆心文字叠在一起。
+  同层按奇偶交替 +0.11 半径，形成两条细环。
+
 ## 0.6.3-preview.94 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
