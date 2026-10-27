@@ -75,6 +75,25 @@ fsOn.on && fsOn.label.includes('退出') && !fsOff
   ? pass('3D 全屏进入/退出', fsOn)
   : fail('3D 全屏进入/退出', { fsOn, fsOff });
 
+// 净屏：界面全隐（含底部大规模提示），Esc 恢复
+await page.getByTestId('legion-3d-clean').click();
+await page.waitForTimeout(500);
+const cleanOn = await page.evaluate(() => {
+  const btn = document.querySelector('[data-testid="legion-3d-fullscreen"]');
+  const hint = document.querySelector('[data-testid="legion-3d-scale-hint"]');
+  return { ui: btn ? getComputedStyle(btn).visibility : null, hint: hint ? getComputedStyle(hint).display : null };
+});
+await page.screenshot({ path: `${process.env.TMPDIR || '/tmp'}/legion-clean.png` });
+await page.keyboard.press('Escape');
+await page.waitForTimeout(500);
+const cleanOff = await page.evaluate(() => {
+  const btn = document.querySelector('[data-testid="legion-3d-fullscreen"]');
+  return btn ? getComputedStyle(btn).visibility : null;
+});
+cleanOn.ui === 'hidden' && cleanOn.hint !== 'flex' && cleanOff === 'visible'
+  ? pass('3D 净屏隐藏界面 / Esc 恢复', cleanOn)
+  : fail('3D 净屏隐藏界面 / Esc 恢复', { cleanOn, cleanOff });
+
 // 自动取景：默认视角要把整张图收进画面（以前 zoom 固定 1.12，只占画布 40%）。
 // 小网络（stub 3 人）取景后应显著放大；R 重置视角后仍保持取景。
 const zoomOf = async () =>

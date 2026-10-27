@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.63 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D
+
+- 新增**净屏**：一键隐藏标题、按钮、图例、提示与详情卡，只留拓扑 —— 截屏与做 PPT 用；
+  `Esc` 或再点一次恢复（净屏期间按钮不可见，所以退出键挂在 window 上，不依赖焦点）。
+- 速查表补 `F`（全屏）与「净屏」两行，键盘用户不用猜。
+
 ## 0.6.3-preview.62 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

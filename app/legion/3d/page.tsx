@@ -180,6 +180,8 @@ export default function Legion3DPage() {
   const [zoomPct, setZoomPct] = useState(Math.round(DEFAULT_VIEW.zoom * 100));
   // 全屏演示：给会议室/PPT 用 —— 把整张拓扑铺满屏幕，只剩画布与图例。
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // 净屏：把标题/按钮/图例/提示全隐掉，只留拓扑 —— 截屏、做 PPT 用。
+  const [cleanView, setCleanView] = useState(false);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -1029,6 +1031,20 @@ export default function Legion3DPage() {
     }
   }, []);
 
+  // 净屏后按钮是 invisible，焦点会掉回 body，stage 的 onKeyDown 收不到 Esc；
+  // 所以净屏期间单独挂一个 window 级的退出键。
+  useEffect(() => {
+    if (!cleanView) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      setCleanView(false);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [cleanView]);
+
   useEffect(() => {
     const onFs = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onFs);
@@ -1202,6 +1218,8 @@ export default function Legion3DPage() {
         e.preventDefault();
         // 速查表开着时先关它，再按一次才动搜索/选中。
         if (helpOpen) { setHelpOpen(false); break; }
+        // 净屏优先退出：隐掉界面后 Esc 是唯一「回来的路」。
+        if (cleanView) { setCleanView(false); break; }
         // 先退搜索，再退选中：一次 Esc 只做一件事。
         if (query) setQuery('');
         else setSelected(null);
@@ -1346,7 +1364,7 @@ export default function Legion3DPage() {
 
       {/* 顶部信息区：手机上「标题 → 搜索 → 按钮」竖排，桌面上标题在左、按钮在右。
           之前按钮绝对定位在 top-16，加了搜索框后正好压住输入框。 */}
-      <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2 sm:inset-x-4 sm:top-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className={`pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2 transition-opacity duration-300 sm:inset-x-4 sm:top-4 sm:flex-row sm:items-start sm:justify-between ${cleanView ? 'invisible' : 'visible'}`}>
       <div className="pointer-events-none min-w-0 max-w-[62vw] sm:max-w-sm">
         <div className="flex items-baseline gap-2">
           <h1 className="text-lg font-semibold text-[var(--fg)]">军团 · 3D</h1>
@@ -1448,6 +1466,16 @@ export default function Legion3DPage() {
         </button>
         <button
           type="button"
+          onClick={() => setCleanView(v => !v)}
+          aria-pressed={cleanView}
+          aria-label={cleanView ? '恢复界面' : '净屏（隐藏界面）'}
+          data-testid="legion-3d-clean"
+          className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+        >
+          {cleanView ? '恢复界面' : '净屏'}
+        </button>
+        <button
+          type="button"
           onClick={exportPng}
           disabled={exporting}
           data-testid="legion-3d-export"
@@ -1505,6 +1533,7 @@ export default function Legion3DPage() {
                 ['Esc', '先清搜索，再取消选中'],
                 ['R', '重置视角'],
                 ['F', '全屏演示（再按退出）'],
+                ['净屏', '隐藏全部界面，只留拓扑（Esc 恢复）'],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-3">
                   <dt className="w-32 shrink-0 font-mono text-[var(--fg)]">{k}</dt>
@@ -1538,7 +1567,7 @@ export default function Legion3DPage() {
             if (next) { e.preventDefault(); next.focus(); }
           }}
           data-testid="legion-3d-node-list"
-          className={`absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28 sm:block ${listOpen ? 'block' : 'hidden'}`}
+          className={`absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28 sm:block ${cleanView ? 'invisible' : 'visible'} ${listOpen ? 'block' : 'hidden'}`}
         >
           {layout.nodes
             // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
@@ -1574,7 +1603,7 @@ export default function Legion3DPage() {
 
       {/* 大网络提示：节点多时给一条可关掉的建议，不挡图 */}
       {!hintDismissed && layout.nodes.length > 120 && (
-        <div className={`pointer-events-auto absolute bottom-16 left-1/2 max-w-[94vw] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-[var(--bg-secondary)]/92 px-3 py-0 text-[11px] sm:py-1 text-[var(--fg-muted)] backdrop-blur sm:bottom-6 sm:flex ${selectedNode ? 'hidden' : 'flex'}`} data-testid="legion-3d-scale-hint">
+        <div className={`pointer-events-auto absolute bottom-16 left-1/2 max-w-[94vw] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-[var(--bg-secondary)]/92 px-3 py-0 text-[11px] sm:py-1 text-[var(--fg-muted)] backdrop-blur sm:bottom-6 ${selectedNode || cleanView ? 'hidden' : 'hidden sm:flex'}`} data-testid="legion-3d-scale-hint">
           <span>规模较大 · {layout.nodes.length} 节点 · 试试搜索或部门聚焦</span>
           <button
             type="button"
@@ -1591,7 +1620,7 @@ export default function Legion3DPage() {
       )}
 
       {/* 底部左：图例与操作提示 */}
-      <div className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${selectedNode ? 'hidden sm:block' : ''}`}>
+      <div className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {([
             ['运行中', 'var(--success)'],
@@ -1614,7 +1643,7 @@ export default function Legion3DPage() {
           data-testid="legion-3d-detail"
           role="status"
           aria-live="polite"
-          className={`absolute inset-x-3 bottom-3 rounded-xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72 ${listOpen ? 'hidden sm:block' : 'block'}`}
+          className={`absolute inset-x-3 bottom-3 rounded-xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72 ${cleanView ? 'invisible' : 'visible'} ${listOpen ? 'hidden sm:block' : 'block'}`}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
