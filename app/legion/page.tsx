@@ -21,8 +21,9 @@ import { useRouter } from 'next/navigation';
 import { buildLegionLayout, toPixel, type LegionNode } from '../lib/legion-layout';
 import { LEGION_LABEL_PEOPLE } from '../lib/legion-view-constants';
 import { getAvatarUrl, useAvatarsVersion } from '../lib/avatars';
-import { legionFetcher as fetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
+import { legionFetcher as fetcher, deptFetcher, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
+import { useNetworkId } from '../lib/network-context';
 
 /**
  * callback ref + ResizeObserver。
@@ -76,6 +77,8 @@ function ringLabel(node: LegionNode): string {
 }
 
 export default function LegionPage() {
+  // #1636-P1 —— 当前选中网络。拼进 SWR key：切网 = 换 key = 重新取数，不会串上一个网络的数据。
+  const { networkId } = useNetworkId();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
@@ -109,15 +112,15 @@ export default function LegionPage() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const { ref, size } = useElementSize<HTMLDivElement>();
 
-  const people = useSWR<PeopleResponse>('/api/hub/people?limit=200&offset=0', fetcher, {
+  const people = useSWR<PeopleResponse>(scopedUrl('/api/hub/people?limit=200&offset=0', networkId), fetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
     onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
   const hierarchy = useSWR<DepartmentsResponse | null>(
-    '/api/hub/departments', deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
+    scopedUrl('/api/hub/departments', networkId), deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
   );
-  const status = useSWR<StatusResponse>('/api/hub/status', fetcher, {
+  const status = useSWR<StatusResponse>(scopedUrl('/api/hub/status', networkId), fetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });

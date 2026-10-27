@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse } from '../../lib/legion-data';
+import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, scopedUrl } from '../../lib/legion-data';
+import { useNetworkId } from '../../lib/network-context';
 import { buildLegionLayout } from '../../lib/legion-layout';
 import { getAvatarUrl, useAvatarsVersion } from '../../lib/avatars';
 
@@ -42,10 +43,12 @@ interface Platform {
 }
 
 export default function LegionPlazaPage() {
+  // #1636-P1 —— 当前选中网络拼进 SWR key。
+  const { networkId } = useNetworkId();
   const { data: peopleData, error: peopleError, isLoading } = useSWR<PeopleResponse>(
-    '/api/hub/people?limit=200&offset=0', legionFetcher, { refreshInterval: 30000, shouldRetryOnError: false },
+    scopedUrl('/api/hub/people?limit=200&offset=0', networkId), legionFetcher, { refreshInterval: 30000, shouldRetryOnError: false },
   );
-  const { data: hierarchy } = useSWR<DepartmentsResponse | null>('/api/hub/departments', deptFetcher, {
+  const { data: hierarchy } = useSWR<DepartmentsResponse | null>(scopedUrl('/api/hub/departments', networkId), deptFetcher, {
     refreshInterval: 60000, shouldRetryOnError: false,
   });
   // manifest 拉完会派发事件；订阅后头像才会从首字母换成图片。

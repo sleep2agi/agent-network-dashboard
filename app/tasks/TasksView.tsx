@@ -187,13 +187,21 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     let alive = true;
     void (async () => {
       try {
-        const res = await fetch('/api/hub/people?limit=200&offset=0', { cache: 'no-store' });
+        // #1636-P1 —— people 也要按当前网络读：不带 network_id 时多网络账号会被 400，
+        // 而且部门筛选会用上一个网络的通讯录投影。
+        const url = networkId
+          ? `/api/hub/people?limit=200&offset=0&network_id=${encodeURIComponent(networkId)}`
+          : '/api/hub/people?limit=200&offset=0';
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) return;
         const json = await res.json();
         if (alive) setPeople(json?.people ?? []);
       } catch { /* 通讯录读不到时部门筛选自然为空 */ }
       try {
-        const res = await fetch('/api/hub/departments', { cache: 'no-store' });
+        const deptUrl = networkId
+          ? `/api/hub/departments?network_id=${encodeURIComponent(networkId)}`
+          : '/api/hub/departments';
+        const res = await fetch(deptUrl, { cache: 'no-store' });
         if (res.status === 404) return; // 老 Hub 没这条路由：保持 null，回退扁平部门名
         if (!res.ok) return;
         const json = await res.json();
@@ -204,7 +212,9 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       } catch { /* 同上 */ }
     })();
     return () => { alive = false; };
-  }, []);
+    // #1636-P1 —— 切网必须重取通讯录/部门树：依赖里少了 networkId，
+    // 页面就会拿上一批数据继续做部门投影（筛选结果看着「有」，实际是别的网络的人）。
+  }, [networkId]);
 
   const deptAliasUser = useMemo(() => buildAliasUserMap(people), [people]);
   const deptUserDept = useMemo(() => buildUserDeptMap(people, deptMembers), [people, deptMembers]);

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
+import { useNetworkId } from '../lib/network-context';
 import { buildOrgGroups, filterOrgPeople, type OrgGroup, type OrgDeptInput, type OrgMemberInput } from '../lib/org-tree';
 import { buildAliasUserMap, buildUserDeptMap, collectDeptSubtree, taskInDept } from '../lib/dept-task-filter';
 
@@ -143,6 +144,9 @@ function GroupSection({ group, depth, counts, focusName, expandAll, overrides, o
 }
 
 function OrgContent() {
+  // #1636-P1 —— 通讯录/部门树都按当前网络读；切网要重取，
+  // 否则会把上一个网络的人当成这个网络的（部门筛选会跟着错）。
+  const { networkId } = useNetworkId();
   const router = useRouter();
   const searchParams = useSearchParams();
   const q = searchParams.get('q') || '';
@@ -170,6 +174,7 @@ function OrgContent() {
     try {
       const params = new URLSearchParams();
       if (q) params.set('q', q);
+      if (networkId) params.set('network_id', networkId);
       params.set('limit', String(PAGE));
       params.set('offset', String(nextOffset));
       const res = await fetch(`/api/hub/people?${params.toString()}`, { cache: 'no-store' });
@@ -186,7 +191,7 @@ function OrgContent() {
     } finally {
       setLoading(false);
     }
-  }, [q]);
+  }, [q, networkId]);
 
   useEffect(() => { load(0, false); }, [load]);
 
@@ -195,7 +200,10 @@ function OrgContent() {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch('/api/hub/departments', { cache: 'no-store' });
+        const deptUrl = networkId
+          ? `/api/hub/departments?network_id=${encodeURIComponent(networkId)}`
+          : '/api/hub/departments';
+        const res = await fetch(deptUrl, { cache: 'no-store' });
         if (!alive) return;
         if (res.status === 404) { setOrg(null); setOrgChecked(true); return; }
         if (res.status === 401) { setNeedsLogin(true); setOrgChecked(true); return; }
@@ -209,7 +217,7 @@ function OrgContent() {
       }
     })();
     return () => { alive = false; };
-  }, []);
+  }, [networkId]);
 
   const setQuery = (value: string) => {
     const next = new URLSearchParams(searchParams.toString());
