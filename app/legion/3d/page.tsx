@@ -950,7 +950,7 @@ export default function Legion3DPage() {
         for (const item of labelQueue) {
           if (drawnLabels >= labelBudget) break;
           const big = item.node.kind === 'core';
-          ctx.font = `${big ? 600 : 400} ${big ? 13 : 11}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+          ctx.font = `${big ? 600 : 400} ${big ? 14 : 12}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
           const w = ctx.measureText(item.text).width;
           const h = big ? 16 : 13;
           const dx = item.px - size.width / 2;
@@ -1440,7 +1440,7 @@ export default function Legion3DPage() {
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="rounded px-1.5 py-0.5 text-[10px] text-[var(--accent-text)] hover:bg-[var(--hover-tint)]"
+              className="rounded px-1.5 py-0.5 text-[11px] text-[var(--accent-text)] hover:bg-[var(--hover-tint)]"
             >
               清空搜索
             </button>
@@ -1622,12 +1622,12 @@ export default function Legion3DPage() {
                     : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
                 }`}
               >
-                <span className="w-8 shrink-0 text-[10px] text-[var(--fg-dim)]">{KIND_LABEL[n.kind]}</span>
+                <span className="w-8 shrink-0 text-[11px] text-[var(--fg-dim)]">{KIND_LABEL[n.kind]}</span>
                 <span className="truncate">{n.label}</span>
               </button>
             ))}
           {layout.stats.people > LEGION_LABEL_PEOPLE && (
-            <p className="px-2 py-1 text-[10px] text-[var(--fg-dim)]">成员超过 60，列表只列部门与核心（避免上百个 Tab 停点）；找成员请用搜索或点画布。</p>
+            <p className="px-2 py-1 text-[11px] text-[var(--fg-dim)]">成员超过 60，列表只列部门与核心（避免上百个 Tab 停点）；找成员请用搜索或点画布。</p>
           )}
         </div>
       )}
@@ -1694,7 +1694,7 @@ export default function Legion3DPage() {
                       setTimeout(() => setCopied(false), 1200);
                     }).catch(() => {});
                   }}
-                  className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
                   aria-label={`复制 ${selectedNode.label} 的分享链接`}
                   data-testid="legion-3d-copy"
                 >
