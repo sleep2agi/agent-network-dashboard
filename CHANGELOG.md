@@ -17,6 +17,11 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 - Small networks now fit their nodes and full orbits between the toolbar and legend, including after resizing or restoring controls from clean view.
 - Manual rotation keeps its camera position, and mobile members retain their portraits at automatic-fit scales. The scene remains visible when controls leave no room for automatic framing.
 
+### Legion 3D department discs
+
+- Departments use translucent elliptical discs with readable short names. Picking, hover/selection outlines, label clearance and automatic framing follow both axes, including the minimum screen size at distant zoom levels.
+- Search clearing, node-list types, the large-member-list hint and copy-link controls use an 11px minimum size.
+
 ## 0.6.3-preview.101 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
