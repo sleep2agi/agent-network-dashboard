@@ -228,7 +228,15 @@ export function TopoGraph3D({ sessions, perRow = 5, maxPerUnit = 20 }: Props) {
             <dt className="text-[var(--fg-muted)]">最后心跳</dt>
             <dd className="break-all">{selected.last_seen_at || selected.updated_at || '从未上线'}</dd>
           </dl>
-          <button className="mt-2 text-xs text-[var(--fg-muted)] underline" onClick={() => setSelected(null)}>关闭</button>
+          <div className="mt-2 flex items-center gap-3">
+            <a
+              className="text-xs font-medium text-[var(--accent)] underline"
+              href={`/nodes?alias=${encodeURIComponent(selected.alias)}`}
+            >
+              打开节点详情
+            </a>
+            <button className="text-xs text-[var(--fg-muted)] underline" onClick={() => setSelected(null)}>关闭</button>
+          </div>
         </div>
       )}
     </div>
