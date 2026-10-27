@@ -218,6 +218,9 @@ export default function Legion3DPage() {
   const [statusOnly, setStatusOnly] = useState<'working' | 'idle' | 'blocked' | 'error' | 'offline' | null>(null);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
+  const toolsToggleRef = useRef<HTMLButtonElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [spin, setSpin] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -493,6 +496,27 @@ export default function Legion3DPage() {
 
   useEffect(() => { spinRef.current = spin; }, [spin]);
   useEffect(() => { selectedRef.current = selected; }, [selected]);
+
+  useEffect(() => {
+    if (!toolsOpen) return;
+    const onOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !toolbarRef.current?.contains(event.target)) setToolsOpen(false);
+    };
+    const wide = window.matchMedia('(min-width: 640px)');
+    const onWide = () => {
+      if (!wide.matches) return;
+      if (document.activeElement === toolsToggleRef.current) {
+        toolbarRef.current?.querySelector<HTMLButtonElement>('[data-testid="legion-3d-spin"]')?.focus();
+      }
+      setToolsOpen(false);
+    };
+    document.addEventListener('pointerdown', onOutside);
+    wide.addEventListener('change', onWide);
+    return () => {
+      document.removeEventListener('pointerdown', onOutside);
+      wide.removeEventListener('change', onWide);
+    };
+  }, [toolsOpen]);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -1446,6 +1470,10 @@ export default function Legion3DPage() {
     dragRef.current = null;
     if (drag.moved > 6) return; // 拖动不是点击
 
+    // 触屏没有 Esc：净屏后轻点画布恢复，拖动仍用于旋转。
+    // 这次轻点只退出净屏，不顺带选择背后的节点。
+    if (cleanView) { setCleanView(false); return; }
+
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16, hitBody);
     setSelected(hit ? hit.item.id : null);
@@ -1493,6 +1521,13 @@ export default function Legion3DPage() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && toolsOpen) {
+      e.preventDefault();
+      e.stopPropagation();
+      setToolsOpen(false);
+      toolsToggleRef.current?.focus();
+      return;
+    }
     // 在输入框里打字时，方向键/加减号归输入框，不能拿去转镜头。
     // 唯一例外是 Esc：清掉搜索词，但保持焦点（用户接着改词）。
     const target = e.target as HTMLElement | null;
@@ -1708,8 +1743,8 @@ export default function Legion3DPage() {
       {/* 顶部信息区：手机上「标题 → 搜索 → 按钮」竖排，桌面上标题在左、按钮在右。
           之前按钮绝对定位在 top-16，加了搜索框后正好压住输入框。 */}
       <div ref={headerRef} data-testid="legion-3d-header" className={`pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2 transition-opacity duration-300 sm:inset-x-4 sm:top-4 sm:flex-row sm:items-start sm:justify-between ${cleanView ? 'invisible' : 'visible'}`}>
-      <div className="pointer-events-none min-w-0 max-w-[62vw] sm:max-w-sm">
-        <div className="flex items-baseline gap-2">
+      <div className="pointer-events-none min-w-0 max-w-full sm:max-w-sm">
+        <div className="flex min-h-11 items-center gap-2 pr-20 sm:min-h-0 sm:items-baseline sm:pr-0">
           <h1 className="text-lg font-semibold text-[var(--fg)]">军团 · 3D</h1>
           <span className="hidden text-[11px] text-[var(--fg-dim)] sm:inline">Legion Topology</span>
         </div>
@@ -1783,7 +1818,15 @@ export default function Legion3DPage() {
         )}
       </div>
 
-      <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5">
+      <div
+        ref={toolbarRef}
+        data-testid="legion-3d-toolbar"
+        className="pointer-events-auto flex flex-wrap items-center gap-1.5 sm:justify-end"
+        onKeyDown={e => {
+          // Enter activates the focused control, even when a node is selected.
+          if (e.key === 'Enter') e.stopPropagation();
+        }}
+      >
         <button
           type="button"
           onClick={() => setSpin(v => !v)}
@@ -1802,6 +1845,41 @@ export default function Legion3DPage() {
         </button>
         <button
           type="button"
+          onClick={() => {
+            setToolsOpen(false);
+            setListOpen(v => {
+              const next = !v;
+              if (next) requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>('[role="option"]')?.focus());
+              return next;
+            });
+          }}
+          aria-expanded={listOpen}
+          aria-controls="legion-3d-node-list"
+          data-testid="legion-3d-list-toggle"
+          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+        >
+          {listOpen ? '收起列表' : '节点列表'}
+        </button>
+        <button
+          ref={toolsToggleRef}
+          type="button"
+          onClick={() => { setToolsOpen(v => !v); setListOpen(false); }}
+          aria-expanded={toolsOpen}
+          aria-controls="legion-3d-more-tools"
+          data-testid="legion-3d-tools-toggle"
+          className="rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] sm:hidden"
+        >
+          {toolsOpen ? '收起操作' : '更多操作'}
+        </button>
+        <div
+          id="legion-3d-more-tools"
+          role="group"
+          aria-label="更多军团操作"
+          data-testid="legion-3d-more-tools"
+          className={`${toolsOpen ? 'grid' : 'hidden'} basis-full grid-cols-3 gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/95 p-1.5 sm:contents`}
+        >
+        <button
+          type="button"
           onClick={toggleFullscreen}
           aria-pressed={isFullscreen}
           aria-label={isFullscreen ? '退出全屏' : '全屏查看'}
@@ -1812,7 +1890,7 @@ export default function Legion3DPage() {
         </button>
         <button
           type="button"
-          onClick={() => setCleanView(v => !v)}
+          onClick={() => { setToolsOpen(false); setCleanView(true); wrapRef.current?.focus(); }}
           aria-pressed={cleanView}
           aria-label={cleanView ? '恢复界面' : '净屏（隐藏界面）'}
           data-testid="legion-3d-clean"
@@ -1829,29 +1907,18 @@ export default function Legion3DPage() {
         >
           {exporting ? '导出中…' : '导出 PNG'}
         </button>
-        <button
-          type="button"
-          onClick={() => setListOpen(v => {
-            const next = !v;
-            if (next) requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>('[role="option"]')?.focus());
-            return next;
-          })}
-          aria-expanded={listOpen}
-          aria-controls="legion-3d-node-list"
-          data-testid="legion-3d-list-toggle"
-          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
-        >
-          {listOpen ? '收起列表' : '节点列表'}
-        </button>
         <Link
           href="/legion/plaza"
-          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+          className="flex min-h-11 items-center justify-center rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0"
         >
           平台视角
         </Link>
+        <p className="col-span-3 px-2 py-1 text-[11px] text-[var(--fg-muted)] sm:hidden">净屏后轻点画布恢复，也可按 Esc。</p>
+        </div>
         <Link
           href="/legion"
-          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+          data-testid="legion-3d-2d"
+          className="absolute right-0 top-0 flex min-h-11 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:static sm:min-h-0 sm:border-0 sm:bg-transparent"
         >
           2D 视图
         </Link>
