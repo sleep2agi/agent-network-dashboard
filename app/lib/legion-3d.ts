@@ -144,8 +144,10 @@ export function fitProjectedBodies(
     minY = Math.min(minY, body.y - body.radius);
     maxY = Math.max(maxY, body.y + body.radius);
   }
-  const scale = Math.min((bounds.x2 - bounds.x1) / Math.max(1, maxX - minX),
-    (bounds.y2 - bounds.y1) / Math.max(1, maxY - minY));
+  // Preserve the existing 82% short-axis density instead of filling a wide
+  // viewport edge-to-edge and crossing the renderer's detail/opacity thresholds.
+  const target = Math.min(bounds.x2 - bounds.x1, bounds.y2 - bounds.y1) * 0.82;
+  const scale = target / Math.max(1, maxX - minX, maxY - minY);
   const zoom = Math.min(limits.max, Math.max(limits.min, view.zoom * scale));
   const k = zoom / view.zoom;
   return {

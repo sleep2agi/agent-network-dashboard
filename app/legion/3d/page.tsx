@@ -715,11 +715,20 @@ export default function Legion3DPage() {
       // 等数据到位再跳回 151%（实测）。等真有数据再取景。
       const dataReady = layout.stats.people + layout.stats.agents > 0;
       if (sizeReady && dataReady && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
-        const fit = fitProjectedBodies(nodes.map(({ item, projected: p }) => {
+        const bodies = nodes.map(({ item, projected: p }) => {
           const crowd = item.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
           const worldR = item.kind === 'group' ? deptWorldRadius(item.depth ?? 1) : WORLD_R[item.kind];
           return { x: p.x, y: p.y, radius: Math.max(1.4, worldR * p.scale * crowd) + 4 };
-        }), view, size, fitBoundsRef.current ?? { x1: 24, y1: 24, x2: size.width - 24, y2: size.height - 24 },
+        });
+        // Sparse nodes cover only one side of an orbit; keep the visible tracks
+        // and moving packets inside the frame as well, especially on mobile.
+        for (const ring of ringRadii) {
+          for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, cam, size, 64)) {
+            bodies.push({ x: p.x, y: p.y, radius: 4 });
+          }
+        }
+        const fit = fitProjectedBodies(bodies, view, size,
+        fitBoundsRef.current ?? { x1: 24, y1: 24, x2: size.width - 24, y2: size.height - 24 },
         { min: MIN_ZOOM, max: MAX_ZOOM });
         if (!fit) { raf = requestAnimationFrame(draw); return; }
         const want = fit.zoom;

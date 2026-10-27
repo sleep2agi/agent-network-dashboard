@@ -132,7 +132,12 @@ describe('#3D 军团拓扑 — 投影/深度/命中必须可断言，不能靠�
             focal: Math.min(size.width, size.height) * (size.width < 640 ? 2.4 : 1.73) * v.zoom,
             cx: size.width / 2 + v.panX, cy: size.height / 2 + v.panY });
           const nodes = projectScene(layout.nodes, n => nodeToVec3(n), camera(view), size);
-          const fit = fitProjectedBodies(nodes.map(n => ({ ...n.projected, radius: radius(n) + 4 })),
+          const bodies = nodes.map(n => ({ ...n.projected, radius: radius(n) + 4 }));
+          for (const ring of layout.rings) {
+            bodies.push(...ringPath(ring.radius, RING_HEIGHT[ring.ring], camera(view), size, 64)
+              .map(p => ({ ...p, radius: 4 })));
+          }
+          const fit = fitProjectedBodies(bodies,
             view, size, bounds, { min: 0.25, max: 8 });
           expect(fit).not.toBeNull();
           const framed = projectScene(layout.nodes, n => nodeToVec3(n), camera(fit), size);
@@ -141,6 +146,14 @@ describe('#3D 军团拓扑 — 投影/深度/命中必须可断言，不能靠�
             expect(n.projected.x + radius(n)).toBeLessThanOrEqual(bounds.x2);
             expect(n.projected.y - radius(n)).toBeGreaterThanOrEqual(bounds.y1);
             expect(n.projected.y + radius(n)).toBeLessThanOrEqual(bounds.y2);
+          }
+          for (const ring of layout.rings) {
+            for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring], camera(fit), size, 64)) {
+              expect(p.x).toBeGreaterThanOrEqual(bounds.x1);
+              expect(p.x).toBeLessThanOrEqual(bounds.x2);
+              expect(p.y).toBeGreaterThanOrEqual(bounds.y1);
+              expect(p.y).toBeLessThanOrEqual(bounds.y2);
+            }
           }
         }
       }
