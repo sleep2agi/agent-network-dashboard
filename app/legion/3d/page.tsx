@@ -212,7 +212,6 @@ export default function Legion3DPage() {
   const [helpOpen, setHelpOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [spin, setSpin] = useState(true);
-  const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -255,7 +254,6 @@ export default function Legion3DPage() {
   const people = useSWR<PeopleResponse>(networkReady ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
-    onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
   const hierarchy = useSWR<DepartmentsResponse | null>(networkReady ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000,
@@ -1569,7 +1567,7 @@ export default function Legion3DPage() {
 
   const loading = people.isLoading || hierarchy.isLoading || status.isLoading;
   const readError = legionReadError(people.error, hierarchy.error);
-  const fatal = needsLogin || readError?.status === 401 ? 'login' : readError ? 'error' : null;
+  const fatal = readError?.status === 401 ? 'login' : readError ? 'error' : null;
   const isEmpty = !loading && !fatal && people.data != null && layout.nodes.length <= 1;
 
   const path = useMemo(() => {
