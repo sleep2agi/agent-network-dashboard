@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.80 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 测试
+
+- 新增 `scripts/bench-legion.mjs`（`npm run bench:legion`）：408 节点下测静止 / 拖动 /
+  缩放三段的 fps 与 p50/p95 帧间隔，作为渲染路径改动的相对回归基线。
+  headless 软件光栅环境实测 **30–39fps（p95 33–50ms）**；真实 GPU 浏览器更高，
+  这组数字只用于同机对比，不对外宣称 60fps。
+- 支持 `STORAGE_STATE` 复用已登录 cookie，避免登录限流（10 次/15 分钟）打断批量体检。
+
 ## 0.6.3-preview.79 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
