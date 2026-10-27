@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.97 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D：深层部门默认淡出
+
+- 生产 13 个部门里二级部门默认只留 12% 透明度，放大到 1.8× 或聚焦/选中时才实心：
+  内圈不再叠成一团。
+
 ## 0.6.3-preview.96 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

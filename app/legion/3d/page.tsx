@@ -905,7 +905,11 @@ export default function Legion3DPage() {
         const statusMiss = statusOnly !== null && node.kind === 'agent' && st !== statusOnly;
         const dim = (activeSet && !activeSet.has(node.id)) || statusMiss;
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
-        let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.42 : 1);
+        // 深一层部门在默认缩放下淡出：13 个部门全画会在内圈叠成一团，放大
+        // （≥1.8×）或聚焦/选中时才实心显示。
+        const deepDept = node.kind === 'group' && (node.depth ?? 1) > 1
+          && view.zoom < 1.8 && selectedRef.current !== node.id && !activeSet?.has(node.id);
+        let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.42 : 1) * (deepDept ? 0.12 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
         const color = nodeColor(node, tk, statusByAlias);
         // 核心轻微呼吸，整张图才有「活着」的感觉（幅度 6%，不抢注意力）。
