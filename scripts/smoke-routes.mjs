@@ -23,7 +23,7 @@ const THEMES = (process.env.THEMES || 'cyber,light').split(',').map(t => t.trim(
 const ALL_ROUTES = [
   '/', '/nodes', '/tasks', '/requirements', '/messages', '/scheduled-tasks',
   '/skillhub', '/servers', '/providers', '/versions', '/org', '/admin',
-  '/settings', '/settings/tokens', '/settings/networks', '/legion', '/legion/3d',
+  '/settings', '/settings/tokens', '/settings/networks', '/legion', '/legion/3d', '/legion/plaza',
   '/node',
 ];
 // 本地 stub Hub 没实现 /api/anet/*（真机才有），这些 5xx 不算页面问题。

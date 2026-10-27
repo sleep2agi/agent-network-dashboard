@@ -678,6 +678,13 @@ export default function LegionPage() {
             >
               3D 视图
             </Link>
+            <Link
+              href="/legion/plaza"
+              data-testid="legion-plaza-link"
+              className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              平台视角
+            </Link>
             <Link href="/org" className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
               列表视图
             </Link>

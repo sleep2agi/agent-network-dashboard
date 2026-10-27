@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.90 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 · 平台视角（`/legion/plaza`）
+
+- 新增「展台」视图：每个部门一块带厚度的 3D 台面，成员与名下 Agent 的头像按网格
+  排在台面上，部门名挂在台面前沿；越靠后的行整体缩小，形成纵深。
+- 台面显示上限 72 个头像（超出不画，避免单块台面糊成一片）。
+- 入口：`/legion` 与 `/legion/3d` 头部「平台视角」；`smoke:routes` 已纳入该路由。
+
 ## 0.6.3-preview.89 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
