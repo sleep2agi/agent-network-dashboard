@@ -21,6 +21,9 @@ already-reviewed #78/#79 integration or a release-version change.
 - The disclosure is inside the measured header. Its real dimensions participate
   in existing label/control avoidance and initial/explicit-reset framing.
   Opening and closing controls must preserve a manually rotated camera.
+- Labels avoid Agent dots as well as departments and members. The compact
+  expanded view exposed the previous omission of Agents from body avoidance;
+  priority, shared anchors and no-space omission stay in the common label path.
 
 ## Verification
 
@@ -44,7 +47,7 @@ BASE_URL=http://127.0.0.1:3137 OUTPUT_DIR=/absolute/path/to/evidence \
 
 The probe extends the disc suite with disclosure keyboard/focus checks, real
 touch recovery, successful and denied fullscreen, PNG downloads, both non-origin
-department and portrait camera observations across 130 RAFs, and responsive
+department and member-outline observations across 130 RAFs, and responsive
 collapse. Expanded dense and empty-department scenes also run the geometry and
 label checks. Baseline 1440/390 dark/light, sparse/deep/dense/empty, edge picking,
 labels, leaders and button/R-reset coverage remain in the same probe.

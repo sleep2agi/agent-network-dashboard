@@ -1037,7 +1037,9 @@ export default function Legion3DPage() {
         // This same object must reach bodies, labelQueue and the leader: the
         // leader router excludes its own body by reference, not by coordinates.
         const anchor = { x: p.x, y: p.y, rx: rx + 2, ry: ry + 2 };
-        if (node.kind !== 'agent') labelBodies.push(anchor);
+        // Compact/expanded mobile framing can bring Agent dots beside the core
+        // label. Every painted body participates, even when it has no label.
+        labelBodies.push(anchor);
 
         ctx.globalAlpha = alpha;
         const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));

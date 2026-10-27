@@ -262,8 +262,13 @@ async function toolbarInteractions(page, tag, width) {
   const search = page.getByTestId('legion-3d-search');
   const view2d = page.getByTestId('legion-3d-2d');
   const disc = () => page.evaluate(() => window.__discFrame.shapes.find(s => s.method === 'ellipse' && Math.abs(s.width - 1.4) < 0.001));
-  const portrait = () => page.evaluate(() => window.__discFrame.portraits[0]);
-  const samePortrait = (a, b) => !!a && !!b && a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) < 0.5);
+  const member = () => page.evaluate(() => {
+    const fg = getComputedStyle(document.documentElement).getPropertyValue('--fg').trim().toLowerCase();
+    // This sparse fixture has exactly one member. Read its actual outline even
+    // when perspective makes it smaller than the 4.5px portrait threshold.
+    const bodies = window.__discFrame.shapes.filter(s => s.method === 'arc' && s.color === fg && s.width >= 1.39);
+    return bodies.length === 1 ? bodies[0] : null;
+  });
   check(`${tag}:viewSwitchDirect`, await view2d.isVisible() && await view2d.getAttribute('href') === '/legion');
   check(`${tag}:primaryDirect`, await list.isVisible() && await reset.isVisible() && await page.getByTestId('legion-3d-spin').isVisible());
   if (width === 390) {
@@ -353,7 +358,7 @@ async function toolbarInteractions(page, tag, width) {
     await reset.click();
     await page.mouse.move(1, 1);
     await frames(page, 8);
-    const before = { disc: await disc(), portrait: await portrait() };
+    const before = { disc: await disc(), member: await member() };
     const h = await header.boundingBox();
     await page.mouse.move(box.x + 35, h.y + h.height + 30);
     await page.mouse.down();
@@ -361,20 +366,21 @@ async function toolbarInteractions(page, tag, width) {
     await page.mouse.up();
     await page.mouse.move(1, 1);
     await frames(page, 8);
-    const dragged = { disc: await disc(), portrait: await portrait() };
+    const dragged = { disc: await disc(), member: await member() };
+    assert(before.member && dragged.member, `${tag}: exactly one non-origin member outline required`);
     check(`${tag}:bothNonOriginMoved`, Math.hypot(before.disc.x - dragged.disc.x, before.disc.y - dragged.disc.y) > 5
-      && Math.hypot(before.portrait[0] - dragged.portrait[0], before.portrait[1] - dragged.portrait[1]) > 5);
+      && Math.hypot(before.member.x - dragged.member.x, before.member.y - dragged.member.y) > 5);
     await revealTools(page);
     await frames(page, 130);
-    check(`${tag}:expandedPreservesManualPose`, almost(dragged.disc, await disc()) && samePortrait(dragged.portrait, await portrait()));
+    check(`${tag}:expandedPreservesManualPose`, almost(dragged.disc, await disc()) && almost(dragged.member, await member()));
     await toggle.press('Escape');
     await frames(page, 130);
-    check(`${tag}:collapsedPreservesManualPose`, almost(dragged.disc, await disc()) && samePortrait(dragged.portrait, await portrait()));
+    check(`${tag}:collapsedPreservesManualPose`, almost(dragged.disc, await disc()) && almost(dragged.member, await member()));
     await stage.focus();
     await page.keyboard.press('r');
     await frames(page, 8);
-    check(`${tag}:resetRestoresBoth`, almost(before.disc, await disc()) && samePortrait(before.portrait, await portrait()));
-    snapshots[`${tag}:toolbarCamera`] = { before, dragged, afterReset: { disc: await disc(), portrait: await portrait() } };
+    check(`${tag}:resetRestoresBoth`, almost(before.disc, await disc()) && almost(before.member, await member()));
+    snapshots[`${tag}:toolbarCamera`] = { before, dragged, afterReset: { disc: await disc(), member: await member() } };
     await revealTools(page);
     await toggle.focus();
     await page.setViewportSize({ width: 1440, height: 900 });
