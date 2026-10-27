@@ -1504,6 +1504,7 @@ export default function Legion3DPage() {
                 ['? ', '打开/关闭这张表'],
                 ['Esc', '先清搜索，再取消选中'],
                 ['R', '重置视角'],
+                ['F', '全屏演示（再按退出）'],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-3">
                   <dt className="w-32 shrink-0 font-mono text-[var(--fg)]">{k}</dt>

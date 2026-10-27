@@ -323,6 +323,22 @@ help2dOwn === 1 && !globalHelp2d
   ? pass('2D ? 打开本页速查表', { help2dOwn, globalHelp2d })
   : fail('2D ? 打开本页速查表', { help2dOwn, globalHelp2d });
 
+// 2D 导出：必须是真的 2x PNG（曾经导出图圆心变黑、图例写死颜色）
+await page.keyboard.press('Escape');
+await page.waitForTimeout(300);
+const [dl2d] = await Promise.all([
+  page.waitForEvent('download', { timeout: 20000 }),
+  page.getByTestId('legion-export').click(),
+]);
+const p2d = `${process.env.TMPDIR || '/tmp'}/legion-2d-smoke-export.png`;
+await dl2d.saveAs(p2d);
+const b2d = readFileSync(p2d);
+const w2d = b2d.readUInt32BE(16);
+const h2d = b2d.readUInt32BE(20);
+w2d >= 1000 && h2d >= 600 && b2d.length > 20000
+  ? pass('2D 导出 2x PNG', { w: w2d, h: h2d, bytes: b2d.length })
+  : fail('2D 导出 2x PNG', { w: w2d, h: h2d, bytes: b2d.length });
+
 // 375 窄屏：/org 的徽标与折叠按钮不把页面撑宽
 await page.setViewportSize({ width: 375, height: 812 });
 await page.goto(`${BASE}/org`, { waitUntil: 'networkidle' });
