@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.85 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团：修「简直不能看」（生产形状下节点挤成一坨、部门名叠在中心）
+
+- Agent 扇形上限 0.2 → **0.42 弧度**，并改**三圈半径交错**（1 / 0.9 / 0.82）：
+  生产里一个人名下 20–40 个 Agent，原参数会挤成一个球。
+- 部门扇区下限 0.22 → **0.45 弧度**：内层环半径只有 0.26，6 个一级部门原来会互相叠住。
+- 3D 部门标签只在**扇区够宽（≥0.28 rad）**或悬停/选中/放大时出现；
+  窄扇区的小部门不再把名字压到邻居身上。
+
 ## 0.6.3-preview.84 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

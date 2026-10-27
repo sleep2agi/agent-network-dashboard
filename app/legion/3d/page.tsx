@@ -940,7 +940,10 @@ export default function Legion3DPage() {
           node.kind === 'core' ||
           // 一级部门常显；二级组在默认缩放下不画名字（两层部门树时会挤成一团），
           // 放大到 1.3× 左右、选中或悬停时才出。
-          (node.kind === 'group' && ((node.depth ?? 1) <= 1 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55)) ||
+          // 部门标签只给「扇区够宽」的部门：小部门在环上只有很窄一段，名字
+          // 一定会压到邻居身上（生产截图里 6 个部门名叠成一团）。窄扇区在
+          // 悬停/选中/放大时才出名字。
+          (node.kind === 'group' && ((node.span ?? 0) >= 0.28 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55)) ||
           (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||

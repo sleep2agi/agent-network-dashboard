@@ -130,7 +130,10 @@ const DEPT_BAND = { inner: 0.26, outer: RING_RADIUS.group + 0.04 } as const;
 
 /** Agent 扇形：相邻 Agent 的角度间隔与最大半宽。 */
 const AGENT_STEP = 0.075;
-const AGENT_MAX_HALF_WIDTH = 0.2;
+// 一个人名下可能有 20+ 个 Agent：原来 0.2 rad 的上限会把它们挤成一坨，
+// 放到 0.42 rad（约 24°），并配合三圈半径错开。
+const AGENT_MAX_HALF_WIDTH = 0.42;
+const AGENT_RING_BANDS = [1, 0.9, 0.82] as const;
 /** 同一 owner 的 Agent 交替落在两个半径上：纯角度摊开在窄屏仍会互相压住。 */
 const AGENT_RING_ALT = 0.9;
 
@@ -302,7 +305,10 @@ interface Slot {
  */
 function distribute(slots: Slot[], start: number, span: number): void {
   if (slots.length === 0) return;
-  const minShare = Math.min(0.12, (span / slots.length) * 0.6);
+  // 部门节点直径约 0.104（世界坐标），内层环半径只有 0.26：0.22 rad 的扇区
+  // 只有 0.057 弧长，6 个一级部门会互相叠住（admin 截图里名字全糊在中心）。
+  // 下限按「弧长 ≥ 1.4 个节点直径」估算：0.104*1.4/0.26 ≈ 0.56，取其 0.8 倍。
+  const minShare = Math.min(0.45, (span / slots.length) * 0.6);
   const reserved = minShare * slots.length;
   const flexible = Math.max(0, span - reserved);
   const totalWeight = slots.reduce((n, s) => n + s.weight, 0) || 1;

@@ -70,16 +70,18 @@ describe('#1636 军团布局 — 纯函数，同一份数据必须永远画出�
     expect(layout.stats).toEqual({ groups: 1, people: 1, agents: 2, orphans: 0, depth: 1, collapsed: 0 });
   });
 
-  test('Agent 扇形不会散出 owner 太远（±0.16 弧度内）', () => {
+  // 2026-10-27：上限从 0.2 放到 0.42 —— 生产里一个人名下 20–40 个 Agent，
+  // 0.2 弧度会挤成一坨（admin 截图实锤）。扇形仍以 owner 为中心。
+  test('Agent 扇形不会散出 owner 太远（±0.43 弧度内）', () => {
     const layout = buildLegionLayout({
       people: [person({ agents: Array.from({ length: 12 }, (_, i) => agent(i)) })],
     });
     const owner = layout.nodes.find(n => n.kind === 'person');
     const agents = layout.nodes.filter(n => n.kind === 'agent');
     for (const a of agents) {
-      expect(angleDelta(a.angle, owner.angle)).toBeLessThanOrEqual(0.2001);
+      expect(angleDelta(a.angle, owner.angle)).toBeLessThanOrEqual(0.4301);
     }
-    // 双环交错：相邻 Agent 不能落在同一半径上，否则窄屏会叠成一点
+    // 多环交错：相邻 Agent 不能落在同一半径上，否则窄屏会叠成一点
     for (let i = 1; i < agents.length; i++) {
       expect(agents[i].radius).not.toBe(agents[i - 1].radius);
     }
