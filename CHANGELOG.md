@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.89 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 3D：不再有大片空白圆
+
+- 部门圆心写短名（半径 ≥11px 写 2 字，≥20px 写 3 字）：之前部门是纯白圆，
+  远看一排「白饼」。
+- 没有头像的成员画首字母兜底；成员头像阈值 7px → 5.5px、Agent 5px → 4.5px，
+  减少「本该有头像却是白的」。
+
 ## 0.6.3-preview.88 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

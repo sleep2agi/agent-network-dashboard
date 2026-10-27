@@ -903,7 +903,7 @@ export default function Legion3DPage() {
           : node.kind === 'agent'
             ? getAvatarUrl(node.label)
             : '';
-        const face = avatarUrl && radiusPx >= (node.kind === 'agent' ? 5 : 7) ? avatarImage(avatarUrl) : null;
+        const face = avatarUrl && radiusPx >= (node.kind === 'agent' ? 4.5 : 5.5) ? avatarImage(avatarUrl) : null;
         if (face) {
           if (dark) {
             const halo = haloFor(color);
@@ -958,6 +958,30 @@ export default function Legion3DPage() {
           ctx.strokeStyle = color;
           ctx.lineWidth = Math.max(1.6, Math.min(3.5, radiusPx * 0.5));
           ctx.stroke();
+        }
+
+        // 圆心内容：部门写短名、没有头像的成员写首字母 —— 否则大圆点就是一片空白，
+        // 远看全是「白饼」（admin 截图里最扎眼的就是这个）。
+        if (!dim) {
+          const textColor = dark ? tk.bg : tk.fg;
+          if (node.kind === 'group' && radiusPx >= 11) {
+            const short = node.label.replace(/[*+\s]/g, '').slice(0, radiusPx >= 20 ? 3 : 2);
+            if (short) {
+              const fs = Math.min(radiusPx * 0.85, 13);
+              ctx.font = `600 ${fs}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+              ctx.fillStyle = textColor;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(short, p.x, p.y + 0.5);
+            }
+          } else if (node.kind === 'person' && !face && radiusPx >= 8) {
+            const initial = (node.label || '?').trim().slice(0, 1).toUpperCase();
+            ctx.font = `600 ${Math.min(radiusPx * 0.9, 12)}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+            ctx.fillStyle = textColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(initial, p.x, p.y + 0.5);
+          }
         }
 
         // 悬停：鼠标下的节点描一圈细线，来得及看清「我点的是哪一个」。
