@@ -504,7 +504,7 @@ export function toPixel(
  */
 export function nearestDept(nodeId: string, nodes: LegionNode[]): LegionNode | null {
   const byId = new Map(nodes.map(n => [n.id, n]));
-  let cur = byId.get(nodeId);
+  const cur = byId.get(nodeId);
   if (!cur) return null;
   for (let parent = cur.parentId ? byId.get(cur.parentId) : null; parent; parent = parent.parentId ? byId.get(parent.parentId) : null) {
     if (parent.kind !== 'group') continue;

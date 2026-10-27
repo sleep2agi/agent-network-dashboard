@@ -47,6 +47,8 @@ export default function SettingsPage() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('anet-theme');
+      // Hydration-safe restore, as in UserBar: keep the first render identical to SSR.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved) setTheme(saved);
     } catch {}
   }, []);
