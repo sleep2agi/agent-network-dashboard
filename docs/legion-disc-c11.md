@@ -33,6 +33,7 @@ and `ellipse` operations, rather than assuming every body is circular.
 ```sh
 npm test
 npm run gates
+npm run oss:check
 npm run lint
 npm run build -- --webpack
 ```
@@ -64,7 +65,13 @@ Coverage:
 - Geometry unit regressions cover both-axis picking, nearest-depth priority,
   tolerance, final-zoom minima/strokes, full-orbit fitting and impossible bounds.
 
-Each run saves screenshots, `result.json` and an exact probe copy. Metadata includes
-source SHA, tracked-file dirty state, build-reported SHA and probe hash. Any false
-check or browser/probe error exits nonzero. Use a committed, freshly built preview
-for final evidence; a dirty tree's build stamp alone is not an exact source identity.
+Run the probe from the source checkout's root. Before opening a browser, it requires
+a clean tracked tree (both staged and unstaged changes) and explicitly checks that
+the health endpoint's build SHA equals the source HEAD. A failed identity gate exits
+nonzero without collecting screenshots.
+
+Each completed browser run saves screenshots, `result.json` and an exact probe copy.
+Metadata includes source SHA, tracked-file dirty state, build-reported SHA and probe
+hash. Any false check or browser/probe error exits nonzero. Use a committed, freshly
+built preview for final evidence; a dirty tree's build stamp alone is not an exact
+source identity.

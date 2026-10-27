@@ -37,10 +37,12 @@ const source = await readFile(new URL(import.meta.url));
 await writeFile(path.join(output, 'probe-used.mjs'), source);
 const metadata = {
   base, fixture: true, sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-  sourceDirty: !!execFileSync('git', ['diff', '--name-only'], { encoding: 'utf8' }).trim(),
+  sourceDirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }).trim(),
   probeSha256: createHash('sha256').update(source).digest('hex'),
   build: await fetch(`${base}/api/health`).then(r => r.json()),
 };
+assert.equal(metadata.sourceDirty, false, 'Evidence requires a clean tracked source tree, including staged changes');
+assert.equal(metadata.build.commit, metadata.sourceCommit, 'Fixture build must match the source commit');
 const browser = await chromium.launch({ headless: true });
 const frames = (page, count = 4) => page.evaluate(count => new Promise(resolve => {
   let elapsed = 0;

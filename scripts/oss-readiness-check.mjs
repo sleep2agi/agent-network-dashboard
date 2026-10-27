@@ -101,6 +101,8 @@ const publicRootScripts = new Set([
   // 不读任何凭据、不发网络请求、不写仓外路径。
   'scripts/run-tests.mjs',
   'scripts/stamp-build-commit.mjs',
+  // Loopback-only health read and synthetic browser data; writes local evidence.
+  'scripts/smoke-legion-discs.mjs',
   // Local-only synthetic rendering checks; password is supplied by the caller.
   'scripts/smoke-legion-labels.mjs',
   'scripts/smoke-legion.mjs',
