@@ -45,6 +45,22 @@ skipFirst === 'skip-to-content' && skipLanded === 'anet-main-content'
   ? pass('skip link：Tab 一次到主内容', { skipFirst, skipLanded })
   : fail('skip link：Tab 一次到主内容', { skipFirst, skipLanded });
 
+// 主题首帧：pre-paint 脚本要在 hydration 前就把 data-theme 设好（不许闪白/报 hydration）
+const themeHydration = [];
+page.on('console', m => { const t = m.text(); if (/hydrat|did not match/i.test(t)) themeHydration.push(t.slice(0, 80)); });
+await page.evaluate(() => localStorage.setItem('anet-theme', 'light'));
+await page.goto(`${BASE}/legion`, { waitUntil: 'domcontentloaded' });
+const themeAtFirstPaint = await page.evaluate(() => document.documentElement.dataset.theme);
+await page.evaluate(() => localStorage.setItem('anet-theme', 'cyber'));
+await page.waitForTimeout(800);
+themeAtFirstPaint === 'light' && themeHydration.length === 0
+  ? pass('主题在 hydration 前生效且无 hydration 警告', { themeAtFirstPaint })
+  : fail('主题在 hydration 前生效且无 hydration 警告', { themeAtFirstPaint, themeHydration });
+
+// 回到 3D 页继续后面的断言（主题检查借用了这个 page）
+await page.goto(`${BASE}/legion/3d`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(1600);
+
 /* ── 3D ─────────────────────────────────────────────────────────── */
 await page.waitForTimeout(400);
 

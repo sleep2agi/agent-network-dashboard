@@ -82,7 +82,16 @@ export const viewport: Viewport = {
 const themeBootScript = `
 try {
   var t = localStorage.getItem('anet-theme') || 'cyber';
-  document.documentElement.setAttribute('data-theme', t);
+  var el = document.documentElement;
+  // slack 是 light 主题上的皮肤：两头都要在首帧前设好，否则会先闪一下
+  // 普通浅色再切到 Slack 配色（applyTheme 的同一套约定）。
+  if (t === 'slack') {
+    el.setAttribute('data-theme', 'light');
+    el.setAttribute('data-skin', 'slack');
+  } else {
+    el.setAttribute('data-theme', t);
+    el.removeAttribute('data-skin');
+  }
 } catch (e) {}
 `;
 
@@ -92,7 +101,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="cyber" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      data-theme="cyber"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>

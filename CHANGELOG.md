@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.74 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 主题
+
+- 首帧脚本补齐 Slack 皮肤：`slack` 在 hydration 前就设好 `data-theme=light` +
+  `data-skin=slack`，不再先闪一下普通浅色。
+- `<html>` 加 `suppressHydrationWarning`：pre-paint 脚本会改 `data-theme`，
+  React 之前会报 hydration 不匹配（浅色/Slack 用户每个页面一条）。
+- 冒烟新增「主题在 hydration 前生效且无 hydration 警告」，当前 28/28。
+
 ## 0.6.3-preview.73 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
