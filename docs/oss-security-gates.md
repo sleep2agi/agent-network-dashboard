@@ -18,6 +18,35 @@ Linux and macOS user-home paths are rejected generically. Deployment operators m
 
 ## Local verification
 
+### Reviewed root-script inventory
+
+`scripts/oss-readiness-check.mjs` keeps an exact-path allowlist of reviewed files
+under `scripts/`. New files require a review and an explicit entry; browser
+probes are not executed by this inventory check. The Legion tooling added to
+that inventory was reviewed with these inputs and side effects:
+
+| File under `scripts/` | Purpose and inputs | Side effects |
+|---|---|---|
+| `accent-text-baseline.json` | Per-source-file counts used by the accent-text ratchet | Data only; no execution |
+| `check-accent-text-ratchet.mjs` | Reads `app/` and the accent-text baseline | `--update` rewrites that baseline; normal checks only read |
+| `check-no-build-artifacts.mjs` | Reads the Git index with `git ls-files` to reject tracked build output | No file writes or network requests |
+| `check-token-contrast.mjs` | Reads theme values in `app/globals.css` and computes contrast | No file writes or network requests |
+| `bench-legion.mjs` | Playwright frame-timing probe using `BASE_URL`, `SAMPLE_MS` and optional `STORAGE_STATE` | Loads the supplied browser session file, or posts the login password; navigates and manipulates the 3D view |
+| `check-canvas-labels.mjs` | Playwright pixel/contrast probe using `BASE_URL` | Posts the login password and renders a temporary Canvas in the page |
+| `check-contrast.mjs` | Playwright DOM contrast probe using `BASE_URL`, `THEMES` and `PAGES` | Posts the login password and visits configured pages |
+| `smoke-legion.mjs` | Playwright 2D/3D interactions using `BASE_URL` | Posts the login password, reads directory data, exercises browser clipboard, and saves PNG exports/screenshots under `TMPDIR` (system temporary directory by default) |
+| `smoke-routes.mjs` | Playwright route checks using `BASE_URL`, `THEMES`, `ONLY` and `IGNORE_5XX` | Posts the login password and visits routes; configured response exclusions are part of its coverage |
+| `verify-prod.mjs` | HTTP health/page/asset checks using `--base`, optional `--expect` and `--browser`; reads local package/build identity | GET requests and optional unauthenticated browser navigation; no login or configuration writes |
+
+The authenticated probes read `ANET_DASHBOARD_PASSWORD` and retain the existing
+development fallback when it is absent. Their `BASE_URL` defaults to localhost,
+but accepts a caller-selected host; unlike `smoke-legion-labels.mjs`, they do not
+enforce a loopback-only target or synthetic data. Registration documents the
+scripts' behavior; it is not evidence that they ran or that a real-account or
+production acceptance check passed.
+
+### Commands
+
 ```bash
 npm ci
 npm run oss:check
