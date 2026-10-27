@@ -418,6 +418,8 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
             </div>
           ) : tasksScoped.length === 0 ? (
             <div className="px-3 py-6">
+              {/* #1636 —— 有筛选时的空态必须给**动作**，不能只说「去清一下筛选」。
+                  文案承诺了动作却没有入口，等于让用户自己猜怎么清。 */}
               <EmptyState
                 variant="tasks"
                 sub={
@@ -426,8 +428,23 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     : filterDept
                       ? '这个部门在当前这批任务里没有记录。部门筛选是通讯录投影，换一页或清空筛选再看。'
                     : filterStatus || filterFrom || filterTo
-                      ? 'No tasks match the current filters. Try clearing them.'
-                      : 'Tasks will appear here when agents send them via CommHub.'
+                      ? '当前筛选没有匹配的任务。'
+                      : '当 Agent 通过 CommHub 派活时，任务会出现在这里。'
+                }
+                cta={
+                  filterStatus || filterFrom || filterTo || filterDept
+                    ? {
+                        label: '清空筛选',
+                        onClick: () => {
+                          setFilterStatus('');
+                          setFilterFrom('');
+                          setFilterTo('');
+                          // 部门走 setDeptAndUrl：它有 URL 回写 + 一个
+                          // 「URL→state」的 effect，只改 state 会被 effect 立刻改回来。
+                          setDeptAndUrl('');
+                        },
+                      }
+                    : undefined
                 }
               />
             </div>
