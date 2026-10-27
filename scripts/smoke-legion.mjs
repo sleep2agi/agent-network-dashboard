@@ -121,6 +121,18 @@ filterOn === 'true' && filterOff === 'false'
   ? pass('3D 图例可当状态筛选（Esc 清）', { filterOn, filterOff })
   : fail('3D 图例可当状态筛选（Esc 清）', { filterOn, filterOff });
 
+// 图例上的数量必须和「N 个 Agent」对得上（避免把未上报算成空闲）
+const legendSum = await page.evaluate(() => {
+  const nums = [...document.querySelectorAll('[data-testid^="legion-3d-filter-"]')]
+    .map(b => Number((b.textContent || '').replace(/\D+/g, '')))
+    .filter(n => Number.isFinite(n));
+  const total = Number(document.body.innerText.match(/(\d+) 个 Agent/)?.[1] ?? 0);
+  return { sum: nums.reduce((a, c) => a + c, 0), total, buckets: nums.length };
+});
+legendSum.sum === legendSum.total && legendSum.buckets >= 4
+  ? pass('3D 图例数量合计 = Agent 总数', legendSum)
+  : fail('3D 图例数量合计 = Agent 总数', legendSum);
+
 // 自动取景：默认视角要把整张图收进画面（以前 zoom 固定 1.12，只占画布 40%）。
 // 小网络（stub 3 人）取景后应显著放大；R 重置视角后仍保持取景。
 const zoomOf = async () =>

@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.77 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团
+
+- 图例带数量：运行中 / 空闲 / 阻塞 / 错误 / 未上报，一眼知道「现在几个在跑」。
+- 3D 新增「未上报」档（无 session 的 Agent 不再被算成空闲）：与 2D 的口径一致，
+  合计等于 Agent 总数（冒烟断言守住）。
+
 ## 0.6.3-preview.76 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

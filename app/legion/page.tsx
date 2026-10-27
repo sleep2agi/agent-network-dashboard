@@ -136,6 +136,19 @@ export default function LegionPage() {
     return map;
   }, [status.data]);
 
+  // 图例带数量（和 3D 一致）：working / idle / 其余算离线未上报。
+  const statusCounts = useMemo(() => {
+    const counts = { working: 0, idle: 0, offline: 0 };
+    for (const n of layout.nodes) {
+      if (n.kind !== 'agent') continue;
+      const st = statusByAlias.get(n.label);
+      if (st === 'working') counts.working += 1;
+      else if (st === 'idle' || st === 'ready') counts.idle += 1;
+      else counts.offline += 1;
+    }
+    return counts;
+  }, [layout.nodes, statusByAlias]);
+
   const points = useMemo(() => {
     if (size.width === 0 || size.height === 0) return new Map<string, { x: number; y: number }>();
     const map = new Map<string, { x: number; y: number }>();
@@ -999,6 +1012,7 @@ export default function LegionPage() {
                     >
                       <i aria-hidden className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                       {label}
+                      <span className="tabular-nums text-[var(--fg-dim)]">{statusCounts[key]}</span>
                     </button>
                   );
                 })}

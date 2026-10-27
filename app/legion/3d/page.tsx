@@ -183,7 +183,7 @@ export default function Legion3DPage() {
   // 净屏：把标题/按钮/图例/提示全隐掉，只留拓扑 —— 截屏、做 PPT 用。
   const [cleanView, setCleanView] = useState(false);
   // 图例即筛选：点「运行中」只看在跑的 Agent，再看部门/人环做背景。
-  const [statusOnly, setStatusOnly] = useState<'working' | 'idle' | 'blocked' | 'error' | null>(null);
+  const [statusOnly, setStatusOnly] = useState<'working' | 'idle' | 'blocked' | 'error' | 'offline' | null>(null);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -332,6 +332,19 @@ export default function Legion3DPage() {
     for (const s of status.data?.sessions ?? []) map.set(s.alias, s.status);
     return map;
   }, [status.data]);
+
+  // 图例带数量：一眼知道「现在有几个在跑」，不用逐个看。
+  const statusCounts = useMemo(() => {
+    const counts = { working: 0, idle: 0, blocked: 0, error: 0, offline: 0 };
+    for (const n of layout.nodes) {
+      if (n.kind !== 'agent') continue;
+      const st = statusByAlias.get(n.label);
+      if (!st) counts.offline += 1;
+      else if (st === 'working' || st === 'blocked' || st === 'error') counts[st] += 1;
+      else counts.idle += 1;
+    }
+    return counts;
+  }, [layout.nodes, statusByAlias]);
 
   const selectedNode = useMemo(
     () => (selected ? layout.nodes.find(n => n.id === selected) ?? null : null),
@@ -850,7 +863,7 @@ export default function Legion3DPage() {
         const crowd = node.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
         const r = Math.max(1.4, WORLD_R[node.kind] * p.scale * crowd);
         const depthT = Math.min(1, Math.max(0, (p.depth - near) / (far - near)));
-        const st = node.kind === 'agent' ? (statusByAlias.get(node.label) ?? 'idle') : null;
+        const st = node.kind === 'agent' ? (statusByAlias.get(node.label) ?? 'offline') : null;
         const statusMiss = statusOnly !== null && node.kind === 'agent' && st !== statusOnly;
         const dim = (activeSet && !activeSet.has(node.id)) || statusMiss;
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
@@ -931,8 +944,8 @@ export default function Legion3DPage() {
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
           hoverRef.current === node.id;
         // 状态筛选开着时，不匹配的 Agent 不要标签（否则压暗了还在喊自己）。
-        const filteredOut = statusOnly !== null && node.kind === 'agent' && statusByAlias.get(node.label ?? '') !== statusOnly
-          && (statusByAlias.get(node.label ?? '') ?? 'idle') !== statusOnly;
+        const filteredOut = statusOnly !== null && node.kind === 'agent'
+          && (statusByAlias.get(node.label ?? '') ?? 'offline') !== statusOnly;
         if (showLabel && !interacting && !filteredOut) {
           labelQueue.push({
             node,
@@ -1678,6 +1691,7 @@ export default function Legion3DPage() {
             ['idle', '空闲', 'var(--fg-muted)'],
             ['blocked', '阻塞', 'var(--warning)'],
             ['error', '错误', 'var(--danger)'],
+            ['offline', '未上报', 'var(--fg-dim)'],
           ] as const).map(([key, label, color]) => {
             const active = statusOnly === key;
             return (
@@ -1691,6 +1705,7 @@ export default function Legion3DPage() {
               >
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                 {label}
+                <span className="tabular-nums text-[var(--fg-dim)]">{statusCounts[key]}</span>
               </button>
             );
           })}
