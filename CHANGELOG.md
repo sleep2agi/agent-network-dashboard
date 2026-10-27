@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.100 — 2026-10-27
+
+从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。
+
+### 军团 · 平台视角
+
+- 画布加左右留白（VIEW_W 1470 → 1560，PAD_X 40）：最右一列不再被卡片边缘切掉。
+
 ## 0.6.3-preview.99 — 2026-10-27
 
 从 `fix/1636-requirements-load-more` 分支构建（**未合并进 main**）。

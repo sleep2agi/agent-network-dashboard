@@ -26,7 +26,8 @@ const SKEW = 54;
 const THICK = 16;
 const GAP_X = 22;
 const ROW_H = 280;
-const VIEW_W = 1470;
+const VIEW_W = 1560;
+const PAD_X = 40;
 
 const HUES = [206, 268, 330, 152, 20, 190, 300, 120, 240, 350, 45, 170];
 
@@ -110,7 +111,7 @@ export default function LegionPlazaPage() {
     const scale = 1 - row * 0.1;
     const rowCount = Math.min(perRow, platforms.length - row * perRow);
     const rowW = rowCount * (PLATFORM_W + GAP_X) - GAP_X;
-    const x = (VIEW_W - rowW) / 2 + col * (PLATFORM_W + GAP_X);
+    const x = PAD_X + (VIEW_W - PAD_X * 2 - rowW) / 2 + col * (PLATFORM_W + GAP_X);
     const y = 150 + row * ROW_H * scale;
     return { platform: p, x, y, scale };
   });
