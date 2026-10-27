@@ -74,7 +74,7 @@ export function decodeIdSegment(seg: string): string {
 
 function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: string | null }) {
   const searchParams = useSearchParams();
-  const { networkId } = useNetworkId();
+  const { networkId, ready: networkReady } = useNetworkId();
   const [tasks, setTasks] = useState<TaskListItem[]>([]);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -184,6 +184,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   // 通讯录与部门树：只为了把 alias 落到部门上。失败就让下拉框空着，
   // 不阻塞任务列表本身（任务能读、部门筛选不可用，是可接受的降级）。
   useEffect(() => {
+    if (!networkReady) return;   // 网络未解析完先不发请求（否则首帧是无 scope 请求）
     let alive = true;
     void (async () => {
       try {
@@ -214,7 +215,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     return () => { alive = false; };
     // #1636-P1 —— 切网必须重取通讯录/部门树：依赖里少了 networkId，
     // 页面就会拿上一批数据继续做部门投影（筛选结果看着「有」，实际是别的网络的人）。
-  }, [networkId]);
+  }, [networkId, networkReady]);
 
   const deptAliasUser = useMemo(() => buildAliasUserMap(people), [people]);
   const deptUserDept = useMemo(() => buildUserDeptMap(people, deptMembers), [people, deptMembers]);

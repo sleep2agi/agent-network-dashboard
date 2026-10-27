@@ -191,7 +191,7 @@ function makeStars(count: number) {
 
 export default function Legion3DPage() {
   // #1636-P1 —— 当前选中网络拼进 SWR key（切网即换 key，避免串网）。
-  const { networkId } = useNetworkId();
+  const { networkId, ready: networkReady } = useNetworkId();
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
@@ -252,16 +252,16 @@ export default function Legion3DPage() {
   const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
 
-  const people = useSWR<PeopleResponse>(scopedUrl('/api/hub/people?limit=200&offset=0', networkId), legionFetcher, {
+  const people = useSWR<PeopleResponse>(networkReady ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
     onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
-  const hierarchy = useSWR<DepartmentsResponse | null>(scopedUrl('/api/hub/departments', networkId), deptFetcher, {
+  const hierarchy = useSWR<DepartmentsResponse | null>(networkReady ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000,
     shouldRetryOnError: false,
   });
-  const status = useSWR<StatusResponse>(scopedUrl('/api/hub/status', networkId), legionFetcher, {
+  const status = useSWR<StatusResponse>(networkReady ? scopedUrl('/api/hub/status', networkId) : null, legionFetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });

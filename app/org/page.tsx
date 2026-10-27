@@ -146,7 +146,7 @@ function GroupSection({ group, depth, counts, focusName, expandAll, overrides, o
 function OrgContent() {
   // #1636-P1 —— 通讯录/部门树都按当前网络读；切网要重取，
   // 否则会把上一个网络的人当成这个网络的（部门筛选会跟着错）。
-  const { networkId } = useNetworkId();
+  const { networkId, ready: networkReady } = useNetworkId();
   const router = useRouter();
   const searchParams = useSearchParams();
   const q = searchParams.get('q') || '';
@@ -193,10 +193,12 @@ function OrgContent() {
     }
   }, [q, networkId]);
 
-  useEffect(() => { load(0, false); }, [load]);
+  // 网络解析完成之前不发请求：否则首帧会发一次没有 scope 的请求（多网络账号会 400）。
+  useEffect(() => { if (!networkReady) return; load(0, false); }, [load, networkReady]);
 
   // 部门树单独拉：404 = 这版 Hub 没有这条路由（能力缺失），不是错误。
   useEffect(() => {
+    if (!networkReady) return;
     let alive = true;
     (async () => {
       try {
@@ -217,7 +219,7 @@ function OrgContent() {
       }
     })();
     return () => { alive = false; };
-  }, [networkId]);
+  }, [networkId, networkReady]);
 
   const setQuery = (value: string) => {
     const next = new URLSearchParams(searchParams.toString());

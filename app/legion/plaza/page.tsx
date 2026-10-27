@@ -44,11 +44,11 @@ interface Platform {
 
 export default function LegionPlazaPage() {
   // #1636-P1 —— 当前选中网络拼进 SWR key。
-  const { networkId } = useNetworkId();
+  const { networkId, ready: networkReady } = useNetworkId();
   const { data: peopleData, error: peopleError, isLoading, mutate: mutatePeople } = useSWR<PeopleResponse>(
-    scopedUrl('/api/hub/people?limit=200&offset=0', networkId), legionFetcher, { refreshInterval: 30000, shouldRetryOnError: false },
+    networkReady ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, { refreshInterval: 30000, shouldRetryOnError: false },
   );
-  const { data: hierarchy, error: hierarchyError, isLoading: hierarchyLoading, mutate: mutateHierarchy } = useSWR<DepartmentsResponse | null>(scopedUrl('/api/hub/departments', networkId), deptFetcher, {
+  const { data: hierarchy, error: hierarchyError, isLoading: hierarchyLoading, mutate: mutateHierarchy } = useSWR<DepartmentsResponse | null>(networkReady ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000, shouldRetryOnError: false,
   });
   // manifest 拉完会派发事件；订阅后头像才会从首字母换成图片。

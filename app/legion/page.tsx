@@ -78,7 +78,7 @@ function ringLabel(node: LegionNode): string {
 
 export default function LegionPage() {
   // #1636-P1 —— 当前选中网络。拼进 SWR key：切网 = 换 key = 重新取数，不会串上一个网络的数据。
-  const { networkId } = useNetworkId();
+  const { networkId, ready: networkReady } = useNetworkId();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
@@ -112,15 +112,15 @@ export default function LegionPage() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const { ref, size } = useElementSize<HTMLDivElement>();
 
-  const people = useSWR<PeopleResponse>(scopedUrl('/api/hub/people?limit=200&offset=0', networkId), fetcher, {
+  const people = useSWR<PeopleResponse>(networkReady ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, fetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
     onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
   const hierarchy = useSWR<DepartmentsResponse | null>(
-    scopedUrl('/api/hub/departments', networkId), deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
+    networkReady ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
   );
-  const status = useSWR<StatusResponse>(scopedUrl('/api/hub/status', networkId), fetcher, {
+  const status = useSWR<StatusResponse>(networkReady ? scopedUrl('/api/hub/status', networkId) : null, fetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });
