@@ -140,6 +140,7 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
       onPointerMove={event => {
         const start = drag.current;
         if (!start || start.id !== event.pointerId) return;
+        if (!(event.buttons & 1)) { drag.current = null; return; }
         const dx = event.clientX - start.x, dy = event.clientY - start.y;
         if (!start.moved && Math.hypot(dx, dy) < 5) return;
         start.moved = true; suppressClick.current = true;
@@ -155,6 +156,7 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
         drag.current = null;
       }}
       onPointerCancel={() => { drag.current = null; }}
+      onPointerLeave={event => { if (!event.currentTarget.hasPointerCapture(event.pointerId)) drag.current = null; }}
       onLostPointerCapture={() => { drag.current = null; }}
       onClickCapture={event => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); suppressClick.current = false; } }}>
       <defs>
@@ -201,16 +203,16 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
         if (Math.abs(p.x - corePoint.x) < boardWidth / 2 + coreRadius + 8 && boardY < coreBottom && boardY + boardHeight > coreTop) {
           boardY = p.y > corePoint.y ? coreBottom + 8 : coreTop - boardHeight - 8;
         }
-        return <g key={department.id} data-testid="plaza-perspective-department" data-department-id={department.id}
+        return <g key={department.id} data-testid="plaza-perspective-department" data-department-id={department.id} onClick={() => onSelect(department.id)}
           data-world-x={center.x} data-world-y={center.y} data-world-z={center.z} data-screen-x={p.x} data-screen-y={p.y} data-depth={p.depth} data-agent-count={department.agents.length}>
-          <g aria-hidden="true" stroke={active ? 'var(--accent-text)' : 'var(--border-hover)'} strokeWidth={active ? 1.8 : 1}>
+          <g aria-hidden="true" style={{ cursor: 'pointer' }} stroke={active ? 'var(--accent-text)' : 'var(--border-hover)'} strokeWidth={active ? 1.8 : 1}>
             {faces.map((face, i) => <path key={i} d={path(face, true)} fill="var(--bg-elevated)" />)}
             <path d={path(top, true)} fill={`url(#${id}-plate)`} data-testid="plaza-perspective-plate" />
             <path d={path(top, true)} fill="var(--accent)" opacity={active ? 0.16 : 0.06} stroke="none" />
             <path d={plazaPath([{ x: p.x, y: boardY + boardHeight }, { x: p.x, y: p.y + 10 }])} stroke="var(--accent-text)" opacity="0.7" />
           </g>
           <foreignObject x={p.x - boardWidth / 2} y={boardY} width={boardWidth} height={boardHeight + 4} style={{ overflow: 'visible' }}>
-            <button type="button" className={styles.board} aria-pressed={active} onClick={() => onSelect(department.id)}
+            <button type="button" className={styles.board} aria-pressed={active}
               aria-label={`查看${department.name}：${department.people.length}人，${department.agents.length}个Agent`} data-testid="plaza-perspective-select"
               title={`${department.name} · ${department.people.length} 名成员 · ${department.agents.length} 个 Agent · 查看全部节点与属性`}>
               <span className={styles.heading}><span className={styles.name}>{department.name}</span><span className={styles.count}>{department.agents.length} Agent</span></span>

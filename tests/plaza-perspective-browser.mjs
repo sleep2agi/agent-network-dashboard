@@ -107,6 +107,35 @@ try {
   assert.ok(Number(await svg.getAttribute('data-zoom')) > 1);
   await page.getByTestId('plaza-perspective-reset').click();
 
+  // Pointer regressions: plates are real selection targets, and a release
+  // outside the stage before capture must not turn later hover into a drag.
+  const pointerChecks = {};
+  for (const id of ['d2', 'd3', 'd5']) {
+    const target = page.locator(`[data-testid="plaza-perspective-department"][data-department-id="dept:${id}"]`);
+    const point = await target.evaluate(element => ({ x: Number(element.dataset.screenX), y: Number(element.dataset.screenY) }));
+    const stage = await svg.boundingBox();
+    const hit = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest('[data-testid="plaza-perspective-department"]')?.getAttribute('data-department-id'), { x: stage.x + point.x, y: stage.y + point.y });
+    assert.equal(hit, `dept:${id}`, 'test must hit the visible plate');
+    await page.mouse.click(stage.x + point.x, stage.y + point.y);
+    pointerChecks[`plate-${id}`] = await page.getByTestId('plaza-department-select').inputValue() === `dept:${id}`;
+  }
+  const namecard = page.locator('[data-department-id="dept:d0"]').getByTestId('plaza-perspective-select');
+  await namecard.focus(); await page.keyboard.press('Enter');
+  pointerChecks.keyboardNamecard = await page.getByTestId('plaza-department-select').inputValue() === 'dept:d0';
+  await page.evaluate(() => scrollTo(0, 0));
+  const edge = await svg.boundingBox(), beforeEdge = await geometry();
+  await page.mouse.move(edge.x + 2, edge.y + 300);
+  await page.mouse.down();
+  await page.mouse.move(edge.x - 20, edge.y + 280);
+  await page.mouse.up();
+  await page.mouse.move(edge.x + 100, edge.y + 220);
+  await page.mouse.move(edge.x + 150, edge.y + 180);
+  await frames(5);
+  pointerChecks.releasedHoverStable = JSON.stringify(await geometry()) === JSON.stringify(beforeEdge);
+  await writeFile(`${output}/pointer-regressions.json`, JSON.stringify(pointerChecks, null, 2));
+  assert.ok(Object.values(pointerChecks).every(Boolean), `pointer regressions: ${JSON.stringify(pointerChecks)}`);
+  await page.getByTestId('plaza-perspective-reset').click();
+
   const streak = page.getByTestId('plaza-perspective-streak').first();
   const phaseBefore = await streak.getAttribute('data-flow-phase');
   await frames(10);
@@ -175,6 +204,6 @@ try {
   assert.ok(calls.filter(u => /^\/api\/hub\/(people|departments|nodes)(\?|$)/.test(u)).every(u => u.includes('network_id=fixture-A')));
   // The existing global Sidebar separately reads unscoped /status for its network inventory.
   assert.ok(calls.includes('/api/hub/status?network_id=fixture-A'));
-  await writeFile(`${output}/implementation-browser.json`, JSON.stringify({ passed: true, initial, rotated, stableFrames: 130, pausedPhase: paused, calls, errors }, null, 2));
+  await writeFile(`${output}/implementation-browser.json`, JSON.stringify({ passed: true, initial, rotated, stableFrames: 130, pointerChecks, pausedPhase: paused, calls, errors }, null, 2));
   console.log('PASS: projected geometry, 130 RAF stability, reset/R, zoom, flow/pause/live reduced-motion, names/status, ownerless/deep/empty, scoped chat open/close, 2D toggle, fullscreen, dark/light desktop, narrow layout, load/403/401/disconnect, network scope');
 } finally { await browser.close(); }
