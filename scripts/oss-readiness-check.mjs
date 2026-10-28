@@ -109,6 +109,7 @@ const publicRootScripts = new Set([
   'scripts/smoke-legion-labels.mjs',
   'scripts/smoke-legion.mjs',
   'scripts/smoke-routes.mjs',
+  'scripts/smoke-schedule-history.mjs',
   'scripts/verify-prod.mjs',
 ]);
 const unexpectedRootScripts = trackedPaths.filter((path) => path.startsWith('scripts/') && !publicRootScripts.has(path));

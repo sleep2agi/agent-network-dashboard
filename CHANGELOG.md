@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.105 — 2026-10-28
+
+### Scheduled execution history
+
+- Switching schedules or networks, or closing and reopening execution history, keeps late responses from replacing the currently selected records.
+- Execution history now shows loading and retryable failures explicitly. Only a successful, validated empty response displays “暂无执行记录”; expired login, permission errors, interrupted connections and invalid responses remain visible as errors.
+- Retry and refresh keep keyboard focus on the same control, with a 44px minimum target for history controls.
+
 ## 0.6.3-preview.104 — 2026-10-28
 
 ### Desktop Legion integration
