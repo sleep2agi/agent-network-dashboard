@@ -209,15 +209,23 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
       })}
       {/* Labels are a separate screen-space layer, so a nearer plate cannot cover the selected card. */}
       <g data-testid="plaza-perspective-labels">
-        {world.platforms.map(({ department, center }) => {
+        <g pointerEvents="none" aria-hidden="true">
+          {world.platforms.map(({ department, center }) => {
+            const label = labelLayout.labels.get(department.id);
+            if (!label) return null;
+            const p = project(center);
+            const edgeX = Math.max(label.x, Math.min(label.x + label.width, p.x));
+            const edgeY = Math.max(label.y, Math.min(label.y + label.height, p.y));
+            return <path key={department.id} d={plazaPath([{ x: edgeX, y: edgeY }, { x: p.x, y: p.y + 10 }])}
+              fill="none" stroke="var(--accent-text)" opacity={department.id === selected ? '0.8' : '0.35'} />;
+          })}
+        </g>
+        {world.platforms.map(({ department }) => {
           const label = labelLayout.labels.get(department.id);
           if (!label) return null;
-          const p = project(center), active = department.id === selected;
+          const active = department.id === selected;
           const shown = department.agents.slice(0, label.rows);
-          const edgeX = Math.max(label.x, Math.min(label.x + label.width, p.x));
-          const edgeY = Math.max(label.y, Math.min(label.y + label.height, p.y));
           return <g key={department.id} data-department-id={department.id} onClick={() => onSelect(department.id)}>
-          <path d={plazaPath([{ x: edgeX, y: edgeY }, { x: p.x, y: p.y + 10 }])} fill="none" stroke="var(--accent-text)" opacity={active ? '0.8' : '0.35'} pointerEvents="none" aria-hidden="true" />
           <foreignObject x={label.x} y={label.y} width={label.width} height={label.height} style={{ overflow: 'visible' }}>
             <button type="button" className={styles.board} aria-pressed={active}
               aria-label={`查看${department.name}：${department.people.length}人，${department.agents.length}个Agent`} data-testid="plaza-perspective-select"
