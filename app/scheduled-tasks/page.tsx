@@ -183,6 +183,11 @@ export default function ScheduledTasksPage() {
   const [editing, setEditing] = useState<ScheduleRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [historyFor, setHistoryFor] = useState<string | null>(null);
+  // 🔴 展开历史时的旧响应竞态（与 #79 people 同一类）：
+  //   点 A（慢）→ 点 B（快）→ A 的响应最后到，就会把 B 的历史换成 A 的，
+  //   而表头仍写着 B；关闭面板后迟到的响应还会把 runs 写回来。
+  //   每次「打开 / 切换 / 收起」都 +1，迟到的那一次直接丢弃（错误也不写）。
+  const runsGen = useRef(0);
   const [runs, setRuns] = useState<RunRow[]>([]);
 
   const [name, setName] = useState('');
@@ -365,12 +370,19 @@ export default function ScheduledTasksPage() {
   };
 
   const openHistory = async (row: ScheduleRow) => {
-    if (historyFor === row.schedule_id) { setHistoryFor(null); return; }
+    const gen = ++runsGen.current;   // 先失效：收起的那个请求也不再回写
+    if (historyFor === row.schedule_id) { setHistoryFor(null); setRuns([]); return; }
     setHistoryFor(row.schedule_id); setRuns([]);
     const join = query ? `${query}&limit=50` : '?limit=50';
-    const res = await fetch(`/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}/runs${join}`);
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) setRuns(data.runs || []); else setError(data.error || `HTTP ${res.status}`);
+    try {
+      const res = await fetch(`/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}/runs${join}`);
+      const data = await res.json().catch(() => ({}));
+      if (gen !== runsGen.current) return;   // 旧网络 / 旧计划 / 已收起 ⇒ 丢弃
+      if (res.ok) setRuns(data.runs || []); else setError(data.error || `HTTP ${res.status}`);
+    } catch (e) {
+      if (gen !== runsGen.current) return;
+      setError(e instanceof Error ? e.message : String(e));
+    }
   };
 
   const saveDisabled = busy || !networkId || !name.trim() || !targetNodeId || !task.trim() || !timezone.trim() ||
