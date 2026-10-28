@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.113 — 2026-10-28
+
+### Filter requirements by project
+
+- Choose all projects, a specific project or “无项目” in the requirements view. Visible parent paths distinguish projects; selecting a parent matches its own requirements, not its descendants.
+- Project selection stays in the URL and combines with status, tags and archived searches. Switching projects starts a new page and ignores late responses from the previous filter.
+- Project loading, empty catalogs, permissions and older Hubs have explicit feedback and retry controls. Unknown or archived URL selections retain their exact ID instead of silently switching to all projects.
+
 ## 0.6.3-preview.112 — 2026-10-28
 
 ### Find archived requirements
