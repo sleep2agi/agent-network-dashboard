@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.106 — 2026-10-28
+
+### Legion light flow and ANet branding
+
+- Department connections now have luminous channels and continuous directional light trails. Large networks limit decorative effects while keeping department paths prominent.
+- Pause light flow independently of camera rotation. Paused lights stay at the same position along a connection when the camera turns or zooms; system reduced-motion preferences are applied live.
+- The topology center uses the client's current one-stroke ANet logo, with original dark, light and small-size artwork. Its proportions remain stable as the scene rotates.
+
 ## 0.6.3-preview.105 — 2026-10-28
 
 ### Scheduled execution history

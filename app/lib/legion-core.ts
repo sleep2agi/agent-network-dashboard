@@ -1,24 +1,26 @@
 /**
- * ANet core medallion. The mark is direction C from anet-design PR #8:
- * brand/logo/c-iso-a.svg @ ffc30cdaa278b53dbf2c40c82b646b1603a7b857.
- * Preserve its proportions and flat fills. Only the surrounding network rings
- * move; every visible part stays inside the existing circular hit/label body.
+ * ANet core medallion using the client's canonical one-stroke AN mark.
+ * See public/brand/README.md for immutable source and asset hashes. The image
+ * stays upright and aspect-correct; only the surrounding network rings move.
  */
-type CorePalette = { bg: string; accent: string; accentFg: string };
+type CorePalette = { bg: string; accent: string; accentFg: string; isDark: boolean };
 
-let mark: { right: Path2D; left: Path2D; bar: Path2D } | undefined;
+const marks = new Map<string, HTMLImageElement>();
 
 export function drawLegionCore(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number,
   palette: CorePalette, phase: number, detailed: boolean) {
-  // Lazy: this module is also evaluated by Next's server renderer.
-  mark ??= {
-    right: new Path2D('M32 13 L45 47 L38.5 47 L32 28.5 Z'),
-    left: new Path2D('M32 13 L19 47 L25.5 47 L32 28.5 Z'),
-    bar: new Path2D('M24.5 35.5 h15 v4.6 h-15 Z'),
-  };
+  // Lazy: this module is also evaluated by Next's server renderer. All images
+  // are bundled same-origin, keeping PNG export's canvas untainted.
+  const src = `/brand/mark-${radius * 1.25 <= 32 ? 'small-' : ''}${palette.isDark ? 'dark' : 'light'}.png`;
+  let mark = marks.get(src);
+  if (!mark) {
+    mark = new Image();
+    mark.src = src;
+    marks.set(src, mark);
+  }
   const alpha = ctx.globalAlpha;
   ctx.save();
-  // Opaque housing keeps network links behind the core, rather than through A.
+  // Opaque housing keeps network links behind the logo.
   ctx.fillStyle = palette.bg;
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -45,19 +47,17 @@ export function drawLegionCore(ctx: CanvasRenderingContext2D, x: number, y: numb
   }
 
   ctx.globalAlpha = alpha;
-  ctx.fillStyle = palette.accent;
-  ctx.beginPath();
-  ctx.arc(x, y, radius * 0.72, 0, Math.PI * 2);
-  ctx.fill();
-  // Same 64×64 coordinate system as the canonical SVG, including its whitespace.
-  // Keep the monogram upright while the camera and orbit indicators turn.
-  ctx.translate(x - radius, y - radius);
-  ctx.scale(radius / 32, radius / 32);
-  ctx.fillStyle = palette.accentFg;
-  ctx.fill(mark.right);
-  ctx.globalAlpha = alpha * 0.82;
-  ctx.fill(mark.left);
-  ctx.globalAlpha = alpha * 0.95;
-  ctx.fill(mark.bar);
+  if (mark.complete && mark.naturalWidth > 0) {
+    const scale = radius * 1.25 / Math.max(mark.naturalWidth, mark.naturalHeight);
+    const width = mark.naturalWidth * scale, height = mark.naturalHeight * scale;
+    ctx.drawImage(mark, x - width / 2, y - height / 2, width, height);
+  } else {
+    // Keep a recognizable label while decoding, or if an asset cannot load.
+    ctx.fillStyle = palette.accent;
+    ctx.font = `600 ${Math.max(8, radius * 0.36)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ANet', x, y);
+  }
   ctx.restore();
 }

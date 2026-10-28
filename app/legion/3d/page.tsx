@@ -226,6 +226,8 @@ export default function Legion3DPage() {
   const toolsToggleRef = useRef<HTMLButtonElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [spin, setSpin] = useState(true);
+  const [flow, setFlow] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -239,6 +241,8 @@ export default function Legion3DPage() {
   const fitBoundsRef = useRef<LabelRect | null>(null);
   const labelUiRectsRef = useRef<LabelRect[]>([]);
   const corePhaseRef = useRef(0);
+  const flowTimeRef = useRef(0);
+  const flowRef = useRef(true);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const viewRef = useRef({ ...DEFAULT_VIEW });
   const spinRef = useRef(true);
@@ -499,6 +503,14 @@ export default function Legion3DPage() {
   }, []);
 
   useEffect(() => { spinRef.current = spin && !chatAlias; }, [spin, chatAlias]);
+  useEffect(() => { flowRef.current = flow && !chatAlias; }, [flow, chatAlias]);
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(preference.matches);
+    update();
+    preference.addEventListener('change', update);
+    return () => preference.removeEventListener('change', update);
+  }, []);
   useEffect(() => { selectedRef.current = selected; }, [selected]);
 
   useEffect(() => {
@@ -687,7 +699,7 @@ export default function Legion3DPage() {
         } else {
           view.yaw += diff * Math.min(1, dt * 4.5);
         }
-      } else if (spinRef.current && now - lastInteract.current > IDLE_BEFORE_SPIN) {
+      } else if (!motionPreference.matches && spinRef.current && now - lastInteract.current > IDLE_BEFORE_SPIN) {
         view.yaw += SPIN_RAD_PER_SEC * dt;
       }
       // 小屏用更长的焦距把图放大：375 宽时 min(w,h) 只有 375，
@@ -725,6 +737,10 @@ export default function Legion3DPage() {
       const interacting = huge && now < interactingUntil.current;
       // Pause also freezes the new core ornament; reduced-motion is read live.
       if (!motionPreference.matches && spinRef.current && !interacting) corePhaseRef.current += dt * 0.24;
+      // A local clock freezes every relationship/ring ornament together. Using
+      // wall time here would jump the streaks when resuming or switching tabs.
+      if (!motionPreference.matches && flowRef.current && !interacting) flowTimeRef.current += dt;
+      const flowTime = flowTimeRef.current;
       applyResolution(interacting ? RES_LOW : 1);
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -876,9 +892,8 @@ export default function Legion3DPage() {
         ctx.fillRect(0, 0, size.width, size.height);
       }
 
-      // 连线（神明 cover14.mjs 的三层画法，改成 3D 屏幕空间里的二次曲线）：
-      //   宽光晕 18px@.7 blur7 → 实线 5px@.95 → 白色 dash 2/22 流光。
-      //   曲线控制点取法向偏移，双向交替，避免所有线朝同一边鼓成一把弓。
+      // Structural light channels stay visible in a dense scene. Moving streaks
+      // illustrate parent-to-child relationships, not live task traffic.
       const curveOf = (ax: number, ay: number, bx: number, by: number, i: number) => {
         const dx = bx - ax;
         const dy = by - ay;
@@ -890,7 +905,7 @@ export default function Legion3DPage() {
         const u = 1 - t;
         return [u * u * ax + 2 * u * t * cx + t * t * bx, u * u * ay + 2 * u * t * cy + t * t * by];
       };
-      type EdgeDraw = { a: SceneNode<LegionNode>; b: SceneNode<LegionNode>; cx: number; cy: number; lit: boolean };
+      type EdgeDraw = { a: SceneNode<LegionNode>; b: SceneNode<LegionNode>; cx: number; cy: number; lit: boolean; trunk: boolean };
       const edgeDraws: EdgeDraw[] = [];
       layout.edges.forEach((edge, i) => {
         const a = byId.get(edge.from);
@@ -898,24 +913,27 @@ export default function Legion3DPage() {
         if (!a || !b) return;
         const lit = !activeSet || (activeSet.has(edge.from) && activeSet.has(edge.to));
         const { cx, cy } = curveOf(a.projected.x, a.projected.y, b.projected.x, b.projected.y, i);
-        edgeDraws.push({ a, b, cx, cy, lit });
+        edgeDraws.push({ a, b, cx, cy, lit, trunk: b.item.kind === 'group' });
       });
 
-      // 光晕层有预算：大网络里高亮（搜索/聚焦）会让几百条边同时「lit」，
-      // 再逐条加宽描边会把帧率打回 30fps。超出预算就只画实线。
-      const glowBudget = huge ? 48 : heavy ? 96 : Number.POSITIVE_INFINITY;
+      // Broad bloom is reserved for the hierarchy spine or an explicit selection.
+      // No per-edge blur; bounded strokes keep large networks responsive.
+      const glowBudget = huge ? 24 : heavy ? 40 : 64;
       let glowDrawn = 0;
-      if (dark && (!heavy || (activeSet && edgeDraws.filter(e => e.lit).length <= glowBudget))) {
+      if (dark && !interacting) {
         ctx.save();
         ctx.strokeStyle = tk.accent;
-        ctx.lineWidth = 6;
-        ctx.globalAlpha = activeSet ? 0.1 : 0.04;
         for (const e of edgeDraws) {
-          if (!e.lit) continue;
+          if (!e.lit || (!e.trunk && !activeSet)) continue;
           if (++glowDrawn > glowBudget) break;
           ctx.beginPath();
           ctx.moveTo(e.a.projected.x, e.a.projected.y);
           ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
+          ctx.lineWidth = 9;
+          ctx.globalAlpha = e.trunk ? 0.055 : 0.035;
+          ctx.stroke();
+          ctx.lineWidth = 4;
+          ctx.globalAlpha = e.trunk ? 0.15 : 0.09;
           ctx.stroke();
         }
         ctx.restore();
@@ -924,60 +942,53 @@ export default function Legion3DPage() {
         ctx.beginPath();
         ctx.moveTo(e.a.projected.x, e.a.projected.y);
         ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
-        ctx.strokeStyle = e.lit && activeSet ? tk.accent : tk.border;
-        ctx.globalAlpha = e.lit ? (activeSet ? 0.62 : (dark ? 0.34 : 0.45)) : 0.08;
-        ctx.lineWidth = huge ? 0.8 : e.lit && activeSet ? 1.6 : 1;
+        ctx.strokeStyle = e.lit && (activeSet || e.trunk) ? tk.accent : tk.info;
+        ctx.globalAlpha = e.lit ? (activeSet ? 0.65 : e.trunk ? (dark ? 0.5 : 0.58) : (dark ? 0.13 : 0.2)) : 0.045;
+        ctx.lineWidth = e.trunk ? 1.5 : huge ? 0.7 : e.lit && activeSet ? 1.4 : 0.8;
         ctx.stroke();
       }
-      // 白色短划流光（dasharray 2 22），沿线跑。
+      // Continuous tapered trails read as light flow rather than scattered dots.
+      // Prefer department links; sample leaf links and cap total decorations.
+      const cometStride = huge ? 14 : heavy ? 5 : 1;
+      const flowBudget = huge ? 32 : heavy ? 48 : 64;
+      let flowDrawn = 0;
       ctx.save();
-      ctx.setLineDash([2, 22]);
-      ctx.strokeStyle = tk.fg;
-      ctx.lineWidth = 1.1;
-      ctx.globalAlpha = dark ? 0.48 : 0.4;
-      const dashStride = huge ? 0 : heavy ? 3 : 1;
-      edgeDraws.forEach((e, i) => {
-        if (interacting || !dashStride || !e.lit || i % dashStride !== 0) return;
-        ctx.lineDashOffset = -((now / 55) % 24) - i * 6;
-        ctx.beginPath();
-        ctx.moveTo(e.a.projected.x, e.a.projected.y);
-        ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
-        ctx.stroke();
-      });
-      ctx.restore();
-      ctx.setLineDash([]);
-      ctx.globalAlpha = 1;
-
-      // 双向数据包：亮头（白芯 + 彩色描边）+ 6 段渐隐尾巴，两个方向各一个。
-      const cometStride = huge ? 18 : heavy ? 6 : 1;
-      // 浅色主题 + 大网络：数据包会变成几百个深绿小点，像噪点。整层关掉。
-      const drawLinkComets = dark || !huge;
-      edgeDraws.forEach((e, i) => {
-        if (!drawLinkComets || interacting || !e.lit || i % cometStride !== 0) return;
-        const speed = 5200;
-        const base = ((now / speed) + i * 0.11) % 1;
-        for (const dir of [1, -1]) {
-          const t = dir === 1 ? 0.12 + base * 0.76 : 0.88 - base * 0.76;
-          for (let k = 6; k >= 1; k--) {
-            const tt = Math.min(1, Math.max(0, t - dir * 0.022 * k));
-            const [tx, ty] = quadAt(e.a.projected.x, e.a.projected.y, e.cx, e.cy, e.b.projected.x, e.b.projected.y, tt);
-            ctx.globalAlpha = Math.max(0, 0.3 - k * 0.045);
-            ctx.fillStyle = tk.accent;
-            ctx.beginPath();
-            ctx.arc(tx, ty, Math.max(0.8, 3.2 - k * 0.35), 0, Math.PI * 2);
-            ctx.fill();
-          }
-          const [hx, hy] = quadAt(e.a.projected.x, e.a.projected.y, e.cx, e.cy, e.b.projected.x, e.b.projected.y, t);
-          ctx.globalAlpha = 0.72;
-          ctx.fillStyle = tk.fg;
+      ctx.lineCap = 'round';
+      edgeDraws.map((edge, index) => ({ edge, index })).sort((a, b) => Number(b.edge.trunk) - Number(a.edge.trunk)).forEach(({ edge: e, index: i }) => {
+        if (interacting || !e.lit || (!e.trunk && i % cometStride !== 0) || flowDrawn >= flowBudget) return;
+        const ax = e.a.projected.x, ay = e.a.projected.y, bx = e.b.projected.x, by = e.b.projected.y;
+        const length = Math.hypot(e.cx - ax, e.cy - ay) + Math.hypot(bx - e.cx, by - e.cy);
+        if (length < 24) return;
+        flowDrawn++;
+        // Phase belongs to the world-space edge. Projected length changes when
+        // the camera moves, which must not move paused light along that edge.
+        const worldLength = Math.hypot(e.b.point.x - e.a.point.x, e.b.point.y - e.a.point.y, e.b.point.z - e.a.point.z);
+        const t = (flowTime * 0.18 / Math.max(0.35, worldLength) + i * 0.173) % 1;
+        const trail = Math.min(0.3, (e.trunk ? 48 : 32) / length);
+        // Fade near endpoints so light enters/leaves a node instead of teleporting.
+        const envelope = Math.min(1, t * 12, (1 - t) * 12);
+        for (let k = 6; k >= 1; k--) {
+          const tail = Math.max(0, t - trail * k / 6);
+          const tip = Math.max(0, t - trail * (k - 1) / 6);
+          const [x1, y1] = quadAt(ax, ay, e.cx, e.cy, bx, by, tail);
+          const [x2, y2] = quadAt(ax, ay, e.cx, e.cy, bx, by, tip);
+          ctx.strokeStyle = dark && k === 1 ? tk.fg : tk.accent;
+          ctx.globalAlpha = envelope * (1 - k / 7) * (e.trunk ? 0.9 : 0.64);
+          ctx.lineWidth = e.trunk ? 2.6 : 1.7;
           ctx.beginPath();
-          ctx.arc(hx, hy, 3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = tk.accent;
-          ctx.lineWidth = 1.6;
+          ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
           ctx.stroke();
         }
+        const [hx, hy] = quadAt(ax, ay, e.cx, e.cy, bx, by, t);
+        if (dark && e.trunk) {
+          ctx.globalAlpha = envelope * 0.7;
+          ctx.drawImage(haloFor(tk.accent), hx - 10, hy - 10, 20, 20);
+        }
+        ctx.globalAlpha = envelope * 0.95;
+        ctx.fillStyle = dark ? tk.fg : tk.accent;
+        ctx.beginPath(); ctx.arc(hx, hy, e.trunk ? 1.8 : 1.3, 0, Math.PI * 2); ctx.fill();
       });
+      ctx.restore();
       ctx.globalAlpha = 1;
 
       // 部门内部短弧线（神明 phalanx18 的 pr 弧）：同部门相邻成员之间一条
@@ -1071,7 +1082,7 @@ export default function Legion3DPage() {
             : '';
         const face = avatarUrl && radiusPx >= 4.5 ? avatarImage(avatarUrl) : null;
         if (node.kind === 'core') {
-          drawLegionCore(ctx, p.x, p.y, radiusPx, tk, corePhaseRef.current, !interacting);
+          drawLegionCore(ctx, p.x, p.y, radiusPx, { ...tk, isDark: dark }, corePhaseRef.current, !interacting);
         } else if (node.kind === 'group') {
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
@@ -1315,7 +1326,7 @@ export default function Legion3DPage() {
         const y = RING_HEIGHT[ring.ring] ?? 0;
         for (let k = 0; k < 2; k++) {
           const dir = k === 0 ? 1 : -1;
-          const head = (now / 1000) * 0.28 * dir + ring.ring * 1.7 + k * Math.PI;
+          const head = flowTime * 0.28 * dir + ring.ring * 1.7 + k * Math.PI;
           for (let seg = 6; seg >= 0; seg--) {
             const a = head - dir * seg * 0.05;
             const pt = projectPoint({ x: Math.sin(a) * ring.radius, y, z: Math.cos(a) * ring.radius }, cam, size);
@@ -1868,12 +1879,24 @@ export default function Legion3DPage() {
       >
         <button
           type="button"
-          onClick={() => setSpin(v => !v)}
-          aria-pressed={spin}
+          onClick={() => { if (!reducedMotion) setSpin(v => !v); }}
+          aria-pressed={spin && !reducedMotion}
+          aria-disabled={reducedMotion}
           data-testid="legion-3d-spin"
-          className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${spin ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+          className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${spin && !reducedMotion ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
         >
-          {spin ? '自转中' : '已暂停'}
+          {reducedMotion ? '自转静止' : spin ? '自转中' : '自转已停'}
+        </button>
+        <button
+          type="button"
+          onClick={() => { if (!reducedMotion) setFlow(v => !v); }}
+          aria-pressed={flow && !reducedMotion}
+          aria-disabled={reducedMotion}
+          title="光流仅示意组织连接，不表示节点在线或任务运行；系统减少动态效果时保持静止"
+          data-testid="legion-3d-flow"
+          className={`min-h-11 rounded-md px-2.5 py-1.5 text-xs transition-colors sm:min-h-0 ${flow && !reducedMotion ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]'} focus-visible:outline-2 focus-visible:outline-[var(--accent-text)]`}
+        >
+          {reducedMotion ? '光流静止' : flow ? '光流开启' : '光流暂停'}
         </button>
         <button
           type="button"
@@ -2039,6 +2062,7 @@ export default function Legion3DPage() {
           })}
         </div>
         <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · / 搜索 · 回车打开选中 · R 重置</p>
+        <p className="text-[var(--fg-muted)]">光流示意组织连接，节点状态以图例为准。</p>
       </div>
 
       {/* 键盘/读屏的节点列表：canvas 不可 Tab，靠这张列表选节点 */}
