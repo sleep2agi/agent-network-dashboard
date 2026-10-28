@@ -91,10 +91,24 @@ function RequirementsContent() {
   const [qInput, setQInput] = useState(q);
   const [archiveSupported, setArchiveSupported] = useState<boolean | null>(null);
   const archiveSupport = useRef<boolean | null>(null);
+  const pendingUrls = useRef(new Set<string>());
 
-  // URL navigation and the empty-state reset must also update the visible fields.
-  useEffect(() => { setQInput(q); }, [q]);
-  useEffect(() => { setTagInput(tag); }, [tag]);
+  // Our actions update drafts immediately. Their later router commits must not
+  // overwrite typing made since submission. External URL navigation still syncs.
+  useEffect(() => {
+    const pending = pendingUrls.current;
+    const url = searchParams.toString();
+    if (pending.has(url)) {
+      for (const entry of pending) {
+        pending.delete(entry);
+        if (entry === url) break;
+      }
+      return;
+    }
+    pending.clear();
+    setQInput(q);
+    setTagInput(tag);
+  }, [searchParams, q, tag]);
 
   const setParam = useCallback((patch: Record<string, string>) => {
     const next = new URLSearchParams(searchParams.toString());
@@ -103,6 +117,10 @@ function RequirementsContent() {
       else next.delete(key);
     }
     const qs = next.toString();
+    if ('q' in patch) setQInput(patch.q);
+    if ('tag' in patch) setTagInput(patch.tag);
+    pendingUrls.current.delete(qs);
+    pendingUrls.current.add(qs);
     router.replace(qs ? `/requirements?${qs}` : '/requirements', { scroll: false });
   }, [router, searchParams]);
 
