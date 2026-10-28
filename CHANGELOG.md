@@ -6,11 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
-## Unreleased
+## 0.6.3-preview.104 — 2026-10-28
+
+### Desktop Legion integration
+
+- The desktop release now integrates the validated Legion 2D, 3D and platform views into main. Platform rosters read every directory page, use independent Agent departments when supported, include unowned Agents and show exact-node attributes.
+- Open an Agent conversation inside the 3D or platform scene. History, live events and sending remain bound to the selected network; closing chat keeps the scene's camera and selection.
+- Platform parent-child connections, searchable paginated rosters and native fullscreen are available. Long model names keep their status labels visible, and fullscreen controls avoid the server drawer.
+- Organization task badges follow the selected network, stale people responses cannot replace the current list, and both task-list clear actions remove all four filters from the URL.
+- Main's login-expiry handling is retained, including the legacy nodes-to-status fallback. Empty scoped task/message results stay scoped instead of silently showing another network's data.
 
 ### Design-language alignment
 
-- The deployed 3D renderer can now use the client's dark surfaces and blue accent alongside its ANet core and label clearance. Accent text and solid-fill foregrounds migrate as a pair, including Provider save and admin task-button hover states.
+- The 3D renderer uses the client's dark surfaces and blue accent alongside its ANet core and label clearance. Accent text and solid-fill foregrounds migrate as a pair, including Provider save and admin task-button hover states.
 
 ### Legion 3D framing
 
