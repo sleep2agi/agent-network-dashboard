@@ -34,4 +34,14 @@ networks, loading/empty, 401/403/HTML/invalid JSON/missing runs/null responses,
 connection failure, keyboard retry/focus, touch targets and page overflow. The
 matrix is dark/light at 1440/390/320px plus the no-network case. Only GET requests
 are accepted; results, exact probe and screenshots are written to `OUTPUT_DIR`.
-Any failed assertion, uncaught browser error or incomplete matrix exits nonzero.
+Every read declares its expected schedule ID and network before it starts. The
+probe validates the exact pathname, one matching network parameter and `limit=50`
+before releasing synthetic data, including every retry. This prevents a fixture
+from disguising a request to the wrong schedule as a correct UI response.
+
+Set `MUTATE_HISTORY_TARGET=1` for the negative control: browser instrumentation
+deliberately sends schedule B's history requests to schedule A. The probe must
+exit nonzero at `cyber-1440-switch-success:read2:exactSchedule`, before supplying
+B's fixture data. This opt-in mutation is recorded in the result and never counts
+as a normal acceptance run. Any failed assertion, uncaught browser error or
+incomplete matrix exits nonzero.

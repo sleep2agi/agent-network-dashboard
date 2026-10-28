@@ -12,7 +12,7 @@ assert.equal(new URL(base).hostname, '127.0.0.1');
 assert(!['3101', '3102', '3001'].includes(new URL(base).port));
 const source = await readFile(new URL(import.meta.url));
 const metadata = {
-  base, fixture: true,
+  base, fixture: true, mutation: process.env.MUTATE_HISTORY_TARGET === '1' ? 'schedule-B-to-A' : null,
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   sourceDirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }).trim(),
   probeSha256: createHash('sha256').update(source).digest('hex'),
@@ -36,14 +36,18 @@ async function create(theme, width, tag, noNetwork = false) {
   context.setDefaultTimeout(10000);
   await context.addCookies([{ name: 'anet_dashboard_session', url: base, httpOnly: true, sameSite: 'Lax',
     value: createHash('sha256').update(`anet-dashboard:${process.env.FIXTURE_PASSWORD || 'disc-fixture-only'}`).digest('hex') }]);
-  await context.addInitScript(({ theme, networks, noNetwork }) => {
+  await context.addInitScript(({ theme, networks, noNetwork, mutation }) => {
     localStorage.setItem('anet-theme', theme); localStorage.setItem('anet-sidebar-mode', 'expanded');
     if (!noNetwork) sessionStorage.setItem('anet_network_id', 'fixture');
     sessionStorage.setItem('anet_v3_auth', JSON.stringify({ user: { username: 'fixture', role: 'owner' }, token: 'fixture-token', networks, currentNetwork: noNetwork ? '' : 'fixture' }));
-    // Observe completion without changing fetch inputs or fulfillment/rejection.
+    // Normal acceptance only observes completion. The explicit negative control
+    // sends B's reads to A to prove exact-target assertions reject a false green.
     const original = window.fetch.bind(window);
     window.__historySettled = []; let seq = 0;
     window.fetch = (...args) => {
+      if (mutation === 'schedule-B-to-A' && typeof args[0] === 'string') {
+        args[0] = args[0].replace('/scheduled-tasks/schedule-B/runs?', '/scheduled-tasks/schedule-A/runs?');
+      }
       const promise = original(...args);
       if (String(args[0]).includes('/runs?')) {
         const id = ++seq;
@@ -52,7 +56,7 @@ async function create(theme, width, tag, noNetwork = false) {
       }
       return promise;
     };
-  }, { theme, networks: noNetwork ? [] : networks, noNetwork });
+  }, { theme, networks: noNetwork ? [] : networks, noNetwork, mutation: metadata.mutation });
   const receivers = [], pending = [];
   let page, seq = 0;
   await context.route('**/*', async route => {
@@ -90,13 +94,25 @@ async function create(theme, width, tag, noNetwork = false) {
   else await page.getByRole('heading', { name: '计划A-fixture', exact: true }).waitFor();
   const card = (id, net = 'fixture') => page.locator('main section').filter({ has: page.getByRole('heading', { name: `计划${id}-${net}`, exact: true }) });
   const button = (id, net) => card(id, net).getByRole('button', { name: '记录', exact: true });
-  async function request(action) {
+  async function request(expected, action) {
+    assert(expected.scheduleId && expected.networkId, 'Each read must declare its expected target');
     let timer;
     const received = new Promise((resolve, reject) => {
       timer = setTimeout(() => reject(new Error(`${tag}: history request not observed`)), 10000);
       receivers.push(resolve);
     });
-    try { await action(); return await received; } finally { clearTimeout(timer); }
+    try {
+      await action();
+      const held = await received, query = held.url.searchParams;
+      const target = {
+        exactSchedule: held.url.pathname === `/api/hub/scheduled-tasks/${encodeURIComponent(expected.scheduleId)}/runs`,
+        exactNetwork: query.getAll('network_id').length === 1 && query.get('network_id') === expected.networkId,
+        exactLimit: query.getAll('limit').length === 1 && query.get('limit') === '50',
+      };
+      for (const [name, passed] of Object.entries(target)) check(`${tag}:read${held.id}:${name}`, passed);
+      assert(Object.values(target).every(Boolean), `${tag}: read${held.id} target mismatch: ${held.url.pathname}${held.url.search}`);
+      return held;
+    } finally { clearTimeout(timer); }
   }
   async function shot(suffix) {
     observations.push({ tag: `${tag}-${suffix}`, text: await page.locator('main').last().innerText() });
@@ -116,11 +132,11 @@ try {
       const f = await create(theme, width, tag);
       const { page, card, button, request } = f;
       try {
-        const a = await request(() => button('A').click());
+        const a = await request({ scheduleId: 'schedule-A', networkId: 'fixture' }, () => button('A').click());
         check(`${tag}:requestScoped`, a.url.searchParams.get('network_id') === 'fixture' && a.url.searchParams.get('limit') === '50');
         check(`${tag}:loadingNotEmpty`, (await card('A').innerText()).includes('正在读取执行记录') && !(await card('A').innerText()).includes('暂无执行记录'));
         if (scenario.startsWith('switch')) {
-          const b = await request(() => button('B').click());
+          const b = await request({ scheduleId: 'schedule-B', networkId: 'fixture' }, () => button('B').click());
           await b.release({ json: { runs: [run('NEW-B')] } });
           check(`${tag}:currentResponseShown`, (await card('B').innerText()).includes('NEW-B'));
           if (scenario === 'switch-error') await a.release({ status: 403, json: { error: 'OLD-A-DENIED' } });
@@ -131,7 +147,7 @@ try {
         } else if (scenario === 'reopen') {
           await button('A').click();
           check(`${tag}:closed`, await card('A').locator('table').count() === 0 && !(await card('A').innerText()).includes('正在读取执行记录'));
-          const newer = await request(() => button('A').click());
+          const newer = await request({ scheduleId: 'schedule-A', networkId: 'fixture' }, () => button('A').click());
           await newer.release({ json: { runs: [run('NEW-A')] } });
           await a.release({ json: { runs: [run('OLD-A')] } });
           check(`${tag}:reopenGeneration`, (await card('A').innerText()).includes('NEW-A') && !(await card('A').innerText()).includes('OLD-A'));
@@ -145,7 +161,7 @@ try {
           // Old builds retain an open row with the same ID: close it so both can
           // issue the same new-network request before releasing the old response.
           if (await card('A', 'fixture-B').locator('table').count()) await button('A', 'fixture-B').click();
-          const b = await request(() => button('A', 'fixture-B').click());
+          const b = await request({ scheduleId: 'schedule-A', networkId: 'fixture-B' }, () => button('A', 'fixture-B').click());
           await b.release({ json: { runs: [run('NETWORK-B')] } });
           await a.release({ json: { runs: [run('NETWORK-A')] } });
           check(`${tag}:newNetworkScoped`, b.url.searchParams.get('network_id') === 'fixture-B');
@@ -164,7 +180,7 @@ try {
             ['null', { json: null }, /响应|格式/],
             ['disconnected', { abort: true }, /fetch|连接|网络/i],
           ]) {
-            const held = await request(() => button('A').click());
+            const held = await request({ scheduleId: 'schedule-A', networkId: 'fixture' }, () => button('A').click());
             await held.release(response);
             const text = await card('A').innerText();
             check(`${tag}:${name}:localError`, message.test(text));
@@ -174,7 +190,7 @@ try {
             if (name === 'forbidden' || name === 'disconnected') await f.shot(name);
             if (await retry.count()) {
               await retry.focus();
-              const recover = await request(() => page.keyboard.press('Enter'));
+              const recover = await request({ scheduleId: 'schedule-A', networkId: 'fixture' }, () => page.keyboard.press('Enter'));
               await recover.release({ json: { runs: [run('RECOVERED')] } });
               check(`${tag}:${name}:retryRecovers`, (await card('A').innerText()).includes('RECOVERED') && await card('A').getByRole('alert').count() === 0);
               check(`${tag}:${name}:focusRetained`, await card('A').getByRole('button', { name: '刷新记录', exact: true }).evaluate(el => el === document.activeElement));
