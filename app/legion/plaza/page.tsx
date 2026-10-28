@@ -12,12 +12,9 @@ import { useAvatarsVersion } from '../../lib/avatars';
 import type { Session, Health } from '../../components/types';
 import { LegionChat } from '../LegionChat';
 import { PlazaScene } from './PlazaScene';
+import { PlazaPerspective } from './PlazaPerspective';
+import { plazaAgentSnapshots, type PlazaNodeMetadata as NodeMetadata } from './plaza-perspective-metadata';
 
-interface NodeMetadata {
-  node_id: string; alias?: string; network_id?: string; model?: string; runtime?: string;
-  hostname?: string; server?: string; project_dir?: string; lifecycle_state?: string;
-  lifecycle_controllable?: boolean; lifecycle_daemon_node_id?: string; display_name?: string;
-}
 const control = 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-3 text-xs hover:bg-[var(--hover-tint)] focus-visible:outline-2 focus-visible:outline-[var(--accent-text)]';
 
 /** Agent's canonical node ID selects metadata. An old duplicate alias cannot win. */
@@ -103,6 +100,7 @@ export default function LegionPlazaPage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [fullscreenError, setFullscreenError] = useState('');
+  const [sceneMode, setSceneMode] = useState<'2d' | '3d'>('3d');
   const [selection, setSelection] = useState<{ network: string; id: string } | null>(null);
   const [chat, setChat] = useState<{ network: string; alias: string } | null>(null);
   const [viewNetwork, setViewNetwork] = useState(networkId);
@@ -113,6 +111,11 @@ export default function LegionPlazaPage() {
   }
   const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=100&offset=0', networkId) : null, loadLegionDirectory, { refreshInterval: 30000, shouldRetryOnError: false });
   const hierarchy = useSWR<DepartmentsResponse | null>(networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false });
+  // Shared SWR keys with the roster: one scoped snapshot, not one read per namecard.
+  const nodes = useSWR<{ ok: boolean; nodes: NodeMetadata[] }>(networkReady && networkId ? scopedUrl('/api/hub/nodes', networkId) : null, legionFetcher, { refreshInterval: 15000, shouldRetryOnError: false });
+  const status = useSWR<{ ok: boolean; sessions: Session[] }>(networkReady && networkId ? scopedUrl('/api/hub/status', networkId) : null, legionFetcher, { refreshInterval: 15000, shouldRetryOnError: false });
+  const snapshots = useMemo(() => plazaAgentSnapshots(nodes.data?.nodes ?? [], status.data?.sessions ?? [], networkId), [nodes.data, status.data, networkId]);
+  const snapshotError = legionReadError(nodes.error, status.error);
   useAvatarsVersion();
   const directory = useMemo(() => buildPlazaDirectory(people.data, hierarchy.data), [people.data, hierarchy.data]);
   const { platforms } = directory;
@@ -142,6 +145,10 @@ export default function LegionPlazaPage() {
           <p className="mt-1 text-xs text-[var(--fg-muted)]" data-testid="plaza-counts">{loading ? '正在读取完整编制…' : `${platforms.length} 个展台 · ${directory.people} 名成员 · ${directory.agents} 个 Agent`}</p>
           <p className="mt-1 text-[11px] text-[var(--fg-muted)]">Agent 独立编制 · 点击展台查看节点属性</p></div>
         <nav className="flex flex-wrap items-center gap-1" aria-label="军团视图">
+          <div role="group" aria-label="平台维度" className="flex rounded-lg border border-[var(--border)] p-0.5">
+            <button type="button" onClick={() => setSceneMode('2d')} aria-pressed={sceneMode === '2d'} className={`${control} ${sceneMode === '2d' ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : ''}`} data-testid="plaza-mode-2d">2D 平台</button>
+            <button type="button" onClick={() => setSceneMode('3d')} aria-pressed={sceneMode === '3d'} className={`${control} ${sceneMode === '3d' ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : ''}`} data-testid="plaza-mode-3d">3D 平台</button>
+          </div>
           <Link href="/legion/3d" className={control}>3D 拓扑</Link><Link href="/legion" className={control}>2D 同心环</Link>
           <button type="button" className={`${control} bg-[var(--bg-elevated)]`} onClick={() => void toggleFullscreen()} aria-pressed={fullscreen} data-testid="plaza-fullscreen">{fullscreen ? '退出全屏' : '全屏'}</button>
         </nav>
@@ -154,8 +161,11 @@ export default function LegionPlazaPage() {
       {!fatal && !loading && <>
         {directory.legacy && <p className="mb-3 text-xs text-[var(--warning)]">当前 Hub 未提供 Agent 独立部门能力，暂按负责人部门展示。</p>}
         {directory.rawAgents > directory.agents && <p className="mb-3 text-xs text-[var(--fg-muted)]">同名节点保留最近更新记录：{directory.rawAgents} 条记录 → {directory.agents} 个 Agent</p>}
-        {!platforms.length ? <p className="py-12 text-center text-sm text-[var(--fg-muted)]">当前网络暂无部门、成员或 Agent</p> : <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <PlazaScene platforms={platforms} selected={platform?.id ?? null} onSelect={id => setSelection({ network: networkId, id })} />
+        {sceneMode === '3d' && snapshotError && <p role="alert" className="mb-3 text-xs text-[var(--warning)]">{snapshotError.status === 401 ? '会话已过期，请重新登录后更新节点状态。' : '节点状态与属性读取失败；卡片仅显示最近快照（如有），不表示实时状态。'}<button type="button" className={control} onClick={() => { void nodes.mutate(); void status.mutate(); }}>重试节点状态</button></p>}
+        {sceneMode === '3d' && !snapshotError && (nodes.isLoading || status.isLoading) && <p role="status" className="mb-3 text-xs text-[var(--fg-muted)]">正在读取节点状态与属性…</p>}
+        {!platforms.length ? <p className="py-12 text-center text-sm text-[var(--fg-muted)]">当前网络暂无部门、成员或 Agent</p> : <div className={`grid min-w-0 items-start gap-4 ${sceneMode === '3d' ? '2xl:grid-cols-[minmax(0,1fr)_320px]' : 'xl:grid-cols-[minmax(0,1fr)_360px]'}`}>
+          {sceneMode === '3d' ? <PlazaPerspective key={networkId} platforms={platforms} selected={platform?.id ?? null} snapshots={snapshots} onSelect={id => setSelection({ network: networkId, id })} />
+            : <PlazaScene platforms={platforms} selected={platform?.id ?? null} onSelect={id => setSelection({ network: networkId, id })} />}
           <section className="min-w-0 space-y-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3 xl:max-h-[65dvh] xl:overflow-auto" aria-label="部门节点与属性">
             <label className="block text-xs text-[var(--fg-muted)]">部门展台
               <select value={platform?.id ?? ''} onChange={e => setSelection({ network: networkId, id: e.target.value })} data-testid="plaza-department-select"

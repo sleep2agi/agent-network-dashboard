@@ -1,0 +1,52 @@
+.scene {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+}
+.viewport {
+  display: block;
+  width: 100%;
+  height: clamp(720px, 72dvh, 860px);
+  touch-action: none;
+  cursor: grab;
+  outline-offset: -3px;
+  background: radial-gradient(ellipse at 50% 55%, var(--hover-tint), transparent 70%);
+}
+.viewport:active { cursor: grabbing; }
+.viewport:focus-visible { outline: 2px solid var(--accent-text); }
+.board {
+  display: block;
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--border-hover);
+  border-radius: 10px;
+  color: var(--fg);
+  background: var(--bg);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 6px 20px var(--hover-tint);
+}
+.board:hover, .board:focus-visible, .board[aria-pressed="true"] {
+  border-color: var(--accent-text);
+  outline: none;
+}
+.board[aria-pressed="true"] { box-shadow: 0 0 0 1px var(--accent-text), 0 6px 20px var(--hover-tint); }
+.heading, .agent, .more { display: flex; align-items: center; gap: 6px; }
+.heading { margin-bottom: 4px; }
+.name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.heading .name { font-size: 13px; font-weight: 650; }
+.count { color: var(--fg-muted); font-size: 10px; white-space: nowrap; }
+.agent { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 6px; row-gap: 0; border-top: 1px solid var(--border); min-height: 32px; }
+.agentText { flex: 1; min-width: 0; }
+.alias { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; line-height: 16px; }
+.metadata { display: block; grid-column: 1 / -1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-muted); font-size: 10px; line-height: 13px; }
+.status { display: flex; align-items: center; gap: 3px; max-width: 66px; font-size: 10px; color: var(--fg-muted); white-space: nowrap; }
+.statusText { overflow: hidden; text-overflow: ellipsis; }
+.statusDot { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: var(--fg-muted); }
+.more { margin-top: 5px; justify-content: space-between; color: var(--accent-text); font-size: 10px; }
+.empty { display: block; padding: 10px 0; font-size: 11px; color: var(--fg-muted); }
+.lightMark { display: none; }
+:global([data-theme="light"]) .darkMark, :global([data-theme="mint"]) .darkMark { display: none; }
+:global([data-theme="light"]) .lightMark, :global([data-theme="mint"]) .lightMark { display: block; }
+@media (max-width: 639px) { .viewport { height: 580px; } }

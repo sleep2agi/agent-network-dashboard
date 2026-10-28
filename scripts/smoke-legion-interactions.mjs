@@ -8,11 +8,14 @@ import { chromium } from '@playwright/test';
 
 const base = process.env.BASE_URL || 'http://127.0.0.1:3141';
 const output = process.env.OUTPUT_DIR;
+const plazaMode = process.env.PLAZA_MODE || '2d';
+assert(['2d', '3d'].includes(plazaMode), 'PLAZA_MODE must be 2d or 3d');
+const plazaScene = plazaMode === '3d' ? 'plaza-perspective-svg' : 'legion-plaza-svg';
 assert(output, 'OUTPUT_DIR required');
 assert.equal(new URL(base).hostname, '127.0.0.1');
 assert(!['3101', '3102'].includes(new URL(base).port), 'Use an isolated fixture port');
 const source = await readFile(new URL(import.meta.url));
-const metadata = { base, fixture: true,
+const metadata = { base, fixture: true, plazaMode,
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   sourceDirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }).trim(),
   probeSha256: createHash('sha256').update(source).digest('hex'),
@@ -99,6 +102,7 @@ async function create(theme, width, mode = 'plaza', state = {}) {
   const page = await context.newPage();
   page.on('pageerror', e => errors.push(e.stack || String(e)));
   await page.goto(`${base}/legion/${mode === '3d' ? '3d' : 'plaza'}`, { waitUntil: 'domcontentloaded' });
+  if (mode === 'plaza') await page.getByTestId(`plaza-mode-${plazaMode}`).click();
   return { context, page, requests, sends, state };
 }
 
@@ -253,7 +257,7 @@ try {
     try {
       const stage = page.getByTestId('legion-plaza-stage');
       if (state.noNetwork) { await stage.getByTestId('network-required').waitFor(); check(`${tag}:networkRequired`, true); }
-      else if (state.secondPageError) { await stage.getByText(/fixture_page2_denied/).waitFor(); check(`${tag}:noPartialCounts`, !await page.getByTestId('legion-plaza-svg').isVisible()); }
+      else if (state.secondPageError) { await stage.getByText(/fixture_page2_denied/).waitFor(); check(`${tag}:noPartialCounts`, !await page.getByTestId(plazaScene).isVisible()); }
       else if (state.historyError) {
         await page.getByTestId('plaza-department-select').selectOption('dept:leaf');
         await page.locator('[data-testid="plaza-agent"][data-node-id="latest-target"]').click();
@@ -265,7 +269,7 @@ try {
       else if (state.peopleError) {
         await stage.getByRole('alert').waitFor();
         check(`${tag}:notEmpty`, !await stage.getByText('当前网络暂无部门、成员或 Agent').isVisible());
-        if (label === 'disconnected') { delete state.peopleError; await stage.getByRole('button', { name: '重试', exact: true }).click(); await page.getByTestId('legion-plaza-svg').waitFor(); check(`${tag}:retryRestores`, true); }
+        if (label === 'disconnected') { delete state.peopleError; await stage.getByRole('button', { name: '重试', exact: true }).click(); await page.getByTestId(plazaScene).waitFor(); check(`${tag}:retryRestores`, true); }
       } else if (state.empty) { await stage.getByText('当前网络暂无部门、成员或 Agent').waitFor(); check(`${tag}:honestEmpty`, true); }
       else if (state.legacy) { await stage.getByText('当前 Hub 未提供 Agent 独立部门能力，暂按负责人部门展示。').waitFor(); check(`${tag}:legacyExplained`, true); }
       else { await stage.getByText(/节点属性读取失败/).waitFor(); check(`${tag}:metadataErrorVisible`, true); }

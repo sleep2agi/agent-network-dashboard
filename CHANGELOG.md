@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.107 — 2026-10-28
+
+### Perspective platforms and node information
+
+- The platform view now opens in perspective 3D. Rotate departments by dragging or using arrow keys, zoom, Shift-drag to pan, locate the selected department and reset with the button or R. The 2D platform remains available from the view switcher.
+- Read node names, reported session status, model and runtime directly on each platform. Select a department for its complete searchable roster, exact-node attributes and in-page chat.
+- Platforms retain empty and nested departments, connect them with directional light trails and show the official ANet logo in both themes. Light flow can be paused and respects reduced-motion preferences.
+- Node-data loading and failures are explicit; a retained snapshot is not presented as live status. Light flow illustrates organization relationships, not task activity.
+
 ## 0.6.3-preview.106 — 2026-10-28
 
 ### Legion light flow and ANet branding
