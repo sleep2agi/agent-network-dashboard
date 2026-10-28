@@ -258,7 +258,7 @@ try {
         await page.getByTestId('plaza-department-select').selectOption('dept:leaf');
         await page.locator('[data-testid="plaza-agent"][data-node-id="latest-target"]').click();
         await page.getByTestId('plaza-chat').click();
-        await page.getByText(state.historyError === 501 ? '当前 Hub 不支持按网络读取历史，请升级 Hub 后重新打开对话' : '读取历史失败（HTTP 403）', { exact: true }).waitFor();
+        await page.getByText(state.historyError === 501 ? '当前 Hub 不支持按网络读取历史，请升级 Hub 后重新打开对话' : '无权读取当前网络的历史，请联系网络管理员', { exact: true }).waitFor();
         check(`${tag}:historyDeniedNotEmpty`, true);
         if (state.historyError === 501) check(`${tag}:noRetryLoop`, !await page.getByRole('button', { name: '重试加载历史', exact: true }).isVisible());
       }

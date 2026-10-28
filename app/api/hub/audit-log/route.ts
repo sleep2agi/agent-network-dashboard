@@ -22,6 +22,8 @@ export async function GET(req: Request) {
     // Without userToken, hubFetch uses CommHub auth token
 
     const res = await hubFetch(`/api/audit-log?${params.toString()}`, init);
+    // #1636 —— 401 原样上抛（否则空日志会被当成“没有操作”）
+    if (res.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
     const contentType = res.headers.get('content-type') || '';
     if (res.ok && contentType.includes('application/json')) {
       return Response.json(await res.json());

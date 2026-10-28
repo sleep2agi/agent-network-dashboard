@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
@@ -76,10 +77,21 @@ export function decodeIdSegment(seg: string): string {
 function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: string | null }) {
   const searchParams = useSearchParams();
   const { networkId, ready: networkReady } = useNetworkId();
-  const [tasks, setTasks] = useState<TaskListItem[]>([]);
-  const [count, setCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [taskRows, setTasks] = useState<TaskListItem[]>([]);
+  const [taskCount, setCount] = useState(0);
+  const [taskLoading, setLoading] = useState(true);
+  const [taskError, setError] = useState('');
+  const [taskNetwork, setTaskNetwork] = useState(networkId);
+  // Hide the previous network's data on the first render, before effects run.
+  // Keep navigation/filter state mounted instead of replaying old URL seeds.
+  const sameNetwork = taskNetwork === networkId;
+  const tasks = sameNetwork ? taskRows : [];
+  const count = sameNetwork ? taskCount : 0;
+  const loading = !sameNetwork || taskLoading;
+  const error = sameNetwork ? taskError : '';
+  const taskGeneration = useRef(0);
+  const taskInFlight = useRef<string | null>(null);
+  const activeTaskScope = useRef<string | null>(null);
 
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || '');
   // 07-31 通信龙 dispatch (临时开放此文件): let ChatPane's "查看任务"
@@ -105,6 +117,27 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       window.history.replaceState({}, '', `${url.pathname}${url.search}`);
     } catch { /* pushState 被禁用时只是不写 URL，筛选本身照常 */ }
   };
+  /**
+   * 清空筛选的唯一入口：state 与 URL 必须一起清。
+   *
+   * 为什么不能只调 setDeptAndUrl('')：那只删 department，
+   * status / from_name / to_name 还留在地址栏里 —— 刷新一次筛选就复活了
+   * （实测：清空后输入框是空的，但 reload 又发出三条旧过滤）。
+   * 两个清空入口（筛选条的「清空」与空态 CTA）都走这里。
+   * 不改变选中策略：selectedId 不受影响。
+   */
+  const clearAllFilters = () => {
+    setFilterStatus('');
+    setFilterFrom('');
+    setFilterTo('');
+    setFilterDept('');
+    try {
+      const url = new URL(window.location.href);
+      for (const key of ['department', 'status', 'from_name', 'to_name']) url.searchParams.delete(key);
+      window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+    } catch { /* URL 不可写时只清 state，筛选本身照常 */ }
+  };
+
   const [people, setPeople] = useState<LegionPerson[]>([]);
   const [depts, setDepts] = useState<LegionDepartment[] | null>(null);
   const [deptMembers, setDeptMembers] = useState<Array<{ user_id: string; department_id: string | null }>>([]);
@@ -145,11 +178,31 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  useEffect(() => {
+    setTaskNetwork(networkId);
+    setTasks([]);
+    setCount(0);
+    setError('');
+    setLoading(true);
+  }, [networkId]);
+
+  const requestScope = JSON.stringify([networkId, filterStatus, filterFrom, filterTo]);
   const fetchTasks = useCallback(async () => {
     // #1636-P1 —— 网络没确定（解析中，或解析完但为空）就**不发请求**：
     // 原来这里没 gate，首帧会发 /api/hub/tasks?limit=100（无 scope），
     // 多网络账号会 400、单网络账号会先渲染出无 scope 的数据。
     if (!networkReady || !networkId) return;
+    // Retry completions can call an old render's callback after a scope change.
+    // Only the scope activated by the current polling effect may start a read.
+    if (activeTaskScope.current !== requestScope) return;
+    // A slow read must get a chance to finish. Same-scope polls coalesce rather
+    // than invalidating it every five seconds; changed filters still supersede.
+    if (taskInFlight.current === requestScope) return;
+    taskInFlight.current = requestScope;
+    // A late network/filter read (including its error/finally) must never
+    // replace a newer result. Cleanup also invalidates unmounted requests.
+    const generation = ++taskGeneration.current;
+    const isCurrent = () => activeTaskScope.current === requestScope && taskGeneration.current === generation;
     try {
       const params = new URLSearchParams();
       params.set('network_id', networkId);
@@ -159,37 +212,45 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       params.set('limit', '100');
 
       const res = await fetch(`/api/hub/tasks?${params.toString()}`);
+      if (!isCurrent()) return;
       if (res.status === 401) {
         window.location.assign('/login');
         return;
       }
       // 非 2xx 是失败，不是空列表：不检查 res.ok 会让 502 显示成「暂无任务」。
       if (!res.ok) {
+        if (res.status === 403) throw new Error('无权读取当前网络的任务，请联系网络管理员');
         const detail = await res.json().catch(() => null);
         throw new Error(detail?.error || detail?.message || `HTTP ${res.status}`);
       }
       const data = await res.json();
+      if (!isCurrent()) return;
       setTasks(data.tasks || []);
       setCount(data.count ?? (data.tasks?.length || 0));
       setError('');
     } catch (e: unknown) {
+      if (!isCurrent()) return;
       setError(e instanceof Error ? e.message : 'fetch failed');
     } finally {
-      setLoading(false);
+      if (isCurrent()) { taskInFlight.current = null; setLoading(false); }
     }
-  }, [filterStatus, filterFrom, filterTo, networkId, networkReady]);
+  }, [filterStatus, filterFrom, filterTo, networkId, networkReady, requestScope]);
 
   useEffect(() => {
     if (!networkReady || !networkId) return;   // 等网络确定再拉，避免无 scope 请求
+    activeTaskScope.current = requestScope;
     setLoading(true);
     fetchTasks();
     const interval = setInterval(fetchTasks, 5000);
-    return () => clearInterval(interval);
-  }, [fetchTasks, networkReady, networkId]);
+    return () => { activeTaskScope.current = null; taskGeneration.current++; taskInFlight.current = null; clearInterval(interval); };
+  }, [fetchTasks, networkReady, networkId, requestScope]);
 
   // 通讯录与部门树：只为了把 alias 落到部门上。失败就让下拉框空着，
   // 不阻塞任务列表本身（任务能读、部门筛选不可用，是可接受的降级）。
   useEffect(() => {
+    setPeople([]);
+    setDepts(null);
+    setDeptMembers([]);
     if (!networkReady || !networkId) return;   // 网络未确定就不发（空 id 也会退化成无 scope 请求）
     let alive = true;
     void (async () => {
@@ -366,12 +427,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                 {(filterStatus || filterFrom || filterTo || filterDept) && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setFilterStatus('');
-                      setFilterFrom('');
-                      setFilterTo('');
-                      setDeptAndUrl('');
-                    }}
+                    onClick={clearAllFilters}
                     className="rounded px-2 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
                   >
                     Clear
@@ -452,14 +508,8 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                   filterStatus || filterFrom || filterTo || filterDept
                     ? {
                         label: '清空筛选',
-                        onClick: () => {
-                          setFilterStatus('');
-                          setFilterFrom('');
-                          setFilterTo('');
-                          // 部门走 setDeptAndUrl：它有 URL 回写 + 一个
-                          // 「URL→state」的 effect，只改 state 会被 effect 立刻改回来。
-                          setDeptAndUrl('');
-                        },
+                        // 与筛选条上的「清空」共用同一语义：state + 四个 URL 参数一起清。
+                        onClick: clearAllFilters,
                       }
                     : undefined
                 }

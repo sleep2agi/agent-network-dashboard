@@ -19,6 +19,8 @@ export async function GET() {
         }
       }),
     });
+    // #1636 —— 401 原样上抛（MCP 也会 401）
+    if (res.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
     const text = await res.text();
     const match = text.match(/data:\s*(\{.*\})/);
     const data = match ? JSON.parse(match[1]) : JSON.parse(text);

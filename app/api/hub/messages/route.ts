@@ -14,6 +14,8 @@ export async function GET(req: Request) {
   if (networkId) qs.set('network_id', networkId);
   try {
     const res = await hubFetch(`/api/messages?${qs.toString()}`);
+    // #1636 —— 401 原样上抛
+    if (res.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
     // 上游失败不能包装成 200 {ok:false, messages:[]}：那会让页面把
     // 「Hub 读不到」显示成「没有消息」。状态码原样透传（5xx→502）。
     if (!res.ok) {

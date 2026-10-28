@@ -52,6 +52,8 @@ export async function GET(req: Request) {
       headers: await hubHeaders(),
       next: { revalidate: 0 },
     });
+    // #1636 —— 上游 401 原样上抛（否则下面会返回 200 + 空节点）
+    if (res.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
     const contentType = res.headers.get('content-type') || '';
     if (res.ok && contentType.includes('application/json')) {
       const data = await res.json();
@@ -59,6 +61,7 @@ export async function GET(req: Request) {
       // nodes table empty — fall back to sessions, map to node shape
       const statusUrl = `${HUB_URL}/api/status${params.toString() ? '?' + params.toString() : ''}`;
       const statusRes = await fetch(statusUrl, { headers: await hubHeaders(), next: { revalidate: 0 } });
+      if (statusRes.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
       if (statusRes.ok) {
         const statusData = await statusRes.json();
         const nodes = nodesFromSessions(statusData.sessions || [], requestedNetworkId);
@@ -76,6 +79,13 @@ export async function GET(req: Request) {
       const nodes = nodesFromSessions(statusData.sessions || [], requestedNetworkId);
       return Response.json({ ok: true, nodes, count: nodes.length, source: 'sessions' });
     }
+    // —— 旧 Hub 回退链的**第二跳**也可能 401（主路由 404 → /api/status 401）。
+    // 那是「没有登录」，不是「这次查不到节点」：必须原样上抛。
+    // 落在下面的 502 会把唯一可执行的提示（去登录）换成一句拼接错误，
+    // 前端只会得到「加载失败」，而用户其实只需要重新登录。
+    // 注意只补这一跳：主路由自己的 401 由既有 guard 负责，两者不是同一条路径
+    // （空表 200 → status 401 是上一条回退，也不在这里）。
+    if (statusRes.status === 401) return Response.json({ error: 'login required' }, { status: 401 });
     return Response.json(
       { ok: false, error: `CommHub /api/nodes ${res.status} · /api/status ${statusRes.status}` },
       { status: 502 },

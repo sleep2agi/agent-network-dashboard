@@ -66,4 +66,3 @@ node scripts/check-accent-text-ratchet.mjs --update   # 改少了以后收紧基
 跟随主题，浅色下必须换色，这种就该迁移成 token。
 
 新增白名单时同时更新本清单，并在 PR 描述里写一句「为什么它不跟随主题」。
-

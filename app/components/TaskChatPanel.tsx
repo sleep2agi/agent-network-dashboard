@@ -850,7 +850,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
         throw new Error(SCOPED_HISTORY_UNSUPPORTED);
       }
       if (!res.ok || data.ok === false) throw new Error(res.status === 401
-        ? '会话已过期，请重新登录后读取历史' : `读取历史失败（HTTP ${res.status}）`);
+        ? '会话已过期，请重新登录后读取历史'
+        : res.status === 403 ? '无权读取当前网络的历史，请联系网络管理员' : `读取历史失败（HTTP ${res.status}）`);
       setHistoryErrorReason('');
       if (data.tasks) {
         const persistedRequestIds = new Set<string>();
