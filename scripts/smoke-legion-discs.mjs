@@ -431,6 +431,17 @@ async function reviewInteractions(page, tag) {
   await page.keyboard.press('Escape');
   check(`${tag}:helpEscapeClosesTopLayer`, !await help.isVisible() && await toggle.evaluate(el => el === document.activeElement));
   check(`${tag}:helpClosesDisclosure`, await toggle.getAttribute('aria-expanded') === 'false');
+  await revealTools(page);
+  await page.getByTestId('legion-3d-clean').click();
+  await page.getByTestId('legion-3d-stage').focus();
+  await page.keyboard.press('?');
+  await help.waitFor();
+  await page.keyboard.press('Escape');
+  await frames(page, 8);
+  check(`${tag}:helpDismissKeepsClean`, !await help.isVisible() && !await page.getByTestId('legion-3d-header').isVisible());
+  await page.keyboard.press('Escape');
+  await frames(page, 8);
+  check(`${tag}:secondEscapeRestoresControls`, !await help.isVisible() && await page.getByTestId('legion-3d-header').isVisible());
   await toggle.focus();
   await page.setViewportSize({ width: 1440, height: 900 });
   await frames(page, 8);

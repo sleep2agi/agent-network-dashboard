@@ -1392,11 +1392,13 @@ export default function Legion3DPage() {
       if (e.key !== 'Escape') return;
       e.preventDefault();
       e.stopPropagation();
-      setCleanView(false);
+      // Capture runs before the stage handler; dismiss the topmost layer first.
+      if (helpOpen) setHelpOpen(false);
+      else setCleanView(false);
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [cleanView]);
+  }, [cleanView, helpOpen]);
 
   useEffect(() => {
     const onFs = () => setIsFullscreen(!!document.fullscreenElement);

@@ -16,6 +16,7 @@ already-reviewed #78/#79 integration or a release-version change.
   list closes the disclosure; an outside pointer press also closes it.
 - Enter activates the focused toolbar control even when a node is selected.
 - Help closes the disclosure, owns keyboard focus and returns it on dismissal.
+  In clean view, Escape dismisses help first; a second Escape restores controls.
   Breakpoint changes move focus from controls becoming hidden to a visible action
   in both directions, including when the disclosure started collapsed.
 - The node list follows the measured header, including empty-network notices.
