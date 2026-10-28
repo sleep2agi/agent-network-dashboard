@@ -45,6 +45,11 @@ describe('Agent department contract', () => {
     assert.equal(result.platforms.find(p => p.id === 'dept:deleted').agents[0].node_id, 'n');
     assert.ok(result.platforms.some(p => ['dept:a', 'dept:b'].includes(p.id) && p.parentId === null));
   });
+  it('keeps the first row on equal update timestamps, matching the client projection', () => {
+    const input = data([{ node_id: 'first', alias: 'same', department_id: 'a', updated_at: '2026-01-01T00:00:00Z' },
+      { node_id: 'last', alias: 'same', department_id: 'b', updated_at: '2026-01-01T00:00:00Z' }]);
+    assert.equal(buildPlazaDirectory(input, hierarchy).platforms.find(p => p.id === 'dept:a').agents[0].node_id, 'first');
+  });
 });
 
 describe('directory pagination', () => {

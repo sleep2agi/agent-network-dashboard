@@ -83,7 +83,7 @@ async function create(theme, width, mode = 'plaza', state = {}) {
       if (url.pathname === '/api/hub/health') json = { ok: true, version: 'fixture', sse_sessions: { [`${net}:${target.alias}`]: 1 }, sessions: records.length };
       if (url.pathname === '/api/hub/tasks') {
         status = state.historyError || 200;
-        json = { ok: status === 200, tasks: status === 200 ? [{ task_id: `history-${net}`, to_name: target.alias, from_name: 'fixture', created_at: '2026-01-01T00:00:00Z', status: 'replied', content: `历史消息-${net}`, result: '模拟回复' }] : undefined };
+        json = { ok: status === 200, ...(status === 501 ? { error: 'hub_tasks_scope_unsupported' } : {}), tasks: status === 200 ? [{ task_id: `history-${net}`, to_name: target.alias, from_name: 'fixture', created_at: '2026-01-01T00:00:00Z', status: 'replied', content: `历史消息-${net}`, result: '模拟回复' }] : undefined };
       }
       if (url.pathname === '/api/hub/send') {
         sends.push(route.request().postDataJSON()); status = state.sendError || 200;
@@ -211,7 +211,7 @@ try {
       contexts.push(tag);
     } catch (e) { errors.push(`${tag}: ${e.stack || e}`); } finally { await context.close(); }
   }
-  for (const [label, state] of Object.entries({ forbidden: { peopleError: 403 }, login: { peopleError: 401 }, disconnected: { peopleError: 502 }, empty: { empty: true }, legacy: { legacy: true }, metadata: { metadataError: 403 }, noNetwork: { noNetwork: true }, page2: { secondPageError: true }, history: { historyError: 403 } })) {
+  for (const [label, state] of Object.entries({ forbidden: { peopleError: 403 }, login: { peopleError: 401 }, disconnected: { peopleError: 502 }, empty: { empty: true }, legacy: { legacy: true }, metadata: { metadataError: 403 }, noNetwork: { noNetwork: true }, page2: { secondPageError: true }, history: { historyError: 403 }, unsupported: { historyError: 501 } })) {
     const tag = `state-${label}`, { page, context } = await create('light', 390, 'plaza', state);
     try {
       const stage = page.getByTestId('legion-plaza-stage');
@@ -221,8 +221,9 @@ try {
         await page.getByTestId('plaza-department-select').selectOption('dept:leaf');
         await page.locator('[data-testid="plaza-agent"][data-node-id="latest-target"]').click();
         await page.getByTestId('plaza-chat').click();
-        await page.getByText('读取历史失败（HTTP 403）', { exact: true }).waitFor();
+        await page.getByText(state.historyError === 501 ? '当前 Hub 不支持按网络读取历史，请升级 Hub 后重新打开对话' : '读取历史失败（HTTP 403）', { exact: true }).waitFor();
         check(`${tag}:historyDeniedNotEmpty`, true);
+        if (state.historyError === 501) check(`${tag}:noRetryLoop`, !await page.getByRole('button', { name: '重试加载历史', exact: true }).isVisible());
       }
       else if (state.peopleError) {
         await stage.getByRole('alert').waitFor();
@@ -249,7 +250,7 @@ try {
   }
 } finally {
   await browser.close();
-  check('allContextsCompleted', contexts.length === 20);
+  check('allContextsCompleted', contexts.length === 21);
   const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
   await writeFile(path.join(output, 'result.json'), JSON.stringify({ ...metadata, checks, contexts, errors }, null, 2));
   console.log(JSON.stringify({ ...metadata, passed: Object.values(checks).filter(Boolean).length, failed, contexts, errors }, null, 2));

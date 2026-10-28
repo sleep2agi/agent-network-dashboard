@@ -594,6 +594,7 @@ interface TaskChatPanelProps {
  *  height rather than by newline count. Attachments render OUTSIDE the
  *  collapse so a folded message never hides an image. */
 const COLLAPSE_MAX_PX = 300; // ≈12 lines at 14px/1.65
+const SCOPED_HISTORY_UNSUPPORTED = '当前 Hub 不支持按网络读取历史，请升级 Hub 后重新打开对话';
 
 function CollapsibleText({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -666,6 +667,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const [historyErrorReason, setHistoryErrorReason] = useState('');
+  const historyUnsupportedRef = useRef(false);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
   // R23→R25: pinyin matching moved to the shared lib (also powers /nodes
@@ -834,6 +836,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     budgetMs: number,
     cursor?: TaskHistoryCursor,
   ): Promise<boolean> => {
+    if (scopeNetworkId && historyUnsupportedRef.current) return false;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), budgetMs);
     try {
@@ -842,6 +845,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
         { signal: ctrl.signal },
       );
       const data = await res.json();
+      if (scopeNetworkId && res.status === 501 && data.error === 'hub_tasks_scope_unsupported') {
+        historyUnsupportedRef.current = true;
+        throw new Error(SCOPED_HISTORY_UNSUPPORTED);
+      }
       if (!res.ok || data.ok === false) throw new Error(res.status === 401
         ? '会话已过期，请重新登录后读取历史' : `读取历史失败（HTTP ${res.status}）`);
       setHistoryErrorReason('');
@@ -867,7 +874,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     } finally {
       clearTimeout(timer);
     }
-  }, [alias, privateStorageScope, scopedChatUrl]);
+  }, [alias, privateStorageScope, scopedChatUrl, scopeNetworkId]);
 
   // Single-attempt loader used for one older keyset page.
   const loadHistory = useCallback(async (cursor: TaskHistoryCursor) => {
@@ -891,6 +898,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
   }, [runFetch]);
 
   useEffect(() => {
+    historyUnsupportedRef.current = false;
     setMessages([]);
     setHistoryLoaded(false);
     setHistoryError(false);
@@ -1548,13 +1556,13 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
             <div className="text-center py-12">
               <div className="text-[var(--fg-muted)] text-sm">{scopeNetworkId && historyErrorReason ? historyErrorReason : '连接较慢，暂未加载出历史'}</div>
               <div className="text-[var(--fg-dim)] text-xs mt-1">你仍可在下方直接给 {alias} 发消息</div>
-              <button
+              {historyErrorReason !== SCOPED_HISTORY_UNSUPPORTED && <button
                 type="button"
                 onClick={() => loadInitial()}
                 className="mt-3 text-xs text-[var(--accent-text)] hover:text-[var(--accent-text)] underline"
               >
                 重试加载历史
-              </button>
+              </button>}
             </div>
           )}
 

@@ -65,8 +65,8 @@ export function buildPlazaDirectory(data?: PeopleResponse, hierarchy?: Departmen
       departmentId: data?.agent_department_supported === true ? agent.department_id ?? null : ownerDept };
     const key = agent.alias ? `alias:${agent.alias}` : `node:${agent.node_id}`;
     const old = byAlias.get(key);
-    if (!old || updatedTime(placed.updated_at) > updatedTime(old.updated_at)
-      || (updatedTime(placed.updated_at) === updatedTime(old.updated_at) && placed.node_id.localeCompare(old.node_id) > 0)) byAlias.set(key, placed);
+    // Match the client/Hub tie rule: equal timestamps retain the first row.
+    if (!old || updatedTime(placed.updated_at) > updatedTime(old.updated_at)) byAlias.set(key, placed);
   };
   for (const p of data?.people ?? []) {
     const dept = members.has(p.user_id) ? members.get(p.user_id)! : p.department?.id ?? null;

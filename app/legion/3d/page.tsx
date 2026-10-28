@@ -1762,7 +1762,7 @@ export default function Legion3DPage() {
       data-testid="legion-3d-stage"
       data-zoom={zoomPct}
     >
-      <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击打开对应页面；按 / 搜索，R 重置视角。</p>
+      <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击 Agent 在页内对话，双击成员或部门进入组织列表；按 / 搜索，R 重置视角。</p>
       <canvas
         ref={canvasRef}
         className="block h-full w-full cursor-grab touch-none active:cursor-grabbing"
@@ -1985,7 +1985,7 @@ export default function Legion3DPage() {
                 ['拖动 / 方向键', '旋转视角'],
                 ['滚轮 / 双指 / + -', '缩放'],
                 ['点节点', '看详情'],
-                ['双击节点 / 回车', '打开详情页（焦点不在列表时）'],
+                ['双击节点 / 回车', 'Agent 页内对话，成员/部门进入列表'],
                 ['列表内 ↑ ↓', '移动选中项；回车只选中'],
                 ['双击空白', '复位视角'],
                 ['? ', '打开/关闭这张表'],
@@ -2038,7 +2038,7 @@ export default function Legion3DPage() {
             );
           })}
         </div>
-        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 点节点看详情/双击直接打开 · / 搜索 · 回车打开选中 · R 重置</p>
+        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · / 搜索 · 回车打开选中 · R 重置</p>
       </div>
 
       {/* 键盘/读屏的节点列表：canvas 不可 Tab，靠这张列表选节点 */}
