@@ -91,6 +91,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   const error = sameNetwork ? taskError : '';
   const taskGeneration = useRef(0);
   const taskInFlight = useRef<string | null>(null);
+  const activeTaskScope = useRef<string | null>(null);
 
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || '');
   // 07-31 通信龙 dispatch (临时开放此文件): let ChatPane's "查看任务"
@@ -185,12 +186,15 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     setLoading(true);
   }, [networkId]);
 
+  const requestScope = JSON.stringify([networkId, filterStatus, filterFrom, filterTo]);
   const fetchTasks = useCallback(async () => {
     // #1636-P1 —— 网络没确定（解析中，或解析完但为空）就**不发请求**：
     // 原来这里没 gate，首帧会发 /api/hub/tasks?limit=100（无 scope），
     // 多网络账号会 400、单网络账号会先渲染出无 scope 的数据。
     if (!networkReady || !networkId) return;
-    const requestScope = JSON.stringify([networkId, filterStatus, filterFrom, filterTo]);
+    // Retry completions can call an old render's callback after a scope change.
+    // Only the scope activated by the current polling effect may start a read.
+    if (activeTaskScope.current !== requestScope) return;
     // A slow read must get a chance to finish. Same-scope polls coalesce rather
     // than invalidating it every five seconds; changed filters still supersede.
     if (taskInFlight.current === requestScope) return;
@@ -198,7 +202,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     // A late network/filter read (including its error/finally) must never
     // replace a newer result. Cleanup also invalidates unmounted requests.
     const generation = ++taskGeneration.current;
-    const isCurrent = () => taskGeneration.current === generation;
+    const isCurrent = () => activeTaskScope.current === requestScope && taskGeneration.current === generation;
     try {
       const params = new URLSearchParams();
       params.set('network_id', networkId);
@@ -230,15 +234,16 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     } finally {
       if (isCurrent()) { taskInFlight.current = null; setLoading(false); }
     }
-  }, [filterStatus, filterFrom, filterTo, networkId, networkReady]);
+  }, [filterStatus, filterFrom, filterTo, networkId, networkReady, requestScope]);
 
   useEffect(() => {
     if (!networkReady || !networkId) return;   // 等网络确定再拉，避免无 scope 请求
+    activeTaskScope.current = requestScope;
     setLoading(true);
     fetchTasks();
     const interval = setInterval(fetchTasks, 5000);
-    return () => { taskGeneration.current++; taskInFlight.current = null; clearInterval(interval); };
-  }, [fetchTasks, networkReady, networkId]);
+    return () => { activeTaskScope.current = null; taskGeneration.current++; taskInFlight.current = null; clearInterval(interval); };
+  }, [fetchTasks, networkReady, networkId, requestScope]);
 
   // 通讯录与部门树：只为了把 alias 落到部门上。失败就让下拉框空着，
   // 不阻塞任务列表本身（任务能读、部门筛选不可用，是可接受的降级）。
