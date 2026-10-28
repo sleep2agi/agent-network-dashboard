@@ -960,7 +960,10 @@ export default function Legion3DPage() {
         const length = Math.hypot(e.cx - ax, e.cy - ay) + Math.hypot(bx - e.cx, by - e.cy);
         if (length < 24) return;
         flowDrawn++;
-        const t = (flowTime * 62 / Math.max(100, length) + i * 0.173) % 1;
+        // Phase belongs to the world-space edge. Projected length changes when
+        // the camera moves, which must not move paused light along that edge.
+        const worldLength = Math.hypot(e.b.point.x - e.a.point.x, e.b.point.y - e.a.point.y, e.b.point.z - e.a.point.z);
+        const t = (flowTime * 0.18 / Math.max(0.35, worldLength) + i * 0.173) % 1;
         const trail = Math.min(0.3, (e.trunk ? 48 : 32) / length);
         // Fade near endpoints so light enters/leaves a node instead of teleporting.
         const envelope = Math.min(1, t * 12, (1 - t) * 12);
