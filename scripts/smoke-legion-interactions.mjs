@@ -139,11 +139,30 @@ async function chatFlow(page, requests, sends, state, tag, opener) {
 }
 
 try {
-  for (const theme of ['cyber', 'light']) for (const width of [1440, 390, 320]) {
+  for (const theme of ['cyber', 'light']) for (const width of [1440, 1024, 390, 320]) {
     const tag = `plaza-${theme}-${width}`;
     const { page, context, requests, sends, state } = await create(theme, width);
     try {
       await page.getByText('6 个展台 · 2 名成员 · 31 个 Agent', { exact: true }).waitFor();
+      const fullscreenButton = page.getByTestId('plaza-fullscreen');
+      const fullscreenTarget = await fullscreenButton.evaluate(button => {
+        const r = button.getBoundingClientRect();
+        const hits = [4, r.width / 2, r.width - 4].flatMap(dx => [4, r.height / 2, r.height - 4]
+          .map(dy => button.contains(document.elementFromPoint(r.x + dx, r.y + dy))));
+        return { width: r.width, height: r.height, right: r.right, bottom: r.bottom, allHit: hits.every(Boolean) };
+      });
+      check(`${tag}:fullscreen44pxTarget`, fullscreenTarget.width >= 44 && fullscreenTarget.height >= 44);
+      check(`${tag}:fullscreenAllPointsHit`, fullscreenTarget.allHit);
+      // Exercise the initial edge before scrolling; center-only clicks missed the dock overlap.
+      await page.mouse.click(fullscreenTarget.right - 4, fullscreenTarget.bottom - 4);
+      await frames(page, 20);
+      const fullscreenEntered = await page.evaluate(() => document.fullscreenElement?.getAttribute('data-testid') === 'legion-plaza-stage');
+      check(`${tag}:fullscreenEdgeClick`, fullscreenEntered);
+      check(`${tag}:fullscreenDidNotOpenServers`, await page.getByRole('button', { name: 'Collapse servers panel', exact: true }).count() === 0);
+      if (fullscreenEntered) {
+        await fullscreenButton.click();
+        await page.waitForFunction(() => document.fullscreenElement == null);
+      }
       await page.screenshot({ path: path.join(output, `${tag}-overview.png`) });
       check(`${tag}:allPagesAndDedup`, requests.some(r => r.includes('/api/hub/people?') && new URL(r, base).searchParams.get('offset') === '1'));
       check(`${tag}:agentOnlyVisible`, await page.locator('[data-department-id="dept:leaf"]').getAttribute('data-agent-count') === '2');
@@ -250,7 +269,7 @@ try {
   }
 } finally {
   await browser.close();
-  check('allContextsCompleted', contexts.length === 21);
+  check('allContextsCompleted', contexts.length === 23);
   const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
   await writeFile(path.join(output, 'result.json'), JSON.stringify({ ...metadata, checks, contexts, errors }, null, 2));
   console.log(JSON.stringify({ ...metadata, passed: Object.values(checks).filter(Boolean).length, failed, contexts, errors }, null, 2));

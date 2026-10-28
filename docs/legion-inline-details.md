@@ -18,7 +18,11 @@ Independent follow-up draft based on #80 at `a33c58466563106a6ecc82ddfd911be9297
   Connection, task state, lifecycle, model, runtime, host, working directory,
   session and manageability are separate fields. Missing values say unreported.
 - Fullscreen uses the actual browser API; denial produces an error, not a success
-  state. Chat stays inside the fullscreen subtree and supports small screens.
+  state. Desktop controls reserve space for the collapsed global server dock and
+  keep a 44px minimum target in both dimensions. Acceptance samples the complete
+  button area and clicks its initial right-bottom edge at 1440/1024/390/320px;
+  a center-only click after scrolling could miss the overlap. Chat stays inside
+  the fullscreen subtree and supports small screens.
 
 ## Acceptance
 

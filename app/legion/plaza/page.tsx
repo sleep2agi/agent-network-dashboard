@@ -18,7 +18,7 @@ interface NodeMetadata {
   hostname?: string; server?: string; project_dir?: string; lifecycle_state?: string;
   lifecycle_controllable?: boolean; lifecycle_daemon_node_id?: string; display_name?: string;
 }
-const control = 'inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-xs hover:bg-[var(--hover-tint)] focus-visible:outline-2 focus-visible:outline-[var(--accent-text)]';
+const control = 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-3 text-xs hover:bg-[var(--hover-tint)] focus-visible:outline-2 focus-visible:outline-[var(--accent-text)]';
 
 /** Agent's canonical node ID selects metadata. An old duplicate alias cannot win. */
 function NodeAttributes({ agent, department, nodes, sessions, health, metadataError, onChat }: {
@@ -137,7 +137,7 @@ export default function LegionPlazaPage() {
   return <div ref={rootRef} tabIndex={-1} data-legion-stage="plaza" data-testid="legion-plaza-stage"
     className={`relative min-w-0 bg-[var(--bg)] p-3 text-[var(--fg)] outline-none sm:p-5 ${fullscreen ? 'h-dvh overflow-auto' : 'min-h-screen'}`}>
     <div className="mx-auto max-w-[1720px]">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <header className={`mb-4 flex flex-wrap items-center justify-between gap-3 ${fullscreen ? '' : 'lg:pr-10'}`}>
         <div><h1 className="text-lg font-semibold">军团 · 平台视角</h1>
           <p className="mt-1 text-xs text-[var(--fg-muted)]" data-testid="plaza-counts">{loading ? '正在读取完整编制…' : `${platforms.length} 个展台 · ${directory.people} 名成员 · ${directory.agents} 个 Agent`}</p>
           <p className="mt-1 text-[11px] text-[var(--fg-muted)]">Agent 独立编制 · 点击展台查看节点属性</p></div>
