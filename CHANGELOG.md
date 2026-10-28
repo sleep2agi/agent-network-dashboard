@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.109 — 2026-10-28
+
+### Floating Legion conversations
+
+- Conversations in the 3D topology and platform views open in a rounded floating window. Drag the title bar to move it or the lower corner to resize it while keeping the scene usable.
+- Collapse a conversation to its title bar and restore it with the current draft and messages intact. The window stays inside the visible area when the viewport or fullscreen state changes.
+- Move and resize with arrow keys, return the window to its starting position with Home, and close with Escape. Keyboard focus can return to the scene without closing the conversation.
+
 ## 0.6.3-preview.108 — 2026-10-28
 
 ### Readable dense platform views

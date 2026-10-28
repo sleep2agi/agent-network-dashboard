@@ -502,8 +502,8 @@ export default function Legion3DPage() {
     } catch { /* 隐私模式下读不到就每次都提示，无害 */ }
   }, []);
 
-  useEffect(() => { spinRef.current = spin && !chatAlias; }, [spin, chatAlias]);
-  useEffect(() => { flowRef.current = flow && !chatAlias; }, [flow, chatAlias]);
+  useEffect(() => { spinRef.current = spin; }, [spin]);
+  useEffect(() => { flowRef.current = flow; }, [flow]);
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setReducedMotion(preference.matches);
@@ -1411,6 +1411,9 @@ export default function Legion3DPage() {
     if (!cleanView) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      // Nonmodal chat can coexist with clean view. Its focused window (or
+      // nested image dialog) owns Escape before the background scene.
+      if (e.target instanceof Element && e.target.closest('[data-testid="legion-chat"]')) return;
       e.preventDefault();
       e.stopPropagation();
       // Capture runs before the stage handler; dismiss the topmost layer first.
