@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { TaskChatPanel } from '../components/TaskChatPanel';
 import { timeAgo } from '../components/utils';
-import { AliasAvatar } from '../components/AliasAvatar';
-import { SESSION_STATUS_TEXT_CLASS } from '../lib/status';
+import { NodeDetailHeader } from '../components/NodeDetailHeader';
 import { useChatUnread } from '../lib/chat-unread';
 
 interface SessionDetail {
@@ -293,37 +292,17 @@ function NodeDetailContent() {
 
   if (!alias) {
     return (
-      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-6 flex items-center justify-center">
-        <p className="text-gray-500">No alias specified. <Link href="/" className="text-blue-400 hover:underline">Back to dashboard</Link></p>
+      <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-6 flex items-center justify-center">
+        <p className="text-[var(--fg-muted)]">No alias specified. <Link href="/" className="text-[var(--accent-text)] hover:underline">Back to dashboard</Link></p>
       </div>
     );
   }
 
-  /* Round 92: shared 5-state palette (was working / idle / other,
-     collapsed blocked + error into gray). */
-  const statusColor = SESSION_STATUS_TEXT_CLASS[session?.status || ''] || SESSION_STATUS_TEXT_CLASS.offline;
+  const headerSession = session?.alias === alias ? session : null;
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
-      {/* Header — round 40: avatar joins the alias for cross-page hue
-          consistency; agent type lives in a subtitle so users know what
-          kind of node they're looking at. */}
-      <div className="flex items-center gap-3 mb-6 lg:ml-0 ml-10">
-        <Link href="/nodes" className="text-gray-500 hover:text-gray-300 text-sm shrink-0">&larr; Nodes</Link>
-        <AliasAvatar alias={alias} size={32} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{alias}</h1>
-            <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${
-              sse > 0 ? (session?.status === 'working' ? 'bg-green-500 animate-pulse' : 'bg-emerald-400') : 'bg-gray-500'
-            }`} />
-            <span className={`text-[10px] uppercase tracking-wide font-semibold ${statusColor}`}>{session?.status || 'unknown'}</span>
-          </div>
-          {session?.agent && (
-            <div className="text-xs text-gray-500 truncate">{session.agent}{session.server ? <> <span className="text-gray-700 mx-1">·</span> {session.server}</> : null}</div>
-          )}
-        </div>
-      </div>
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+      <NodeDetailHeader key={alias} alias={alias} session={headerSession} sse={headerSession ? sse : 0} />
 
       {error && (
         <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-4 py-2 rounded-lg mb-6 text-sm">{error}</div>

@@ -6,6 +6,13 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.111 — 2026-10-28
+
+### Node detail shortcuts
+
+- Copy a node's exact alias beside its title, with keyboard access and visible success or clipboard-failure feedback.
+- Long node names keep their full alias in a tooltip. The header now uses the shared theme colors and title weight.
+
 ## 0.6.3-preview.110 — 2026-10-28
 
 ### Clearer platform hierarchy
