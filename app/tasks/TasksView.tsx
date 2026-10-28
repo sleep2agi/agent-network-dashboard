@@ -77,11 +77,20 @@ export function decodeIdSegment(seg: string): string {
 function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: string | null }) {
   const searchParams = useSearchParams();
   const { networkId, ready: networkReady } = useNetworkId();
-  const [tasks, setTasks] = useState<TaskListItem[]>([]);
-  const [count, setCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [taskRows, setTasks] = useState<TaskListItem[]>([]);
+  const [taskCount, setCount] = useState(0);
+  const [taskLoading, setLoading] = useState(true);
+  const [taskError, setError] = useState('');
+  const [taskNetwork, setTaskNetwork] = useState(networkId);
+  // Hide the previous network's data on the first render, before effects run.
+  // Keep navigation/filter state mounted instead of replaying old URL seeds.
+  const sameNetwork = taskNetwork === networkId;
+  const tasks = sameNetwork ? taskRows : [];
+  const count = sameNetwork ? taskCount : 0;
+  const loading = !sameNetwork || taskLoading;
+  const error = sameNetwork ? taskError : '';
   const taskGeneration = useRef(0);
+  const taskInFlight = useRef<string | null>(null);
 
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || '');
   // 07-31 通信龙 dispatch (临时开放此文件): let ChatPane's "查看任务"
@@ -168,11 +177,24 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  useEffect(() => {
+    setTaskNetwork(networkId);
+    setTasks([]);
+    setCount(0);
+    setError('');
+    setLoading(true);
+  }, [networkId]);
+
   const fetchTasks = useCallback(async () => {
     // #1636-P1 —— 网络没确定（解析中，或解析完但为空）就**不发请求**：
     // 原来这里没 gate，首帧会发 /api/hub/tasks?limit=100（无 scope），
     // 多网络账号会 400、单网络账号会先渲染出无 scope 的数据。
     if (!networkReady || !networkId) return;
+    const requestScope = JSON.stringify([networkId, filterStatus, filterFrom, filterTo]);
+    // A slow read must get a chance to finish. Same-scope polls coalesce rather
+    // than invalidating it every five seconds; changed filters still supersede.
+    if (taskInFlight.current === requestScope) return;
+    taskInFlight.current = requestScope;
     // A late network/filter read (including its error/finally) must never
     // replace a newer result. Cleanup also invalidates unmounted requests.
     const generation = ++taskGeneration.current;
@@ -206,7 +228,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       if (!isCurrent()) return;
       setError(e instanceof Error ? e.message : 'fetch failed');
     } finally {
-      if (isCurrent()) setLoading(false);
+      if (isCurrent()) { taskInFlight.current = null; setLoading(false); }
     }
   }, [filterStatus, filterFrom, filterTo, networkId, networkReady]);
 
@@ -215,12 +237,15 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     setLoading(true);
     fetchTasks();
     const interval = setInterval(fetchTasks, 5000);
-    return () => { taskGeneration.current++; clearInterval(interval); };
+    return () => { taskGeneration.current++; taskInFlight.current = null; clearInterval(interval); };
   }, [fetchTasks, networkReady, networkId]);
 
   // 通讯录与部门树：只为了把 alias 落到部门上。失败就让下拉框空着，
   // 不阻塞任务列表本身（任务能读、部门筛选不可用，是可接受的降级）。
   useEffect(() => {
+    setPeople([]);
+    setDepts(null);
+    setDeptMembers([]);
     if (!networkReady || !networkId) return;   // 网络未确定就不发（空 id 也会退化成无 scope 请求）
     let alive = true;
     void (async () => {
@@ -529,7 +554,6 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 // shape the old page.tsx had (wrapper → Inner). Fallback matches the
 // loaded layout width so the burger button doesn't crash into "Loa…".
 export function TasksView({ initialSelectedId = null }: { initialSelectedId?: string | null }) {
-  const { networkId, ready } = useNetworkId();
   return (
     <Suspense
       fallback={
@@ -538,9 +562,7 @@ export function TasksView({ initialSelectedId = null }: { initialSelectedId?: st
         </div>
       }
     >
-      {/* Reset rows, department projection and local selection together on a
-          network change, before the new scope's first response arrives. */}
-      <TasksViewInner key={`${ready}:${networkId}`} initialSelectedId={initialSelectedId} />
+      <TasksViewInner initialSelectedId={initialSelectedId} />
     </Suspense>
   );
 }

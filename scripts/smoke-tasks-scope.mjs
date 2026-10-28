@@ -26,9 +26,10 @@ const frames = page => page.evaluate(() => new Promise(resolve => {
   let n = 0; const next = () => ++n === 10 ? resolve() : requestAnimationFrame(next); requestAnimationFrame(next);
 }));
 const networks = [{ network_id: 'A', network_name: 'Scope A' }, { network_id: 'B', network_name: 'Scope B' }];
+const scenarios = ['late-success', 'late-401', 'late-error', 'late-rejection', 'late-json', 'pending-B', 'clear-filter', 'slow-poll', 'filter-survives-switch', 'closed-detail', 'selected-detail'];
 
 try {
-  for (const scenario of ['late-success', 'late-401', 'late-error', 'late-rejection', 'late-json', 'pending-B', 'clear-filter']) {
+  for (const scenario of scenarios) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     context.setDefaultTimeout(8000);
     try {
@@ -42,6 +43,12 @@ try {
         const task = (scope, label) => ({ task_id: label, network_id: scope, from_name: 'fixture', to_name: 'reader', status: 'replied', content: label, created_at: '2026-01-01T00:00:00Z' });
         const payload = (scope, label) => ({ ok: true, tasks: [task(scope, label)], count: 1 });
         window.__reads = [];
+        window.__pollTicks = 0;
+        const interval = window.setInterval;
+        window.setInterval = (callback, delay, ...args) => interval(() => {
+          if (delay === 5000) window.__pollTicks++;
+          callback(...args);
+        }, delay);
         window.__delayed = new Promise(resolve => { window.__release = resolve; });
         window.__pendingB = new Promise(resolve => { window.__releaseB = resolve; });
         window.fetch = async (input, init) => {
@@ -49,13 +56,15 @@ try {
           if (url.pathname !== '/api/hub/tasks' || url.searchParams.get('limit') !== '100') return original(input, init);
           window.__reads.push(url.pathname + url.search);
           const scope = url.searchParams.get('network_id');
-          const delay = scope === 'A' && (scenario !== 'clear-filter' || url.searchParams.get('from_name') === 'old');
+          const stateOnly = ['filter-survives-switch', 'closed-detail', 'selected-detail'].includes(scenario);
+          const delay = !stateOnly && scope === 'A' && (scenario !== 'clear-filter' || url.searchParams.get('from_name') === 'old');
+          if (scenario === 'slow-poll' && window.__reads.length > 1) await window.__pendingB;
           if (scope === 'B' && scenario === 'pending-B') await window.__pendingB;
           if (delay && scenario !== 'late-json') await window.__delayed;
           if (delay && scenario === 'late-rejection') throw new TypeError('stale-network-failure');
           if (delay && scenario === 'late-401') return Response.json({ error: 'stale-login' }, { status: 401 });
           if (delay && scenario === 'late-error') return Response.json({ error: 'stale-forbidden' }, { status: 403 });
-          const data = payload(scope, delay ? 'OBSOLETE-A' : 'CURRENT-TASK');
+          const data = payload(scope, delay && scenario !== 'slow-poll' ? 'OBSOLETE-A' : 'CURRENT-TASK');
           const response = Response.json(data);
           if (delay && scenario === 'late-json') {
             response.json = async () => { window.__jsonStarted = true; await window.__delayed; return data; };
@@ -75,8 +84,41 @@ try {
       });
       const page = await context.newPage();
       page.on('pageerror', error => result.errors.push(`${scenario}: ${error.message}`));
-      await page.goto(`${base}/tasks${scenario === 'clear-filter' ? '?from_name=old&status=replied&to_name=reader&department=__unassigned__&keep=1' : ''}`);
+      const suffix = scenario === 'clear-filter' ? '?from_name=old&status=replied&to_name=reader&department=__unassigned__&keep=1'
+        : scenario === 'filter-survives-switch' ? '?from_name=old' : scenario === 'closed-detail' ? '/DEEP-TASK' : '';
+      await page.goto(`${base}/tasks${suffix}`);
       await page.waitForFunction(() => window.__reads.length > 0);
+      if (scenario === 'slow-poll') {
+        await page.waitForFunction(() => window.__pollTicks > 0);
+        await frames(page);
+        check(`${scenario}:coalescesPendingPoll`, await page.evaluate(() => window.__reads.length === 1));
+        await page.evaluate(() => window.__release());
+        await frames(page);
+        check(`${scenario}:firstSlowSuccessVisible`, await page.getByText('CURRENT-TASK', { exact: true }).isVisible());
+        check(`${scenario}:loadingCompletes`, !await page.locator('[data-testid="task-list-column"] .animate-pulse').isVisible());
+        await page.evaluate(() => window.__releaseB());
+        result.contexts.push(scenario);
+        continue;
+      }
+      if (['filter-survives-switch', 'closed-detail', 'selected-detail'].includes(scenario)) {
+        await page.getByText('CURRENT-TASK', { exact: true }).waitFor();
+        if (scenario === 'filter-survives-switch') {
+          await page.getByTestId('tasks-filter-from').fill('new');
+          await page.waitForFunction(() => window.__reads.some(url => new URL(url, location.href).searchParams.get('from_name') === 'new'));
+        } else if (scenario === 'closed-detail') await page.getByTestId('task-detail-close').click();
+        else await page.getByText('CURRENT-TASK', { exact: true }).click();
+        const selected = await page.getByTestId('tasks-layout').getAttribute('data-selected-id');
+        const pathname = new URL(page.url()).pathname;
+        await page.getByTestId('network-switcher').click();
+        await page.getByTestId('network-option').filter({ hasText: 'Scope B' }).click();
+        await page.waitForFunction(() => window.__reads.some(url => new URL(url, location.href).searchParams.get('network_id') === 'B'));
+        await page.getByText('CURRENT-TASK', { exact: true }).waitFor();
+        check(`${scenario}:selectionRetained`, await page.getByTestId('tasks-layout').getAttribute('data-selected-id') === selected);
+        check(`${scenario}:pathnameRetained`, new URL(page.url()).pathname === pathname);
+        if (scenario === 'filter-survives-switch') check(`${scenario}:editedFilterRetained`, await page.getByTestId('tasks-filter-from').inputValue() === 'new');
+        result.contexts.push(scenario);
+        continue;
+      }
       if (scenario === 'late-json') await page.waitForFunction(() => window.__jsonStarted);
       if (scenario === 'clear-filter') {
         // Populate the filtered view, then hold its next poll while the actual
@@ -109,7 +151,7 @@ try {
         await page.waitForURL('**/login');
       }
       check(`${scenario}:noOldRows`, await page.getByText('OBSOLETE-A', { exact: true }).count() === 0);
-      check(`${scenario}:noOldError`, !/stale-forbidden|stale-network-failure/.test(await page.locator('body').innerText()));
+      check(`${scenario}:noOldError`, !/stale-forbidden|stale-network-failure|无权读取当前网络的任务/.test(await page.locator('body').innerText()));
       check(`${scenario}:noOldRedirect`, new URL(page.url()).pathname === '/tasks');
       if (scenario === 'pending-B') {
         check(`${scenario}:stillLoading`, await page.locator('[data-testid="task-list-column"] .animate-pulse').isVisible());
@@ -125,7 +167,7 @@ try {
   }
 } finally {
   await browser.close();
-  check('allContextsCompleted', result.contexts.length === 7);
+  check('allContextsCompleted', result.contexts.length === scenarios.length);
   await writeFile(path.join(output, 'result.json'), JSON.stringify(result, null, 2));
   console.log(`${Object.values(result.checks).filter(Boolean).length}/${Object.keys(result.checks).length} checks; ${result.errors.length} errors`);
   if (result.errors.length || Object.values(result.checks).some(value => !value)) process.exitCode = 1;
