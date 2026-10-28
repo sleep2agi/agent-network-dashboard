@@ -43,15 +43,15 @@ const COLUMNS: { key: Requirement['column'] | ''; label: string }[] = [
 ];
 
 const COLUMN_CHIP: Record<string, string> = {
-  pool: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
-  doing: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-  done: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-  abandoned: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
+  pool: 'bg-[var(--bg-elevated)] text-[var(--warning)]',
+  doing: 'bg-[var(--bg-elevated)] text-[var(--info)]',
+  done: 'bg-[var(--bg-elevated)] text-[var(--success)]',
+  abandoned: 'bg-[var(--bg-elevated)] text-[var(--fg-muted)]',
 };
 
 function priorityClass(priority: string) {
   if (priority === 'high') return 'text-red-400';
-  if (priority === 'low' || priority === 'lowest') return 'text-gray-600';
+  if (priority === 'low' || priority === 'lowest') return 'text-[var(--fg-muted)]';
   return 'text-gray-400';
 }
 
@@ -152,14 +152,14 @@ function RequirementsContent() {
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-lg font-semibold text-white">Requirements</h1>
-            <p className="mt-1 text-xs text-gray-500">
-              需求池 / 进行中 / 完成 —— 只读视图（写面见 #1634）。任务派单在 <Link href="/tasks" className="text-blue-400 hover:underline">Tasks</Link>。
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">
+              只读视图。派单在 <Link href="/tasks" className="text-[var(--hl)] hover:underline">Tasks</Link>。
             </p>
           </div>
           <button
             type="button"
             onClick={() => load()}
-            className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200"
+            className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200"
           >
             Refresh
           </button>
@@ -175,10 +175,10 @@ function RequirementsContent() {
                 key={col.key || 'all'}
                 type="button"
                 onClick={() => setParam({ status: col.key })}
-                className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
                   active
-                    ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
-                    : 'border-transparent text-gray-500 hover:bg-[var(--border)]/60 hover:text-gray-300'
+                    ? 'bg-[var(--bg-elevated)] text-gray-100'
+                    : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'
                 }`}
               >
                 {col.label}
@@ -190,25 +190,23 @@ function RequirementsContent() {
 
         {/* Text filters */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-blue-500/40">
-            <span className="text-[10px] uppercase tracking-wide text-gray-600">Search</span>
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-[var(--border-hover)]">
             <input
               value={qInput}
               onChange={e => setQInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') setParam({ q: qInput }); }}
               onBlur={() => { if (qInput !== q) setParam({ q: qInput }); }}
-              placeholder="标题 / 人 / 标签"
+              placeholder="搜索标题 / 人 / 标签"
               className="w-40 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none sm:w-56"
             />
           </div>
-          <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-blue-500/40">
-            <span className="text-[10px] uppercase tracking-wide text-gray-600">Tag</span>
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-[var(--border-hover)]">
             <input
               value={tagInput}
               onChange={e => setTagInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') setParam({ tag: tagInput }); }}
               onBlur={() => { if (tagInput !== tag) setParam({ tag: tagInput }); }}
-              placeholder="exact tag"
+              placeholder="精确标签"
               className="w-28 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none"
             />
           </div>
@@ -216,7 +214,7 @@ function RequirementsContent() {
             <button
               type="button"
               onClick={() => { setTagInput(''); setQInput(''); setParam({ status: '', tag: '', q: '' }); }}
-              className="rounded-lg border border-gray-700 px-2.5 py-1.5 text-[11px] text-gray-500 hover:border-gray-600 hover:text-gray-200"
+              className="rounded-md px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200"
             >
               Clear filters
             </button>
@@ -255,15 +253,15 @@ function RequirementsContent() {
             cta={status || tag || q ? { label: '清空筛选', onClick: () => setParam({ status: '', tag: '', q: '' }) } : undefined}
           />
         ) : (
-          <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+          <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
             {rows.map(row => {
               const chk = row.checklist_count;
               const kids = row.children;
               return (
                 <li key={row.id} className="hover:bg-[var(--bg-secondary)]/60">
                   <Link href={`/requirements/${row.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4">
-                    <span className="w-12 shrink-0 text-[11px] tabular-nums text-gray-600">#{row.seq}</span>
-                    <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] ${COLUMN_CHIP[row.column] || COLUMN_CHIP.abandoned}`}>
+                    <span className="w-12 shrink-0 text-[11px] tabular-nums text-[var(--fg-muted)]">#{row.seq}</span>
+                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${COLUMN_CHIP[row.column] || COLUMN_CHIP.abandoned}`}>
                       {row.column}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-sm text-gray-100">{row.name}</span>
@@ -273,15 +271,15 @@ function RequirementsContent() {
                       </span>
                     ))}
                     <span className={`shrink-0 text-[11px] ${priorityClass(row.priority)}`}>{row.priority}</span>
-                    <span className="hidden w-24 shrink-0 truncate text-[11px] text-gray-500 sm:inline">{personLabel(row.agent_owner)}</span>
+                    <span className="hidden w-24 shrink-0 truncate text-[11px] text-[var(--fg-muted)] sm:inline">{personLabel(row.agent_owner)}</span>
                     <span className="w-20 shrink-0 text-right text-[11px]">{dueLabel(row.due)}</span>
                     {chk && chk.total > 0 && (
-                      <span className="hidden shrink-0 text-[10px] tabular-nums text-gray-500 sm:inline">
+                      <span className="hidden shrink-0 text-[10px] tabular-nums text-[var(--fg-muted)] sm:inline">
                         ✓ {chk.done}/{chk.total}
                       </span>
                     )}
                     {kids && kids.total > 0 && (
-                      <span className="hidden shrink-0 text-[10px] tabular-nums text-gray-500 md:inline">
+                      <span className="hidden shrink-0 text-[10px] tabular-nums text-[var(--fg-muted)] md:inline">
                         ↳ {kids.done}/{kids.total}
                       </span>
                     )}
@@ -297,7 +295,7 @@ function RequirementsContent() {
             type="button"
             disabled={loadingMore}
             onClick={() => load({ cursor, append: true })}
-            className="mx-auto mt-4 block rounded-lg border border-[var(--border)] px-4 py-2 text-xs text-gray-400 hover:text-gray-200 disabled:opacity-50"
+            className="mx-auto mt-4 block rounded-md px-4 py-2 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200 disabled:opacity-50"
           >
             {loadingMore ? '加载中…' : '加载更多'}
           </button>

@@ -81,9 +81,9 @@ function timeAgo(dateStr: string): string {
 }
 
 function priorityClass(priority: string) {
-  if (priority === 'high') return 'text-red-400';
-  if (priority === 'low') return 'text-gray-600';
-  return 'text-gray-400';
+  if (priority === 'high') return 'text-[var(--danger)]';
+  if (priority === 'low') return 'text-[var(--fg-dim)]';
+  return 'text-[var(--fg-muted)]';
 }
 
 const fetcher = async (url: string) => {
@@ -150,10 +150,10 @@ export function TaskDetail({
 
   const timelineSteps: { label: string; time: string; color: string }[] = task
     ? [
-        { label: 'Created', time: task.created_at, color: 'text-gray-400' },
+        { label: 'Created', time: task.created_at, color: 'text-[var(--fg-muted)]' },
         { label: 'Delivered', time: task.delivered_at, color: 'text-blue-400' },
-        { label: 'Started', time: task.started_at, color: 'text-green-400' },
-        { label: 'Completed', time: task.completed_at, color: 'text-purple-400' },
+        { label: 'Started', time: task.started_at, color: 'text-[var(--success)]' },
+        { label: 'Completed', time: task.completed_at, color: 'text-[var(--accent-text)]' },
       ]
     : [];
 
@@ -165,10 +165,10 @@ export function TaskDetail({
       data-poll-events-ms={String(POLL_EVENTS_MS)}
       className="flex flex-col h-full max-h-screen overflow-hidden"
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1c1c1f]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
         <div className="min-w-0 flex-1 flex items-center gap-2">
-          <div className="text-xs text-gray-500 truncate" title={taskId}>
-            <span className="text-gray-600">Task ID:</span>{' '}
+          <div className="text-xs text-[var(--fg-muted)] truncate" title={taskId}>
+            <span className="text-[var(--fg-dim)]">Task ID:</span>{' '}
             <span className="font-mono">{taskId.slice(0, 12)}…</span>
           </div>
           {task && (
@@ -176,7 +176,7 @@ export function TaskDetail({
               data-testid="task-detail-status"
               className={`text-xs px-2 py-0.5 rounded-md border ${
                 STATUS_CHIP[task.status] ||
-                'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                'bg-gray-500/10 text-[var(--fg-muted)] border-gray-500/20'
               }`}
             >
               {task.status}
@@ -189,7 +189,7 @@ export function TaskDetail({
             onClick={onClose}
             aria-label="Close detail (返回 tasks 列表)"
             data-testid="task-detail-close"
-            className="shrink-0 rounded-md border border-[#26262b] px-2 py-1 text-xs text-gray-400 hover:text-white hover:border-[#3a3a41]"
+            className="shrink-0 rounded-md border border-[var(--border)] px-2 py-1 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:border-[#3a3a41]"
           >
             ←
           </button>
@@ -199,9 +199,9 @@ export function TaskDetail({
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {isLoading && !task && (
           <div className="animate-pulse space-y-3">
-            <div className="h-6 w-1/3 bg-gray-800/40 rounded" />
-            <div className="h-24 bg-gray-800/40 rounded" />
-            <div className="h-24 bg-gray-800/40 rounded" />
+            <div className="h-6 w-1/3 bg-[var(--bg-elevated)]/40 rounded" />
+            <div className="h-24 bg-[var(--bg-elevated)]/40 rounded" />
+            <div className="h-24 bg-[var(--bg-elevated)]/40 rounded" />
           </div>
         )}
         {error && (
@@ -210,7 +210,7 @@ export function TaskDetail({
           </div>
         )}
         {!isLoading && !error && !task && (
-          <div className="text-gray-400 text-sm">Task not found</div>
+          <div className="text-[var(--fg-muted)] text-sm">Task not found</div>
         )}
 
         {task && (
@@ -219,9 +219,9 @@ export function TaskDetail({
             <section
               data-testid="task-detail-timeline"
               data-block="timeline"
-              className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+              className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4"
             >
-              <h2 className="text-sm font-semibold text-gray-300 mb-4">Timeline</h2>
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">Timeline</h2>
               <div className="relative">
                 {timelineSteps.map((step, i) => {
                   const done = !!step.time;
@@ -237,25 +237,25 @@ export function TaskDetail({
                       <div className="flex flex-col items-center">
                         <div
                           className={`w-3 h-3 rounded-full border-2 shrink-0 ${
-                            done ? `${step.color} border-current` : 'border-gray-700 bg-transparent'
+                            done ? `${step.color} border-current` : 'border-[var(--border)] bg-transparent'
                           }`}
                         />
                         {!isLast && (
                           <div
                             className={`w-0.5 flex-1 mt-1 ${
                               done && timelineSteps[i + 1]?.time
-                                ? 'bg-cyan-500/40'
-                                : 'bg-gray-800'
+                                ? 'bg-[var(--accent)]/40'
+                                : 'bg-[var(--bg-elevated)]'
                             }`}
                           />
                         )}
                       </div>
                       <div className="min-w-0 -mt-0.5">
-                        <div className={`text-sm font-medium ${done ? 'text-gray-200' : 'text-gray-600'}`}>
+                        <div className={`text-sm font-medium ${done ? 'text-[var(--fg)]' : 'text-[var(--fg-dim)]'}`}>
                           {step.label}
                         </div>
                         <div
-                          className="text-xs text-gray-500"
+                          className="text-xs text-[var(--fg-muted)]"
                           title={step.time || undefined}
                         >
                           {step.time ? `${timeAgo(step.time)} — ${step.time}` : 'Pending'}
@@ -271,9 +271,9 @@ export function TaskDetail({
             <section
               data-testid="task-detail-info"
               data-block="info"
-              className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+              className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4"
             >
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">Info</h2>
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">Info</h2>
               <div className="space-y-2 text-xs">
                 {[
                   ['Task ID', task.task_id],
@@ -284,10 +284,10 @@ export function TaskDetail({
                   ['Expires', task.expires_at],
                 ].map(([label, val]) => (
                   <div key={label as string} className="flex justify-between gap-4">
-                    <span className="text-gray-500 shrink-0">{label}</span>
+                    <span className="text-[var(--fg-muted)] shrink-0">{label}</span>
                     <span
                       data-info-field={String(label).toLowerCase().replace(/\s+/g, '-')}
-                      className="text-gray-300 truncate max-w-[240px] text-right"
+                      className="text-[var(--fg)] truncate max-w-[240px] text-right"
                       title={String(val || '')}
                     >
                       {String(val || '--')}
@@ -296,12 +296,12 @@ export function TaskDetail({
                 ))}
               </div>
               <div
-                className="mt-4 pt-3 border-t border-[#1c1c1f] flex items-center gap-2 text-sm text-gray-300"
+                className="mt-4 pt-3 border-t border-[var(--border)] flex items-center gap-2 text-sm text-[var(--fg)]"
                 data-testid="task-detail-participants"
               >
                 {task.from_name && <AliasAvatar alias={task.from_name} size={20} />}
                 <span className="truncate">{task.from_name || '--'}</span>
-                <span className="text-gray-600 shrink-0">→</span>
+                <span className="text-[var(--fg-dim)] shrink-0">→</span>
                 {task.to_name && <AliasAvatar alias={task.to_name} size={20} />}
                 <span className="truncate">{task.to_name || '--'}</span>
               </div>
@@ -319,12 +319,12 @@ export function TaskDetail({
             <section
               data-testid="task-detail-content"
               data-block="content"
-              className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+              className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4"
             >
-              <h2 className="text-sm font-semibold text-gray-300 mb-2">Content</h2>
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-2">Content</h2>
               <pre
                 data-testid="task-detail-content-body"
-                className="text-xs text-gray-200 whitespace-pre-wrap break-words bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f] max-h-64 overflow-y-auto font-sans"
+                className="text-xs text-[var(--fg)] whitespace-pre-wrap break-words bg-[var(--bg)] rounded-lg px-3 py-2 border border-[var(--border)] max-h-64 overflow-y-auto font-sans"
               >
                 {task.content || '--'}
               </pre>
@@ -335,12 +335,12 @@ export function TaskDetail({
               <section
                 data-testid="task-detail-result"
                 data-block="result"
-                className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+                className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4"
               >
-                <h2 className="text-sm font-semibold text-gray-300 mb-2">Result</h2>
+                <h2 className="text-sm font-semibold text-[var(--fg)] mb-2">Result</h2>
                 <pre
                   data-testid="task-detail-result-body"
-                  className="text-xs text-gray-200 whitespace-pre-wrap break-words bg-[#0e0e10] rounded-lg px-3 py-2 border border-[#1c1c1f] max-h-64 overflow-y-auto font-sans"
+                  className="text-xs text-[var(--fg)] whitespace-pre-wrap break-words bg-[var(--bg)] rounded-lg px-3 py-2 border border-[var(--border)] max-h-64 overflow-y-auto font-sans"
                 >
                   {task.result}
                 </pre>
@@ -355,13 +355,13 @@ export function TaskDetail({
               data-testid="task-detail-events"
               data-block="events"
               data-events-count={events.length}
-              className="bg-[#161618] border border-[#26262b] rounded-xl p-4"
+              className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4"
             >
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">
-                Events {events.length > 0 && <span className="text-gray-500">({events.length})</span>}
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">
+                Events {events.length > 0 && <span className="text-[var(--fg-muted)]">({events.length})</span>}
               </h2>
               {events.length === 0 ? (
-                <div className="text-xs text-gray-600 italic">No events yet.</div>
+                <div className="text-xs text-[var(--fg-dim)] italic">No events yet.</div>
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {events.map((e, i) => (
@@ -376,7 +376,7 @@ export function TaskDetail({
                           e.to_status === 'running'
                             ? 'bg-green-400'
                             : e.to_status === 'replied'
-                              ? 'bg-purple-400'
+                              ? 'bg-[var(--accent)]'
                               : e.to_status === 'failed'
                                 ? 'bg-red-400'
                                 : 'bg-blue-400'
@@ -384,22 +384,22 @@ export function TaskDetail({
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span data-testid="task-event-label" className="text-gray-300 font-medium truncate">
+                          <span data-testid="task-event-label" className="text-[var(--fg)] font-medium truncate">
                             {taskEventLabel(e)}
                           </span>
                           {e.from_status && (
-                            <span className="text-gray-600 shrink-0">
+                            <span className="text-[var(--fg-dim)] shrink-0">
                               {e.from_status} → {e.to_status}
                             </span>
                           )}
                           {e.actor && (
-                            <span data-testid="task-event-actor" className="text-gray-500 truncate">
+                            <span data-testid="task-event-actor" className="text-[var(--fg-muted)] truncate">
                               by {e.actor}
                             </span>
                           )}
                         </div>
                         {e.detail && (
-                          <div data-testid="task-event-detail" className="mt-0.5 text-[11px] text-gray-500 break-words">
+                          <div data-testid="task-event-detail" className="mt-0.5 text-[11px] text-[var(--fg-muted)] break-words">
                             {e.detail}
                           </div>
                         )}
@@ -409,7 +409,7 @@ export function TaskDetail({
                           </div>
                         )}
                       </div>
-                      <span className="text-gray-600 ml-auto shrink-0" title={e.created_at}>
+                      <span className="text-[var(--fg-dim)] ml-auto shrink-0" title={e.created_at}>
                         {timeAgo(e.created_at)}
                       </span>
                     </div>

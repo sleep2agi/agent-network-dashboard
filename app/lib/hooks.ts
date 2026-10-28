@@ -10,6 +10,15 @@ const fetcher = async (url: string) => {
     window.location.assign('/login');
     throw new Error('unauthorized');
   }
+  // 非 2xx 不能当成数据：代理层失败时返回的是 {error} 而不是列表，
+  // 旧行为会让页面把「读失败」渲染成「没有数据」。
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw Object.assign(
+      new Error(detail?.error || detail?.message || `HTTP ${res.status}`),
+      { status: res.status },
+    );
+  }
   return res.json();
 };
 
@@ -24,12 +33,12 @@ function withNetwork(url: string, networkId: string): string {
 
 export function useSessions() {
   const { networkId } = useNetworkId();
-  const { data, error, isLoading } = useSWR<{ sessions: Session[]; _hint?: { global_count?: number; filtered_network?: string } }>(
+  const { data, error, isLoading, mutate } = useSWR<{ sessions: Session[]; _hint?: { global_count?: number; filtered_network?: string } }>(
     withNetwork('/api/hub/status', networkId),
     fetcher,
     SWR_OPTIONS,
   );
-  return { sessions: data?.sessions || [], hint: data?._hint, error, isLoading };
+  return { sessions: data?.sessions || [], hint: data?._hint, error, isLoading, mutate };
 }
 
 // RFC-027 PR2 — alias → lifecycle_state map sourced from /api/nodes
@@ -124,10 +133,10 @@ export function useMessages(limit = 100) {
   // keepPreviousData: /messages grows `limit` when the user asks for older
   // history (#217 M5) — without it the key change would blank the list and
   // flash the skeleton while the bigger page is in flight.
-  const { data, error, isLoading } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR(
     withNetwork(`/api/hub/messages?limit=${limit}`, networkId),
     fetcher,
     { ...SWR_OPTIONS, keepPreviousData: true },
   );
-  return { messages: data?.messages || [], error, isLoading };
+  return { messages: data?.messages || [], error, isLoading, mutate };
 }

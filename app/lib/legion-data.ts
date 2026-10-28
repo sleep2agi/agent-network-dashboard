@@ -16,6 +16,8 @@ export interface PeopleResponse {
   people: LegionPerson[];
   agents_without_owner?: LegionAgentRef[];
   has_more: boolean;
+  next_offset?: number | null;
+  agent_department_supported?: boolean;
 }
 
 export interface DepartmentsResponse {
@@ -28,6 +30,28 @@ export interface StatusResponse {
 }
 
 const unauthorized = () => Object.assign(new Error('unauthorized'), { status: 401 });
+
+type LegionReadError = Error & { status?: number };
+
+/** 多路编制读取共用错误呈现；任一路登录失效都优先显示重新登录。 */
+export function legionReadError(...errors: (LegionReadError | undefined)[]): LegionReadError | undefined {
+  return errors.find(error => error?.status === 401) ?? errors.find(error => error != null);
+}
+
+/**
+ * #1636-P1 —— 把当前网络拼进请求 URL。
+ *
+ * 为什么必须在 **URL/SWR key** 上拼，而不是在 fetcher 里偷偷加参数：
+ * SWR 的缓存按 key 存。只要 key 不含网络，切网之后拿到的还是上一个网络的缓存，
+ * 页面会「看起来没变」；拼进 key 之后，切网 = 换 key = 重新取数 = 不会串数据。
+ *
+ * networkId 为空（还没解析出来）时原样返回，保持与旧行为一致。
+ */
+export function scopedUrl(url: string, networkId: string | null | undefined): string {
+  if (!networkId) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}network_id=${encodeURIComponent(networkId)}`;
+}
 
 export const legionFetcher = async (url: string) => {
   const res = await fetch(url, { cache: 'no-store' });

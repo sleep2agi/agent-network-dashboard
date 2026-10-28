@@ -19,19 +19,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { buildLegionLayout, nearestDept, type LegionNode } from '../../lib/legion-layout';
+import { buildLegionLayout, nearestDept, deptWorldRadius, type LegionNode } from '../../lib/legion-layout';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
-import { legionFetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
-import { hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
+import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
+import { useNetworkId } from '../../lib/network-context';
+import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
+import { departmentDisc, fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
+import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
+import { drawLegionCore } from '../../lib/legion-core';
 import { EmptyState } from '../../components/EmptyState';
+import { getAvatarUrl } from '../../lib/avatars';
+import { LegionChat } from '../LegionChat';
 
 // 神明给的参数（PPT 首页 3D 图，admin 已认可）：俯仰约 25–30°、柔和透视
 // （别用强广角，远景缩成点就没有军团体量感）、自转 0.02–0.03 rad/s。
 // 实现上把「透视强度」和「缩放」拆开：dist 固定大一点 = 透视更平，
 // 滚轮改的是 zoom（scale），不再同时改变透视。
 const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.52, dist: 6.0, zoom: 1.12, panX: 0, panY: 0 };
-const MIN_ZOOM = 0.62;
-const MAX_ZOOM = 2.4;
+// 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
+// admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 8;
 const SPIN_RAD_PER_SEC = 0.027;
 const IDLE_BEFORE_SPIN = 3000;
 
@@ -50,6 +58,13 @@ const WORLD_R: Record<LegionNode['kind'], number> = {
   agent: 0.021,
 };
 
+function nodeBody({ item, projected: p }: SceneNode<LegionNode>, people: number) {
+  const crowd = item.kind === 'person' && people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
+  const worldR = item.kind === 'group' ? deptWorldRadius(item.depth ?? 1) : WORLD_R[item.kind];
+  const radius = Math.max(1.4, worldR * p.scale * crowd);
+  return { radius, ...(item.kind === 'group' ? departmentDisc(radius) : { rx: radius, ry: radius }) };
+}
+
 function readTokens() {
   const cs = getComputedStyle(document.documentElement);
   const v = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
@@ -61,6 +76,7 @@ function readTokens() {
     border: v('--border', '#26262b'),
     surface: v('--bg-secondary', '#161618'),
     accent: v('--accent', '#8b5cf6'),
+    accentFg: v('--accent-fg', '#ffffff'),
     success: v('--success', '#10b981'),
     warning: v('--warning', '#f59e0b'),
     danger: v('--danger', '#ef4444'),
@@ -130,6 +146,21 @@ function nodeColor(node: LegionNode, tk: Tokens, statusByAlias: Map<string, stri
 /** 光晕精灵缓存：一个颜色一张 128×128 的径向渐变贴图，按需缩放。
  *  逐帧 shadowBlur 在软件光栅下开销极大（headless 实测 30fps），
  *  预先画好再 drawImage 是同类效果里最便宜的做法。 */
+/** 头像图片缓存：同一个 URL 只 new 一次 Image，加载完由渲染循环自动画出来
+ *  （循环每帧都在跑，不需要额外的 re-render）。 */
+const AVATAR_IMAGES = new Map<string, HTMLImageElement>();
+function avatarImage(url: string): HTMLImageElement | null {
+  if (!url) return null;
+  let img = AVATAR_IMAGES.get(url);
+  if (!img) {
+    img = new Image();
+    img.decoding = 'async';
+    img.src = url;
+    AVATAR_IMAGES.set(url, img);
+  }
+  return img.complete && img.naturalWidth > 0 ? img : null;
+}
+
 const HALO_CACHE = new Map<string, HTMLCanvasElement>();
 function haloFor(color: string): HTMLCanvasElement {
   const hit = HALO_CACHE.get(color);
@@ -168,8 +199,11 @@ function makeStars(count: number) {
 }
 
 export default function Legion3DPage() {
+  // #1636-P1 —— 当前选中网络拼进 SWR key（切网即换 key，避免串网）。
+  const { networkId, ready: networkReady } = useNetworkId();
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
+  const [chatAlias, setChatAlias] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   // 大网络提示条：一次会话里关掉就不再弹（sessionStorage）。
@@ -182,11 +216,16 @@ export default function Legion3DPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   // 净屏：把标题/按钮/图例/提示全隐掉，只留拓扑 —— 截屏、做 PPT 用。
   const [cleanView, setCleanView] = useState(false);
+  // 图例即筛选：点「运行中」只看在跑的 Agent，再看部门/人环做背景。
+  const [statusOnly, setStatusOnly] = useState<'working' | 'idle' | 'blocked' | 'error' | 'offline' | null>(null);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const helpRef = useRef<HTMLDivElement | null>(null);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
+  const toolsToggleRef = useRef<HTMLButtonElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [spin, setSpin] = useState(true);
-  const [needsLogin, setNeedsLogin] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -195,6 +234,11 @@ export default function Legion3DPage() {
   const [stageHeight, setStageHeight] = useState<number | null>(null);
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
+  const fitBoundsRef = useRef<LabelRect | null>(null);
+  const labelUiRectsRef = useRef<LabelRect[]>([]);
+  const corePhaseRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const viewRef = useRef({ ...DEFAULT_VIEW });
   const spinRef = useRef(true);
@@ -209,24 +253,50 @@ export default function Legion3DPage() {
   // 用户自己缩放过就尊重他的视角；只有「还没动过」时，尺寸变化（首帧
   // 布局落定、窗口缩放）才重新取景。
   const userAdjusted = useRef(false);
+  // 首次进入的「镜头推近」：从 0.62× 缓动到取景比例，约 0.9 秒。
+  // 只在第一次打开时跑一次（sessionStorage 记住），并尊重 prefers-reduced-motion。
+  const introRef = useRef<{ t0: number; from: number; to: number } | null>(null);
+  const introDone = useRef(false);
   const dragRef = useRef<{ x: number; y: number; yaw: number; pitch: number; moved: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ span: number; dist: number } | null>(null);
   const screenRef = useRef<Array<SceneNode<LegionNode>>>([]);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const hoverRef = useRef<string | null>(null);
+  // 悬停提示需要指针位置（canvas 坐标），只存在 ref 里，避免每帧 setState。
+  const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
 
-  const people = useSWR<PeopleResponse>('/api/hub/people?limit=200&offset=0', legionFetcher, {
+  // 换数据 key 不会重置本地状态；旧节点 id 会让新网络所有节点落进淡出分支。
+  // 只在网络身份改变时清理，同网络轮询/重新验证保留当前选择。
+  const [viewNetworkId, setViewNetworkId] = useState(networkId);
+  if (viewNetworkId !== networkId) {
+    setViewNetworkId(networkId);
+    setSelected(null);
+    setChatAlias(null);
+    setFocus(null);
+    setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
+  }
+  useEffect(() => {
+    hoverRef.current = null;
+    hoverPos.current = null;
+    yawTarget.current = null;
+    introRef.current = null;
+    viewRef.current = { ...DEFAULT_VIEW };
+    fitPending.current = true;
+    userAdjusted.current = false;
+    lastFitSize.current = null;
+  }, [networkId]);
+
+  const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
-    onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
-  const hierarchy = useSWR<DepartmentsResponse | null>('/api/hub/departments', deptFetcher, {
+  const hierarchy = useSWR<DepartmentsResponse | null>(networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000,
     shouldRetryOnError: false,
   });
-  const status = useSWR<StatusResponse>('/api/hub/status', legionFetcher, {
+  const status = useSWR<StatusResponse>(networkReady && networkId ? scopedUrl('/api/hub/status', networkId) : null, legionFetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });
@@ -327,6 +397,19 @@ export default function Legion3DPage() {
     return map;
   }, [status.data]);
 
+  // 图例带数量：一眼知道「现在有几个在跑」，不用逐个看。
+  const statusCounts = useMemo(() => {
+    const counts = { working: 0, idle: 0, blocked: 0, error: 0, offline: 0 };
+    for (const n of layout.nodes) {
+      if (n.kind !== 'agent') continue;
+      const st = statusByAlias.get(n.label);
+      if (!st) counts.offline += 1;
+      else if (st === 'working' || st === 'blocked' || st === 'error') counts[st] += 1;
+      else counts.idle += 1;
+    }
+    return counts;
+  }, [layout.nodes, statusByAlias]);
+
   const selectedNode = useMemo(
     () => (selected ? layout.nodes.find(n => n.id === selected) ?? null : null),
     [layout.nodes, selected],
@@ -415,8 +498,43 @@ export default function Legion3DPage() {
     } catch { /* 隐私模式下读不到就每次都提示，无害 */ }
   }, []);
 
-  useEffect(() => { spinRef.current = spin; }, [spin]);
+  useEffect(() => { spinRef.current = spin && !chatAlias; }, [spin, chatAlias]);
   useEffect(() => { selectedRef.current = selected; }, [selected]);
+
+  useEffect(() => {
+    if (!toolsOpen) return;
+    const onOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !toolbarRef.current?.contains(event.target)) setToolsOpen(false);
+    };
+    document.addEventListener('pointerdown', onOutside);
+    return () => document.removeEventListener('pointerdown', onOutside);
+  }, [toolsOpen]);
+
+  useEffect(() => {
+    const wide = window.matchMedia('(min-width: 640px)');
+    const onBreakpoint = () => {
+      const active = document.activeElement;
+      if (wide.matches && active === toolsToggleRef.current) {
+        toolbarRef.current?.querySelector<HTMLButtonElement>('[data-testid="legion-3d-spin"]')?.focus();
+      } else if (!wide.matches && active?.closest('#legion-3d-more-tools')) {
+        toolsToggleRef.current?.focus();
+      }
+      setToolsOpen(false);
+    };
+    wide.addEventListener('change', onBreakpoint);
+    return () => wide.removeEventListener('change', onBreakpoint);
+  }, []);
+
+  useEffect(() => {
+    if (!helpOpen) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const stage = wrapRef.current;
+    helpRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    return () => {
+      if (previous?.isConnected && previous.getClientRects().length) previous.focus();
+      else stage?.focus();
+    };
+  }, [helpOpen]);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -452,6 +570,46 @@ export default function Legion3DPage() {
     return () => ro.disconnect();
   }, []);
 
+  useEffect(() => {
+    const header = headerRef.current;
+    const wrap = wrapRef.current;
+    if (!header || !wrap) return;
+    const measure = () => {
+      const stage = wrap.getBoundingClientRect();
+      const rect = (el: HTMLElement) => {
+        const box = el.getBoundingClientRect();
+        return { x1: box.left - stage.left - 4, y1: box.top - stage.top - 4,
+          x2: box.right - stage.left + 4, y2: box.bottom - stage.top + 4 };
+      };
+      const top = rect(header);
+      wrap.style.setProperty('--legion-list-top', `${top.y2 + 8}px`);
+      const footer = footerRef.current;
+      const bottom = footer && footer.offsetHeight > 0 ? rect(footer) : null;
+      labelUiRectsRef.current = cleanView ? [] : [top, ...(bottom ? [bottom] : [])];
+      const previous = fitBoundsRef.current;
+      const bounds = {
+        x1: 24, x2: stage.width - 24,
+        y1: cleanView ? 24 : top.y2 + 16,
+        y2: cleanView ? stage.height - 24 : (bottom?.y1 ?? stage.height - 24) - 24,
+      };
+      fitBoundsRef.current = bounds;
+      // Restoring controls can shrink the safe area without resizing the canvas.
+      // Expanding it alone must not move a manually positioned camera.
+      if (previous && !userAdjusted.current && (
+        bounds.x1 > previous.x1 + 1 || bounds.y1 > previous.y1 + 1
+        || bounds.x2 < previous.x2 - 1 || bounds.y2 < previous.y2 - 1
+        || previous.x2 <= previous.x1 || previous.y2 <= previous.y1
+      )) fitPending.current = true;
+    };
+    // Responsive controls are measured on resize, never during Canvas frames.
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    if (footerRef.current) observer.observe(footerRef.current);
+    observer.observe(wrap);
+    measure();
+    return () => observer.disconnect();
+  }, [cleanView]);
+
   /* ── 渲染循环 ───────────────────────────────────────────────────── */
 
   useEffect(() => {
@@ -476,6 +634,8 @@ export default function Legion3DPage() {
     let dark = isDarkBg(tk.bg);
     let raf = 0;
     let stopped = false;
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const labelMetrics = new Map<string, { lines: string[]; width: number; height: number; lineHeight: number }>();
     let lastFrame = performance.now();
 
     let frame = 0;
@@ -532,6 +692,20 @@ export default function Legion3DPage() {
       }
       // 小屏用更长的焦距把图放大：375 宽时 min(w,h) 只有 375，
       // 按桌面系数算整张图只有硬币大，留白像坏了。
+      if (introRef.current) {
+        const a = introRef.current;
+        const t = Math.min(1, (now - a.t0) / 900);
+        const ease = 1 - Math.pow(1 - t, 3);
+        view.zoom = a.from + (a.to - a.from) * ease;
+        if (t >= 1) {
+          view.zoom = a.to;
+          introRef.current = null;
+          setZoomPct(Math.round(a.to * 100));
+          // 动画结束就把「保护标记」放下：之后尺寸/结构变化可以正常重新取景。
+          userAdjusted.current = false;
+        }
+      }
+
       const narrow = size.width < 640;
       const cam = {
         yaw: view.yaw,
@@ -549,6 +723,8 @@ export default function Legion3DPage() {
       const huge = layout.nodes.length > LEGION_HUGE_NODES;
       // 交互中：大网络先不画标签与数据包，停手后自动恢复（跟手优先）。
       const interacting = huge && now < interactingUntil.current;
+      // Pause also freezes the new core ornament; reduced-motion is read live.
+      if (!motionPreference.matches && spinRef.current && !interacting) corePhaseRef.current += dt * 0.24;
       applyResolution(interacting ? RES_LOW : 1);
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -565,40 +741,89 @@ export default function Legion3DPage() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const toPoint = (n: LegionNode) => nodeToVec3({ ...n });
-      const nodes = projectScene(layout.nodes, toPoint, cam, size);
-      screenRef.current = nodes;
+      let nodes = projectScene(layout.nodes, toPoint, cam, size);
 
       // 自动取景：默认 zoom=1.12 时整张图只占画布 40% 左右，剩下大半是空的。
-      // 首屏和「重置视角」后按内容包围盒算一次缩放 + 平移，把军团收进画面
-      // 78%，重心放到画布中心。只在结构变化时做，不跟用户的拖动/缩放抢。
+      // 首屏和「重置视角」后按节点实体包围盒取景，留出实测标题/工具栏和图例。
+      // 只在结构/尺寸变化时做，不跟用户的拖动/缩放抢。
       const sizeDrift = !lastFitSize.current
         || Math.abs(size.width - lastFitSize.current.w) > 8
         || Math.abs(size.height - lastFitSize.current.h) > 8;
-      if ((fitPending.current || (sizeDrift && !userAdjusted.current)) && nodes.length > 0) {
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        for (const n of nodes) {
-          if (n.projected.x < minX) minX = n.projected.x;
-          if (n.projected.x > maxX) maxX = n.projected.x;
-          if (n.projected.y < minY) minY = n.projected.y;
-          if (n.projected.y > maxY) maxY = n.projected.y;
+      const fitBounds = fitBoundsRef.current ?? { x1: 24, y1: 24, x2: size.width - 24, y2: size.height - 24 };
+      const initialZoom = view.zoom;
+      const framingBodies = (zoom = initialZoom) => {
+        const fittingCam = { ...cam, focal: cam.focal * zoom / initialZoom };
+        const projected = zoom === initialZoom ? nodes : projectScene(layout.nodes, toPoint, fittingCam, size);
+        const bodies = projected.map(sn => {
+          const { rx, ry } = nodeBody(sn, layout.stats.people);
+          // Includes the widest hover/selection stroke, also at the pixel floor.
+          return { x: sn.projected.x, y: sn.projected.y, rx: rx + 6, ry: ry + 6 };
+        });
+        // Sparse nodes cover only one side of an orbit; include the visible
+        // tracks and packets both in initial fitting and in recovery checks.
+        for (const ring of ringRadii) {
+          for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, fittingCam, size, 64)) {
+            bodies.push({ x: p.x, y: p.y, rx: 4, ry: 4 });
+          }
         }
-        const bw = maxX - minX;
-        const bh = maxY - minY;
-        const span = Math.max(bw, bh, 1);
-        const target = Math.min(size.width, size.height) * 0.82;
-        const want = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, view.zoom * (target / span)));
-        const k = want / view.zoom;
-        // 投影 = 画布中心 + pan + zoom·u；pan 也在包围盒里，先减掉再乘 k。
-        const ccx = (minX + maxX) / 2 - size.width / 2 - view.panX;
-        const ccy = (minY + maxY) / 2 - size.height / 2 - view.panY;
-        view.panX = -ccx * k;
-        view.panY = -ccy * k;
-        view.zoom = want;
-        setZoomPct(Math.round(want * 100));
-        fitPending.current = false;
-        userAdjusted.current = false;
-        lastFitSize.current = { w: size.width, h: size.height };
+        return bodies;
+      };
+      // 入场动画期间不要重新取景：动画会让 view.zoom 每一帧都变，
+      // 再按当前 zoom 算包围盒会滚雪球（实测直接顶到 MAX_ZOOM）。
+      // 画布还没量到真实尺寸时不要取景：首帧 stage 只有几十像素，
+      // 按那个尺寸算出来会被 MAX_ZOOM 夹到 240%，随后再跳回正常值（实测）。
+      // 自愈：出现过「取景算早了 → 内容缩成一小坨、之后再也不重算」的情况
+      // （admin 截图里 240% 却只有中间一小团）。用户没手动缩放过时，每 ~1 秒
+      // 检查一次内容包围盒，占画面不到 35% 就重新取景。
+      if (!userAdjusted.current && !introRef.current && !fitPending.current && frame % 60 === 0 && nodes.length > 3) {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const body of framingBodies()) {
+          minX = Math.min(minX, body.x - body.rx);
+          maxX = Math.max(maxX, body.x + body.rx);
+          minY = Math.min(minY, body.y - body.ry);
+          maxY = Math.max(maxY, body.y + body.ry);
+        }
+        const spanNow = Math.max(maxX - minX, maxY - minY, 1);
+        if (spanNow < Math.min(fitBounds.x2 - fitBounds.x1, fitBounds.y2 - fitBounds.y1) * 0.35) fitPending.current = true;
       }
+
+      const sizeReady = size.width > 240 && size.height > 300;
+      // 只有 core 时不取景；仅有部门的编制也有真实实体和轨道，需要避让展开控件。
+      const dataReady = layout.stats.groups + layout.stats.people + layout.stats.agents > 0;
+      if (sizeReady && dataReady && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
+        const fit = fitProjectedBodies(framingBodies, view, size, fitBounds, { min: MIN_ZOOM, max: MAX_ZOOM });
+        // If controls exhaust the usable area, keep drawing the current scene.
+        // A later valid bounds measurement will request another fit.
+        if (fit) {
+          const want = fit.zoom;
+          Object.assign(view, fit);
+          setZoomPct(Math.round(want * 100));
+          // 首次进入：先落在 62% 处，再缓动到目标（镜头推近的感觉）。
+          if (!introDone.current) {
+            introDone.current = true;
+            const reduce = typeof window !== 'undefined'
+              && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            let seen = false;
+            try { seen = sessionStorage.getItem('legion3d-intro') === '1'; } catch {}
+            if (!reduce && !seen) {
+              view.zoom = want * 0.62;
+              // 动画期间也别让「尺寸漂移」触发重算。
+              userAdjusted.current = true;
+              introRef.current = { t0: now, from: want * 0.62, to: want };
+              try { sessionStorage.setItem('legion3d-intro', '1'); } catch {}
+            }
+          }
+          userAdjusted.current = false;
+        }
+        fitPending.current = false;
+        lastFitSize.current = { w: size.width, h: size.height };
+        // Render and hit-test the final zoom in this frame, not the pre-fit scene.
+        cam.focal *= view.zoom / initialZoom;
+        cam.cx = size.width / 2 + view.panX;
+        cam.cy = size.height / 2 + view.panY;
+        nodes = projectScene(layout.nodes, toPoint, cam, size);
+      }
+      screenRef.current = nodes;
       const byId = new Map(nodes.map(n => [n.item.id, n]));
       const core = byId.get('core');
       const byIdProbe = () => (core ? { x: core.projected.x, y: core.projected.y } : null);
@@ -800,59 +1025,79 @@ export default function Legion3DPage() {
       }
 
       // 节点：远→近（projectScene 已排序），近的盖住远的。
-      const labelQueue: Array<{ node: LegionNode; text: string; px: number; py: number; r: number; alpha: number; dim: boolean; priority: number }> = [];
+      const labelQueue: Array<{ node: LegionNode; text: string; anchor: LabelEllipse; alpha: number; dim: boolean; priority: number }> = [];
+      const labelBodies: LabelEllipse[] = [];
       for (const sn of nodes) {
         const node = sn.item;
         const p = sn.projected;
         // 人多的时候成员环会连成一条「白香肠」：100 个人挤在一圈上，半径再大
         // 就互相吃掉轮廓。>60 人时把成员点收小一档，让环重新变成一颗颗。
-        const crowd = node.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
-        const r = Math.max(1.4, WORLD_R[node.kind] * p.scale * crowd);
+        const { radius: r, rx, ry } = nodeBody(sn, layout.stats.people);
         const depthT = Math.min(1, Math.max(0, (p.depth - near) / (far - near)));
-        const dim = activeSet && !activeSet.has(node.id);
+        const st = node.kind === 'agent' ? (statusByAlias.get(node.label) ?? 'offline') : null;
+        const statusMiss = statusOnly !== null && node.kind === 'agent' && st !== statusOnly;
+        const dim = (activeSet && !activeSet.has(node.id)) || statusMiss;
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
-        let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.42 : 1);
+        // 深一层部门在默认缩放下淡出：13 个部门全画会在内圈叠成一团，放大
+        // （≥1.8×）或聚焦/选中时才实心显示。
+        // 空部门（memberCount 0）同样淡出：生产 13 个部门只有 1 个有人，
+        // 全实心会让画面全是空泡泡。放大/聚焦/选中时才回到实心。
+        const emptyDept = node.kind === 'group' && (node.memberCount ?? 0) === 0
+          && selectedRef.current !== node.id && !activeSet?.has(node.id) && view.zoom < 1.8;
+        const deepDept = node.kind === 'group' && (node.depth ?? 1) > 1
+          && view.zoom < 1.8 && selectedRef.current !== node.id && !activeSet?.has(node.id);
+        let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.42 : 1)
+          * (emptyDept ? 0.3 : deepDept ? 0.12 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
         const color = nodeColor(node, tk, statusByAlias);
-        // 核心轻微呼吸，整张图才有「活着」的感觉（幅度 6%，不抢注意力）。
-        const pulse = node.kind === 'core' ? 1 + 0.06 * Math.sin(now / 620) : 1;
-        const radiusPx = r * pulse;
+        // Stable core size keeps the logo crisp and its labels still.
+        const radiusPx = r;
+        // This same object must reach bodies, labelQueue and the leader: the
+        // leader router excludes its own body by reference, not by coordinates.
+        const anchor = { x: p.x, y: p.y, rx: rx + 2, ry: ry + 2 };
+        // Compact/expanded mobile framing can bring Agent dots beside the core
+        // label. Every painted body participates, even when it has no label.
+        labelBodies.push(anchor);
 
         ctx.globalAlpha = alpha;
-        // 部门 = **等距盘**（椭圆），不是球。
-        // 理由：整张图里球太多了（中枢/部门/成员/Agent 都是球），只能靠大小和颜色区分；
-        // 形状一分，拥挤感立刻下降，也更接近产品里「编队平台」的意象。
-        if (node.kind === 'group') {
-          const rx = Math.max(16, radiusPx * 2.1);
-          const ry = rx * 0.42;
-          ctx.globalAlpha = Math.min(1, alpha) * 0.32;
-          ctx.fillStyle = color;
+        const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
+
+        // 头像：成员用 display_name、Agent 用 alias 取头像（和列表页同一套解析链）。
+        // 半径太小时照片必然糊成噪点，所以 Agent 只在近处（>5px）才换头像。
+        const avatarUrl = node.kind === 'person'
+          ? getAvatarUrl(node.sublabel?.replace(/^@/, '') || node.label)
+          : node.kind === 'agent'
+            ? getAvatarUrl(node.label)
+            : '';
+        const face = avatarUrl && radiusPx >= 4.5 ? avatarImage(avatarUrl) : null;
+        if (node.kind === 'core') {
+          drawLegionCore(ctx, p.x, p.y, radiusPx, tk, corePhaseRef.current, !interacting);
+        } else if (node.kind === 'group') {
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fillStyle = hexToRgba(color, dark ? 0.24 : 0.12);
           ctx.fill();
-          ctx.globalAlpha = Math.min(1, alpha) * 0.85;
           ctx.strokeStyle = color;
           ctx.lineWidth = 1.4;
-          ctx.beginPath();
-          ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
           ctx.stroke();
-          ctx.globalAlpha = alpha;
-          // 部门标签不能跟着 continue 一起丢：这里单独入队（优先级 2，仅次中枢/悬停）
-          labelQueue.push({
-            node,
-            text: node.label,
-            px: p.x,
-            py: p.y,
-            r: rx * 0.55,
-            alpha: Math.max(0.8, 1 - depthT * 0.35),
-            dim: !!dim,
-            priority: 2,
-          });
-          ctx.globalAlpha = 1;
-          continue;
-        }
-        const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
-        if ((huge && node.kind === 'agent') || interacting) {
+        } else if (face) {
+          if (dark) {
+            const halo = haloFor(color);
+            const hr = radiusPx * 3.4;
+            ctx.drawImage(halo, p.x - hr / 2, p.y - hr / 2, hr, hr);
+          }
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(face, p.x - radiusPx, p.y - radiusPx, radiusPx * 2, radiusPx * 2);
+          ctx.restore();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = ring;
+          ctx.stroke();
+        } else if ((huge && node.kind === 'agent') || interacting) {
           // 300 个 Agent 时每个都画「白芯 + 描边」纯属浪费：一个色点足够，
           // 状态色仍然可读，鼠标悬停/命中半径不变。
           ctx.fillStyle = color;
@@ -862,7 +1107,7 @@ export default function Legion3DPage() {
         } else if (dark) {
           // 深底（神明 cover14 的节点画法）：彩色外晕 → 白芯 → 彩色描边。
           // 只画实心色块时深底上是一团糊光；白芯给每个节点一个硬边。
-          const wantHalo = !heavy || node.kind === 'core' || activeSet?.has(node.id);
+          const wantHalo = !heavy || activeSet?.has(node.id);
           if (wantHalo) {
             const halo = haloFor(color);
             const hr = radiusPx * 3.4;
@@ -891,13 +1136,37 @@ export default function Legion3DPage() {
           ctx.stroke();
         }
 
+        // 圆心内容：部门写短名、没有头像的成员写首字母 —— 否则大圆点就是一片空白，
+        // 远看全是「白饼」（admin 截图里最扎眼的就是这个）。
+        if (!dim) {
+          const textColor = dark ? tk.bg : tk.fg;
+          if (node.kind === 'group' && radiusPx >= 11) {
+            const short = Array.from(node.label.replace(/[*+\s]/g, '')).slice(0, rx >= 28 ? 3 : 2).join('');
+            if (short) {
+              const fs = Math.min(13, Math.max(11, ry * 1.25));
+              ctx.font = `600 ${fs}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+              ctx.fillStyle = tk.fg;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(short, p.x, p.y + 0.5);
+            }
+          } else if (node.kind === 'person' && !face && radiusPx >= 8) {
+            const initial = (node.label || '?').trim().slice(0, 1).toUpperCase();
+            ctx.font = `600 ${Math.min(radiusPx * 0.9, 12)}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+            ctx.fillStyle = textColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(initial, p.x, p.y + 0.5);
+          }
+        }
+
         // 悬停：鼠标下的节点描一圈细线，来得及看清「我点的是哪一个」。
         if (hoverRef.current === node.id && selectedRef.current !== node.id) {
           ctx.globalAlpha = 0.55;
           ctx.strokeStyle = tk.accent;
           ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, radiusPx + 5, 0, Math.PI * 2);
+          ctx.ellipse(p.x, p.y, rx + 5, ry + 5, 0, 0, Math.PI * 2);
           ctx.stroke();
         }
 
@@ -907,82 +1176,138 @@ export default function Legion3DPage() {
           ctx.strokeStyle = tk.fg;
           ctx.lineWidth = 1.2;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, radiusPx + 4, 0, Math.PI * 2);
+          ctx.ellipse(p.x, p.y, rx + 4, ry + 4, 0, 0, Math.PI * 2);
           ctx.stroke();
         }
 
         // 标签：Agent 太多，只有近处或高亮时才画，避免糊成一片。
         const showLabel =
           node.kind === 'core' ||
+          // 一级部门常显；二级组在默认缩放下不画名字（两层部门树时会挤成一团），
+          // 放大到 1.3× 左右、选中或悬停时才出。
+          // 部门标签只给「扇区够宽」的部门：小部门在环上只有很窄一段，名字
+          // 一定会压到邻居身上（生产截图里 6 个部门名叠成一团）。窄扇区在
+          // 悬停/选中/放大时才出名字。
+          (node.kind === 'group' && ((node.span ?? 0) >= 1.0 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55)) ||
           (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
           hoverRef.current === node.id;
-        if (showLabel && !interacting) {
+        // 状态筛选开着时，不匹配的 Agent 不要标签（否则压暗了还在喊自己）。
+        const filteredOut = statusOnly !== null && node.kind === 'agent'
+          && (statusByAlias.get(node.label ?? '') ?? 'offline') !== statusOnly;
+        if (showLabel && !interacting && !filteredOut) {
           labelQueue.push({
             node,
-            text: node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
-            px: p.x,
-            py: p.y,
-            r: radiusPx,
+            text: node.kind !== 'group' && node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
+            anchor,
             // 标签的深度淡出比节点保守，并且有下限 0.8：11px 文字掉到 0.45 时
             // 对底色的有效对比度会跌破 4.5:1（实测深底 3.67、浅底 3.14）。
             // 被主动淡出的节点（dim）保持 0.35，那是「这不属于当前筛选」的语义。
             alpha: dim ? 0.35 : Math.max(0.8, 1 - depthT * 0.35),
             dim: !!dim,
-            priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : 3,
+            // 一级部门优先占位：两层部门树时，二级组的标签会把一级部门挤开、看起来更乱。
+            priority: node.kind === 'core' ? 0 : (hoverRef.current === node.id || selectedRef.current === node.id) ? 1 : node.kind === 'group' ? ((node.depth ?? 1) <= 1 ? 2 : 2.5) : 3,
           });
         }
         ctx.globalAlpha = 1;
       }
 
-      // 标签统一绘制 + 简单避让：核心/部门/悬停优先占位，其余沿径向往外
-      // 试两档，仍冲突就跳过 —— 宁可少一个名字，也不要两行字叠成一团。
+      // 保留现有可见性/优先级；文字避开实体、已有标签和控件。
+      // 部门全文换行，没有可读位置时留白，详情里仍可读完整名称。
       {
         labelQueue.sort((a, b) => a.priority - b.priority);
-        const placed: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+        const placed: LabelRect[] = [...labelUiRectsRef.current];
+        const leaders: Array<{ anchor: LabelEllipse; rect: LabelRect; alpha: number }> = [];
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         // 最多画 N 个标签：搜索命中会一次性点亮几百个节点，逐个 measureText +
         // roundRect 会把帧率拖回 30fps。少画几个名字不影响「找到它」。
         const labelBudget = huge ? 16 : heavy ? 40 : Number.POSITIVE_INFINITY;
+        const attemptBudget = labelBudget * 2;
         let drawnLabels = 0;
+        let attemptedLabels = 0;
         for (const item of labelQueue) {
-          if (drawnLabels >= labelBudget) break;
+          if (drawnLabels >= labelBudget || attemptedLabels >= attemptBudget) break;
+          attemptedLabels++;
           const big = item.node.kind === 'core';
           ctx.font = `${big ? 600 : 400} ${big ? 14 : 12}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
-          const w = ctx.measureText(item.text).width;
-          const h = big ? 16 : 13;
-          const dx = item.px - size.width / 2;
-          const dy = item.py - size.height / 2;
-          const len = Math.hypot(dx, dy) || 1;
-          const ux = len > 4 ? dx / len : 0;
-          const uy = len > 4 ? dy / len : 1;
-          let spot: { x: number; y: number } | null = null;
-          for (const extra of [12, 24, 38]) {
-            const off = item.r + extra;
-            const cx = item.px + ux * off;
-            const cy = item.py + uy * off;
-            const rect = { x1: cx - w / 2 - 4, y1: cy - h / 2 - 2, x2: cx + w / 2 + 4, y2: cy + h / 2 + 2 };
-            const hit = placed.some(p => !(rect.x2 < p.x1 || rect.x1 > p.x2 || rect.y2 < p.y1 || rect.y1 > p.y2));
-            if (!hit) { placed.push(rect); spot = { x: cx, y: cy }; break; }
+          // Circular nodes have tighter gaps than the wide department discs.
+          // At 12px this caps each line at about 15 CJK characters.
+          const maxTextWidth = Math.min(180, Math.max(120, (size.width - 32) / 2));
+          const metricKey = `${ctx.font}:${maxTextWidth}:${item.text}`;
+          let metric = labelMetrics.get(metricKey);
+          if (!metric) {
+            const lines = item.node.kind === 'group' ? wrapLegionLabel(item.text, maxTextWidth, text => ctx.measureText(text).width) : [item.text];
+            const lineHeight = big ? 16 : 14;
+            metric = { lines, width: Math.max(0, ...lines.map(text => ctx.measureText(text).width)) + 8, height: lines.length * lineHeight + 6, lineHeight };
+            labelMetrics.set(metricKey, metric);
           }
+          const spot = placeLegionLabel({ anchor: item.anchor, width: metric.width, height: metric.height,
+            bounds: { x1: 12, y1: 12, x2: size.width - 12, y2: size.height - 12 }, occupied: placed, bodies: labelBodies });
           if (!spot) continue;
+          placed.push(spot);
           drawnLabels++;
-          // 底衬：只有大网络（标签挤在连线里）才垫，小网络保持纯文字。
-          if (heavy) {
+          if (item.node.kind === 'group') leaders.push({ anchor: item.anchor, rect: spot, alpha: item.alpha });
+          if (heavy || item.node.kind === 'group') {
             ctx.globalAlpha = 0.42 * item.alpha;
             ctx.fillStyle = tk.bg;
-            const pad = 3;
             ctx.beginPath();
-            ctx.roundRect(spot.x - w / 2 - pad, spot.y - h / 2, w + pad * 2, h, 4);
+            ctx.roundRect(spot.x1, spot.y1, metric.width, metric.height, 4);
             ctx.fill();
           }
           ctx.globalAlpha = item.alpha;
           ctx.fillStyle = tk.fg;
-          ctx.fillText(item.text, spot.x, spot.y);
+          for (const [index, line] of metric.lines.entries()) {
+            ctx.fillText(line, (spot.x1 + spot.x2) / 2, spot.y1 + 3 + metric.lineHeight * (index + 0.5));
+          }
+        }
+        // Check the route only after every label has its final position.
+        for (const item of leaders) {
+          const leader = legionLabelLeader(item.anchor, item.rect, placed, labelBodies);
+          if (!leader) continue;
+          ctx.globalAlpha = 0.45 * item.alpha;
+          ctx.strokeStyle = tk.dim;
+          ctx.lineWidth = 0.75;
+          ctx.beginPath();
+          ctx.moveTo(leader.from.x, leader.from.y);
+          ctx.lineTo(leader.to.x, leader.to.y);
+          ctx.stroke();
         }
         ctx.globalAlpha = 1;
+
+        // 悬停提示：不点也能知道「这是谁、什么状态」。
+        // 选中时不画（右侧详情卡已经有完整信息）。
+        const hv = hoverRef.current;
+        const hp = hoverPos.current;
+        if (hv && hp && !selectedRef.current && !interacting) {
+          const hitNode = nodes.find(n => n.item.id === hv);
+          if (hitNode) {
+            const nd = hitNode.item;
+            const status = nd.kind === 'agent' ? (statusByAlias.get(nd.label) ?? '未上报') : nd.kind === 'person' ? `${nd.agentCount} 个 Agent` : '';
+            const text = status ? `${nd.label} · ${status}` : nd.label;
+            ctx.font = '400 11px system-ui, -apple-system, "Noto Sans SC", sans-serif';
+            const w = ctx.measureText(text).width;
+            const padX = 6;
+            const boxW = w + padX * 2;
+            const boxH = 20;
+            const x = Math.max(6, Math.min(size.width - boxW - 6, hp.x + 14));
+            const y = Math.max(6, hp.y - boxH - 8);
+            ctx.globalAlpha = 0.94;
+            ctx.fillStyle = tk.surface;
+            ctx.beginPath();
+            ctx.roundRect(x, y, boxW, boxH, 5);
+            ctx.fill();
+            ctx.strokeStyle = tk.border;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = tk.fg;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x + padX, y + boxH / 2);
+            ctx.globalAlpha = 1;
+          }
+        }
       }
 
       // 环上彗星：头亮、尾巴 6 段渐隐，双向各一颗（神明参数：比虚线更有「通信」感）。
@@ -1021,9 +1346,16 @@ export default function Legion3DPage() {
     [layout.nodes, selectedNode],
   );
 
-  /** 打开节点详情页（Agent→节点页，成员/部门→/org）。列表与画布双击共用。 */
+  /** Agent 在当前场景对话；列表、回车、画布双击走同一入口。 */
   const openNode = useCallback((node: LegionNode) => {
-    if (node.kind === 'agent') router.push(`/nodes/${encodeURIComponent(node.label)}`);
+    if (node.kind === 'agent') {
+      setCleanView(false);
+      setHelpOpen(false);
+      setToolsOpen(false);
+      setChatAlias(node.label);
+      yawTarget.current = null;
+      lastInteract.current = performance.now();
+    }
     else if (node.kind === 'person' || node.kind === 'group') router.push('/org');
   }, [router]);
 
@@ -1070,11 +1402,13 @@ export default function Legion3DPage() {
       if (e.key !== 'Escape') return;
       e.preventDefault();
       e.stopPropagation();
-      setCleanView(false);
+      // Capture runs before the stage handler; dismiss the topmost layer first.
+      if (helpOpen) setHelpOpen(false);
+      else setCleanView(false);
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [cleanView]);
+  }, [cleanView, helpOpen]);
 
   useEffect(() => {
     const onFs = () => setIsFullscreen(!!document.fullscreenElement);
@@ -1082,7 +1416,13 @@ export default function Legion3DPage() {
     return () => document.removeEventListener('fullscreenchange', onFs);
   }, []);
 
+  const hitBody = (sn: SceneNode<LegionNode>) => {
+    const { rx, ry } = nodeBody(sn, layout.stats.people);
+    return { rx: rx + 6, ry: ry + 6 };
+  };
+
   const onPointerDown = (e: React.PointerEvent) => {
+    introRef.current = null; // 手动交互优先，别跟用户的拖动抢
     const target = e.currentTarget as HTMLElement;
     yawTarget.current = null; // 手动拖动优先，打断自动对准
     target.setPointerCapture?.(e.pointerId);
@@ -1104,11 +1444,13 @@ export default function Legion3DPage() {
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!pointersRef.current.has(e.pointerId)) return;
-    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    // 之前这里一上来就要求「指针已在 map 里」（按下时才登记），导致**悬停永远不会触发**：
+    // 光标不变、悬停高亮不亮、提示框也不出。现在只区分「按下」与「未按下」。
+    const down = pointersRef.current.has(e.pointerId);
+    if (down) pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lastInteract.current = performance.now();
 
-    if (pointersRef.current.size === 2 && pinchRef.current) {
+    if (down && pointersRef.current.size === 2 && pinchRef.current) {
       const [a, b] = [...pointersRef.current.values()];
       const span = Math.hypot(a.x - b.x, a.y - b.y);
       if (span > 4 && pinchRef.current.span > 4) {
@@ -1116,6 +1458,7 @@ export default function Legion3DPage() {
         const ratio = span / pinchRef.current.span;
         viewRef.current.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, pinchRef.current.dist * ratio));
         userAdjusted.current = true;
+        fitPending.current = false;
         setZoomPct(Math.round(viewRef.current.zoom * 100));
       }
       return;
@@ -1124,8 +1467,9 @@ export default function Legion3DPage() {
     if (!dragRef.current) {
       // 没按下的移动 = 悬停：只更新 ref，不触发 React 重渲染。
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
+      const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18, hitBody);
       const next = hit ? hit.item.id : null;
+      hoverPos.current = next ? { x: e.clientX - rect.left, y: e.clientY - rect.top } : null;
       if (next !== hoverRef.current) {
         hoverRef.current = next;
         (e.currentTarget as HTMLElement).style.cursor = next ? 'pointer' : 'grab';
@@ -1137,6 +1481,10 @@ export default function Legion3DPage() {
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
     drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
+    if (dx !== 0 || dy !== 0) {
+      userAdjusted.current = true;
+      fitPending.current = false;
+    }
     interactingUntil.current = performance.now() + 180;
     viewRef.current.yaw = drag.yaw + dx * 0.008;
     viewRef.current.pitch = Math.min(1.45, Math.max(0.12, drag.pitch + dy * 0.005));
@@ -1151,34 +1499,38 @@ export default function Legion3DPage() {
     dragRef.current = null;
     if (drag.moved > 6) return; // 拖动不是点击
 
+    // 触屏没有 Esc：净屏后轻点画布恢复，拖动仍用于旋转。
+    // 这次轻点只退出净屏，不顺带选择背后的节点。
+    if (cleanView) { setCleanView(false); return; }
+
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16);
+    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16, hitBody);
     setSelected(hit ? hit.item.id : null);
   };
 
   const onDoubleClick = (e: React.MouseEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18);
+    const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 18, hitBody);
     if (!hit) {
       // 双击空白 = 复位视角（含缩放锚点），省得再去右上角点按钮。
       resetView();
       return;
     }
-    const n = hit.item;
-    if (n.kind === 'agent') router.push(`/nodes/${encodeURIComponent(n.label)}`);
-    else if (n.kind === 'person' || n.kind === 'group') router.push('/org');
+    openNode(hit.item);
   };
 
   const onPointerLeave = () => {
     hoverRef.current = null;
+    hoverPos.current = null;
   };
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     lastInteract.current = performance.now();
     interactingUntil.current = performance.now() + 180;
+    introRef.current = null;
     const v = viewRef.current;
-    const factor = e.deltaY > 0 ? 1 / 1.08 : 1.08;
+    const factor = e.deltaY > 0 ? 1 / 1.12 : 1.12;
     const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.zoom * factor));
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     // 以鼠标位置为锚点：screen = center + pan + zoom * u，保持 u 对应点不动
@@ -1191,10 +1543,30 @@ export default function Legion3DPage() {
     v.panY = my - k * (my - v.panY);
     v.zoom = next;
     userAdjusted.current = true;
+    fitPending.current = false;
     setZoomPct(Math.round(next * 100));
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // The help dialog owns keyboard input above the disclosure and canvas.
+    if (helpOpen) {
+      e.stopPropagation();
+      if (e.key === 'Escape' || e.key === '?') {
+        e.preventDefault();
+        setHelpOpen(false);
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        helpRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      }
+      return;
+    }
+    if (e.key === 'Escape' && toolsOpen) {
+      e.preventDefault();
+      e.stopPropagation();
+      setToolsOpen(false);
+      toolsToggleRef.current?.focus();
+      return;
+    }
     // 在输入框里打字时，方向键/加减号归输入框，不能拿去转镜头。
     // 唯一例外是 Esc：清掉搜索词，但保持焦点（用户接着改词）。
     const target = e.target as HTMLElement | null;
@@ -1216,18 +1588,23 @@ export default function Legion3DPage() {
       searchRef.current?.focus();
       return;
     }
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-'].includes(e.key)) {
+      introRef.current = null;
+      userAdjusted.current = true;
+      fitPending.current = false;
+    }
     switch (e.key) {
-      case 'ArrowLeft': e.preventDefault(); v.yaw -= 0.12; break;
-      case 'ArrowRight': e.preventDefault(); v.yaw += 0.12; break;
-      case 'ArrowUp': e.preventDefault(); v.pitch = Math.min(1.45, v.pitch + 0.08); break;
-      case 'ArrowDown': e.preventDefault(); v.pitch = Math.max(0.12, v.pitch - 0.08); break;
+      case 'ArrowLeft': e.preventDefault(); v.yaw -= 0.12; userAdjusted.current = true; break;
+      case 'ArrowRight': e.preventDefault(); v.yaw += 0.12; userAdjusted.current = true; break;
+      case 'ArrowUp': e.preventDefault(); v.pitch = Math.min(1.45, v.pitch + 0.08); userAdjusted.current = true; break;
+      case 'ArrowDown': e.preventDefault(); v.pitch = Math.max(0.12, v.pitch - 0.08); userAdjusted.current = true; break;
       case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); break;
       case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); break;
       case 'Enter': {
         // 焦点还在节点列表里时，回车只负责「选中」（按钮自身行为），
         // 不要在列表里按一下就跳走；再按一次才打开（见列表项的 onClick）。
         if (document.activeElement?.closest('[role="listbox"]')) break;
-        // 选中节点后回车 = 打开它的详情页（Agent→节点页，成员/部门→/org）。
+        // 选中节点后回车 = 页内对话（成员/部门仍去 /org）。
         // 省掉「Tab 到详情卡里的链接再回车」这一步。
         const sel = selectedRef.current;
         if (sel) {
@@ -1241,16 +1618,17 @@ export default function Legion3DPage() {
         // 优先，否则弹出来的是全局英文快捷键表。
         e.preventDefault();
         e.stopPropagation();
+        setToolsOpen(false);
         setHelpOpen(v => !v);
         break;
       case 'r': case 'R': resetView(); break;
       case 'f': case 'F': e.preventDefault(); void toggleFullscreen(); break;
       case 'Escape':
         e.preventDefault();
-        // 速查表开着时先关它，再按一次才动搜索/选中。
-        if (helpOpen) { setHelpOpen(false); break; }
-        // 净屏优先退出：隐掉界面后 Esc 是唯一「回来的路」。
+        // 净屏优先退出，也可轻点画布恢复。
         if (cleanView) { setCleanView(false); break; }
+        // 状态筛选次之，然后才是搜索/选中。
+        if (statusOnly) { setStatusOnly(null); break; }
         // 先退搜索，再退选中：一次 Esc 只做一件事。
         if (query) setQuery('');
         else setSelected(null);
@@ -1295,8 +1673,10 @@ export default function Legion3DPage() {
       g.fillText('军团 · 3D 网络拓扑', px(16), px(24));
       g.fillStyle = tk2.muted;
       g.font = `${px(12)}px ${font}`;
+      const filterLabel = statusOnly ? ({ working: '运行中', idle: '空闲', blocked: '阻塞', error: '错误', offline: '未上报' } as const)[statusOnly] : null;
       g.fillText(
-        `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`,
+        `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`
+          + (filterLabel ? ` · 仅显示 ${filterLabel}` : ''),
         px(16), px(44),
       );
       g.textAlign = 'right';
@@ -1342,9 +1722,14 @@ export default function Legion3DPage() {
 
   /* ── 页面 ───────────────────────────────────────────────────────── */
 
-  const loading = people.isLoading || status.isLoading;
-  const peopleError = people.error as (Error & { status?: number }) | undefined;
-  const fatal = needsLogin || peopleError?.status === 401 ? 'login' : peopleError ? 'error' : null;
+  // 网络未确定 ⇒ 也算 loading（null key 时 SWR 的 isLoading 是 false，会把等待误判成「空」）
+  const loading = !networkReady || people.isLoading || hierarchy.isLoading || status.isLoading;
+  const readError = legionReadError(people.error, hierarchy.error);
+  // #73 —— 不再维护 needsLogin 这个「只置位不清零」的 state：SWR 成功后 error 会自己清掉，
+  // 直接派生就能「登录恢复后立刻收起过期提示」。no-network 分支是 #72 的网络就绪判定。
+  const fatal = readError?.status === 401 ? 'login'
+    : networkReady && !networkId ? 'no-network'
+    : readError ? 'error' : null;
   const isEmpty = !loading && !fatal && people.data != null && layout.nodes.length <= 1;
 
   const path = useMemo(() => {
@@ -1370,13 +1755,14 @@ export default function Legion3DPage() {
       ref={wrapRef}
       tabIndex={0}
       onKeyDown={onKeyDown}
+      data-legion-stage="3d"
       style={{ height: isFullscreen ? '100dvh' : (stageHeight ?? 'calc(100dvh - 7.5rem)') }}
       className="relative w-full overflow-hidden bg-[var(--bg)] outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
       aria-label="军团 3D 网络拓扑"
       data-testid="legion-3d-stage"
       data-zoom={zoomPct}
     >
-      <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击打开对应页面；按 / 搜索，R 重置视角。</p>
+      <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击 Agent 在页内对话，双击成员或部门进入组织列表；按 / 搜索，R 重置视角。</p>
       <canvas
         ref={canvasRef}
         className="block h-full w-full cursor-grab touch-none active:cursor-grabbing"
@@ -1395,14 +1781,17 @@ export default function Legion3DPage() {
 
       {/* 顶部信息区：手机上「标题 → 搜索 → 按钮」竖排，桌面上标题在左、按钮在右。
           之前按钮绝对定位在 top-16，加了搜索框后正好压住输入框。 */}
-      <div className={`pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2 transition-opacity duration-300 sm:inset-x-4 sm:top-4 sm:flex-row sm:items-start sm:justify-between ${cleanView ? 'invisible' : 'visible'}`}>
-      <div className="pointer-events-none min-w-0 max-w-[62vw] sm:max-w-sm">
-        <div className="flex items-baseline gap-2">
+      <div ref={headerRef} data-testid="legion-3d-header" className={`pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2 transition-opacity duration-300 sm:inset-x-4 sm:top-4 sm:flex-row sm:items-start sm:justify-between ${cleanView ? 'invisible' : 'visible'}`}>
+      <div className="pointer-events-none min-w-0 max-w-full sm:max-w-sm">
+        <div className="flex min-h-11 items-center gap-2 pr-20 sm:min-h-0 sm:items-baseline sm:pr-0">
           <h1 className="text-lg font-semibold text-[var(--fg)]">军团 · 3D</h1>
           <span className="hidden text-[11px] text-[var(--fg-dim)] sm:inline">Legion Topology</span>
         </div>
         <p className="mt-1 text-xs text-[var(--fg-muted)]">
-          {loading ? '正在读取编制…' : `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`}
+          {loading
+            ? '正在读取编制…'
+            : `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`
+              + (statusOnly ? ` · 仅显示 ${({ working: '运行中', idle: '空闲', blocked: '阻塞', error: '错误', offline: '未上报' } as const)[statusOnly]}` : '')}
         </p>
         <div className="pointer-events-auto mt-2 flex items-center gap-2">
           <input
@@ -1468,7 +1857,15 @@ export default function Legion3DPage() {
         )}
       </div>
 
-      <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5">
+      <div
+        ref={toolbarRef}
+        data-testid="legion-3d-toolbar"
+        className="pointer-events-auto flex flex-wrap items-center gap-1.5 sm:justify-end"
+        onKeyDown={e => {
+          // Enter activates the focused control, even when a node is selected.
+          if (e.key === 'Enter') e.stopPropagation();
+        }}
+      >
         <button
           type="button"
           onClick={() => setSpin(v => !v)}
@@ -1487,6 +1884,41 @@ export default function Legion3DPage() {
         </button>
         <button
           type="button"
+          onClick={() => {
+            setToolsOpen(false);
+            setListOpen(v => {
+              const next = !v;
+              if (next) requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>('[role="option"]')?.focus());
+              return next;
+            });
+          }}
+          aria-expanded={listOpen}
+          aria-controls="legion-3d-node-list"
+          data-testid="legion-3d-list-toggle"
+          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+        >
+          {listOpen ? '收起列表' : '节点列表'}
+        </button>
+        <button
+          ref={toolsToggleRef}
+          type="button"
+          onClick={() => { setToolsOpen(v => !v); setListOpen(false); }}
+          aria-expanded={toolsOpen}
+          aria-controls="legion-3d-more-tools"
+          data-testid="legion-3d-tools-toggle"
+          className="rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] sm:hidden"
+        >
+          {toolsOpen ? '收起操作' : '更多操作'}
+        </button>
+        <div
+          id="legion-3d-more-tools"
+          role="group"
+          aria-label="更多军团操作"
+          data-testid="legion-3d-more-tools"
+          className={`${toolsOpen ? 'grid' : 'hidden'} basis-full grid-cols-3 gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/95 p-1.5 sm:contents`}
+        >
+        <button
+          type="button"
           onClick={toggleFullscreen}
           aria-pressed={isFullscreen}
           aria-label={isFullscreen ? '退出全屏' : '全屏查看'}
@@ -1497,7 +1929,7 @@ export default function Legion3DPage() {
         </button>
         <button
           type="button"
-          onClick={() => setCleanView(v => !v)}
+          onClick={() => { setToolsOpen(false); setCleanView(true); wrapRef.current?.focus(); }}
           aria-pressed={cleanView}
           aria-label={cleanView ? '恢复界面' : '净屏（隐藏界面）'}
           data-testid="legion-3d-clean"
@@ -1514,23 +1946,18 @@ export default function Legion3DPage() {
         >
           {exporting ? '导出中…' : '导出 PNG'}
         </button>
-        <button
-          type="button"
-          onClick={() => setListOpen(v => {
-            const next = !v;
-            if (next) requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>('[role="option"]')?.focus());
-            return next;
-          })}
-          aria-expanded={listOpen}
-          aria-controls="legion-3d-node-list"
-          data-testid="legion-3d-list-toggle"
-          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+        <Link
+          href="/legion/plaza"
+          className="flex min-h-11 items-center justify-center rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0"
         >
-          {listOpen ? '收起列表' : '节点列表'}
-        </button>
+          平台视角
+        </Link>
+        <p className="col-span-3 px-2 py-1 text-[11px] text-[var(--fg-muted)] sm:hidden">净屏后轻点画布恢复，也可按 Esc。</p>
+        </div>
         <Link
           href="/legion"
-          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+          data-testid="legion-3d-2d"
+          className="absolute right-0 top-0 flex min-h-11 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:static sm:min-h-0 sm:border-0 sm:bg-transparent"
         >
           2D 视图
         </Link>
@@ -1539,6 +1966,7 @@ export default function Legion3DPage() {
 
       {helpOpen && (
         <div
+          ref={helpRef}
           role="dialog"
           aria-modal="true"
           aria-label="键盘快捷键"
@@ -1557,14 +1985,14 @@ export default function Legion3DPage() {
                 ['拖动 / 方向键', '旋转视角'],
                 ['滚轮 / 双指 / + -', '缩放'],
                 ['点节点', '看详情'],
-                ['双击节点 / 回车', '打开详情页（焦点不在列表时）'],
+                ['双击节点 / 回车', 'Agent 页内对话，成员/部门进入列表'],
                 ['列表内 ↑ ↓', '移动选中项；回车只选中'],
                 ['双击空白', '复位视角'],
                 ['? ', '打开/关闭这张表'],
                 ['Esc', '先清搜索，再取消选中'],
                 ['R', '重置视角'],
                 ['F', '全屏演示（再按退出）'],
-                ['净屏', '隐藏全部界面，只留拓扑（Esc 恢复）'],
+                ['净屏', '隐藏全部界面（轻点画布或 Esc 恢复）'],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-3">
                   <dt className="w-32 shrink-0 font-mono text-[var(--fg)]">{k}</dt>
@@ -1582,6 +2010,37 @@ export default function Legion3DPage() {
         </div>
       )}
 
+      {/* 底部左：图例与操作提示 */}
+      <div ref={footerRef} className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {/* 图例即筛选：点一下只看这个状态，再点取消（Esc 也能清）。 */}
+          {([
+            ['working', '运行中', 'var(--success)'],
+            ['idle', '空闲', 'var(--fg-muted)'],
+            ['blocked', '阻塞', 'var(--warning)'],
+            ['error', '错误', 'var(--danger)'],
+            ['offline', '未上报', 'var(--fg-dim)'],
+          ] as const).map(([key, label, color]) => {
+            const active = statusOnly === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setStatusOnly(active ? null : key)}
+                aria-pressed={active}
+                data-testid={`legion-3d-filter-${key}`}
+                className={`pointer-events-auto inline-flex items-center gap-1.5 rounded px-1 py-0.5 transition-colors ${active ? 'bg-[var(--accent)]/15 text-[var(--fg)]' : 'hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+              >
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+                {label}
+                <span className="tabular-nums text-[var(--fg-dim)]">{statusCounts[key]}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · / 搜索 · 回车打开选中 · R 重置</p>
+      </div>
+
       {/* 键盘/读屏的节点列表：canvas 不可 Tab，靠这张列表选节点 */}
       {listOpen && (
         <div
@@ -1598,7 +2057,8 @@ export default function Legion3DPage() {
             if (next) { e.preventDefault(); next.focus(); }
           }}
           data-testid="legion-3d-node-list"
-          className={`absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28 sm:block ${cleanView ? 'invisible' : 'visible'} ${listOpen ? 'block' : 'hidden'}`}
+          style={{ maxHeight: 'min(52vh, calc(100% - var(--legion-list-top, 11rem) - 12px))' }}
+          className={`absolute left-3 top-[var(--legion-list-top,11rem)] z-10 w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:block ${cleanView ? 'invisible' : 'visible'} ${listOpen ? 'block' : 'hidden'}`}
         >
           {layout.nodes
             // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
@@ -1650,37 +2110,19 @@ export default function Legion3DPage() {
         </div>
       )}
 
-      {/* 底部左：图例与操作提示 */}
-      <div className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          {([
-            ['运行中', 'var(--success)'],
-            ['空闲', 'var(--fg-muted)'],
-            ['阻塞', 'var(--warning)'],
-            ['错误', 'var(--danger)'],
-          ] as const).map(([label, color]) => (
-            <span key={label} className="inline-flex items-center gap-1.5">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
-              {label}
-            </span>
-          ))}
-        </div>
-        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 点节点看详情/双击直接打开 · / 搜索 · 回车打开选中 · R 重置</p>
-      </div>
-
       {/* 选中节点详情 */}
       {selectedNode && (
         <div
           data-testid="legion-3d-detail"
           role="status"
           aria-live="polite"
-          className={`absolute inset-x-3 bottom-3 rounded-xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72 ${cleanView ? 'invisible' : 'visible'} ${listOpen ? 'hidden sm:block' : 'block'}`}
+          className={`absolute inset-x-3 bottom-3 rounded-xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72 ${cleanView ? 'invisible' : 'visible'} ${listOpen || toolsOpen ? 'hidden sm:block' : 'block'}`}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-[11px] text-[var(--fg-dim)]">{KIND_LABEL[selectedNode.kind]}{path.length > 0 ? ` · ${path.join(' / ')}` : ''}</p>
               <div className="mt-0.5 flex items-start gap-2">
-                <p className="min-w-0 truncate text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
+                <p className="min-w-0 flex-1 [overflow-wrap:anywhere] text-sm font-semibold text-[var(--fg)]">{selectedNode.label}</p>
                 <button
                   type="button"
                   onClick={() => {
@@ -1772,30 +2214,45 @@ export default function Legion3DPage() {
               {focus === selectedNode.id ? '取消聚焦' : '聚焦此部门'}
             </button>
           )}
-            {(selectedNode.kind === 'agent' || selectedNode.kind === 'person' || selectedNode.kind === 'group') && (
+            {selectedNode.kind === 'agent' && (
+              <button type="button" onClick={() => openNode(selectedNode)} data-testid="legion-3d-chat"
+                onKeyDown={e => e.stopPropagation()}
+                className="min-h-11 rounded-md px-3 text-xs text-[var(--accent-text)] hover:bg-[var(--hover-tint)]">开始对话</button>
+            )}
+            {(selectedNode.kind === 'person' || selectedNode.kind === 'group') && (
               <Link
                 href={detailHref}
                 className="inline-flex items-center gap-1 text-xs text-[var(--accent-text)] hover:underline"
               >
-                {selectedNode.kind === 'agent' ? '打开节点详情' : '在部门列表里看'} →
+                在部门列表里看 →
               </Link>
             )}
           </div>
         </div>
       )}
 
+      {chatAlias && networkReady && networkId && !fatal && (
+        <LegionChat key={`${networkId}:${chatAlias}`} alias={chatAlias} networkId={networkId}
+          onClose={() => { setChatAlias(null); lastInteract.current = performance.now(); }} />
+      )}
+
       {/* 三态：只在真·空/真·错时覆盖画布，不用空态掩盖故障 */}
+      {fatal === 'no-network' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6">
+          <NetworkRequiredNotice className="max-w-md" />
+        </div>
+      )}
       {fatal === 'login' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6 text-center">
+        <div role="alert" className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6 text-center">
           <p className="text-sm text-[var(--warning)]">
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团。
           </p>
         </div>
       )}
       {fatal === 'error' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6">
+        <div role="alert" className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/92 px-6">
           <div className="max-w-sm text-center">
-            <p className="text-sm text-[var(--danger)]">读取军团编制失败：{peopleError?.message ?? '未知错误'}</p>
+            <p className="text-sm text-[var(--danger)]">读取军团编制失败：{readError?.message ?? '未知错误'}</p>
             <button
               type="button"
               onClick={() => { void people.mutate(); void hierarchy.mutate(); void status.mutate(); }}

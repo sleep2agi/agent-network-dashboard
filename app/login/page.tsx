@@ -59,7 +59,11 @@ export default function LoginPage() {
         <div className="text-center mb-7">
           {/* Brand mark — uses the favicon 3-node mesh SVG which IS the
               agent-network concept (nodes + edges). Replaces the previous
-              flat emerald square placeholder. */}
+              flat emerald square placeholder.
+              注意：登录页是**固定深色**的品牌屏（不跟随用主题），这里的颜色
+              写死是有意的 —— 换成 --accent-text 在浅色主题下会变成深青压在
+              深底上。scripts/check-accent-text-ratchet.mjs 对 app/login/**
+              做了豁免，新增前请先想清楚是不是还要固定深色。 */}
           <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-[#161618] border border-[#26262b] anet-login-mark">
             <svg className="w-9 h-9" viewBox="0 0 32 32" aria-hidden>
               <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.25" className="text-cyan-400 anet-login-mark-ring" />

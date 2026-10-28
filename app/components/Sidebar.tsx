@@ -39,7 +39,17 @@ const SIDEBAR_MODE_LABEL: Record<SidebarMode, string> = {
   'icon-rail': '图标',
 };
 
-const networkFetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : { networks: [] });
+// 与 /api/hub/status 同一个坑：这个 key 也被设置页共用。吞掉非 2xx 会让
+// 「读不到网络」变成「你没有网络」，并把这份假空写进 SWR 全局缓存。
+const networkFetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (res.status === 401) {
+    window.location.assign('/login');
+    throw new Error('unauthorized');
+  }
+  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  return res.json();
+};
 
 // Cleanup (issue #4): sidebar collapsed to the 6 core destinations. The
 // low-frequency / unverified entries (Messages, Networks, Audit Log,
@@ -286,10 +296,10 @@ export function Sidebar() {
             data-nav-item
             data-nav-href={item.href}
             data-nav-active={active ? 'true' : undefined}
-            className={`relative flex items-center gap-3 rounded-lg text-sm transition-colors active:bg-[#232327] ${
+            className={`relative flex items-center gap-3 rounded-lg text-sm transition-colors active:bg-[var(--bg-elevated)] ${
               active
-                ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 anet-nav-active'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-[#1c1c1f]'
+                ? 'bg-[var(--accent)]/10 text-[var(--accent-text)] border border-cyan-500/20 anet-nav-active'
+                : 'text-[var(--fg-muted)] hover:text-gray-200 hover:bg-[var(--bg-elevated)]'
             } ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-3'}`}
           >
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -309,7 +319,7 @@ export function Sidebar() {
           explicit min-w/min-h so it can never be miss-tapped. */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-3 left-3 z-50 lg:hidden bg-[#161618] border border-[#26262b] rounded-lg p-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-gray-400 hover:text-white active:bg-[#232327]"
+        className="fixed top-3 left-3 z-50 lg:hidden bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-[var(--fg-muted)] hover:text-white active:bg-[var(--bg-elevated)]"
         aria-label="Toggle menu"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -328,9 +338,9 @@ export function Sidebar() {
         />
       )}
 
-      {/* Sidebar — `bg-[#111113]` resolves to var(--bg) in dark themes,
+      {/* Sidebar — `bg-[var(--bg)]` resolves to var(--bg) in dark themes,
           but in light/mint we want a distinct surface, so we layer
-          `lg:bg-white` / `lg:dark:bg-[#111113]` via the theme attribute.
+          `lg:bg-white` / `lg:dark:bg-[var(--bg)]` via the theme attribute.
           The CSS shim in globals.css upgrades sidebar bg to bg-secondary
           in light themes so the sidebar reads as its own card.
           Round 47: explicit ease-out curve + slight shadow so the drawer
@@ -342,7 +352,7 @@ export function Sidebar() {
         className={`
         fixed top-0 left-0 h-full z-40 flex flex-col
         transition-transform duration-200 ease-out
-        ${mode === 'expanded' ? 'w-52 bg-[#111113] border-r border-[#26262b]' : mode === 'icon-rail' ? 'w-14 bg-[#0A0C14]' : 'w-16 bg-[#111113] border-r border-[#26262b]'}
+        ${mode === 'expanded' ? 'w-52 bg-[var(--bg)] border-r border-[var(--border)]' : mode === 'icon-rail' ? 'w-14 bg-[#0A0C14]' : 'w-16 bg-[var(--bg)] border-r border-[var(--border)]'}
         ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 lg:shadow-none' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:shrink-0 lg:shadow-none
       `}>
@@ -350,7 +360,7 @@ export function Sidebar() {
             with an inline live "online" pulse so every page surfaces
             fleet health without leaving for /nodes. */}
         <SidebarBrand collapsed={collapsed} />
-        <div className={`border-b border-[#26262b]`} />
+        <div className={`border-b border-[var(--border)]`} />
 
         {/* Scrollable middle: networks + nav grow and scroll together so
             nothing is cut off when there are many networks / short viewports
@@ -359,8 +369,8 @@ export function Sidebar() {
 
         {/* Network list */}
         {!collapsed && networks.length > 0 && (
-          <div className="px-2 py-3 border-b border-[#26262b]">
-            <div className="px-3 text-[10px] text-gray-600 uppercase mb-2">Network</div>
+          <div className="px-2 py-3 border-b border-[var(--border)]">
+            <div className="px-3 text-[10px] text-[var(--fg-dim)] uppercase mb-2">Network</div>
             <div className="relative" ref={netRef}>
               <button
                 type="button"
@@ -369,7 +379,7 @@ export function Sidebar() {
                 aria-haspopup="listbox"
                 aria-expanded={netOpen}
                 title={activeNetwork?.network_id}
-                className="w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 rounded-md text-xs text-left transition-colors bg-[var(--bg-elevated)] text-gray-300 hover:text-gray-100"
+                className="w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 rounded-md text-xs text-left transition-colors bg-[var(--bg-elevated)] text-[var(--fg)] hover:text-gray-100"
               >
                 <span>{ROLE_ICON[activeNetwork?.role || 'member'] || '👤'}</span>
                 <span className="truncate flex-1">
@@ -379,9 +389,9 @@ export function Sidebar() {
                     an admin can still tell at a glance whether the network
                     they are looking at is the one holding the fleet. */}
                 {activeNetwork?.agentCount ? (
-                  <span className="shrink-0 tabular-nums text-[10px] text-gray-600">{activeNetwork.agentCount}</span>
+                  <span className="shrink-0 tabular-nums text-[10px] text-[var(--fg-dim)]">{activeNetwork.agentCount}</span>
                 ) : null}
-                <span className={`shrink-0 text-[9px] text-gray-600 transition-transform ${netOpen ? 'rotate-180' : ''}`}>▼</span>
+                <span className={`shrink-0 text-[9px] text-[var(--fg-dim)] transition-transform ${netOpen ? 'rotate-180' : ''}`}>▼</span>
               </button>
 
               {netOpen && (
@@ -400,14 +410,14 @@ export function Sidebar() {
                       title={n.network_id}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 text-xs transition-colors text-left ${
                         networkId === n.network_id
-                          ? 'bg-cyan-500/10 text-cyan-300'
-                          : 'text-gray-500 hover:text-gray-300 hover:bg-[#1c1c1f]'
+                          ? 'bg-[var(--accent)]/10 text-[var(--accent-text)]'
+                          : 'text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-elevated)]'
                       }`}
                     >
                       <span>{ROLE_ICON[n.role || 'member'] || '👤'}</span>
                       <span className="truncate flex-1">{n.displayName || n.network_name}</span>
                       {n.agentCount ? (
-                        <span className="shrink-0 tabular-nums text-[10px] text-gray-600">{n.agentCount}</span>
+                        <span className="shrink-0 tabular-nums text-[10px] text-[var(--fg-dim)]">{n.agentCount}</span>
                       ) : null}
                     </button>
                   ))}
@@ -433,11 +443,11 @@ export function Sidebar() {
             56px width, plus title= tooltips. Pinned bottom of the flex column
             (shrink-0) so it never overlaps content; the middle region above
             scrolls instead of hiding tabs behind it. */}
-        <div className="shrink-0 border-t border-[#26262b] bg-[#111113]">
+        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg)]">
           <button
             onClick={cycleTheme}
             title={collapsed ? `主题：${THEME_LABEL[theme]}（点击切换）` : undefined}
-            className={`w-full flex items-center text-[11px] text-gray-600 hover:text-gray-400 hover:bg-[#1c1c1f] transition-colors ${
+            className={`w-full flex items-center text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] transition-colors ${
               collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2 px-5 py-3 lg:py-2'
             }`}
             aria-label={`切换主题（当前：${THEME_LABEL[theme]}）`}
@@ -455,7 +465,7 @@ export function Sidebar() {
               window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
             }}
             title={collapsed ? 'Quick search (⌘K)' : undefined}
-            className={`w-full flex items-center text-[11px] text-gray-600 hover:text-gray-400 hover:bg-[#1c1c1f] transition-colors ${
+            className={`w-full flex items-center text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] transition-colors ${
               collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2 px-5 py-3 lg:py-2'
             }`}
             aria-label="Open command palette"
@@ -476,7 +486,7 @@ export function Sidebar() {
               window.location.assign('/login');
             }}
             title={collapsed ? 'Sign out' : undefined}
-            className={`w-full flex items-center text-xs text-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-colors ${
+            className={`w-full flex items-center text-xs text-[var(--fg-muted)] hover:text-red-400 hover:bg-red-500/5 transition-colors ${
               collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-5 py-3'
             }`}
           >
@@ -490,7 +500,7 @@ export function Sidebar() {
               onClick={cycleMode}
               title={`当前：${SIDEBAR_MODE_LABEL[mode]} — 点击切换（展开 → 折叠 → 图标）`}
               data-testid="sidebar-mode-cycle"
-              className="hidden lg:flex p-1.5 rounded text-gray-600 hover:text-gray-400 transition-colors items-center gap-1"
+              className="hidden lg:flex p-1.5 rounded text-[var(--fg-dim)] hover:text-[var(--fg-muted)] transition-colors items-center gap-1"
               aria-label={`Cycle sidebar mode (current: ${mode})`}
             >
               {/* Chevron rotates to hint at direction — expanded →
@@ -518,8 +528,20 @@ interface StatusData {
   sessions?: Array<{ status?: string; alias?: string; network_id?: string }>;
 }
 
-const statusFetcher = (url: string) =>
-  fetch(url).then(r => r.ok ? r.json() as Promise<StatusData> : { sessions: [] });
+// 这个 fetcher 与 app/lib/hooks.ts 的 useSessions 共用 SWR key
+// `/api/hub/status`。旧实现把非 2xx 吞成 `{sessions: []}`，于是全局缓存里
+// 存的是一份「读失败但看起来像空」的数据：任何页面（/nodes、/versions…）
+// 拿到的都是空数组而不是 error，空态就把「Hub 读不到」说成「队伍还没建」。
+// 失败必须抛出，让错误沿同一条 key 传下去，各页面自己决定怎么显示。
+const statusFetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (res.status === 401) {
+    window.location.assign('/login');
+    throw new Error('unauthorized');
+  }
+  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  return res.json() as Promise<StatusData>;
+};
 
 function SidebarBrand({ collapsed }: { collapsed: boolean }) {
   // Live online count — re-uses the same /api/hub/status endpoint the
@@ -561,13 +583,13 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
   return (
     <Link
       href="/"
-      className="block px-4 py-4 flex items-center gap-3 hover:bg-[#161618]/40 transition-colors rounded-r-xl"
+      className="block px-4 py-4 flex items-center gap-3 hover:bg-[var(--bg-secondary)]/40 transition-colors rounded-r-xl"
       aria-label="Agent Network — home"
     >
       <BrandMark size={32} />
       <div className="min-w-0">
         <div className="text-white text-[13px] font-semibold leading-tight">Agent Network</div>
-        <div className="text-[10px] text-gray-500 flex items-center gap-1.5 mt-0.5">
+        <div className="text-[10px] text-[var(--fg-muted)] flex items-center gap-1.5 mt-0.5">
           <span
             className={`inline-block w-1.5 h-1.5 rounded-full ${online > 0 ? 'bg-emerald-400 anet-brand-pulse' : 'bg-gray-600'}`}
             aria-hidden
@@ -575,7 +597,7 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
           {total === 0 ? (
             <span>waiting for agents</span>
           ) : (
-            <span><span className="text-gray-300 font-medium tabular-nums">{onlineDisplay}</span><span className="text-gray-600">/{total}</span> online</span>
+            <span><span className="text-[var(--fg)] font-medium tabular-nums">{onlineDisplay}</span><span className="text-[var(--fg-dim)]">/{total}</span> online</span>
           )}
         </div>
       </div>
@@ -587,13 +609,13 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
 function BrandMark({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="shrink-0">
-      <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.2" className="text-cyan-400" />
-      <line x1="16" y1="10" x2="10" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-cyan-400" />
-      <line x1="16" y1="10" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-cyan-400" />
-      <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-cyan-400" />
-      <circle cx="16" cy="10" r="2.5" fill="currentColor" className="text-cyan-400" />
+      <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.2" className="text-[var(--accent-text)]" />
+      <line x1="16" y1="10" x2="10" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-[var(--accent-text)]" />
+      <line x1="16" y1="10" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-[var(--accent-text)]" />
+      <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" className="text-[var(--accent-text)]" />
+      <circle cx="16" cy="10" r="2.5" fill="currentColor" className="text-[var(--accent-text)]" />
       <circle cx="10" cy="20" r="2.5" fill="currentColor" className="text-green-400" />
-      <circle cx="22" cy="20" r="2.5" fill="currentColor" className="text-violet-400" />
+      <circle cx="22" cy="20" r="2.5" fill="currentColor" className="text-[var(--accent-text)]" />
     </svg>
   );
 }

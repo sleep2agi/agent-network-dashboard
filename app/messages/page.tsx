@@ -30,8 +30,8 @@ interface MessageItem {
 const TYPE_COLORS: Record<string, string> = {
   task: 'bg-green-500/10 text-green-300 border-green-500/20',
   message: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-  broadcast: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
-  reply: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+  broadcast: 'bg-[var(--accent)]/10 text-[var(--accent-text)] border-[var(--accent)]/25',
+  reply: 'bg-[var(--info)]/10 text-[var(--info)] border-[var(--info)]/25',
 };
 
 function normalizeDate(value?: string) {
@@ -70,7 +70,7 @@ const HISTORY_PAGE = 30;
 
 export default function MessagesPage() {
   const [histLimit, setHistLimit] = useState(HISTORY_PAGE);
-  const { messages, isLoading } = useMessages(histLimit);
+  const { messages, isLoading, error, mutate } = useMessages(histLimit);
   // The hub returned a full page → assume more history exists beyond it.
   const hasOlder = messages.length >= histLimit;
   const loadingOlder = isLoading && messages.length > 0;
@@ -146,7 +146,7 @@ export default function MessagesPage() {
   }, [filtered]);
 
   return (
-    <div data-testid="messages-shell" className="min-h-screen bg-[var(--col-chat)] text-gray-100 p-4 sm:p-6">
+    <div data-testid="messages-shell" className="min-h-screen bg-[var(--col-chat)] text-[var(--fg)] p-4 sm:p-6">
       {/* #209 R31 (mobile vertical rhythm — same pattern as R28/R30):
           header row + quick-from chips row both mb-6 → mb-4 sm:mb-6.
           #209 R33: header restructured to mirror /nodes R32 — title
@@ -155,7 +155,7 @@ export default function MessagesPage() {
           collapsible row below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Messages</h1>
+          <h1 className="text-2xl font-bold text-[var(--fg)] lg:ml-0 ml-10">Messages</h1>
           {/* Round 89: filter-aware chip. When search/type filter is active
               the visible rows are filtered.length; the total loaded is
               messages.length (the M5 lazy window, newest histLimit). Show
@@ -179,7 +179,7 @@ export default function MessagesPage() {
                 a.href = url; a.download = `messages-${new Date().toISOString().slice(0,10)}.md`;
                 a.click(); URL.revokeObjectURL(url);
               }}
-              className="text-xs text-gray-500 hover:text-gray-300 border border-gray-700/50 px-2.5 py-1 rounded-lg transition-colors shrink-0"
+              className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] border border-[var(--border)]/50 px-2.5 py-1 rounded-lg transition-colors shrink-0"
             >
               Export MD
             </button>
@@ -203,7 +203,7 @@ export default function MessagesPage() {
         <select
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
-          className="bg-[#161618] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-blue-500/50 focus:outline-none"
+          className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-[var(--fg)] focus:border-blue-500/50 focus:outline-none"
         >
           <option value="">All types</option>
           <option value="task">task</option>
@@ -211,10 +211,10 @@ export default function MessagesPage() {
           <option value="broadcast">broadcast</option>
           <option value="reply">reply</option>
         </select>
-        <div className="flex rounded-lg border border-[#26262b] bg-[#161618] p-0.5">
+        <div className="flex rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-0.5">
           {(['timeline', 'grouped'] as const).map(mode => (
             <button key={mode} type="button" onClick={() => setViewMode(mode)}
-              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${viewMode === mode ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-500 hover:text-gray-200'}`}>
+              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${viewMode === mode ? 'bg-[var(--accent)]/10 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:text-[var(--fg)]'}`}>
               {mode === 'timeline' ? 'Timeline' : 'Grouped'}
             </button>
           ))}
@@ -222,7 +222,7 @@ export default function MessagesPage() {
         <button
           onClick={() => setDebug(!debug)}
           className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
-            debug ? 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20' : 'text-gray-500 border-gray-700/50 hover:text-gray-300'
+            debug ? 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20' : 'text-[var(--fg-muted)] border-[var(--border)]/50 hover:text-[var(--fg)]'
           }`}
         >
           {debug ? 'Debug ON' : 'Debug'}
@@ -242,8 +242,8 @@ export default function MessagesPage() {
               onClick={() => setSearch(`from:${alias}`)}
               className={`shrink-0 rounded-full border px-3 py-1 text-xs transition-colors ${
                 search === `from:${alias}`
-                  ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
-                  : 'border-[#26262b] bg-[#161618] text-gray-400 hover:text-gray-200'
+                  ? 'border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent-text)]'
+                  : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--fg-muted)] hover:text-[var(--fg)]'
               }`}
             >
               from:{alias}
@@ -253,7 +253,7 @@ export default function MessagesPage() {
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="shrink-0 rounded-full border border-gray-700 px-3 py-1 text-[11px] text-[var(--fg-dim)] hover:text-gray-200"
+              className="shrink-0 rounded-full border border-[var(--border)] px-3 py-1 text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg)]"
             >
               Clear
             </button>
@@ -271,40 +271,69 @@ export default function MessagesPage() {
             type="button"
             onClick={() => setHistLimit(l => l + HISTORY_PAGE)}
             disabled={loadingOlder}
-            className="rounded-full border border-[#26262b] bg-[#161618] px-4 py-1.5 text-xs text-gray-400 transition-colors hover:text-gray-200 disabled:opacity-50"
+            className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)] disabled:opacity-50"
           >
             {loadingOlder ? 'Loading…' : '↑ Load earlier messages'}
           </button>
         </div>
       )}
 
+      {/* 读失败不等于「没有消息」。旧实现忽略 error，把失败渲染成空态，
+          用户看到的是「这里很安静」而不是「没读到」。 */}
+      {error && messages.length > 0 && (
+        <div role="status" className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-[var(--bg-secondary)] px-3 py-2 text-xs">
+          <span className="text-[var(--fg-muted)]">刷新失败，下面是上一次读到的消息。</span>
+          <button
+            type="button"
+            onClick={() => mutate()}
+            className="shrink-0 rounded-md px-2 py-1 text-[var(--hl)] hover:bg-[var(--hover-tint)]"
+          >
+            重试
+          </button>
+        </div>
+      )}
+
       {isLoading && messages.length === 0 ? (
         <div className="animate-pulse space-y-3">
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 rounded-2xl bg-gray-800/20" />)}
+          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 rounded-2xl bg-[var(--bg-elevated)]/20" />)}
+        </div>
+      ) : error && messages.length === 0 ? (
+        <div role="alert" className="rounded-xl bg-[var(--bg-secondary)] p-6 text-center text-sm">
+          <p className="font-medium text-[var(--danger)]">读不到消息</p>
+          <p className="mt-1 text-xs text-[var(--fg-muted)]">
+            {error instanceof Error ? error.message : String(error)}
+          </p>
+          <button
+            type="button"
+            onClick={() => mutate()}
+            className="mt-3 rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+          >
+            重试
+          </button>
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState variant="messages" />
       ) : viewMode === 'grouped' ? (
         <div className="space-y-4">
           {conversations.map((conv, ci) => (
-            <div key={ci} className="bg-[#161618] border border-[#26262b] rounded-xl overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-[#26262b] flex items-center justify-between">
+            <div key={ci} className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-[var(--border)] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AliasAvatar alias={conv.participants[0]} size={16} />
-                  <span className="text-sm text-gray-200 font-medium">{conv.participants[0]}</span>
-                  <span className="text-gray-600 text-xs">↔</span>
+                  <span className="text-sm text-[var(--fg)] font-medium">{conv.participants[0]}</span>
+                  <span className="text-[var(--fg-dim)] text-xs">↔</span>
                   <AliasAvatar alias={conv.participants[1]} size={16} />
-                  <span className="text-sm text-gray-200 font-medium">{conv.participants[1]}</span>
+                  <span className="text-sm text-[var(--fg)] font-medium">{conv.participants[1]}</span>
                 </div>
-                <span className="text-[10px] text-gray-600">{conv.messages.length} messages</span>
+                <span className="text-[10px] text-[var(--fg-dim)]">{conv.messages.length} messages</span>
               </div>
               <div className="px-4 py-2 space-y-2 max-h-64 overflow-y-auto">
                 {conv.messages.map(m => (
                   <div key={m.id} className="flex items-start gap-2 text-xs py-1">
                     {m.from_alias && <AliasAvatar alias={m.from_alias} size={14} />}
-                    <span className="shrink-0 font-medium text-gray-200">{m.from_alias}</span>
-                    <span className="text-gray-400 flex-1 truncate" title={m.content || ''}>{previewContent(m.content).slice(0, 120)}</span>
-                    <span className="text-[9px] text-gray-600 shrink-0">{timeAgo(m.created_at || '')}</span>
+                    <span className="shrink-0 font-medium text-[var(--fg)]">{m.from_alias}</span>
+                    <span className="text-[var(--fg-muted)] flex-1 truncate" title={m.content || ''}>{previewContent(m.content).slice(0, 120)}</span>
+                    <span className="text-[9px] text-[var(--fg-dim)] shrink-0">{timeAgo(m.created_at || '')}</span>
                   </div>
                 ))}
               </div>
@@ -350,13 +379,13 @@ export default function MessagesPage() {
                   <div className={samePrev ? 'mt-0.5 sm:mt-1' : 'mt-2 sm:mt-3'}>
                     <div className="rounded-2xl border border-white/[0.06] border-l-2 border-l-[var(--hl)] bg-[var(--bubble-in)] px-3 py-2 sm:px-4 sm:py-3 shadow-sm w-full">
                       <div className="mb-1 sm:mb-2 flex flex-wrap items-center gap-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-[var(--fg-muted)] border-gray-500/20'}`}>
                           {message.type || 'unknown'}
                         </span>
                         <span className="text-sm font-medium text-[var(--fg)]">{fromAlias}</span>
                         {message.to_alias && <span className="text-xs text-[#CBD5E1]">to {message.to_alias}</span>}
                         {message.priority === 'high' && <span className="text-xs text-[var(--danger)]">HIGH</span>}
-                        <span className="ml-auto text-[11px] text-[var(--fg-dim)]">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
+                        <span className="ml-auto text-[11px] text-[var(--fg-muted)]">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
                       </div>
                       {/* Round 79: break-words + overflow-wrap:anywhere so
                           long unbroken runs (URLs, ASCII rules like
@@ -384,16 +413,16 @@ export default function MessagesPage() {
                     }`}>
                       {!samePrev && (
                         <div className="mb-1 sm:mb-2 flex flex-wrap items-center gap-2">
-                          <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-[var(--fg-muted)] border-gray-500/20'}`}>
                             {message.type || 'unknown'}
                           </span>
                           <span className={`text-sm font-medium ${variant === 'outgoing' ? 'text-[var(--fg)]' : 'text-[var(--fg)]'}`}>
                             {fromAlias}
                           </span>
-                          <span className="text-xs text-[var(--fg-dim)]">&rarr;</span>
+                          <span className="text-xs text-[var(--fg-muted)]">&rarr;</span>
                           <span className="text-sm text-[#CBD5E1]">{message.to_alias || '--'}</span>
                           {message.priority === 'high' && <span className="text-xs text-[var(--danger)]">HIGH</span>}
-                          <span className="ml-auto text-[11px] text-[var(--fg-dim)]">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
+                          <span className="ml-auto text-[11px] text-[var(--fg-muted)]">{message.created_at ? timeAgo(message.created_at) : '--'}</span>
                         </div>
                       )}
 
@@ -417,13 +446,13 @@ export default function MessagesPage() {
 
                       {/* When in a streak, surface the timestamp inline-right so users still know cadence */}
                       {samePrev && (
-                        <div className="mt-1 text-[11px] text-[var(--fg-dim)] text-right">
+                        <div className="mt-1 text-[11px] text-[var(--fg-muted)] text-right">
                           {message.created_at ? timeAgo(message.created_at) : ''}
                         </div>
                       )}
 
                       {debug && (
-                        <div className="mt-3 border-t border-white/10 pt-3 text-[11px] text-[var(--fg-dim)] space-y-1">
+                        <div className="mt-3 border-t border-white/10 pt-3 text-[11px] text-[var(--fg-muted)] space-y-1">
                           <div>ID: {message.id}</div>
                           {message.task_id && <div>Task ID: {message.task_id}</div>}
                           <div>Created: {message.created_at}</div>

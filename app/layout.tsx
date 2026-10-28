@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AppShell } from "./components/AppShell";
 import { NetworkProvider } from "./lib/network-context";
@@ -8,14 +8,22 @@ import { PwaInstaller } from "./components/PwaInstaller";
 
 // #217 D1 (Vincent: OpenWebUI-style serious-product feel): UI text is
 // sans; mono stays for code blocks, IDs and logs via .font-mono.
-const geistSans = Geist({
+// 字体自托管：Geist / Geist Mono 的 latin 子集（可变字重 100–900）随仓库走。
+// 原来是 next/font/google —— 构建时必须能访问 fonts.googleapis.com 与
+// fonts.gstatic.com；本机 DNS 把 gstatic 指到不可达的 IP 时 `next build` 直接失败。
+// 自托管后构建不依赖外网，产物与线上用同一份文件。
+const geistSans = localFont({
+  src: "./fonts/geist-latin.woff2",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/geist-mono-latin.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -74,7 +82,16 @@ export const viewport: Viewport = {
 const themeBootScript = `
 try {
   var t = localStorage.getItem('anet-theme') || 'cyber';
-  document.documentElement.setAttribute('data-theme', t);
+  var el = document.documentElement;
+  // slack 是 light 主题上的皮肤：两头都要在首帧前设好，否则会先闪一下
+  // 普通浅色再切到 Slack 配色（applyTheme 的同一套约定）。
+  if (t === 'slack') {
+    el.setAttribute('data-theme', 'light');
+    el.setAttribute('data-skin', 'slack');
+  } else {
+    el.setAttribute('data-theme', t);
+    el.removeAttribute('data-skin');
+  }
 } catch (e) {}
 `;
 
@@ -84,7 +101,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="cyber" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      data-theme="cyber"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>

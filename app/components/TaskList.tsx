@@ -3,7 +3,7 @@
 import { AliasAvatar } from './AliasAvatar';
 import { relativeAgo } from '../lib/time';
 import { previewContent } from './utils';
-import { STATUS_CHIP_CLASS, STATUS_DOT_HEX } from '../lib/status';
+import { STATUS_DOT_HEX } from '../lib/status';
 
 // Task-list rail for the /tasks two-column layout (类飞书 "list + detail").
 // Rendered inside TasksView's <aside> — this file is intentionally small
@@ -49,11 +49,11 @@ export function TaskList({
       className="flex flex-col h-full max-h-screen overflow-y-auto"
     >
       {tasks.length === 0 ? (
-        <div className="px-4 py-6 text-xs text-gray-400 text-center">
+        <div className="px-4 py-6 text-center text-xs text-[var(--fg-muted)]">
           没有匹配的任务
         </div>
       ) : (
-        <ul className="flex flex-col divide-y divide-[#1c1c1f]">
+        <ul className="flex flex-col divide-y divide-[var(--border)]">
           {tasks.map((t) => {
             const active = t.task_id === selectedId;
             return (
@@ -64,10 +64,10 @@ export function TaskList({
                   data-task-id={t.task_id}
                   data-selected={active ? 'true' : 'false'}
                   onClick={() => onSelect(t.task_id)}
-                  className={`w-full text-left px-3 py-2.5 transition-colors ${
+                  className={`w-full px-3 py-2.5 text-left transition-colors ${
                     active
-                      ? 'bg-cyan-500/10 border-l-2 border-cyan-500'
-                      : 'border-l-2 border-transparent hover:bg-[#1c1c1f]/40'
+                      ? 'bg-[var(--bg-elevated)]'
+                      : 'hover:bg-[var(--hover-tint)]'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -77,30 +77,23 @@ export function TaskList({
                       className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                       style={{ backgroundColor: STATUS_DOT_HEX[t.status] || '#6b7280' }}
                     />
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                        STATUS_CHIP_CLASS[t.status] ||
-                        'bg-gray-500/10 text-gray-400 border-gray-500/20'
-                      }`}
-                    >
-                      {t.status}
-                    </span>
+                    <span className="text-[10px] text-[var(--fg-muted)]">{t.status}</span>
                     {t.priority === 'high' && (
                       <span className="text-[10px] text-red-400 shrink-0">HIGH</span>
                     )}
-                    <span className="ml-auto text-[10px] text-gray-500 tabular-nums shrink-0">
+                    <span className="ml-auto shrink-0 text-[10px] tabular-nums text-[var(--fg-muted)]">
                       {timeAgo(t.created_at)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-300 min-w-0 mb-1">
+                  <div className="mb-1 flex min-w-0 items-center gap-1 text-xs text-[var(--fg-muted)]">
                     {t.from_name && <AliasAvatar alias={t.from_name} size={14} />}
                     <span className="truncate max-w-[35%]">{t.from_name || '--'}</span>
-                    <span className="text-gray-600 shrink-0" aria-hidden="true">→</span>
+                    <span className="shrink-0 text-[var(--fg-muted)]" aria-hidden="true">→</span>
                     {t.to_name && <AliasAvatar alias={t.to_name} size={14} />}
                     <span className="truncate max-w-[35%]">{t.to_name || '--'}</span>
                   </div>
                   <div
-                    className="text-[11px] text-gray-500 line-clamp-2 leading-snug"
+                    className="line-clamp-2 text-[11px] leading-snug text-[var(--fg-muted)]"
                     title={t.content}
                   >
                     {previewContent(t.content) || <span className="italic">(no content)</span>}

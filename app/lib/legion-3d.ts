@@ -127,6 +127,69 @@ export function projectScene<T>(
   return out;
 }
 
+export interface ScreenAxes { rx: number; ry: number }
+export type FramingBody = { x: number; y: number } & (ScreenAxes | { radius: number });
+
+/** One department shape for paint, feedback, picking and label/framing bounds. */
+export function departmentDisc(radius: number): ScreenAxes {
+  const rx = Math.max(16, 2.1 * radius);
+  return { rx, ry: 0.42 * rx };
+}
+
+function bodyBounds(bodies: ReadonlyArray<FramingBody>) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const body of bodies) {
+    const rx = 'rx' in body ? body.rx : body.radius;
+    const ry = 'ry' in body ? body.ry : body.radius;
+    minX = Math.min(minX, body.x - rx);
+    maxX = Math.max(maxX, body.x + rx);
+    minY = Math.min(minY, body.y - ry);
+    maxY = Math.max(maxY, body.y + ry);
+  }
+  return { minX, maxX, minY, maxY };
+}
+
+/** Fit bodies and complete orbits clear of controls. A projector recomputes
+ * pixel minima and fixed-width strokes at the final zoom, with the old pan. */
+export function fitProjectedBodies(
+  bodies: ReadonlyArray<FramingBody> | ((zoom: number) => ReadonlyArray<FramingBody>),
+  view: { zoom: number; panX: number; panY: number },
+  size: { width: number; height: number },
+  bounds: { x1: number; y1: number; x2: number; y2: number },
+  limits: { min: number; max: number },
+): { zoom: number; panX: number; panY: number } | null {
+  const initial = typeof bodies === 'function' ? bodies(view.zoom) : bodies;
+  if (!initial.length || view.zoom <= 0 || bounds.x2 <= bounds.x1 || bounds.y2 <= bounds.y1) return null;
+  // Preserve the existing 82% short-axis density instead of filling a wide
+  // viewport edge-to-edge and crossing the renderer's detail/opacity thresholds.
+  const target = Math.min(bounds.x2 - bounds.x1, bounds.y2 - bounds.y1) * 0.82;
+  if (typeof bodies === 'function') {
+    // Extents are monotonic in zoom for a fixed orientation. Binary search
+    // handles the 16px disc floor without pretending that it scales down.
+    let low = limits.min, high = limits.max;
+    for (let i = 0; i < 24; i++) {
+      const mid = (low + high) / 2;
+      const b = bodyBounds(bodies(mid));
+      if (Math.max(b.maxX - b.minX, b.maxY - b.minY) <= target) low = mid;
+      else high = mid;
+    }
+    const b = bodyBounds(bodies(low));
+    if (b.maxX - b.minX > bounds.x2 - bounds.x1 || b.maxY - b.minY > bounds.y2 - bounds.y1) return null;
+    return { zoom: low,
+      panX: (bounds.x1 + bounds.x2 - b.minX - b.maxX) / 2 + view.panX,
+      panY: (bounds.y1 + bounds.y2 - b.minY - b.maxY) / 2 + view.panY };
+  }
+  const { minX, maxX, minY, maxY } = bodyBounds(initial);
+  const scale = target / Math.max(1, maxX - minX, maxY - minY);
+  const zoom = Math.min(limits.max, Math.max(limits.min, view.zoom * scale));
+  const k = zoom / view.zoom;
+  return {
+    zoom,
+    panX: (bounds.x1 + bounds.x2 - size.width) / 2 - ((minX + maxX - size.width) / 2 - view.panX) * k,
+    panY: (bounds.y1 + bounds.y2 - size.height) / 2 - ((minY + maxY - size.height) / 2 - view.panY) * k,
+  };
+}
+
 /**
  * 命中测试：屏幕点周围 radius 像素内、**离相机最近**的那个节点。
  * 传的是已排序（远→近）的数组，所以从后往前找第一个命中即可。
@@ -136,12 +199,17 @@ export function hitTest<T>(
   x: number,
   y: number,
   radius: number,
+  // 节点自身的屏幕半径：核心/部门直径 40–60px，只按固定 18px 判会「看得见点不着」。
+  radiusOf?: (node: SceneNode<T>) => number | ScreenAxes,
 ): SceneNode<T> | null {
   for (let i = nodes.length - 1; i >= 0; i--) {
     const n = nodes[i];
+    const shape = radiusOf?.(n) ?? radius;
+    const rx = Math.max(radius, typeof shape === 'number' ? shape : shape.rx);
+    const ry = Math.max(radius, typeof shape === 'number' ? shape : shape.ry);
     const dx = n.projected.x - x;
     const dy = n.projected.y - y;
-    if (dx * dx + dy * dy <= radius * radius) return n;
+    if ((dx / rx) ** 2 + (dy / ry) ** 2 <= 1) return n;
   }
   return null;
 }

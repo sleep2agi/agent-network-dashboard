@@ -10,9 +10,12 @@ import { useAvatarUrl } from '../lib/avatars';
 
 const AVATAR_HUES = [180, 200, 220, 270, 300, 330, 30, 90];
 
-export function aliasAvatarColors(alias: string): { bg: string; ring: string; text: string } {
+export function aliasAvatarColors(alias?: string | null): { bg: string; ring: string; text: string } {
+  // 别让一个缺名字的条目把整页打崩：/settings/networks 曾经因为 network.name
+  // 缺失（undefined）在这里读 .length 抛错，整页只剩「This page couldn't load」。
+  const name = typeof alias === 'string' ? alias : '';
   let h = 0;
-  for (let i = 0; i < alias.length; i++) h = (h * 31 + alias.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   const hue = AVATAR_HUES[h % AVATAR_HUES.length];
   return {
     bg: `hsl(${hue} 55% 22%)`,

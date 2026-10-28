@@ -14,6 +14,13 @@ export async function GET(req: Request) {
 
   try {
     const res = await hubFetch(`/api/status${qs}`);
+    // 上游 5xx 不能透传成 200：页面靠状态码区分「读到 0 个节点」和「没读到」。
+    if (!res.ok) {
+      return Response.json(
+        { ok: false, error: `CommHub /api/status ${res.status}` },
+        { status: res.status === 404 ? 502 : res.status },
+      );
+    }
     const data = await res.json();
     if (Array.isArray(data.sessions)) data.sessions = normalizeSessions(data.sessions);
 
