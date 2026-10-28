@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
 import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/requirements-paging';
 import { ProjectFilter } from './ProjectFilter';
@@ -70,7 +70,6 @@ function dueLabel(due?: string) {
 }
 
 function RequirementsContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const status = searchParams.get('status') || '';
@@ -94,11 +93,10 @@ function RequirementsContent() {
   const [archiveSupported, setArchiveSupported] = useState<boolean | null>(null);
   const archiveSupport = useRef<boolean | null>(null);
   const pendingUrls = useRef(new Set<string>());
-  const desiredParams = useRef(searchParams.toString());
   const [projectSupported, setProjectSupported] = useState<boolean | null>(null);
   const [projectRefresh, setProjectRefresh] = useState(0);
 
-  // Our actions update drafts immediately. Their later router commits must not
+  // Our actions update drafts immediately. Their later React renders must not
   // overwrite typing made since submission. External URL navigation still syncs.
   useEffect(() => {
     const pending = pendingUrls.current;
@@ -108,31 +106,40 @@ function RequirementsContent() {
         pending.delete(entry);
         if (entry === url) break;
       }
-      if (pending.size === 0) desiredParams.current = url;
       return;
     }
     pending.clear();
-    desiredParams.current = url;
     setQInput(q);
     setTagInput(tag);
   }, [searchParams, q, tag]);
 
+  useEffect(() => {
+    const restore = () => {
+      // Back/Forward is external even if it matches an unobserved local write.
+      pendingUrls.current.clear();
+      const params = new URLSearchParams(window.location.search);
+      setQInput(params.get('q') || '');
+      setTagInput(params.get('tag') || '');
+    };
+    window.addEventListener('popstate', restore);
+    return () => window.removeEventListener('popstate', restore);
+  }, []);
+
   const setParam = useCallback((patch: Record<string, string>) => {
-    // Compose rapid changes against the latest requested URL, including a blur
-    // submission whose router commit has not arrived yet.
-    const next = new URLSearchParams(desiredParams.current);
+    // This page fetches on the client. Next's native history integration makes
+    // the real URL authoritative immediately, without a cancellable RSC trip.
+    const next = new URLSearchParams(window.location.search);
     for (const [key, value] of Object.entries(patch)) {
       if (value) next.set(key, value);
       else next.delete(key);
     }
     const qs = next.toString();
-    desiredParams.current = qs;
     if ('q' in patch) setQInput(patch.q);
     if ('tag' in patch) setTagInput(patch.tag);
     pendingUrls.current.delete(qs);
     pendingUrls.current.add(qs);
-    router.replace(qs ? `/requirements?${qs}` : '/requirements', { scroll: false });
-  }, [router]);
+    window.history.replaceState(null, '', qs ? `/requirements?${qs}` : '/requirements');
+  }, []);
 
   const load = useCallback(async (opts: { cursor?: string | null; append?: boolean } = {}) => {
     const nextCursor = opts.cursor ?? null;
