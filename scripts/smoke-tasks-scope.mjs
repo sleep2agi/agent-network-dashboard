@@ -14,7 +14,10 @@ assert(!['3001', '3101', '3102'].includes(new URL(base).port));
 const source = await readFile(new URL(import.meta.url));
 const result = { build: await fetch(`${base}/api/health`).then(r => r.json()),
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+  sourceDirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }).trim(),
   probeSha256: createHash('sha256').update(source).digest('hex'), checks: {}, errors: [], contexts: [] };
+assert.equal(result.sourceDirty, false, 'Clean tracked source required');
+assert.equal(result.sourceCommit, result.build.commit, 'Build/source mismatch');
 await mkdir(output, { recursive: true });
 await writeFile(path.join(output, 'probe-used.mjs'), source);
 const browser = await chromium.launch({ headless: true });
@@ -60,8 +63,10 @@ try {
           return response;
         };
       }, { scenario, networks });
-      await context.route('**/api/**', route => {
+      await context.route('**/*', route => {
         const url = new URL(route.request().url());
+        if (url.origin !== new URL(base).origin) return route.abort();
+        if (!url.pathname.startsWith('/api/')) return route.continue();
         let json = { ok: true, nodes: [], sessions: [], tasks: [], stats: {}, messages: [] };
         if (url.pathname === '/api/hub/networks') json = { ok: true, networks };
         if (url.pathname === '/api/hub/people') json = { ok: true, people: [], total: 0 };
