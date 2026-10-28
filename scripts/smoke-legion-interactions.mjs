@@ -170,10 +170,12 @@ try {
       }
       await page.screenshot({ path: path.join(output, `${tag}-overview.png`) });
       check(`${tag}:allPagesAndDedup`, requests.some(r => r.includes('/api/hub/people?') && new URL(r, base).searchParams.get('offset') === '1'));
-      check(`${tag}:agentOnlyVisible`, await page.locator('[data-department-id="dept:leaf"]').getAttribute('data-agent-count') === '2');
-      check(`${tag}:modernUnassigned`, await page.locator('[data-department-id="unassigned"]').getAttribute('data-agent-count') === '1');
+      // The upright namecard layer shares department IDs with world geometry.
+      // Count contracts belong to the platform entity in both 2D and 3D.
+      check(`${tag}:agentOnlyVisible`, await page.locator('[data-department-id="dept:leaf"][data-agent-count]').getAttribute('data-agent-count') === '2');
+      check(`${tag}:modernUnassigned`, await page.locator('[data-department-id="unassigned"][data-agent-count]').getAttribute('data-agent-count') === '1');
       check(`${tag}:trueParentLink`, await page.locator('[data-from="dept:root"][data-to="dept:leaf"] path[filter]').count() === 1);
-      check(`${tag}:emptyPreserved`, await page.locator('[data-department-id="dept:empty"]').getAttribute('data-agent-count') === '0');
+      check(`${tag}:emptyPreserved`, await page.locator('[data-department-id="dept:empty"][data-agent-count]').getAttribute('data-agent-count') === '0');
       await page.getByTestId('plaza-department-select').selectOption('dept:leaf');
       const longRow = page.locator('[data-testid="plaza-agent"][data-node-id="orphan"]');
       await longRow.getByText(`${longModel} · opencode`, { exact: true }).waitFor();
