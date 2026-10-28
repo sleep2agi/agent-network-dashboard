@@ -8,6 +8,8 @@ import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/r
 import { ProjectFilter } from './ProjectFilter';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
+import { ResponsibilityFilter, useRequirementPeople } from './ResponsibilityFilter';
+import { peopleOptions, responsibilityPatch, validResponsibility } from '../lib/requirement-people';
 
 /**
  * Requirements board — #1633 (read-only first slice).
@@ -59,9 +61,9 @@ function priorityClass(priority: string) {
   return 'text-gray-400';
 }
 
-function personLabel(p?: RequirementPerson | null) {
+function personLabel(p: RequirementPerson | null | undefined, names: Map<string, string>) {
   if (!p) return '—';
-  return p.alias || p.id;
+  return names.get(`${p.kind}:${p.id}`) || p.alias || p.id;
 }
 
 function dueLabel(due?: string) {
@@ -78,6 +80,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const tag = searchParams.get('tag') || '';
   const q = searchParams.get('q') || '';
   const project = searchParams.get('project_id') || '';
+  const owner = searchParams.get('owner') || '';
+  const agent = searchParams.get('agent_owner') || '';
   const includeArchived = searchParams.get('include_archived') !== '0';
   const searching = q.trim().length > 0;
 
@@ -97,6 +101,11 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const pendingUrls = useRef(new Set<string>());
   const [projectSupported, setProjectSupported] = useState<boolean | null>(null);
   const [projectRefresh, setProjectRefresh] = useState(0);
+  const [peopleQuery, setPeopleQuery] = useState('');
+  const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
+  const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
+  const personOptions = useMemo(() => peopleCatalog.status === 'ready' ? peopleOptions(peopleCatalog.people) : [], [peopleCatalog]);
+  const personNames = useMemo(() => new Map(personOptions.map(p => [p.value, p.label])), [personOptions]);
 
   // Our actions update drafts immediately. Their later React renders must not
   // overwrite typing made since submission. External URL navigation still syncs.
@@ -143,6 +152,11 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     window.history.replaceState(null, '', qs ? `/requirements?${qs}` : '/requirements');
   }, []);
 
+  const clearFilters = () => {
+    setPeopleQuery('');
+    setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '' });
+  };
+
   const load = useCallback(async (opts: { cursor?: string | null; append?: boolean } = {}) => {
     const nextCursor = opts.cursor ?? null;
     let phase: 'append' | 'replace' = opts.append === true ? 'append' : 'replace';
@@ -151,11 +165,14 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     if (gen === null) return;
     dispatch({ type: 'start', phase });
     try {
+      if (!validResponsibility(owner, agent)) throw new Error('URL 中的负责人或 Agent 角色格式无效，请清空责任归属');
       const params = new URLSearchParams({ network_id: networkId });
       if (status) params.set('status', status);
       if (tag) params.set('tag', tag);
       if (q) params.set('q', q);
       if (project) params.set('project_id', project);
+      if (owner) params.set('owner', owner);
+      if (agent) params.set('agent_owner', agent);
       const wantsArchives = searching && includeArchived;
       if (wantsArchives && archiveSupport.current === true) params.set('include_archived', '1');
       params.set('limit', '200');
@@ -176,6 +193,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         // A legacy Hub may ignore unknown filters. Never label all rows as a
         // successful project-filtered result, including a direct URL visit.
         if (project && !supported) throw new Error('当前 Hub 未提供项目筛选能力，请清空项目筛选后重试');
+        const roles = Array.isArray(caps) && caps.includes('agent_owner');
+        setResponsibilitySupported(roles);
+        if ((owner || agent) && !roles) throw new Error('当前 Hub 未提供双角色筛选能力，请清空责任归属后重试');
       };
       checkProjects(data.capabilities);
       const supportsArchives = (caps: unknown) => Array.isArray(caps) && caps.includes('archived') && caps.includes('search');
@@ -222,7 +242,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     } finally {
       gate.current.settle(gen);
     }
-  }, [networkId, status, tag, q, project, searching, includeArchived]);
+  }, [networkId, status, tag, q, project, owner, agent, searching, includeArchived]);
 
   useEffect(() => {
     void load();
@@ -288,6 +308,11 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           onChange={value => setParam({ project_id: value, q: qInput, tag: tagInput })}
         />
 
+        <ResponsibilityFilter owner={owner} agent={agent} supported={responsibilitySupported}
+          query={peopleQuery} onQueryChange={setPeopleQuery}
+          catalog={peopleCatalog} options={personOptions} onRetry={retryPeople}
+          onChange={value => setParam({ ...responsibilityPatch(value), q: qInput, tag: tagInput })} />
+
         {/* Text filters */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-[var(--border-hover)]">
@@ -325,10 +350,10 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               包含已归档
             </label>
           )}
-          {(status || tag || q || project) && (
+          {(status || tag || q || project || owner || agent) && (
             <button
               type="button"
-              onClick={() => setParam({ status: '', tag: '', q: '', project_id: '' })}
+              onClick={clearFilters}
               className="rounded-md px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200"
             >
               Clear filters
@@ -380,9 +405,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           // 那时说「需求池是空的」就是把鉴权/故障说成没数据，用户会以为需求丢了。
           <EmptyState
             variant="generic"
-            title={status || tag || q || project ? '没有符合筛选的需求' : '需求池是空的'}
-            sub={status || tag || q || project ? '清掉筛选再试，或换一个项目或标签。' : '客户端建一条需求后，这里就会出现。'}
-            cta={status || tag || q || project ? { label: '清空筛选', onClick: () => setParam({ status: '', tag: '', q: '', project_id: '' }) } : undefined}
+            title={status || tag || q || project || owner || agent ? '没有符合筛选的需求' : '需求池是空的'}
+            sub={status || tag || q || project || owner || agent ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
+            cta={status || tag || q || project || owner || agent ? { label: '清空筛选', onClick: clearFilters } : undefined}
           />
         ) : (
           <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
@@ -408,7 +433,11 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                       </span>
                     ))}
                     <span className={`shrink-0 text-[11px] ${priorityClass(row.priority)}`}>{row.priority}</span>
-                    <span className="hidden w-24 shrink-0 truncate text-[11px] text-[var(--fg-muted)] sm:inline">{personLabel(row.agent_owner)}</span>
+                    <span data-responsibility className="hidden w-36 shrink-0 text-[11px] leading-4 text-[var(--fg-muted)] sm:block"
+                      title={`负责人：${personLabel(row.owner, personNames)}；负责 Agent：${personLabel(row.agent_owner, personNames)}`}>
+                      <span className="block truncate">人 · {personLabel(row.owner, personNames)}</span>
+                      <span className="block truncate">Agent · {personLabel(row.agent_owner, personNames)}</span>
+                    </span>
                     <span className="w-20 shrink-0 text-right text-[11px]">{dueLabel(row.due)}</span>
                     {chk && chk.total > 0 && (
                       <span className="hidden shrink-0 text-[10px] tabular-nums text-[var(--fg-muted)] sm:inline">
