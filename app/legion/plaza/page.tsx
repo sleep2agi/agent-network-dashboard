@@ -81,7 +81,7 @@ function Roster({ platform, networkId, onChat }: { platform: PlazaDepartment; ne
       {shown.map(a => {
         const node = scopedNodes.find(n => n.node_id === a.node_id), session = scopedSessions.find(s => s.node_id === a.node_id);
         return <button key={a.node_id} type="button" onClick={() => setSelected(a.node_id)} aria-pressed={selected === a.node_id}
-          className={`flex min-h-14 items-center gap-2 rounded-lg border p-2 text-left ${selected === a.node_id ? 'border-[var(--accent-text)] bg-[var(--bg-elevated)]' : 'border-transparent hover:bg-[var(--hover-tint)]'}`} data-testid="plaza-agent" data-node-id={a.node_id}>
+          className={`flex min-h-14 min-w-0 items-center gap-2 rounded-lg border p-2 text-left ${selected === a.node_id ? 'border-[var(--accent-text)] bg-[var(--bg-elevated)]' : 'border-transparent hover:bg-[var(--hover-tint)]'}`} data-testid="plaza-agent" data-node-id={a.node_id}>
           <AliasAvatar alias={a.alias} size={30} />
           <span className="min-w-0 flex-1"><span className="block truncate text-sm">{a.alias || a.node_id}</span>
             <span className="block truncate text-[11px] text-[var(--fg-muted)]">{node?.model ?? session?.model ?? '模型未上报'} · {node?.runtime ?? session?.runtime ?? '运行时未上报'}</span></span>

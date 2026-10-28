@@ -37,6 +37,7 @@ const people = [person('1', [agent('old-target', target.alias, 'root', '2026-01-
 const orphans = [agent('orphan', '无负责人节点', 'leaf'), ...Array.from({ length: 27 }, (_, i) => agent(`bulk-${i}`, `密集节点${String(i).padStart(2, '0')}`, 'bulk'))];
 const all = [...people.flatMap(p => p.agents), ...orphans];
 const networks = [{ network_id: 'fixture', network_name: '模拟网络A' }, { network_id: 'fixture-B', network_name: '模拟网络B' }];
+const longModel = 'openrouter/anthropic/claude-opus-4.6:thinking';
 const browser = await chromium.launch({ headless: true });
 
 async function create(theme, width, mode = 'plaza', state = {}) {
@@ -77,7 +78,7 @@ async function create(theme, width, mode = 'plaza', state = {}) {
       }
       if (url.pathname === '/api/hub/nodes') {
         status = state.metadataError || 200; json = { ok: status === 200, error: status !== 200 ? 'fixture_metadata' : undefined,
-          nodes: records.map(a => ({ ...a, network_id: net, model: a.node_id === 'old-target' ? 'old-model' : `fixture-model-${net}`, runtime: 'opencode', hostname: 'fixture-host', lifecycle_controllable: false })) };
+          nodes: records.map(a => ({ ...a, network_id: net, model: a.node_id === 'orphan' ? longModel : a.node_id === 'old-target' ? 'old-model' : `fixture-model-${net}`, runtime: 'opencode', hostname: 'fixture-host', lifecycle_controllable: false })) };
       }
       if (url.pathname === '/api/hub/status') json = { ok: true, sessions: records.map(a => ({ ...a, network_id: net, status: 'idle', task: '等待模拟任务', runtime: 'opencode', project_dir: '/workspace/fixture', session_id: `session-${a.node_id}`, server: 'fixture-host' })) };
       if (url.pathname === '/api/hub/health') json = { ok: true, version: 'fixture', sse_sessions: { [`${net}:${target.alias}`]: 1 }, sessions: records.length };
@@ -170,6 +171,23 @@ try {
       check(`${tag}:trueParentLink`, await page.locator('[data-from="dept:root"][data-to="dept:leaf"] path[filter]').count() === 1);
       check(`${tag}:emptyPreserved`, await page.locator('[data-department-id="dept:empty"]').getAttribute('data-agent-count') === '0');
       await page.getByTestId('plaza-department-select').selectOption('dept:leaf');
+      const longRow = page.locator('[data-testid="plaza-agent"][data-node-id="orphan"]');
+      await longRow.getByText(`${longModel} · opencode`, { exact: true }).waitFor();
+      await page.getByTestId('plaza-department-select').scrollIntoViewIfNeeded();
+      const rosterBounds = await longRow.evaluate(row => {
+        const r = row.getBoundingClientRect(), status = row.lastElementChild.getBoundingClientRect();
+        let left = 0, right = innerWidth;
+        for (let parent = row.parentElement; parent; parent = parent.parentElement) {
+          if (['hidden', 'auto', 'scroll', 'clip'].includes(getComputedStyle(parent).overflowX)) {
+            const clip = parent.getBoundingClientRect();
+            left = Math.max(left, clip.left); right = Math.min(right, clip.right);
+          }
+        }
+        return { rowFits: r.left >= left && r.right <= right, statusFits: status.left >= left && status.right <= right };
+      });
+      check(`${tag}:longModelRosterFitsPanel`, rosterBounds.rowFits);
+      check(`${tag}:longModelStatusVisible`, rosterBounds.statusFits);
+      await page.screenshot({ path: path.join(output, `${tag}-roster-long-model.png`) });
       await page.locator('[data-testid="plaza-agent"][data-node-id="latest-target"]').click();
       const attrs = page.getByTestId('plaza-node-attributes');
       await attrs.getByText('fixture-model-fixture', { exact: true }).waitFor();

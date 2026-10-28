@@ -17,6 +17,9 @@ Independent follow-up draft based on #80 at `a33c58466563106a6ecc82ddfd911be9297
   Metadata uses exact node IDs and scoped snapshots, not a request per Agent.
   Connection, task state, lifecycle, model, runtime, host, working directory,
   session and manageability are separate fields. Missing values say unreported.
+  Roster rows may shrink inside their grid, keeping task status visible beside
+  truncated provider-qualified model labels. Acceptance measures the row and
+  status against clipping ancestors; page-level overflow alone misses this case.
 - Fullscreen uses the actual browser API; denial produces an error, not a success
   state. Desktop controls reserve space for the collapsed global server dock and
   keep a 44px minimum target in both dimensions. Acceptance samples the complete
