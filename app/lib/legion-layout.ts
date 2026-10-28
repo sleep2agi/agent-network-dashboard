@@ -29,12 +29,15 @@ export interface LegionPerson {
   display_name: string;
   role: string;
   department: { id: string; name: string } | null;
-  agents: { node_id: string; alias: string }[];
+  agents: LegionAgentRef[];
 }
 
 export interface LegionAgentRef {
   node_id: string;
   alias: string;
+  department_id?: string | null;
+  updated_at?: string;
+  lifecycle_state?: string | null;
 }
 
 /** Hub `/api/networks/{id}/departments` 的一行（客户端 `src/org-model.ts` 同构）。 */

@@ -29,6 +29,7 @@ import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse
 import { drawLegionCore } from '../../lib/legion-core';
 import { EmptyState } from '../../components/EmptyState';
 import { getAvatarUrl } from '../../lib/avatars';
+import { LegionChat } from '../LegionChat';
 
 // 神明给的参数（PPT 首页 3D 图，admin 已认可）：俯仰约 25–30°、柔和透视
 // （别用强广角，远景缩成点就没有军团体量感）、自转 0.02–0.03 rad/s。
@@ -202,6 +203,7 @@ export default function Legion3DPage() {
   const { networkId, ready: networkReady } = useNetworkId();
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
+  const [chatAlias, setChatAlias] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   // 大网络提示条：一次会话里关掉就不再弹（sessionStorage）。
@@ -271,6 +273,7 @@ export default function Legion3DPage() {
   if (viewNetworkId !== networkId) {
     setViewNetworkId(networkId);
     setSelected(null);
+    setChatAlias(null);
     setFocus(null);
     setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
   }
@@ -495,7 +498,7 @@ export default function Legion3DPage() {
     } catch { /* 隐私模式下读不到就每次都提示，无害 */ }
   }, []);
 
-  useEffect(() => { spinRef.current = spin; }, [spin]);
+  useEffect(() => { spinRef.current = spin && !chatAlias; }, [spin, chatAlias]);
   useEffect(() => { selectedRef.current = selected; }, [selected]);
 
   useEffect(() => {
@@ -1343,9 +1346,16 @@ export default function Legion3DPage() {
     [layout.nodes, selectedNode],
   );
 
-  /** 打开节点详情页（Agent→节点页，成员/部门→/org）。列表与画布双击共用。 */
+  /** Agent 在当前场景对话；列表、回车、画布双击走同一入口。 */
   const openNode = useCallback((node: LegionNode) => {
-    if (node.kind === 'agent') router.push(`/nodes/${encodeURIComponent(node.label)}`);
+    if (node.kind === 'agent') {
+      setCleanView(false);
+      setHelpOpen(false);
+      setToolsOpen(false);
+      setChatAlias(node.label);
+      yawTarget.current = null;
+      lastInteract.current = performance.now();
+    }
     else if (node.kind === 'person' || node.kind === 'group') router.push('/org');
   }, [router]);
 
@@ -1506,9 +1516,7 @@ export default function Legion3DPage() {
       resetView();
       return;
     }
-    const n = hit.item;
-    if (n.kind === 'agent') router.push(`/nodes/${encodeURIComponent(n.label)}`);
-    else if (n.kind === 'person' || n.kind === 'group') router.push('/org');
+    openNode(hit.item);
   };
 
   const onPointerLeave = () => {
@@ -1596,7 +1604,7 @@ export default function Legion3DPage() {
         // 焦点还在节点列表里时，回车只负责「选中」（按钮自身行为），
         // 不要在列表里按一下就跳走；再按一次才打开（见列表项的 onClick）。
         if (document.activeElement?.closest('[role="listbox"]')) break;
-        // 选中节点后回车 = 打开它的详情页（Agent→节点页，成员/部门→/org）。
+        // 选中节点后回车 = 页内对话（成员/部门仍去 /org）。
         // 省掉「Tab 到详情卡里的链接再回车」这一步。
         const sel = selectedRef.current;
         if (sel) {
@@ -1747,6 +1755,7 @@ export default function Legion3DPage() {
       ref={wrapRef}
       tabIndex={0}
       onKeyDown={onKeyDown}
+      data-legion-stage="3d"
       style={{ height: isFullscreen ? '100dvh' : (stageHeight ?? 'calc(100dvh - 7.5rem)') }}
       className="relative w-full overflow-hidden bg-[var(--bg)] outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
       aria-label="军团 3D 网络拓扑"
@@ -2205,16 +2214,26 @@ export default function Legion3DPage() {
               {focus === selectedNode.id ? '取消聚焦' : '聚焦此部门'}
             </button>
           )}
-            {(selectedNode.kind === 'agent' || selectedNode.kind === 'person' || selectedNode.kind === 'group') && (
+            {selectedNode.kind === 'agent' && (
+              <button type="button" onClick={() => openNode(selectedNode)} data-testid="legion-3d-chat"
+                onKeyDown={e => e.stopPropagation()}
+                className="min-h-11 rounded-md px-3 text-xs text-[var(--accent-text)] hover:bg-[var(--hover-tint)]">开始对话</button>
+            )}
+            {(selectedNode.kind === 'person' || selectedNode.kind === 'group') && (
               <Link
                 href={detailHref}
                 className="inline-flex items-center gap-1 text-xs text-[var(--accent-text)] hover:underline"
               >
-                {selectedNode.kind === 'agent' ? '打开节点详情' : '在部门列表里看'} →
+                在部门列表里看 →
               </Link>
             )}
           </div>
         </div>
+      )}
+
+      {chatAlias && networkReady && networkId && !fatal && (
+        <LegionChat key={`${networkId}:${chatAlias}`} alias={chatAlias} networkId={networkId}
+          onClose={() => { setChatAlias(null); lastInteract.current = performance.now(); }} />
       )}
 
       {/* 三态：只在真·空/真·错时覆盖画布，不用空态掩盖故障 */}

@@ -16,6 +16,8 @@ export interface PeopleResponse {
   people: LegionPerson[];
   agents_without_owner?: LegionAgentRef[];
   has_more: boolean;
+  next_offset?: number | null;
+  agent_department_supported?: boolean;
 }
 
 export interface DepartmentsResponse {

@@ -103,6 +103,7 @@ const publicRootScripts = new Set([
   'scripts/stamp-build-commit.mjs',
   // Loopback-only health read and synthetic browser data; writes local evidence.
   'scripts/smoke-legion-discs.mjs',
+  'scripts/smoke-legion-interactions.mjs',
   // Local-only synthetic rendering checks; password is supplied by the caller.
   'scripts/smoke-legion-labels.mjs',
   'scripts/smoke-legion.mjs',

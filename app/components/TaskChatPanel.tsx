@@ -583,6 +583,8 @@ interface TaskChatPanelProps {
    *  soft-refresh AND the SSE-event soft-refresh (in-flight send patches
    *  stay live). Reactivation runs one immediate catch-up. Default true. */
   active?: boolean;
+  /** Embedded scenes bind history, SSE and sends to the selected network. */
+  scopeNetworkId?: string;
 }
 
 /** P0 chat batch (Vincent: 长消息=无排版文字墙): message bodies taller than
@@ -633,9 +635,11 @@ function CollapsibleText({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }: TaskChatPanelProps) {
+export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, scopeNetworkId }: TaskChatPanelProps) {
   const isActive = active !== false;
   const { networkId } = useNetworkId();
+  const scopedChatUrl = useCallback((url: string) => scopeNetworkId
+    ? `${url}${url.includes('?') ? '&' : '?'}network_id=${encodeURIComponent(scopeNetworkId)}` : url, [scopeNetworkId]);
   // NetworkContext hydrates after the first client paint. Do not briefly read
   // another network's shard through an auth fallback while that happens.
   const privateStorageScope = networkId ? chatPrivateScope(networkId) : null;
@@ -833,10 +837,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     const timer = setTimeout(() => ctrl.abort(), budgetMs);
     try {
       const res = await fetch(
-        buildTaskHistoryUrl(alias, limit, cursor),
+        scopedChatUrl(buildTaskHistoryUrl(alias, limit, cursor)),
         { signal: ctrl.signal },
       );
       const data = await res.json();
+      if (!res.ok || data.ok === false) throw new Error('chat_history_unavailable');
       if (data.tasks) {
         const persistedRequestIds = new Set<string>();
         for (const task of data.tasks as ChatTask[]) {
@@ -858,7 +863,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     } finally {
       clearTimeout(timer);
     }
-  }, [alias, privateStorageScope]);
+  }, [alias, privateStorageScope, scopedChatUrl]);
 
   // Single-attempt loader used for one older keyset page.
   const loadHistory = useCallback(async (cursor: TaskHistoryCursor) => {
@@ -1002,14 +1007,14 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
   const lastSoftRefreshRef = useRef(0);
   useEffect(() => () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current); }, []);
   useSSE({
-    url: '/api/hub/events',
+    url: scopedChatUrl('/api/hub/events'),
     enabled: true,
     onEvent: async (e: { type?: string; in_reply_to?: string; message_id?: string }) => {
       const t = e?.type || '';
       if (t === 'new_reply' && e.in_reply_to && pollingIds.has(e.in_reply_to)) {
         // Fast path: a reply to a task WE sent from this panel.
         try {
-          const res = await fetch(`/api/hub/tasks?task_id=${encodeURIComponent(e.in_reply_to)}`);
+          const res = await fetch(scopedChatUrl(`/api/hub/tasks?task_id=${encodeURIComponent(e.in_reply_to)}`));
           const data = await res.json();
           const updated = data?.tasks?.[0];
           if (!updated) return;
@@ -1085,7 +1090,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       }
       for (const taskId of pollingIds) {
         try {
-          const res = await fetch(`/api/hub/tasks?task_id=${encodeURIComponent(taskId)}`);
+          const res = await fetch(scopedChatUrl(`/api/hub/tasks?task_id=${encodeURIComponent(taskId)}`));
           const data = await res.json();
           if (data.tasks?.[0]) {
             const updated = data.tasks[0];
@@ -1098,7 +1103,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       }
     }, 30_000);
     return () => clearInterval(interval);
-  }, [pollingIds]);
+  }, [pollingIds, scopedChatUrl]);
 
   // #492 upload half — proxied to hub, Bearer server-side. The
   // returned attachment carries `file_id` (canonical hub identifier)
@@ -1197,7 +1202,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     if (filesToSend.length === 0) {
       putChatOutbox({
         requestId, localTaskId, panelAlias: alias, targetAlias: sendTo,
-        content: taskContent, priority, networkId: aliasNetRef.current[sendTo] || networkId || '',
+        content: taskContent, priority, networkId: scopeNetworkId || aliasNetRef.current[sendTo] || networkId || '',
         createdAt: optimistic.created_at,
       }, privateStorageScope);
     }
@@ -1253,7 +1258,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
           alias: sendTo, task: taskContent, priority, attachments: uploaded,
           ...(requestId ? { request_id: requestId } : {}),
           // P0: multi-network users MUST scope the send or the hub rejects.
-          ...((aliasNetRef.current[sendTo] || networkId) ? { network_id: aliasNetRef.current[sendTo] || networkId } : {}),
+          ...((scopeNetworkId || aliasNetRef.current[sendTo] || networkId) ? { network_id: scopeNetworkId || aliasNetRef.current[sendTo] || networkId } : {}),
         }),
       });
       const data = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
