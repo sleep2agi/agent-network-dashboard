@@ -218,6 +218,7 @@ export default function Legion3DPage() {
   const [statusOnly, setStatusOnly] = useState<'working' | 'idle' | 'blocked' | 'error' | 'offline' | null>(null);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const helpRef = useRef<HTMLDivElement | null>(null);
   const [toolsOpen, setToolsOpen] = useState(false);
   const toolbarRef = useRef<HTMLDivElement | null>(null);
   const toolsToggleRef = useRef<HTMLButtonElement | null>(null);
@@ -502,21 +503,35 @@ export default function Legion3DPage() {
     const onOutside = (event: PointerEvent) => {
       if (event.target instanceof Node && !toolbarRef.current?.contains(event.target)) setToolsOpen(false);
     };
+    document.addEventListener('pointerdown', onOutside);
+    return () => document.removeEventListener('pointerdown', onOutside);
+  }, [toolsOpen]);
+
+  useEffect(() => {
     const wide = window.matchMedia('(min-width: 640px)');
-    const onWide = () => {
-      if (!wide.matches) return;
-      if (document.activeElement === toolsToggleRef.current) {
+    const onBreakpoint = () => {
+      const active = document.activeElement;
+      if (wide.matches && active === toolsToggleRef.current) {
         toolbarRef.current?.querySelector<HTMLButtonElement>('[data-testid="legion-3d-spin"]')?.focus();
+      } else if (!wide.matches && active?.closest('#legion-3d-more-tools')) {
+        toolsToggleRef.current?.focus();
       }
       setToolsOpen(false);
     };
-    document.addEventListener('pointerdown', onOutside);
-    wide.addEventListener('change', onWide);
+    wide.addEventListener('change', onBreakpoint);
+    return () => wide.removeEventListener('change', onBreakpoint);
+  }, []);
+
+  useEffect(() => {
+    if (!helpOpen) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const stage = wrapRef.current;
+    helpRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
     return () => {
-      document.removeEventListener('pointerdown', onOutside);
-      wide.removeEventListener('change', onWide);
+      if (previous?.isConnected && previous.getClientRects().length) previous.focus();
+      else stage?.focus();
     };
-  }, [toolsOpen]);
+  }, [helpOpen]);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -564,6 +579,7 @@ export default function Legion3DPage() {
           x2: box.right - stage.left + 4, y2: box.bottom - stage.top + 4 };
       };
       const top = rect(header);
+      wrap.style.setProperty('--legion-list-top', `${top.y2 + 8}px`);
       const footer = footerRef.current;
       const bottom = footer && footer.offsetHeight > 0 ? rect(footer) : null;
       labelUiRectsRef.current = cleanView ? [] : [top, ...(bottom ? [bottom] : [])];
@@ -1522,6 +1538,18 @@ export default function Legion3DPage() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // The help dialog owns keyboard input above the disclosure and canvas.
+    if (helpOpen) {
+      e.stopPropagation();
+      if (e.key === 'Escape' || e.key === '?') {
+        e.preventDefault();
+        setHelpOpen(false);
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        helpRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      }
+      return;
+    }
     if (e.key === 'Escape' && toolsOpen) {
       e.preventDefault();
       e.stopPropagation();
@@ -1580,15 +1608,14 @@ export default function Legion3DPage() {
         // 优先，否则弹出来的是全局英文快捷键表。
         e.preventDefault();
         e.stopPropagation();
+        setToolsOpen(false);
         setHelpOpen(v => !v);
         break;
       case 'r': case 'R': resetView(); break;
       case 'f': case 'F': e.preventDefault(); void toggleFullscreen(); break;
       case 'Escape':
         e.preventDefault();
-        // 速查表开着时先关它，再按一次才动搜索/选中。
-        if (helpOpen) { setHelpOpen(false); break; }
-        // 净屏优先退出：隐掉界面后 Esc 是唯一「回来的路」。
+        // 净屏优先退出，也可轻点画布恢复。
         if (cleanView) { setCleanView(false); break; }
         // 状态筛选次之，然后才是搜索/选中。
         if (statusOnly) { setStatusOnly(null); break; }
@@ -1928,6 +1955,7 @@ export default function Legion3DPage() {
 
       {helpOpen && (
         <div
+          ref={helpRef}
           role="dialog"
           aria-modal="true"
           aria-label="键盘快捷键"
@@ -1953,7 +1981,7 @@ export default function Legion3DPage() {
                 ['Esc', '先清搜索，再取消选中'],
                 ['R', '重置视角'],
                 ['F', '全屏演示（再按退出）'],
-                ['净屏', '隐藏全部界面，只留拓扑（Esc 恢复）'],
+                ['净屏', '隐藏全部界面（轻点画布或 Esc 恢复）'],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-3">
                   <dt className="w-32 shrink-0 font-mono text-[var(--fg)]">{k}</dt>
@@ -2018,7 +2046,8 @@ export default function Legion3DPage() {
             if (next) { e.preventDefault(); next.focus(); }
           }}
           data-testid="legion-3d-node-list"
-          className={`absolute left-3 top-44 z-10 max-h-[52vh] w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:top-28 sm:block ${cleanView ? 'invisible' : 'visible'} ${listOpen ? 'block' : 'hidden'}`}
+          style={{ maxHeight: 'min(52vh, calc(100% - var(--legion-list-top, 11rem) - 12px))' }}
+          className={`absolute left-3 top-[var(--legion-list-top,11rem)] z-10 w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:block ${cleanView ? 'invisible' : 'visible'} ${listOpen ? 'block' : 'hidden'}`}
         >
           {layout.nodes
             // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
@@ -2076,7 +2105,7 @@ export default function Legion3DPage() {
           data-testid="legion-3d-detail"
           role="status"
           aria-live="polite"
-          className={`absolute inset-x-3 bottom-3 rounded-xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72 ${cleanView ? 'invisible' : 'visible'} ${listOpen ? 'hidden sm:block' : 'block'}`}
+          className={`absolute inset-x-3 bottom-3 rounded-xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72 ${cleanView ? 'invisible' : 'visible'} ${listOpen || toolsOpen ? 'hidden sm:block' : 'block'}`}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">

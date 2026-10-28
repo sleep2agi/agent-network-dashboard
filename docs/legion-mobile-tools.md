@@ -15,6 +15,12 @@ already-reviewed #78/#79 integration or a release-version change.
   selected node/search. Collapsed controls leave the tab sequence. Opening the
   list closes the disclosure; an outside pointer press also closes it.
 - Enter activates the focused toolbar control even when a node is selected.
+- Help closes the disclosure, owns keyboard focus and returns it on dismissal.
+  Breakpoint changes move focus from controls becoming hidden to a visible action
+  in both directions, including when the disclosure started collapsed.
+- The node list follows the measured header, including empty-network notices.
+  Mobile details temporarily yield to the expanded controls, retaining the
+  selection/search and making platform navigation usable on 320×568 screens.
 - Clean view supports a single tap/click on the canvas to restore controls. That
   action does not select the node beneath it. Dragging still rotates the scene;
   Escape recovery remains available. The mobile disclosure explains recovery.
@@ -50,7 +56,10 @@ BASE_URL=http://127.0.0.1:3137 OUTPUT_DIR=/absolute/path/to/evidence \
 The probe extends the disc suite with disclosure keyboard/focus checks, real
 touch recovery, successful and denied fullscreen, PNG downloads, both non-origin
 department and member-outline observations across 130 RAFs, and responsive
-collapse. Expanded dense and empty-department scenes also run the geometry and
+collapse. Real clean-view touch drags must move a non-origin body, remain clean
+and stable for 130 RAFs, and avoid selecting nodes. Short-screen navigation uses
+an actual click, and breakpoint assertions inspect the focused element.
+Expanded dense and empty-department scenes also run the geometry and
 label checks. Baseline 1440/390 dark/light, sparse/deep/dense/empty, edge picking,
 labels, leaders and button/R-reset coverage remain in the same probe.
 

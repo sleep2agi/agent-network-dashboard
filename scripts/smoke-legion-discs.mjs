@@ -346,6 +346,29 @@ async function toolbarInteractions(page, tag, width) {
   await frames(page, 8);
   check(`${tag}:cleanEntered`, !await header.isVisible());
   const box = await page.getByRole('img', { name: '军团三维拓扑图', exact: true }).boundingBox();
+  const cleanBefore = await disc();
+  if (width === 390) {
+    const cdp = await page.context().newCDPSession(page);
+    const start = { x: box.x + 35, y: box.y + 200 };
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] });
+    for (let step = 1; step <= 10; step++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: start.x + step * 11, y: start.y + step * 6 }] });
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.detach();
+  } else {
+    await page.mouse.move(box.x + 35, box.y + 200);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 145, box.y + 260, { steps: 10 });
+    await page.mouse.up();
+    await page.mouse.move(1, 1);
+  }
+  await frames(page, 8);
+  const cleanDragged = await disc();
+  check(`${tag}:cleanDragActuallyMoves`, Math.hypot(cleanBefore.x - cleanDragged.x, cleanBefore.y - cleanDragged.y) > 5);
+  await frames(page, 130);
+  check(`${tag}:cleanDragStaysClean`, !await header.isVisible() && await page.getByTestId('legion-3d-detail').count() === 0
+    && almost(cleanDragged, await disc()));
   const target = await disc();
   if (width === 390) await page.touchscreen.tap(box.x + target.x, box.y + target.y);
   else await page.mouse.click(box.x + target.x, box.y + target.y);
@@ -394,6 +417,50 @@ async function toolbarInteractions(page, tag, width) {
   }
 }
 
+async function reviewInteractions(page, tag) {
+  const toggle = page.getByTestId('legion-3d-tools-toggle');
+  const help = page.getByTestId('legion-3d-help');
+  const list = page.getByTestId('legion-3d-list-toggle');
+  await revealTools(page);
+  await toggle.focus();
+  await page.keyboard.press('?');
+  await help.waitFor();
+  check(`${tag}:helpFocusInside`, await help.evaluate(el => el.contains(document.activeElement)));
+  await page.keyboard.press('Tab');
+  check(`${tag}:helpTrapsTab`, await help.evaluate(el => el.contains(document.activeElement)));
+  await page.keyboard.press('Escape');
+  check(`${tag}:helpEscapeClosesTopLayer`, !await help.isVisible() && await toggle.evaluate(el => el === document.activeElement));
+  check(`${tag}:helpClosesDisclosure`, await toggle.getAttribute('aria-expanded') === 'false');
+  await toggle.focus();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await frames(page, 8);
+  check(`${tag}:collapsedTriggerFocusMoved`, await page.getByTestId('legion-3d-spin').evaluate(el => el === document.activeElement));
+  await page.getByTestId('legion-3d-export').focus();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await frames(page, 8);
+  check(`${tag}:secondaryFocusMoved`, await toggle.evaluate(el => el === document.activeElement));
+  await list.click();
+  await page.getByRole('option', { name: `部门 ${longName}`, exact: true }).click();
+  if (await list.getAttribute('aria-expanded') === 'true') await list.click();
+  await page.getByTestId('legion-3d-search').fill('没有匹配的搜索词');
+  await page.setViewportSize({ width: 320, height: 568 });
+  await revealTools(page);
+  await frames(page, 8);
+  const link = page.getByRole('link', { name: '平台视角', exact: true });
+  check(`${tag}:shortScreenLinkHit`, await link.evaluate(el => {
+    const r = el.getBoundingClientRect();
+    return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+  }));
+  await toggle.click();
+  check(`${tag}:shortScreenSelectionPreserved`, await page.getByTestId('legion-3d-detail').isVisible()
+    && await page.getByTestId('legion-3d-search').inputValue() === '没有匹配的搜索词');
+  await revealTools(page);
+  await page.screenshot({ path: path.join(output, `${tag}-short-screen.png`) });
+  await link.click();
+  await page.waitForURL('**/legion/plaza');
+  check(`${tag}:shortScreenLinkClick`, new URL(page.url()).pathname === '/legion/plaza');
+}
+
 try {
   for (const [name, fixture] of Object.entries(fixtures)) for (const theme of ['cyber', 'light']) for (const width of [1440, 390]) {
     const tag = `${name}-${theme}-${width}`;
@@ -432,12 +499,25 @@ try {
       await page.mouse.move(1, 1);
       await frames(page, 16);
       await capture(page, `${tag}-tools-open`, fixture);
+      if (name === 'empty') {
+        await page.getByTestId('legion-3d-list-toggle').click();
+        await frames(page, 8);
+        const header = await page.getByTestId('legion-3d-header').boundingBox();
+        const list = await page.getByTestId('legion-3d-node-list').boundingBox();
+        check(`${tag}:listClearsControls`, list.y >= header.y + header.height + 8);
+        await page.screenshot({ path: path.join(output, `${tag}-list.png`) });
+      }
     }
     await context.close();
   }
   for (const theme of ['cyber', 'light']) for (const width of [1440, 390]) {
     const { page, context } = await createPage(sparse, theme, width);
     await toolbarInteractions(page, `toolbar-${theme}-${width}`, width);
+    await context.close();
+  }
+  for (const theme of ['cyber', 'light']) {
+    const { page, context } = await createPage(sparse, theme, 390);
+    await reviewInteractions(page, `review-${theme}`);
     await context.close();
   }
 } catch (error) {
