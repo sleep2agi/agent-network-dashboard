@@ -87,7 +87,7 @@ async function create(theme, width, mode = 'plaza', state = {}) {
       if (url.pathname === '/api/hub/health') json = { ok: true, version: 'fixture', sse_sessions: { [`${net}:${target.alias}`]: 1 }, sessions: records.length };
       if (url.pathname === '/api/hub/tasks') {
         status = state.historyError || 200;
-        json = { ok: status === 200, ...(status === 501 ? { error: 'hub_tasks_scope_unsupported' } : {}), tasks: status === 200 ? [{ task_id: `history-${net}`, to_name: target.alias, from_name: 'fixture', created_at: '2026-01-01T00:00:00Z', status: 'replied', content: `历史消息-${net}`, result: '模拟回复' }] : undefined };
+        json = { ok: status === 200, ...(status === 501 ? { error: 'hub_tasks_scope_unsupported' } : {}), tasks: status === 200 ? [{ task_id: `history-${net}`, to_name: target.alias, from_name: 'fixture', created_at: '2026-01-01T00:00:00Z', status: 'replied', content: `历史消息-${net}`, result: '### 协作进度 · 模拟回复\n\n已完成本轮界面迭代，正在核对交互结果。\n\n- **界面**：保留当前网络与节点信息。\n- **验证**：检查深浅主题、窗口边界和键盘操作。\n- **下一步**：核对截图后整理发布记录。\n\n这是一段隔离测试消息，用于观察长文本在浮窗中的阅读和滚动。'.repeat(2) }] : undefined };
       }
       if (url.pathname === '/api/hub/send') {
         sends.push(route.request().postDataJSON()); status = state.sendError || 200;
@@ -128,11 +128,56 @@ async function chatFlow(page, requests, sends, state, tag, opener) {
   await dialog.getByText(/fixture-send-denied/).first().waitFor();
   check(`${tag}:sendFailureVisible`, true);
   await input.fill('保留草稿');
+  check(`${tag}:nonModal`, await dialog.getAttribute('aria-modal') !== 'true');
+  check(`${tag}:noBackdrop`, await page.getByTestId('legion-chat-overlay').evaluate(el => getComputedStyle(el).pointerEvents === 'none' && getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)'));
+  const beforeMove = await dialog.boundingBox();
+  const handle = page.getByTestId('legion-chat-move');
+  const h = await handle.boundingBox();
+  await page.mouse.move(h.x + 30, h.y + 22); await page.mouse.down();
+  await page.mouse.move(h.x - 70, h.y - 38, { steps: 6 }); await page.mouse.up();
+  const moved = await dialog.boundingBox();
+  check(`${tag}:windowActuallyMoved`, Math.hypot(moved.x - beforeMove.x, moved.y - beforeMove.y) > 10);
+  const resize = await page.getByTestId('legion-chat-resize').boundingBox();
+  await page.mouse.move(resize.x + 22, resize.y + 22); await page.mouse.down();
+  await page.mouse.move(resize.x - 38, resize.y - 38, { steps: 6 }); await page.mouse.up();
+  const resized = await dialog.boundingBox();
+  check(`${tag}:windowActuallyResized`, resized.height < moved.height - 10);
+  check(`${tag}:windowContained`, await dialog.evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; }));
+  await page.getByTestId('legion-chat-minimize').click();
+  check(`${tag}:collapsed`, (await dialog.boundingBox()).height <= 66 && !await input.isVisible());
+  check(`${tag}:bodyMountedWhileCollapsed`, await input.count() === 1);
+  await page.getByTestId('legion-chat-minimize').click();
+  check(`${tag}:restoreDraft`, await input.isVisible() && await input.inputValue() === '保留草稿');
+  await handle.focus(); await page.keyboard.press('ArrowDown');
+  check(`${tag}:keyboardMove`, (await dialog.boundingBox()).y > resized.y);
   check(`${tag}:pageScrollRetained`, Math.abs(await page.evaluate(() => scrollY) - scrollBefore) <= 1);
+  // Captured pointers released outside the handle must not keep dragging.
+  const released = await dialog.boundingBox();
+  await page.mouse.move(8, 8); await frames(page);
+  check(`${tag}:releaseStopsMoving`, JSON.stringify(await dialog.boundingBox()) === JSON.stringify(released));
+  await page.getByTestId('legion-chat-resize').focus();
+  await page.keyboard.press('ArrowUp');
+  check(`${tag}:keyboardResize`, (await dialog.boundingBox()).height < released.height);
+  if (page.viewportSize().width >= 1024) {
+    const viewport = page.viewportSize();
+    await page.setViewportSize({ width: 580, height: 580 }); await frames(page, 20);
+    check(`${tag}:viewportShrinkClamped`, await dialog.evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; }));
+    await page.setViewportSize(viewport); await frames(page, 20);
+    await handle.focus(); await page.keyboard.press('Home');
+    const fullscreen = page.getByTestId(tag.startsWith('plaza') ? 'plaza-fullscreen' : 'legion-3d-fullscreen');
+    await fullscreen.click(); await page.waitForFunction(() => !!document.fullscreenElement);
+    check(`${tag}:chatInsideFullscreen`, await dialog.evaluate(el => document.fullscreenElement.contains(el)));
+    check(`${tag}:fullscreenDraftIntact`, await input.inputValue() === '保留草稿');
+    await fullscreen.click(); await page.waitForFunction(() => !document.fullscreenElement);
+    check(`${tag}:fullscreenExitKeepsChat`, await dialog.isVisible());
+  }
   check(`${tag}:closeTouchTarget`, await page.getByTestId('legion-chat-close').evaluate(el => { const r = el.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; }));
   await page.getByTestId('legion-chat-close').focus();
   await page.keyboard.press('Shift+Tab');
-  check(`${tag}:tabWrapsInside`, await dialog.evaluate(el => el.contains(document.activeElement) && document.activeElement !== el.querySelector('[data-testid="legion-chat-close"]')));
+  check(`${tag}:headerTabOrder`, await page.getByTestId('legion-chat-minimize').evaluate(el => document.activeElement === el));
+  await handle.focus(); await page.keyboard.press('Shift+Tab');
+  check(`${tag}:tabCanReturnToScene`, await dialog.evaluate(el => !el.contains(document.activeElement)));
+  await page.getByTestId('legion-chat-close').focus();
   await page.screenshot({ path: path.join(output, `${tag}-chat.png`) });
   await page.keyboard.press('Escape');
   await dialog.waitFor({ state: 'hidden' });
@@ -215,8 +260,13 @@ try {
       await page.getByText('浏览器未允许全屏，请检查权限后重试').waitFor();
       check(`${tag}:fullscreenDenied`, await page.getByTestId('plaza-fullscreen').getAttribute('aria-pressed') === 'false');
       if (width === 1440) {
+        await page.getByTestId('plaza-department-select').selectOption('dept:leaf');
+        await page.locator('[data-testid="plaza-agent"][data-node-id="latest-target"]').click();
+        await page.getByTestId('plaza-chat').click();
+        await page.getByTestId('legion-chat-minimize').click();
         await page.getByTestId('network-switcher').click();
         await page.getByTestId('network-option').filter({ hasText: '模拟网络B' }).click();
+        check(`${tag}:networkSwitchClosesCollapsedChat`, !await page.getByTestId('legion-chat').isVisible());
         await page.getByTestId('plaza-department-select').selectOption('dept:leaf');
         await page.locator('[data-testid="plaza-agent"][data-node-id="latest-target"]').click();
         await attrs.getByText('fixture-model-fixture-B', { exact: true }).waitFor();
@@ -251,6 +301,23 @@ try {
       await stage.focus(); await page.keyboard.press('Enter');
       await page.getByTestId('legion-chat').waitFor();
       check(`${tag}:enterStaysIn3d`, new URL(page.url()).pathname === '/legion/3d');
+      await frames(page, 10);
+      const exposed = await page.evaluate(() => {
+        const canvas = document.querySelector('canvas[aria-label="军团三维拓扑图"]');
+        const r = canvas.getBoundingClientRect();
+        const p = window.__departments.find(([x, y]) => document.elementFromPoint(r.x + x, r.y + y) === canvas);
+        return p ? { x: r.x + p[0], y: r.y + p[1] } : null;
+      });
+      check(`${tag}:graphExposedWhileChatOpen`, !!exposed);
+      if (exposed) {
+        const beforeBackground = await page.evaluate(() => window.__departments[0]);
+        await page.mouse.move(exposed.x, exposed.y); await page.mouse.down();
+        await page.mouse.move(exposed.x + 45, exposed.y + 25, { steps: 6 }); await page.mouse.up();
+        await frames(page, 130);
+        const afterBackground = await page.evaluate(() => window.__departments[0]);
+        check(`${tag}:graphDragsWhileChatOpen`, Math.hypot(afterBackground[0] - beforeBackground[0], afterBackground[1] - beforeBackground[1]) > 1);
+        check(`${tag}:backgroundKeepsChat`, await page.getByTestId('legion-chat').isVisible());
+      }
       contexts.push(tag);
     } catch (e) { errors.push(`${tag}: ${e.stack || e}`); } finally { await context.close(); }
   }
