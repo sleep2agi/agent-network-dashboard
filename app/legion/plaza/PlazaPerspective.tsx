@@ -3,8 +3,9 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { PlazaDepartment } from '../../lib/legion-directory';
 import type { PlazaAgentSnapshot } from './plaza-perspective-metadata';
-import { buildPlazaWorld, constrainPlazaCamera, fitPlazaWorld, PLAZA_CAMERA, PLAZA_LABEL_WIDTH, plazaFlowPhase, plazaFlowStreak,
+import { buildPlazaWorld, constrainPlazaCamera, fitPlazaWorld, PLAZA_CAMERA, plazaFlowPhase, plazaFlowStreak,
   plazaPath, plazaPlateCorners, projectPlazaPoint, type PlazaCamera, type PlazaVec3 } from './plaza-perspective';
+import { layoutPlazaLabels } from './plaza-label-layout';
 import styles from './plaza-perspective.module.css';
 
 const control = 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-3 text-xs hover:bg-[var(--hover-tint)] focus-visible:outline-2 focus-visible:outline-[var(--accent-text)] disabled:opacity-50';
@@ -91,6 +92,10 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
   const path = (points: PlazaVec3[], close = false) => plazaPath(points.map(project), close);
   const corePoint = project(world.core);
   const coreRadius = Math.max(23, Math.min(42, 68 * corePoint.scale));
+  const labelLayout = layoutPlazaLabels(world.platforms.map(({ department, center }) => ({
+    id: department.id, ...project(center), agents: department.agents.length,
+  })), size, { x: corePoint.x - coreRadius - 30, y: corePoint.y - coreRadius - 10,
+    width: coreRadius * 2 + 60, height: coreRadius * 2 + 58 }, selected);
   const reset = () => { drag.current = null; setCamera({ ...PLAZA_CAMERA }); };
   const zoom = (factor: number) => setCamera(c => constrainPlazaCamera({ ...c, zoom: c.zoom * factor }));
   const selectedWorld = world.platforms.find(p => p.department.id === selected);
@@ -106,7 +111,7 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
 
   return <div className={styles.scene} data-testid="plaza-perspective-scene">
     <div className="flex flex-wrap items-center justify-between gap-1 border-b border-[var(--border)] px-2 py-1">
-      <span className="px-2 text-xs text-[var(--fg-muted)]">3D 平台 · {platforms.length} 个部门</span>
+      <span className="px-2 text-xs text-[var(--fg-muted)]">3D 平台 · {platforms.length} 个部门{labelLayout.dense ? ' · 密集概览' : ''}</span>
       <div className="flex flex-wrap items-center gap-1" role="group" aria-label="3D 平台控制">
         <button type="button" className={control} onClick={() => zoom(1 / 1.2)} aria-label="缩小平台" disabled={camera.zoom <= 0.3}>−</button>
         <output className="min-w-10 text-center text-xs tabular-nums" aria-label="平台缩放">{Math.round(camera.zoom * 100)}%</output>
@@ -193,25 +198,35 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
         const top = plazaPlateCorners(center), bottom = plazaPlateCorners(center, true);
         const faces = top.map((_, i) => [top[i], top[(i + 1) % 4], bottom[(i + 1) % 4], bottom[i]])
           .sort((a, b) => a.reduce((sum, q) => sum + project(q).depth, 0) - b.reduce((sum, q) => sum + project(q).depth, 0));
-        const shown = department.agents.slice(0, active ? 6 : 4);
-        const boardHeight = 60 + Math.max(1, shown.length) * 33;
-        const boardWidth = PLAZA_LABEL_WIDTH;
-        let boardY = p.y - boardHeight - 12;
-        // Billboards may move clear of the core; XYZ platforms and their camera never do.
-        // In particular, expanding a foreground department to six aliases must not hide ANet.
-        const coreTop = corePoint.y - coreRadius - 8, coreBottom = corePoint.y + coreRadius + 30;
-        if (Math.abs(p.x - corePoint.x) < boardWidth / 2 + coreRadius + 8 && boardY < coreBottom && boardY + boardHeight > coreTop) {
-          boardY = p.y > corePoint.y ? coreBottom + 8 : coreTop - boardHeight - 8;
-        }
         return <g key={department.id} data-testid="plaza-perspective-department" data-department-id={department.id} onClick={() => onSelect(department.id)}
           data-world-x={center.x} data-world-y={center.y} data-world-z={center.z} data-screen-x={p.x} data-screen-y={p.y} data-depth={p.depth} data-agent-count={department.agents.length}>
           <g aria-hidden="true" style={{ cursor: 'pointer' }} stroke={active ? 'var(--accent-text)' : 'var(--border-hover)'} strokeWidth={active ? 1.8 : 1}>
             {faces.map((face, i) => <path key={i} d={path(face, true)} fill="var(--bg-elevated)" />)}
             <path d={path(top, true)} fill={`url(#${id}-plate)`} data-testid="plaza-perspective-plate" />
             <path d={path(top, true)} fill="var(--accent)" opacity={active ? 0.16 : 0.06} stroke="none" />
-            <path d={plazaPath([{ x: p.x, y: boardY + boardHeight }, { x: p.x, y: p.y + 10 }])} stroke="var(--accent-text)" opacity="0.7" />
           </g>
-          <foreignObject x={p.x - boardWidth / 2} y={boardY} width={boardWidth} height={boardHeight + 4} style={{ overflow: 'visible' }}>
+        </g>;
+      })}
+      {/* Labels are a separate screen-space layer, so a nearer plate cannot cover the selected card. */}
+      <g data-testid="plaza-perspective-labels">
+        <g pointerEvents="none" aria-hidden="true">
+          {world.platforms.map(({ department, center }) => {
+            const label = labelLayout.labels.get(department.id);
+            if (!label) return null;
+            const p = project(center);
+            const edgeX = Math.max(label.x, Math.min(label.x + label.width, p.x));
+            const edgeY = Math.max(label.y, Math.min(label.y + label.height, p.y));
+            return <path key={department.id} d={plazaPath([{ x: edgeX, y: edgeY }, { x: p.x, y: p.y + 10 }])}
+              fill="none" stroke="var(--accent-text)" opacity={department.id === selected ? '0.8' : '0.35'} />;
+          })}
+        </g>
+        {world.platforms.map(({ department }) => {
+          const label = labelLayout.labels.get(department.id);
+          if (!label) return null;
+          const active = department.id === selected;
+          const shown = department.agents.slice(0, label.rows);
+          return <g key={department.id} data-department-id={department.id} onClick={() => onSelect(department.id)}>
+          <foreignObject x={label.x} y={label.y} width={label.width} height={label.height} style={{ overflow: 'visible' }}>
             <button type="button" className={styles.board} aria-pressed={active}
               aria-label={`查看${department.name}：${department.people.length}人，${department.agents.length}个Agent`} data-testid="plaza-perspective-select"
               title={`${department.name} · ${department.people.length} 名成员 · ${department.agents.length} 个 Agent · 查看全部节点与属性`}>
@@ -228,13 +243,14 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
                 </span>;
               })}
               {!shown.length && <span className={styles.empty}>{department.people.length ? `${department.people.length} 名成员 · 暂无 Agent` : '暂无成员或 Agent'}</span>}
-              <span className={styles.more}><span>{department.people.length} 名成员{department.unknown ? ' · 部门未可见' : ''}</span><span>{department.agents.length > shown.length ? `+${department.agents.length - shown.length} · ` : ''}查看全部 →</span></span>
+              <span className={styles.more}><span title={`${department.people.length} 名成员${department.unknown ? ' · 部门未可见' : ''}`}>{department.people.length} 名成员{department.unknown ? ' · 部门未可见' : ''}</span><span>{department.agents.length > shown.length ? `+${department.agents.length - shown.length} · ` : ''}查看全部 →</span></span>
             </button>
           </foreignObject>
-        </g>;
-      })}
+          </g>;
+        })}
+      </g>
     </svg>
-    <p id={helpId} className="border-t border-[var(--border)] px-3 py-2 text-[11px] leading-5 text-[var(--fg-muted)]">拖动 / 方向键旋转 · 滚轮 / ＋− 缩放 · Shift + 拖动平移 · R 重置。部门列表可键盘选择。光流仅表示编制方向，不代表任务活动；卡片状态来自会话上报。</p>
+    <p id={helpId} className="border-t border-[var(--border)] px-3 py-2 text-[11px] leading-5 text-[var(--fg-muted)]">拖动 / 方向键旋转 · 滚轮 / ＋− 缩放 · Shift + 拖动平移 · R 重置。部门列表可键盘选择。{labelLayout.dense && '密集概览保留节点摘要，选中部门展开名片。'}{labelLayout.hidden > 0 && <span data-testid="plaza-label-overflow">{labelLayout.hidden} 个部门名片暂未展开，可放大或从部门列表选择。</span>}光流仅表示编制方向，不代表任务活动；卡片状态来自会话上报。</p>
   </div>;
 }
 
