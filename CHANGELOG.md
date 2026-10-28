@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.112 — 2026-10-28
+
+### Find archived requirements
+
+- Requirement searches include archived items by default when the Hub advertises archive search. Turn “包含已归档” off to search active items only; the preference is kept in the URL and applies only when a search term is present.
+- Archived results have an explicit label. Search status reports the number of loaded rows, and existing status/tag filters and load-more pagination work with the archive option.
+- Older Hubs show an explicit availability message. Capability negotiation and delayed pages use the current search generation so stale responses cannot replace a newer filter selection.
+
 ## 0.6.3-preview.110 — 2026-10-28
 
 ### Clearer platform hierarchy
