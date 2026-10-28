@@ -134,6 +134,7 @@ type ScheduleRow = {
   revision: number;
 };
 type RunRow = { run_id: string; scheduled_for: string; task_id?: string | null; status: string; error_code?: string | null; created_at: string };
+type RunHistoryState = { status: 'loading' } | { status: 'ready'; runs: RunRow[] } | { status: 'error'; message: string };
 type IntervalUnit = 'seconds' | 'minutes' | 'hours' | 'days';
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -173,8 +174,70 @@ function intervalFormValue(seconds: number): { every: string; unit: IntervalUnit
   return { every: String(seconds), unit: 'seconds' };
 }
 
+function ScheduleHistory({ networkId, scheduleId }: { networkId: string; scheduleId: string }) {
+  const [state, setState] = useState<RunHistoryState>({ status: 'loading' });
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let current = true;
+    const controller = new AbortController();
+    // A retry starts a new read; only an accepted response may claim an empty history.
+    setState({ status: 'loading' });
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/hub/scheduled-tasks/${encodeURIComponent(scheduleId)}/runs?network_id=${encodeURIComponent(networkId)}&limit=50`, {
+          cache: 'no-store', signal: controller.signal,
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          if (res.status === 401) throw new Error('登录状态已失效，请重新登录（HTTP 401）');
+          const detail = typeof data?.message === 'string' ? data.message : typeof data?.error === 'string' ? data.error : `HTTP ${res.status}`;
+          throw new Error(`读取执行记录失败：${detail}`);
+        }
+        if (!data || !Array.isArray(data.runs) || data.runs.some((run: RunRow | null) => !run ||
+          typeof run.run_id !== 'string' || typeof run.scheduled_for !== 'string' || typeof run.status !== 'string' ||
+          (run.task_id != null && typeof run.task_id !== 'string') || (run.error_code != null && typeof run.error_code !== 'string'))) {
+          throw new Error('执行记录响应格式错误，请重试');
+        }
+        if (current) setState({ status: 'ready', runs: data.runs });
+      } catch (e) {
+        if (current) setState({ status: 'error', message: e instanceof Error ? e.message : '网络连接失败，请重试' });
+      }
+    };
+    void load();
+    // Closing, reopening or switching scopes disposes this request, even when
+    // its response has already arrived and abort cannot cancel JSON parsing.
+    return () => { current = false; controller.abort(); };
+  }, [networkId, scheduleId, attempt]);
+
+  return (
+    <div className="mt-4 min-w-0 border-t border-[var(--border)] pt-4" aria-busy={state.status === 'loading'}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="text-sm font-medium text-[var(--fg)]">执行记录</h3>
+        <button type="button" aria-disabled={state.status === 'loading'}
+          onClick={() => { if (state.status !== 'loading') setAttempt(value => value + 1); }}
+          className="min-h-11 min-w-11 rounded-md px-3 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] aria-disabled:opacity-50">
+          {state.status === 'loading' ? '读取中…' : state.status === 'error' ? '重试' : '刷新记录'}
+        </button>
+      </div>
+      {state.status === 'loading' && <p role="status" className="text-sm text-[var(--fg-dim)]">正在读取执行记录…</p>}
+      {state.status === 'error' && <p role="alert" className="text-sm text-[var(--danger)] [overflow-wrap:anywhere]">{state.message}</p>}
+      {state.status === 'ready' && (state.runs.length === 0 ? <p className="text-sm text-[var(--fg-dim)]">暂无执行记录</p> : (
+        <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="text-[var(--fg-dim)]"><tr><th className="pb-2">计划时间</th><th>状态</th><th>Task ID</th><th>错误</th></tr></thead><tbody>{state.runs.map(run => <tr key={run.run_id} className="border-t border-[var(--col-hairline)] text-[var(--fg-muted)]"><td className="py-2">{formatTime(run.scheduled_for)}</td><td>{run.status}</td><td className="font-mono">{run.task_id?.slice(0, 12) || '—'}</td><td className="text-[var(--danger)]">{run.error_code || '—'}</td></tr>)}</tbody></table></div>
+      ))}
+    </div>
+  );
+}
+
 export default function ScheduledTasksPage() {
   const { networkId } = useNetworkId();
+  // A network change starts a new page generation before paint, including when
+  // two networks expose the same schedule ID. Old list/history reads cannot
+  // repopulate the new scope or resurrect a previously expanded row.
+  return <ScheduledTasks key={networkId} networkId={networkId} />;
+}
+
+function ScheduledTasks({ networkId }: { networkId: string }) {
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
   const [nodes, setNodes] = useState<NodeRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,7 +246,6 @@ export default function ScheduledTasksPage() {
   const [editing, setEditing] = useState<ScheduleRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [historyFor, setHistoryFor] = useState<string | null>(null);
-  const [runs, setRuns] = useState<RunRow[]>([]);
 
   const [name, setName] = useState('');
   const [targetNodeId, setTargetNodeId] = useState('');
@@ -364,13 +426,8 @@ export default function ScheduledTasksPage() {
     finally { setBusy(false); }
   };
 
-  const openHistory = async (row: ScheduleRow) => {
-    if (historyFor === row.schedule_id) { setHistoryFor(null); return; }
-    setHistoryFor(row.schedule_id); setRuns([]);
-    const join = query ? `${query}&limit=50` : '?limit=50';
-    const res = await fetch(`/api/hub/scheduled-tasks/${encodeURIComponent(row.schedule_id)}/runs${join}`);
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) setRuns(data.runs || []); else setError(data.error || `HTTP ${res.status}`);
+  const openHistory = (row: ScheduleRow) => {
+    setHistoryFor(current => current === row.schedule_id ? null : row.schedule_id);
   };
 
   const saveDisabled = busy || !networkId || !name.trim() || !targetNodeId || !task.trim() || !timezone.trim() ||
@@ -425,9 +482,9 @@ export default function ScheduledTasksPage() {
         <section key={row.schedule_id} className="rounded-xl bg-[var(--bg-secondary)] p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 className="font-semibold text-[var(--fg)]">{row.name}</h2><span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-xs ${row.status === 'active' ? 'text-[var(--success)]' : row.status === 'paused' ? 'text-[var(--warning)]' : 'text-[var(--fg-dim)]'}`}>{row.status}</span></div><p className="mt-1 text-sm text-[var(--hl)]">{row.target_alias}</p><p className="mt-2 line-clamp-2 text-sm text-[var(--fg-muted)]">{row.task_content}</p><p className="mt-3 text-xs text-[var(--fg-dim)]">{describeSchedule(row.schedule, row.timezone)} · {describeMisfire(row.misfire_policy)} · 下次 {formatTime(row.next_run_at)} · 上次 {formatTime(row.last_run_at)}</p></div>
-            <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => openEdit(row)} className="rounded-md px-3 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">编辑</button><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => mutate(row, 'toggle')} className="rounded-md px-3 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">{row.status === 'active' ? '暂停' : '恢复'}</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'run')} className="rounded-md px-3 py-1.5 text-xs text-[var(--hl)] hover:bg-[var(--hover-tint)]">立即执行</button><button type="button" onClick={() => openHistory(row)} className="rounded-md px-3 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">记录</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'cancel')} className="rounded-md px-3 py-1.5 text-xs text-[var(--danger)] hover:bg-[var(--hover-tint)]">取消</button></div>
+            <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => openEdit(row)} className="rounded-md px-3 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">编辑</button><button type="button" disabled={busy || !['active','paused'].includes(row.status)} onClick={() => mutate(row, 'toggle')} className="rounded-md px-3 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">{row.status === 'active' ? '暂停' : '恢复'}</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'run')} className="rounded-md px-3 py-1.5 text-xs text-[var(--hl)] hover:bg-[var(--hover-tint)]">立即执行</button><button type="button" onClick={() => openHistory(row)} aria-expanded={historyFor === row.schedule_id} aria-controls={`schedule-history-${row.schedule_id}`} className="min-h-11 min-w-11 rounded-md px-3 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">记录</button><button type="button" disabled={busy || row.status === 'cancelled'} onClick={() => mutate(row, 'cancel')} className="rounded-md px-3 py-1.5 text-xs text-[var(--danger)] hover:bg-[var(--hover-tint)]">取消</button></div>
           </div>
-          {historyFor === row.schedule_id && <div className="mt-4 overflow-x-auto border-t border-[var(--border)] pt-4"><table className="w-full text-left text-xs"><thead className="text-[var(--fg-dim)]"><tr><th className="pb-2">计划时间</th><th>状态</th><th>Task ID</th><th>错误</th></tr></thead><tbody>{runs.map(run => <tr key={run.run_id} className="border-t border-[var(--col-hairline)] text-[var(--fg-muted)]"><td className="py-2">{formatTime(run.scheduled_for)}</td><td>{run.status}</td><td className="font-mono">{run.task_id?.slice(0, 12) || '—'}</td><td className="text-[var(--danger)]">{run.error_code || '—'}</td></tr>)}</tbody></table>{runs.length === 0 && <p className="text-[var(--fg-dim)]">暂无执行记录</p>}</div>}
+          {historyFor === row.schedule_id && <div id={`schedule-history-${row.schedule_id}`} role="region" aria-label={`${row.name}的执行记录`}><ScheduleHistory networkId={networkId} scheduleId={row.schedule_id} /></div>}
         </section>
       ))}</div>;
       })()}
