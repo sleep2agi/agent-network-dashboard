@@ -12,6 +12,7 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 - Copy a node's exact alias beside its title, with keyboard access and visible success or clipboard-failure feedback.
 - Long node names keep their full alias in a tooltip. The header now uses the shared theme colors and title weight.
+- Opening node details no longer lets a delayed chat-input focus interrupt a header action.
 
 ## 0.6.3-preview.110 — 2026-10-28
 

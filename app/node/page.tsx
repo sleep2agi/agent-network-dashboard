@@ -362,7 +362,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
       {/* Tab content */}
       <div className="flex-1 overflow-hidden">
         {tab === 'chat' && (
-          <TaskChatPanel alias={alias} onClose={() => {}} inline />
+          <TaskChatPanel alias={alias} onClose={() => {}} inline autoFocus={false} />
         )}
 
         {tab === 'events' && (
