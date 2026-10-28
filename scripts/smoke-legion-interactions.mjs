@@ -105,6 +105,7 @@ async function create(theme, width, mode = 'plaza', state = {}) {
       }
       if (url.pathname === '/api/hub/send') {
         sends.push(route.request().postDataJSON()); status = state.sendError || 200;
+        if (state.sendHold) await state.sendHold;
         json = status === 200 ? { ok: true, message_id: `fixture-send-${sends.length}`, status: 'delivered' } : { ok: false, error: 'fixture-send-denied' };
       }
       return route.fulfill({ status, json });
@@ -135,6 +136,18 @@ async function chatFlow(page, requests, sends, state, tag, opener) {
   await input.pressSequentially('r?F 模拟消息');
   await Promise.all([page.waitForResponse('**/api/hub/send'), dialog.getByRole('button', { name: 'Send message', exact: true }).click()]);
   check(`${tag}:sendExactTarget`, sends.length === 1 && sends[0].alias === target.alias && sends[0].network_id === 'fixture' && sends[0].task === 'r?F 模拟消息');
+  if (tag === '3d-cyber-1440') {
+    let releaseSend;
+    state.sendHold = new Promise(resolve => { releaseSend = resolve; });
+    await input.fill('延迟发送焦点测试');
+    const response = page.waitForResponse('**/api/hub/send');
+    try {
+      await Promise.all([page.waitForRequest('**/api/hub/send'), dialog.getByRole('button', { name: 'Send message', exact: true }).click()]);
+      await page.getByTestId('legion-chat-move').focus();
+    } finally { releaseSend(); delete state.sendHold; }
+    await response; await frames(page, 10);
+    check(`${tag}:lateSendKeepsNewFocus`, await page.getByTestId('legion-chat-move').evaluate(el => el === document.activeElement));
+  }
   state.sendError = 403;
   await input.fill('模拟拒绝');
   await Promise.all([page.waitForResponse('**/api/hub/send'), dialog.getByRole('button', { name: 'Send message', exact: true }).click()]);
@@ -339,10 +352,11 @@ try {
         await stage.focus();
         if (theme === 'light') {
           state.extraHistory = true;
-          await dialog.getByText('后台更新测试', { exact: true }).waitFor({ timeout: 18000 });
+          await dialog.getByText('后台更新测试', { exact: true }).first().waitFor({ timeout: 18000 });
           check(`${tag}:visibleChatUpdatesWithSceneFocused`, !await dialog.evaluate(el => el.contains(document.activeElement)));
         }
         await page.emulateMedia({ reducedMotion: 'no-preference' });
+        await page.locator('[data-testid="legion-3d-flow"][aria-disabled="false"]').waitFor();
         const spin = page.getByTestId('legion-3d-spin'), flow = page.getByTestId('legion-3d-flow');
         if (await spin.getAttribute('aria-pressed') === 'true') await spin.click();
         if (await flow.getAttribute('aria-pressed') !== 'true') await flow.click();

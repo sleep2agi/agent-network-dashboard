@@ -1182,6 +1182,9 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     }
 
     const filesToSend = attachedFiles;
+    // Floating hosts return focus at the user's send action, never after an
+    // awaited response that could arrive after they moved back to the scene.
+    if (!autoFocus) textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
     setSending(true);
     setInput('');
     writeDraft(alias, '', networkId);
@@ -1265,7 +1268,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     }
     setSending(false);
     setUploadProgress(null);
-    textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
+    if (autoFocus) textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
   };
 
   // Core POST shared by send() and the failed-bubble retry (R4: WeChat-style
