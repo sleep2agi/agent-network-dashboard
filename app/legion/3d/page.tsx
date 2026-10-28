@@ -1079,7 +1079,7 @@ export default function Legion3DPage() {
             : '';
         const face = avatarUrl && radiusPx >= 4.5 ? avatarImage(avatarUrl) : null;
         if (node.kind === 'core') {
-          drawLegionCore(ctx, p.x, p.y, radiusPx, tk, corePhaseRef.current, !interacting);
+          drawLegionCore(ctx, p.x, p.y, radiusPx, { ...tk, isDark: dark }, corePhaseRef.current, !interacting);
         } else if (node.kind === 'group') {
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
