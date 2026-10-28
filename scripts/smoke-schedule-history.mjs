@@ -119,7 +119,7 @@ async function create(theme, width, tag, noNetwork = false) {
     await page.screenshot({ path: path.join(output, `${tag}-${suffix}.png`), fullPage: true });
   }
   async function close() {
-    for (const p of pending) if (!p.released) await p.release();
+    for (const p of pending) if (!p.released) await p.release({ abort: true });
     await context.close();
   }
   return { page, card, button, request, shot, close };
