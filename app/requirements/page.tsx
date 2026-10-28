@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
 import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/requirements-paging';
+import { ProjectFilter } from './ProjectFilter';
 
 /**
  * Requirements board — #1633 (read-only first slice).
@@ -69,12 +70,12 @@ function dueLabel(due?: string) {
 }
 
 function RequirementsContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const status = searchParams.get('status') || '';
   const tag = searchParams.get('tag') || '';
   const q = searchParams.get('q') || '';
+  const project = searchParams.get('project_id') || '';
   const includeArchived = searchParams.get('include_archived') !== '0';
   const searching = q.trim().length > 0;
 
@@ -92,8 +93,10 @@ function RequirementsContent() {
   const [archiveSupported, setArchiveSupported] = useState<boolean | null>(null);
   const archiveSupport = useRef<boolean | null>(null);
   const pendingUrls = useRef(new Set<string>());
+  const [projectSupported, setProjectSupported] = useState<boolean | null>(null);
+  const [projectRefresh, setProjectRefresh] = useState(0);
 
-  // Our actions update drafts immediately. Their later router commits must not
+  // Our actions update drafts immediately. Their later React renders must not
   // overwrite typing made since submission. External URL navigation still syncs.
   useEffect(() => {
     const pending = pendingUrls.current;
@@ -110,8 +113,22 @@ function RequirementsContent() {
     setTagInput(tag);
   }, [searchParams, q, tag]);
 
+  useEffect(() => {
+    const restore = () => {
+      // Back/Forward is external even if it matches an unobserved local write.
+      pendingUrls.current.clear();
+      const params = new URLSearchParams(window.location.search);
+      setQInput(params.get('q') || '');
+      setTagInput(params.get('tag') || '');
+    };
+    window.addEventListener('popstate', restore);
+    return () => window.removeEventListener('popstate', restore);
+  }, []);
+
   const setParam = useCallback((patch: Record<string, string>) => {
-    const next = new URLSearchParams(searchParams.toString());
+    // This page fetches on the client. Next's native history integration makes
+    // the real URL authoritative immediately, without a cancellable RSC trip.
+    const next = new URLSearchParams(window.location.search);
     for (const [key, value] of Object.entries(patch)) {
       if (value) next.set(key, value);
       else next.delete(key);
@@ -121,8 +138,8 @@ function RequirementsContent() {
     if ('tag' in patch) setTagInput(patch.tag);
     pendingUrls.current.delete(qs);
     pendingUrls.current.add(qs);
-    router.replace(qs ? `/requirements?${qs}` : '/requirements', { scroll: false });
-  }, [router, searchParams]);
+    window.history.replaceState(null, '', qs ? `/requirements?${qs}` : '/requirements');
+  }, []);
 
   const load = useCallback(async (opts: { cursor?: string | null; append?: boolean } = {}) => {
     const nextCursor = opts.cursor ?? null;
@@ -136,6 +153,7 @@ function RequirementsContent() {
       if (status) params.set('status', status);
       if (tag) params.set('tag', tag);
       if (q) params.set('q', q);
+      if (project) params.set('project_id', project);
       const wantsArchives = searching && includeArchived;
       if (wantsArchives && archiveSupport.current === true) params.set('include_archived', '1');
       params.set('limit', '200');
@@ -150,6 +168,14 @@ function RequirementsContent() {
         dispatch({ type: 'failed', phase, error: data?.error || `hub_${res.status}` });
         return;
       }
+      const checkProjects = (caps: unknown) => {
+        const supported = Array.isArray(caps) && caps.includes('projects');
+        setProjectSupported(supported);
+        // A legacy Hub may ignore unknown filters. Never label all rows as a
+        // successful project-filtered result, including a direct URL visit.
+        if (project && !supported) throw new Error('当前 Hub 未提供项目筛选能力，请清空项目筛选后重试');
+      };
+      checkProjects(data.capabilities);
       const supportsArchives = (caps: unknown) => Array.isArray(caps) && caps.includes('archived') && caps.includes('search');
       const supported = supportsArchives(data.capabilities);
       archiveSupport.current = supported;
@@ -173,6 +199,7 @@ function RequirementsContent() {
           dispatch({ type: 'failed', phase, error: data?.error || `hub_${res.status}` });
           return;
         }
+        checkProjects(data.capabilities);
         const confirmed = supportsArchives(data.capabilities);
         archiveSupport.current = confirmed;
         setArchiveSupported(confirmed);
@@ -193,7 +220,7 @@ function RequirementsContent() {
     } finally {
       gate.current.settle(gen);
     }
-  }, [status, tag, q, searching, includeArchived]);
+  }, [status, tag, q, project, searching, includeArchived]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -215,7 +242,7 @@ function RequirementsContent() {
           </div>
           <button
             type="button"
-            onClick={() => load()}
+            onClick={() => { setProjectRefresh(n => n + 1); void load(); }}
             className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200"
           >
             Refresh
@@ -244,6 +271,13 @@ function RequirementsContent() {
             );
           })}
         </div>
+
+        <ProjectFilter
+          value={project}
+          supported={projectSupported}
+          refreshKey={projectRefresh}
+          onChange={value => setParam({ project_id: value, q: qInput, tag: tagInput })}
+        />
 
         {/* Text filters */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -282,10 +316,10 @@ function RequirementsContent() {
               包含已归档
             </label>
           )}
-          {(status || tag || q) && (
+          {(status || tag || q || project) && (
             <button
               type="button"
-              onClick={() => { setTagInput(''); setQInput(''); setParam({ status: '', tag: '', q: '' }); }}
+              onClick={() => setParam({ status: '', tag: '', q: '', project_id: '' })}
               className="rounded-md px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200"
             >
               Clear filters
@@ -337,9 +371,9 @@ function RequirementsContent() {
           // 那时说「需求池是空的」就是把鉴权/故障说成没数据，用户会以为需求丢了。
           <EmptyState
             variant="generic"
-            title={status || tag || q ? '没有符合筛选的需求' : '需求池是空的'}
-            sub={status || tag || q ? '清掉筛选再试，或换一个标签。' : '客户端建一条需求后，这里就会出现。'}
-            cta={status || tag || q ? { label: '清空筛选', onClick: () => setParam({ status: '', tag: '', q: '' }) } : undefined}
+            title={status || tag || q || project ? '没有符合筛选的需求' : '需求池是空的'}
+            sub={status || tag || q || project ? '清掉筛选再试，或换一个项目或标签。' : '客户端建一条需求后，这里就会出现。'}
+            cta={status || tag || q || project ? { label: '清空筛选', onClick: () => setParam({ status: '', tag: '', q: '', project_id: '' }) } : undefined}
           />
         ) : (
           <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl bg-[var(--bg-secondary)]">

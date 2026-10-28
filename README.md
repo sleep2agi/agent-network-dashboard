@@ -68,6 +68,15 @@ Browser
 
 The Dashboard is stateless. CommHub owns users, nodes, tasks, messages, and persistence.
 
+### Requirements view
+
+`/requirements` supports status, exact-tag, text and project filters. “无项目”
+selects requirements without a project; selecting a parent project matches that
+exact project, not its descendants. Visible parent paths distinguish project
+names. Filters are kept in the URL and apply to each loaded page. Archived
+requirements can be included in text searches when the Hub supports them.
+Unknown or archived project links keep their ID and show an explanation.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
