@@ -32,6 +32,7 @@ interface Requirement {
   children?: { total: number; done: number };
   updatedAt?: string;
   has_description?: boolean;
+  archived?: boolean;
 }
 
 const COLUMNS: { key: Requirement['column'] | ''; label: string }[] = [
@@ -74,6 +75,8 @@ function RequirementsContent() {
   const status = searchParams.get('status') || '';
   const tag = searchParams.get('tag') || '';
   const q = searchParams.get('q') || '';
+  const includeArchived = searchParams.get('include_archived') !== '0';
+  const searching = q.trim().length > 0;
 
   // #1636: 替换态与追加态分开，追加时已加载的行不能进骨架屏。
   const [state, dispatch] = useReducer(
@@ -86,6 +89,26 @@ function RequirementsContent() {
   const gate = useRef(createLoadGate());
   const [tagInput, setTagInput] = useState(tag);
   const [qInput, setQInput] = useState(q);
+  const [archiveSupported, setArchiveSupported] = useState<boolean | null>(null);
+  const archiveSupport = useRef<boolean | null>(null);
+  const pendingUrls = useRef(new Set<string>());
+
+  // Our actions update drafts immediately. Their later router commits must not
+  // overwrite typing made since submission. External URL navigation still syncs.
+  useEffect(() => {
+    const pending = pendingUrls.current;
+    const url = searchParams.toString();
+    if (pending.has(url)) {
+      for (const entry of pending) {
+        pending.delete(entry);
+        if (entry === url) break;
+      }
+      return;
+    }
+    pending.clear();
+    setQInput(q);
+    setTagInput(tag);
+  }, [searchParams, q, tag]);
 
   const setParam = useCallback((patch: Record<string, string>) => {
     const next = new URLSearchParams(searchParams.toString());
@@ -94,12 +117,16 @@ function RequirementsContent() {
       else next.delete(key);
     }
     const qs = next.toString();
+    if ('q' in patch) setQInput(patch.q);
+    if ('tag' in patch) setTagInput(patch.tag);
+    pendingUrls.current.delete(qs);
+    pendingUrls.current.add(qs);
     router.replace(qs ? `/requirements?${qs}` : '/requirements', { scroll: false });
   }, [router, searchParams]);
 
   const load = useCallback(async (opts: { cursor?: string | null; append?: boolean } = {}) => {
     const nextCursor = opts.cursor ?? null;
-    const phase = opts.append === true ? 'append' as const : 'replace' as const;
+    let phase: 'append' | 'replace' = opts.append === true ? 'append' : 'replace';
     // 闸门在 dispatch 之前：被拒绝的追加不进入加载态，也不发请求。
     const gen = gate.current.begin(phase);
     if (gen === null) return;
@@ -109,17 +136,47 @@ function RequirementsContent() {
       if (status) params.set('status', status);
       if (tag) params.set('tag', tag);
       if (q) params.set('q', q);
+      const wantsArchives = searching && includeArchived;
+      if (wantsArchives && archiveSupport.current === true) params.set('include_archived', '1');
       params.set('limit', '200');
       if (nextCursor) params.set('cursor', nextCursor);
-      const res = await fetch(`/api/hub/requirements?${params.toString()}`, { cache: 'no-store' });
+      let res = await fetch(`/api/hub/requirements?${params.toString()}`, { cache: 'no-store' });
       // 已被更新的一次加载取代（换筛选/重复刷新）：这个回包整份作废。
       if (!gate.current.isCurrent(gen)) return;
       if (res.status === 401) { dispatch({ type: 'unauthorized', phase }); return; }
-      const data = await res.json();
+      let data = await res.json();
       if (!gate.current.isCurrent(gen)) return;
       if (!res.ok || !data.ok) {
         dispatch({ type: 'failed', phase, error: data?.error || `hub_${res.status}` });
         return;
+      }
+      const supportsArchives = (caps: unknown) => Array.isArray(caps) && caps.includes('archived') && caps.includes('search');
+      const supported = supportsArchives(data.capabilities);
+      archiveSupport.current = supported;
+      setArchiveSupported(supported);
+      // Learn capability from a normal read before sending the archive option.
+      // Negotiate inside this generation so the preliminary page is never shown
+      // as an archive-inclusive result, and late responses cannot change the UI.
+      if (params.has('include_archived') !== (wantsArchives && supported)) {
+        if (wantsArchives && supported) params.set('include_archived', '1');
+        else params.delete('include_archived');
+        // A changed capability also changes the query: never reuse its cursor.
+        params.delete('cursor');
+        phase = 'replace';
+        dispatch({ type: 'start', phase });
+        res = await fetch(`/api/hub/requirements?${params.toString()}`, { cache: 'no-store' });
+        if (!gate.current.isCurrent(gen)) return;
+        if (res.status === 401) { dispatch({ type: 'unauthorized', phase }); return; }
+        data = await res.json();
+        if (!gate.current.isCurrent(gen)) return;
+        if (!res.ok || !data.ok) {
+          dispatch({ type: 'failed', phase, error: data?.error || `hub_${res.status}` });
+          return;
+        }
+        const confirmed = supportsArchives(data.capabilities);
+        archiveSupport.current = confirmed;
+        setArchiveSupported(confirmed);
+        if (confirmed !== supported) throw new Error('搜索能力已变化，请重试');
       }
       const incoming = (data.requirements || []) as Requirement[];
       const nextCursorValue = typeof data.next_cursor === 'string' ? data.next_cursor : null;
@@ -136,7 +193,7 @@ function RequirementsContent() {
     } finally {
       gate.current.settle(gen);
     }
-  }, [status, tag, q]);
+  }, [status, tag, q, searching, includeArchived]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -166,7 +223,7 @@ function RequirementsContent() {
         </div>
 
         {/* Status tabs */}
-        <div className="mb-4 flex flex-wrap items-center gap-1.5">
+        <div className="mb-4 flex flex-wrap items-center gap-1.5" aria-label="状态筛选，数量为当前已加载结果">
           {COLUMNS.map(col => {
             const count = col.key ? counts[col.key] || 0 : rows.length;
             const active = status === col.key;
@@ -197,6 +254,7 @@ function RequirementsContent() {
               onKeyDown={e => { if (e.key === 'Enter') setParam({ q: qInput }); }}
               onBlur={() => { if (qInput !== q) setParam({ q: qInput }); }}
               placeholder="搜索标题 / 人 / 标签"
+              aria-label="搜索需求"
               className="w-40 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none sm:w-56"
             />
           </div>
@@ -207,9 +265,23 @@ function RequirementsContent() {
               onKeyDown={e => { if (e.key === 'Enter') setParam({ tag: tagInput }); }}
               onBlur={() => { if (tagInput !== tag) setParam({ tag: tagInput }); }}
               placeholder="精确标签"
+              aria-label="精确标签"
               className="w-28 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none"
             />
           </div>
+          {archiveSupported === true && (
+            <label className={`flex min-h-11 items-center gap-2 rounded-md px-2.5 text-xs sm:min-h-9 ${searching ? 'cursor-pointer text-[var(--fg)]' : 'text-[var(--fg-muted)]'}`}>
+              <input
+                type="checkbox"
+                checked={includeArchived}
+                disabled={!searching}
+                onChange={e => setParam({ q: qInput, tag: tagInput, include_archived: e.target.checked ? '1' : '0' })}
+                aria-describedby="archive-search-hint"
+                className="h-4 w-4 accent-[var(--hl)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--hl)]"
+              />
+              包含已归档
+            </label>
+          )}
           {(status || tag || q) && (
             <button
               type="button"
@@ -220,6 +292,23 @@ function RequirementsContent() {
             </button>
           )}
         </div>
+
+        <p id="archive-search-hint" role="status" className="mb-4 text-xs text-[var(--fg-muted)]">
+          {needsLogin
+            ? '登录后可继续读取需求。'
+            : error
+              ? '本次读取未完成，请重试。'
+              : archiveSupported === false
+            ? '当前 Hub 未提供归档搜索能力，仅显示普通需求。'
+            : !searching
+              ? '输入搜索词后可查找已归档需求。'
+              : loading
+                ? '正在读取搜索结果…'
+                : archiveSupported === true && includeArchived
+                  ? '搜索包含已归档需求，归档项单独标记。'
+                  : '搜索仅包含未归档需求。'}
+          {!loading && !error && !needsLogin && ` 已加载 ${rows.length} 条${hasMore ? '，可继续加载。' : '。'}`}
+        </p>
 
         {needsLogin && (
           <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
@@ -264,7 +353,12 @@ function RequirementsContent() {
                     <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${COLUMN_CHIP[row.column] || COLUMN_CHIP.abandoned}`}>
                       {row.column}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-gray-100">{row.name}</span>
+                    <span className="min-w-0 flex-1 basis-32 text-sm text-gray-100 sm:basis-0">
+                      <span className="block truncate" title={row.name}>{row.name}</span>
+                      {row.archived === true && (
+                        <span className="mt-1 inline-flex rounded border border-[var(--border)] bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] leading-4 text-[var(--fg-muted)]">已归档</span>
+                      )}
+                    </span>
                     {(row.tags || []).slice(0, 3).map(t => (
                       <span key={t} className="hidden shrink-0 rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-gray-400 sm:inline">
                         {t}
