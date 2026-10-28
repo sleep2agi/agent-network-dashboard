@@ -20,8 +20,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, toPixel, type LegionNode } from '../lib/legion-layout';
 import { LEGION_LABEL_PEOPLE } from '../lib/legion-view-constants';
-import { legionFetcher as fetcher, deptFetcher, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
+import { getAvatarUrl, useAvatarsVersion } from '../lib/avatars';
+import { legionFetcher as fetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
+import { useNetworkId } from '../lib/network-context';
+import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 
 /**
  * callback ref + ResizeObserver。
@@ -75,11 +78,20 @@ function ringLabel(node: LegionNode): string {
 }
 
 export default function LegionPage() {
+  // #1636-P1 —— 当前选中网络。拼进 SWR key：切网 = 换 key = 重新取数，不会串上一个网络的数据。
+  const { networkId, ready: networkReady } = useNetworkId();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   // 全屏演示（和 3D 页同口径）：把 2D 图铺满视口，会议室/PPT 用。
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // 净屏（和 3D 同口径）：隐掉头部与右侧面板，只留环图；Esc 恢复。
+  const [cleanView, setCleanView] = useState(false);
+  // 与 3D 一致：图例即筛选，只看某个状态的 Agent。
+  const [statusOnly, setStatusOnly] = useState<'working' | 'idle' | 'offline' | null>(null);
+  // manifest 拉完会派发 avatar 事件；订阅它才能在拿到头像 URL 后重渲染 SVG。
+  const avatarsVersion = useAvatarsVersion();
+  void avatarsVersion;
   const stageRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
@@ -95,21 +107,31 @@ export default function LegionPage() {
   const [helpOpen, setHelpOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [exportError, setExportError] = useState('');
-  const [needsLogin, setNeedsLogin] = useState(false);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const { ref, size } = useElementSize<HTMLDivElement>();
 
-  const people = useSWR<PeopleResponse>('/api/hub/people?limit=200&offset=0', fetcher, {
+  // 节点 id 属于当前网络；换 SWR key 不会自动清掉旧网络的选中/聚焦状态。
+  // 和 AliasAvatar 一样在渲染时调整，避免新网络先提交一帧旧节点高亮。
+  const [viewNetworkId, setViewNetworkId] = useState(networkId);
+  if (viewNetworkId !== networkId) {
+    setViewNetworkId(networkId);
+    setSelected(null);
+    setFocusGroup(null);
+    setHovered(null);
+    setCollapsed(new Set());
+    setView({ k: 1, tx: 0, ty: 0 });
+  }
+
+  const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, fetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
-    onError: (err: Error & { status?: number }) => { if (err.status === 401) setNeedsLogin(true); },
   });
   const hierarchy = useSWR<DepartmentsResponse | null>(
-    '/api/hub/departments', deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
+    networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, { refreshInterval: 60000, shouldRetryOnError: false },
   );
-  const status = useSWR<StatusResponse>('/api/hub/status', fetcher, {
+  const status = useSWR<StatusResponse>(networkReady && networkId ? scopedUrl('/api/hub/status', networkId) : null, fetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });
@@ -131,6 +153,19 @@ export default function LegionPage() {
     for (const s of status.data?.sessions ?? []) map.set(s.alias, s.status);
     return map;
   }, [status.data]);
+
+  // 图例带数量（和 3D 一致）：working / idle / 其余算离线未上报。
+  const statusCounts = useMemo(() => {
+    const counts = { working: 0, idle: 0, offline: 0 };
+    for (const n of layout.nodes) {
+      if (n.kind !== 'agent') continue;
+      const st = statusByAlias.get(n.label);
+      if (st === 'working') counts.working += 1;
+      else if (st === 'idle' || st === 'ready') counts.idle += 1;
+      else counts.offline += 1;
+    }
+    return counts;
+  }, [layout.nodes, statusByAlias]);
 
   const points = useMemo(() => {
     if (size.width === 0 || size.height === 0) return new Map<string, { x: number; y: number }>();
@@ -274,7 +309,7 @@ export default function LegionPage() {
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [selected, canCollapse, toggleCollapse, query, layout.nodes, router, helpOpen]);
+  }, [selected, canCollapse, toggleCollapse, query, layout.nodes, router, helpOpen, statusOnly]);
 
   // 从 /org 的「在军团图里看」跳过来：/legion?focus=<部门名>
   // 用 location.search 而不是 useSearchParams，避免这个客户端页要额外包 Suspense。
@@ -355,6 +390,32 @@ export default function LegionPage() {
     document.addEventListener('fullscreenchange', onFs);
     return () => document.removeEventListener('fullscreenchange', onFs);
   }, []);
+
+  // 筛选开着时单独挂 Esc：主键盘处理器是 capture 阶段注册的，和全站
+  // （HelpOverlay / CommandPalette）的 Esc 抢事件，实测收不到。
+  useEffect(() => {
+    if (!statusOnly) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      setStatusOnly(null);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [statusOnly]);
+
+  useEffect(() => {
+    if (!cleanView) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      setCleanView(false);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [cleanView]);
 
   const reset = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
   const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {
@@ -517,13 +578,15 @@ export default function LegionPage() {
   // 节点尺寸随画布缩放：1280 下取 1，375 下约 0.66。不缩的话部门圆直径
   // 44px 会大于环差，父子部门在窄屏上叠成一坨（实测 375 下圆心只差 29px）。
   const nodeScale = Math.max(0.62, Math.min(1, Math.min(size.width, size.height) / 520));
-  const loading = people.isLoading && !people.data;
-  const error = people.error as (Error & { status?: number }) | undefined;
+  // 网络还没确定时也计入 loading：否则 SWR 的 null key 让 isLoading=false，
+  // 页面会误显示「军团还没有成员」。
+  const loading = !networkReady || (people.isLoading && !people.data) || hierarchy.isLoading;
+  const error = legionReadError(people.error, hierarchy.error);
 
   return (
     <div ref={pageRef} className={`min-h-screen bg-[var(--bg)] text-[var(--fg)] ${isFullscreen ? 'h-[100dvh] overflow-auto' : ''}`}>
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className={`mb-4 flex flex-wrap items-end justify-between gap-3 ${cleanView ? 'invisible' : 'visible'}`}>
           <div>
             <h1 className="text-lg font-semibold text-white">Legion</h1>
             <p className="mt-1 text-xs text-[var(--fg-muted)]">
@@ -592,6 +655,16 @@ export default function LegionPage() {
             </button>
             <button
               type="button"
+              onClick={() => setCleanView(v => !v)}
+              aria-pressed={cleanView}
+              aria-label={cleanView ? '恢复界面' : '净屏（隐藏界面）'}
+              data-testid="legion-clean"
+              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+            >
+              {cleanView ? '恢复界面' : '净屏'}
+            </button>
+            <button
+              type="button"
               onClick={exportPng}
               disabled={exporting}
               data-testid="legion-export"
@@ -621,14 +694,21 @@ export default function LegionPage() {
             >
               3D 视图
             </Link>
+            <Link
+              href="/legion/plaza"
+              data-testid="legion-plaza-link"
+              className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              平台视角
+            </Link>
             <Link href="/org" className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
               列表视图
             </Link>
           </div>
         </div>
 
-        {needsLogin || error?.status === 401 ? (
-          <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
+        {error?.status === 401 ? (
+          <div role="alert" className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
             会话已过期，<Link href="/login" className="underline">重新登录</Link> 后再看军团编制。
           </div>
         ) : null}
@@ -667,9 +747,9 @@ export default function LegionPage() {
           </div>
         ) : null}
         {error && error.status !== 401 ? (
-          <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+          <div role="alert" className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
             读取失败：{error.message}
-            <button type="button" onClick={() => people.mutate()} className="ml-3 underline">重试</button>
+            <button type="button" onClick={() => { void people.mutate(); void hierarchy.mutate(); }} className="ml-3 underline">重试</button>
           </div>
         ) : null}
 
@@ -677,17 +757,19 @@ export default function LegionPage() {
           <div className="flex h-[62vh] min-h-[420px] items-center justify-center rounded-xl bg-[var(--bg-secondary)]">
             <div className="h-40 w-40 animate-pulse rounded-full border border-[var(--border)]" />
           </div>
-        ) : !needsLogin && !error && layout.stats.people === 0 && layout.stats.orphans === 0 && layout.stats.groups === 0 ? (
+        ) : networkReady && !networkId ? (
+          <NetworkRequiredNotice />
+        ) : !error && layout.stats.people === 0 && layout.stats.orphans === 0 && layout.stats.groups === 0 ? (
           <EmptyState
             variant="nodes"
             title="军团还没有成员"
             sub="成员加入网络并绑定 Agent 后，这里会自动长出编制。"
           />
-        ) : needsLogin || error ? null : (
-          <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+        ) : error ? null : (
+          <div className={`grid gap-4 ${cleanView ? 'lg:grid-cols-1' : 'lg:grid-cols-[1fr_280px]'}`}>
             <div
               ref={stageCallbackRef}
-              className={`relative overflow-hidden rounded-xl bg-[var(--bg-secondary)] ${isFullscreen ? 'h-[calc(100dvh-10rem)] min-h-[420px]' : 'h-[62vh] min-h-[420px]'}`}
+              className={`relative overflow-hidden rounded-xl bg-[var(--bg-secondary)] ${cleanView ? 'h-[calc(100dvh-3rem)]' : isFullscreen ? 'h-[calc(100dvh-10rem)] min-h-[420px]' : 'h-[62vh] min-h-[420px]'}`}
               onWheel={onWheel}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
@@ -814,13 +896,17 @@ export default function LegionPage() {
                     const dim = activeSet ? !activeSet.has(node.id) : false;
                     const isSelected = selected === node.id;
                     const statusValue = node.kind === 'agent' ? statusByAlias.get(node.label) : undefined;
-                    const r = (node.kind === 'core' ? 48 : node.kind === 'group' ? 26 : node.kind === 'person' ? 16 : 7) * nodeScale;
+                    // 人多时把成员点收小：100 个 16px 圆挤在同一圈会连成一条白带，
+                    // 看不出「一个个的人」；和 3D 的 crowd 缩放同一个思路。
+                    const crowd = node.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.72 : 1;
+                    const deptR = node.kind === 'group' ? ((node.depth ?? 1) <= 1 ? 24 : 16) : 0;
+                    const r = (node.kind === 'core' ? 48 : node.kind === 'group' ? deptR : node.kind === 'person' ? 16 : 7) * nodeScale * crowd;
                     const labelScale = Math.max(nodeScale, 0.85);
                     return (
                       <g
                         key={node.id}
                         transform={`translate(${p.x} ${p.y})`}
-                        opacity={dim ? 0.35 : 1}
+                        opacity={dim || (statusOnly && node.kind === 'agent' && (statusValue ?? 'offline') !== statusOnly) ? 0.18 : 1}
                         tabIndex={0}
                         role="button"
                         aria-label={`${ringLabel(node)} ${node.label}`}
@@ -861,13 +947,15 @@ export default function LegionPage() {
                             <circle
                               r={r}
                               fill="var(--bg-elevated)"
-                              stroke={isSelected ? 'var(--hl)' : 'var(--border)'}
-                              strokeWidth={isSelected ? 2 : 1}
+                              stroke={isSelected ? 'var(--hl)' : 'var(--border-hover)'}
+                              strokeWidth={isSelected ? 2 : 1.4}
                               strokeDasharray={node.collapsed ? '3 3' : undefined}
                             />
-                            <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)]" style={{ fontSize: 10 * labelScale }}>
-                              {node.label.slice(0, 4)}
-                            </text>
+                            {((node.span ?? 0) >= 1.0 || isSelected || hovered === node.id || view.k >= 1.25) && (
+                              <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)]" style={{ fontSize: 10 * labelScale }}>
+                                {node.label.slice(0, 4)}
+                              </text>
+                            )}
                             {/* 部门不再画「N 人 · M Agent」：多层部门时这行字会压进圆心
                                 （depth1 半径只有 0.30），且右侧面板本来就写着。*/}
                             {/* 折叠角标：虚线圆 + 「+N」把藏起来的人数说清楚，
@@ -891,7 +979,23 @@ export default function LegionPage() {
                           </>
                         ) : node.kind === 'person' ? (
                           <>
-                            <circle r={r} fill="var(--bg)" stroke={isSelected ? 'var(--hl)' : 'var(--border-hover)'} strokeWidth={isSelected ? 2 : 1} />
+                            <circle r={r} fill="var(--bg)" stroke={isSelected ? 'var(--hl)' : 'var(--fg)'} strokeWidth={isSelected ? 2 : 1} />
+                            {(() => {
+                              const url = getAvatarUrl(node.sublabel?.replace(/^@/, '') || node.label);
+                              if (!url || r < 7) return null;
+                              return (
+                                <image
+                                  href={url}
+                                  x={-r}
+                                  y={-r}
+                                  width={r * 2}
+                                  height={r * 2}
+                                  preserveAspectRatio="xMidYMid slice"
+                                  style={{ clipPath: 'circle(50%)' }}
+                                  aria-hidden
+                                />
+                              );
+                            })()}
                             {layout.stats.people <= LEGION_LABEL_PEOPLE && (
                               <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)] font-medium" style={{ fontSize: 9 * labelScale }}>
                                 {(node.label || '?').slice(0, 1).toUpperCase()}
@@ -932,7 +1036,7 @@ export default function LegionPage() {
                 </g>
               </svg>
 
-              <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-lg bg-[var(--bg)]/80 p-1 backdrop-blur">
+              <div className={`absolute bottom-3 left-3 flex items-center gap-1 rounded-lg bg-[var(--bg)]/80 p-1 backdrop-blur ${cleanView ? 'hidden' : ''}`}>
                 <button type="button" onClick={() => zoomBy(1.2)} aria-label="放大" className="rounded px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">＋</button>
                 <button type="button" onClick={() => zoomBy(1 / 1.2)} aria-label="缩小" className="rounded px-2 py-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">－</button>
                 <button type="button" onClick={reset} aria-label="重置视图" className="rounded px-2 py-1 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">重置</button>
@@ -940,13 +1044,33 @@ export default function LegionPage() {
               </div>
 
               <div className="absolute right-3 top-3 flex flex-wrap items-center gap-2 rounded-lg bg-[var(--bg)]/80 px-2 py-1 text-[10px] text-[var(--fg-muted)] backdrop-blur">
-                <span className="inline-flex items-center gap-1"><i className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'var(--success)' }} />working</span>
-                <span className="inline-flex items-center gap-1"><i className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'var(--info)' }} />idle</span>
-                <span className="inline-flex items-center gap-1"><i className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'var(--fg-dim)' }} />offline</span>
+                {/* 和 3D 页、导出图用同一套中文图例（之前这里是 working/idle/offline，
+                    同一张图在页面上是英文、导出后是中文）。 */}
+                {([
+                  ['working', '运行中', 'var(--success)'],
+                  ['idle', '空闲', 'var(--info)'],
+                  ['offline', '离线 / 未上报', 'var(--fg-dim)'],
+                ] as const).map(([key, label, color]) => {
+                  const active = statusOnly === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setStatusOnly(active ? null : key)}
+                      aria-pressed={active}
+                      data-testid={`legion-filter-${key}`}
+                      className={`inline-flex items-center gap-1 rounded px-1 py-0.5 transition-colors ${active ? 'bg-[var(--accent)]/15 text-[var(--fg)]' : 'hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+                    >
+                      <i aria-hidden className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+                      {label}
+                      <span className="tabular-nums text-[var(--fg-dim)]">{statusCounts[key]}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <aside data-testid="legion-panel" role="status" aria-live="polite" className="rounded-xl bg-[var(--bg-secondary)] p-4">
+            <aside data-testid="legion-panel" data-clean={cleanView ? '1' : '0'} role="status" aria-live="polite" className={`rounded-xl bg-[var(--bg-secondary)] p-4 ${cleanView ? 'hidden' : ''}`}>
               <div className="flex items-baseline justify-between">
                 <h2 className="text-xs uppercase tracking-wide text-[var(--fg-muted)]">
                   {selectedNode ? ringLabel(selectedNode) : '编制'}
@@ -965,15 +1089,19 @@ export default function LegionPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        void navigator.clipboard?.writeText(selectedNode.label).then(() => {
+                        // 和 3D 一致：复制可直接发给别人的地址（?node=），不是光秃秃一个名字。
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('node', selectedNode.label);
+                        const share = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+                        void navigator.clipboard?.writeText(share).then(() => {
                           setCopied(true);
                           setTimeout(() => setCopied(false), 1200);
                         }).catch(() => {});
                       }}
                       className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
-                      aria-label={`复制名称 ${selectedNode.label}`}
+                      aria-label={`复制 ${selectedNode.label} 的分享链接`}
                     >
-                      {copied ? '已复制' : '复制'}
+                      {copied ? '已复制' : '复制链接'}
                     </button>
                   </div>
                   {selectedNode.sublabel && <p className="text-[11px] text-[var(--fg-muted)]">{selectedNode.sublabel}</p>}

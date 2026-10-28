@@ -79,9 +79,18 @@ for (const screenshot of publicScreenshots) {
 }
 
 const publicRootScripts = new Set([
+  // Reviewed file-by-file in docs/oss-security-gates.md: local source checks
+  // and their data, plus opt-in browser/HTTP probes with explicit side effects.
+  'scripts/accent-text-baseline.json',
+  'scripts/bench-legion.mjs',
   'scripts/build-guard.sh',
+  'scripts/check-accent-text-ratchet.mjs',
   'scripts/check-avatars.mjs',
+  'scripts/check-canvas-labels.mjs',
   'scripts/check-color-ratchet.mjs',
+  'scripts/check-contrast.mjs',
+  'scripts/check-no-build-artifacts.mjs',
+  'scripts/check-token-contrast.mjs',
   'scripts/color-ratchet-baseline.json',
   'scripts/oss-binary-scan.mjs',
   'scripts/oss-public-surface-scan.mjs',
@@ -92,6 +101,14 @@ const publicRootScripts = new Set([
   // 不读任何凭据、不发网络请求、不写仓外路径。
   'scripts/run-tests.mjs',
   'scripts/stamp-build-commit.mjs',
+  // Loopback-only health read and synthetic browser data; writes local evidence.
+  'scripts/smoke-legion-discs.mjs',
+  'scripts/smoke-legion-interactions.mjs',
+  // Local-only synthetic rendering checks; password is supplied by the caller.
+  'scripts/smoke-legion-labels.mjs',
+  'scripts/smoke-legion.mjs',
+  'scripts/smoke-routes.mjs',
+  'scripts/verify-prod.mjs',
 ]);
 const unexpectedRootScripts = trackedPaths.filter((path) => path.startsWith('scripts/') && !publicRootScripts.has(path));
 check(unexpectedRootScripts.length === 0, `unreviewed root scripts: ${unexpectedRootScripts.join(', ')}`);

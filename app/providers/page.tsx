@@ -91,13 +91,13 @@ export default function ProvidersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">Model Providers</h1>
+        <h1 className="ml-10 text-xl font-semibold text-[var(--fg)] lg:ml-0">Model Providers</h1>
         {mock && <span className="text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/5 text-amber-300">preview fixture</span>}
         <button
           onClick={openCreate}
-          className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-cyan-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-cyan-500"
+          className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-[var(--hl)] px-3 py-1.5 text-sm font-medium text-[var(--bg)] hover:opacity-90"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
           新增供应商
@@ -114,7 +114,7 @@ export default function ProvidersPage() {
       )}
 
       <div className="max-w-3xl space-y-4">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--fg-muted)]">
           Configure model providers and per-server reachability. API keys are stored write-only in the secret vault and never displayed.
         </p>
 
@@ -125,9 +125,9 @@ export default function ProvidersPage() {
           </div>
         )}
 
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
+        <section className="rounded-xl bg-[var(--bg-secondary)] p-5">
           {loading ? (
-            <div className="animate-pulse space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-14 bg-gray-800/20 rounded" />)}</div>
+            <div className="animate-pulse space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-14 rounded bg-[var(--bg-elevated)]" />)}</div>
           ) : providers.length === 0 ? (
             <EmptyState
               variant="generic"
@@ -141,33 +141,33 @@ export default function ProvidersPage() {
                 const rid = p.provider_id || p.name;
                 const isOpen = expandedId === rid;
                 return (
-                <div key={rid} className={`rounded-lg border border-[#1c1c1f] bg-[#0e0e10] ${p.enabled ? '' : 'opacity-60'}`} data-provider={p.name}>
+                <div key={rid} className={`rounded-lg bg-[var(--bg)] ${p.enabled ? '' : 'opacity-60'}`} data-provider={p.name}>
                   <div className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:gap-3">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${p.enabled ? 'bg-green-500' : 'bg-gray-600'}`} title={p.enabled ? 'enabled' : 'disabled'} />
+                      <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${p.enabled ? 'bg-[var(--success)]' : 'bg-[var(--fg-dim)]'}`} title={p.enabled ? 'enabled' : 'disabled'} />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <span className="text-sm font-semibold text-white truncate">{p.name}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded border border-gray-600/30 text-gray-400 shrink-0" title={p.type}>{typeLabel(p.type)}</span>
+                          <span className="truncate text-sm font-semibold text-[var(--fg)]">{p.name}</span>
+                          <span className="shrink-0 text-[10px] text-[var(--fg-muted)]" title={p.type}>{typeLabel(p.type)}</span>
                           {p.hasKey
-                            ? <span className="text-[10px] px-1.5 py-0.5 rounded border border-green-500/20 bg-green-500/5 text-green-400 shrink-0">key set</span>
-                            : <span className="text-[10px] px-1.5 py-0.5 rounded border border-gray-600/20 text-gray-500 shrink-0">no key</span>}
+                            ? <span className="shrink-0 text-[10px] text-[var(--success)]">key set</span>
+                            : <span className="shrink-0 text-[10px] text-[var(--fg-muted)]">no key</span>}
                         </div>
-                        <div className="text-[11px] text-gray-500 truncate">
+                        <div className="truncate text-[11px] text-[var(--fg-muted)]">
                           {hostOf(p.base_url)} · {(p.models?.length || 0)} model{(p.models?.length || 0) === 1 ? '' : 's'}
                         </div>
                       </div>
                     </div>
-                    <div className="flex w-full shrink-0 items-center justify-end gap-1.5 border-t border-[#1c1c1f] pt-2 sm:w-auto sm:justify-normal sm:self-auto sm:border-t-0 sm:pt-0">
+                    <div className="flex w-full shrink-0 items-center justify-end gap-1.5 border-t border-[var(--border)] pt-2 sm:w-auto sm:justify-normal sm:self-auto sm:border-t-0 sm:pt-0">
                       <button
                         type="button"
                         onClick={() => setExpandedId(isOpen ? null : rid)}
                         disabled={!p.enabled}
                         title={p.enabled ? '连通性测试（模型 × 服务器 可达矩阵）' : '供应商已停用，启用后可测连通性'}
-                        className={`rounded border px-2 py-1 text-[11px] transition-colors ${!p.enabled ? 'border-[#26262b] text-gray-600 cursor-not-allowed' : isOpen ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300' : 'border-[#26262b] text-gray-300 hover:border-cyan-500/30 hover:text-cyan-300'}`}
+                        className={`rounded px-2 py-1 text-[11px] transition-colors ${!p.enabled ? 'cursor-not-allowed text-[var(--fg-dim)]' : isOpen ? 'bg-[var(--bg-elevated)] text-[var(--fg)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
                       >Test{isOpen ? ' ▾' : ''}</button>
-                      <button type="button" onClick={() => openEdit(p)} title="编辑（名称 / base_url / 模型）" className="rounded border border-[#26262b] px-2 py-1 text-[11px] text-gray-300 hover:border-cyan-500/30 hover:text-cyan-300">Edit</button>
-                      <button type="button" onClick={() => toggleEnabled(p)} title={p.enabled ? '停用（软删，可重新启用）' : '启用'} className="rounded border border-[#26262b] px-2 py-1 text-[11px] text-gray-400 hover:text-gray-200">
+                      <button type="button" onClick={() => openEdit(p)} title="编辑（名称 / base_url / 模型）" className="rounded px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">Edit</button>
+                      <button type="button" onClick={() => toggleEnabled(p)} title={p.enabled ? '停用（软删，可重新启用）' : '启用'} className="rounded px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
                         {p.enabled ? 'Disable' : 'Enable'}
                       </button>
                     </div>
@@ -175,7 +175,7 @@ export default function ProvidersPage() {
                   {isOpen && (
                     (p.models?.length || 0) > 0
                       ? <ReachabilityMatrix providerId={p.provider_id} models={p.models || []} />
-                      : <div className="border-t border-[#1c1c1f] px-3 py-3 text-[11px] text-gray-500">该供应商未配置模型——先 Edit 添加模型再测可达性。</div>
+                      : <div className="border-t border-[var(--border)] px-3 py-3 text-[11px] text-[var(--fg-muted)]">该供应商未配置模型——先 Edit 添加模型再测可达性。</div>
                   )}
                 </div>
                 );
@@ -184,8 +184,8 @@ export default function ProvidersPage() {
           )}
         </section>
 
-        <p className="text-[11px] text-gray-600">
-          按 <span className="text-gray-400">Test</span> 展开「模型 × 服务器」连通性矩阵（对每个模型实时探测可达性）。创建节点向导的模型下拉将从此处的 registry 拉取（即将支持）。
+        <p className="text-[11px] text-[var(--fg-muted)]">
+          按 <span className="text-[var(--fg)]">Test</span> 展开「模型 × 服务器」连通性矩阵（对每个模型实时探测可达性）。创建节点向导的模型下拉将从此处的 registry 拉取（即将支持）。
         </p>
       </div>
 

@@ -261,10 +261,9 @@ export function ServersPanel({ enabled = true, className = '' }: { enabled?: boo
         return (
           <div
             key={s.hostname}
-            className="rounded-lg border px-2.5 py-2 space-y-1.5"
+            className="rounded-lg px-2.5 py-2 space-y-1.5"
             style={{
               background: 'var(--bg)',
-              borderColor: 'var(--border)',
               opacity: offline ? 0.55 : 1,
             }}
             data-server-card={s.hostname}
@@ -284,7 +283,7 @@ export function ServersPanel({ enabled = true, className = '' }: { enabled?: boo
                 {/* Hero 1 health badge — worst-of CPU/Mem/Disk */}
                 {!offline && <HealthBadge cpu={cpuPct} mem={memPct} disk={diskPct} />}
                 <span className="font-mono text-[12px] font-semibold truncate" style={{ color: 'var(--fg)' }}>{s.hostname}</span>
-                {s.note && <span className="text-[9px] text-[var(--fg-dim)]">({s.note})</span>}
+                {s.note && <span className="text-[9px] text-[var(--fg-muted)]">({s.note})</span>}
               </div>
               <span className="flex items-center gap-1 shrink-0">
                 <span className="text-[10px] text-[var(--fg-muted)] font-mono tabular-nums">

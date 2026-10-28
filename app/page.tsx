@@ -151,13 +151,13 @@ export default function Dashboard() {
           only two numbers that drive action are running and failed;
           everything else lives on /tasks. */}
       {Object.keys(taskStats).length > 0 && (
-        <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg border border-[#26262b] bg-[#161618] px-4 py-2.5 text-xs">
+        <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg bg-[var(--bg-secondary)] px-4 py-2.5 text-xs">
           <div className="text-gray-400 tabular-nums">
             <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} running</span>
             <span className="text-gray-600"> &middot; </span>
             <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} failed</span>
           </div>
-          <Link href="/tasks" prefetch={false} className="text-cyan-400 hover:text-cyan-300">View all &rarr;</Link>
+          <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:opacity-80">View all &rarr;</Link>
         </section>
       )}
 
@@ -256,8 +256,8 @@ export default function Dashboard() {
                   disabled={counts[c.key] === 0 && c.key !== 'all'}
                   className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                     agentFilter === c.key
-                      ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
-                      : 'text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] border border-transparent'
+                      ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]'
+                      : 'text-gray-500 hover:text-gray-200 hover:bg-[var(--hover-tint)]'
                   }`}
                 >
                   {c.dot && <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.dot }} />}

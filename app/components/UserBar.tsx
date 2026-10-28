@@ -115,15 +115,15 @@ export function UserBar() {
   const initials = (auth.user.display_name || auth.user.username).slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex items-center justify-between bg-[#161618] border border-[#26262b] rounded-lg px-4 py-2.5 mb-4">
+    <div className="flex items-center justify-between bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-4 py-2.5 mb-4">
       {/* User info */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-xs font-bold text-white">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-xs font-bold text-[var(--fg)]">
           {initials}
         </div>
         <div>
-          <div className="text-sm text-white font-medium">{auth.user.display_name || auth.user.username}</div>
-          <div className="text-[10px] text-gray-500">{auth.user.role} · {auth.user.user_id}</div>
+          <div className="text-sm text-[var(--fg)] font-medium">{auth.user.display_name || auth.user.username}</div>
+          <div className="text-[10px] text-[var(--fg-muted)]">{auth.user.role} · {auth.user.user_id}</div>
         </div>
       </div>
 
@@ -138,7 +138,7 @@ export function UserBar() {
               setNetworkId(e.target.value);
               sessionStorage.setItem('anet_v3_auth', JSON.stringify(updated));
             }}
-            className="bg-[#0e0e10] border border-[#26262b] rounded px-2 py-1 text-base sm:text-xs text-white focus:outline-none"
+            className="bg-[var(--bg)] border border-[var(--border)] rounded px-2 py-1 text-base sm:text-xs text-[var(--fg)] focus:outline-none"
           >
             {auth.networks.map(n => (
               <option key={n.network_id} value={n.network_id}>{n.network_name}</option>
@@ -146,7 +146,7 @@ export function UserBar() {
           </select>
         )}
         <button onClick={() => { setEditName(auth.user?.display_name || ''); setEditEmail(''); setEditing(!editing); }}
-          className="text-xs text-gray-500 hover:text-gray-300 whitespace-nowrap"
+          className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] whitespace-nowrap"
           aria-label="Edit profile">
           <span className="hidden sm:inline">Edit</span>
           <svg className="sm:hidden w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -154,7 +154,7 @@ export function UserBar() {
           </svg>
         </button>
         <button onClick={logout}
-          className="text-xs text-gray-500 hover:text-gray-300 whitespace-nowrap"
+          className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] whitespace-nowrap"
           aria-label="Sign out">
           <span className="hidden sm:inline">Sign out</span>
           <svg className="sm:hidden w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -163,12 +163,12 @@ export function UserBar() {
         </button>
       </div>
       {editing && (
-        <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-[#26262b]">
+        <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-[var(--border)]">
           <input type="text" value={editName} onChange={e => setEditName(e.target.value)} placeholder="Display name"
-            className="bg-[#0e0e10] border border-[#26262b] rounded px-2 py-1 text-base sm:text-xs text-white placeholder-gray-600 focus:outline-none w-32" />
+            className="bg-[var(--bg)] border border-[var(--border)] rounded px-2 py-1 text-base sm:text-xs text-[var(--fg)] placeholder-gray-600 focus:outline-none w-32" />
           <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Email"
-            className="bg-[#0e0e10] border border-[#26262b] rounded px-2 py-1 text-base sm:text-xs text-white placeholder-gray-600 focus:outline-none w-40" />
-          <button onClick={updateProfile} className="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs rounded">Save</button>
+            className="bg-[var(--bg)] border border-[var(--border)] rounded px-2 py-1 text-base sm:text-xs text-[var(--fg)] placeholder-gray-600 focus:outline-none w-40" />
+          <button onClick={updateProfile} className="px-2 py-1 bg-[var(--accent)] hover:opacity-90 text-[var(--accent-fg)] text-xs rounded">Save</button>
         </div>
       )}
     </div>

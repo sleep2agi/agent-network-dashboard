@@ -18,6 +18,38 @@ Linux and macOS user-home paths are rejected generically. Deployment operators m
 
 ## Local verification
 
+### Reviewed root-script inventory
+
+`scripts/oss-readiness-check.mjs` keeps an exact-path allowlist of reviewed files
+under `scripts/`. New files require a review and an explicit entry; browser
+probes are not executed by this inventory check. The Legion tooling added to
+that inventory was reviewed with these inputs and side effects:
+
+| File under `scripts/` | Purpose and inputs | Side effects |
+|---|---|---|
+| `accent-text-baseline.json` | Per-source-file counts used by the accent-text ratchet | Data only; no execution |
+| `check-accent-text-ratchet.mjs` | Reads `app/` and the accent-text baseline | `--update` rewrites that baseline; normal checks only read |
+| `check-no-build-artifacts.mjs` | Reads the Git index with `git ls-files` to reject tracked build output | No file writes or network requests |
+| `check-token-contrast.mjs` | Reads theme values in `app/globals.css` and computes contrast | No file writes or network requests |
+| `bench-legion.mjs` | Playwright frame-timing probe using `BASE_URL`, `SAMPLE_MS` and optional `STORAGE_STATE` | Loads the supplied browser session file, or posts the login password; navigates and manipulates the 3D view |
+| `check-canvas-labels.mjs` | Playwright pixel/contrast probe using `BASE_URL` | Posts the login password and renders a temporary Canvas in the page |
+| `check-contrast.mjs` | Playwright DOM contrast probe using `BASE_URL`, `THEMES` and `PAGES` | Posts the login password and visits configured pages |
+| `smoke-legion.mjs` | Playwright 2D/3D interactions using `BASE_URL` | Posts the login password, reads directory data, exercises browser clipboard, and saves PNG exports/screenshots under `TMPDIR` (system temporary directory by default) |
+| `smoke-legion-discs.mjs` | Opt-in synthetic 3D geometry/interaction probe using `BASE_URL`, required `OUTPUT_DIR`, and optional `FIXTURE_PASSWORD` (test-only default); requires clean tracked Git status, including staged changes, and matching source/build SHA | GETs loopback `/api/health`; accepts only `127.0.0.1` and rejects ports 3101/3102. Sets a local browser cookie from the fixture password, intercepts all browser API/portrait requests with fixtures, blocks external origins, and interacts with the local 3D/organization views. Writes PNG screenshots, JSON results, and an exact probe copy to `OUTPUT_DIR`; does not post credentials or write to Hub |
+| `smoke-legion-interactions.mjs` | Synthetic Agent-directory, platform-detail, fullscreen and inline-chat acceptance; same clean-source/build identity gate and environment inputs as the disc probe | Loopback health GET only before Chromium; all browser APIs including chat POSTs are fulfilled by synthetic fixtures, external origins blocked. Saves screenshots, probe copy and JSON to `OUTPUT_DIR`; no real Hub reads or writes |
+| `smoke-routes.mjs` | Playwright route checks using `BASE_URL`, `THEMES`, `ONLY` and `IGNORE_5XX` | Posts the login password and visits routes; configured response exclusions are part of its coverage |
+| `verify-prod.mjs` | HTTP health/page/asset checks using `--base`, optional `--expect` and `--browser`; reads local package/build identity | GET requests and optional unauthenticated browser navigation; no login or configuration writes |
+
+The authenticated probes read `ANET_DASHBOARD_PASSWORD` and retain the existing
+development fallback when it is absent. Their `BASE_URL` defaults to localhost,
+but accepts a caller-selected host; unlike `smoke-legion-labels.mjs` and
+`smoke-legion-discs.mjs`, they do not
+enforce a loopback-only target or synthetic data. Registration documents the
+scripts' behavior; it is not evidence that they ran or that a real-account or
+production acceptance check passed.
+
+### Commands
+
 ```bash
 npm ci
 npm run oss:check

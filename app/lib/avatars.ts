@@ -101,6 +101,9 @@ function readMap(): Record<string, string> {
 
 export function getAvatarUrl(alias?: string | null): string {
   if (!alias) return '';
+  // 非 hook 调用（canvas 渲染循环）也要能触发 manifest 拉取，否则
+  // 军团图这种「不走 useAvatarUrl」的地方永远拿不到默认头像池。
+  fetchManifestOnce();
   // Node-backed: hub authority — its value, or (when cleared/none) the
   // designed default chain, SKIPPING localStorage entirely.
   if (hubNodeAliases.has(alias)) {

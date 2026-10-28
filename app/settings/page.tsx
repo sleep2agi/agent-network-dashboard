@@ -1,311 +1,299 @@
 'use client';
 
-import { useState } from 'react';
+// Settings — information architecture aligned with the desktop client's
+// settings model (client `src/settings-model.ts`): 账号 → 用户管理 →
+// Agent 组织架构 → 本地 Hub → 外观 → 通知 → 快捷键 → 关于.
+//
+// Dashboard only owns the subset it can actually back with real data:
+//   账号（改密码 / 退出）         ← client 账号
+//   连接（Hub 地址 / 凭据 / 版本） ← client 本地 Hub·状态
+//   成员与组织（/admin、/org）     ← client 用户管理 + Agent 组织架构
+//   外观（主题）                   ← client 外观·主题
+//   资源（tokens / networks / …）  ← Dashboard 特有
+//   关于（版本 / 数据层）           ← client 关于
+// 通知、语音输入、快捷键三组客户端有、Dashboard 没有对应能力，这里不画
+// 假开关（宁可缺组，也不做点了没反应的设置项）。
+//
+// Styling follows client docs/design/minimal-2026-09.md: 靠底色分层不靠
+// 边框（信息卡不描边）、字重上限 600、选中态用中性 rowActive 而不是
+// 强调色块。
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAnetConfig, useHealth } from '../lib/hooks';
 import { applyTheme } from '../components/ThemeSwitcher';
 import { DASHBOARD_VERSION } from '../lib/version';
 import { clearPrivateChatStorage } from '../lib/chat-outbox';
+import { SETTINGS_SECTIONS, SETTINGS_LINKS, SETTINGS_THEMES } from '../lib/settings-model';
+
+function GroupHeading({ id, label }: { id: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2 px-1">
+      <h2 id={`${id}-heading`} className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fg-muted)]">
+        {label}
+      </h2>
+      <div className="h-px flex-1 bg-[var(--border)]" />
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { config } = useAnetConfig();
   const { health, error: healthError } = useHealth();
-  const [theme, setTheme] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'cyber';
-    try { return localStorage.getItem('anet-theme') || 'cyber'; } catch { return 'cyber'; }
-  });
+  // 首帧必须和 SSR 一致（cyber），否则浅色/Slack 用户一进 /settings 就报
+  // hydration 不匹配：服务端渲染 cyber，客户端首帧读 localStorage 得到 light。
+  // 挂载后再同步到真实选择（这时已经 hydrate 完，不会打架）。
+  const [theme, setTheme] = useState<string>('cyber');
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('anet-theme');
+      // Hydration-safe restore, as in UserBar: keep the first render identical to SSR.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (saved) setTheme(saved);
+    } catch {}
+  }, []);
   const [oldPwd, setOldPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [pwdResult, setPwdResult] = useState('');
   const rowClass = 'flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between';
   const valueClass = 'break-all sm:max-w-[320px] sm:text-right';
+  const cardClass = 'rounded-xl bg-[var(--bg-secondary)] p-5';
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
-      <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Settings</h1>
+    <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
+      <div className="mx-auto max-w-2xl">
+        <h1 className="mb-4 ml-10 text-xl font-semibold text-[var(--fg)] lg:ml-0">Settings</h1>
 
-      {/* Section anchor nav (round 28) — jump to a group instead of scrolling
-          through the whole page. Mirrors the section headers below; pages
-          with 7+ cards benefit from a visible table-of-contents.
-          R3 of #190 mobile polish: matches the /admin chip treatment
-          (preview.3) — 44px tap-target + visible border so the chips read
-          as tappable rather than as inert headings on 375–390px. */}
-      {/* #209 R36: mb-8 → mb-4 sm:mb-8 — same pattern R31 applied to
-          /admin's identical jump-nav. Saves 16 px on phones. */}
-      <nav className="mb-4 sm:mb-8 flex flex-wrap gap-2 text-xs">
-        {[
-          { href: '#appearance', label: 'Appearance' },
-          { href: '#connection', label: 'Connection' },
-          { href: '#account',    label: 'Account' },
-          { href: '#resources',  label: 'Resources' },
-        ].map(a => (
-          <a key={a.href} href={a.href}
-            className="inline-flex min-h-[44px] items-center rounded-md border border-[#26262b] bg-[#0e0e10]/60 px-3 py-2 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
-            {a.label}
-          </a>
-        ))}
-      </nav>
+        {/* 分段锚点：与下面六组标题一一对应。字重/描边按 minimal 规范收掉，
+            但保留 44px 触控高度（移动端可点性不靠边框表达）。 */}
+        <nav aria-label="Settings sections" className="mb-6 -mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+          {SETTINGS_SECTIONS.map(s => (
+            <a
+              key={s.id}
+              href={`#${s.id}`}
+              className="inline-flex min-h-[44px] shrink-0 items-center rounded-md px-3 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              {s.label}
+            </a>
+          ))}
+        </nav>
 
-      <div className="max-w-2xl space-y-10">
-        {/* ── Group: Appearance (#217 S6 — Vincent: "设置里面再来一个
-            优化白色的主题"). The light theme tokens were restored from
-            pre-R8 history; this card is the visible owner of the toggle
-            (previously theme switching hid inside Cmd+K only). */}
-        <div id="appearance" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Appearance</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
-          <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-gray-300 mb-4">Theme</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {([
-                { id: 'cyber', label: 'Dark', swatch: '#0b0b0d' },
-                { id: 'light', label: 'Light', swatch: '#f6f7f9' },
-                { id: 'slack', label: 'Slack', swatch: '#3f0e40' },
-              ] as const).map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    try { localStorage.setItem('anet-theme', t.id); } catch {}
-                    applyTheme(t.id);
-                    setTheme(t.id);
-                  }}
-                  aria-pressed={theme === t.id}
-                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-colors ${
-                    theme === t.id
-                      ? 'border-cyan-500/60 bg-cyan-500/10 text-gray-100'
-                      : 'border-[#26262b] text-gray-400 hover:border-[#3a3a41]'
-                  }`}
-                >
-                  <span
-                    aria-hidden
-                    className="inline-block w-5 h-5 rounded-full border border-black/20 shrink-0"
-                    style={{ backgroundColor: t.swatch }}
-                  />
-                  {t.label}
-                  {/* R4 (#17): the selected-state marker was a raw "✓" text
-                      glyph — it renders font-dependently and sat a touch off
-                      the row's optical baseline. Swap to the same inline-SVG
-                      check the rest of the dashboard uses (round 59 emoji→SVG
-                      migration), so the icon language is consistent and crisp. */}
-                  {theme === t.id && (
-                    <svg aria-hidden className="ml-auto w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  )}
+        <div className="space-y-8">
+          {/* ── Account（客户端第一组：账号）──────────────────────── */}
+          <section id="account" data-settings-group="account" aria-labelledby="account-heading" className="space-y-3 scroll-mt-6">
+            <GroupHeading id="account" label="Account" />
+
+            <div className={cardClass}>
+              <h3 className="mb-4 text-sm font-semibold">Change password</h3>
+              <div className="space-y-3">
+                <input type="password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} placeholder="Current password"
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-[var(--hl)] focus:outline-none sm:text-sm" />
+                <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="New password"
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-[var(--hl)] focus:outline-none sm:text-sm" />
+                <button onClick={async () => {
+                  if (!oldPwd || !newPwd) return;
+                  const saved = sessionStorage.getItem('anet_v3_auth');
+                  if (!saved) { setPwdResult('Not logged in with V3 auth'); return; }
+                  const { token } = JSON.parse(saved);
+                  const res = await fetch('/api/hub/auth', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'change_password', token, current_password: oldPwd, new_password: newPwd }),
+                  });
+                  const data = await res.json();
+                  setPwdResult(data.ok ? 'Password changed' : `Failed: ${data.error}`);
+                  if (data.ok) {
+                    if (data.token) {
+                      const auth = JSON.parse(saved);
+                      sessionStorage.setItem('anet_v3_auth', JSON.stringify({ ...auth, token: data.token }));
+                    }
+                    setOldPwd('');
+                    setNewPwd('');
+                  }
+                  setTimeout(() => setPwdResult(''), 5000);
+                }} disabled={!oldPwd || !newPwd}
+                  className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-medium text-[var(--bg)] transition-opacity hover:opacity-90 disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)]">
+                  Change password
                 </button>
+              </div>
+              {pwdResult && <div className={`mt-2 text-xs ${pwdResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{pwdResult}</div>}
+            </div>
+
+            <div className={cardClass}>
+              <h3 className="mb-1 text-sm font-semibold">Sign out</h3>
+              <p className="mb-3 text-xs text-[var(--fg-muted)]">Signing out clears your dashboard session cookie. You&apos;ll return to the login page.</p>
+              <button
+                onClick={async () => {
+                  await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+                  clearPrivateChatStorage();
+                  sessionStorage.removeItem('anet_v3_auth');
+                  window.location.assign('/login');
+                }}
+                className="rounded-lg bg-[var(--bg-elevated)] px-4 py-2 text-sm text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)]"
+              >
+                Sign out
+              </button>
+            </div>
+          </section>
+
+          {/* ── Connection（客户端「本地 Hub」组的状态视图）──────── */}
+          <section id="connection" data-settings-group="connection" aria-labelledby="connection-heading" className="space-y-3 scroll-mt-6">
+            <GroupHeading id="connection" label="Connection" />
+
+            <div className={cardClass}>
+              <h3 className="mb-4 text-sm font-semibold">CommHub connection</h3>
+              <div className="space-y-3 text-sm">
+                <div className={rowClass}>
+                  <span className="shrink-0 text-[var(--fg-muted)]">Hub URL</span>
+                  <span className={`text-[var(--hl)] ${valueClass}`}>{config?.hub || 'not configured'}</span>
+                </div>
+                <div className={rowClass}>
+                  <span className="text-[var(--fg-muted)]">Config source</span>
+                  <span className={`text-[var(--fg)] ${valueClass}`}>
+                    {config?.source === 'file' ? 'Local file (~/.anet/config.json)' : config?.source === 'runtime-env' ? 'Vercel env vars' : 'Missing'}
+                  </span>
+                </div>
+                <div className={rowClass}>
+                  <span className="text-[var(--fg-muted)]">Auth token</span>
+                  <span className={`${config?.tokenConfigured ? 'text-[var(--success)]' : 'text-[var(--danger)]'} ${valueClass}`}>
+                    {config?.tokenConfigured ? `Configured (${config.tokenPreview})` : 'Not configured'}
+                  </span>
+                </div>
+                <div className={rowClass}>
+                  <span className="text-[var(--fg-muted)]">Server auth</span>
+                  <span className={`${health?.auth === 'enabled' ? 'text-[var(--success)]' : 'text-[var(--warning)]'} sm:text-right`}>
+                    {health?.auth || '--'}
+                  </span>
+                </div>
+                {config?.error && (
+                  <div className="border-t border-[var(--border)] pt-3 text-xs text-[var(--fg-muted)]">
+                    {config.error}
+                  </div>
+                )}
+                {/* #214 F5: the red HealthBanner's "Open Settings" CTA used to
+                    land on a read-only page with no next step. When the hub is
+                    unreachable, give the user actual recovery commands. */}
+                {(healthError || health?.ok === false) && (
+                  <div className="space-y-1.5 border-t border-[var(--danger)]/30 pt-3 text-xs" role="alert">
+                    <div className="font-medium text-[var(--danger)]">CommHub unreachable — how to recover:</div>
+                    <div className="text-[var(--fg-muted)]">1. Check the hub process on the server: <code className="rounded bg-[var(--code-bg)] px-1.5 py-0.5 font-mono">anet hub status</code></div>
+                    <div className="text-[var(--fg-muted)]">2. Start it if stopped: <code className="rounded bg-[var(--code-bg)] px-1.5 py-0.5 font-mono">anet hub start</code></div>
+                    <div className="text-[var(--fg-muted)]">3. Confirm the Hub URL above matches where the hub actually listens.</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={cardClass}>
+              <h3 className="mb-4 text-sm font-semibold">Server</h3>
+              <div className="space-y-3 text-sm">
+                <div className={rowClass}>
+                  <span className="text-[var(--fg-muted)]">Hub version</span>
+                  <span className={`font-mono text-[var(--fg)] ${valueClass}`}>{health?.version || '--'}</span>
+                </div>
+                <div className={rowClass}>
+                  <span className="text-[var(--fg-muted)]">Sessions</span>
+                  <span className={`text-[var(--fg)] ${valueClass}`}>{health?.sessions ?? '--'}</span>
+                </div>
+                <div className={rowClass}>
+                  <span className="text-[var(--fg-muted)]">SSE streams</span>
+                  <span className={`text-[var(--fg)] ${valueClass}`}>{health?.sse_connections ?? '--'}</span>
+                </div>
+                <div className={rowClass}>
+                  <span className="text-[var(--fg-muted)]">Uptime</span>
+                  <span className={`text-[var(--fg)] ${valueClass}`}>{health?.uptime ? `${Math.floor(health.uptime / 3600)}h ${Math.floor((health.uptime % 3600) / 60)}m` : '--'}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── Team（客户端：用户管理 + Agent 组织架构）────────── */}
+          <section id="team" data-settings-group="team" aria-labelledby="team-heading" className="space-y-3 scroll-mt-6">
+            <GroupHeading id="team" label="Team" />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {SETTINGS_LINKS.filter(l => l.group === 'team').map(l => (
+                <Link key={l.href} href={l.href} className="rounded-xl bg-[var(--bg-secondary)] p-5 transition-colors hover:bg-[var(--bg-elevated)]">
+                  <h3 className="text-sm font-semibold">{l.title}</h3>
+                  <p className="mt-2 text-xs text-[var(--fg-muted)]">{l.desc}</p>
+                  <span className="mt-3 inline-block text-xs text-[var(--hl)]">{l.action} &rarr;</span>
+                </Link>
               ))}
             </div>
           </section>
-        </div>
 
-        {/* ── Group: Connection ─────────────────────────────────── */}
-        <div id="connection" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Connection</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
-
-        {/* CommHub Connection */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">CommHub Connection</h2>
-          <div className="space-y-3 text-sm">
-            <div className={rowClass}>
-              <span className="text-gray-500 shrink-0">Hub URL</span>
-              <span className={`text-cyan-300 ${valueClass}`}>{config?.hub || 'not configured'}</span>
-            </div>
-            <div className={rowClass}>
-              <span className="text-gray-500">Config Source</span>
-              <span className={`text-gray-300 ${valueClass}`}>
-                {config?.source === 'file' ? 'Local file (~/.anet/config.json)' : config?.source === 'runtime-env' ? 'Vercel env vars' : 'Missing'}
-              </span>
-            </div>
-            <div className={rowClass}>
-              <span className="text-gray-500">Auth Token</span>
-              <span className={`${config?.tokenConfigured ? 'text-green-400' : 'text-red-400'} ${valueClass}`}>
-                {config?.tokenConfigured ? `Configured (${config.tokenPreview})` : 'Not configured'}
-              </span>
-            </div>
-            <div className={rowClass}>
-              <span className="text-gray-500">Server Auth</span>
-              <span className={`${health?.auth === 'enabled' ? 'text-green-400' : 'text-yellow-400'} sm:text-right`}>
-                {health?.auth || '--'}
-              </span>
-            </div>
-            {config?.error && (
-              <div className="border-t border-[#26262b] pt-3 text-xs text-gray-500">
-                {config.error}
+          {/* ── Appearance（客户端外观组：主题）────────────────── */}
+          <section id="appearance" data-settings-group="appearance" aria-labelledby="appearance-heading" className="space-y-3 scroll-mt-6">
+            <GroupHeading id="appearance" label="Appearance" />
+            <div className={cardClass}>
+              <h3 className="mb-4 text-sm font-semibold">Theme</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {SETTINGS_THEMES.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      try { localStorage.setItem('anet-theme', t.id); } catch {}
+                      applyTheme(t.id);
+                      setTheme(t.id);
+                    }}
+                    aria-pressed={theme === t.id}
+                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-colors ${
+                      theme === t.id
+                        ? 'bg-[var(--bg-elevated)] text-[var(--fg)]'
+                        : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
+                    }`}
+                  >
+                    <span
+                      aria-hidden
+                      className="inline-block h-5 w-5 shrink-0 rounded-full border border-black/20"
+                      style={{ backgroundColor: t.swatch }}
+                    />
+                    {t.label}
+                    {theme === t.id && (
+                      <svg aria-hidden className="ml-auto h-4 w-4 text-[var(--hl)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
               </div>
-            )}
-            {/* #214 F5: the red HealthBanner's "Open Settings" CTA used to
-                land on a read-only page with no next step. When the hub is
-                unreachable, give the user actual recovery commands. */}
-            {(healthError || health?.ok === false) && (
-              <div className="border-t border-red-500/20 pt-3 text-xs space-y-1.5" role="alert">
-                <div className="text-red-300 font-medium">CommHub unreachable — how to recover:</div>
-                <div className="text-gray-400">1. Check the hub process on the server: <code className="font-mono bg-[#0e0e10] border border-[#1c1c1f] rounded px-1.5 py-0.5">anet hub status</code></div>
-                <div className="text-gray-400">2. Start it if stopped: <code className="font-mono bg-[#0e0e10] border border-[#1c1c1f] rounded px-1.5 py-0.5">anet hub start</code></div>
-                <div className="text-gray-400">3. Confirm the Hub URL above matches where the hub actually listens.</div>
+            </div>
+          </section>
+
+          {/* ── Resources（Dashboard 特有：低频页面入口）───────── */}
+          <section id="resources" data-settings-group="resources" aria-labelledby="resources-heading" className="space-y-3 scroll-mt-6">
+            <GroupHeading id="resources" label="Resources" />
+            {/* #209 (per Vincent 521/522): the low-frequency pages 通信龙
+                moved out of the sidebar (Messages, Audit Log, Server Logs)
+                need a discovery surface that isn't the primary nav. */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {SETTINGS_LINKS.filter(l => l.group === 'resource').map(l => (
+                <Link key={l.href} href={l.href} className="rounded-xl bg-[var(--bg-secondary)] p-5 transition-colors hover:bg-[var(--bg-elevated)]">
+                  <h3 className="text-sm font-semibold">{l.title}</h3>
+                  <p className="mt-2 text-xs text-[var(--fg-muted)]">{l.desc}</p>
+                  <span className="mt-3 inline-block text-xs text-[var(--hl)]">{l.action} &rarr;</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* ── About（客户端最后一组）────────────────────────── */}
+          <section id="about" data-settings-group="about" aria-labelledby="about-heading" className="space-y-3 scroll-mt-6">
+            <GroupHeading id="about" label="About" />
+            <div className={cardClass}>
+              <div className="space-y-3 text-sm">
+                <div className={rowClass}>
+                  <span className="text-[var(--fg-muted)]">Dashboard version</span>
+                  <span className={`font-mono text-[var(--fg)] ${valueClass}`} title="From package.json @sleep2agi/agent-network-dashboard">
+                    {DASHBOARD_VERSION}
+                  </span>
+                </div>
+                <div className={rowClass}>
+                  <span className="text-[var(--fg-muted)]">Data layer</span>
+                  <span className={`text-[var(--fg)] ${valueClass}`}>SWR (5s refresh, 3s dedup)</span>
+                </div>
               </div>
-            )}
-          </div>
-        </section>
-
-        {/* Server Info */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Server Info</h2>
-          <div className="space-y-3 text-sm">
-            <div className={rowClass}>
-              <span className="text-gray-500">Version</span>
-              <span className={`text-gray-300 ${valueClass}`}>{health?.version || '--'}</span>
             </div>
-            <div className={rowClass}>
-              <span className="text-gray-500">Sessions</span>
-              <span className={`text-gray-300 ${valueClass}`}>{health?.sessions ?? '--'}</span>
-            </div>
-            <div className={rowClass}>
-              <span className="text-gray-500">SSE streams <span className="text-gray-600">· server</span></span>
-              <span className={`text-gray-300 ${valueClass}`}>{health?.sse_connections ?? '--'}</span>
-            </div>
-            <div className={rowClass}>
-              <span className="text-gray-500">Uptime</span>
-              <span className={`text-gray-300 ${valueClass}`}>{health?.uptime ? `${Math.floor(health.uptime / 3600)}h ${Math.floor((health.uptime % 3600) / 60)}m` : '--'}</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Dashboard Info */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Dashboard</h2>
-          <div className="space-y-3 text-sm">
-            <div className={rowClass}>
-              <span className="text-gray-500">Version</span>
-              <span className={`text-gray-300 font-mono ${valueClass}`} title="From package.json @sleep2agi/agent-network-dashboard">
-                {DASHBOARD_VERSION}
-              </span>
-            </div>
-            <div className={rowClass}>
-              <span className="text-gray-500">Data Layer</span>
-              <span className={`text-gray-300 ${valueClass}`}>SWR (5s refresh, 3s dedup)</span>
-            </div>
-            <div className={rowClass}>
-              <span className="text-gray-500">Pages</span>
-              <span className={`text-gray-300 ${valueClass}`}>Overview, Tasks, Nodes, Messages, Networks, Audit, Server Logs, Admin, Settings</span>
-            </div>
-          </div>
-        </section>
+          </section>
         </div>
-
-        {/* ── Group: Account ────────────────────────────────────── */}
-        <div id="account" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Account</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
-
-        {/* Change Password */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Change Password</h2>
-          <div className="space-y-3">
-            <input type="password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} placeholder="Current password"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
-            <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="New password"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
-            <button onClick={async () => {
-              if (!oldPwd || !newPwd) return;
-              const saved = sessionStorage.getItem('anet_v3_auth');
-              if (!saved) { setPwdResult('Not logged in with V3 auth'); return; }
-              const { token } = JSON.parse(saved);
-              const res = await fetch('/api/hub/auth', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'change_password', token, current_password: oldPwd, new_password: newPwd }),
-              });
-              const data = await res.json();
-              setPwdResult(data.ok ? 'Password changed' : `Failed: ${data.error}`);
-              if (data.ok) {
-                if (data.token) {
-                  const auth = JSON.parse(saved);
-                  sessionStorage.setItem('anet_v3_auth', JSON.stringify({ ...auth, token: data.token }));
-                }
-                setOldPwd('');
-                setNewPwd('');
-              }
-              setTimeout(() => setPwdResult(''), 5000);
-            }} disabled={!oldPwd || !newPwd}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm rounded-lg transition-colors">
-              Change Password
-            </button>
-          </div>
-          {pwdResult && <div className={`mt-2 text-xs ${pwdResult.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>{pwdResult}</div>}
-        </section>
-
-        {/* Session — tone-neutral, no longer "danger zone" red */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">Sign out</h2>
-          <p className="text-xs text-gray-500 mb-3">Signing out clears your dashboard session cookie. You&apos;ll return to the login page.</p>
-          <button
-            onClick={async () => {
-              await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-              clearPrivateChatStorage();
-              sessionStorage.removeItem('anet_v3_auth');
-              window.location.assign('/login');
-            }}
-            className="px-4 py-2 bg-transparent hover:bg-[#1c1c1f] text-gray-300 text-sm rounded-lg border border-[#26262b] hover:border-[#3a3a41] transition-colors"
-          >
-            Sign out
-          </button>
-        </section>
-        </div>
-
-        {/* ── Group: Resources ──────────────────────────────────── */}
-        <div id="resources" className="space-y-4 scroll-mt-6">
-          <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400 font-semibold">Resources</div>
-            <div className="flex-1 h-px bg-[#26262b]" />
-          </div>
-
-        {/* #209 (per Vincent 521/522): the low-frequency pages 通信龙
-            moved out of the sidebar (Messages, Audit Log, Server Logs)
-            need a discovery surface that isn't the primary nav — folded
-            into the Settings/Resources grid alongside Tokens + Networks
-            so the page tree stays the same (pages NOT deleted), the
-            sidebar stays at 6, and users still have a one-tap way to
-            reach them without remembering URLs or opening Cmd+K. */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link href="/settings/tokens" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">API Tokens</h2>
-            <p className="text-xs text-gray-500 mt-2">Create and manage tokens for CLI access.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
-          </Link>
-          <Link href="/settings/networks" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Networks</h2>
-            <p className="text-xs text-gray-500 mt-2">Create, manage, and delete agent networks.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
-          </Link>
-          <Link href="/settings/providers" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Model Providers</h2>
-            <p className="text-xs text-gray-500 mt-2">Configure model providers and per-server reachability.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Manage &rarr;</span>
-          </Link>
-          <Link href="/messages" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Messages</h2>
-            <p className="text-xs text-gray-500 mt-2">Global timeline of CommHub messages across all agents.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
-          </Link>
-          <Link href="/logs" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Audit Log</h2>
-            <p className="text-xs text-gray-500 mt-2">Authentication, token rotations, and admin actions.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
-          </Link>
-          <Link href="/server-logs" className="bg-[#161618] border border-[#26262b] rounded-xl p-5 hover:border-cyan-500/30 transition-colors">
-            <h2 className="text-sm font-semibold text-gray-300">Server Logs</h2>
-            <p className="text-xs text-gray-500 mt-2">Live stdout / stderr from the CommHub server.</p>
-            <span className="text-xs text-cyan-400 mt-3 inline-block">Open &rarr;</span>
-          </Link>
-        </div>
-        </div>
-
       </div>
     </div>
   );

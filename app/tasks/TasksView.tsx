@@ -4,20 +4,30 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useState,
   useSyncExternalStore,
 } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useNetworkId } from '../lib/network-context';
+import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { EmptyState } from '../components/EmptyState';
 import { TaskList, type TaskListItem } from '../components/TaskList';
 import { TaskDetail } from '../components/TaskDetail';
 import {
   TASK_STATUSES,
-  STATUS_CHIP_CLASS,
   STATUS_DOT_HEX,
   STATUS_BAR_CLASS,
 } from '../lib/status';
+import {
+  buildAliasUserMap,
+  buildUserDeptMap,
+  collectDeptSubtree,
+  deptOptions,
+  filterTasksByDept,
+  filterUnassignedTasks,
+} from '../lib/dept-task-filter';
+import type { LegionDepartment, LegionPerson } from '../lib/legion-layout';
 
 // #Stage-tasks (dashboard 类飞书 two-column, 07-31):
 //
@@ -65,7 +75,7 @@ export function decodeIdSegment(seg: string): string {
 
 function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: string | null }) {
   const searchParams = useSearchParams();
-  const { networkId } = useNetworkId();
+  const { networkId, ready: networkReady } = useNetworkId();
   const [tasks, setTasks] = useState<TaskListItem[]>([]);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -82,10 +92,33 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   // needs both prefill directions.
   const [filterFrom, setFilterFrom] = useState(searchParams.get('from_name') || '');
   const [filterTo, setFilterTo] = useState(searchParams.get('to_name') || '');
+  // 部门筛选：Hub 的任务接口没有 department_id，这里按「成员名下 Agent」投影。
+  // UI 上必须标明口径，数量也只代表这一页任务的命中数，不能冒充部门全量。
+  const [filterDept, setFilterDept] = useState(searchParams.get('department') || '');
+  // 部门筛选写回 URL：筛选结果能直接分享给别人，刷新也不会丢。
+  const setDeptAndUrl = (value: string) => {
+    setFilterDept(value);
+    try {
+      const url = new URL(window.location.href);
+      if (value) url.searchParams.set('department', value);
+      else url.searchParams.delete('department');
+      window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+    } catch { /* pushState 被禁用时只是不写 URL，筛选本身照常 */ }
+  };
+  const [people, setPeople] = useState<LegionPerson[]>([]);
+  const [depts, setDepts] = useState<LegionDepartment[] | null>(null);
+  const [deptMembers, setDeptMembers] = useState<Array<{ user_id: string; department_id: string | null }>>([]);
 
   // #Stage-tasks: selection is seeded from /tasks/[id] URL, then plain
   // client state kept in sync with pushState (shallow — no route remount,
   // switching tasks swaps the right pane in place).
+  // 浏览器前进/后退会改 URL 但不重挂组件：把 department 参数同步回 state，
+  // 否则会出现「地址栏是 d2、下拉框还停在 d1」。
+  const deptParam = searchParams.get('department') || '';
+  useEffect(() => {
+    setFilterDept(prev => (prev === deptParam ? prev : deptParam));
+  }, [deptParam]);
+
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const isDesktop = useIsDesktop();
 
@@ -113,9 +146,13 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   }, []);
 
   const fetchTasks = useCallback(async () => {
+    // #1636-P1 —— 网络没确定（解析中，或解析完但为空）就**不发请求**：
+    // 原来这里没 gate，首帧会发 /api/hub/tasks?limit=100（无 scope），
+    // 多网络账号会 400、单网络账号会先渲染出无 scope 的数据。
+    if (!networkReady || !networkId) return;
     try {
       const params = new URLSearchParams();
-      if (networkId) params.set('network_id', networkId);
+      params.set('network_id', networkId);
       if (filterStatus) params.set('status', filterStatus);
       if (filterFrom) params.set('from_name', filterFrom);
       if (filterTo) params.set('to_name', filterTo);
@@ -126,6 +163,11 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
         window.location.assign('/login');
         return;
       }
+      // 非 2xx 是失败，不是空列表：不检查 res.ok 会让 502 显示成「暂无任务」。
+      if (!res.ok) {
+        const detail = await res.json().catch(() => null);
+        throw new Error(detail?.error || detail?.message || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       setTasks(data.tasks || []);
       setCount(data.count ?? (data.tasks?.length || 0));
@@ -135,20 +177,73 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterFrom, filterTo, networkId]);
+  }, [filterStatus, filterFrom, filterTo, networkId, networkReady]);
 
   useEffect(() => {
+    if (!networkReady || !networkId) return;   // 等网络确定再拉，避免无 scope 请求
     setLoading(true);
     fetchTasks();
     const interval = setInterval(fetchTasks, 5000);
     return () => clearInterval(interval);
-  }, [fetchTasks]);
+  }, [fetchTasks, networkReady, networkId]);
 
+  // 通讯录与部门树：只为了把 alias 落到部门上。失败就让下拉框空着，
+  // 不阻塞任务列表本身（任务能读、部门筛选不可用，是可接受的降级）。
+  useEffect(() => {
+    if (!networkReady || !networkId) return;   // 网络未确定就不发（空 id 也会退化成无 scope 请求）
+    let alive = true;
+    void (async () => {
+      try {
+        // #1636-P1 —— people 也要按当前网络读：不带 network_id 时多网络账号会被 400，
+        // 而且部门筛选会用上一个网络的通讯录投影。
+        const url = `/api/hub/people?limit=200&offset=0&network_id=${encodeURIComponent(networkId)}`;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (alive) setPeople(json?.people ?? []);
+      } catch { /* 通讯录读不到时部门筛选自然为空 */ }
+      try {
+        const deptUrl = `/api/hub/departments?network_id=${encodeURIComponent(networkId)}`;
+        const res = await fetch(deptUrl, { cache: 'no-store' });
+        if (res.status === 404) return; // 老 Hub 没这条路由：保持 null，回退扁平部门名
+        if (!res.ok) return;
+        const json = await res.json();
+        if (alive) {
+          setDepts(json?.departments ?? null);
+          setDeptMembers(json?.members ?? []);
+        }
+      } catch { /* 同上 */ }
+    })();
+    return () => { alive = false; };
+    // #1636-P1 —— 切网必须重取通讯录/部门树：依赖里少了 networkId，
+    // 页面就会拿上一批数据继续做部门投影（筛选结果看着「有」，实际是别的网络的人）。
+  }, [networkId, networkReady]);
+
+  const deptAliasUser = useMemo(() => buildAliasUserMap(people), [people]);
+  const deptUserDept = useMemo(() => buildUserDeptMap(people, deptMembers), [people, deptMembers]);
+  const deptChoices = useMemo(() => deptOptions(depts, people, deptMembers), [depts, people, deptMembers]);
+  const deptIds = useMemo(
+    () => (filterDept ? collectDeptSubtree(depts, filterDept) : new Set<string>()),
+    [filterDept, depts],
+  );
+  const deptScopedTasks = useMemo(
+    () => filterTasksByDept(tasks, deptAliasUser, deptUserDept, deptIds),
+    [tasks, deptAliasUser, deptUserDept, deptIds],
+  );
+  // 「未归属」不是一个部门：所有参与者都落不到部门才算。单独给一个选项，
+  // 否则这些任务在任何部门筛选下都人间蒸发。
+  const UNASSIGNED = '__unassigned__';
+  const unassignedTasks = useMemo(
+    () => filterUnassignedTasks(tasks, deptAliasUser, deptUserDept),
+    [tasks, deptAliasUser, deptUserDept],
+  );
+
+  const tasksScoped = filterDept === UNASSIGNED ? unassignedTasks : deptIds.size > 0 ? deptScopedTasks : tasks;
   const counts: Record<string, number> = {};
-  tasks.forEach((t) => {
+  tasksScoped.forEach((t) => {
     counts[t.status] = (counts[t.status] || 0) + 1;
   });
-  const total = tasks.length || 1;
+  const total = tasksScoped.length || 1;
   const bars = TASK_STATUSES.map((key) => ({ key, color: STATUS_BAR_CLASS[key] })).filter(
     (b) => counts[b.key],
   );
@@ -157,7 +252,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     <div
       data-testid="tasks-layout"
       data-selected-id={selectedId ?? ''}
-      className="min-h-screen max-w-full overflow-x-hidden bg-[#0b0b0d] text-gray-100 flex"
+      className="min-h-screen max-w-full overflow-x-hidden bg-[var(--bg)] text-[var(--fg)] flex"
     >
       {/* Rail — desktop always visible; on mobile it holds the whole
           page (detail becomes a full-screen overlay). No "toggle
@@ -168,19 +263,19 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           layout showing "one thing twice". */}
       <aside
         data-testid="task-list-column"
-        className={`flex flex-col w-full sm:w-[380px] shrink-0 min-h-screen sticky top-0 border-r border-[#1c1c1f] ${
+        className={`flex flex-col w-full sm:w-[380px] shrink-0 min-h-screen sticky top-0 border-r border-[var(--border)] ${
           selectedId && !isDesktop ? 'hidden' : 'flex'
         }`}
       >
-        <div className="px-4 py-3 border-b border-[#1c1c1f]">
+        <div className="px-4 py-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-3 mb-3">
-            <h1 className="text-xl font-bold text-white lg:ml-0 ml-10">Tasks</h1>
-            {tasks.length < count && (
+            <h1 className="text-xl font-semibold text-[var(--fg)] lg:ml-0 ml-10">Tasks</h1>
+            {tasksScoped.length < count && (
               <span
-                className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums"
-                title={`Showing ${tasks.length} of ${count} tasks`}
+                className="text-xs bg-[var(--bg-elevated)] text-[var(--fg-muted)] px-2 py-0.5 rounded-full tabular-nums"
+                title={`Showing ${tasksScoped.length} of ${count} tasks`}
               >
-                {tasks.length} / {count}
+                {tasksScoped.length} / {count}
               </span>
             )}
           </div>
@@ -189,9 +284,9 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
             <>
               {/* Status tab strip */}
               <div className="anet-tabstrip-wrap mb-2">
-                <div className="anet-tabstrip flex flex-wrap gap-1 bg-[#161618] rounded-lg border border-[#26262b] p-1 overflow-x-auto scrollbar-thin">
+                <div className="anet-tabstrip flex flex-wrap gap-1 rounded-lg bg-[var(--bg-secondary)] p-1 overflow-x-auto scrollbar-thin">
                   {['', ...TASK_STATUSES].map((s) => {
-                    const cnt = s === '' ? tasks.length : counts[s] || 0;
+                    const cnt = s === '' ? tasksScoped.length : counts[s] || 0;
                     const isActive = filterStatus === s;
                     return (
                       <button
@@ -200,8 +295,8 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         disabled={cnt === 0 && s !== '' && !isActive}
                         className={`px-2.5 py-1 rounded-md text-xs transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
                           isActive
-                            ? `${STATUS_CHIP_CLASS[s] || 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'} border`
-                            : 'text-gray-500 hover:text-gray-300 hover:bg-[#1c1c1f]/40'
+                            ? 'bg-[var(--bg-elevated)] text-[var(--fg)]'
+                            : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
                         }`}
                       >
                         {s && (
@@ -214,7 +309,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         <span>{s || 'All'}</span>
                         <span
                           className={`text-[10px] tabular-nums ${
-                            isActive ? 'opacity-80' : 'text-gray-600'
+                            isActive ? 'text-[var(--fg-muted)]' : 'text-[var(--fg-dim)]'
                           }`}
                         >
                           {cnt}
@@ -227,46 +322,74 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 
               {/* From/To filters */}
               <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                <div className="flex items-center gap-1 rounded border border-[#26262b] bg-[#161618] px-2 py-1 focus-within:border-blue-500/40">
-                  <span className="text-[9px] uppercase tracking-wide text-gray-600">From</span>
+                <div className="flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 focus-within:border-[var(--border-hover)]">
+                  <span className="text-[9px] uppercase tracking-wide text-[var(--fg-muted)]">From</span>
                   <input
                     type="text"
                     value={filterFrom}
                     onChange={(e) => setFilterFrom(e.target.value)}
                     placeholder="any"
                     data-testid="tasks-filter-from"
-                    className="w-16 bg-transparent text-xs text-white placeholder-gray-700 focus:outline-none"
+                    className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                <div className="flex items-center gap-1 rounded border border-[#26262b] bg-[#161618] px-2 py-1 focus-within:border-blue-500/40">
-                  <span className="text-[9px] uppercase tracking-wide text-gray-600">To</span>
+                <div className="flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 focus-within:border-[var(--border-hover)]">
+                  <span className="text-[9px] uppercase tracking-wide text-[var(--fg-muted)]">To</span>
                   <input
                     type="text"
                     value={filterTo}
                     onChange={(e) => setFilterTo(e.target.value)}
                     placeholder="any"
                     data-testid="tasks-filter-to"
-                    className="w-16 bg-transparent text-xs text-white placeholder-gray-700 focus:outline-none"
+                    className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
-                {(filterStatus || filterFrom || filterTo) && (
+                {deptChoices.length > 0 && (
+                  <div className="flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1">
+                    <span className="text-[9px] uppercase tracking-wide text-[var(--fg-muted)]">Dept</span>
+                    <select
+                      value={filterDept}
+                      onChange={(e) => setDeptAndUrl(e.target.value)}
+                      data-testid="tasks-filter-dept"
+                      className="max-w-[7.5rem] bg-transparent text-xs text-[var(--fg)] focus:outline-none"
+                    >
+                      <option value="">全部</option>
+                      {deptChoices.map(d => (
+                        <option key={d.id} value={d.id}>{`${'　'.repeat(d.depth)}${d.name}`}</option>
+                      ))}
+                      {unassignedTasks.length > 0 && (
+                        <option value={UNASSIGNED}>未归属（{unassignedTasks.length}）</option>
+                      )}
+                    </select>
+                  </div>
+                )}
+                {(filterStatus || filterFrom || filterTo || filterDept) && (
                   <button
                     type="button"
                     onClick={() => {
                       setFilterStatus('');
                       setFilterFrom('');
                       setFilterTo('');
+                      setDeptAndUrl('');
                     }}
-                    className="rounded border border-gray-700 px-2 py-0.5 text-[10px] text-gray-500 hover:text-gray-200 hover:border-gray-600"
+                    className="rounded px-2 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
                   >
                     Clear
                   </button>
                 )}
               </div>
 
+              {filterDept && (
+                <p className="mb-2 text-[10px] leading-snug text-[var(--fg-dim)]" data-testid="tasks-dept-scope">
+                  {filterDept === UNASSIGNED
+                    ? `「未归属」= 参与者都不在通讯录或没有部门；命中数为当前这 ${tasks.length} 条任务里的投影结果。`
+                    : `按「成员名下 Agent」归属部门筛选，命中数为当前这 ${tasks.length} 条任务里的投影结果，不是部门全量。`}
+                </p>
+              )}
+
               {/* Status distribution bar (only when no status filter) */}
               {!filterStatus && bars.length > 0 && (
-                <div className="flex h-1 rounded-full overflow-hidden bg-gray-800">
+                <div className="flex h-1 rounded-full overflow-hidden bg-[var(--border)]">
                   {bars.map((b) => (
                     <div
                       key={b.key}
@@ -288,32 +411,54 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto">
-          {loading ? (
+          {networkReady && !networkId ? (
+            <div className="px-3 py-6">
+              <NetworkRequiredNotice />
+            </div>
+          ) : loading ? (
             <div className="animate-pulse space-y-1 px-3 py-2">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="h-14 bg-gray-800/40 rounded" />
+                <div key={i} className="h-14 rounded bg-[var(--bg-elevated)]" />
               ))}
             </div>
-          ) : tasks.length === 0 ? (
+          ) : error && tasks.length === 0 ? (
+            <div className="px-3 py-6 text-center text-sm">
+              <p className="font-medium text-[var(--danger)]">读不到任务列表</p>
+              <p className="mt-1 text-xs text-[var(--fg-muted)]">{error}</p>
+              <button
+                type="button"
+                onClick={() => { setLoading(true); setError(''); void fetchTasks(); }}
+                className="mt-3 rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+              >
+                重试
+              </button>
+            </div>
+          ) : tasksScoped.length === 0 ? (
             <div className="px-3 py-6">
-              {/* #1636 —— 有筛选时的空态必须给**动作**，不能只说“去清一下筛选”。
+              {/* #1636 —— 有筛选时的空态必须给**动作**，不能只说「去清一下筛选」。
                   文案承诺了动作却没有入口，等于让用户自己猜怎么清。 */}
               <EmptyState
                 variant="tasks"
                 sub={
-                  filterStatus || filterFrom || filterTo
-                    ? '当前筛选没有匹配的任务。'
-                    : '当 Agent 通过 CommHub 派活时，任务会出现在这里。'
+                  filterDept === UNASSIGNED
+                    ? '这批任务里的参与者都能落到部门，没有未归属的任务。'
+                    : filterDept
+                      ? '这个部门在当前这批任务里没有记录。部门筛选是通讯录投影，换一页或清空筛选再看。'
+                    : filterStatus || filterFrom || filterTo
+                      ? '当前筛选没有匹配的任务。'
+                      : '当 Agent 通过 CommHub 派活时，任务会出现在这里。'
                 }
                 cta={
-                  filterStatus || filterFrom || filterTo
+                  filterStatus || filterFrom || filterTo || filterDept
                     ? {
                         label: '清空筛选',
                         onClick: () => {
                           setFilterStatus('');
                           setFilterFrom('');
                           setFilterTo('');
-                          try { window.history.replaceState({}, '', '/tasks'); } catch {}
+                          // 部门走 setDeptAndUrl：它有 URL 回写 + 一个
+                          // 「URL→state」的 effect，只改 state 会被 effect 立刻改回来。
+                          setDeptAndUrl('');
                         },
                       }
                     : undefined
@@ -321,7 +466,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               />
             </div>
           ) : (
-            <TaskList tasks={tasks} selectedId={selectedId} onSelect={selectTask} />
+            <TaskList tasks={tasksScoped} selectedId={selectedId} onSelect={selectTask} />
           )}
         </div>
       </aside>

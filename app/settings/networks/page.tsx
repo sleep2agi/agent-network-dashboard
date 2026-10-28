@@ -34,9 +34,13 @@ interface Member {
 }
 
 export default function NetworksPage() {
-  const { data, mutate } = useSWR('/api/hub/networks', fetcher, { refreshInterval: 10000 });
+  const { data, error, mutate } = useSWR('/api/hub/networks', fetcher, { refreshInterval: 10000 });
   const networks: Network[] = data?.networks || [];
-  const loading = !data;
+  // 读失败不能落到「No networks found + 建一个」：那条文案会让人以为
+  // 自己没有任何网络，从而重复创建。loading 也要排除 error，否则转圈不休。
+  const loadFailed = Boolean(error);
+  const unsupported = Boolean(data?.unavailable);
+  const loading = !data && !loadFailed;
 
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -109,38 +113,56 @@ export default function NetworksPage() {
           beside it — the old single row read as an off-balance
           "← Settings   Networks" pair on phones. */}
       <div className="mb-6">
-        <Link href="/settings" className="inline-block text-gray-500 hover:text-gray-300 text-sm lg:ml-0 ml-10 mb-1">&larr; Settings</Link>
-        <h1 className="text-2xl font-bold text-white">Networks</h1>
+        <Link href="/settings" className="inline-block text-[var(--fg-muted)] hover:text-[var(--fg)] text-sm lg:ml-0 ml-10 mb-1">&larr; Settings</Link>
+        <h1 className="text-2xl font-bold text-[var(--fg)]">Networks</h1>
       </div>
 
       <div className="max-w-2xl space-y-6">
         {/* Create */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">Create Network</h2>
+        <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">Create Network</h2>
           <div className="space-y-3">
             <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Network name"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-[var(--fg)] placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <input type="text" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description (optional)"
-              className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-3 py-2 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-[var(--fg)] placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <button onClick={createNetwork} disabled={!newName.trim()}
-              className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-800 text-white text-sm rounded-lg transition-colors">
+              className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-800 text-[var(--fg)] text-sm rounded-lg transition-colors">
               Create
             </button>
           </div>
-          {result && <div className={`mt-2 text-xs ${result.startsWith('Failed') || result.startsWith('V3') || result.startsWith('Invite') ? 'text-red-400' : 'text-green-400'}`}>{result}</div>}
+          {result && <div className={`mt-2 text-xs ${result.startsWith('Failed') || result.startsWith('V3') || result.startsWith('Invite') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{result}</div>}
         </section>
 
         {/* List */}
-        <section className="bg-[#161618] border border-[#26262b] rounded-xl p-5">
+        <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-300">My Networks</h2>
+            <h2 className="text-sm font-semibold text-[var(--fg)]">My Networks</h2>
             {/* #217 D9: "N TOTAL" counter dropped below 4 rows — counting
                 a visibly one-item list is noise (D6 conditional rule). */}
             {networks.length > 3 && (
-              <span className="text-[10px] text-gray-600 uppercase tracking-wide">{networks.length} total</span>
+              <span className="text-[10px] text-[var(--fg-dim)] uppercase tracking-wide">{networks.length} total</span>
             )}
           </div>
-          {loading ? (
+          {loadFailed ? (
+            <div role="alert" data-testid="networks-load-error" className="rounded-lg bg-[var(--bg-secondary)] px-3 py-3 text-sm">
+              <div className="text-[var(--fg)]">读不到网络列表</div>
+              <div className="mt-1 text-xs text-[var(--fg-muted)]">
+                {error instanceof Error ? error.message : String(error)} · 这不代表你没有网络，请先确认 Hub 可达，不要重复创建。
+              </div>
+              <button
+                type="button"
+                onClick={() => mutate()}
+                className="mt-2 rounded-md bg-[var(--bg-elevated)] px-2 py-1 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+              >
+                重试
+              </button>
+            </div>
+          ) : unsupported ? (
+            <div className="rounded-lg bg-[var(--bg-secondary)] px-3 py-3 text-sm text-[var(--fg-muted)]">
+              这版 Hub 没有网络管理接口（`/api/networks` 404），这里不显示网络列表。
+            </div>
+          ) : loading ? (
             <div className="animate-pulse space-y-2">{[1,2].map(i => <div key={i} className="h-14 bg-gray-800/20 rounded" />)}</div>
           ) : networks.length === 0 ? (
             <EmptyState
@@ -151,14 +173,14 @@ export default function NetworksPage() {
           ) : (
             <div className="space-y-3">
               {networks.map(n => (
-                <div key={n.network_id} className="bg-[#0e0e10] rounded-lg px-4 py-3 border border-[#1c1c1f]">
+                <div key={n.network_id} className="bg-[var(--bg)] rounded-lg px-4 py-3 border border-[var(--border)]">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0">
                       <AliasAvatar alias={n.network_name} size={28} />
                       <div className="min-w-0">
-                        <div className="text-sm text-white font-medium truncate">{n.network_name}</div>
-                        <div className="text-[10px] text-gray-500 font-mono truncate" title={n.network_id}>{n.network_id} · {timeAgo(n.created_at)}</div>
-                        {n.description && <div className="text-xs text-gray-400 mt-1">{n.description}</div>}
+                        <div className="text-sm text-[var(--fg)] font-medium truncate">{n.network_name}</div>
+                        <div className="text-[10px] text-[var(--fg-muted)] font-mono truncate" title={n.network_id}>{n.network_id} · {timeAgo(n.created_at)}</div>
+                        {n.description && <div className="text-xs text-[var(--fg-muted)] mt-1">{n.description}</div>}
                       </div>
                     </div>
                     <div className="flex gap-2 shrink-0">
@@ -171,11 +193,11 @@ export default function NetworksPage() {
                       </button>
                       {confirmDelete === n.network_id ? (
                         <>
-                          <button onClick={() => deleteNetwork(n.network_id)} className="text-xs text-red-400 px-2 py-1 rounded border border-red-800/30 bg-red-500/10">Confirm</button>
-                          <button onClick={() => setConfirmDelete(null)} className="text-xs text-gray-500">Cancel</button>
+                          <button onClick={() => deleteNetwork(n.network_id)} className="text-xs text-[var(--danger)] px-2 py-1 rounded border border-red-800/30 bg-red-500/10">Confirm</button>
+                          <button onClick={() => setConfirmDelete(null)} className="text-xs text-[var(--fg-muted)]">Cancel</button>
                         </>
                       ) : (
-                        <button onClick={() => setConfirmDelete(n.network_id)} className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded border border-red-800/30 hover:bg-red-500/10">
+                        <button onClick={() => setConfirmDelete(n.network_id)} className="text-xs text-[var(--danger)] hover:text-red-300 px-2 py-1 rounded border border-red-800/30 hover:bg-red-500/10">
                           Delete
                         </button>
                       )}
@@ -183,10 +205,10 @@ export default function NetworksPage() {
                   </div>
 
                   {expandedNetwork === n.network_id && (
-                    <div className="mt-3 pt-3 border-t border-[#1c1c1f]">
-                      <div className="text-xs text-gray-500 mb-2">Members ({(members[n.network_id] || []).length})</div>
+                    <div className="mt-3 pt-3 border-t border-[var(--border)]">
+                      <div className="text-xs text-[var(--fg-muted)] mb-2">Members ({(members[n.network_id] || []).length})</div>
                       {(members[n.network_id] || []).length === 0 ? (
-                        <div className="text-[10px] text-gray-600">No members or V3 auth required</div>
+                        <div className="text-[10px] text-[var(--fg-dim)]">No members or V3 auth required</div>
                       ) : (
                         (members[n.network_id] || []).map(m => {
                           const name = m.username || m.display_name || '?';
@@ -194,10 +216,10 @@ export default function NetworksPage() {
                           <div key={m.user_id} className="flex items-center gap-2 justify-between text-xs py-1">
                             <div className="flex items-center gap-2 min-w-0">
                               <AliasAvatar alias={name} size={16} />
-                              <span className="text-gray-300 truncate">{name}</span>
+                              <span className="text-[var(--fg)] truncate">{name}</span>
                             </div>
                             <span className={`px-1.5 py-0.5 rounded border text-[10px] shrink-0 ${
-                              m.role === 'owner' ? 'text-yellow-300 border-yellow-500/20' : 'text-gray-400 border-gray-600/20'
+                              m.role === 'owner' ? 'text-yellow-300 border-yellow-500/20' : 'text-[var(--fg-muted)] border-gray-600/20'
                             }`}>{m.role}</span>
                           </div>
                           );
@@ -205,24 +227,24 @@ export default function NetworksPage() {
                       )}
 
                       {/* Invite */}
-                      <div className="mt-3 pt-3 border-t border-[#1c1c1f]">
-                        <div className="text-xs text-gray-500 mb-2">Invite</div>
+                      <div className="mt-3 pt-3 border-t border-[var(--border)]">
+                        <div className="text-xs text-[var(--fg-muted)] mb-2">Invite</div>
                         <div className="flex gap-2">
                           <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
-                            className="bg-[#0e0e10] border border-[#26262b] rounded px-2 py-1 text-base sm:text-xs text-white focus:outline-none">
+                            className="bg-[var(--bg)] border border-[var(--border)] rounded px-2 py-1 text-base sm:text-xs text-[var(--fg)] focus:outline-none">
                             <option value="member">member</option>
                             <option value="admin">admin</option>
                             <option value="viewer">viewer</option>
                           </select>
                           <button onClick={() => generateInvite(n.network_id)}
-                            className="px-2 py-1 bg-green-600 hover:bg-green-500 text-white text-xs rounded">
+                            className="px-2 py-1 bg-green-600 hover:bg-green-500 text-[var(--fg)] text-xs rounded">
                             Generate Code
                           </button>
                         </div>
                         {inviteCode && (
                           <div className="mt-2 bg-green-500/5 border border-green-500/20 rounded px-3 py-2">
                             <div className="flex items-center justify-between mb-1">
-                              <div className="text-[10px] text-green-400 uppercase tracking-wide">Invite code</div>
+                              <div className="text-[10px] text-[var(--success)] uppercase tracking-wide">Invite code</div>
                               <button
                                 type="button"
                                 onClick={() => { navigator.clipboard?.writeText(inviteCode).catch(() => {}); }}

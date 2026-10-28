@@ -63,46 +63,64 @@ export async function GET(req: Request) {
       `${HUB_URL}/api/tasks?${params.toString()}`,
       { headers: await hubHeaders(), next: { revalidate: 0 } },
     );
-    // #1636 —— Hub 说 401 就是 401，**不许**被下面的 completions 兜底吞成
-    // “200 + 空数组”。否则会话过期时用户看到的是“还没有任务”，
-    // 会以为系统正常，而真正原因是登录失效（最难被发现的假空态）。
+    // #1636-P1 —— 上游说 401 就是 401。绝不能落进下面的 /api/completions 兜底，
+    // 否则「登录失效」会被显示成「暂无任务」（最容易被误判成系统正常的假空态）。
     if (tasksRes.status === 401) {
-      return Response.json({ error: 'login required' }, { status: 401 });
+      return Response.json({ ok: false, error: 'login required' }, { status: 401 });
     }
     const contentType = tasksRes.headers.get('content-type') || '';
-    if (tasksRes.ok && contentType.includes('application/json')) {
+    const tasksJson = tasksRes.ok && contentType.includes('application/json');
+
+    if (tasksJson) {
       const data = await tasksRes.json();
-      if (data.ok && data.tasks && data.tasks.length > 0) {
-        return Response.json(data);
+      // 200 + ok:false 也是上游故障（Hub 自己说没给成结果），不能当成空列表。
+      if (data.ok === false) {
+        return Response.json(
+          { ok: false, error: `CommHub /api/tasks ${tasksRes.status} (ok:false)` },
+          { status: 502 },
+        );
       }
-      // network_id filter returned empty — retry without filter to include unassigned tasks
-      if (networkId && data.tasks?.length === 0) {
-        const fallbackParams = new URLSearchParams();
-        if (filterStatus) fallbackParams.set('status', filterStatus);
-        if (filterFrom) fallbackParams.set('from_name', filterFrom);
-        if (filterTo) fallbackParams.set('to_name', filterTo);
-        if (before) fallbackParams.set('before', before);
-        if (beforeTaskId) fallbackParams.set('before_task_id', beforeTaskId);
-        fallbackParams.set('limit', String(limit));
-        fallbackParams.set('skip_stats', '1');
-        const fbRes = await fetch(`${HUB_URL}/api/tasks?${fallbackParams.toString()}`, { headers: await hubHeaders(), next: { revalidate: 0 } });
-        if (fbRes.ok) {
-          const fbData = await fbRes.json();
-          if (fbData.ok && fbData.tasks?.length > 0) {
-            return Response.json({ ...fbData, source: 'global' });
-          }
-        }
-        return Response.json(data);
+      // #1636-P1 —— **主接口的合法 200（含空数组）就是答案，直接返回**。
+      //
+      // 旧实现在这里分三种情况绕过：
+      //   1. 有 network_id 且为空 ⇒ 撤掉 network_id 再查一次（跨网络串数据）；
+      //   2. 广查询为空 ⇒ 继续去 /api/completions 捞历史，命中就带上
+      //      `source: 'completions'` 返回 —— 主接口说的「这个网络/这批筛选下没有任务」
+      //      被悄悄替换成另一份数据的投影；
+      //   3. 定向查询为空 ⇒ 直接返回（这一条本来就是对的）。
+      //
+      // 共同的问题是：**调用方无法从响应里看出答案来自哪个接口**。
+      // 「没有任务」和「我换了个数据源给你看历史」必须由调用方自己决定，
+      // 不能由代理层替它决定。所以这里统一直接返回。
+      //
+      // 产品口径：任务的「当前列表」= /api/tasks；历史完成记录是**另一个视图**
+      // （要的话应由页面显式发起 /api/completions，而不是被代理层替换）。
+      return Response.json(data);
+    } else {
+      // 非 2xx，或 2xx 但不是 JSON。
+      //   · 404/405/501 = 旧 Hub 没有 /api/tasks ⇒ 允许走 completions 兜底；
+      //   · 其它（401 已在上面、500/502/HTML）= **上游故障**，必须非 2xx。
+      const endpointMissing =
+        tasksRes.status === 404 || tasksRes.status === 405 || tasksRes.status === 501;
+      if (!endpointMissing) {
+        return Response.json(
+          { ok: false, error: `CommHub /api/tasks ${tasksRes.status}` },
+          { status: 502 },
+        );
       }
-      // For targeted queries (chat history by to_name, or a single task_id),
-      // a valid empty v2 result is authoritative — return it immediately
-      // instead of falling through to a global /api/completions scan. That
-      // extra round-trip is what kept the chat-history spinner turning on a
-      // node with no tasks yet, and its substring to_name match could surface
-      // unrelated rows. Broad list queries keep the legacy fallback below.
-      // (Vincent tg923: 转圈加载太久)
-      if (data.ok && Array.isArray(data.tasks) && (filterTo || filterTaskId)) {
-        return Response.json(data);
+      // 旧 Hub 没有 /api/tasks，而调用方指定了网络：completions 不支持按网络过滤，
+      // 用它兜底等于跨网络返回数据。但也**不能伪装成 200 空列表** —— 那是假空态，
+      // 用户会以为「这个网络真的没任务」。返回一个可识别的能力错误，让调用方
+      // 能显示「当前 Hub 不支持按网络查询任务」。
+      if (networkId) {
+        return Response.json(
+          {
+            ok: false,
+            error: 'hub_tasks_scope_unsupported',
+            detail: `CommHub /api/tasks ${tasksRes.status}: 该 Hub 不支持按网络查询任务，无法在保持 network_id 作用域的前提下返回结果`,
+          },
+          { status: 501 },
+        );
       }
     }
 
@@ -111,9 +129,16 @@ export async function GET(req: Request) {
       `${HUB_URL}/api/completions?limit=${limit}`,
       { headers: await hubHeaders(), next: { revalidate: 0 } },
     );
-    // 同上：兜底路径也会 401，不能当成“没有历史任务”。
+    // 两个上游都失败时必须报错：旧实现会返回 {ok:true, tasks:[]}，
+    // 页面于是把「Hub 挂了我读不到」显示成「暂无任务」。
     if (compRes.status === 401) {
-      return Response.json({ error: 'login required' }, { status: 401 });
+      return Response.json({ ok: false, error: 'login required' }, { status: 401 });
+    }
+    if (!compRes.ok) {
+      return Response.json(
+        { ok: false, error: `CommHub /api/tasks ${tasksRes.status} · /api/completions ${compRes.status}` },
+        { status: 502 },
+      );
     }
     const compData = await compRes.json();
     const completions: Completion[] = compData.completions || [];

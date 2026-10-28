@@ -1,0 +1,24 @@
+{
+  "total": 78,
+  "files": {
+    "app/components/AgentCard.tsx": 3,
+    "app/components/AttachmentBlock.tsx": 6,
+    "app/components/CollapsibleSearch.tsx": 1,
+    "app/components/CommandCenter.tsx": 1,
+    "app/components/CommandPalette.tsx": 2,
+    "app/components/CreateNodeWizard.tsx": 1,
+    "app/components/EmptyState.tsx": 6,
+    "app/components/HostSupervisorPicker.tsx": 7,
+    "app/components/MobileNav.tsx": 1,
+    "app/components/NodeAttrsEditor.tsx": 3,
+    "app/components/NodeLifecycleMenu.tsx": 3,
+    "app/components/NodeList.tsx": 3,
+    "app/components/StatsBar.tsx": 1,
+    "app/components/TaskChatPanel.tsx": 3,
+    "app/components/TopoGraph.tsx": 22,
+    "app/logs/page.tsx": 4,
+    "app/nodes/NodesView.tsx": 5,
+    "app/server-logs/page.tsx": 4,
+    "app/settings/networks/page.tsx": 2
+  }
+}

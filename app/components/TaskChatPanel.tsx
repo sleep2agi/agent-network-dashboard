@@ -109,9 +109,9 @@ function CopyButton({ text, label }: { text: string; label: string }) {
       onClick={copy}
       aria-label={label}
       title={label}
-      className="shrink-0 rounded p-0.5 text-[10px] leading-none transition-opacity opacity-50 sm:opacity-0 sm:group-hover/bubble:opacity-70 hover:!opacity-100 text-[var(--fg-dim)] hover:text-cyan-300"
+      className="shrink-0 rounded p-0.5 text-[10px] leading-none transition-opacity opacity-50 sm:opacity-0 sm:group-hover/bubble:opacity-70 hover:!opacity-100 text-[var(--fg-dim)] hover:text-[var(--accent-text)]"
     >
-      {copied ? <span className="text-green-400">✓</span> : (
+      {copied ? <span className="text-[var(--success)]">✓</span> : (
         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
@@ -232,12 +232,12 @@ function ImageLightbox({ urls, initialIndex, onClose, opener }: { urls: string[]
       />
       {urls.length > 1 && (
         <>
-          <span className="absolute left-3 top-3 text-[11px] tabular-nums text-white/70">{idx + 1}/{urls.length}</span>
+          <span className="absolute left-3 top-3 text-[11px] tabular-nums text-[var(--fg)]/70">{idx + 1}/{urls.length}</span>
           <button
             onClick={(e) => { e.stopPropagation(); step(-1); }}
             disabled={idx === 0}
             aria-label={t('上一张', 'Previous image')}
-            className="absolute left-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-2xl text-white/80 hover:bg-white/10 disabled:opacity-25"
+            className="absolute left-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-2xl text-[var(--fg)]/80 hover:bg-white/10 disabled:opacity-25"
           >
             ‹
           </button>
@@ -245,7 +245,7 @@ function ImageLightbox({ urls, initialIndex, onClose, opener }: { urls: string[]
             onClick={(e) => { e.stopPropagation(); step(1); }}
             disabled={idx === urls.length - 1}
             aria-label={t('下一张', 'Next image')}
-            className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-2xl text-white/80 hover:bg-white/10 disabled:opacity-25"
+            className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-2xl text-[var(--fg)]/80 hover:bg-white/10 disabled:opacity-25"
           >
             ›
           </button>
@@ -256,11 +256,11 @@ function ImageLightbox({ urls, initialIndex, onClose, opener }: { urls: string[]
         target="_blank"
         rel="noreferrer"
         onClick={(e) => e.stopPropagation()}
-        className="absolute right-12 top-3 text-[11px] text-white/70 underline hover:text-white"
+        className="absolute right-12 top-3 text-[11px] text-[var(--fg)]/70 underline hover:text-[var(--fg)]"
       >
         {t('新标签打开', 'Open in new tab')}
       </a>
-      <button onClick={onClose} aria-label={t('关闭预览', 'Close preview')} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center text-lg text-white/80 hover:text-white">
+      <button onClick={onClose} aria-label={t('关闭预览', 'Close preview')} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center text-lg text-[var(--fg)]/80 hover:text-[var(--fg)]">
         ×
       </button>
     </div>
@@ -273,7 +273,7 @@ function AttachmentPreviews({ text, onOpen }: { text: string; onOpen: (url: stri
   return (
     <div className="mt-2 grid grid-cols-2 gap-2">
       {urls.map((url) => (
-        <ChatImage key={url} src={url} alt="Dashboard attachment" thumbClass="h-28 w-full rounded-lg border border-cyan-500/20" onOpen={onOpen} />
+        <ChatImage key={url} src={url} alt="Dashboard attachment" thumbClass="h-28 w-full rounded-lg border border-[var(--accent)]/20" onOpen={onOpen} />
       ))}
     </div>
   );
@@ -299,7 +299,7 @@ function LocalFilePreview({ file, onRemove }: { file: File; onRemove: () => void
 
   return (
     <div
-      className="relative h-16 w-16 overflow-hidden rounded-lg border border-cyan-500/25 bg-black/20"
+      className="relative h-16 w-16 overflow-hidden rounded-lg border border-[var(--accent)]/25 bg-black/20"
       title={file.name}
     >
       {isImage && url ? (
@@ -307,13 +307,13 @@ function LocalFilePreview({ file, onRemove }: { file: File; onRemove: () => void
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1 text-center">
           <span className="text-lg">📄</span>
-          <span className="max-w-full truncate text-[9px] font-semibold text-cyan-300">{ext}</span>
+          <span className="max-w-full truncate text-[9px] font-semibold text-[var(--accent-text)]">{ext}</span>
         </div>
       )}
       <button
         type="button"
         onClick={onRemove}
-        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs text-white hover:bg-red-500"
+        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs text-[var(--fg)] hover:bg-[var(--danger)]"
         aria-label={`Remove ${file.name}`}
       >
         ×
@@ -352,16 +352,16 @@ function LocalFilePreview({ file, onRemove }: { file: File; onRemove: () => void
 const STATUS_STEPS = ['queued', 'delivered', 'acked', 'replied'] as const;
 type StatusInfo = { label: string; hover: string; color: string; icon: React.ReactNode };
 const STATUS_INFO: Record<string, StatusInfo> = {
-  created:   { label: '发送中',   hover: '客户端已建消息，尚未收到 hub 回执。', color: 'text-gray-400',   icon: <IconSending /> },
-  queued:    { label: '排队中',   hover: '已入队，尚未推给节点。节点可能离线、或通道拥堵。', color: 'text-gray-400',   icon: <IconClock /> },
+  created:   { label: '发送中',   hover: '客户端已建消息，尚未收到 hub 回执。', color: 'text-[var(--fg-muted)]',   icon: <IconSending /> },
+  queued:    { label: '排队中',   hover: '已入队，尚未推给节点。节点可能离线、或通道拥堵。', color: 'text-[var(--fg-muted)]',   icon: <IconClock /> },
   delivered: { label: '已推送',   hover: 'hub 侧已标记推送。尚未确认节点是否收到（delivered_at 是入队时刻，不代表 SSE 已到达）。', color: 'text-sky-400',    icon: <IconCheck /> },
-  acked:     { label: '已接收',   hover: '节点进程已确认收到。未必已处理——对方 agent 可能尚未唤醒。', color: 'text-gray-300',   icon: <IconCheckDouble /> },
+  acked:     { label: '已接收',   hover: '节点进程已确认收到。未必已处理——对方 agent 可能尚未唤醒。', color: 'text-[var(--fg)]',   icon: <IconCheckDouble /> },
   replied:   { label: '已回复',   hover: '对方已针对此消息回复。', color: 'text-emerald-400', icon: <IconCheckDouble filled /> },
-  failed:    { label: '失败',     hover: '发送失败——详细原因见消息下方文本。', color: 'text-red-400',    icon: <IconWarn /> },
-  closed:    { label: '已关闭',   hover: '会话已被关闭，不再期待回复。', color: 'text-gray-500',   icon: <IconClose /> },
-  expired:   { label: '已超时',   hover: '在期限内未收到回复，任务已超时。', color: 'text-gray-500',   icon: <IconClock /> },
-  cancelled: { label: '已取消',   hover: '任务被主动取消。', color: 'text-gray-500',   icon: <IconClose /> },
-  running:   { label: '处理中',   hover: '节点进程正在处理（今日 hub 不写入此值，见组件注释）。', color: 'text-green-400',  icon: <IconClock /> },
+  failed:    { label: '失败',     hover: '发送失败——详细原因见消息下方文本。', color: 'text-[var(--danger)]',    icon: <IconWarn /> },
+  closed:    { label: '已关闭',   hover: '会话已被关闭，不再期待回复。', color: 'text-[var(--fg-muted)]',   icon: <IconClose /> },
+  expired:   { label: '已超时',   hover: '在期限内未收到回复，任务已超时。', color: 'text-[var(--fg-muted)]',   icon: <IconClock /> },
+  cancelled: { label: '已取消',   hover: '任务被主动取消。', color: 'text-[var(--fg-muted)]',   icon: <IconClose /> },
+  running:   { label: '处理中',   hover: '节点进程正在处理（今日 hub 不写入此值，见组件注释）。', color: 'text-[var(--success)]',  icon: <IconClock /> },
 };
 
 function StatusBar({ status, result }: { status: string; result?: string }) {
@@ -419,7 +419,7 @@ function StatusBar({ status, result }: { status: string; result?: string }) {
       {failedReason !== null && (
         <span
           data-status-reason={failedReason}
-          className="text-[10px] text-red-400/80 max-w-[260px] truncate"
+          className="text-[10px] text-[var(--danger)]/80 max-w-[260px] truncate"
           title={result || undefined}
         >
           {failedReason}
@@ -515,15 +515,15 @@ function buildMdComponents(onImageClick?: (url: string) => void) {
   return {
           h1: ({ children }) => <h1 className="text-base font-semibold text-[var(--fg)] mt-2 mb-1">{children}</h1>,
           h2: ({ children }) => <h2 className="text-sm font-semibold text-[var(--fg)] mt-2 mb-1">{children}</h2>,
-          h3: ({ children }) => <h3 className="text-sm font-semibold text-cyan-300 mt-1.5 mb-0.5">{children}</h3>,
+          h3: ({ children }) => <h3 className="text-sm font-semibold text-[var(--accent-text)] mt-1.5 mb-0.5">{children}</h3>,
           p: ({ children }) => <p className="my-1">{children}</p>,
           strong: ({ children }) => <strong className="text-[var(--fg)] font-semibold">{children}</strong>,
           em: ({ children }) => <em className="italic text-[var(--fg-muted)]">{children}</em>,
           ul: ({ children }) => <ul className="list-disc pl-5 my-1 space-y-0.5">{children}</ul>,
           ol: ({ children }) => <ol className="list-decimal pl-5 my-1 space-y-0.5">{children}</ol>,
           li: ({ children }) => <li>{children}</li>,
-          a: ({ href, children }) => <a href={href} target="_blank" rel="noreferrer" className="text-cyan-300 underline">{children}</a>,
-          blockquote: ({ children }) => <blockquote className="border-l-2 border-cyan-500/30 pl-3 my-1 text-[var(--fg-muted)] italic">{children}</blockquote>,
+          a: ({ href, children }) => <a href={href} target="_blank" rel="noreferrer" className="text-[var(--accent-text)] underline">{children}</a>,
+          blockquote: ({ children }) => <blockquote className="border-l-2 border-[var(--accent)]/30 pl-3 my-1 text-[var(--fg-muted)] italic">{children}</blockquote>,
           hr: () => <hr className="border-t border-[var(--border)] my-2" />,
           img: ({ src, alt }) => {
             const url = typeof src === 'string' ? src : '';
@@ -534,7 +534,7 @@ function buildMdComponents(onImageClick?: (url: string) => void) {
           code: ({ className, children }) => {
             const inline = !className?.startsWith('language-');
             if (inline) {
-              return <code className="bg-[var(--code-bg)] rounded px-1.5 py-0.5 text-cyan-300 text-[11px] border border-[var(--border)]">{children}</code>;
+              return <code className="bg-[var(--code-bg)] rounded px-1.5 py-0.5 text-[var(--accent-text)] text-[11px] border border-[var(--border)]">{children}</code>;
             }
             const lang = className?.replace(/^language-/, '') || '';
             return (
@@ -552,7 +552,7 @@ function buildMdComponents(onImageClick?: (url: string) => void) {
           thead: ({ children }) => <thead className="bg-[var(--code-bg)]">{children}</thead>,
           tbody: ({ children }) => <tbody>{children}</tbody>,
           tr: ({ children }) => <tr className="border-b border-[var(--border)]">{children}</tr>,
-          th: ({ children }) => <th className="text-left text-cyan-300 font-semibold px-2 py-1 border border-[var(--border)]">{children}</th>,
+          th: ({ children }) => <th className="text-left text-[var(--accent-text)] font-semibold px-2 py-1 border border-[var(--border)]">{children}</th>,
           td: ({ children }) => <td className="px-2 py-1 border border-[var(--border)] align-top">{children}</td>,
   } satisfies React.ComponentProps<typeof ReactMarkdown>['components'];
 }
@@ -583,6 +583,8 @@ interface TaskChatPanelProps {
    *  soft-refresh AND the SSE-event soft-refresh (in-flight send patches
    *  stay live). Reactivation runs one immediate catch-up. Default true. */
   active?: boolean;
+  /** Embedded scenes bind history, SSE and sends to the selected network. */
+  scopeNetworkId?: string;
 }
 
 /** P0 chat batch (Vincent: 长消息=无排版文字墙): message bodies taller than
@@ -592,6 +594,7 @@ interface TaskChatPanelProps {
  *  height rather than by newline count. Attachments render OUTSIDE the
  *  collapse so a folded message never hides an image. */
 const COLLAPSE_MAX_PX = 300; // ≈12 lines at 14px/1.65
+const SCOPED_HISTORY_UNSUPPORTED = '当前 Hub 不支持按网络读取历史，请升级 Hub 后重新打开对话';
 
 function CollapsibleText({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -624,7 +627,7 @@ function CollapsibleText({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={() => setExpanded(e => !e)}
-          className="mt-1 text-[12px] font-medium text-cyan-400 hover:text-cyan-300"
+          className="mt-1 text-[12px] font-medium text-[var(--accent-text)] hover:text-[var(--accent-text)]"
         >
           {expanded ? t('收起 ⌃', 'Collapse ⌃') : t('展开全文 ⌄', 'Show full text ⌄')}
         </button>
@@ -633,9 +636,11 @@ function CollapsibleText({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }: TaskChatPanelProps) {
+export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, scopeNetworkId }: TaskChatPanelProps) {
   const isActive = active !== false;
   const { networkId } = useNetworkId();
+  const scopedChatUrl = useCallback((url: string) => scopeNetworkId
+    ? `${url}${url.includes('?') ? '&' : '?'}network_id=${encodeURIComponent(scopeNetworkId)}` : url, [scopeNetworkId]);
   // NetworkContext hydrates after the first client paint. Do not briefly read
   // another network's shard through an auth fallback while that happens.
   const privateStorageScope = networkId ? chatPrivateScope(networkId) : null;
@@ -661,6 +666,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [historyError, setHistoryError] = useState(false);
+  const [historyErrorReason, setHistoryErrorReason] = useState('');
+  const historyUnsupportedRef = useRef(false);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
   // R23→R25: pinyin matching moved to the shared lib (also powers /nodes
@@ -712,12 +719,12 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setSearchOpen(true);
-        setTimeout(() => searchInputRef.current?.focus(), 50);
+        setTimeout(() => searchInputRef.current?.focus({ preventScroll: !!scopeNetworkId }), 50);
       }
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [isActive]);
+  }, [isActive, scopeNetworkId]);
   // 07-31 通信龙 batch (SPEC §12 header 🔍): ChatPane's search button
   // dispatches `chat:open-search` (detail.alias). Same effect as
   // Cmd/Ctrl+F, but reachable by pointer users. Filter on detail.alias
@@ -729,11 +736,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       const detail = (e as CustomEvent<{ alias?: string }>).detail;
       if (detail?.alias && detail.alias !== alias) return;
       setSearchOpen(true);
-      setTimeout(() => searchInputRef.current?.focus(), 50);
+      setTimeout(() => searchInputRef.current?.focus({ preventScroll: !!scopeNetworkId }), 50);
     };
     window.addEventListener('chat:open-search', onEvent);
     return () => window.removeEventListener('chat:open-search', onEvent);
-  }, [isActive, alias]);
+  }, [isActive, alias, scopeNetworkId]);
   const lightboxOpenerRef = useRef<HTMLElement | null>(null);
   const openLightbox = useCallback((url: string) => {
     lightboxOpenerRef.current = document.activeElement as HTMLElement | null;
@@ -829,14 +836,22 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     budgetMs: number,
     cursor?: TaskHistoryCursor,
   ): Promise<boolean> => {
+    if (scopeNetworkId && historyUnsupportedRef.current) return false;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), budgetMs);
     try {
       const res = await fetch(
-        buildTaskHistoryUrl(alias, limit, cursor),
+        scopedChatUrl(buildTaskHistoryUrl(alias, limit, cursor)),
         { signal: ctrl.signal },
       );
       const data = await res.json();
+      if (scopeNetworkId && res.status === 501 && data.error === 'hub_tasks_scope_unsupported') {
+        historyUnsupportedRef.current = true;
+        throw new Error(SCOPED_HISTORY_UNSUPPORTED);
+      }
+      if (!res.ok || data.ok === false) throw new Error(res.status === 401
+        ? '会话已过期，请重新登录后读取历史' : `读取历史失败（HTTP ${res.status}）`);
+      setHistoryErrorReason('');
       if (data.tasks) {
         const persistedRequestIds = new Set<string>();
         for (const task of data.tasks as ChatTask[]) {
@@ -853,12 +868,13 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
         setMessages(prev => mergeTaskHistoryPage(prev, data.tasks, persistedRequestIds));
       }
       return true;
-    } catch {
+    } catch (error) {
+      setHistoryErrorReason(error instanceof Error ? error.message : '读取历史失败');
       return false;
     } finally {
       clearTimeout(timer);
     }
-  }, [alias, privateStorageScope]);
+  }, [alias, privateStorageScope, scopedChatUrl, scopeNetworkId]);
 
   // Single-attempt loader used for one older keyset page.
   const loadHistory = useCallback(async (cursor: TaskHistoryCursor) => {
@@ -882,6 +898,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
   }, [runFetch]);
 
   useEffect(() => {
+    historyUnsupportedRef.current = false;
     setMessages([]);
     setHistoryLoaded(false);
     setHistoryError(false);
@@ -914,8 +931,9 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       });
     }
     // Focus textarea
-    setTimeout(() => textareaRef.current?.focus(), 300);
-  }, [alias, loadInitial, privateStorageScope]);
+    const focusTimer = setTimeout(() => textareaRef.current?.focus({ preventScroll: !!scopeNetworkId }), 300);
+    return () => clearTimeout(focusTimer);
+  }, [alias, loadInitial, privateStorageScope, scopeNetworkId]);
 
   // M4: user scrolled to the top → fetch one older page, keeping the
   // viewport anchored on the message they were looking at.
@@ -981,8 +999,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     const behavior: ScrollBehavior = firstAnchorRef.current ? 'auto' : 'smooth';
     firstAnchorRef.current = false;
     forceScrollRef.current = false;
-    messagesEndRef.current?.scrollIntoView({ behavior });
-  }, [messages]);
+    // Embedded scenes must not scroll their page/camera out of view with the chat.
+    if (scopeNetworkId) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior });
+    else messagesEndRef.current?.scrollIntoView({ behavior });
+  }, [messages, scopeNetworkId]);
 
   // SSE-driven task updates: the server pushes new_reply events to the
   // sender's alias channel (/events/<from_session>), so we just listen for
@@ -1002,14 +1022,14 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
   const lastSoftRefreshRef = useRef(0);
   useEffect(() => () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current); }, []);
   useSSE({
-    url: '/api/hub/events',
+    url: scopedChatUrl('/api/hub/events'),
     enabled: true,
     onEvent: async (e: { type?: string; in_reply_to?: string; message_id?: string }) => {
       const t = e?.type || '';
       if (t === 'new_reply' && e.in_reply_to && pollingIds.has(e.in_reply_to)) {
         // Fast path: a reply to a task WE sent from this panel.
         try {
-          const res = await fetch(`/api/hub/tasks?task_id=${encodeURIComponent(e.in_reply_to)}`);
+          const res = await fetch(scopedChatUrl(`/api/hub/tasks?task_id=${encodeURIComponent(e.in_reply_to)}`));
           const data = await res.json();
           const updated = data?.tasks?.[0];
           if (!updated) return;
@@ -1059,7 +1079,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       runFetch(HISTORY_PAGE, 12_000);
       // R27 (微信手感): switching back to a tab refocuses the composer —
       // desktop only (focusing on touch pops the soft keyboard uninvited).
-      if (!coarsePointerRef.current) textareaRef.current?.focus();
+      if (!coarsePointerRef.current) textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
     }
     wasActiveRef.current = true;
     const id = setInterval(() => {
@@ -1067,7 +1087,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       runFetch(HISTORY_PAGE, 12_000);
     }, 15_000);
     return () => clearInterval(id);
-  }, [historyLoaded, isActive, runFetch]);
+  }, [historyLoaded, isActive, runFetch, scopeNetworkId]);
 
   // Polling fallback (SSE-unavailable / proxies stripping events).
   // Slow cadence so we're not the bulk of server load — SSE handles the fast path.
@@ -1085,7 +1105,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       }
       for (const taskId of pollingIds) {
         try {
-          const res = await fetch(`/api/hub/tasks?task_id=${encodeURIComponent(taskId)}`);
+          const res = await fetch(scopedChatUrl(`/api/hub/tasks?task_id=${encodeURIComponent(taskId)}`));
           const data = await res.json();
           if (data.tasks?.[0]) {
             const updated = data.tasks[0];
@@ -1098,7 +1118,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
       }
     }, 30_000);
     return () => clearInterval(interval);
-  }, [pollingIds]);
+  }, [pollingIds, scopedChatUrl]);
 
   // #492 upload half — proxied to hub, Bearer server-side. The
   // returned attachment carries `file_id` (canonical hub identifier)
@@ -1197,7 +1217,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     if (filesToSend.length === 0) {
       putChatOutbox({
         requestId, localTaskId, panelAlias: alias, targetAlias: sendTo,
-        content: taskContent, priority, networkId: aliasNetRef.current[sendTo] || networkId || '',
+        content: taskContent, priority, networkId: scopeNetworkId || aliasNetRef.current[sendTo] || networkId || '',
         createdAt: optimistic.created_at,
       }, privateStorageScope);
     }
@@ -1239,7 +1259,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     }
     setSending(false);
     setUploadProgress(null);
-    textareaRef.current?.focus();
+    textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
   };
 
   // Core POST shared by send() and the failed-bubble retry (R4: WeChat-style
@@ -1253,7 +1273,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
           alias: sendTo, task: taskContent, priority, attachments: uploaded,
           ...(requestId ? { request_id: requestId } : {}),
           // P0: multi-network users MUST scope the send or the hub rejects.
-          ...((aliasNetRef.current[sendTo] || networkId) ? { network_id: aliasNetRef.current[sendTo] || networkId } : {}),
+          ...((scopeNetworkId || aliasNetRef.current[sendTo] || networkId) ? { network_id: scopeNetworkId || aliasNetRef.current[sendTo] || networkId } : {}),
         }),
       });
       const data = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
@@ -1396,7 +1416,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
     const before = input.slice(0, lastAt);
     setInput(`${before}@${nodeName} `);
     setShowMentions(false);
-    textareaRef.current?.focus();
+    textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
   };
 
   const filteredMentions = mentionNodes.filter(n =>
@@ -1438,8 +1458,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
   useEffect(() => {
     if (!currentMatchKey) return;
     const el = scrollRef.current?.querySelector(`[data-ev="${CSS.escape(currentMatchKey)}"]`);
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, [currentMatchKey]);
+    const container = scrollRef.current;
+    if (scopeNetworkId && el && container) container.scrollTo({ top: container.scrollTop + el.getBoundingClientRect().top - container.getBoundingClientRect().top - container.clientHeight / 2, behavior: 'smooth' });
+    else el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [currentMatchKey, scopeNetworkId]);
   const stepMatch = (delta: number) => {
     if (!searchMatches.length) return;
     setSearchIdx((i) => (i + delta + searchMatches.length) % searchMatches.length);
@@ -1475,17 +1497,17 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
               <span className="shrink-0 text-[10px] tabular-nums text-[var(--fg-dim)]">
                 {searchMatches.length ? `${Math.min(searchIdx, searchMatches.length - 1) + 1}/${searchMatches.length}` : searchQuery.trim() ? t('0 条', '0 found') : t(`${chatEvents.length} 条内`, `in ${chatEvents.length}`)}
               </span>
-              <button type="button" onClick={() => stepMatch(-1)} aria-label={t('上一条（更早）', 'Previous (older)')} className="shrink-0 rounded px-1 text-[var(--fg-dim)] hover:text-cyan-300">↑</button>
-              <button type="button" onClick={() => stepMatch(1)} aria-label={t('下一条（更新）', 'Next (newer)')} className="shrink-0 rounded px-1 text-[var(--fg-dim)] hover:text-cyan-300">↓</button>
+              <button type="button" onClick={() => stepMatch(-1)} aria-label={t('上一条（更早）', 'Previous (older)')} className="shrink-0 rounded px-1 text-[var(--fg-dim)] hover:text-[var(--accent-text)]">↑</button>
+              <button type="button" onClick={() => stepMatch(1)} aria-label={t('下一条（更新）', 'Next (newer)')} className="shrink-0 rounded px-1 text-[var(--fg-dim)] hover:text-[var(--accent-text)]">↓</button>
               <button type="button" onClick={closeSearch} aria-label={t('关闭搜索', 'Close search')} className="shrink-0 rounded px-1 text-[var(--fg-dim)] hover:text-[var(--fg)]">×</button>
             </div>
           ) : (
             <div className="sticky top-0 z-20 flex justify-end pointer-events-none -mb-8">
               <button
                 type="button"
-                onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
+                onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus({ preventScroll: !!scopeNetworkId }), 50); }}
                 aria-label={t('搜索会话', 'Search conversation')}
-                className="pointer-events-auto inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-elevated)]/80 text-[var(--fg-dim)] shadow hover:text-cyan-300 sm:min-h-0 sm:min-w-0 sm:p-1.5"
+                className="pointer-events-auto inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-elevated)]/80 text-[var(--fg-dim)] shadow hover:text-[var(--accent-text)] sm:min-h-0 sm:min-w-0 sm:p-1.5"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
@@ -1495,7 +1517,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
           )}
           {!historyLoaded && (
             <div className="flex justify-center py-8">
-              <div className="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[var(--accent)]/30 border-t-cyan-500 rounded-full animate-spin" />
             </div>
           )}
           {/* M4: top-of-thread row — scroll-to-top auto-loads older, and
@@ -1509,7 +1531,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
               className="w-full flex justify-center py-2 text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg-muted)]"
             >
               {loadingOlder ? (
-                <span className="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-[var(--accent)]/30 border-t-cyan-500 rounded-full animate-spin" />
               ) : (
                 <span>↑ Load earlier messages</span>
               )}
@@ -1532,15 +1554,15 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
               sending. Retry re-runs the full ladder (20 → 6). */}
           {historyLoaded && historyError && messages.length === 0 && (
             <div className="text-center py-12">
-              <div className="text-[var(--fg-muted)] text-sm">连接较慢，暂未加载出历史</div>
+              <div className="text-[var(--fg-muted)] text-sm">{scopeNetworkId && historyErrorReason ? historyErrorReason : '连接较慢，暂未加载出历史'}</div>
               <div className="text-[var(--fg-dim)] text-xs mt-1">你仍可在下方直接给 {alias} 发消息</div>
-              <button
+              {historyErrorReason !== SCOPED_HISTORY_UNSUPPORTED && <button
                 type="button"
                 onClick={() => loadInitial()}
-                className="mt-3 text-xs text-cyan-400 hover:text-cyan-300 underline"
+                className="mt-3 text-xs text-[var(--accent-text)] hover:text-[var(--accent-text)] underline"
               >
                 重试加载历史
-              </button>
+              </button>}
             </div>
           )}
 
@@ -1566,7 +1588,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                 <Fragment key={`${m.task_id}:reply`}>
                 {sepEl}
                 <div className="flex justify-start" data-ev={`${m.task_id}:reply`}>
-                  <div title={event.at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-green-500/8 border border-green-500/15 rounded-2xl rounded-bl-md px-3 py-2.5 sm:px-4 shadow-sm ${currentMatchKey === `${m.task_id}:reply` ? 'ring-2 ring-yellow-400/60' : ''}`}>
+                  <div title={event.at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-green-500/8 rounded-2xl rounded-bl-md px-3 py-2.5 sm:px-4 ${currentMatchKey === `${m.task_id}:reply` ? 'ring-2 ring-yellow-400/60' : ''}`}>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {m.to_name && <AliasAvatar alias={m.to_name} size={14} />}
@@ -1576,7 +1598,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                       <CopyButton text={m.result || ''} label={t('复制回复', 'Copy reply')} />
                     </div>
                     <div className="mb-2 rounded-lg border-l-2 border-cyan-400/40 bg-black/20 px-2.5 py-1.5">
-                      <div className="text-[9px] text-cyan-300/80">
+                      <div className="text-[9px] text-[var(--accent-text)]/80">
                         引用 {senderLabel} 的任务 · {formatTimestamp(m.created_at)}
                       </div>
                       <div className="mt-0.5 max-h-10 overflow-hidden text-[11px] leading-5 text-[var(--fg-muted)]">
@@ -1615,14 +1637,14 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                     title={(m.result || '').replace(/^❌\s*/, '') || t('发送失败', 'Send failed')}
                     aria-label={t('发送失败，点击查看原因', 'Send failed — tap for reason')}
                     aria-expanded={errorFor === m.task_id}
-                    className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-red-500 text-[11px] font-bold leading-none text-white"
+                    className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[var(--danger)] text-[11px] font-bold leading-none text-[var(--fg)]"
                   >
                     !
                   </button>
                 )}
-                <div title={m.created_at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-cyan-500/8 border border-cyan-500/15 rounded-2xl rounded-br-md px-3 py-2.5 sm:px-4 shadow-sm ${currentMatchKey === `${m.task_id}:task` ? 'ring-2 ring-yellow-400/60' : ''}`}>
+                <div title={m.created_at} className={`group/bubble max-w-[92%] sm:max-w-[min(85%,56ch)] bg-[var(--accent)]/8 rounded-2xl rounded-br-md px-3 py-2.5 sm:px-4 ${currentMatchKey === `${m.task_id}:task` ? 'ring-2 ring-yellow-400/60' : ''}`}>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[10px] font-medium ${fromUser ? 'text-cyan-400' : 'text-purple-300'}`}>{senderLabel}</span>
+                    <span className={`text-[10px] font-medium ${fromUser ? 'text-[var(--accent-text)]' : 'text-purple-300'}`}>{senderLabel}</span>
                     {!fromUser && <span className="text-[9px] text-[var(--fg-dim)]">forwarded to {m.to_name}</span>}
                     <span className="flex-1" />
                     <CopyButton text={m.content || ''} label={t('复制内容', 'Copy message')} />
@@ -1645,13 +1667,13 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                           optimistic bubble is still in flight; tap-to-resend
                           on failure (same bubble, no retyping). */}
                       {m.task_id.startsWith('tmp-') && m.status !== 'failed' && (
-                        <span aria-label={t('发送中', 'Sending')} className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
+                        <span aria-label={t('发送中', 'Sending')} className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[var(--accent)]/30 border-t-cyan-400" />
                       )}
                       {m.status === 'failed' && fromUser && (
                         <button
                           type="button"
                           onClick={() => retrySend(m)}
-                          className="inline-flex items-center gap-1 rounded-md border border-red-500/40 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-300 hover:bg-red-500/20"
+                          className="inline-flex items-center gap-1 rounded-md border border-red-500/40 bg-[var(--danger)]/10 px-1.5 py-0.5 text-[10px] font-medium text-red-300 hover:bg-[var(--danger)]/20"
                         >
                           <span aria-hidden>↻</span> {t('重发', 'Resend')}
                         </button>
@@ -1664,7 +1686,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
 
               {m.status === 'failed' && errorFor === m.task_id && (
                 <div className="flex justify-end">
-                  <div className="max-w-[92%] rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-[11px] leading-5 text-red-300">
+                  <div className="max-w-[92%] rounded-lg border border-red-500/30 bg-[var(--danger)]/10 px-2.5 py-1.5 text-[11px] leading-5 text-red-300">
                     {(m.result || '').replace(/^❌\s*/, '') || t('发送失败', 'Send failed')}
                   </div>
                 </div>
@@ -1673,11 +1695,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
               {/* Typing indicator when running */}
               {m.status === 'running' && !m.result && (
                 <div className="flex justify-start">
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="bg-[var(--bg-secondary)] rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex gap-1">
-                      <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0s' }} />
-                      <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.15s' }} />
-                      <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.3s' }} />
+                      <span className="w-2 h-2 rounded-full bg-[var(--fg-muted)] animate-bounce" style={{ animationDelay: '0s' }} />
+                      <span className="w-2 h-2 rounded-full bg-[var(--fg-muted)] animate-bounce" style={{ animationDelay: '0.15s' }} />
+                      <span className="w-2 h-2 rounded-full bg-[var(--fg-muted)] animate-bounce" style={{ animationDelay: '0.3s' }} />
                     </div>
                   </div>
                 </div>
@@ -1694,9 +1716,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                 onClick={() => {
                   setNewBelow(0);
                   atBottomRef.current = true;
-                  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  if (scopeNetworkId) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+                  else messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="pointer-events-auto flex items-center gap-1 rounded-full border border-cyan-500/30 bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-cyan-300 shadow-lg shadow-black/40 hover:bg-cyan-500/10"
+                className="pointer-events-auto flex items-center gap-1 rounded-full border border-[var(--accent)]/30 bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-[var(--accent-text)] shadow-lg shadow-black/40 hover:bg-[var(--accent)]/10"
               >
                 ↓ {t(`${newBelow} 条新消息`, `${newBelow} new message${newBelow > 1 ? 's' : ''}`)}
               </button>
@@ -1715,7 +1738,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                     <button key={node} onClick={() => insertMention(node)}
                       onMouseEnter={() => setMentionIndex(i)}
                       aria-selected={i === mentionIndex}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${i === mentionIndex ? 'bg-cyan-500/10' : 'hover:bg-cyan-500/10'}`}>
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${i === mentionIndex ? 'bg-[var(--accent)]/10' : 'hover:bg-[var(--accent)]/10'}`}>
                       <AliasAvatar alias={node} size={16} />
                       <span className="text-[var(--fg-muted)]">{node}</span>
                     </button>
@@ -1730,10 +1753,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                 onPaste={handlePaste}
                 placeholder={`Message ${alias}...`}
                 rows={1}
-                className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-3 py-2.5 pr-24 text-base sm:px-4 sm:text-sm text-[var(--fg)] placeholder-[var(--fg-dim)] focus:border-cyan-500/40 focus:outline-none resize-none transition-colors"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-3 py-2.5 pr-24 text-base sm:px-4 sm:text-sm text-[var(--fg)] placeholder-[var(--fg-dim)] focus:border-[var(--accent)]/40 focus:outline-none resize-none transition-colors"
               />
               <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
-                <label className="inline-flex min-h-[44px] min-w-[44px] -my-3 -mx-1.5 items-center justify-center sm:min-h-0 sm:min-w-0 sm:m-0 sm:p-1 text-[var(--fg-dim)] hover:text-cyan-300 cursor-pointer rounded hover:bg-cyan-500/10" title={t('附加文件', 'Attach file')}>
+                <label className="inline-flex min-h-[44px] min-w-[44px] -my-3 -mx-1.5 items-center justify-center sm:min-h-0 sm:min-w-0 sm:m-0 sm:p-1 text-[var(--fg-dim)] hover:text-[var(--accent-text)] cursor-pointer rounded hover:bg-[var(--accent)]/10" title={t('附加文件', 'Attach file')}>
                   <input
                     type="file"
                     multiple
@@ -1756,7 +1779,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
                 hit zone, 4 px short of the iOS 44 px guideline on
                 the short axis. Bump to inline-flex + min-h/w 44. */}
             <button onClick={send} aria-label="Send message" disabled={sending || (!input.trim() && attachedFiles.length === 0)}
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center bg-cyan-600 hover:bg-cyan-500 disabled:bg-[var(--border)] disabled:text-[var(--fg-dim)] text-[var(--fg)] rounded-xl transition-all shrink-0 active:scale-95">
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center bg-[var(--accent)] hover:opacity-90 disabled:bg-[var(--border)] disabled:text-[var(--fg-dim)] text-[var(--accent-fg)] rounded-xl transition-all shrink-0 active:scale-95">
               {sending ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
@@ -1767,8 +1790,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active }
             </button>
           </div>
           {uploadProgress && (
-            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-cyan-300" role="status">
-              <span className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
+            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[var(--accent-text)]" role="status">
+              <span className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-[var(--accent)]/30 border-t-cyan-400" />
               {t(`上传附件 ${uploadProgress.done}/${uploadProgress.total}…`, `Uploading ${uploadProgress.done}/${uploadProgress.total}…`)}
             </div>
           )}

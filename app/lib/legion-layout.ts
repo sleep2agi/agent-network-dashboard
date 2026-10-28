@@ -29,12 +29,15 @@ export interface LegionPerson {
   display_name: string;
   role: string;
   department: { id: string; name: string } | null;
-  agents: { node_id: string; alias: string }[];
+  agents: LegionAgentRef[];
 }
 
 export interface LegionAgentRef {
   node_id: string;
   alias: string;
+  department_id?: string | null;
+  updated_at?: string;
+  lifecycle_state?: string | null;
 }
 
 /** Hub `/api/networks/{id}/departments` 的一行（客户端 `src/org-model.ts` 同构）。 */
@@ -120,17 +123,21 @@ export const UNGROUPED = '未分组';
 export const ORPHAN_GROUP = '无主 Agent';
 
 /** 环半径：部门贴近圆心，人第二层，Agent 在最外。 */
-export const RING_RADIUS = { core: 0, group: 0.5, person: 0.76, agent: 1 } as const;
+export const RING_RADIUS = { core: 0, group: 0.5, person: 0.84, agent: 1 } as const;
 /**
  * 多层部门时，最内层（depth 1）到最外层（最深）的半径带。0.26→0.54：
  * 0.30→0.50 在 375px 屏上只留 29px 环差，而部门圆直径 44px，父子部门
  * 会叠在一起；拉开到 0.28 环差后窄屏才放得下（节点半径同时按屏幕缩放）。
  */
-const DEPT_BAND = { inner: 0.26, outer: RING_RADIUS.group + 0.04 } as const;
+// 部门环整体外移：生产 13 个部门，内圈 0.34 会被压成「顶部一团」。
+const DEPT_BAND = { inner: 0.56, outer: 0.74 } as const;
 
 /** Agent 扇形：相邻 Agent 的角度间隔与最大半宽。 */
 const AGENT_STEP = 0.075;
-const AGENT_MAX_HALF_WIDTH = 0.2;
+// 一个人名下可能有 20+ 个 Agent：原来 0.2 rad 的上限会把它们挤成一坨，
+// 放到 0.42 rad（约 24°），并配合三圈半径错开。
+const AGENT_MAX_HALF_WIDTH = 0.42;
+const AGENT_RING_BANDS = [1, 0.9, 0.82] as const;
 /** 同一 owner 的 Agent 交替落在两个半径上：纯角度摊开在窄屏仍会互相压住。 */
 const AGENT_RING_ALT = 0.9;
 
@@ -285,6 +292,11 @@ function buildTree(input: LegionInput): { roots: DeptNode[]; depth: number } {
 }
 
 /** 深度 → 半径。一层时保持 v2 的 0.5，多层时在最内 0.30 与 0.50 之间插值。 */
+/** 部门节点在世界坐标里的半径：层级越深越小（内层环会挤，必须收）。 */
+export function deptWorldRadius(depth: number): number {
+  return depth <= 1 ? 0.05 : 0.036;
+}
+
 function deptRadius(depth: number, maxDepth: number): number {
   if (maxDepth <= 1) return RING_RADIUS.group;
   const t = (depth - 1) / (maxDepth - 1);
@@ -302,14 +314,18 @@ interface Slot {
  */
 function distribute(slots: Slot[], start: number, span: number): void {
   if (slots.length === 0) return;
-  const minShare = Math.min(0.12, (span / slots.length) * 0.6);
+  // 部门节点直径约 0.104（世界坐标），内层环半径只有 0.26：0.22 rad 的扇区
+  // 只有 0.057 弧长，6 个一级部门会互相叠住（admin 截图里名字全糊在中心）。
+  // 下限按「弧长 ≥ 1.4 个节点直径」估算：0.104*1.4/0.26 ≈ 0.56，取其 0.8 倍。
+  const minShare = Math.min(0.45, (span / slots.length) * 0.6);
   const reserved = minShare * slots.length;
   const flexible = Math.max(0, span - reserved);
-  const totalWeight = slots.reduce((n, s) => n + s.weight, 0) || 1;
+  const roots = slots.map(s => Math.sqrt(Math.max(0, s.weight)));
+  const totalWeight = roots.reduce((n, w) => n + w, 0) || 1;
   let cursor = start;
-  for (const slot of slots) {
-    const width = minShare + flexible * (slot.weight / totalWeight);
-    slot.apply(cursor, width);
+  for (let i = 0; i < slots.length; i++) {
+    const width = minShare + flexible * (roots[i] / totalWeight);
+    slots[i].apply(cursor, width);
     cursor += width;
   }
 }
@@ -330,7 +346,9 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
   });
 
   const emitDept = (node: DeptNode, start: number, span: number, parentId: string) => {
-    const radius = deptRadius(node.depth, depth);
+    // 部门多的时候（生产 13 个）挤在内层环上会互相压：同层交替错开一点半径，
+    // 形成两条细环，圆心文字不再叠在一起。
+    const radius = deptRadius(node.depth, depth) + (node.depth === 1 && order % 2 === 1 ? 0.11 : 0);
     const center = start + span / 2;
     const isCollapsed = collapsed.has(node.id) && (node.children.length > 0 || node.people.length > 0 || node.orphans.length > 0);
     nodes.push({
@@ -409,6 +427,29 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
     0,
     TAU,
   );
+
+  // Agent 外层均匀铺满整圈：按所属成员方位排序后再均分。否则一个部门占
+  // 9/16 人时，它的几百个 Agent 会全挤在同一侧（admin 截图里的「半边糊、半边空」）。
+  // 半径保留 3 档交错，外层仍有一点纹理。
+  const agentNodes = nodes.filter(n => n.kind === 'agent');
+  if (agentNodes.length > 1) {
+    const byIdMap = new Map(nodes.map(n => [n.id, n]));
+    agentNodes.sort((a, b) => {
+      const pa = byIdMap.get(a.parentId ?? '')?.angle ?? 0;
+      const pb = byIdMap.get(b.parentId ?? '')?.angle ?? 0;
+      return pa - pb || a.order - b.order;
+    });
+    const bands = [1, 0.93, 0.86];
+    agentNodes.forEach((agent, i) => {
+      const angle = ((i + 0.5) / agentNodes.length) * TAU;
+      const radius = RING_RADIUS.agent * bands[i % bands.length];
+      agent.angle = angle;
+      agent.radius = radius;
+      const pt = polar(radius, angle);
+      agent.x = pt.x;
+      agent.y = pt.y;
+    });
+  }
 
   return {
     nodes,

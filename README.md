@@ -68,6 +68,10 @@ Browser
 
 The Dashboard is stateless. CommHub owns users, nodes, tasks, messages, and persistence.
 
+## Design language
+
+The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
+
 ## Quality and security gates
 
 ```bash

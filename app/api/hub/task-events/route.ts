@@ -16,7 +16,11 @@ export async function GET(req: Request) {
     const res = await hubFetch(`/api/task_events?${params.toString()}`);
     const ct = res.headers.get('content-type') || '';
     if (res.ok && ct.includes('application/json')) return Response.json(await res.json());
-    return Response.json({ ok: true, events: [], count: 0 });
+    if (res.status === 404) return Response.json({ ok: true, events: [], count: 0, unavailable: true });
+    return Response.json(
+      { ok: false, error: `CommHub /api/task_events ${res.status}` },
+      { status: res.status },
+    );
   } catch (e: unknown) {
     return Response.json({ error: 'failed', detail: e instanceof Error ? e.message : String(e) }, { status: 502 });
   }

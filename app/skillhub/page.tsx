@@ -116,8 +116,8 @@ export default function SkillHubPage() {
     <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
       <div className="mb-6 flex items-center gap-3">
         <div>
-          <h1 className="ml-10 text-2xl font-bold text-[var(--fg)] lg:ml-0">SkillHub</h1>
-          <p className="mt-1 text-sm text-[var(--fg-dim)]">节点沉淀可复用能力，审核后供整个网络使用；网络内发布不会自动公开。</p>
+          <h1 className="ml-10 text-xl font-semibold text-[var(--fg)] lg:ml-0">SkillHub</h1>
+          <p className="mt-1 text-xs text-[var(--fg-muted)]">节点沉淀可复用能力，审核后供整个网络使用；网络内发布不会自动公开。</p>
         </div>
         <button onClick={() => setShowUpload(true)} className="ml-auto rounded-lg bg-[var(--hl)] px-3 py-2 text-sm font-medium text-[var(--bg)] hover:opacity-90">上传 Skill</button>
       </div>
@@ -129,20 +129,20 @@ export default function SkillHubPage() {
 
       <div className="grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-3">
         {loading ? [1,2,3].map(i => <div key={i} className="h-40 animate-pulse rounded-xl bg-[var(--bg-elevated)]" />) : skills.map(skill => (
-          <article key={skill.skill_id} className="flex min-h-40 flex-col rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
+          <article key={skill.skill_id} className="flex min-h-40 flex-col rounded-xl bg-[var(--bg-secondary)] p-4">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1"><h2 className="truncate font-semibold text-[var(--fg)]">{skill.name}</h2><code className="text-xs text-[var(--hl)]">{skill.slug}@{skill.version}</code></div>
               <span className={`rounded-full bg-[var(--hover-tint)] px-2 py-0.5 text-[10px] ${skill.status === 'published' ? 'text-[var(--success)]' : skill.status === 'pending' ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>{skill.status === 'published' ? '网络内发布' : skill.status === 'pending' ? '待审核' : '已拒绝'}</span>
             </div>
             <p className="mt-3 line-clamp-3 text-sm text-[var(--fg-muted)]">{skill.description || '暂无说明'}</p>
-            <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-[var(--fg-dim)]">
+            <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-[var(--fg-muted)]">
               <span>{skill.source_type === 'node' ? '节点' : '用户'} · {skill.source_alias || 'unknown'}</span>
-              <button onClick={() => openSkill(skill)} className="ml-auto rounded border border-[var(--border-hover)] px-2 py-1 text-[var(--fg-muted)]">查看</button>
-              {reviewer && skill.status === 'pending' && <span className="flex gap-1"><button onClick={() => review(skill.skill_id, 'rejected')} className="rounded border border-[var(--danger)] px-2 py-1 text-[var(--danger)]">拒绝</button><button onClick={() => review(skill.skill_id, 'published')} className="rounded border border-[var(--success)] px-2 py-1 text-[var(--success)]">发布</button></span>}
+              <button onClick={() => openSkill(skill)} className="ml-auto rounded px-2 py-1 text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">查看</button>
+              {reviewer && skill.status === 'pending' && <span className="flex gap-1"><button onClick={() => review(skill.skill_id, 'rejected')} className="rounded px-2 py-1 text-[var(--danger)] hover:bg-[var(--hover-tint)]">拒绝</button><button onClick={() => review(skill.skill_id, 'published')} className="rounded px-2 py-1 text-[var(--success)] hover:bg-[var(--hover-tint)]">发布</button></span>}
             </div>
           </article>
         ))}
-        {!loading && skills.length === 0 && <div className="col-span-full rounded-xl border border-dashed border-[var(--border-hover)] p-10 text-center text-sm text-[var(--fg-dim)]">还没有 Skill。让节点总结经验，或上传第一份 SKILL.md。</div>}
+        {!loading && skills.length === 0 && <div className="col-span-full rounded-xl bg-[var(--bg-secondary)] p-10 text-center text-sm text-[var(--fg-muted)]">还没有 Skill。让节点总结经验，或上传第一份 SKILL.md。</div>}
       </div>
 
       {showUpload && <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--bg) 70%, transparent)' }} onMouseDown={e => { if (e.target === e.currentTarget) setShowUpload(false); }}>
