@@ -68,6 +68,9 @@ export async function GET(req: Request) {
     if (tasksRes.status === 401) {
       return Response.json({ ok: false, error: 'login required' }, { status: 401 });
     }
+    if (tasksRes.status === 403) {
+      return Response.json({ ok: false, error: 'forbidden' }, { status: 403 });
+    }
     const contentType = tasksRes.headers.get('content-type') || '';
     const tasksJson = tasksRes.ok && contentType.includes('application/json');
 
@@ -133,6 +136,9 @@ export async function GET(req: Request) {
     // 页面于是把「Hub 挂了我读不到」显示成「暂无任务」。
     if (compRes.status === 401) {
       return Response.json({ ok: false, error: 'login required' }, { status: 401 });
+    }
+    if (compRes.status === 403) {
+      return Response.json({ ok: false, error: 'forbidden' }, { status: 403 });
     }
     if (!compRes.ok) {
       return Response.json(

@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
@@ -80,6 +81,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const taskGeneration = useRef(0);
 
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || '');
   // 07-31 通信龙 dispatch (临时开放此文件): let ChatPane's "查看任务"
@@ -171,6 +173,10 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     // 原来这里没 gate，首帧会发 /api/hub/tasks?limit=100（无 scope），
     // 多网络账号会 400、单网络账号会先渲染出无 scope 的数据。
     if (!networkReady || !networkId) return;
+    // A late network/filter read (including its error/finally) must never
+    // replace a newer result. Cleanup also invalidates unmounted requests.
+    const generation = ++taskGeneration.current;
+    const isCurrent = () => taskGeneration.current === generation;
     try {
       const params = new URLSearchParams();
       params.set('network_id', networkId);
@@ -180,23 +186,27 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       params.set('limit', '100');
 
       const res = await fetch(`/api/hub/tasks?${params.toString()}`);
+      if (!isCurrent()) return;
       if (res.status === 401) {
         window.location.assign('/login');
         return;
       }
       // 非 2xx 是失败，不是空列表：不检查 res.ok 会让 502 显示成「暂无任务」。
       if (!res.ok) {
+        if (res.status === 403) throw new Error('无权读取当前网络的任务，请联系网络管理员');
         const detail = await res.json().catch(() => null);
         throw new Error(detail?.error || detail?.message || `HTTP ${res.status}`);
       }
       const data = await res.json();
+      if (!isCurrent()) return;
       setTasks(data.tasks || []);
       setCount(data.count ?? (data.tasks?.length || 0));
       setError('');
     } catch (e: unknown) {
+      if (!isCurrent()) return;
       setError(e instanceof Error ? e.message : 'fetch failed');
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   }, [filterStatus, filterFrom, filterTo, networkId, networkReady]);
 
@@ -205,7 +215,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     setLoading(true);
     fetchTasks();
     const interval = setInterval(fetchTasks, 5000);
-    return () => clearInterval(interval);
+    return () => { taskGeneration.current++; clearInterval(interval); };
   }, [fetchTasks, networkReady, networkId]);
 
   // 通讯录与部门树：只为了把 alias 落到部门上。失败就让下拉框空着，
@@ -519,6 +529,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
 // shape the old page.tsx had (wrapper → Inner). Fallback matches the
 // loaded layout width so the burger button doesn't crash into "Loa…".
 export function TasksView({ initialSelectedId = null }: { initialSelectedId?: string | null }) {
+  const { networkId, ready } = useNetworkId();
   return (
     <Suspense
       fallback={
@@ -527,7 +538,9 @@ export function TasksView({ initialSelectedId = null }: { initialSelectedId?: st
         </div>
       }
     >
-      <TasksViewInner initialSelectedId={initialSelectedId} />
+      {/* Reset rows, department projection and local selection together on a
+          network change, before the new scope's first response arrives. */}
+      <TasksViewInner key={`${ready}:${networkId}`} initialSelectedId={initialSelectedId} />
     </Suspense>
   );
 }

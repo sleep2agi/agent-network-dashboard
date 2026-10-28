@@ -15,6 +15,7 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 - Platform parent-child connections, searchable paginated rosters and native fullscreen are available. Long model names keep their status labels visible, and fullscreen controls avoid the server drawer.
 - Organization task badges follow the selected network, stale people responses cannot replace the current list, and both task-list clear actions remove all four filters from the URL.
 - Main's login-expiry handling is retained, including the legacy nodes-to-status fallback. Empty scoped task/message results stay scoped instead of silently showing another network's data.
+- Late task-list responses cannot replace a newly selected network or cleared filter. Task permission denials retain HTTP 403 and show an explicit permission message in the list and inline conversation history.
 
 ### Design-language alignment
 
