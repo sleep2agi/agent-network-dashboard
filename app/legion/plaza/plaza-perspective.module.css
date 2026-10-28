@@ -45,7 +45,9 @@
 .status { display: flex; align-items: center; gap: 3px; max-width: 66px; font-size: 10px; color: var(--fg-muted); white-space: nowrap; }
 .statusText { overflow: hidden; text-overflow: ellipsis; }
 .statusDot { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: var(--fg-muted); }
-.more { margin-top: 5px; justify-content: space-between; color: var(--accent-text); font-size: 10px; }
+.more { margin-top: 5px; justify-content: space-between; color: var(--accent-text); font-size: 10px; white-space: nowrap; }
+.more > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.more > span:last-child { flex-shrink: 0; }
 .empty { display: block; padding: 10px 0; font-size: 11px; color: var(--fg-muted); }
 .lightMark { display: none; }
 :global([data-theme="light"]) .darkMark, :global([data-theme="mint"]) .darkMark { display: none; }

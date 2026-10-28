@@ -243,7 +243,7 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
                 </span>;
               })}
               {!shown.length && <span className={styles.empty}>{department.people.length ? `${department.people.length} 名成员 · 暂无 Agent` : '暂无成员或 Agent'}</span>}
-              <span className={styles.more}><span>{department.people.length} 名成员{department.unknown ? ' · 部门未可见' : ''}</span><span>{department.agents.length > shown.length ? `+${department.agents.length - shown.length} · ` : ''}查看全部 →</span></span>
+              <span className={styles.more}><span title={`${department.people.length} 名成员${department.unknown ? ' · 部门未可见' : ''}`}>{department.people.length} 名成员{department.unknown ? ' · 部门未可见' : ''}</span><span>{department.agents.length > shown.length ? `+${department.agents.length - shown.length} · ` : ''}查看全部 →</span></span>
             </button>
           </foreignObject>
           </g>;

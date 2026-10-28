@@ -4,10 +4,10 @@ import { layoutPlazaLabels, plazaLabelsOverlap } from './plaza-label-layout.ts';
 import { buildPlazaWorld, fitPlazaWorld, PLAZA_CAMERA, projectPlazaPoint } from './plaza-perspective.ts';
 import type { PlazaDepartment } from '../../lib/legion-directory.ts';
 
-function scene(count: number, width: number, camera = PLAZA_CAMERA) {
+function scene(count: number, width: number, camera = PLAZA_CAMERA, height = 776) {
   const departments = Array.from({ length: count }, (_, i) => ({ id: `d${i}`, name: `Department ${i}`,
     parentId: i > 11 ? `d${i - 12}` : null, agents: [], people: [] })) as PlazaDepartment[];
-  const world = buildPlazaWorld(departments), viewport = { width, height: 776 }, frame = fitPlazaWorld(world, viewport);
+  const world = buildPlazaWorld(departments), viewport = { width, height }, frame = fitPlazaWorld(world, viewport);
   const p = projectPlazaPoint(world.core, camera, frame), r = Math.max(23, Math.min(42, 68 * p.scale));
   return { viewport, core: { x: p.x - r - 30, y: p.y - r - 10, width: r * 2 + 60, height: r * 2 + 58 },
     anchors: world.platforms.map(a => ({ id: a.department.id, ...projectPlazaPoint(a.center, camera, frame), agents: 6 })) };
@@ -58,4 +58,13 @@ test('oversized networks expose omitted cards and placement is deterministic', (
   assert.equal(result.labels.size + result.hidden, 120); assert(result.hidden > 0);
   readable(result, fixture);
   assert.deepEqual(layoutPlazaLabels([...fixture.anchors].reverse(), fixture.viewport, fixture.core, 'd119'), result);
+});
+
+test('580px mobile scene keeps selected information available while panning through the core', () => {
+  for (const panY of [-80, -120, -160, -200, -240]) for (const selected of ['d0', 'd17']) {
+    const fixture = scene(18, 340, { ...PLAZA_CAMERA, panY }, 580);
+    const result = layoutPlazaLabels(fixture.anchors, fixture.viewport, fixture.core, selected);
+    assert((result.labels.get(selected)?.rows ?? 0) >= 1, `selected ${selected} lost at panY=${panY}`);
+    readable(result, fixture);
+  }
 });

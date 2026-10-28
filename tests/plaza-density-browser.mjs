@@ -6,6 +6,8 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 const base = process.env.BASE_URL || 'http://127.0.0.1:3175';
 const output = process.env.OUTPUT_DIR;
+const widths = (process.env.WIDTHS || '1920,1440,390').split(',').map(Number);
+assert(widths.every(w => [1920, 1440, 390].includes(w)));
 assert.equal(new URL(base).hostname, '127.0.0.1');
 assert(output); await mkdir(output, { recursive: true });
 const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
@@ -13,13 +15,14 @@ const sourceDirty = !!execFileSync('git', ['status', '--porcelain', '--untracked
 const build = await fetch(`${base}/api/health`).then(r => r.json());
 assert.equal(build.commit, process.env.EXPECTED_COMMIT || sourceCommit);
 const result = { sourceCommit, sourceDirty, build, fixture: true, base,
-  probeSha256: createHash('sha256').update(await readFile(new URL(import.meta.url))).digest('hex'), checks: {}, views: [], errors: [] };
+  probeSha256: createHash('sha256').update(await readFile(new URL(import.meta.url))).digest('hex'), checks: {}, views: [], edgeCases: [], errors: [], exit: 1 };
 const check = (name, ok) => { result.checks[name] = !!ok; assert(ok, name); };
 const browser = await chromium.launch({ headless: true });
 try {
-  for (const width of [1920, 1440, 390]) for (const theme of ['cyber', 'light']) {
+  for (const width of widths) for (const theme of ['cyber', 'light']) {
     const tag = `${width}-${theme}`;
     let count = 18;
+    let unavailableDepartments = false;
     const context = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 1080 }, reducedMotion: 'no-preference' });
     await context.addCookies([{ name: 'anet_dashboard_session', value: 'density-fixture-only', url: base }]);
     await context.addInitScript(theme => {
@@ -41,7 +44,7 @@ try {
       const json = path === '/api/hub/people' ? { ok: true, agent_department_supported: true, total: 1,
         people: [{ user_id: 'u1', username: 'fixture', display_name: '隔离验收', role: 'owner',
           department: { id: departments[0].id, name: departments[0].name }, agents }], agents_without_owner: [], has_more: false }
-        : path === '/api/hub/departments' ? { ok: true, departments, members: [] }
+        : path === '/api/hub/departments' ? { ok: true, departments: unavailableDepartments ? departments.slice(0, 1) : departments, members: [] }
           : path === '/api/hub/nodes' ? { ok: true, nodes }
             : path === '/api/hub/status' ? { ok: true, sessions }
               : path === '/api/hub/networks' ? { ok: true, networks: [{ network_id: 'fixture-A', network_name: 'Fixture' }] }
@@ -103,8 +106,30 @@ try {
     await validate('return3d');
     check(`${tag}:noPageOverflow`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     result.views.push({ width, theme, initial, focused, rotated: placed });
+    if (width === 390) {
+      await svg.focus();
+      for (let i = 0; i < 3; i++) await page.keyboard.press('Shift+ArrowUp');
+      await frames(3);
+      check(`${tag}:mobilePanApplied`, (await camera())[4] === '-120');
+      for (const selected of ['dept:dense-17', 'dept:dense-0']) {
+        await page.getByTestId('plaza-department-select').selectOption(selected);
+        const state = await inspect();
+        check(`${tag}:mobilePan:${selected}:selectedVisible`, state.cards.some(c => c.id === selected && c.active && c.names > 0));
+        check(`${tag}:mobilePan:${selected}:readable`, !state.overlaps.length && !state.clipped.length && !state.coreHidden);
+        check(`${tag}:mobilePan:${selected}:completeRosterAccessible`, await page.getByTestId('plaza-agent').count() === 6);
+        result.edgeCases.push({ tag, selected, state });
+      }
+      await page.screenshot({ path: `${output}/${tag}-panned.png`, fullPage: true });
+    } else {
+      unavailableDepartments = true; await page.reload(); await svg.waitFor(); await frames(5);
+      const state = await inspect();
+      result.edgeCases.push({ tag, unavailableDepartments: true, state });
+      await page.screenshot({ path: `${output}/${tag}-unavailable-departments.png`, fullPage: true });
+      check(`${tag}:unknownDepartments:allPlatforms`, await page.getByTestId('plaza-perspective-department').count() === 18);
+      await validate('unknownDepartments');
+    }
     if (width === 1920 && theme === 'cyber') {
-      count = 120; await page.reload(); await svg.waitFor(); await frames(3);
+      count = 120; unavailableDepartments = false; await page.reload(); await svg.waitFor(); await frames(3);
       check('oversize:allPlatforms', await page.getByTestId('plaza-perspective-department').count() === 120);
       check('oversize:overflowExplained', await page.getByTestId('plaza-label-overflow').isVisible());
       await page.getByTestId('plaza-department-select').selectOption('dept:dense-119');
@@ -113,7 +138,9 @@ try {
     }
     await context.close();
   }
+  check('allContextsCompleted', result.views.length === widths.length * 2);
   check('noPageErrorsOrWrites', result.errors.length === 0);
+  result.exit = 0;
 } finally {
   await browser.close();
   result.total = Object.keys(result.checks).length; result.passed = Object.values(result.checks).filter(Boolean).length;

@@ -79,7 +79,14 @@ export function layoutPlazaLabels(anchors: PlazaLabelAnchor[], viewport: { width
       for (let i = 1; i < compactSlots.length; i++) if (distance(compactSlots[i]) < distance(compactSlots[nearest])) nearest = i;
       const slot = compactSlots.splice(nearest, 1)[0];
       label = slot ? { ...slot, id: anchor.id, rows } : null;
-    } else label = fit(anchor, rows, width) ?? (!active ? fit(anchor, 1, width) : null);
+    } else {
+      label = fit(anchor, rows, width);
+      // A 580px mobile scene can have too little room above/below the core for
+      // six rows after panning. Keep the selected card accessible with fewer
+      // rows; its +N footer and the complete roster still expose every node.
+      if (active) for (let visible = rows - 1; visible >= 1 && !label; visible--) label = fit(anchor, visible, width);
+      else label ??= fit(anchor, 1, width);
+    }
     if (label) { labels.set(anchor.id, label); occupied.push(label); }
   }
   return { labels, dense, hidden: anchors.length - labels.size };

@@ -11,7 +11,7 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 ### Readable dense platform views
 
 - Platform namecards avoid one another and leave the ANet mark visible. The selected department's card stays readable above platform geometry, including after rotation or panning.
-- Dense organizations use compact department cards with a node-name, status and model/runtime preview. Select a department to expand its first six nodes and access the complete roster.
+- Dense organizations use compact department cards with a node-name, status and model/runtime preview. Select a department to expand up to six nodes and access the complete roster; tight viewports retain a readable selected summary.
 - When the viewport cannot hold every namecard, the view explains how many are not expanded. All department platforms and selector entries remain available, including empty and nested departments.
 
 ## 0.6.3-preview.107 — 2026-10-28
