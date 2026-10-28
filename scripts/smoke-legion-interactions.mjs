@@ -55,8 +55,21 @@ async function create(theme, width, mode = 'plaza', state = {}) {
     sessionStorage.setItem('anet_v3_auth', JSON.stringify({ user: { username: 'fixture', role: 'owner' }, token: 'fixture-token', networks, currentNetwork: 'fixture' }));
     const proto = CanvasRenderingContext2D.prototype;
     const begin = proto.setTransform, ellipse = proto.ellipse;
-    proto.setTransform = function (...args) { if (this.canvas.getAttribute('aria-label') === '军团三维拓扑图' && args.join(',') === '1,0,0,1,0,0') window.__departments = []; return begin.apply(this, args); };
+    proto.setTransform = function (...args) { if (this.canvas.getAttribute('aria-label') === '军团三维拓扑图' && args.join(',') === '1,0,0,1,0,0') { window.__departments = []; window.__trails = []; } return begin.apply(this, args); };
     proto.ellipse = function (...args) { if (this.canvas.getAttribute('aria-label') === '军团三维拓扑图') (window.__departments ??= []).push(args.slice(0, 4)); return ellipse.apply(this, args); };
+    let segment = {};
+    for (const method of ['beginPath', 'moveTo', 'lineTo', 'stroke']) {
+      const original = proto[method];
+      proto[method] = function (...args) {
+        if (this.canvas.getAttribute('aria-label') === '军团三维拓扑图') {
+          if (method === 'beginPath') segment = {};
+          if (method === 'moveTo') segment.from = args;
+          if (method === 'lineTo') segment.to = args;
+          if (method === 'stroke' && segment.from && segment.to && [2.6, 1.7].some(w => Math.abs(w - this.lineWidth) < .001)) (window.__trails ??= []).push({ ...segment });
+        }
+        return original.apply(this, args);
+      };
+    }
   }, { theme, networks, noNetwork: !!state.noNetwork });
   await context.route('**/*', async route => {
     const url = new URL(route.request().url());
@@ -88,6 +101,7 @@ async function create(theme, width, mode = 'plaza', state = {}) {
       if (url.pathname === '/api/hub/tasks') {
         status = state.historyError || 200;
         json = { ok: status === 200, ...(status === 501 ? { error: 'hub_tasks_scope_unsupported' } : {}), tasks: status === 200 ? [{ task_id: `history-${net}`, to_name: target.alias, from_name: 'fixture', created_at: '2026-01-01T00:00:00Z', status: 'replied', content: `历史消息-${net}`, result: '### 协作进度 · 模拟回复\n\n已完成本轮界面迭代，正在核对交互结果。\n\n- **界面**：保留当前网络与节点信息。\n- **验证**：检查深浅主题、窗口边界和键盘操作。\n- **下一步**：核对截图后整理发布记录。\n\n这是一段隔离测试消息，用于观察长文本在浮窗中的阅读和滚动。'.repeat(2) }] : undefined };
+        if (status === 200 && state.extraHistory) json.tasks.push({ task_id: 'history-live', to_name: target.alias, from_name: 'fixture', created_at: '2026-01-02T00:00:00Z', status: 'replied', content: '后台更新测试', result: '模拟新回复' });
       }
       if (url.pathname === '/api/hub/send') {
         sends.push(route.request().postDataJSON()); status = state.sendError || 200;
@@ -301,6 +315,8 @@ try {
       await stage.focus(); await page.keyboard.press('Enter');
       await page.getByTestId('legion-chat').waitFor();
       check(`${tag}:enterStaysIn3d`, new URL(page.url()).pathname === '/legion/3d');
+      // On a phone, collapse the window to expose the small graph's actual nodes.
+      if (width < 640) await page.getByTestId('legion-chat-minimize').click();
       await frames(page, 10);
       const exposed = await page.evaluate(() => {
         const canvas = document.querySelector('canvas[aria-label="军团三维拓扑图"]');
@@ -317,6 +333,37 @@ try {
         const afterBackground = await page.evaluate(() => window.__departments[0]);
         check(`${tag}:graphDragsWhileChatOpen`, Math.hypot(afterBackground[0] - beforeBackground[0], afterBackground[1] - beforeBackground[1]) > 1);
         check(`${tag}:backgroundKeepsChat`, await page.getByTestId('legion-chat').isVisible());
+      }
+      if (width === 1440) {
+        const dialog = page.getByTestId('legion-chat');
+        await stage.focus();
+        if (theme === 'light') {
+          state.extraHistory = true;
+          await dialog.getByText('后台更新测试', { exact: true }).waitFor({ timeout: 18000 });
+          check(`${tag}:visibleChatUpdatesWithSceneFocused`, !await dialog.evaluate(el => el.contains(document.activeElement)));
+        }
+        await page.emulateMedia({ reducedMotion: 'no-preference' });
+        const spin = page.getByTestId('legion-3d-spin'), flow = page.getByTestId('legion-3d-flow');
+        if (await spin.getAttribute('aria-pressed') === 'true') await spin.click();
+        if (await flow.getAttribute('aria-pressed') !== 'true') await flow.click();
+        await page.mouse.move(1, 1); await frames(page, 130);
+        const flowing = await page.evaluate(() => window.__trails);
+        await frames(page, 35);
+        check(`${tag}:actualFlowWhileChatOpen`, flowing.length > 0 && JSON.stringify(flowing) !== await page.evaluate(() => JSON.stringify(window.__trails)));
+        await flow.click(); await frames(page, 10);
+        const paused = await page.evaluate(() => JSON.stringify(window.__trails));
+        await frames(page, 130);
+        check(`${tag}:flowPauseWhileChatOpen`, paused === await page.evaluate(() => JSON.stringify(window.__trails)));
+        await spin.click(); await page.mouse.move(1, 1); await frames(page, 130);
+        const rotating = await page.evaluate(() => window.__departments[0]);
+        await frames(page, 130);
+        check(`${tag}:actualSpinWhileChatOpen`, JSON.stringify(rotating) !== await page.evaluate(() => JSON.stringify(window.__departments[0])));
+        await spin.click();
+        await page.getByTestId('legion-3d-clean').click();
+        await page.getByTestId('legion-chat-close').focus(); await page.keyboard.press('Escape');
+        check(`${tag}:escapeClosesChatBeforeCleanView`, !await dialog.isVisible() && await page.getByTestId('legion-3d-clean').getAttribute('aria-pressed') === 'true');
+        await stage.focus(); await page.keyboard.press('Escape');
+        check(`${tag}:secondEscapeLeavesCleanView`, await page.getByTestId('legion-3d-clean').getAttribute('aria-pressed') === 'false');
       }
       contexts.push(tag);
     } catch (e) { errors.push(`${tag}: ${e.stack || e}`); } finally { await context.close(); }

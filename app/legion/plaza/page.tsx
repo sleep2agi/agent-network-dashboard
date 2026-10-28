@@ -178,6 +178,6 @@ export default function LegionPlazaPage() {
         </div>}
       </>}
     </div>
-    {chat?.network === networkId && networkReady && !fatal && <LegionChat key={`${networkId}:${chat.alias}`} alias={chat.alias} networkId={networkId} viewport onClose={() => setChat(null)} />}
+    {chat?.network === networkId && networkReady && !fatal && <LegionChat key={`${networkId}:${chat.alias}`} alias={chat.alias} networkId={networkId} onClose={() => setChat(null)} />}
   </div>;
 }

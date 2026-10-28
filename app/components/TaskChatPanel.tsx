@@ -583,6 +583,10 @@ interface TaskChatPanelProps {
    *  soft-refresh AND the SSE-event soft-refresh (in-flight send patches
    *  stay live). Reactivation runs one immediate catch-up. Default true. */
   active?: boolean;
+  /** A nonmodal host can keep visible history live without owning global shortcuts. */
+  keyboardActive?: boolean;
+  /** Floating hosts manage their own focus so activation never steals it from window controls. */
+  autoFocus?: boolean;
   /** Embedded scenes bind history, SSE and sends to the selected network. */
   scopeNetworkId?: string;
 }
@@ -636,8 +640,9 @@ function CollapsibleText({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, scopeNetworkId }: TaskChatPanelProps) {
+export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, keyboardActive, autoFocus = true, scopeNetworkId }: TaskChatPanelProps) {
   const isActive = active !== false;
+  const ownsKeyboard = isActive && keyboardActive !== false;
   const { networkId } = useNetworkId();
   const scopedChatUrl = useCallback((url: string) => scopeNetworkId
     ? `${url}${url.includes('?') ? '&' : '?'}network_id=${encodeURIComponent(scopeNetworkId)}` : url, [scopeNetworkId]);
@@ -714,7 +719,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
   // opens the in-conversation search instead of browser find — the open
   // panel IS the user's context. Closing the panel restores browser find.
   useEffect(() => {
-    if (!isActive) return;
+    if (!ownsKeyboard) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
@@ -724,14 +729,14 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [isActive, scopeNetworkId]);
+  }, [ownsKeyboard, scopeNetworkId]);
   // 07-31 通信龙 batch (SPEC §12 header 🔍): ChatPane's search button
   // dispatches `chat:open-search` (detail.alias). Same effect as
   // Cmd/Ctrl+F, but reachable by pointer users. Filter on detail.alias
   // === alias so a search click on chat A doesn't accidentally open
   // search on chat B if both were somehow mounted.
   useEffect(() => {
-    if (!isActive) return;
+    if (!ownsKeyboard) return;
     const onEvent = (e: Event) => {
       const detail = (e as CustomEvent<{ alias?: string }>).detail;
       if (detail?.alias && detail.alias !== alias) return;
@@ -740,7 +745,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     };
     window.addEventListener('chat:open-search', onEvent);
     return () => window.removeEventListener('chat:open-search', onEvent);
-  }, [isActive, alias, scopeNetworkId]);
+  }, [ownsKeyboard, alias, scopeNetworkId]);
   const lightboxOpenerRef = useRef<HTMLElement | null>(null);
   const openLightbox = useCallback((url: string) => {
     lightboxOpenerRef.current = document.activeElement as HTMLElement | null;
@@ -932,9 +937,9 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       });
     }
     // Focus textarea
-    const focusTimer = setTimeout(() => textareaRef.current?.focus({ preventScroll: !!scopeNetworkId }), 300);
+    const focusTimer = autoFocus ? setTimeout(() => textareaRef.current?.focus({ preventScroll: !!scopeNetworkId }), 300) : undefined;
     return () => clearTimeout(focusTimer);
-  }, [alias, loadInitial, privateStorageScope, scopeNetworkId]);
+  }, [alias, loadInitial, privateStorageScope, scopeNetworkId, autoFocus]);
 
   // M4: user scrolled to the top → fetch one older page, keeping the
   // viewport anchored on the message they were looking at.
@@ -1080,7 +1085,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       runFetch(HISTORY_PAGE, 12_000);
       // R27 (微信手感): switching back to a tab refocuses the composer —
       // desktop only (focusing on touch pops the soft keyboard uninvited).
-      if (!coarsePointerRef.current) textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
+      if (autoFocus && !coarsePointerRef.current) textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
     }
     wasActiveRef.current = true;
     const id = setInterval(() => {
@@ -1088,7 +1093,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       runFetch(HISTORY_PAGE, 12_000);
     }, 15_000);
     return () => clearInterval(id);
-  }, [historyLoaded, isActive, runFetch, scopeNetworkId]);
+  }, [historyLoaded, isActive, runFetch, scopeNetworkId, autoFocus]);
 
   // Polling fallback (SSE-unavailable / proxies stripping events).
   // Slow cadence so we're not the bulk of server load — SSE handles the fast path.

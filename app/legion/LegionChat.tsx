@@ -7,8 +7,8 @@ import { CHAT_COLLAPSED_HEIGHT, fitChatWindow, initialChatWindow, type ChatWindo
 import styles from './legion-chat.module.css';
 
 /** Lives inside the scene's fullscreen element. Unmount on network/target change. */
-export function LegionChat({ alias, networkId, onClose, viewport = false }: {
-  alias: string; networkId: string; onClose: () => void; viewport?: boolean;
+export function LegionChat({ alias, networkId, onClose }: {
+  alias: string; networkId: string; onClose: () => void;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
@@ -97,7 +97,7 @@ export function LegionChat({ alias, networkId, onClose, viewport = false }: {
   const pointerHandlers = { onPointerMove: move, onPointerUp: end, onPointerCancel: end, onLostPointerCapture: () => { pointer.current = null; } };
 
   return (
-    <div ref={layerRef} className={`${viewport ? 'fixed' : 'absolute'} inset-0 ${styles.layer}`} data-testid="legion-chat-overlay">
+    <div ref={layerRef} className={`fixed inset-0 ${styles.layer}`} data-testid="legion-chat-overlay">
       <div
         ref={dialogRef} role="dialog" aria-label={`与 ${alias} 对话`}
         data-testid="legion-chat" data-network-id={networkId}
@@ -134,7 +134,8 @@ export function LegionChat({ alias, networkId, onClose, viewport = false }: {
           </button>
         </header>
         <div className={styles.body} hidden={minimized}>
-          <TaskChatPanel alias={alias} onClose={onClose} inline active={!minimized && focused} availableNodes={availableNodes} scopeNetworkId={networkId} />
+          <TaskChatPanel alias={alias} onClose={onClose} inline active={!minimized} keyboardActive={!minimized && focused}
+            autoFocus={false} availableNodes={availableNodes} scopeNetworkId={networkId} />
         </div>
         {!minimized && <footer className={styles.footer}>
           <span>可同时操作军团图</span>
