@@ -15,10 +15,10 @@ export function LegionChat({ alias, networkId, onClose, viewport = false }: {
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const stage = dialogRef.current?.closest<HTMLElement>('[data-legion-stage]');
-    closeRef.current?.focus();
+    closeRef.current?.focus({ preventScroll: true });
     return () => {
-      if (opener?.isConnected && opener.getClientRects().length) opener.focus();
-      else stage?.focus();
+      if (opener?.isConnected && opener.getClientRects().length) opener.focus({ preventScroll: true });
+      else stage?.focus({ preventScroll: true });
     };
   }, []);
 

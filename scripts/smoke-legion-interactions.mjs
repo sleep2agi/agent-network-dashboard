@@ -45,15 +45,15 @@ async function create(theme, width, mode = 'plaza', state = {}) {
   await context.addCookies([{ name: 'anet_dashboard_session', url: base, httpOnly: true, sameSite: 'Lax',
     value: createHash('sha256').update(`anet-dashboard:${process.env.FIXTURE_PASSWORD || 'disc-fixture-only'}`).digest('hex') }]);
   const requests = [], sends = [];
-  await context.addInitScript(({ theme, networks }) => {
+  await context.addInitScript(({ theme, networks, noNetwork }) => {
     localStorage.setItem('anet-theme', theme); localStorage.setItem('anet-sidebar-mode', 'expanded');
-    sessionStorage.setItem('anet_network_id', 'fixture');
+    if (!noNetwork) sessionStorage.setItem('anet_network_id', 'fixture');
     sessionStorage.setItem('anet_v3_auth', JSON.stringify({ user: { username: 'fixture', role: 'owner' }, token: 'fixture-token', networks, currentNetwork: 'fixture' }));
     const proto = CanvasRenderingContext2D.prototype;
     const begin = proto.setTransform, ellipse = proto.ellipse;
     proto.setTransform = function (...args) { if (this.canvas.getAttribute('aria-label') === '军团三维拓扑图' && args.join(',') === '1,0,0,1,0,0') window.__departments = []; return begin.apply(this, args); };
     proto.ellipse = function (...args) { if (this.canvas.getAttribute('aria-label') === '军团三维拓扑图') (window.__departments ??= []).push(args.slice(0, 4)); return ellipse.apply(this, args); };
-  }, { theme, networks });
+  }, { theme, networks, noNetwork: !!state.noNetwork });
   await context.route('**/*', async route => {
     const url = new URL(route.request().url());
     if (url.origin !== new URL(base).origin) return route.abort();
@@ -64,6 +64,7 @@ async function create(theme, width, mode = 'plaza', state = {}) {
       let json = { ok: true, nodes: [], tasks: [], messages: [], stats: {} }, status = 200;
       if (url.pathname === '/api/hub/networks') json = { ok: true, networks: state.noNetwork ? [] : networks };
       if (url.pathname === '/api/hub/people') {
+        if (state.secondPageError && Number(url.searchParams.get('offset')) > 0) return route.fulfill({ status: 403, json: { ok: false, error: 'fixture_page2_denied' } });
         if (state.peopleError) return route.fulfill({ status: state.peopleError, json: { ok: false, error: `fixture_people_${state.peopleError}` } });
         if (state.hold) await state.hold;
         if (state.empty) json = { ok: true, people: [], agents_without_owner: [], has_more: false, total: 0, agent_department_supported: true };
@@ -102,15 +103,17 @@ async function create(theme, width, mode = 'plaza', state = {}) {
 
 async function chatFlow(page, requests, sends, state, tag, opener) {
   const url = page.url();
+  await opener.scrollIntoViewIfNeeded();
+  const scrollBefore = await page.evaluate(() => scrollY);
   await opener.click();
   const dialog = page.getByTestId('legion-chat');
   await dialog.waitFor();
-  await dialog.getByText('历史消息-fixture', { exact: true }).waitFor();
+  await dialog.getByText('历史消息-fixture', { exact: true }).first().waitFor();
   check(`${tag}:sameRoute`, page.url() === url);
   check(`${tag}:historyScoped`, requests.some(r => r.startsWith('/api/hub/tasks?') && new URL(r, base).searchParams.get('network_id') === 'fixture'));
   check(`${tag}:focusInDialog`, await dialog.evaluate(el => el.contains(document.activeElement)));
   const input = dialog.locator('textarea');
-  await input.fill('r?F 模拟消息');
+  await input.pressSequentially('r?F 模拟消息');
   await Promise.all([page.waitForResponse('**/api/hub/send'), dialog.getByRole('button', { name: 'Send message', exact: true }).click()]);
   check(`${tag}:sendExactTarget`, sends.length === 1 && sends[0].alias === target.alias && sends[0].network_id === 'fixture' && sends[0].task === 'r?F 模拟消息');
   state.sendError = 403;
@@ -120,6 +123,11 @@ async function chatFlow(page, requests, sends, state, tag, opener) {
   await dialog.getByText(/fixture-send-denied/).first().waitFor();
   check(`${tag}:sendFailureVisible`, true);
   await input.fill('保留草稿');
+  check(`${tag}:pageScrollRetained`, Math.abs(await page.evaluate(() => scrollY) - scrollBefore) <= 1);
+  check(`${tag}:closeTouchTarget`, await page.getByTestId('legion-chat-close').evaluate(el => { const r = el.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; }));
+  await page.getByTestId('legion-chat-close').focus();
+  await page.keyboard.press('Shift+Tab');
+  check(`${tag}:tabWrapsInside`, await dialog.evaluate(el => el.contains(document.activeElement) && document.activeElement !== el.querySelector('[data-testid="legion-chat-close"]')));
   await page.screenshot({ path: path.join(output, `${tag}-chat.png`) });
   await page.keyboard.press('Escape');
   await dialog.waitFor({ state: 'hidden' });
@@ -136,6 +144,7 @@ try {
     const { page, context, requests, sends, state } = await create(theme, width);
     try {
       await page.getByText('6 个展台 · 2 名成员 · 31 个 Agent', { exact: true }).waitFor();
+      await page.screenshot({ path: path.join(output, `${tag}-overview.png`) });
       check(`${tag}:allPagesAndDedup`, requests.some(r => r.includes('/api/hub/people?') && new URL(r, base).searchParams.get('offset') === '1'));
       check(`${tag}:agentOnlyVisible`, await page.locator('[data-department-id="dept:leaf"]').getAttribute('data-agent-count') === '2');
       check(`${tag}:modernUnassigned`, await page.locator('[data-department-id="unassigned"]').getAttribute('data-agent-count') === '1');
@@ -169,8 +178,8 @@ try {
         await page.locator('[data-testid="plaza-agent"][data-node-id="latest-target"]').click();
         await attrs.getByText('fixture-model-fixture-B', { exact: true }).waitFor();
         await page.getByTestId('plaza-chat').click();
-        await page.getByTestId('legion-chat').getByText('历史消息-fixture-B', { exact: true }).waitFor();
-        check(`${tag}:networkHistoryIsolated`, !(await page.getByTestId('legion-chat').textContent()).includes('历史消息-fixture\n') && await page.getByTestId('legion-chat').locator('textarea').inputValue() === '');
+        await page.getByTestId('legion-chat').getByText('历史消息-fixture-B', { exact: true }).first().waitFor();
+        check(`${tag}:networkHistoryIsolated`, await page.getByTestId('legion-chat').getByText('历史消息-fixture', { exact: true }).count() === 0 && await page.getByTestId('legion-chat').locator('textarea').inputValue() === '');
       }
       contexts.push(tag);
     } catch (e) { errors.push(`${tag}: ${e.stack || e}`); } finally { await context.close(); }
@@ -202,11 +211,20 @@ try {
       contexts.push(tag);
     } catch (e) { errors.push(`${tag}: ${e.stack || e}`); } finally { await context.close(); }
   }
-  for (const [label, state] of Object.entries({ forbidden: { peopleError: 403 }, login: { peopleError: 401 }, disconnected: { peopleError: 502 }, empty: { empty: true }, legacy: { legacy: true }, metadata: { metadataError: 403 } })) {
+  for (const [label, state] of Object.entries({ forbidden: { peopleError: 403 }, login: { peopleError: 401 }, disconnected: { peopleError: 502 }, empty: { empty: true }, legacy: { legacy: true }, metadata: { metadataError: 403 }, noNetwork: { noNetwork: true }, page2: { secondPageError: true }, history: { historyError: 403 } })) {
     const tag = `state-${label}`, { page, context } = await create('light', 390, 'plaza', state);
     try {
       const stage = page.getByTestId('legion-plaza-stage');
-      if (state.peopleError) {
+      if (state.noNetwork) { await stage.getByTestId('network-required').waitFor(); check(`${tag}:networkRequired`, true); }
+      else if (state.secondPageError) { await stage.getByText(/fixture_page2_denied/).waitFor(); check(`${tag}:noPartialCounts`, !await page.getByTestId('legion-plaza-svg').isVisible()); }
+      else if (state.historyError) {
+        await page.getByTestId('plaza-department-select').selectOption('dept:leaf');
+        await page.locator('[data-testid="plaza-agent"][data-node-id="latest-target"]').click();
+        await page.getByTestId('plaza-chat').click();
+        await page.getByText('读取历史失败（HTTP 403）', { exact: true }).waitFor();
+        check(`${tag}:historyDeniedNotEmpty`, true);
+      }
+      else if (state.peopleError) {
         await stage.getByRole('alert').waitFor();
         check(`${tag}:notEmpty`, !await stage.getByText('当前网络暂无部门、成员或 Agent').isVisible());
         if (label === 'disconnected') { delete state.peopleError; await stage.getByRole('button', { name: '重试', exact: true }).click(); await page.getByTestId('legion-plaza-svg').waitFor(); check(`${tag}:retryRestores`, true); }
@@ -216,9 +234,22 @@ try {
       await page.screenshot({ path: path.join(output, `${tag}.png`) }); contexts.push(tag);
     } catch (e) { errors.push(`${tag}: ${e.stack || e}`); } finally { await context.close(); }
   }
+  {
+    let release;
+    const state = { hold: new Promise(resolve => { release = resolve; }) };
+    const { page, context } = await create('light', 390, 'plaza', state);
+    try {
+      const stage = page.getByTestId('legion-plaza-stage');
+      await stage.getByRole('status').waitFor();
+      check('state-loading:notEmpty', !await stage.getByText('当前网络暂无部门、成员或 Agent').isVisible());
+      release();
+      await page.getByText('6 个展台 · 2 名成员 · 31 个 Agent', { exact: true }).waitFor();
+      check('state-loading:recovers', true); contexts.push('state-loading');
+    } catch (e) { errors.push(`state-loading: ${e.stack || e}`); } finally { release(); await context.close(); }
+  }
 } finally {
   await browser.close();
-  check('allContextsCompleted', contexts.length === 16);
+  check('allContextsCompleted', contexts.length === 20);
   const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
   await writeFile(path.join(output, 'result.json'), JSON.stringify({ ...metadata, checks, contexts, errors }, null, 2));
   console.log(JSON.stringify({ ...metadata, passed: Object.values(checks).filter(Boolean).length, failed, contexts, errors }, null, 2));

@@ -665,6 +665,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [historyError, setHistoryError] = useState(false);
+  const [historyErrorReason, setHistoryErrorReason] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
   // R23→R25: pinyin matching moved to the shared lib (also powers /nodes
@@ -716,12 +717,12 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setSearchOpen(true);
-        setTimeout(() => searchInputRef.current?.focus(), 50);
+        setTimeout(() => searchInputRef.current?.focus({ preventScroll: !!scopeNetworkId }), 50);
       }
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [isActive]);
+  }, [isActive, scopeNetworkId]);
   // 07-31 通信龙 batch (SPEC §12 header 🔍): ChatPane's search button
   // dispatches `chat:open-search` (detail.alias). Same effect as
   // Cmd/Ctrl+F, but reachable by pointer users. Filter on detail.alias
@@ -733,11 +734,11 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       const detail = (e as CustomEvent<{ alias?: string }>).detail;
       if (detail?.alias && detail.alias !== alias) return;
       setSearchOpen(true);
-      setTimeout(() => searchInputRef.current?.focus(), 50);
+      setTimeout(() => searchInputRef.current?.focus({ preventScroll: !!scopeNetworkId }), 50);
     };
     window.addEventListener('chat:open-search', onEvent);
     return () => window.removeEventListener('chat:open-search', onEvent);
-  }, [isActive, alias]);
+  }, [isActive, alias, scopeNetworkId]);
   const lightboxOpenerRef = useRef<HTMLElement | null>(null);
   const openLightbox = useCallback((url: string) => {
     lightboxOpenerRef.current = document.activeElement as HTMLElement | null;
@@ -841,7 +842,9 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
         { signal: ctrl.signal },
       );
       const data = await res.json();
-      if (!res.ok || data.ok === false) throw new Error('chat_history_unavailable');
+      if (!res.ok || data.ok === false) throw new Error(res.status === 401
+        ? '会话已过期，请重新登录后读取历史' : `读取历史失败（HTTP ${res.status}）`);
+      setHistoryErrorReason('');
       if (data.tasks) {
         const persistedRequestIds = new Set<string>();
         for (const task of data.tasks as ChatTask[]) {
@@ -858,7 +861,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
         setMessages(prev => mergeTaskHistoryPage(prev, data.tasks, persistedRequestIds));
       }
       return true;
-    } catch {
+    } catch (error) {
+      setHistoryErrorReason(error instanceof Error ? error.message : '读取历史失败');
       return false;
     } finally {
       clearTimeout(timer);
@@ -919,8 +923,9 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       });
     }
     // Focus textarea
-    setTimeout(() => textareaRef.current?.focus(), 300);
-  }, [alias, loadInitial, privateStorageScope]);
+    const focusTimer = setTimeout(() => textareaRef.current?.focus({ preventScroll: !!scopeNetworkId }), 300);
+    return () => clearTimeout(focusTimer);
+  }, [alias, loadInitial, privateStorageScope, scopeNetworkId]);
 
   // M4: user scrolled to the top → fetch one older page, keeping the
   // viewport anchored on the message they were looking at.
@@ -986,8 +991,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     const behavior: ScrollBehavior = firstAnchorRef.current ? 'auto' : 'smooth';
     firstAnchorRef.current = false;
     forceScrollRef.current = false;
-    messagesEndRef.current?.scrollIntoView({ behavior });
-  }, [messages]);
+    // Embedded scenes must not scroll their page/camera out of view with the chat.
+    if (scopeNetworkId) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior });
+    else messagesEndRef.current?.scrollIntoView({ behavior });
+  }, [messages, scopeNetworkId]);
 
   // SSE-driven task updates: the server pushes new_reply events to the
   // sender's alias channel (/events/<from_session>), so we just listen for
@@ -1064,7 +1071,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       runFetch(HISTORY_PAGE, 12_000);
       // R27 (微信手感): switching back to a tab refocuses the composer —
       // desktop only (focusing on touch pops the soft keyboard uninvited).
-      if (!coarsePointerRef.current) textareaRef.current?.focus();
+      if (!coarsePointerRef.current) textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
     }
     wasActiveRef.current = true;
     const id = setInterval(() => {
@@ -1072,7 +1079,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       runFetch(HISTORY_PAGE, 12_000);
     }, 15_000);
     return () => clearInterval(id);
-  }, [historyLoaded, isActive, runFetch]);
+  }, [historyLoaded, isActive, runFetch, scopeNetworkId]);
 
   // Polling fallback (SSE-unavailable / proxies stripping events).
   // Slow cadence so we're not the bulk of server load — SSE handles the fast path.
@@ -1244,7 +1251,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     }
     setSending(false);
     setUploadProgress(null);
-    textareaRef.current?.focus();
+    textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
   };
 
   // Core POST shared by send() and the failed-bubble retry (R4: WeChat-style
@@ -1401,7 +1408,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     const before = input.slice(0, lastAt);
     setInput(`${before}@${nodeName} `);
     setShowMentions(false);
-    textareaRef.current?.focus();
+    textareaRef.current?.focus({ preventScroll: !!scopeNetworkId });
   };
 
   const filteredMentions = mentionNodes.filter(n =>
@@ -1443,8 +1450,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
   useEffect(() => {
     if (!currentMatchKey) return;
     const el = scrollRef.current?.querySelector(`[data-ev="${CSS.escape(currentMatchKey)}"]`);
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, [currentMatchKey]);
+    const container = scrollRef.current;
+    if (scopeNetworkId && el && container) container.scrollTo({ top: container.scrollTop + el.getBoundingClientRect().top - container.getBoundingClientRect().top - container.clientHeight / 2, behavior: 'smooth' });
+    else el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [currentMatchKey, scopeNetworkId]);
   const stepMatch = (delta: number) => {
     if (!searchMatches.length) return;
     setSearchIdx((i) => (i + delta + searchMatches.length) % searchMatches.length);
@@ -1488,7 +1497,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
             <div className="sticky top-0 z-20 flex justify-end pointer-events-none -mb-8">
               <button
                 type="button"
-                onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
+                onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus({ preventScroll: !!scopeNetworkId }), 50); }}
                 aria-label={t('搜索会话', 'Search conversation')}
                 className="pointer-events-auto inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-elevated)]/80 text-[var(--fg-dim)] shadow hover:text-[var(--accent-text)] sm:min-h-0 sm:min-w-0 sm:p-1.5"
               >
@@ -1537,7 +1546,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
               sending. Retry re-runs the full ladder (20 → 6). */}
           {historyLoaded && historyError && messages.length === 0 && (
             <div className="text-center py-12">
-              <div className="text-[var(--fg-muted)] text-sm">连接较慢，暂未加载出历史</div>
+              <div className="text-[var(--fg-muted)] text-sm">{scopeNetworkId && historyErrorReason ? historyErrorReason : '连接较慢，暂未加载出历史'}</div>
               <div className="text-[var(--fg-dim)] text-xs mt-1">你仍可在下方直接给 {alias} 发消息</div>
               <button
                 type="button"
@@ -1699,7 +1708,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                 onClick={() => {
                   setNewBelow(0);
                   atBottomRef.current = true;
-                  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  if (scopeNetworkId) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+                  else messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="pointer-events-auto flex items-center gap-1 rounded-full border border-[var(--accent)]/30 bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-[var(--accent-text)] shadow-lg shadow-black/40 hover:bg-[var(--accent)]/10"
               >

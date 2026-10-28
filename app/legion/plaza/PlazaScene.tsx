@@ -40,10 +40,21 @@ export function PlazaScene({ platforms, selected, onSelect }: {
         <g fill="none" stroke="var(--accent-text)" aria-hidden="true" data-testid="plaza-links">
           {slots.map(({ platform, x, y, scale }) => {
             const parent = platform.parentId ? byId.get(platform.parentId) : undefined;
-            const sx = parent ? parent.x + W * parent.scale / 2 : viewW / 2;
-            const sy = parent ? parent.y : 42;
             const tx = x + W * scale / 2, ty = y;
-            const d = `M ${sx} ${sy} C ${sx} ${sy - 40} ${tx} ${ty - 55} ${tx} ${ty}`;
+            // Cross-row edges use side gutters, never the department-caption band.
+            let d;
+            if (parent && parent.y === y) {
+              const sx = parent.x + W * parent.scale / 2;
+              d = `M ${sx} ${y} C ${sx} ${y - 50} ${tx} ${y - 50} ${tx} ${y}`;
+            } else if (parent) {
+              const sx = parent.x + (W - SKEW * 0.35) * parent.scale;
+              const sy = parent.y + D * 0.35 * parent.scale;
+              const rail = parent.x + W * parent.scale + 12;
+              d = `M ${sx} ${sy} Q ${rail} ${sy} ${rail} ${sy + 12} V ${ty - 48} Q ${rail} ${ty - 32} ${rail - 16} ${ty - 32} H ${tx + 12} Q ${tx} ${ty - 32} ${tx} ${ty}`;
+            } else {
+              d = y === 100 ? `M ${viewW / 2} 42 Q ${tx} 42 ${tx} ${ty}`
+                : `M ${viewW / 2} 42 H 24 Q 12 42 12 54 V ${ty - 48} Q 12 ${ty - 32} 28 ${ty - 32} H ${tx - 12} Q ${tx} ${ty - 32} ${tx} ${ty}`;
+            }
             return <g key={platform.id} data-from={parent?.platform.id ?? 'network'} data-to={platform.id}>
               <path d={d} strokeWidth="7" opacity="0.5" filter={`url(#${id}-glow)`} />
               <path d={d} strokeWidth="1.8" opacity="0.9" />
