@@ -217,7 +217,8 @@ export function PlazaPerspective({ platforms, selected, snapshots, onSelect }: {
             const edgeX = Math.max(label.x, Math.min(label.x + label.width, p.x));
             const edgeY = Math.max(label.y, Math.min(label.y + label.height, p.y));
             return <path key={department.id} d={plazaPath([{ x: edgeX, y: edgeY }, { x: p.x, y: p.y + 10 }])}
-              fill="none" stroke="var(--accent-text)" opacity={department.id === selected ? '0.8' : '0.35'} />;
+              fill="none" stroke={department.id === selected ? 'var(--accent-text)' : 'var(--border-hover)'} strokeWidth="1"
+              opacity={department.id === selected ? '0.8' : '1'} />;
           })}
         </g>
         {world.platforms.map(({ department }) => {

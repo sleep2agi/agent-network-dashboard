@@ -6,6 +6,13 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.110 — 2026-10-28
+
+### Clearer platform hierarchy
+
+- Neutral namecard guide lines are distinct from the animated organization connections. The selected department retains its accent-colored guide.
+- Node status and the full-roster shortcut use 11px text with bounded line heights, improving desktop readability while preserving compact card layout.
+
 ## 0.6.3-preview.109 — 2026-10-28
 
 ### Floating Legion conversations
