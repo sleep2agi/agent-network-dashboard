@@ -26,6 +26,12 @@ export function NodeDetailHeader({ alias, session, sse }: {
   const feedbackId = useId();
   const ready = session?.alias === alias;
   const statusColor = SESSION_STATUS_TEXT_CLASS[session?.status || ''] || SESSION_STATUS_TEXT_CLASS.offline;
+  const statusIndicator = <>
+    <span aria-hidden="true" className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
+      sse > 0 ? (session?.status === 'working' ? 'animate-pulse bg-green-500' : 'bg-emerald-400') : 'bg-gray-500'
+    }`} />
+    <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide ${statusColor}`}>{session?.status || 'unknown'}</span>
+  </>;
 
   const copyAlias = async () => {
     if (!ready || pending.current) return;
@@ -65,12 +71,10 @@ export function NodeDetailHeader({ alias, session, sse }: {
               {copyState === 'copied' ? <path d="m5 12 4 4L19 6" /> : <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" /></>}
             </svg>
           </button>
-          <span aria-hidden="true" className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
-            sse > 0 ? (session?.status === 'working' ? 'animate-pulse bg-green-500' : 'bg-emerald-400') : 'bg-gray-500'
-          }`} />
-          <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide ${statusColor}`}>{session?.status || 'unknown'}</span>
+          <span className="hidden shrink-0 items-center gap-2 sm:inline-flex">{statusIndicator}</span>
         </div>
         <div className="flex min-h-4 flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+          <span className="inline-flex shrink-0 items-center gap-2 sm:hidden">{statusIndicator}</span>
           {session?.agent && <span className="min-w-0 truncate text-[var(--fg-muted)]" title={[session.agent, session.server].filter(Boolean).join(' · ')}>
             {session.agent}{session.server ? <> <span className="mx-1 text-[var(--fg-dim)]">·</span> {session.server}</> : null}
           </span>}
