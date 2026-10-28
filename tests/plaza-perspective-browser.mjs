@@ -94,6 +94,7 @@ try {
   const rotated = await geometry();
   assert.ok(Math.hypot(rotated.x - initial.x, rotated.y - initial.y) > 20, 'non-origin platform must actually move');
   assert.notEqual(rotated.path, initial.path, 'plate world projection must change');
+  assert.equal(await page.evaluate(() => window.getSelection()?.toString() || ''), '', 'orbiting must not select namecard text');
   await frames(130);
   assert.deepEqual(await geometry(), rotated, '130 RAF cannot overwrite the manual camera');
   await page.screenshot({ path: `${output}/implementation-orbit.png`, fullPage: true });
