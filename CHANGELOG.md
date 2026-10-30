@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.130 — 2026-10-30
+
+### Tag tree: create tags and move them between parents
+
+- When the Hub lists `tag_tree`, the tag manager can create a tag on the root or
+  under an existing tag, and move any tag to another parent (or back to the
+  root). The list indents children so the tree is visible without a second view.
+- Parent choices already exclude the tag itself and its subtree, and only offer
+  levels that keep the tree within the Hub’s four levels; the Hub’s own refusals
+  (`tag_exists`, `tag_parent_not_found`, `tag_parent_cycle`,
+  `tag_depth_exceeded`) keep their specific wording.
+- Without `tag_tree` the create/move controls are not rendered at all.
+
 ## 0.6.3-preview.129 — 2026-10-30
 
 ### Manage tags for the whole network

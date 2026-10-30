@@ -129,3 +129,50 @@ function dedupeNodes(nodes: TagCatalog['nodes']): TagCatalog['nodes'] {
   const seen = new Set<string>();
   return nodes.filter(node => (seen.has(node.name) ? false : (seen.add(node.name), true)));
 }
+
+export interface TagCreateInput { name: string; parentId: string | null }
+
+/** Create rules: name valid, parent optional but must be a real tag name. */
+export function validateTagCreate(name: string, parent: string | null): string | null {
+  if (!tagName(name)) return `标签名不合法：最多 ${TAG_MAX_LENGTH} 个字，不能含控制字符`;
+  if (parent !== null && !tagName(parent)) return '父标签不合法';
+  return null;
+}
+
+/** Reparent rules the Hub enforces: explicit parent (null = root), no cycles, depth ≤ 4. */
+export function validateTagMove(tag: string, parent: string | null): string | null {
+  if (!tagName(tag)) return `标签名不合法：最多 ${TAG_MAX_LENGTH} 个字`;
+  if (parent !== null && !tagName(parent)) return '父标签不合法';
+  if (parent === tag) return '父标签不能是它自己';
+  return null;
+}
+
+/** Tree errors use their own wording: a missing parent is not a missing tag. */
+export function tagTreeMessage(status: number, error?: string | null): string {
+  if (status === 409 || error === 'tag_exists') return '这个标签已经存在，换一个名字。';
+  if (error === 'tag_parent_not_found') return '父标签在当前网络里不存在，刷新后再选。';
+  if (error === 'tag_depth_exceeded') return '标签层级最多 4 层，这次会把子树压得太深。';
+  if (error === 'tag_parent_cycle') return '父标签不能是自己或自己的子标签。';
+  if (error === 'invalid_tag_parent_id') return '父标签参数不合法，请重新选择。';
+  if (error === 'invalid_tag') return `标签名不合法：最多 ${TAG_MAX_LENGTH} 个字，不能含控制字符。`;
+  return tagOpMessage(status, error);
+}
+
+/** Optimistic catalogue for a created tag; the dialog refetches anyway. */
+export function applyCreateToCatalog(catalog: TagCatalog, name: string, parent: string | null): TagCatalog {
+  const depth = parent ? Math.min(4, (catalog.nodes.find(node => node.name === parent)?.depth ?? 1) + 1) : 1;
+  const nodes = catalog.nodes.some(node => node.name === name)
+    ? catalog.nodes
+    : [...catalog.nodes, { name, parent_id: parent, depth, registered: true, count: 0, color: null }];
+  const tags = catalog.tags.includes(name) ? catalog.tags : [...catalog.tags, name];
+  return { ...catalog, tags, nodes };
+}
+
+/** Optimistic catalogue for a move; depth is recomputed from the new parent. */
+export function applyMoveToCatalog(catalog: TagCatalog, tag: string, parent: string | null): TagCatalog {
+  const parentDepth = parent ? (catalog.nodes.find(node => node.name === parent)?.depth ?? 1) : 0;
+  const nodes = catalog.nodes.map(node => node.name === tag
+    ? { ...node, parent_id: parent, depth: parentDepth + 1 }
+    : node);
+  return { ...catalog, nodes };
+}
