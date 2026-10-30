@@ -105,6 +105,10 @@ and scrolls horizontally on narrow screens.
 Board cards can be dragged between status columns, or moved with a per-card
 select for keyboard and touch; failed writes roll the card back to its column.
 
+The requirements page can create a requirement (name, priority, status, project,
+tags, description). Hub validates it; the page keeps the draft visible when the
+write is rejected.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.

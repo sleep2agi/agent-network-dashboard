@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
 import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/requirements-paging';
 import { ProjectFilter } from './ProjectFilter';
+import { CreateRequirement } from './CreateRequirement';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
 import { ResponsibilityFilter, useRequirementPeople } from './ResponsibilityFilter';
@@ -108,6 +109,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [moveNotice, setMoveNotice] = useState('');
   const [columnOverrides, setColumnOverrides] = useState<Record<string, string>>({});
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [createNotice, setCreateNotice] = useState('');
   const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
   const personOptions = useMemo(() => peopleCatalog.status === 'ready' ? peopleOptions(peopleCatalog.people) : [], [peopleCatalog]);
@@ -317,6 +319,13 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <CreateRequirement
+              networkId={networkId}
+              onCreated={seq => {
+                setCreateNotice(seq ? `已创建需求 #${seq}` : '已创建需求');
+                void load();
+              }}
+            />
             <div role="group" aria-label="视图切换" className="flex items-center gap-0.5 rounded-md border border-[var(--border)] p-0.5">
               {[{ key: '', label: '列表', test: 'list' }, { key: 'board', label: '看板', test: 'board' }].map(option => {
                 const active = (option.key === 'board') === board;
@@ -444,6 +453,13 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   : '搜索仅包含未归档需求。'}
           {!loading && !error && !needsLogin && ` 已加载 ${rows.length} 条${hasMore ? '，可继续加载。' : '。'}`}
         </p>
+
+        {createNotice && (
+          <p role="status" data-testid="requirements-create-notice" className="mb-4 text-xs text-[var(--fg-muted)]">
+            {createNotice}
+            <button type="button" onClick={() => setCreateNotice('')} className="ml-2 underline">知道了</button>
+          </p>
+        )}
 
         {needsLogin && (
           <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
