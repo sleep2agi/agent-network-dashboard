@@ -363,6 +363,20 @@ export default function Legion3DPage() {
       introRef.current = null;
       fitPending.current = false;
       sharedLock.current = true;
+      return;
+    }
+    // 没有分享链接时，恢复本机记住的视角（只认有限数值）。
+    let saved: { yaw?: number; pitch?: number; zoom?: number } | null = null;
+    try { saved = JSON.parse(localStorage.getItem(`legion3d-view:${networkId}`) || 'null'); } catch { saved = null; }
+    if (saved && [saved.yaw, saved.pitch, saved.zoom].every(value => typeof value === 'number' && Number.isFinite(value))) {
+      viewRef.current = {
+        ...DEFAULT_VIEW,
+        yaw: saved.yaw as number,
+        pitch: Math.min(1.1, Math.max(-1.1, saved.pitch as number)),
+        zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, saved.zoom as number)),
+      };
+      setZoomPct(Math.round(viewRef.current.zoom * 100));
+      sharedLock.current = true;
     }
   }, [networkId]);
 
@@ -1634,8 +1648,23 @@ export default function Legion3DPage() {
     window.setTimeout(() => setShareInfo(''), 2500);
   }, []);
 
+  // 视角记忆：拖拽/缩放后把当前相机存到本机，下次打开同一网络接着看。
+  // 分享链接（?view=）优先级更高，不会被记忆覆盖。
+  const persistTimer = useRef<number | null>(null);
+  const persistView = useCallback(() => {
+    if (typeof window === 'undefined' || !networkId) return;
+    if (persistTimer.current !== null) window.clearTimeout(persistTimer.current);
+    persistTimer.current = window.setTimeout(() => {
+      const v = viewRef.current;
+      try {
+        localStorage.setItem(`legion3d-view:${networkId}`, JSON.stringify({ yaw: v.yaw, pitch: v.pitch, zoom: v.zoom }));
+      } catch { /* 隐私模式写不进去就只影响记忆，不影响画面 */ }
+    }, 300);
+  }, [networkId]);
+
   const resetView = useCallback(() => {
     sharedLock.current = false;
+    try { localStorage.removeItem(`legion3d-view:${networkId}`); } catch { /* ignore */ }
     yawTarget.current = null;
     viewRef.current = { ...DEFAULT_VIEW };
     setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
@@ -1761,6 +1790,7 @@ export default function Legion3DPage() {
     pointersRef.current.delete(e.pointerId);
     if (pointersRef.current.size < 2) pinchRef.current = null;
     lastInteract.current = performance.now();
+    if (drag && drag.moved > 0) persistView();
     if (!drag) return;
     dragRef.current = null;
     if (drag.moved > 6) return; // 拖动不是点击
@@ -1812,6 +1842,7 @@ export default function Legion3DPage() {
     userAdjusted.current = true;
     fitPending.current = false;
     setZoomPct(Math.round(next * 100));
+    persistView();
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -1865,8 +1896,8 @@ export default function Legion3DPage() {
       case 'ArrowRight': e.preventDefault(); v.yaw += 0.12; userAdjusted.current = true; break;
       case 'ArrowUp': e.preventDefault(); v.pitch = Math.min(1.45, v.pitch + 0.08); userAdjusted.current = true; break;
       case 'ArrowDown': e.preventDefault(); v.pitch = Math.max(0.12, v.pitch - 0.08); userAdjusted.current = true; break;
-      case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); break;
-      case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); break;
+      case '+': case '=': e.preventDefault(); v.zoom = Math.min(MAX_ZOOM, v.zoom * 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); persistView(); break;
+      case '-': e.preventDefault(); v.zoom = Math.max(MIN_ZOOM, v.zoom / 1.1); userAdjusted.current = true; setZoomPct(Math.round(v.zoom * 100)); persistView(); break;
       case 'Enter': {
         // 焦点还在节点列表里时，回车只负责「选中」（按钮自身行为），
         // 不要在列表里按一下就跳走；再按一次才打开（见列表项的 onClick）。
