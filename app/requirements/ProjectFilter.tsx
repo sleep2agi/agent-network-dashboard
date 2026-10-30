@@ -84,7 +84,7 @@ export function ProjectFilter({ networkId, value, supported, refreshKey, onChang
           aria-label="项目筛选"
           aria-describedby="project-filter-hint"
           value={value}
-          disabled={supported === false || catalog.status === 'mismatch'}
+          disabled={catalog.status === 'mismatch'}
           onChange={e => onChange(e.target.value)}
           title={selectionLabel}
           className="min-h-11 min-w-0 max-w-full flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 text-sm text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--hl)] sm:min-h-9 sm:max-w-80 sm:flex-none"
