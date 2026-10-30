@@ -122,6 +122,9 @@ visible when Hub rejects the write.
 Board columns can be collapsed (persisted locally) and the abandoned column is
 hidden behind a count toggle unless the status filter selects it.
 
+Board cards can be selected in bulk mode and moved or re-prioritised; partial
+failures keep the failed cards selected and report Hub’s reason.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
