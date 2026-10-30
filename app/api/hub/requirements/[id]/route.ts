@@ -51,7 +51,15 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
  * whitelisted fields and passes Hub's error code through untouched so the UI
  * can say *why* instead of failing silently.
  */
-const WRITABLE = ['column', 'priority', 'due', 'start', 'tags', 'name'] as const;
+/** `owner` must be a human and `agent_owner` a node; Hub enforces this too. */
+const WRITABLE = ['column', 'priority', 'due', 'start', 'tags', 'name', 'owner', 'agent_owner'] as const;
+
+function validPerson(value: unknown, kind: 'user' | 'node'): boolean {
+  if (value === null) return true;
+  if (!value || typeof value !== 'object') return false;
+  const row = value as Record<string, unknown>;
+  return row.kind === kind && typeof row.id === 'string' && row.id.length > 0;
+}
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const authFailure = await requireDashboardAuth();
@@ -74,6 +82,12 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   }
   if (Object.keys(patch).length === 0) {
     return Response.json({ ok: false, error: 'empty_patch' }, { status: 400 });
+  }
+  if ('owner' in patch && !validPerson(patch.owner, 'user')) {
+    return Response.json({ ok: false, error: 'owner_must_be_human' }, { status: 400 });
+  }
+  if ('agent_owner' in patch && !validPerson(patch.agent_owner, 'node')) {
+    return Response.json({ ok: false, error: 'agent_owner_must_be_node' }, { status: 400 });
   }
 
   try {

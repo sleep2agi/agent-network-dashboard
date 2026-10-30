@@ -9,6 +9,7 @@ import { EmptyState } from '../../components/EmptyState';
 import CommentMarkdown from '../../components/CommentMarkdown';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { useNetworkId } from '../../lib/network-context';
+import { peopleOptions, readRequirementPeople, type PersonOption } from '../../lib/requirement-people';
 
 /**
  * One requirement — #1633 (read-only).
@@ -86,11 +87,33 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [busy, setBusy] = useState(false);
   const [comment, setComment] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [personChoices, setPersonChoices] = useState<PersonOption[] | null>(null);
+  const [peopleError, setPeopleError] = useState('');
+  const [peopleAttempt, setPeopleAttempt] = useState(0);
 
   const reload = () => setReloadKey(k => k + 1);
   // Every read and write names the selected network: a user token can belong to
   // several networks and Hub then refuses to guess.
   const scope = `network_id=${encodeURIComponent(networkId)}`;
+
+  useEffect(() => {
+    let alive = true;
+    setPeopleError('');
+    (async () => {
+      try {
+        const res = await fetch(`/api/hub/requirements/people?${scope}`, { cache: 'no-store' });
+        if (!res.ok) {
+          if (alive) setPeopleError(res.status === 401 ? '人员目录登录已过期' : `人员目录读取失败（${res.status}）`);
+          return;
+        }
+        const choices = peopleOptions(readRequirementPeople(await res.json()));
+        if (alive) setPersonChoices(choices);
+      } catch {
+        if (alive) setPeopleError('人员目录读取失败，请重试');
+      }
+    })();
+    return () => { alive = false; };
+  }, [scope, peopleAttempt]);
 
   async function sendPatch(fields: Record<string, unknown>) {
     if (!id || busy) return;
@@ -205,6 +228,11 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   }
 
   const checklist = req.checklist || [];
+  const personValue = (person?: Person | null) => (person ? `${person.kind}:${person.id}` : '');
+  const optionLabel = (value: string) => personChoices?.find(choice => choice.value === value)?.label ?? value;
+  const ownerValue = personValue(req.owner);
+  const agentValue = personValue(req.agent_owner);
+  const directoryReady = personChoices !== null;
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-gray-200">
@@ -225,8 +253,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
           </div>
           <h1 className="text-lg font-semibold text-white">{req.name}</h1>
           <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-gray-500">
-            <span>负责人 {personLabel(req.owner)}</span>
-            <span>负责 Agent {personLabel(req.agent_owner)}</span>
+            <span>负责人 {req.owner ? optionLabel(ownerValue) : '—'}</span>
+            <span>负责 Agent {req.agent_owner ? optionLabel(agentValue) : '—'}</span>
             {req.children && req.children.total > 0 && <span>子卡 {req.children.done}/{req.children.total}</span>}
             {req.external_url && (
               <a href={req.external_url} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">
@@ -277,6 +305,58 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               className="rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs normal-case text-gray-200"
             />
           </label>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-600">
+            负责人
+            <select
+              aria-label="负责人（人）"
+              value={ownerValue}
+              disabled={busy || !directoryReady}
+              title={peopleError || (directoryReady ? '只列人；同名以 ID 区分' : '正在读取人员目录…')}
+              onChange={e => {
+                const value = e.target.value;
+                if (value && !value.startsWith('user:')) return;
+                sendPatch({ owner: value ? { kind: 'user', id: value.slice('user:'.length) } : null });
+              }}
+              className="max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs normal-case text-gray-200 disabled:opacity-60"
+            >
+              <option value="">未分配</option>
+              {personChoices?.filter(choice => choice.kind === 'user').map(choice => (
+                <option key={choice.value} value={choice.value} title={choice.label}>{choice.label}</option>
+              ))}
+              {ownerValue && !personChoices?.some(choice => choice.value === ownerValue) && (
+                <option value={ownerValue} disabled>{optionLabel(ownerValue)}（不可用）</option>
+              )}
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-600">
+            负责 Agent
+            <select
+              aria-label="负责 Agent"
+              value={agentValue}
+              disabled={busy || !directoryReady}
+              title={peopleError || (directoryReady ? '只列 Agent；同名以 ID 区分' : '正在读取人员目录…')}
+              onChange={e => {
+                const value = e.target.value;
+                if (value && !value.startsWith('node:')) return;
+                sendPatch({ agent_owner: value ? { kind: 'node', id: value.slice('node:'.length) } : null });
+              }}
+              className="max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs normal-case text-gray-200 disabled:opacity-60"
+            >
+              <option value="">未分配</option>
+              {personChoices?.filter(choice => choice.kind === 'node').map(choice => (
+                <option key={choice.value} value={choice.value} title={choice.label}>{choice.label}</option>
+              ))}
+              {agentValue && !personChoices?.some(choice => choice.value === agentValue) && (
+                <option value={agentValue} disabled>{optionLabel(agentValue)}（不可用）</option>
+              )}
+            </select>
+          </label>
+          {peopleError && (
+            <span role="status" className="text-[11px] text-amber-300">
+              {peopleError}
+              <button type="button" onClick={() => setPeopleAttempt(n => n + 1)} className="ml-2 underline">重试人员目录</button>
+            </span>
+          )}
           {busy && <span className="text-[11px] text-gray-500">saving…</span>}
           {actionError && <span className="text-[11px] text-red-400">{actionError}</span>}
         </section>
