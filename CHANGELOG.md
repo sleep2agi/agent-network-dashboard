@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.119 — 2026-10-30
+
+### Move requirement cards between board columns
+
+- Drag a card to another status column to change its column, or use the
+  per-card “移动到状态” select (keyboard/touch). Both send only the new column
+  with the current `network_id`.
+- The card moves immediately; a successful write refreshes silently without a
+  skeleton, and a denied or failed write puts the card back in its original
+  column with Hub’s reason shown.
+- Dropping a card in its current column sends nothing.
+
 ## 0.6.3-preview.118 — 2026-10-30
 
 ### Requirement board view
