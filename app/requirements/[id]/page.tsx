@@ -108,6 +108,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [childPriority, setChildPriority] = useState('normal');
   const [childBusy, setChildBusy] = useState(false);
   const [ancestors, setAncestors] = useState<Array<{ id: string; seq: number; name: string }>>([]);
+  const [copied, setCopied] = useState(false);
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [parentQuery, setParentQuery] = useState('');
   const [parentResults, setParentResults] = useState<Array<{ id: string; seq: number; name: string; column: string; priority: string }>>([]);
@@ -447,7 +448,25 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               ))}
             </p>
           )}
-          <h1 className="text-lg font-semibold text-white">{req.name}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-lg font-semibold text-white">{req.name}</h1>
+            <button
+              type="button"
+              data-testid="requirement-copy-link"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href);
+                  setCopied(true);
+                  window.setTimeout(() => setCopied(false), 2000);
+                } catch {
+                  setCopied(false);
+                }
+              }}
+              className="shrink-0 rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              {copied ? '已复制' : '复制链接'}
+            </button>
+          </div>
           <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-gray-500">
             <span>负责人 {req.owner ? optionLabel(ownerValue) : '—'}</span>
             <span>负责 Agent {req.agent_owner ? optionLabel(agentValue) : '—'}</span>

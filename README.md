@@ -190,6 +190,8 @@ Department discs in the 2D chart show their head count.
 
 `/` focuses the requirement search, `Esc` clears it and then leaves the field.
 
+A requirement can be shared by copying its link from the detail header.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
