@@ -1665,10 +1665,11 @@ export default function Legion3DPage() {
   // 滚轮必须在非 passive 监听里 preventDefault，否则页面会跟着滚，控制台还会报
   // “Unable to preventDefault inside passive event listener”。React 的 onWheel 是 passive。
   useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
+    // 用 document 级监听：舞台可能是后挂载的（先显示“正在确认网络”），
+    // 绑在 ref 上会错过挂载时机；这里按事件目标判断是否在舞台上。
     const onWheelNative = (event: WheelEvent) => {
-      if (presentingRef.current) return;
+      const el = (event.target as Element | null)?.closest?.('[data-testid="legion-3d-stage"]');
+      if (!el || presentingRef.current) return;
       event.preventDefault();
       lastInteract.current = performance.now();
       interactingUntil.current = performance.now() + 180;
@@ -1676,7 +1677,7 @@ export default function Legion3DPage() {
       const v = viewRef.current;
       const factor = event.deltaY > 0 ? 1 / 1.12 : 1.12;
       const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.zoom * factor));
-      const rect = el.getBoundingClientRect();
+      const rect = (el as HTMLElement).getBoundingClientRect();
       const cx = rect.width / 2;
       const cy = rect.height / 2;
       const mx = event.clientX - rect.left - cx;
@@ -1690,8 +1691,8 @@ export default function Legion3DPage() {
       setZoomPct(Math.round(next * 100));
       persistView();
     };
-    el.addEventListener('wheel', onWheelNative, { passive: false });
-    return () => el.removeEventListener('wheel', onWheelNative);
+    document.addEventListener('wheel', onWheelNative, { passive: false });
+    return () => document.removeEventListener('wheel', onWheelNative);
   }, [persistView]);
 
   const resetView = useCallback(() => {
