@@ -6,6 +6,22 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.155 — 2026-10-31
+
+### The 3D chart shows its hierarchy
+
+At the production density the acceptance fixture now uses (12 departments, 24
+people, ~36 agents), the 3D topology drew every department on one flat plane:
+four parent names, eight sub-departments as pale slivers, and no way to tell
+which belonged to which.
+
+- Sub-departments now sit below their parent by a whole tier (`DEPTH_STEP`), so
+  the parent/child relation is visible when the camera is orbited up instead of
+  being encoded only in radius.
+- Sub-department discs are less flat and slightly larger, and their short name is
+  drawn from a smaller radius, so all 13 departments are named rather than five.
+- No new controls; drag, zoom, tour, share links and reset are unchanged.
+
 ## 0.6.3-preview.154 — 2026-10-31
 
 ### Acceptance at production density
