@@ -94,6 +94,10 @@ Requirement detail, its activity timeline, checklist toggles and comments also
 follow the selected network; the page waits for the network and remounts when
 it changes.
 
+The requirement detail page can change the human owner and responsible Agent
+from the same visible people directory; role mismatches are rejected and
+unknown identities keep their exact ID.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
