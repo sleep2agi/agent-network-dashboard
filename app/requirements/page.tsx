@@ -192,8 +192,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
       searchInputRef.current?.focus();
       searchInputRef.current?.select();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, []);
 
   useEffect(() => {
