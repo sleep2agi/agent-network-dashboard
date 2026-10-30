@@ -205,6 +205,9 @@ function makeDust(count: number) {
 
 const DUST = typeof window === 'undefined' ? [] : makeDust(64);
 
+/** 演示模式的部门巡礼：每步停留时长，跟着 yaw 一起走。 */
+const TOUR_STEP_MS = 3600;
+
 /** 确定性星空（同一块画布每次刷新星位一致，不会「闪」成噪点）。 */
 function makeStars(count: number) {
   let seed = 20261026;
@@ -255,6 +258,7 @@ export default function Legion3DPage() {
   const [exportError, setExportError] = useState('');
   // 演示/录屏模式：隐藏鼠标与悬浮提示、匀速环绕，并可直接导出 16 秒循环。
   const [presenting, setPresenting] = useState(false);
+  const [tour, setTour] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [captureProgress, setCaptureProgress] = useState(0);
   const [captureError, setCaptureError] = useState('');
@@ -279,6 +283,9 @@ export default function Legion3DPage() {
   const lastInteract = useRef(0);
   const yawTarget = useRef<number | null>(null);
   const presentingRef = useRef(false);
+  const tourRef = useRef(false);
+  const tourAt = useRef(0);
+  const tourIndex = useRef(-1);
   const captureRef = useRef<null | {
     startedAt: number; startYaw: number; durationMs: number; mime: string;
     out: HTMLCanvasElement; octx: CanvasRenderingContext2D;
@@ -539,6 +546,14 @@ export default function Legion3DPage() {
 
   useEffect(() => { spinRef.current = spin; }, [spin]);
   useEffect(() => { presentingRef.current = presenting; }, [presenting]);
+  useEffect(() => { tourRef.current = tour; }, [tour]);
+  // 退出演示就结束巡礼，别让下一次进入从一半开始。
+  useEffect(() => {
+    if (presenting) return;
+    setTour(false);
+    tourIndex.current = -1;
+    tourAt.current = 0;
+  }, [presenting]);
   useEffect(() => { flowRef.current = flow; }, [flow]);
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -775,6 +790,22 @@ export default function Legion3DPage() {
       }
 
       const narrow = size.width < 640;
+      // 演示模式的部门巡礼：按顺序逐个聚焦，镜头同时转向该部门。
+      // 录屏与减少动态效果时不自动推进（录屏必须保持一条无缝轨道）。
+      if (presentingRef.current && tourRef.current && !capture && !motionPreference.matches) {
+        const depts = layout.nodes.filter(n => n.kind === 'group');
+        if (depts.length > 1) {
+          if (tourAt.current === 0) tourAt.current = now;
+          if (now - tourAt.current >= TOUR_STEP_MS) {
+            tourAt.current = now;
+            tourIndex.current = (tourIndex.current + 1) % depts.length;
+            const next = depts[tourIndex.current];
+            setFocus(next.id);
+            yawTarget.current = next.angle;
+          }
+        }
+      }
+
       const cam = {
         yaw: view.yaw,
         pitch: view.pitch,
@@ -2091,14 +2122,41 @@ export default function Legion3DPage() {
       />
 
       {presenting && (
-        <button
-          type="button"
-          data-testid="legion-3d-present-exit"
-          onClick={exitPresenting}
-          className="pointer-events-auto absolute right-3 top-3 z-20 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/90 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] backdrop-blur transition-colors hover:text-[var(--fg)]"
-        >
-          退出演示（Esc）
-        </button>
+        <div className="pointer-events-auto absolute right-3 top-3 z-20 flex items-center gap-2">
+          <button
+            type="button"
+            data-testid="legion-3d-tour"
+            aria-pressed={tour}
+            aria-disabled={reducedMotion}
+            title={reducedMotion ? '系统减少动态效果时巡礼保持静止' : '按顺序逐个聚焦部门，镜头跟着转'}
+            onClick={() => {
+              if (reducedMotion) return;
+              const next = !tour;
+              setTour(next);
+              tourAt.current = 0;
+              if (!next) { setFocus(null); tourIndex.current = -1; return; }
+              const depts = layout.nodes.filter(n => n.kind === 'group');
+              tourIndex.current = depts.length ? 0 : -1;
+              if (depts[0]) { setFocus(depts[0].id); yawTarget.current = depts[0].angle; }
+            }}
+            className={`rounded-md border px-2.5 py-1.5 text-xs backdrop-blur transition-colors ${tour ? 'border-[var(--accent)] bg-[var(--bg-secondary)]/90 text-[var(--accent-text)]' : 'border-[var(--border)] bg-[var(--bg-secondary)]/90 text-[var(--fg-muted)] hover:text-[var(--fg)]'} ${reducedMotion ? 'opacity-50' : ''}`}
+          >
+            部门巡礼{reducedMotion ? '（静止）' : ''}
+          </button>
+          {tour && (
+            <span data-testid="legion-3d-tour-status" className="rounded-md bg-[var(--bg-secondary)]/90 px-2 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur">
+              {layout.nodes.find(n => n.id === focus)?.label ?? '巡礼中'}
+            </span>
+          )}
+          <button
+            type="button"
+            data-testid="legion-3d-present-exit"
+            onClick={exitPresenting}
+            className="rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/90 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] backdrop-blur transition-colors hover:text-[var(--fg)]"
+          >
+            退出演示（Esc）
+          </button>
+        </div>
       )}
       {capturing && (
         <div role="status" data-testid="legion-3d-capture-status" className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-md bg-[var(--bg-secondary)]/92 px-3 py-1 text-xs text-[var(--fg-muted)] backdrop-blur">
