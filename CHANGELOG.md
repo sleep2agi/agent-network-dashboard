@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.150 — 2026-10-31
+
+### The 3D legion view remembers where you were
+
+- After rotating or zooming, the camera is stored per network on this device;
+  reopening the page continues from that angle instead of re-framing.
+- A shared link (`?view=…`) still wins, “重置视角” clears the memory, and only
+  finite values are ever restored.
+
 ## 0.6.3-preview.149 — 2026-10-31
 
 ### Tree view for the loaded requirement list
