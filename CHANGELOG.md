@@ -6,6 +6,21 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.117 — 2026-10-30
+
+### Edit owners from the requirement detail
+
+- The detail page can now change the human owner and the responsible Agent
+  directly, using the same visible people directory and role semantics as the
+  list filter: owner options are people, Agent options are Agents.
+- Duplicate names stay distinguishable by ID, and an owner who is no longer in
+  the visible directory keeps their exact ID instead of silently becoming
+  “unassigned”.
+- The write proxy accepts only `owner` (a person or null) and `agent_owner` (an
+  Agent or null); wrong roles are rejected before Hub. Directory failures,
+  expiries and denied writes disable the controls or show Hub’s error instead of
+  pretending the change succeeded.
+
 ## 0.6.3-preview.116 — 2026-10-30
 
 ### Keep requirement detail in the selected network
