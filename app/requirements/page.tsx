@@ -682,6 +682,18 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           {!loading && !error && !needsLogin && ` 已加载 ${rows.length} 条${hasMore ? '，可继续加载。' : '。'}`}
         </p>
 
+        {rows.length > 0 && orderedRows.length === 0 && (participating || priorities) && !loading && !error && (
+          <p role="status" data-testid="requirements-local-empty" className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs text-[var(--fg-muted)]">
+            已加载的 {rows.length} 条里没有匹配本地区筛选（我参与 / 优先级）的需求
+            {hasMore ? '；还有更多未加载。' : '。'}
+            {hasMore && (
+              <button type="button" onClick={() => load({ cursor, append: true })} className="ml-2 underline hover:text-[var(--fg)]">
+                继续加载
+              </button>
+            )}
+          </p>
+        )}
+
         {createNotice && (
           <p role="status" data-testid="requirements-create-notice" className="mb-4 text-xs text-[var(--fg-muted)]">
             {createNotice}

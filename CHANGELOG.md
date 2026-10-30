@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.142 — 2026-10-31
+
+### No dead end when a local filter empties the loaded page
+
+- “我参与” and the priority chips only see loaded rows. When they filter the
+  current page down to zero while more pages exist, the page now says so and
+  offers “继续加载” instead of looking like an empty result.
+- The notice is a normal status line, disappears as soon as a match is loaded,
+  and leaves the ordinary empty state (a truly empty board) untouched.
+
 ## 0.6.3-preview.141 — 2026-10-31
 
 ### Priorities read P0–P3
