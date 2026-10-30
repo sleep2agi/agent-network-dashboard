@@ -113,6 +113,9 @@ The project picker compares Hub's echoed network with the selected one: a
 different network blocks the catalogue, while a missing echo (older Hub) stays
 a silent success.
 
+The requirement detail page maintains participants (people and Agents) from the
+visible people directory; unknown participants keep their exact ID.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
