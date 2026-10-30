@@ -122,6 +122,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // #1636 回归：追加只在完全空闲时放行；替换抢占旧请求并用代际号丢弃迟到回包。
   const gate = useRef(createLoadGate());
   const [tagInput, setTagInput] = useState(tag);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [qInput, setQInput] = useState(q);
   const [archiveSupported, setArchiveSupported] = useState<boolean | null>(null);
   const archiveSupport = useRef<boolean | null>(null);
@@ -178,6 +179,21 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     };
     window.addEventListener('popstate', restore);
     return () => window.removeEventListener('popstate', restore);
+  }, []);
+
+  // 「/」聚焦搜索：和大多数列表页一致；在输入框/下拉里打字时不抢键。
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) return;
+      event.preventDefault();
+      searchInputRef.current?.focus();
+      searchInputRef.current?.select();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   useEffect(() => {
@@ -615,6 +631,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-[var(--border-hover)]">
             <input
+              ref={searchInputRef}
+              title="按 / 聚焦搜索"
               value={qInput}
               onChange={e => setQInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') setParam({ q: qInput }); }}
