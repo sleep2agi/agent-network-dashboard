@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.154 — 2026-10-31
+
+### Acceptance at production density
+
+- The legion acceptance fixture gains a “dense” mode: 12 departments in two
+  levels, 24 people and ~36 agents. Both the 2D chart and the 3D topology are
+  rendered and screenshotted at that size, so layout or label regressions show
+  up before users see them (the previous fixture had 4 departments and 1 member).
+- No product change: this round only makes the evidence realistic.
+
 ## 0.6.3-preview.153 — 2026-10-31
 
 ### Copy a requirement link

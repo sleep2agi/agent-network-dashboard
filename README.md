@@ -192,6 +192,8 @@ Department discs in the 2D chart show their head count.
 
 A requirement can be shared by copying its link from the detail header.
 
+Legion acceptance also renders a production-like dense fixture (12 departments).
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
