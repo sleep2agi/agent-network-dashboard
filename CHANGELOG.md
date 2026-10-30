@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.123 — 2026-10-30
+
+### Edit description and tags from the requirement detail
+
+- The description section can switch into a Markdown editor with save/cancel;
+  the rendered view returns after saving. Validation failures keep the draft.
+- Tags can be edited as a comma-separated list, deduplicated, cleared entirely,
+  and capped at 10 labels of 20 characters before any request is sent.
+- The PATCH proxy validates `description` (≤20000) and `tags` shapes before
+  forwarding them with the selected network.
+
 ## 0.6.3-preview.122 — 2026-10-30
 
 ### Edit participants from the requirement detail
