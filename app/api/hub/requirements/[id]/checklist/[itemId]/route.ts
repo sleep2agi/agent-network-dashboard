@@ -34,8 +34,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string; i
   }
 
   try {
+    const networkId = new URL(req.url).searchParams.get('network_id');
+    const scope = networkId ? `?network_id=${encodeURIComponent(networkId)}` : '';
     const res = await fetch(
-      `${HUB_URL}/api/requirements/${encodeURIComponent(id)}/checklist/${encodeURIComponent(itemId)}`,
+      `${HUB_URL}/api/requirements/${encodeURIComponent(id)}/checklist/${encodeURIComponent(itemId)}${scope}`,
       {
         method: 'PATCH',
         headers: { ...(await hubHeaders()), 'Content-Type': 'application/json' },
