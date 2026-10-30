@@ -415,7 +415,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           </div>
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)]">
-              排序
+              <span className="hidden sm:inline">排序</span>
               <select
                 aria-label="排序"
                 value={sortSpec.key}
