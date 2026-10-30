@@ -108,6 +108,11 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [childPriority, setChildPriority] = useState('normal');
   const [childBusy, setChildBusy] = useState(false);
   const [ancestors, setAncestors] = useState<Array<{ id: string; seq: number; name: string }>>([]);
+  const [parentPickerOpen, setParentPickerOpen] = useState(false);
+  const [parentQuery, setParentQuery] = useState('');
+  const [parentResults, setParentResults] = useState<Array<{ id: string; seq: number; name: string; column: string; priority: string }>>([]);
+  const [parentBusy, setParentBusy] = useState(false);
+  const [parentError, setParentError] = useState('');
   const [editError, setEditError] = useState('');
 
   const reload = () => setReloadKey(k => k + 1);
@@ -312,6 +317,41 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     })();
     return () => { alive = false; };
   }, [id, scope, reloadKey, req]);
+
+  async function searchParents() {
+    const q = parentQuery.trim();
+    if (!q) { setParentError('先输入关键词再搜索'); return; }
+    setParentBusy(true);
+    setParentError('');
+    try {
+      const res = await fetch(`/api/hub/requirements?${scope}&q=${encodeURIComponent(q)}&view=summary&limit=20`, { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) { setParentError(data?.message || data?.error || `hub_${res.status}`); return; }
+      // 自己不能当自己的上级：其余交给 Hub 的层级/成环校验。
+      setParentResults(((data.requirements || []) as Array<{ id: string; seq: number; name: string; column: string; priority: string }>)
+        .filter(row => row.id !== id));
+    } catch {
+      setParentError('搜索失败，请重试');
+    } finally {
+      setParentBusy(false);
+    }
+  }
+
+  async function moveUnder(parentId: string | null) {
+    if (parentBusy) return;
+    setParentBusy(true);
+    setParentError('');
+    try {
+      if (await sendPatch({ parent_id: parentId })) {
+        setParentPickerOpen(false);
+        setParentResults([]);
+        setParentQuery('');
+        reload();
+      }
+    } finally {
+      setParentBusy(false);
+    }
+  }
 
   async function createChild() {
     if (!id || childBusy) return;
@@ -697,9 +737,54 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         </section>
 
         <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4" data-testid="requirement-children">
-          <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-500">
+          <h2 className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-gray-500">
             子需求{childRows.length > 0 && <span className="ml-1 text-gray-600">{childRows.length}</span>}
+            <button
+              type="button"
+              data-testid="requirement-move-parent"
+              onClick={() => { setParentPickerOpen(v => !v); setParentError(''); }}
+              className="ml-auto text-[11px] normal-case text-gray-500 underline hover:text-gray-300"
+            >
+              改父级
+            </button>
           </h2>
+          {parentPickerOpen && (
+            <div className="mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-2.5" data-testid="requirement-parent-picker">
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  aria-label="搜索新上级"
+                  value={parentQuery}
+                  onChange={event => setParentQuery(event.target.value)}
+                  onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void searchParents(); } }}
+                  placeholder="搜索新上级（标题）"
+                  className="min-w-0 flex-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 text-xs text-[var(--fg)]"
+                />
+                <button type="button" onClick={() => void searchParents()} disabled={parentBusy} className="rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-muted)] disabled:opacity-60">搜索</button>
+                <button type="button" data-testid="requirement-move-root" onClick={() => void moveUnder(null)} disabled={parentBusy} className="rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-muted)] disabled:opacity-60">升为顶级</button>
+              </div>
+              {parentError && <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">{parentError}</p>}
+              {parentResults.length > 0 && (
+                <ul className="mt-2 max-h-40 overflow-auto rounded border border-[var(--border)]" data-testid="requirement-parent-results">
+                  {parentResults.map(row => (
+                    <li key={row.id}>
+                      <button
+                        type="button"
+                        data-testid={`requirement-parent-option-${row.id}`}
+                        onClick={() => void moveUnder(row.id)}
+                        disabled={parentBusy}
+                        className="flex w-full items-center gap-2 px-2 py-1 text-left text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+                      >
+                        <span className="tabular-nums text-[10px] text-gray-500">#{row.seq}</span>
+                        <span className="rounded bg-[var(--bg-elevated)] px-1 text-[10px]">{row.column}</span>
+                        <span className="min-w-0 flex-1 truncate">{row.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-1 text-[10px] text-gray-600">最多 5 层、不能成环（Hub 校验）；改父级不改卡片其它字段。</p>
+            </div>
+          )}
           {childError && <p role="alert" className="mb-2 text-[11px] text-[var(--danger)]">{childError}</p>}
           {childRows.length === 0 ? (
             <p className="text-sm text-gray-600">（还没有子需求）</p>
