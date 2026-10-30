@@ -7,6 +7,8 @@ import { EmptyState } from '../components/EmptyState';
 import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/requirements-paging';
 import { ProjectFilter } from './ProjectFilter';
 import { CreateRequirement } from './CreateRequirement';
+import { TagChip, TagPicker, useRequirementTags } from './TagFilter';
+import { tagColor } from '../lib/tag-catalog';
 import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
@@ -122,6 +124,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [bulkError, setBulkError] = useState('');
   const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
+  const { catalog: tagCatalog } = useRequirementTags(networkId);
   const personOptions = useMemo(() => peopleCatalog.status === 'ready' ? peopleOptions(peopleCatalog.people) : [], [peopleCatalog]);
   const personNames = useMemo(() => new Map(personOptions.map(p => [p.value, p.label])), [personOptions]);
 
@@ -529,17 +532,12 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               className="w-40 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none sm:w-56"
             />
           </div>
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-[var(--border-hover)]">
-            <input
-              value={tagInput}
-              onChange={e => setTagInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') setParam({ tag: tagInput }); }}
-              onBlur={() => { if (tagInput !== tag) setParam({ tag: tagInput }); }}
-              placeholder="精确标签"
-              aria-label="精确标签"
-              className="w-28 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none"
-            />
-          </div>
+          <TagPicker
+            value={tag}
+            catalog={tagCatalog}
+            query={q}
+            onApply={next => setParam({ tag: next, q: qInput })}
+          />
           {archiveSupported === true && (
             <label className={`flex min-h-11 items-center gap-2 rounded-md px-2.5 text-xs sm:min-h-9 ${searching ? 'cursor-pointer text-[var(--fg)]' : 'text-[var(--fg-muted)]'}`}>
               <input
@@ -769,8 +767,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                               )}
                               {(row.tags || []).length > 0 && (
                                 <span className="mt-2 flex flex-wrap gap-1">
-                                  {(row.tags || []).slice(0, 3).map(tag => (
-                                    <span key={tag} className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-gray-400">{tag}</span>
+                                  {(row.tags || []).slice(0, 3).map(name => (
+                                    <TagChip key={name} name={name} color={tagColor(tagCatalog, name)} className="text-[10px] text-gray-400" />
                                   ))}
                                 </span>
                               )}
@@ -846,10 +844,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                         <span className="mt-1 inline-flex rounded border border-[var(--border)] bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] leading-4 text-[var(--fg-muted)]">已归档</span>
                       )}
                     </span>
-                    {(row.tags || []).slice(0, 3).map(t => (
-                      <span key={t} className="hidden shrink-0 rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-gray-400 sm:inline">
-                        {t}
-                      </span>
+                    {(row.tags || []).slice(0, 3).map(name => (
+                      <TagChip key={name} name={name} color={tagColor(tagCatalog, name)} className="hidden shrink-0 text-[10px] text-gray-400 sm:inline-flex" />
                     ))}
                     <span className={`shrink-0 text-[11px] ${priorityClass(row.priority)}`}>{row.priority}</span>
                     <span data-responsibility className="hidden w-36 shrink-0 text-[11px] leading-4 text-[var(--fg-muted)] sm:block"

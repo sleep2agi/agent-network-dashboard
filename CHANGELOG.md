@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.128 — 2026-10-30
+
+### Tag catalogue: colours, usage counts and suggestions
+
+- The requirement page reads Hub’s tag catalogue (`GET /api/requirements/tags`)
+  through a thin read-only proxy. The tag box becomes a suggestion list ordered
+  by usage, showing each tag’s colour and count; the applied tag is never
+  offered back, and typing any custom tag still works with Enter.
+- Tags on list rows, board cards and the detail header show their Hub colour;
+  the detail tag editor offers the most-used tags as chips that only fill the
+  draft until you save.
+- Old Hubs that return just `tags` degrade to plain text tags: no colours, no
+  counts, no tree, no errors. Tag management (`tags/ops`) is not proxied yet.
+
 ## 0.6.3-preview.127 — 2026-10-30
 
 ### Overdue quick filter
