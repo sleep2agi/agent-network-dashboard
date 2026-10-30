@@ -47,6 +47,9 @@ interface Requirement {
   archived?: boolean;
 }
 
+const PRIORITIES = ['high', 'normal', 'low', 'lowest'] as const;
+const PRIORITY_LABEL: Record<string, string> = { high: 'P0', normal: 'P1', low: 'P2', lowest: 'P3' };
+
 const COLUMNS: { key: Requirement['column'] | ''; label: string }[] = [
   { key: '', label: 'All' },
   { key: 'pool', label: '需求池' },
@@ -101,6 +104,13 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // 「我参与」是本地过滤：Hub 列表没有参与人查询参数，APP 也是过滤已加载项。
   const participant = searchParams.get('participant') || '';
   const participating = !!meId && participant === ownerRefFor(meId);
+  // 优先级也只在已加载结果上筛（Hub 列表没有 priority 查询参数）。
+  const priorityParam = searchParams.get('priority') || '';
+  const priorities = useMemo(() => {
+    if (!priorityParam) return null;
+    const picked = priorityParam.split(',').filter(value => (PRIORITIES as readonly string[]).includes(value));
+    return picked.length ? new Set(picked) : null;
+  }, [priorityParam]);
 
   // #1636: 替换态与追加态分开，追加时已加载的行不能进骨架屏。
   const [state, dispatch] = useReducer(
@@ -214,7 +224,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
 
   const clearFilters = () => {
     setPeopleQuery('');
-    setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '', overdue: '', participant: '' });
+    setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '', overdue: '', participant: '', priority: '' });
   };
 
 
@@ -414,10 +424,12 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // 「我参与」在已加载结果上过滤；其它筛选仍交给 Hub。参与人只认 user 角色，
   // 与 APP 的 personKey 语义一致。
   const participatingRows = useMemo(
-    () => (participating && meId
-      ? rows.filter(row => (row.participants || []).some(person => person.kind === 'user' && person.id === meId))
-      : rows),
-    [rows, participating, meId],
+    () => rows.filter(row => {
+      if (participating && meId && !(row.participants || []).some(person => person.kind === 'user' && person.id === meId)) return false;
+      if (priorities && !priorities.has(row.priority)) return false;
+      return true;
+    }),
+    [rows, participating, meId, priorities],
   );
   const orderedRows = useMemo(
     () => sortRequirements(participatingRows, sortSpec),
@@ -556,6 +568,34 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               只筛已加载的 {rows.length} 条
             </span>
           )}
+          <span className="ml-2 flex items-center gap-1" data-testid="requirements-priority-chips">
+            <span className="text-[10px] text-[var(--fg-dim)]">优先级</span>
+            {PRIORITIES.map(value => {
+              const on = priorities?.has(value) ?? false;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={on}
+                  data-testid={`requirements-priority-${value}`}
+                  title={`在已加载结果里筛 ${PRIORITY_LABEL[value]}（${value}）；Hub 列表没有优先级查询参数`}
+                  onClick={() => {
+                    const next = new Set(priorities ?? []);
+                    if (next.has(value)) next.delete(value); else next.add(value);
+                    setParam({ priority: [...next].join(','), q: qInput, tag: tagInput });
+                  }}
+                  className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${on ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+                >
+                  {PRIORITY_LABEL[value]}
+                </button>
+              );
+            })}
+          </span>
+          {priorities && (
+            <span className="text-[10px] text-[var(--fg-dim)]" data-testid="requirements-priority-hint">
+              只筛已加载的 {rows.length} 条
+            </span>
+          )}
         </div>
 
         <ProjectFilter
@@ -614,7 +654,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               包含已归档
             </label>
           )}
-          {(status || tag || q || project || owner || agent || overdue || participating) && (
+          {(status || tag || q || project || owner || agent || overdue || participating || priorities) && (
             <button
               type="button"
               onClick={clearFilters}
@@ -676,9 +716,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           // 那时说「需求池是空的」就是把鉴权/故障说成没数据，用户会以为需求丢了。
           <EmptyState
             variant="generic"
-            title={status || tag || q || project || owner || agent || overdue || participating ? '没有符合筛选的需求' : '需求池是空的'}
-            sub={status || tag || q || project || owner || agent || overdue || participating ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
-            cta={status || tag || q || project || owner || agent || overdue || participating ? { label: '清空筛选', onClick: clearFilters } : undefined}
+            title={status || tag || q || project || owner || agent || overdue || participating || priorities ? '没有符合筛选的需求' : '需求池是空的'}
+            sub={status || tag || q || project || owner || agent || overdue || participating || priorities ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
+            cta={status || tag || q || project || owner || agent || overdue || participating || priorities ? { label: '清空筛选', onClick: clearFilters } : undefined}
           />
         ) : board ? (
           <>

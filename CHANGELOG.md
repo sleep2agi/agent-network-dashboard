@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.140 — 2026-10-31
+
+### Priority chips on the requirement page
+
+- Four chips (P0–P3) filter by priority. The Hub list has no priority query
+  parameter, so like “我参与” this filters the rows already loaded, says so
+  (“只筛已加载的 N 条”), and never sends `priority` upstream.
+- Multi-select: chips toggle independently, the choice lives in the URL
+  (`priority=high,normal`), composes with every other filter and is reset by
+  “clear filters”.
+
 ## 0.6.3-preview.139 — 2026-10-30
 
 ### Shareable camera views in the legion 3D page

@@ -164,6 +164,8 @@ Presentation mode can tour departments one by one; recordings never auto-advance
 
 A 3D camera view can be copied as a link (`?view=…`) and reopened by others.
 
+Priority chips filter the loaded rows and say so in the UI.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
