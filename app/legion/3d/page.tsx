@@ -1662,6 +1662,38 @@ export default function Legion3DPage() {
     }, 300);
   }, [networkId]);
 
+  // 滚轮必须在非 passive 监听里 preventDefault，否则页面会跟着滚，控制台还会报
+  // “Unable to preventDefault inside passive event listener”。React 的 onWheel 是 passive。
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const onWheelNative = (event: WheelEvent) => {
+      if (presentingRef.current) return;
+      event.preventDefault();
+      lastInteract.current = performance.now();
+      interactingUntil.current = performance.now() + 180;
+      introRef.current = null;
+      const v = viewRef.current;
+      const factor = event.deltaY > 0 ? 1 / 1.12 : 1.12;
+      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.zoom * factor));
+      const rect = el.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const mx = event.clientX - rect.left - cx;
+      const my = event.clientY - rect.top - cy;
+      const k = next / v.zoom;
+      v.panX = mx - k * (mx - v.panX);
+      v.panY = my - k * (my - v.panY);
+      v.zoom = next;
+      userAdjusted.current = true;
+      fitPending.current = false;
+      setZoomPct(Math.round(next * 100));
+      persistView();
+    };
+    el.addEventListener('wheel', onWheelNative, { passive: false });
+    return () => el.removeEventListener('wheel', onWheelNative);
+  }, [persistView]);
+
   const resetView = useCallback(() => {
     sharedLock.current = false;
     try { localStorage.removeItem(`legion3d-view:${networkId}`); } catch { /* ignore */ }
@@ -1818,31 +1850,6 @@ export default function Legion3DPage() {
   const onPointerLeave = () => {
     hoverRef.current = null;
     hoverPos.current = null;
-  };
-
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    if (presentingRef.current) return;
-    lastInteract.current = performance.now();
-    interactingUntil.current = performance.now() + 180;
-    introRef.current = null;
-    const v = viewRef.current;
-    const factor = e.deltaY > 0 ? 1 / 1.12 : 1.12;
-    const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.zoom * factor));
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    // 以鼠标位置为锚点：screen = center + pan + zoom * u，保持 u 对应点不动
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-    const mx = e.clientX - rect.left - cx;
-    const my = e.clientY - rect.top - cy;
-    const k = next / v.zoom;
-    v.panX = mx - k * (mx - v.panX);
-    v.panY = my - k * (my - v.panY);
-    v.zoom = next;
-    userAdjusted.current = true;
-    fitPending.current = false;
-    setZoomPct(Math.round(next * 100));
-    persistView();
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -2211,7 +2218,6 @@ export default function Legion3DPage() {
         onPointerCancel={onPointerUp}
         onPointerLeave={onPointerLeave}
         onDoubleClick={onDoubleClick}
-        onWheel={onWheel}
         role="img"
         aria-label="军团三维拓扑图"
         aria-describedby="legion-3d-hint"
