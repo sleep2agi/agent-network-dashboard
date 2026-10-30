@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.148 — 2026-10-31
+
+### Legion 3D: a breathing camera while presenting
+
+- Presentation mode and recordings get a gentle ±3.5% dolly and a tiny pitch
+  sway, so a still-looking orbit feels alive rather than frozen.
+- The phase is normalised to the loop duration: during a recording it returns to
+  zero at the seam, so first/last frames still line up. `prefers-reduced-motion`
+  keeps the camera perfectly still, and normal browsing is untouched.
+
 ## 0.6.3-preview.147 — 2026-10-31
 
 ### Move a requirement under another parent
