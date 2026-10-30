@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   LOOP_DURATION_MS, EXPORT_WIDTH, EXPORT_HEIGHT, loopYaw, loopProgress, containRect,
   pickRecordingMime, recordingExtension, recordingFileName,
+  exportDimensions, EXPORT_1080_WIDTH, EXPORT_1080_HEIGHT,
 } from './legion-recording';
 
 describe('军团 3D 录屏模式 — 循环几何与容器选择', () => {
@@ -49,5 +50,18 @@ describe('军团 3D 录屏模式 — 循环几何与容器选择', () => {
     const at = new Date(2026, 9, 30, 12, 5, 9);
     expect(recordingFileName('video/webm;codecs=vp9', at)).toBe('legion-3d-loop-1280x720-20261030-120509.webm');
     expect(recordingFileName('video/mp4;codecs=avc1', at)).toBe('legion-3d-loop-1280x720-20261030-120509.mp4');
+  });
+});
+
+describe('export size option', () => {
+  test('default stays 720p; 1080p is opt-in', () => {
+    expect(exportDimensions(false)).toEqual({ width: 1280, height: 720, label: '720p' });
+    expect(exportDimensions(true)).toEqual({ width: EXPORT_1080_WIDTH, height: EXPORT_1080_HEIGHT, label: '1080p' });
+  });
+
+  test('file names carry the actual frame size', () => {
+    const at = new Date('2026-10-31T09:05:07');
+    expect(recordingFileName('video/mp4', at)).toMatch(/^legion-3d-loop-1280x720-\d{8}-\d{6}\.mp4$/);
+    expect(recordingFileName('video/mp4', at, 1920, 1080)).toMatch(/^legion-3d-loop-1920x1080-\d{8}-\d{6}\.mp4$/);
   });
 });

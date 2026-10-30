@@ -9,9 +9,18 @@
 
 /** 一圈的时长。越长越慢；16s 在 PPT 里看起来是「匀速环绕」而不是「转圈」。 */
 export const LOOP_DURATION_MS = 16_000;
-/** 导出画幅：神明 PPT 用的 720p。 */
+/** 导出画幅：神明 PPT 用的 720p（默认）；1080p 仅作可选。 */
 export const EXPORT_WIDTH = 1280;
 export const EXPORT_HEIGHT = 720;
+export const EXPORT_1080_WIDTH = 1920;
+export const EXPORT_1080_HEIGHT = 1080;
+
+/** 录制尺寸 + 文案：默认 720p，可选 1080p（PPT 侧仍要求 720p）。 */
+export function exportDimensions(highDefinition: boolean): { width: number; height: number; label: string } {
+  return highDefinition
+    ? { width: EXPORT_1080_WIDTH, height: EXPORT_1080_HEIGHT, label: '1080p' }
+    : { width: EXPORT_WIDTH, height: EXPORT_HEIGHT, label: '720p' };
+}
 export const EXPORT_FPS = 30;
 
 /** 录制文件的候选容器：先 mp4（PPT 最稳），浏览器不支持时退 webm。 */
@@ -72,8 +81,8 @@ export function containRect(srcW: number, srcH: number, dstW: number, dstH: numb
 }
 
 /** 给导出文件名加时间戳，避免同一个目录里互相覆盖。 */
-export function recordingFileName(mime: string, at: Date): string {
+export function recordingFileName(mime: string, at: Date, width = EXPORT_WIDTH, height = EXPORT_HEIGHT): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   const stamp = `${at.getFullYear()}${pad(at.getMonth() + 1)}${pad(at.getDate())}-${pad(at.getHours())}${pad(at.getMinutes())}${pad(at.getSeconds())}`;
-  return `legion-3d-loop-${EXPORT_WIDTH}x${EXPORT_HEIGHT}-${stamp}.${recordingExtension(mime)}`;
+  return `legion-3d-loop-${width}x${height}-${stamp}.${recordingExtension(mime)}`;
 }
