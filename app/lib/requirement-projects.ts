@@ -30,3 +30,14 @@ export function projectOptions(projects: readonly RequirementProject[]): Project
   for (const p of ordered) visit(p, []);
   return out;
 }
+
+/**
+ * Hub .215+ echoes the network it actually read. A different echo must never be
+ * rendered as this network's catalogue; a missing echo is an older Hub and must
+ * stay a silent success (the production reality for several deployments).
+ */
+export function projectNetworkMismatch(data: { network_id?: unknown } | null | undefined, requested: string): string | null {
+  const echoed = data && typeof data.network_id === 'string' && data.network_id ? data.network_id : null;
+  if (!echoed || !requested) return null;
+  return echoed === requested ? null : echoed;
+}

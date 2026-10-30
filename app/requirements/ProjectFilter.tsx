@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { projectOptions, type RequirementProject } from '../lib/requirement-projects';
+import { projectNetworkMismatch, projectOptions, type RequirementProject } from '../lib/requirement-projects';
 
 type Catalog =
   | { status: 'loading' }
   | { status: 'ready'; projects: RequirementProject[] }
-  | { status: 'failed'; code: number };
+  | { status: 'failed'; code: number }
+  | { status: 'mismatch'; echoed: string };
 const LOADING: Catalog = { status: 'loading' };
 
 export function ProjectFilter({ networkId, value, supported, refreshKey, onChange }: {
@@ -40,6 +41,10 @@ export function ProjectFilter({ networkId, value, supported, refreshKey, onChang
           setCatalog({ status: 'failed', code: 502 });
           return;
         }
+        // Hub .215+ echoes the network it actually read. Missing = older Hub:
+        // keep silent success; different = never show it as this network.
+        const echoed = projectNetworkMismatch(data, networkId);
+        if (echoed) { setCatalog({ status: 'mismatch', echoed }); return; }
         setCatalog({ status: 'ready', projects: data.projects });
       } catch {
         if (!controller.signal.aborted) setCatalog({ status: 'failed', code: 502 });
@@ -57,7 +62,9 @@ export function ProjectFilter({ networkId, value, supported, refreshKey, onChang
     : value === 'none' ? '无项目' : value ? `项目 ID：${value}` : '全部项目';
   const hint = catalog.status === 'loading'
     ? '正在读取项目列表…'
-    : catalog.status === 'failed'
+    : catalog.status === 'mismatch'
+      ? `Hub 实际返回的是另一个网络（${catalog.echoed}），未按当前网络展示项目。请重试或切换网络。`
+      : catalog.status === 'failed'
       ? catalog.code === 401 ? '项目列表登录已过期。'
         : catalog.code === 403 ? '没有读取项目列表的权限（403）。'
           : catalog.code === 404 ? '当前 Hub 未提供项目列表接口（404）。'
@@ -77,6 +84,7 @@ export function ProjectFilter({ networkId, value, supported, refreshKey, onChang
           aria-label="项目筛选"
           aria-describedby="project-filter-hint"
           value={value}
+          disabled={supported === false || catalog.status === 'mismatch'}
           onChange={e => onChange(e.target.value)}
           title={selectionLabel}
           className="min-h-11 min-w-0 max-w-full flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 text-sm text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--hl)] sm:min-h-9 sm:max-w-80 sm:flex-none"
@@ -94,7 +102,7 @@ export function ProjectFilter({ networkId, value, supported, refreshKey, onChang
       <p id="project-filter-hint" role="status" className="mt-2 break-words text-xs text-[var(--fg-muted)]">
         {hint}
         {catalog.status === 'failed' && catalog.code === 401 && <>{' '}<Link href="/login" className="underline">重新登录</Link></>}
-        {catalog.status === 'failed' && (
+        {(catalog.status === 'failed' || catalog.status === 'mismatch') && (
           <button type="button" onClick={() => setRetry(n => n + 1)} className="ml-2 inline-flex min-h-11 items-center underline sm:min-h-0">重试项目列表</button>
         )}
       </p>

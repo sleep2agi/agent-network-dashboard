@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { projectOptions } from './requirement-projects';
+import { projectNetworkMismatch, projectOptions } from './requirement-projects';
 
 describe('project paths preserve exact IDs and visible ancestry', () => {
   test('child-before-parent input becomes a parent-first path without mutating data', () => {
@@ -35,5 +35,14 @@ describe('project paths preserve exact IDs and visible ancestry', () => {
     ]);
     expect(options).toHaveLength(3);
     expect(new Set(options.map(p => p.id)).size).toBe(3);
+  });
+
+  test('network echo: missing means older Hub (no error), equal passes, different is a mismatch', () => {
+    expect(projectNetworkMismatch({ ok: true }, 'net_a')).toBeNull();
+    expect(projectNetworkMismatch({ network_id: undefined }, 'net_a')).toBeNull();
+    expect(projectNetworkMismatch({ network_id: '' }, 'net_a')).toBeNull();
+    expect(projectNetworkMismatch({ network_id: 'net_a' }, 'net_a')).toBeNull();
+    expect(projectNetworkMismatch({ network_id: 'net_b' }, 'net_a')).toBe('net_b');
+    expect(projectNetworkMismatch({ network_id: 'net_b' }, '')).toBeNull();
   });
 });

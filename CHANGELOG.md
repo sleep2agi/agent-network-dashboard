@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.121 — 2026-10-30
+
+### Refuse a project catalogue from another network
+
+- Hub preview.215+ echoes the network it actually read. If that echo differs
+  from the selected network, the project picker no longer renders the foreign
+  catalogue: it is disabled and says which network Hub returned, with retry.
+- A missing echo is an older Hub and stays a silent success, so existing
+  deployments keep working unchanged.
+
 ## 0.6.3-preview.120 — 2026-10-30
 
 ### Create requirements from the dashboard
