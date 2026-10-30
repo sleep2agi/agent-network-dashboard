@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.149 — 2026-10-31
+
+### Tree view for the loaded requirement list
+
+- A “树状” toggle groups the loaded rows by `parent_id`: roots first, children
+  indented under their parent, and a chevron collapses the whole subtree.
+  Rows whose parent is not loaded stay roots — the view never invents a parent.
+- The mode lives in the URL (`tree=1`) and only affects the list; the board keeps
+  its columns, and a data cycle still shows every row exactly once.
+
 ## 0.6.3-preview.148 — 2026-10-31
 
 ### Legion 3D: a breathing camera while presenting
