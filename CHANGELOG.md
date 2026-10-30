@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.116 — 2026-10-30
+
+### Keep requirement detail in the selected network
+
+- Opening a requirement, its activity timeline, checklist toggles, comments and
+  inline edits now name the selected network. A user token that belongs to
+  several networks no longer gets `network_id_required` on the detail page.
+- Switching networks remounts the detail view, so another network's description
+  or timeline cannot stay on screen; a foreign requirement shows Hub's denial.
+- Without a resolved network the page shows the standard network notice and
+  sends no detail read.
+
 ## 0.6.3-preview.115 — 2026-10-30
 
 ### Present and record the legion
