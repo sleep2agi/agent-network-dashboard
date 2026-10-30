@@ -103,6 +103,11 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [projectSupported, setProjectSupported] = useState<boolean | null>(null);
   const [projectRefresh, setProjectRefresh] = useState(0);
   const [peopleQuery, setPeopleQuery] = useState('');
+  const [movingId, setMovingId] = useState<string | null>(null);
+  const [moveError, setMoveError] = useState('');
+  const [moveNotice, setMoveNotice] = useState('');
+  const [columnOverrides, setColumnOverrides] = useState<Record<string, string>>({});
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
   const personOptions = useMemo(() => peopleCatalog.status === 'ready' ? peopleOptions(peopleCatalog.people) : [], [peopleCatalog]);
@@ -158,13 +163,15 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '' });
   };
 
-  const load = useCallback(async (opts: { cursor?: string | null; append?: boolean } = {}) => {
+
+  const load = useCallback(async (opts: { cursor?: string | null; append?: boolean; silent?: boolean } = {}) => {
     const nextCursor = opts.cursor ?? null;
     let phase: 'append' | 'replace' = opts.append === true ? 'append' : 'replace';
     // 闸门在 dispatch 之前：被拒绝的追加不进入加载态，也不发请求。
     const gen = gate.current.begin(phase);
     if (gen === null) return;
-    dispatch({ type: 'start', phase });
+    // 静默刷新（看板移动后的对账）不出骨架屏，也不在失败时清空已加载行。
+    if (!opts.silent) dispatch({ type: 'start', phase });
     try {
       if (!validResponsibility(owner, agent)) throw new Error('URL 中的负责人或 Agent 角色格式无效，请清空责任归属');
       const params = new URLSearchParams({ network_id: networkId });
@@ -185,6 +192,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
       let data = await res.json();
       if (!gate.current.isCurrent(gen)) return;
       if (!res.ok || !data.ok) {
+        if (opts.silent) return;
         dispatch({ type: 'failed', phase, error: data?.error || `hub_${res.status}` });
         return;
       }
@@ -219,7 +227,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         data = await res.json();
         if (!gate.current.isCurrent(gen)) return;
         if (!res.ok || !data.ok) {
-          dispatch({ type: 'failed', phase, error: data?.error || `hub_${res.status}` });
+          if (!opts.silent) dispatch({ type: 'failed', phase, error: data?.error || `hub_${res.status}` });
           return;
         }
         checkProjects(data.capabilities);
@@ -239,6 +247,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
       });
     } catch (e: unknown) {
       if (!gate.current.isCurrent(gen)) return;
+      if (opts.silent) return;
       dispatch({ type: 'failed', phase, error: e instanceof Error ? e.message : 'fetch failed' });
     } finally {
       gate.current.settle(gen);
@@ -252,6 +261,44 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     // negotiation, so it cannot issue a follow-up read for the old network.
     return () => { currentGate.begin('replace'); };
   }, [load]);
+
+  const columnOf = useCallback((row: Requirement) => columnOverrides[row.id] ?? row.column, [columnOverrides]);
+
+  const moveCard = useCallback(async (row: Requirement, column: Requirement['column']) => {
+    const from = columnOverrides[row.id] ?? row.column;
+    if (column === from) return;
+    setMovingId(row.id);
+    setMoveError('');
+    setMoveNotice('');
+    setColumnOverrides(prev => ({ ...prev, [row.id]: column }));
+    const revert = () => setColumnOverrides(prev => {
+      const next = { ...prev };
+      delete next[row.id];
+      return next;
+    });
+    try {
+      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(row.id)}?network_id=${encodeURIComponent(networkId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ column }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        revert();
+        setMoveError(`移动失败：${data?.error || `hub_${res.status}`}`);
+        return;
+      }
+      revert();
+      setMoveNotice(`已移到 ${COLUMNS.find(item => item.key === column)?.label ?? column}`);
+      // 静默对账：不闪骨架屏，也不掩盖后续读取失败。
+      await load({ silent: true });
+    } catch {
+      revert();
+      setMoveError('移动失败：网络错误');
+    } finally {
+      setMovingId(null);
+    }
+  }, [columnOverrides, load, networkId]);
 
   const counts = useMemo(() => {
     const out: Record<string, number> = {};
@@ -430,16 +477,35 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             cta={status || tag || q || project || owner || agent ? { label: '清空筛选', onClick: clearFilters } : undefined}
           />
         ) : board ? (
+          <>
+            {(moveError || moveNotice) && (
+              <p
+                role={moveError ? 'alert' : 'status'}
+                data-testid="requirements-move-status"
+                className={`mb-2 text-xs ${moveError ? 'text-red-400' : 'text-[var(--fg-muted)]'}`}
+              >
+                {moveError || moveNotice}
+              </p>
+            )}
           <div className="-mx-1 min-w-0 overflow-x-auto pb-1" data-testid="requirements-board">
             <div className="grid auto-cols-[minmax(16rem,1fr)] snap-x grid-flow-col gap-3 px-1">
               {COLUMNS.filter(col => col.key).filter(col => !status || col.key === status).map(col => {
-                const items = rows.filter(row => row.column === col.key);
+                const items = rows.filter(row => columnOf(row) === col.key);
                 return (
                   <section
                     key={col.key}
                     aria-label={`${col.label}列`}
                     data-testid={`requirements-column-${col.key}`}
-                    className="snap-start rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/60"
+                    className={`snap-start rounded-xl border bg-[var(--bg-secondary)]/60 transition-colors ${dragOverColumn === col.key ? 'border-[var(--hl)] bg-[var(--hover-tint)]' : 'border-[var(--border)]'}`}
+                    onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; setDragOverColumn(col.key); }}
+                    onDragLeave={event => { if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) setDragOverColumn(null); }}
+                    onDrop={event => {
+                      event.preventDefault();
+                      setDragOverColumn(null);
+                      const id = event.dataTransfer.getData('text/plain');
+                      const row = rows.find(item => item.id === id);
+                      if (row) void moveCard(row, col.key as Requirement['column']);
+                    }}
                   >
                     <header className="flex items-center justify-between gap-2 px-3 py-2">
                       <span className={`rounded px-1.5 py-0.5 text-[11px] ${COLUMN_CHIP[col.key]}`}>{col.label}</span>
@@ -454,46 +520,70 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                         const chk = row.checklist_count;
                         const kids = row.children;
                         return (
-                          <Link
+                          <div
                             key={row.id}
-                            href={`/requirements/${row.id}`}
-                            className="block rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 transition-colors hover:border-[var(--border-hover)] hover:bg-[var(--hover-tint)]"
+                            className={`rounded-lg border border-[var(--border)] bg-[var(--bg)] transition-opacity ${movingId === row.id ? 'opacity-60' : ''}`}
                           >
-                            <span className="flex items-center justify-between gap-2 text-[10px] text-[var(--fg-muted)]">
-                              <span className="tabular-nums">#{row.seq}</span>
-                              <span className="flex items-center gap-2">
-                                <span className={priorityClass(row.priority)}>{row.priority}</span>
-                                {row.due && <span>{dueLabel(row.due)}</span>}
-                              </span>
-                            </span>
-                            <span className="mt-1 block text-sm text-gray-100">
-                              <span className="line-clamp-2" title={row.name}>{row.name}</span>
-                            </span>
-                            {row.archived === true && (
-                              <span className="mt-1 inline-flex rounded border border-[var(--border)] bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] leading-4 text-[var(--fg-muted)]">已归档</span>
-                            )}
-                            {(row.tags || []).length > 0 && (
-                              <span className="mt-2 flex flex-wrap gap-1">
-                                {(row.tags || []).slice(0, 3).map(tag => (
-                                  <span key={tag} className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-gray-400">{tag}</span>
-                                ))}
-                              </span>
-                            )}
-                            <span
-                              data-responsibility
-                              className="mt-2 block text-[11px] leading-4 text-[var(--fg-muted)]"
-                              title={`负责人：${personLabel(row.owner, personNames)}；负责 Agent：${personLabel(row.agent_owner, personNames)}`}
+                            <Link
+                              href={`/requirements/${row.id}`}
+                              draggable
+                              onDragStart={event => {
+                                event.dataTransfer.setData('text/plain', row.id);
+                                event.dataTransfer.effectAllowed = 'move';
+                              }}
+                              onDragEnd={() => setDragOverColumn(null)}
+                              className="block rounded-t-lg px-3 pb-1 pt-2.5 hover:bg-[var(--hover-tint)]"
                             >
-                              <span className="block truncate">人 · {personLabel(row.owner, personNames)}</span>
-                              <span className="block truncate">Agent · {personLabel(row.agent_owner, personNames)}</span>
-                            </span>
-                            {(chk || kids) && (
-                              <span className="mt-1 flex gap-3 text-[10px] tabular-nums text-[var(--fg-muted)]">
-                                {chk && chk.total > 0 && <span>✓ {chk.done}/{chk.total}</span>}
-                                {kids && kids.total > 0 && <span>↳ {kids.done}/{kids.total}</span>}
+                              <span className="flex items-center justify-between gap-2 text-[10px] text-[var(--fg-muted)]">
+                                <span className="tabular-nums">#{row.seq}</span>
+                                <span className="flex items-center gap-2">
+                                  <span className={priorityClass(row.priority)}>{row.priority}</span>
+                                  {row.due && <span>{dueLabel(row.due)}</span>}
+                                </span>
                               </span>
-                            )}
-                          </Link>
+                              <span className="mt-1 block text-sm text-gray-100">
+                                <span className="line-clamp-2" title={row.name}>{row.name}</span>
+                              </span>
+                              {row.archived === true && (
+                                <span className="mt-1 inline-flex rounded border border-[var(--border)] bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] leading-4 text-[var(--fg-muted)]">已归档</span>
+                              )}
+                              {(row.tags || []).length > 0 && (
+                                <span className="mt-2 flex flex-wrap gap-1">
+                                  {(row.tags || []).slice(0, 3).map(tag => (
+                                    <span key={tag} className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-gray-400">{tag}</span>
+                                  ))}
+                                </span>
+                              )}
+                              <span
+                                data-responsibility
+                                className="mt-2 block text-[11px] leading-4 text-[var(--fg-muted)]"
+                                title={`负责人：${personLabel(row.owner, personNames)}；负责 Agent：${personLabel(row.agent_owner, personNames)}`}
+                              >
+                                <span className="block truncate">人 · {personLabel(row.owner, personNames)}</span>
+                                <span className="block truncate">Agent · {personLabel(row.agent_owner, personNames)}</span>
+                              </span>
+                              {(chk || kids) && (
+                                <span className="mt-1 flex gap-3 text-[10px] tabular-nums text-[var(--fg-muted)]">
+                                  {chk && chk.total > 0 && <span>✓ {chk.done}/{chk.total}</span>}
+                                  {kids && kids.total > 0 && <span>↳ {kids.done}/{kids.total}</span>}
+                                </span>
+                              )}
+                            </Link>
+                            <div className="flex items-center justify-end px-2 pb-1.5">
+                              <select
+                                aria-label={`移动到状态 ${row.seq}`}
+                                value={columnOf(row)}
+                                disabled={movingId === row.id}
+                                onChange={event => void moveCard(row, event.target.value as Requirement['column'])}
+                                title="移动到其它状态（键盘/触屏可用）"
+                                className="rounded border border-[var(--border)] bg-transparent px-1 py-0.5 text-[10px] text-[var(--fg-muted)] disabled:opacity-50"
+                              >
+                                {COLUMNS.filter(item => item.key).map(item => (
+                                  <option key={item.key} value={item.key}>{item.label}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
@@ -502,6 +592,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               })}
             </div>
           </div>
+          </>
         ) : (
           <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
             {rows.map(row => {

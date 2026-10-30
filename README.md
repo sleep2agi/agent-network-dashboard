@@ -102,6 +102,9 @@ The requirements page can switch to a status board (`view=board`). The board
 uses the same filters and pagination as the list, keeps the choice in the URL,
 and scrolls horizontally on narrow screens.
 
+Board cards can be dragged between status columns, or moved with a per-card
+select for keyboard and touch; failed writes roll the card back to its column.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
