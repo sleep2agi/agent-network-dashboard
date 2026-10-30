@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.134 — 2026-10-30
+
+### “我负责” quick filter
+
+- The requirement page gains a “我负责” chip that filters to requirements whose
+  owner is the signed-in Hub user. The id comes from the dashboard’s own session
+  snapshot (`user.user_id`, the same id the APP reads from `/api/auth/me`).
+- It is a server-side owner filter (`owner=user:<id>`), composes with the other
+  filters, persists in the URL and is cleared by “clear filters”. Sessions
+  without a Hub user id do not see the chip at all — no guessing from a name.
+- It means “owner”, not “participating”: the APP’s participating filter is a
+  local predicate, and this chip does not pretend to cover it.
+
 ## 0.6.3-preview.133 — 2026-10-30
 
 ### Legion 3D: department bands with seats

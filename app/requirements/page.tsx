@@ -8,6 +8,7 @@ import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/r
 import { ProjectFilter } from './ProjectFilter';
 import { CreateRequirement } from './CreateRequirement';
 import { TagChip, TagPicker, useRequirementTags } from './TagFilter';
+import { ownerRefFor, useCurrentUserId } from '../lib/current-user';
 import { TagManager } from './TagManager';
 import { tagColor } from '../lib/tag-catalog';
 import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
@@ -92,6 +93,10 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const board = searchParams.get('view') === 'board';
   const sortSpec = parseSort(searchParams);
   const overdue = searchParams.get('overdue') === '1';
+  const meId = useCurrentUserId();
+  // 「我负责」只认服务端签发的 user_id，认不出来就不显示这个胶囊。
+  const mineOwner = meId ? ownerRefFor(meId) : null;
+  const mine = !!mineOwner && owner === mineOwner && !agent;
 
   // #1636: 替换态与追加态分开，追加时已加载的行不能进骨架屏。
   const [state, dispatch] = useReducer(
@@ -510,6 +515,18 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             已逾期
           </button>
           <span className="text-[10px] text-[var(--fg-dim)]">未完成且截止已过</span>
+          {mineOwner && (
+            <button
+              type="button"
+              aria-pressed={mine}
+              data-testid="requirements-mine-toggle"
+              title="只筛负责人是我的需求（不含我参与的）"
+              onClick={() => setParam(mine ? { owner: '', agent_owner: '' } : { owner: mineOwner, agent_owner: '' })}
+              className={`ml-2 rounded-md px-3 py-1.5 text-xs transition-colors ${mine ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+            >
+              我负责
+            </button>
+          )}
         </div>
 
         <ProjectFilter
