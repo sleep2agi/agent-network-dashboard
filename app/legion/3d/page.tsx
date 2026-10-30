@@ -1260,6 +1260,20 @@ export default function Legion3DPage() {
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, rx + 4, ry + 4, 0, 0, Math.PI * 2);
           ctx.stroke();
+          // 缓慢转动的虚线扫描环：一眼认出「现在聚焦的是这个」。
+          // 相位按 yaw 归一化到整数个图案周期，录屏绕一圈首尾仍对齐。
+          const scan = Math.max(rx, ry) + 10;
+          const pattern = 4 + 7;
+          const turns = 4;
+          ctx.globalAlpha = 0.6;
+          ctx.strokeStyle = tk.accent;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 7]);
+          ctx.lineDashOffset = -((view.yaw / (Math.PI * 2)) % 1) * pattern * turns;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, scan, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
         }
 
         // 标签：Agent 太多，只有近处或高亮时才画，避免糊成一片。
