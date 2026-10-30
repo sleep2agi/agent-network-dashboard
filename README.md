@@ -162,6 +162,8 @@ Checklists can be edited as a whole (add / reorder / delete) from the detail pag
 
 Presentation mode can tour departments one by one; recordings never auto-advance.
 
+A 3D camera view can be copied as a link (`?view=…`) and reopened by others.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.

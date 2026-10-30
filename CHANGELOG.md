@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.139 — 2026-10-30
+
+### Shareable camera views in the legion 3D page
+
+- “复制视角链接” copies the current camera (`?view=yaw,pitch,zoom`); opening the
+  link restores that exact view, and automatic framing/entry zoom stand aside so
+  the shared angle is not overwritten.
+- Invalid or missing values are ignored silently — the page falls back to its
+  normal framing and never claims a view it did not apply.
+- Pitch and zoom are clamped to the same limits the controls use.
+
 ## 0.6.3-preview.138 — 2026-10-30
 
 ### Legion 3D: a department tour for presentations
