@@ -113,7 +113,7 @@ export function CreateRequirement({ networkId, onCreated }: {
         新建需求
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:items-center" onClick={() => { if (!busy) setOpen(false); }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[var(--bg)]/70 p-4 sm:items-center" onClick={() => { if (!busy) setOpen(false); }}>
           <div
             ref={panelRef}
             role="dialog"
@@ -165,7 +165,7 @@ export function CreateRequirement({ networkId, onCreated }: {
                   <option value="">不选项目</option>
                   {projects && projectOptions(projects).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
                 </select>
-                {projectError && <span role="status" className="mt-1 block text-[10px] text-amber-300">{projectError}</span>}
+                {projectError && <span role="status" className="mt-1 block text-[10px] text-[var(--warning)]">{projectError}</span>}
               </label>
               <label className="block">
                 <span className="mb-1 block text-xs text-[var(--fg-muted)]">标签（逗号分隔，最多 10 个）</span>
@@ -177,7 +177,7 @@ export function CreateRequirement({ networkId, onCreated }: {
                 <textarea value={description} onChange={event => setDescription(event.target.value)} rows={3} aria-label="描述"
                   className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--fg)]" />
               </label>
-              {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
+              {error && <p role="alert" className="text-xs text-[var(--danger)]">{error}</p>}
               <div className="flex items-center justify-end gap-2 pt-1">
                 <button type="button" onClick={() => { if (!busy) setOpen(false); }} className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]">取消</button>
                 <button type="button" onClick={() => void submit()} disabled={busy} data-testid="requirements-create-submit"
