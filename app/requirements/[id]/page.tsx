@@ -12,6 +12,7 @@ import { useNetworkId } from '../../lib/network-context';
 import { peopleOptions, readRequirementPeople, type PersonOption } from '../../lib/requirement-people';
 import { TagChip, useRequirementTags } from '../TagFilter';
 import { editorTagSuggestions, tagColor } from '../../lib/tag-catalog';
+import { addChecklistItem, checklistPayload, moveChecklistItem, removeChecklistItem, validateChecklist, CHECKLIST_MAX_ITEMS, type ChecklistItem as EditableChecklistItem } from '../../lib/checklist-model';
 
 /**
  * One requirement — #1633 (read-only).
@@ -96,6 +97,10 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [editingTags, setEditingTags] = useState(false);
   const [tagsDraft, setTagsDraft] = useState('');
+  const [editingChecklist, setEditingChecklist] = useState(false);
+  const [checklistDraft, setChecklistDraft] = useState<EditableChecklistItem[]>([]);
+  const [newItemText, setNewItemText] = useState('');
+  const [checklistError, setChecklistError] = useState('');
   const [editError, setEditError] = useState('');
 
   const reload = () => setReloadKey(k => k + 1);
@@ -161,6 +166,30 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
 
   async function changeParticipants(next: Person[]) {
     await sendPatch({ participants: next });
+  }
+
+  function startChecklistEdit() {
+    setChecklistDraft((req?.checklist || []).map(item => ({ id: item.id, text: item.text, done: item.done === true })));
+    setNewItemText('');
+    setChecklistError('');
+    setEditingChecklist(true);
+  }
+
+  function addChecklistRow() {
+    const next = addChecklistItem(checklistDraft, newItemText);
+    if (!next) {
+      setChecklistError(checklistDraft.length >= CHECKLIST_MAX_ITEMS ? `检查项最多 ${CHECKLIST_MAX_ITEMS} 个` : '检查项不能为空，且不超过 500 字');
+      return;
+    }
+    setChecklistDraft(next);
+    setNewItemText('');
+    setChecklistError('');
+  }
+
+  async function saveChecklist() {
+    const invalid = validateChecklist(checklistDraft);
+    if (invalid) { setChecklistError(invalid); return; }
+    if (await sendPatch({ checklist: checklistPayload(checklistDraft) })) setEditingChecklist(false);
   }
 
   async function saveDescription() {
@@ -514,10 +543,46 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         </section>
 
         <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
-          <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-500">
+          <h2 className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-gray-500">
             Checklist {checklist.length > 0 && <span className="ml-1 text-gray-600">{checklist.filter(c => c.done).length}/{checklist.length}</span>}
+            {!editingChecklist && (
+              <button type="button" data-testid="requirement-edit-checklist" onClick={startChecklistEdit} className="ml-auto text-[11px] normal-case text-gray-500 underline hover:text-gray-300">编辑清单</button>
+            )}
           </h2>
-          {checklist.length === 0 ? (
+          {editingChecklist ? (
+            <div>
+              {checklistDraft.length === 0 ? (
+                <p className="text-sm text-gray-600">（还没有检查项，先添加一条）</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {checklistDraft.map((item, index) => (
+                    <li key={item.id} className="flex items-center gap-2 text-sm" data-testid={`checklist-row-${index}`}>
+                      <span className="min-w-0 flex-1 break-words text-gray-200">{item.text}</span>
+                      <button type="button" aria-label={`上移 ${item.text}`} disabled={index === 0} onClick={() => setChecklistDraft(draft => [...moveChecklistItem(draft, index, index - 1)])} className="px-1 text-gray-500 disabled:opacity-30">↑</button>
+                      <button type="button" aria-label={`下移 ${item.text}`} disabled={index === checklistDraft.length - 1} onClick={() => setChecklistDraft(draft => [...moveChecklistItem(draft, index, index + 1)])} className="px-1 text-gray-500 disabled:opacity-30">↓</button>
+                      <button type="button" aria-label={`删除 ${item.text}`} onClick={() => setChecklistDraft(draft => removeChecklistItem(draft, item.id))} className="px-1 text-[11px] text-[var(--danger)]">删除</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  aria-label="新检查项"
+                  value={newItemText}
+                  onChange={event => setNewItemText(event.target.value)}
+                  onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addChecklistRow(); } }}
+                  placeholder="加一条检查项，回车添加"
+                  className="min-w-0 flex-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 text-xs text-[var(--fg)]"
+                />
+                <button type="button" data-testid="requirement-add-checklist" onClick={addChecklistRow} className="rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-muted)]">添加</button>
+              </div>
+              {checklistError && <p role="alert" data-testid="checklist-error" className="mt-1 text-[11px] text-[var(--danger)]">{checklistError}</p>}
+              <div className="mt-2 flex items-center gap-2">
+                <button type="button" data-testid="requirement-save-checklist" disabled={busy} onClick={() => void saveChecklist()} className="rounded bg-[var(--hl)] px-2 py-0.5 text-[10px] text-[var(--bg)] disabled:opacity-60">保存</button>
+                <button type="button" onClick={() => { setEditingChecklist(false); setChecklistError(''); }} className="text-[10px] text-gray-500 underline">取消</button>
+              </div>
+            </div>
+          ) : checklist.length === 0 ? (
             <p className="text-sm text-gray-600">（没有检查项）</p>
           ) : (
             <ul className="space-y-1.5">

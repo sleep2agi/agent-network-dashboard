@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.137 — 2026-10-30
+
+### Checklist editing on the requirement detail
+
+- The checklist gains an edit mode: add an item (Enter or 添加), move rows up/down,
+  delete rows, then 保存 sends one whole-array PATCH. Ticking an item still uses
+  the per-item endpoint, so a checkbox tick never rewrites the list.
+- Client-side rules mirror the Hub: at most 100 items, each 1–500 characters,
+  ids generated client-side (`ck_…`) and kept by the Hub. Cancel sends nothing.
+- Order is preserved exactly as shown; the proxy whitelists `checklist` and
+  rejects malformed arrays before they reach the Hub.
+
 ## 0.6.3-preview.136 — 2026-10-30
 
 ### Legion 2D: soft halos on departments, people and agents

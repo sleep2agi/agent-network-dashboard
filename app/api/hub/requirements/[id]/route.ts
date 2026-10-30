@@ -52,7 +52,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
  * can say *why* instead of failing silently.
  */
 /** `owner` must be a human and `agent_owner` a node; Hub enforces this too. */
-const WRITABLE = ['column', 'priority', 'due', 'start', 'tags', 'name', 'description', 'owner', 'agent_owner', 'participants'] as const;
+const WRITABLE = ['column', 'priority', 'due', 'start', 'tags', 'name', 'description', 'owner', 'agent_owner', 'participants', 'checklist'] as const;
 
 function validPerson(value: unknown, kind: 'user' | 'node'): boolean {
   if (value === null) return true;
@@ -96,6 +96,17 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     const tags = patch.tags;
     const valid = Array.isArray(tags) && tags.length <= 10 && tags.every(tag => typeof tag === 'string' && tag.trim().length > 0 && tag.length <= 20);
     if (!valid) return Response.json({ ok: false, error: 'invalid_tags', field: 'tags' }, { status: 400 });
+  }
+  if ('checklist' in patch) {
+    const list = patch.checklist;
+    const valid = Array.isArray(list) && list.length <= 100 && list.every(item => {
+      if (!item || typeof item !== 'object') return false;
+      const row = item as Record<string, unknown>;
+      return typeof row.id === 'string' && row.id.length > 0
+        && typeof row.text === 'string' && row.text.trim().length > 0 && row.text.length <= 500
+        && (row.done === undefined || typeof row.done === 'boolean');
+    });
+    if (!valid) return Response.json({ ok: false, error: 'invalid_checklist', field: 'checklist' }, { status: 400 });
   }
   if ('participants' in patch) {
     const list = patch.participants;
