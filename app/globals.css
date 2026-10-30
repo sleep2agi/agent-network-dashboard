@@ -57,6 +57,7 @@ body {
   --fg-dim:       #8b8b95;
   --border:       #242428;
   --border-hover: #3a3a41;
+  --scrim:        rgba(0, 0, 0, 0.55); /* modal backdrop, theme-independent */
   --accent:       #5e9bff;
   --accent-text:  var(--accent);
   --accent-fg:    #0b0b0d; /* Paired foreground for the client's light-blue fill. */
@@ -1442,6 +1443,7 @@ joining the R145
   --fg-dim:       #5f6875; /* was #8a94a3 (2.86:1) → #6b7280 (4.24:1) → #5f6875 (4.94:1 on elevated) */
   --border:       #e3e6eb;
   --border-hover: #c8cdd6;
+  --scrim:        rgba(17, 17, 19, 0.35);
   --accent:       #007a61; /* was #009e7e — 3.39:1 as text on white */
   --accent-text:  var(--accent); /* 浅底上 accent 本身就够深 */
   --accent-fg:    #ffffff;

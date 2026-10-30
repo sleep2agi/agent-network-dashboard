@@ -11,25 +11,29 @@ import { catalogFromHub, tagColor, tagCount, tagSuggestions, type TagCatalog } f
  * plain text tags the rows already carry.
  */
 export function useRequirementTags(networkId: string) {
-  const key = JSON.stringify([networkId]);
-  const [response, setResponse] = useState<{ key: string; catalog: TagCatalog | null } | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const key = JSON.stringify([networkId, attempt]);
+  // Keep the last catalogue while a refresh is in flight: the manage dialog
+  // must not unmount (and lose its success message) just because we re-read.
+  const [response, setResponse] = useState<{ network: string; catalog: TagCatalog | null } | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     async function read() {
       try {
         const params = new URLSearchParams({ network_id: networkId });
         const res = await fetch(`/api/hub/requirements/tags?${params}`, { cache: 'no-store', signal: controller.signal });
-        if (!res.ok) { if (!controller.signal.aborted) setResponse({ key, catalog: null }); return; }
+        if (!res.ok) { if (!controller.signal.aborted) setResponse({ network: networkId, catalog: null }); return; }
         const catalog = catalogFromHub(await res.json());
-        if (!controller.signal.aborted) setResponse({ key, catalog });
+        if (!controller.signal.aborted) setResponse({ network: networkId, catalog });
       } catch {
-        if (!controller.signal.aborted) setResponse({ key, catalog: null });
+        if (!controller.signal.aborted) setResponse({ network: networkId, catalog: null });
       }
     }
     void read();
     return () => controller.abort();
   }, [key, networkId]);
-  return { catalog: response?.key === key ? response.catalog : null };
+  const refresh = useCallback(() => setAttempt(value => value + 1), []);
+  return { catalog: response?.network === networkId ? response.catalog : null, refresh };
 }
 
 /** One tag pill; a colour dot only when the Hub knows a colour for it. */
