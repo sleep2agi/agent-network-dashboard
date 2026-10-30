@@ -73,7 +73,7 @@ export function TagManager({ catalog, networkId, onClose, onApplied }: {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) { setError(tagOpMessage(res.status, data.error)); return; }
-      const affected = typeof data.affected === 'number' ? data.affected : null;
+      const affected = op.op === 'color' ? null : typeof data.affected === 'number' ? data.affected : null;
       setNotice(`${opLabel(op)}完成${affected === null ? '' : `，影响 ${affected} 张卡`}。`);
       setAction(null);
       setConfirming(false);
