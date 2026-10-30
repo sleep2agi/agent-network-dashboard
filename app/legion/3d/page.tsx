@@ -291,6 +291,8 @@ export default function Legion3DPage() {
   const sharedLock = useRef(false);
   const tourRef = useRef(false);
   const tourAt = useRef(0);
+  // 演示/录屏的镜头呼吸相位（只在 0–1 之间循环，录屏首尾自然对齐）。
+  const breathRef = useRef(0);
   const tourIndex = useRef(-1);
   const captureRef = useRef<null | {
     startedAt: number; startYaw: number; durationMs: number; mime: string; width: number; height: number;
@@ -842,10 +844,21 @@ export default function Legion3DPage() {
         }
       }
 
+      // 演示与录屏时给镜头一点“呼吸”：±3.5% 推拉 + 极小俯仰摆动。
+      // 相位按循环时长归一化，录屏一圈正好回到原点，首尾帧仍能对上。
+      if (capture) {
+        breathRef.current = loopProgress(now - capture.startedAt, capture.durationMs);
+      } else if (presentingRef.current && !motionPreference.matches) {
+        breathRef.current = (breathRef.current + dt / (LOOP_DURATION_MS / 1000)) % 1;
+      } else {
+        breathRef.current = 0;
+      }
+      const breathe = (capture || (presentingRef.current && !motionPreference.matches)) ? breathRef.current : 0;
+      const dolly = 1 + Math.sin(breathe * Math.PI * 2) * 0.035;
       const cam = {
         yaw: view.yaw,
-        pitch: view.pitch,
-        dist: view.dist,
+        pitch: view.pitch + (breathe ? Math.sin(breathe * Math.PI * 2 + Math.PI / 2) * 0.012 : 0),
+        dist: view.dist * dolly,
         focal: Math.min(size.width, size.height) * (narrow ? 2.4 : 1.73) * view.zoom,
         cx: size.width / 2 + view.panX,
         cy: size.height / 2 + view.panY,
