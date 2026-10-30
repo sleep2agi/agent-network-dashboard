@@ -155,6 +155,9 @@ A “我负责” chip narrows the list to requirements owned by the signed-in H
 “我参与” filters the loaded rows by participants; it is labelled as such
 because the Hub list has no participant parameter.
 
+The 2D org chart and the 3D topology share one language: soft halos around
+departments, people and agents.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
