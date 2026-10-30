@@ -954,6 +954,17 @@ export default function LegionPage() {
                               strokeWidth={isSelected ? 2 : 1.4}
                               strokeDasharray={node.collapsed ? '3 3' : undefined}
                             />
+                            {((node.memberCount ?? 0) + (node.agentCount ?? 0)) > 0 && (view.k >= 0.9 || isSelected || hovered === node.id) && (
+                              <text
+                                textAnchor="middle"
+                                y={r + 12 * labelScale}
+                                data-role="dept-count"
+                                className="fill-[var(--fg-muted)]"
+                                style={{ fontSize: 8.5 * labelScale }}
+                              >
+                                {node.memberCount ?? 0}人 · {node.agentCount ?? 0}A
+                              </text>
+                            )}
                             {((node.span ?? 0) >= 1.0 || isSelected || hovered === node.id || view.k >= 1.25) && (
                               <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)]" style={{ fontSize: 10 * labelScale }}>
                                 {node.label.slice(0, 4)}
