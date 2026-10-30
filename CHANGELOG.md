@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.145 — 2026-10-31
+
+### “/” focuses the requirement search
+
+- Pressing `/` anywhere on the requirement list focuses (and selects) the search
+  box, the same affordance most list screens have; typing inside any input,
+  textarea or select never steals the key.
+
 ## 0.6.3-preview.144 — 2026-10-31
 
 ### Sub-requirements on the detail page
