@@ -188,6 +188,8 @@ The 3D camera is remembered per network; `?view=` and reset take precedence.
 
 Department discs in the 2D chart show their head count.
 
+`/` focuses the requirement search, `Esc` clears it and then leaves the field.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
