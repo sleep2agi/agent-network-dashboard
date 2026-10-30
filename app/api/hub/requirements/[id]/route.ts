@@ -52,7 +52,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
  * can say *why* instead of failing silently.
  */
 /** `owner` must be a human and `agent_owner` a node; Hub enforces this too. */
-const WRITABLE = ['column', 'priority', 'due', 'start', 'tags', 'name', 'owner', 'agent_owner'] as const;
+const WRITABLE = ['column', 'priority', 'due', 'start', 'tags', 'name', 'owner', 'agent_owner', 'participants'] as const;
 
 function validPerson(value: unknown, kind: 'user' | 'node'): boolean {
   if (value === null) return true;
@@ -88,6 +88,15 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   }
   if ('agent_owner' in patch && !validPerson(patch.agent_owner, 'node')) {
     return Response.json({ ok: false, error: 'agent_owner_must_be_node' }, { status: 400 });
+  }
+  if ('participants' in patch) {
+    const list = patch.participants;
+    const valid = Array.isArray(list) && list.length <= 100 && list.every(person => {
+      if (!person || typeof person !== 'object') return false;
+      const row = person as Record<string, unknown>;
+      return (row.kind === 'user' || row.kind === 'node') && typeof row.id === 'string' && row.id.length > 0;
+    });
+    if (!valid) return Response.json({ ok: false, error: 'invalid_participants' }, { status: 400 });
   }
 
   try {

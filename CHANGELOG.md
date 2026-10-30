@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.122 — 2026-10-30
+
+### Edit participants from the requirement detail
+
+- The detail page lists participants as chips and lets you add people or Agents
+  from the same visible directory, remove one, or clear them. The PATCH proxy
+  validates and forwards the full `participants` list with the selected network.
+- Already-added identities are hidden from the add picker; an unknown
+  participant keeps its exact ID and is marked unavailable instead of
+  disappearing. Directory failures disable adding only; denied writes keep the
+  previous list and show Hub’s reason.
+
 ## 0.6.3-preview.121 — 2026-10-30
 
 ### Refuse a project catalogue from another network

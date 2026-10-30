@@ -24,7 +24,7 @@ interface ChecklistItem { id: string; text: string; done?: boolean }
 interface Requirement {
   id: string; seq: number; name: string; column: string; priority: string;
   due?: string; start?: string; tags?: string[];
-  owner?: Person | null; agent_owner?: Person | null;
+  owner?: Person | null; agent_owner?: Person | null; participants?: Person[];
   parent_id?: string | null;
   children?: { total: number; done: number };
   description?: string; checklist?: ChecklistItem[];
@@ -147,6 +147,10 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     } catch (e: unknown) {
       setActionError(e instanceof Error ? e.message : 'checklist failed');
     } finally { setBusy(false); }
+  }
+
+  async function changeParticipants(next: Person[]) {
+    await sendPatch({ participants: next });
   }
 
   async function submitComment() {
@@ -359,6 +363,58 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
           )}
           {busy && <span className="text-[11px] text-gray-500">saving…</span>}
           {actionError && <span className="text-[11px] text-red-400">{actionError}</span>}
+        </section>
+
+        <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
+          <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-500">参与者 {req.participants && req.participants.length > 0 && <span className="ml-1 text-gray-600">{req.participants.length}</span>}</h2>
+          <div className="flex flex-wrap items-center gap-2" data-testid="requirement-participants">
+            {(req.participants || []).length === 0 ? (
+              <p className="text-sm text-gray-600">暂无参与者</p>
+            ) : (req.participants || []).map(person => {
+              const value = `${person.kind}:${person.id}`;
+              const known = personChoices?.some(choice => choice.value === value);
+              const label = optionLabel(value);
+              return (
+                <span key={value} className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--bg)] px-2 py-0.5 text-xs text-gray-200">
+                  <span className="max-w-[12rem] truncate" title={`${person.kind} · ${person.id}`}>{label}{known ? '' : '（不可用）'}</span>
+                  <button
+                    type="button"
+                    aria-label={`移除参与者 ${label}`}
+                    disabled={busy}
+                    onClick={() => void changeParticipants((req.participants || []).filter(item => !(item.kind === person.kind && item.id === person.id)))}
+                    className="rounded px-1 text-[var(--fg-muted)] hover:text-[var(--danger)] disabled:opacity-50"
+                  >✕</button>
+                </span>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 text-xs text-[var(--fg-muted)]">
+              添加参与者
+              <select
+                aria-label="添加参与者"
+                value=""
+                disabled={busy || personChoices === null}
+                onChange={event => {
+                  const person = personChoices?.find(choice => choice.value === event.target.value);
+                  if (!person) return;
+                  const ref = person.value.split(':');
+                  void changeParticipants([...(req.participants || []), { kind: ref[0] as Person['kind'], id: ref.slice(1).join(':') }]);
+                }}
+                className="max-w-[14rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs normal-case text-gray-200 disabled:opacity-60"
+              >
+                <option value="">选择人 / Agent</option>
+                {(['user', 'node'] as const).map(kind => (
+                  <optgroup key={kind} label={kind === 'user' ? '人' : 'Agent'}>
+                    {personChoices?.filter(choice => choice.kind === kind && !(req.participants || []).some(item => item.kind === kind && item.id === choice.value.split(':').slice(1).join(':'))).map(choice => (
+                      <option key={choice.value} value={choice.value}>{choice.label}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
+            {peopleError && <span role="status" className="text-[11px] text-[var(--warning)]">{peopleError}</span>}
+          </div>
         </section>
 
         <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
