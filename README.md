@@ -172,6 +172,8 @@ Local filters that empty the loaded page offer “继续加载” instead of a d
 
 Recordings default to 720p; 1080p is an opt-in with the same seamless loop.
 
+The detail page lists sub-requirements and can create one under the current card.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.

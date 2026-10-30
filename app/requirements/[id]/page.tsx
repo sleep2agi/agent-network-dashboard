@@ -102,6 +102,11 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [checklistDraft, setChecklistDraft] = useState<EditableChecklistItem[]>([]);
   const [newItemText, setNewItemText] = useState('');
   const [checklistError, setChecklistError] = useState('');
+  const [childRows, setChildRows] = useState<Array<{ id: string; seq: number; name: string; column: string; priority: string }>>([]);
+  const [childError, setChildError] = useState('');
+  const [childDraft, setChildDraft] = useState('');
+  const [childPriority, setChildPriority] = useState('normal');
+  const [childBusy, setChildBusy] = useState(false);
   const [editError, setEditError] = useState('');
 
   const reload = () => setReloadKey(k => k + 1);
@@ -256,6 +261,54 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     })();
     return () => { alive = false; };
   }, [id, scope, reloadKey]);
+
+  useEffect(() => {
+    if (!id) return;
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/hub/requirements?${scope}&parent_id=${encodeURIComponent(id)}&view=summary&limit=100`, { cache: 'no-store' });
+        const data = await res.json().catch(() => ({}));
+        if (!alive) return;
+        if (!res.ok || data.ok === false) {
+          setChildRows([]);
+          setChildError(data?.message || data?.error || `hub_${res.status}`);
+          return;
+        }
+        setChildError('');
+        setChildRows((data.requirements || []) as Array<{ id: string; seq: number; name: string; column: string; priority: string }>);
+      } catch {
+        if (alive) { setChildRows([]); setChildError('子需求读取失败，请重试'); }
+      }
+    })();
+    return () => { alive = false; };
+  }, [id, scope, reloadKey]);
+
+  async function createChild() {
+    if (!id || childBusy) return;
+    const name = childDraft.trim();
+    if (!name) { setChildError('子需求需要一个标题'); return; }
+    setChildBusy(true);
+    setChildError('');
+    try {
+      const res = await fetch(`/api/hub/requirements?${scope}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, priority: childPriority, parent_id: id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        setChildError(data?.message || data?.error || `hub_${res.status}`);
+        return;
+      }
+      setChildDraft('');
+      reload();
+    } catch {
+      setChildError('网络异常，子需求未创建');
+    } finally {
+      setChildBusy(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -602,6 +655,51 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               ))}
             </ul>
           )}
+        </section>
+
+        <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4" data-testid="requirement-children">
+          <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-500">
+            子需求{childRows.length > 0 && <span className="ml-1 text-gray-600">{childRows.length}</span>}
+          </h2>
+          {childError && <p role="alert" className="mb-2 text-[11px] text-[var(--danger)]">{childError}</p>}
+          {childRows.length === 0 ? (
+            <p className="text-sm text-gray-600">（还没有子需求）</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {childRows.map(row => (
+                <li key={row.id}>
+                  <Link href={`/requirements/${row.id}`} className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border)] px-2 py-1.5 text-sm hover:bg-[var(--hover-tint)]">
+                    <span className="tabular-nums text-[11px] text-gray-500">#{row.seq}</span>
+                    <span className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-gray-400">{row.column}</span>
+                    <span className="text-[11px] text-gray-400" title={priorityTitle(row.priority)}>{priorityLabel(row.priority)}</span>
+                    <span className="min-w-0 flex-1 truncate text-gray-200">{row.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              aria-label="子需求标题"
+              value={childDraft}
+              onChange={event => setChildDraft(event.target.value)}
+              onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void createChild(); } }}
+              placeholder="子需求标题"
+              className="min-w-0 flex-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 text-xs text-[var(--fg)]"
+            />
+            <select
+              aria-label="子需求优先级"
+              value={childPriority}
+              onChange={event => setChildPriority(event.target.value)}
+              className="rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs text-[var(--fg)]"
+            >
+              {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{priorityLabel(p)}</option>)}
+            </select>
+            <button type="button" data-testid="requirement-create-child" disabled={childBusy} onClick={() => void createChild()} className="rounded bg-[var(--hl)] px-2 py-1 text-[11px] text-[var(--bg)] disabled:opacity-60">
+              {childBusy ? '创建中…' : '新建子需求'}
+            </button>
+          </div>
+          <p className="mt-1 text-[10px] text-gray-600">同一网络、最多 5 层、不能成环（由 Hub 校验）。</p>
         </section>
 
         <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
