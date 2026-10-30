@@ -107,6 +107,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [childDraft, setChildDraft] = useState('');
   const [childPriority, setChildPriority] = useState('normal');
   const [childBusy, setChildBusy] = useState(false);
+  const [ancestors, setAncestors] = useState<Array<{ id: string; seq: number; name: string }>>([]);
   const [editError, setEditError] = useState('');
 
   const reload = () => setReloadKey(k => k + 1);
@@ -284,6 +285,34 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     return () => { alive = false; };
   }, [id, scope, reloadKey]);
 
+  // 上级链（最多 3 层）：只用已有详情接口逐级读，成环/失败就停，绝不假装有上级。
+  useEffect(() => {
+    const parentId = (req as { parent_id?: string | null } | null)?.parent_id;
+    if (!parentId) { setAncestors([]); return; }
+    let alive = true;
+    (async () => {
+      const chain: Array<{ id: string; seq: number; name: string }> = [];
+      const seen = new Set<string>([id || '']);
+      let cursor: string | null = parentId;
+      for (let depth = 0; depth < 3 && cursor && !seen.has(cursor); depth++) {
+        seen.add(cursor);
+        try {
+          const res = await fetch(`/api/hub/requirements/${encodeURIComponent(cursor)}?${scope}`, { cache: 'no-store' });
+          if (!res.ok) break;
+          const data = await res.json();
+          if (!data?.ok || !data.requirement) break;
+          const row = data.requirement as { id: string; seq: number; name: string; parent_id?: string | null };
+          chain.push({ id: row.id, seq: row.seq, name: row.name });
+          cursor = row.parent_id ?? null;
+        } catch {
+          break;
+        }
+      }
+      if (alive) setAncestors(chain);
+    })();
+    return () => { alive = false; };
+  }, [id, scope, reloadKey, req]);
+
   async function createChild() {
     if (!id || childBusy) return;
     const name = childDraft.trim();
@@ -368,6 +397,16 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               <TagChip key={name} name={name} color={tagColor(tagCatalog, name)} className="text-gray-400" />
             ))}
           </div>
+          {ancestors.length > 0 && (
+            <p className="mb-1 flex flex-wrap items-center gap-1 text-[11px] text-gray-500" data-testid="requirement-ancestors">
+              上级：
+              {ancestors.slice().reverse().map(ancestor => (
+                <Link key={ancestor.id} href={`/requirements/${ancestor.id}`} className="underline hover:text-gray-300">
+                  #{ancestor.seq} {ancestor.name}
+                </Link>
+              ))}
+            </p>
+          )}
           <h1 className="text-lg font-semibold text-white">{req.name}</h1>
           <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-gray-500">
             <span>负责人 {req.owner ? optionLabel(ownerValue) : '—'}</span>
