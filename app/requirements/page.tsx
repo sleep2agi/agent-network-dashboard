@@ -38,6 +38,7 @@ interface Requirement {
   tags?: string[];
   owner?: RequirementPerson | null;
   agent_owner?: RequirementPerson | null;
+  participants?: RequirementPerson[];
   project_id?: string | null;
   checklist_count?: { total: number; done: number };
   children?: { total: number; done: number };
@@ -97,6 +98,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // 「我负责」只认服务端签发的 user_id，认不出来就不显示这个胶囊。
   const mineOwner = meId ? ownerRefFor(meId) : null;
   const mine = !!mineOwner && owner === mineOwner && !agent;
+  // 「我参与」是本地过滤：Hub 列表没有参与人查询参数，APP 也是过滤已加载项。
+  const participant = searchParams.get('participant') || '';
+  const participating = !!meId && participant === ownerRefFor(meId);
 
   // #1636: 替换态与追加态分开，追加时已加载的行不能进骨架屏。
   const [state, dispatch] = useReducer(
@@ -210,7 +214,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
 
   const clearFilters = () => {
     setPeopleQuery('');
-    setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '', overdue: '' });
+    setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '', overdue: '', participant: '' });
   };
 
 
@@ -407,11 +411,19 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     return out;
   }, [rows]);
 
+  // 「我参与」在已加载结果上过滤；其它筛选仍交给 Hub。参与人只认 user 角色，
+  // 与 APP 的 personKey 语义一致。
+  const participatingRows = useMemo(
+    () => (participating && meId
+      ? rows.filter(row => (row.participants || []).some(person => person.kind === 'user' && person.id === meId))
+      : rows),
+    [rows, participating, meId],
+  );
   const orderedRows = useMemo(
-    () => sortRequirements(rows, sortSpec),
+    () => sortRequirements(participatingRows, sortSpec),
     // sortSpec is derived from searchParams each render; depend on its values.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rows, sortSpec.key, sortSpec.dir],
+    [participatingRows, sortSpec.key, sortSpec.dir],
   );
 
   return (
@@ -527,6 +539,23 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               我负责
             </button>
           )}
+          {mineOwner && (
+            <button
+              type="button"
+              aria-pressed={participating}
+              data-testid="requirements-participating-toggle"
+              title="在已加载的结果里筛参与人是我；Hub 列表没有参与人查询参数"
+              onClick={() => setParam({ participant: participating ? '' : mineOwner, q: qInput, tag: tagInput })}
+              className={`rounded-md px-3 py-1.5 text-xs transition-colors ${participating ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+            >
+              我参与
+            </button>
+          )}
+          {participating && (
+            <span className="text-[10px] text-[var(--fg-dim)]" data-testid="requirements-participating-hint">
+              只筛已加载的 {rows.length} 条
+            </span>
+          )}
         </div>
 
         <ProjectFilter
@@ -585,7 +614,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               包含已归档
             </label>
           )}
-          {(status || tag || q || project || owner || agent || overdue) && (
+          {(status || tag || q || project || owner || agent || overdue || participating) && (
             <button
               type="button"
               onClick={clearFilters}
@@ -647,9 +676,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           // 那时说「需求池是空的」就是把鉴权/故障说成没数据，用户会以为需求丢了。
           <EmptyState
             variant="generic"
-            title={status || tag || q || project || owner || agent || overdue ? '没有符合筛选的需求' : '需求池是空的'}
-            sub={status || tag || q || project || owner || agent || overdue ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
-            cta={status || tag || q || project || owner || agent || overdue ? { label: '清空筛选', onClick: clearFilters } : undefined}
+            title={status || tag || q || project || owner || agent || overdue || participating ? '没有符合筛选的需求' : '需求池是空的'}
+            sub={status || tag || q || project || owner || agent || overdue || participating ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
+            cta={status || tag || q || project || owner || agent || overdue || participating ? { label: '清空筛选', onClick: clearFilters } : undefined}
           />
         ) : board ? (
           <>

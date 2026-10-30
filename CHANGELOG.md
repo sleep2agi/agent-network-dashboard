@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.135 — 2026-10-30
+
+### “我参与” filter over the loaded results
+
+- A second chip filters the list to requirements whose participants include me.
+  The Hub list has no participant query parameter (the APP filters the loaded
+  rows the same way), so this is explicitly a loaded-result filter: the chip
+  says how many rows it is looking at.
+- It composes with “我负责” and every other filter, lives in the URL as
+  `participant=user:<id>`, and “clear filters” resets it.
+- No Hub query, no writes; sessions without a Hub user id never see the chip.
+
 ## 0.6.3-preview.134 — 2026-10-30
 
 ### “我负责” quick filter
