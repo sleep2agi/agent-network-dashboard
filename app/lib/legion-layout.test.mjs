@@ -363,6 +363,22 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
     expect(layout.stats.collapsed).toBe(1);
   });
 
+  test('真实部门树：合成分组 id 不与真实部门 id 相撞', () => {
+    const layout = buildLegionLayout({
+      people: [person({ user_id: 'u1', display_name: 'A', department: { id: 'orphans', name: '真orphans' }, agents: [agent(1)] })],
+      departments: [{ id: 'orphans', name: '真orphans', parent_id: null }],
+      orphans: [{ node_id: 'n_x', alias: '无主X', department_id: null }],
+    });
+    const groups = layout.nodes.filter(n => n.kind === 'group');
+    const ids = groups.map(g => g.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(groups.find(g => g.label === '真orphans')?.id).toBe('dept:orphans');
+    const orphanGroup = groups.find(g => g.label === ORPHAN_GROUP);
+    expect(orphanGroup.id).not.toBe('dept:orphans');
+    expect(layout.nodes.find(n => n.id === 'agent:n_x')?.parentId).toBe(orphanGroup.id);
+    expect(layout.nodes.find(n => n.id === 'agent:n_1')?.parentId).toBe('person:u1');
+  });
+
   test('真实部门树：无主 Agent 的插入顺序不影响布局', () => {
     const base = {
       people: [],

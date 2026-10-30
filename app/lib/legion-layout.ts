@@ -251,21 +251,31 @@ function buildTree(input: LegionInput): { roots: DeptNode[]; depth: number } {
     // 旧实现只在这个分支放 people 就 return，2D/3D 因此漏画整类 Agent。
     // 归属优先级：Agent 自己的 department_id → 真实部门；null → 无主 Agent 组；
     // 非空但部门树没定义 → 保留一个「未知部门」组，不静默并进别的部门。
-    const orphanRoot = (id: string, label: string): DeptNode => {
-      const existing = orphans.find(n => n.id === id);
+    // 合成 id 必须让开真实部门 id：Hub 数据里出现 id='orphans' 的概率不为零，
+    // 撞上就会把真实部门和无主 Agent 并成一个节点。
+    const taken = new Set([...byId.values()].map(n => n.id));
+    const synthetic = new Map<string, DeptNode>();
+    const orphanRoot = (key: string, base: string, label: string): DeptNode => {
+      const existing = synthetic.get(key);
       if (existing) return existing;
+      let id = base, suffix = 2;
+      while (taken.has(id)) id = `${base}~${suffix++}`;
+      taken.add(id);
       const created: DeptNode = {
         id, label, parentId: null, depth: 1, sort: 0,
         children: [], people: [], orphans: [], weight: 1, memberCount: 0, agentCount: 0,
       };
       orphans.push(created);
+      synthetic.set(key, created);
       return created;
     };
     for (const agent of [...(input.orphans ?? [])].sort((a, b) => a.alias.localeCompare(b.alias, 'zh-Hans-CN') || a.node_id.localeCompare(b.node_id))) {
       const deptId = agent.department_id;
       const dept = deptId ? byId.get(deptId) : undefined;
       const target = dept
-        ?? (deptId ? orphanRoot(`dept:unknown:${deptId}`, `${UNKNOWN_DEPT} · ${deptId}`) : orphanRoot('dept:orphans', ORPHAN_GROUP));
+        ?? (deptId
+          ? orphanRoot(`unknown:${deptId}`, `dept:unknown:${deptId}`, `${UNKNOWN_DEPT} · ${deptId}`)
+          : orphanRoot('none', 'dept:orphans', ORPHAN_GROUP));
       target.orphans.push(agent);
     }
     // 部门存在但一个人都没有：仍然画出来（编制的空位也是信息）。
