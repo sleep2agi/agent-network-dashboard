@@ -7,6 +7,7 @@ import { EmptyState } from '../components/EmptyState';
 import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/requirements-paging';
 import { ProjectFilter } from './ProjectFilter';
 import { CreateRequirement } from './CreateRequirement';
+import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
 import { ResponsibilityFilter, useRequirementPeople } from './ResponsibilityFilter';
@@ -86,6 +87,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const includeArchived = searchParams.get('include_archived') !== '0';
   const searching = q.trim().length > 0;
   const board = searchParams.get('view') === 'board';
+  const sortSpec = parseSort(searchParams);
 
   // #1636: 替换态与追加态分开，追加时已加载的行不能进骨架屏。
   const [state, dispatch] = useReducer(
@@ -389,6 +391,13 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     return out;
   }, [rows]);
 
+  const orderedRows = useMemo(
+    () => sortRequirements(rows, sortSpec),
+    // sortSpec is derived from searchParams each render; depend on its values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, sortSpec.key, sortSpec.dir],
+  );
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-gray-200">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
@@ -400,6 +409,28 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)]">
+              排序
+              <select
+                aria-label="排序"
+                value={sortSpec.key}
+                onChange={event => setParam({ sort: event.target.value, dir: event.target.value ? sortSpec.dir : '' })}
+                title="排序只作用于已加载结果，不会改变 Hub 的全量顺序"
+                className="rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-[11px] text-[var(--fg)]"
+              >
+                <option value="">默认</option>
+                {SORT_KEYS.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}
+              </select>
+            </label>
+            <button
+              type="button"
+              aria-label="切换排序方向"
+              disabled={!sortSpec.key}
+              onClick={() => setParam({ sort: sortSpec.key, dir: sortSpec.dir === 'asc' ? 'desc' : 'asc' })}
+              className="rounded border border-[var(--border)] px-1.5 py-1 text-[11px] text-[var(--fg-muted)] disabled:opacity-40"
+            >
+              {sortSpec.dir === 'asc' ? '↑' : '↓'}
+            </button>
             <CreateRequirement
               networkId={networkId}
               onCreated={seq => {
@@ -641,7 +672,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               {COLUMNS.filter(col => col.key)
                 .filter(col => (!status || col.key === status) && (col.key !== 'abandoned' || showAbandoned || status === 'abandoned'))
                 .map(col => {
-                const items = rows.filter(row => columnOf(row) === col.key);
+                const items = orderedRows.filter(row => columnOf(row) === col.key);
                 const isCollapsed = collapsedColumns.has(col.key);
                 return (
                   <section
@@ -784,7 +815,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           </>
         ) : (
           <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
-            {rows.map(row => {
+            {orderedRows.map(row => {
               const chk = row.checklist_count;
               const kids = row.children;
               return (

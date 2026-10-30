@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.126 — 2026-10-30
+
+### Sort the requirement list and board
+
+- A “排序” control offers default (Hub order), sequence, title, priority, due
+  and recently updated, with an ascending/descending toggle. The choice lives in
+  the URL (`sort`/`dir`) and applies to both the list and the board.
+- Sorting runs on the rows already loaded; the control says so, so it is never
+  mistaken for a Hub-wide ordering. Missing due/updated values stay last in both
+  directions and ties fall back to the sequence.
+
 ## 0.6.3-preview.125 — 2026-10-30
 
 ### Bulk-move and bulk-prioritise board cards
