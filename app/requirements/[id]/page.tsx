@@ -7,6 +7,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { EmptyState } from '../../components/EmptyState';
 import CommentMarkdown from '../../components/CommentMarkdown';
+import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
+import { useNetworkId } from '../../lib/network-context';
 
 /**
  * One requirement — #1633 (read-only).
@@ -70,7 +72,7 @@ function describeEvent(ev: EventRow) {
   return { label: ev.kind, body: '' };
 }
 
-export default function RequirementDetailPage() {
+function RequirementDetailContent({ networkId }: { networkId: string }) {
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const [req, setReq] = useState<Requirement | null>(null);
@@ -86,12 +88,15 @@ export default function RequirementDetailPage() {
   const [reloadKey, setReloadKey] = useState(0);
 
   const reload = () => setReloadKey(k => k + 1);
+  // Every read and write names the selected network: a user token can belong to
+  // several networks and Hub then refuses to guess.
+  const scope = `network_id=${encodeURIComponent(networkId)}`;
 
   async function sendPatch(fields: Record<string, unknown>) {
     if (!id || busy) return;
     setBusy(true); setActionError('');
     try {
-      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}`, {
+      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}?${scope}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fields),
@@ -108,7 +113,7 @@ export default function RequirementDetailPage() {
     if (!id || busy) return;
     setBusy(true); setActionError('');
     try {
-      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}/checklist/${encodeURIComponent(itemId)}`, {
+      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}/checklist/${encodeURIComponent(itemId)}?${scope}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ done }),
@@ -125,7 +130,7 @@ export default function RequirementDetailPage() {
     if (!id || busy || !comment.trim()) return;
     setBusy(true); setActionError('');
     try {
-      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}/comments`, {
+      const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}/comments?${scope}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: comment.trim() }),
@@ -146,8 +151,8 @@ export default function RequirementDetailPage() {
       setLoading(true); setError('');
       try {
         const [detailRes, eventsRes] = await Promise.all([
-          fetch(`/api/hub/requirements/${encodeURIComponent(id)}`, { cache: 'no-store' }),
-          fetch(`/api/hub/requirements/events?requirement_id=${encodeURIComponent(id)}&limit=100`, { cache: 'no-store' }),
+          fetch(`/api/hub/requirements/${encodeURIComponent(id)}?${scope}`, { cache: 'no-store' }),
+          fetch(`/api/hub/requirements/events?requirement_id=${encodeURIComponent(id)}&limit=100&${scope}`, { cache: 'no-store' }),
         ]);
         if (detailRes.status === 401) { if (alive) { setNeedsLogin(true); } return; }
         const detail = await detailRes.json();
@@ -163,7 +168,7 @@ export default function RequirementDetailPage() {
       }
     })();
     return () => { alive = false; };
-  }, [id, reloadKey]);
+  }, [id, scope, reloadKey]);
 
   if (loading) {
     return (
@@ -361,4 +366,17 @@ export default function RequirementDetailPage() {
       </div>
     </div>
   );
+}
+
+export default function RequirementDetailPage() {
+  const { networkId, ready } = useNetworkId();
+  if (!ready) return <div role="status" className="min-h-screen bg-[var(--bg)] p-6 text-sm text-gray-500">正在确认当前网络…</div>;
+  if (!networkId) return (
+    <div className="min-h-screen bg-[var(--bg)] p-6">
+      <div className="mx-auto max-w-4xl"><NetworkRequiredNotice /></div>
+    </div>
+  );
+  // A network switch must not leave another network's description or timeline
+  // on screen: remount resets every piece of local state.
+  return <RequirementDetailContent key={networkId} networkId={networkId} />;
 }

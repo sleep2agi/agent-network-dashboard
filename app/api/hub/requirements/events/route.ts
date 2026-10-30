@@ -25,10 +25,12 @@ export async function GET(req: Request) {
     return Response.json({ ok: false, error: 'invalid_requirement_id' }, { status: 400 });
   }
   const limit = searchParams.get('limit') || '100';
+  const networkId = searchParams.get('network_id');
 
   try {
     const res = await fetch(
-      `${HUB_URL}/api/requirements/events?requirement_id=${encodeURIComponent(requirementId)}&limit=${encodeURIComponent(limit)}`,
+      `${HUB_URL}/api/requirements/events?requirement_id=${encodeURIComponent(requirementId)}&limit=${encodeURIComponent(limit)}`
+      + (networkId ? `&network_id=${encodeURIComponent(networkId)}` : ''),
       { headers: await hubHeaders(), next: { revalidate: 0 } },
     );
     const contentType = res.headers.get('content-type') || '';

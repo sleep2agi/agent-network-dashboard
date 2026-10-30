@@ -13,7 +13,12 @@ async function hubHeaders(): Promise<Record<string, string>> {
  * One requirement — #1633. Hub only resolves `req_…` ids on this path;
  * a short number (#N) 404s, so the page always links by id.
  */
-export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+function networkParam(url: string): string {
+  const networkId = new URL(url).searchParams.get('network_id');
+  return networkId ? `?network_id=${encodeURIComponent(networkId)}` : '';
+}
+
+export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const authFailure = await requireDashboardAuth();
   if (authFailure) return authFailure;
 
@@ -23,7 +28,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   }
 
   try {
-    const res = await fetch(`${HUB_URL}/api/requirements/${encodeURIComponent(id)}`, {
+    const res = await fetch(`${HUB_URL}/api/requirements/${encodeURIComponent(id)}${networkParam(req.url)}`, {
       headers: await hubHeaders(),
       next: { revalidate: 0 },
     });
@@ -72,7 +77,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   }
 
   try {
-    const res = await fetch(`${HUB_URL}/api/requirements/${encodeURIComponent(id)}`, {
+    const res = await fetch(`${HUB_URL}/api/requirements/${encodeURIComponent(id)}${networkParam(req.url)}`, {
       method: 'PATCH',
       headers: { ...(await hubHeaders()), 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),

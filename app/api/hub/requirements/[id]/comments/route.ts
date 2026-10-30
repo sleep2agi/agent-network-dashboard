@@ -34,7 +34,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (text.length > 4000) return Response.json({ ok: false, error: 'comment_too_long' }, { status: 400 });
 
   try {
-    const res = await fetch(`${HUB_URL}/api/requirements/${encodeURIComponent(id)}/comments`, {
+    const networkId = new URL(req.url).searchParams.get('network_id');
+    const scope = networkId ? `?network_id=${encodeURIComponent(networkId)}` : '';
+    const res = await fetch(`${HUB_URL}/api/requirements/${encodeURIComponent(id)}/comments${scope}`, {
       method: 'POST',
       headers: { ...(await hubHeaders()), 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
