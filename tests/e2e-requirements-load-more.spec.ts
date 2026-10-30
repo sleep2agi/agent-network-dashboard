@@ -108,6 +108,9 @@ test.afterAll(async () => {
 
 test.beforeEach(async ({ context }) => {
   await context.addCookies(sessionCookies);
+  // /requirements 现在要等网络解析完成才发请求；测试 Hub 不提供 /api/networks，
+  // 所以像其它 Playwright 脚本一样先把选区写进 sessionStorage。
+  await context.addInitScript(() => sessionStorage.setItem('anet_network_id', 'fixture'));
   hub.reset();
 });
 

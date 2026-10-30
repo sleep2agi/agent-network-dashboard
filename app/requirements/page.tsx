@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { EmptyState } from '../components/EmptyState';
 import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/requirements-paging';
 import { ProjectFilter } from './ProjectFilter';
+import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
+import { useNetworkId } from '../lib/network-context';
 
 /**
  * Requirements board — #1633 (read-only first slice).
@@ -69,7 +71,7 @@ function dueLabel(due?: string) {
   return overdue ? <span className="text-red-400">{day}</span> : <span className="text-gray-400">{day}</span>;
 }
 
-function RequirementsContent() {
+function RequirementsContent({ networkId }: { networkId: string }) {
   const searchParams = useSearchParams();
 
   const status = searchParams.get('status') || '';
@@ -149,7 +151,7 @@ function RequirementsContent() {
     if (gen === null) return;
     dispatch({ type: 'start', phase });
     try {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({ network_id: networkId });
       if (status) params.set('status', status);
       if (tag) params.set('tag', tag);
       if (q) params.set('q', q);
@@ -220,9 +222,15 @@ function RequirementsContent() {
     } finally {
       gate.current.settle(gen);
     }
-  }, [status, tag, q, project, searching, includeArchived]);
+  }, [networkId, status, tag, q, project, searching, includeArchived]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    void load();
+    const currentGate = gate.current;
+    // Unmounting on a network change also invalidates a pending archive
+    // negotiation, so it cannot issue a follow-up read for the old network.
+    return () => { currentGate.begin('replace'); };
+  }, [load]);
 
   const counts = useMemo(() => {
     const out: Record<string, number> = {};
@@ -273,6 +281,7 @@ function RequirementsContent() {
         </div>
 
         <ProjectFilter
+          networkId={networkId}
           value={project}
           supported={projectSupported}
           refreshKey={projectRefresh}
@@ -434,9 +443,17 @@ function RequirementsContent() {
 }
 
 export default function RequirementsPage() {
+  const { networkId, ready } = useNetworkId();
+  if (!ready) return <div role="status" className="px-6 py-8 text-sm text-[var(--fg-muted)]">正在确认当前网络…</div>;
+  if (!networkId) return (
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <NetworkRequiredNotice />
+    </div>
+  );
   return (
     <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
-      <RequirementsContent />
+      {/* A new network owns new rows, cursors, capabilities and catalog reads. */}
+      <RequirementsContent key={networkId} networkId={networkId} />
     </Suspense>
   );
 }

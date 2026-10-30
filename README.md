@@ -76,6 +76,10 @@ exact project, not its descendants. Visible parent paths distinguish project
 names. Filters are kept in the URL and apply to each loaded page. Archived
 requirements can be included in text searches when the Hub supports them.
 Unknown or archived project links keep their ID and show an explanation.
+Requirements and their project directory follow the network selected in the
+sidebar. The page waits for that selection and starts fresh when it changes,
+including pagination and search capabilities. Hub verifies access using the
+existing signed-in user; an empty directory is distinct from a read failure.
 
 ## Design language
 
