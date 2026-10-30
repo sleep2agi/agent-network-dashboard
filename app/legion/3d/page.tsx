@@ -1428,15 +1428,18 @@ export default function Legion3DPage() {
         }
 
         // 标签：Agent 太多，只有近处或高亮时才画，避免糊成一片。
+        // 部门的短名已经写在圆点里；名字短到圆心能写全时，外面再画一个一样的
+        // 名字只是重复（密集网络里尤其明显），只有悬停/选中才补。
+        const shortInside = node.kind === 'group' && radiusPx >= 11
+          && Array.from(node.label.replace(/[*+\s]/g, '')).length <= (rx >= 28 ? 3 : 2);
+        const groupWanted = node.kind === 'group'
+          && ((node.span ?? 0) >= 1.0 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55);
         const showLabel =
           node.kind === 'core' ||
-          // 一级部门常显；二级组在默认缩放下不画名字（两层部门树时会挤成一团），
-          // 放大到 1.3× 左右、选中或悬停时才出。
-          // 部门标签只给「扇区够宽」的部门：小部门在环上只有很窄一段，名字
-          // 一定会压到邻居身上（生产截图里 6 个部门名叠成一团）。窄扇区在
-          // 悬停/选中/放大时才出名字。
-          (node.kind === 'group' && ((node.span ?? 0) >= 1.0 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55)) ||
-          (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
+          (groupWanted && !shortInside) ||
+          (groupWanted && (selectedRef.current === node.id || hoverRef.current === node.id)) ||
+          (!heavy && node.kind === 'person' && layout.stats.people <= LEGION_LABEL_PEOPLE
+            && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
           hoverRef.current === node.id;
