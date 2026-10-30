@@ -8,6 +8,12 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ## 0.6.3-preview.115 — 2026-10-30
 
+### Present and record the legion
+
+- “演示模式” hides the interface, cursor and hover tooltips and orbits the 3D legion at a constant speed; Esc or the exit chip restores the page.
+- “导出循环” records exactly one 16-second revolution and downloads a 1280×720 seamless loop (mp4 when the browser can encode it, webm otherwise). The camera angle is a pure function of elapsed time, so frame drops cannot drift the loop seam; ornaments freeze during capture so the last frame matches the first.
+- Recording progress, cancellation and encoder failures are visible instead of failing silently.
+
 ### Find requirements by responsibility
 
 - Filter requirements by a human owner, a responsible Agent or no assignment. “未分配” means both roles are empty; individual empty-role and combined URL conditions remain explicit.

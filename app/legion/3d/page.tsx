@@ -27,6 +27,7 @@ import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { departmentDisc, fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
+import { EXPORT_FPS, EXPORT_HEIGHT, EXPORT_WIDTH, LOOP_DURATION_MS, containRect, loopProgress, loopYaw, pickRecordingMime, recordingFileName } from '../../lib/legion-recording';
 import { EmptyState } from '../../components/EmptyState';
 import { getAvatarUrl } from '../../lib/avatars';
 import { LegionChat } from '../LegionChat';
@@ -230,6 +231,12 @@ export default function Legion3DPage() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
+  // 演示/录屏模式：隐藏鼠标与悬浮提示、匀速环绕，并可直接导出 16 秒循环。
+  const [presenting, setPresenting] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [captureProgress, setCaptureProgress] = useState(0);
+  const [captureError, setCaptureError] = useState('');
+  const [captureInfo, setCaptureInfo] = useState('');
   const [size, setSize] = useState({ width: 0, height: 0 });
   // 舞台高度按「窗口底 − 舞台顶 − 父级底部安全区」算：顶部有 HealthBanner、
   // 手机底部有 5rem 安全区，写死 100vh 一定会多出一条滚动条。
@@ -249,6 +256,12 @@ export default function Legion3DPage() {
   const selectedRef = useRef<string | null>(null);
   const lastInteract = useRef(0);
   const yawTarget = useRef<number | null>(null);
+  const presentingRef = useRef(false);
+  const captureRef = useRef<null | {
+    startedAt: number; startYaw: number; durationMs: number; mime: string;
+    out: HTMLCanvasElement; octx: CanvasRenderingContext2D;
+    recorder: MediaRecorder; stream: MediaStream; chunks: Blob[]; finished: boolean; cancelled: boolean; timer: number | null;
+  }>(null);
   // 交互中（拖动/缩放）先降特效，停手 180ms 后恢复 —— 大网络里保证跟手。
   const interactingUntil = useRef(0);
   // 首屏 / 重置视角后自动取景（见渲染循环里的 fitPending 分支）。
@@ -503,6 +516,7 @@ export default function Legion3DPage() {
   }, []);
 
   useEffect(() => { spinRef.current = spin; }, [spin]);
+  useEffect(() => { presentingRef.current = presenting; }, [presenting]);
   useEffect(() => { flowRef.current = flow; }, [flow]);
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -691,7 +705,14 @@ export default function Legion3DPage() {
       const view = viewRef.current;
       const dt = Math.min(0.05, (now - lastFrame) / 1000);
       lastFrame = now;
-      if (yawTarget.current !== null) {
+      const capture = captureRef.current;
+      if (capture) {
+        // 录屏时 yaw 只由「已录时长」决定：一圈固定 2π，接缝不会因掉帧漂移。
+        view.yaw = loopYaw(capture.startYaw, now - capture.startedAt, capture.durationMs);
+      }
+      if (capture) {
+        // 已由循环函数接管
+      } else if (yawTarget.current !== null) {
         const diff = yawTarget.current - view.yaw;
         if (Math.abs(diff) < 0.01) {
           view.yaw = yawTarget.current;
@@ -699,7 +720,7 @@ export default function Legion3DPage() {
         } else {
           view.yaw += diff * Math.min(1, dt * 4.5);
         }
-      } else if (!motionPreference.matches && spinRef.current && now - lastInteract.current > IDLE_BEFORE_SPIN) {
+      } else if (!capture && !motionPreference.matches && spinRef.current && now - lastInteract.current > IDLE_BEFORE_SPIN) {
         view.yaw += SPIN_RAD_PER_SEC * dt;
       }
       // 小屏用更长的焦距把图放大：375 宽时 min(w,h) 只有 375，
@@ -736,10 +757,10 @@ export default function Legion3DPage() {
       // 交互中：大网络先不画标签与数据包，停手后自动恢复（跟手优先）。
       const interacting = huge && now < interactingUntil.current;
       // Pause also freezes the new core ornament; reduced-motion is read live.
-      if (!motionPreference.matches && spinRef.current && !interacting) corePhaseRef.current += dt * 0.24;
+      if (!capture && !motionPreference.matches && spinRef.current && !interacting) corePhaseRef.current += dt * 0.24;
       // A local clock freezes every relationship/ring ornament together. Using
       // wall time here would jump the streaks when resuming or switching tabs.
-      if (!motionPreference.matches && flowRef.current && !interacting) flowTimeRef.current += dt;
+      if (!capture && !motionPreference.matches && flowRef.current && !interacting) flowTimeRef.current += dt;
       const flowTime = flowTimeRef.current;
       applyResolution(interacting ? RES_LOW : 1);
 
@@ -1343,6 +1364,18 @@ export default function Legion3DPage() {
       }
       ctx.globalAlpha = 1;
 
+      if (capture) {
+        // 等比放进 1280×720：竖屏/宽屏都留主题底色，不把圆环拉成椭圆。
+        const rect = containRect(size.width, size.height, EXPORT_WIDTH, EXPORT_HEIGHT);
+        capture.octx.fillStyle = tk.bg;
+        capture.octx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
+        capture.octx.drawImage(canvas, rect.x, rect.y, rect.width, rect.height);
+        if (!capture.finished && loopProgress(now - capture.startedAt, capture.durationMs) >= 1) {
+          capture.finished = true;
+          try { if (capture.recorder.state !== 'inactive') capture.recorder.stop(); } catch { /* stopped already */ }
+        }
+      }
+
       raf = requestAnimationFrame(draw);
     };
 
@@ -1437,6 +1470,7 @@ export default function Legion3DPage() {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
+    if (presentingRef.current) return; // 演示/录屏：画面只做匀速环绕，不接受交互
     introRef.current = null; // 手动交互优先，别跟用户的拖动抢
     const target = e.currentTarget as HTMLElement;
     yawTarget.current = null; // 手动拖动优先，打断自动对准
@@ -1459,6 +1493,7 @@ export default function Legion3DPage() {
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (presentingRef.current) return; // 演示/录屏：不产生 hover 提示，避免镜头里出现浮框
     // 之前这里一上来就要求「指针已在 map 里」（按下时才登记），导致**悬停永远不会触发**：
     // 光标不变、悬停高亮不亮、提示框也不出。现在只区分「按下」与「未按下」。
     const down = pointersRef.current.has(e.pointerId);
@@ -1541,6 +1576,7 @@ export default function Legion3DPage() {
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
+    if (presentingRef.current) return;
     lastInteract.current = performance.now();
     interactingUntil.current = performance.now() + 180;
     introRef.current = null;
@@ -1640,6 +1676,8 @@ export default function Legion3DPage() {
       case 'f': case 'F': e.preventDefault(); void toggleFullscreen(); break;
       case 'Escape':
         e.preventDefault();
+        // 演示/录屏先退出（并丢弃未完成的录制），再退回净屏。
+        if (presentingRef.current) { exitPresenting(); break; }
         // 净屏优先退出，也可轻点画布恢复。
         if (cleanView) { setCleanView(false); break; }
         // 状态筛选次之，然后才是搜索/选中。
@@ -1651,6 +1689,134 @@ export default function Legion3DPage() {
       default: break;
     }
   };
+
+  /* ── 演示 / 录屏模式 ─────────────────────────────────────────────── */
+
+  const endCapture = useCallback((cancelled: boolean) => {
+    const capture = captureRef.current;
+    if (!capture) return;
+    capture.cancelled = cancelled;
+    if (cancelled) {
+      // 取消反馈立即给：不依赖 MediaRecorder 的 onstop 在什么时机到达。
+      setCaptureInfo('已取消录屏，未生成文件。');
+      setCaptureProgress(0);
+    }
+    try { if (capture.recorder.state !== 'inactive') capture.recorder.stop(); } catch { /* already stopped */ }
+  }, []);
+
+  const exitPresenting = useCallback(() => {
+    endCapture(true);
+    setPresenting(false);
+    setCleanView(false);
+    setCaptureProgress(0);
+  }, [endCapture]);
+
+  const togglePresenting = useCallback(() => {
+    if (presentingRef.current) { exitPresenting(); return; }
+    setPresenting(true);
+    setCleanView(true);
+    setCaptureError('');
+    setCaptureInfo('');
+    setSpin(true);
+    spinRef.current = true;
+    hoverRef.current = null;
+    hoverPos.current = null;
+    yawTarget.current = null;
+  }, [exitPresenting]);
+
+  // 演示/录屏时焦点可能落在 body（点了工具栏按钮后按钮重渲染），舞台的
+  // onKeyDown 收不到事件；Esc 必须在任何焦点下都能退出，并丢弃未完成录制。
+  useEffect(() => {
+    if (!presenting) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      exitPresenting();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [presenting, exitPresenting]);
+
+  const startCapture = useCallback(() => {
+    if (captureRef.current) return;
+    setCaptureError('');
+    setCaptureInfo('');
+    if (typeof MediaRecorder === 'undefined') {
+      setCaptureError('当前浏览器不支持 MediaRecorder，无法导出循环视频');
+      return;
+    }
+    const mime = pickRecordingMime(type => MediaRecorder.isTypeSupported(type));
+    if (!mime) {
+      setCaptureError('当前浏览器没有可用的视频编码器（mp4 / webm 均不支持）');
+      return;
+    }
+    const canvas = canvasRef.current;
+    if (!canvas) { setCaptureError('画布尚未就绪'); return; }
+    const out = document.createElement('canvas');
+    out.width = EXPORT_WIDTH;
+    out.height = EXPORT_HEIGHT;
+    const octx = out.getContext('2d');
+    if (!octx) { setCaptureError('浏览器不支持 canvas'); return; }
+    const tk = readTokens();
+    octx.fillStyle = tk.bg;
+    octx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
+    const rect = containRect(size.width, size.height, EXPORT_WIDTH, EXPORT_HEIGHT);
+    octx.drawImage(canvas, rect.x, rect.y, rect.width, rect.height);
+
+    let stream: MediaStream;
+    try { stream = out.captureStream(EXPORT_FPS); } catch { setCaptureError('无法捕获画布，无法导出视频'); return; }
+    let recorder: MediaRecorder;
+    try {
+      recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8_000_000 });
+    } catch {
+      setCaptureError('视频编码器启动失败，请换一个浏览器再试');
+      return;
+    }
+    const chunks: Blob[] = [];
+    recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+    recorder.onstop = () => {
+      const capture = captureRef.current;
+      if (!capture) return;
+      if (capture.timer !== null) window.clearInterval(capture.timer);
+      for (const track of capture.stream.getTracks()) track.stop();
+      captureRef.current = null;
+      setCapturing(false);
+      setCaptureProgress(0);
+      if (capture.cancelled) { setCaptureInfo('已取消录屏，未生成文件。'); return; }
+      const blob = new Blob(chunks, { type: mime });
+      if (!blob.size) { setCaptureError('录屏没有产生数据，请重试'); return; }
+      const name = recordingFileName(mime, new Date());
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      setCaptureInfo(`已导出 ${name}（${(blob.size / 1024 / 1024).toFixed(1)} MB · ${LOOP_DURATION_MS / 1000} 秒无缝循环）`);
+    };
+
+    const startYaw = ((viewRef.current.yaw % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    recorder.start(250);
+    captureRef.current = {
+      startedAt: performance.now(), startYaw, durationMs: LOOP_DURATION_MS, mime, out, octx,
+      recorder, stream, chunks, finished: false, cancelled: false,
+      timer: window.setInterval(() => {
+        const current = captureRef.current;
+        if (current) setCaptureProgress(loopProgress(performance.now() - current.startedAt, current.durationMs));
+      }, 200),
+    };
+    setPresenting(true);
+    setCleanView(true);
+    setCapturing(true);
+    setSpin(true);
+    spinRef.current = true;
+    hoverRef.current = null;
+    hoverPos.current = null;
+    yawTarget.current = null;
+    wrapRef.current?.focus();
+  }, [size.width, size.height]);
 
   /* ── 导出 ───────────────────────────────────────────────────────── */
 
@@ -1780,7 +1946,7 @@ export default function Legion3DPage() {
       <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击 Agent 在页内对话，双击成员或部门进入组织列表；按 / 搜索，R 重置视角。</p>
       <canvas
         ref={canvasRef}
-        className="block h-full w-full cursor-grab touch-none active:cursor-grabbing"
+        className={`block h-full w-full touch-none ${presenting ? 'cursor-none' : 'cursor-grab active:cursor-grabbing'}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -1793,6 +1959,40 @@ export default function Legion3DPage() {
         aria-describedby="legion-3d-hint"
         tabIndex={-1}
       />
+
+      {presenting && (
+        <button
+          type="button"
+          data-testid="legion-3d-present-exit"
+          onClick={exitPresenting}
+          className="pointer-events-auto absolute right-3 top-3 z-20 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/90 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] backdrop-blur transition-colors hover:text-[var(--fg)]"
+        >
+          退出演示（Esc）
+        </button>
+      )}
+      {capturing && (
+        <div role="status" data-testid="legion-3d-capture-status" className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-md bg-[var(--bg-secondary)]/92 px-3 py-1 text-xs text-[var(--fg-muted)] backdrop-blur">
+          <span>录屏中 {Math.round(captureProgress * 100)}% · {LOOP_DURATION_MS / 1000} 秒无缝循环</span>
+          <button
+            type="button"
+            data-testid="legion-3d-capture-cancel"
+            onClick={() => endCapture(true)}
+            className="rounded px-1.5 py-0.5 text-[var(--fg)] underline underline-offset-2 hover:text-[var(--fg-muted)]"
+          >
+            取消
+          </button>
+        </div>
+      )}
+      {captureInfo && !capturing && (
+        <p role="status" data-testid="legion-3d-capture-info" className="pointer-events-none absolute bottom-4 left-1/2 z-20 max-w-[92vw] -translate-x-1/2 rounded-md bg-[var(--bg-secondary)]/92 px-3 py-1 text-center text-xs text-[var(--fg-muted)] backdrop-blur">
+          {captureInfo}
+        </p>
+      )}
+      {captureError && (
+        <p role="alert" data-testid="legion-3d-capture-error" className="pointer-events-none absolute bottom-4 left-1/2 z-20 max-w-[92vw] -translate-x-1/2 rounded-md border border-red-500/30 bg-[var(--bg-secondary)]/95 px-3 py-1 text-center text-xs text-red-300 backdrop-blur">
+          {captureError}
+        </p>
+      )}
 
       {/* 顶部信息区：手机上「标题 → 搜索 → 按钮」竖排，桌面上标题在左、按钮在右。
           之前按钮绝对定位在 top-16，加了搜索框后正好压住输入框。 */}
@@ -1963,6 +2163,26 @@ export default function Legion3DPage() {
           className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
         >
           {cleanView ? '恢复界面' : '净屏'}
+        </button>
+        <button
+          type="button"
+          onClick={togglePresenting}
+          aria-pressed={presenting}
+          title="隐藏界面、鼠标与悬浮提示，匀速环绕；按 Esc 退出"
+          data-testid="legion-3d-present"
+          className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${presenting ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+        >
+          演示模式
+        </button>
+        <button
+          type="button"
+          onClick={startCapture}
+          disabled={capturing}
+          title="录制一圈 16 秒，导出 1280×720 无缝循环视频"
+          data-testid="legion-3d-record"
+          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-60"
+        >
+          {capturing ? `录屏 ${Math.round(captureProgress * 100)}%` : '导出循环'}
         </button>
         <button
           type="button"

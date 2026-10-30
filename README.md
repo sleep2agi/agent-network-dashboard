@@ -86,6 +86,10 @@ picker, while selecting them filters requirements by their exact identity.
 Combined owner/Agent URL conditions match both roles. The visible people
 directory also supplies separate human and Agent names in desktop result rows.
 
+The 3D legion page has a presentation mode that hides the UI, cursor and
+hover tooltips and orbits at a constant speed, plus a one-click 1280×720
+seamless-loop export (16 s, mp4/webm depending on the browser encoder).
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
