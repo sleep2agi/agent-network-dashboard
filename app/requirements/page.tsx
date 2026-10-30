@@ -12,6 +12,7 @@ import { ownerRefFor, useCurrentUserId } from '../lib/current-user';
 import { TagManager } from './TagManager';
 import { tagColor } from '../lib/tag-catalog';
 import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
+import { PRIORITY_KEYS, isPriorityKey, priorityLabel, priorityTitle } from '../lib/requirement-priority';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
 import { ResponsibilityFilter, useRequirementPeople } from './ResponsibilityFilter';
@@ -47,8 +48,7 @@ interface Requirement {
   archived?: boolean;
 }
 
-const PRIORITIES = ['high', 'normal', 'low', 'lowest'] as const;
-const PRIORITY_LABEL: Record<string, string> = { high: 'P0', normal: 'P1', low: 'P2', lowest: 'P3' };
+const PRIORITIES = PRIORITY_KEYS;
 
 const COLUMNS: { key: Requirement['column'] | ''; label: string }[] = [
   { key: '', label: 'All' },
@@ -108,7 +108,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const priorityParam = searchParams.get('priority') || '';
   const priorities = useMemo(() => {
     if (!priorityParam) return null;
-    const picked = priorityParam.split(',').filter(value => (PRIORITIES as readonly string[]).includes(value));
+    const picked = priorityParam.split(',').filter(isPriorityKey);
     return picked.length ? new Set(picked) : null;
   }, [priorityParam]);
 
@@ -578,7 +578,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   type="button"
                   aria-pressed={on}
                   data-testid={`requirements-priority-${value}`}
-                  title={`在已加载结果里筛 ${PRIORITY_LABEL[value]}（${value}）；Hub 列表没有优先级查询参数`}
+                  title={`在已加载结果里筛 ${priorityLabel(value)}（${value}）；Hub 列表没有优先级查询参数`}
                   onClick={() => {
                     const next = new Set(priorities ?? []);
                     if (next.has(value)) next.delete(value); else next.add(value);
@@ -586,7 +586,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   }}
                   className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${on ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
                 >
-                  {PRIORITY_LABEL[value]}
+                  {priorityLabel(value)}
                 </button>
               );
             })}
@@ -858,7 +858,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                               <span className="flex items-center justify-between gap-2 text-[10px] text-[var(--fg-muted)]">
                                 <span className="tabular-nums">#{row.seq}</span>
                                 <span className="flex items-center gap-2">
-                                  <span className={priorityClass(row.priority)}>{row.priority}</span>
+                                  <span className={priorityClass(row.priority)} title={priorityTitle(row.priority)}>{priorityLabel(row.priority)}</span>
                                   {row.due && <span>{dueLabel(row.due)}</span>}
                                 </span>
                               </span>
@@ -950,7 +950,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                     {(row.tags || []).slice(0, 3).map(name => (
                       <TagChip key={name} name={name} color={tagColor(tagCatalog, name)} className="hidden shrink-0 text-[10px] text-gray-400 sm:inline-flex" />
                     ))}
-                    <span className={`shrink-0 text-[11px] ${priorityClass(row.priority)}`}>{row.priority}</span>
+                    <span className={`shrink-0 text-[11px] ${priorityClass(row.priority)}`} title={priorityTitle(row.priority)}>{priorityLabel(row.priority)}</span>
                     <span data-responsibility className="hidden w-36 shrink-0 text-[11px] leading-4 text-[var(--fg-muted)] sm:block"
                       title={`负责人：${personLabel(row.owner, personNames)}；负责 Agent：${personLabel(row.agent_owner, personNames)}`}>
                       <span className="block truncate">人 · {personLabel(row.owner, personNames)}</span>
