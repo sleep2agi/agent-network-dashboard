@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.144 — 2026-10-31
+
+### Sub-requirements on the detail page
+
+- The detail page lists its sub-requirements (seq, column, priority, title) with
+  links, and can create one inline: title + priority → one POST carrying
+  `parent_id`. The list refreshes from the Hub right after creation.
+- Read failures and Hub refusals (invalid title, missing parent, depth or cycle
+  rules) are shown as-is; the empty state is a plain sentence, not an error.
+- The create proxy now whitelists `parent_id` (and rejects malformed ids before
+  they reach the Hub).
+
 ## 0.6.3-preview.143 — 2026-10-31
 
 ### Optional 1080p recording

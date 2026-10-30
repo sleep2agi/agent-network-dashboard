@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 }
 
 
-const CREATE_FIELDS = ['name', 'priority', 'column', 'project_id', 'tags', 'description'] as const;
+const CREATE_FIELDS = ['name', 'priority', 'column', 'project_id', 'tags', 'description', 'parent_id'] as const;
 
 /**
  * Create one requirement — APP parity. Hub owns validation (name length,
@@ -86,6 +86,12 @@ export async function POST(req: Request) {
   }
   if ('tags' in payload && (!Array.isArray(payload.tags) || payload.tags.some(tag => typeof tag !== 'string' || !tag.trim()))) {
     return Response.json({ ok: false, error: 'invalid_tags', field: 'tags' }, { status: 400 });
+  }
+  if ('parent_id' in payload) {
+    const parent = payload.parent_id;
+    if (parent !== null && (typeof parent !== 'string' || !/^req_[A-Za-z0-9_-]+$/.test(parent))) {
+      return Response.json({ ok: false, error: 'invalid_parent_id', field: 'parent_id' }, { status: 400 });
+    }
   }
 
   const networkId = new URL(req.url).searchParams.get('network_id');
