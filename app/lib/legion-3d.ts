@@ -58,14 +58,25 @@ export function jitterHeight(order: number, ring: number): number {
   return Math.sin(order * 1.7) * 0.035;
 }
 
-/** 2D 布局节点 → 3D 坐标。x/z 用平面坐标，y 用环高度 + 抖动。 */
+/** 部门每深一层下沉多少：一级部门留在环高度上，子部门依次往下。
+ *  12 个部门的生产密度里，父子部门原本压在同一张平面上，只能靠半径区分，
+ *  看起来是一圈薄片；分层下沉之后才真的像一张三维编制图。 */
+export const DEPTH_STEP = 0.42;
+
+/** 部门层级的垂直偏移（非部门节点恒为 0，最多下沉两级）。 */
+export function depthDrop(kind?: string, depth?: number): number {
+  if (kind !== 'group' || !depth || depth < 2) return 0;
+  return -Math.min(depth - 1, 2) * DEPTH_STEP;
+}
+
+/** 2D 布局节点 → 3D 坐标。x/z 用平面坐标，y 用环高度 + 部门层级 + 抖动。 */
 export function nodeToVec3(
-  node: { x: number; y: number; ring: number; order: number },
+  node: { x: number; y: number; ring: number; order: number; kind?: string; depth?: number },
   scale = 1,
 ): Vec3 {
   return {
     x: node.x * scale,
-    y: (RING_HEIGHT[node.ring] ?? 0) + jitterHeight(node.order, node.ring),
+    y: (RING_HEIGHT[node.ring] ?? 0) + depthDrop(node.kind, node.depth) + jitterHeight(node.order, node.ring),
     z: node.y * scale,
   };
 }

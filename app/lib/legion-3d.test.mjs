@@ -7,6 +7,8 @@ import {
   hitTest,
   jitterHeight,
   nodeToVec3,
+  depthDrop,
+  DEPTH_STEP,
   projectPoint,
   projectScene,
   ringPath,
@@ -93,6 +95,14 @@ describe('#3D 军团拓扑 — 投影/深度/命中必须可断言，不能靠�
     expect(RING_HEIGHT[3]).toBeLessThan(RING_HEIGHT[2]);
     const core = nodeToVec3({ x: 0, y: 0, ring: 0, order: 0 });
     const agent = nodeToVec3({ x: 1, y: 0, ring: 3, order: 7 });
+    // 子部门按层级下沉：一级部门不降、二级降一级、更深的最多降两级。
+    expect(depthDrop('group', 1)).toBe(0);
+    expect(depthDrop('group', 2)).toBe(-DEPTH_STEP);
+    expect(depthDrop('group', 5)).toBe(-2 * DEPTH_STEP);
+    expect(depthDrop('person', 3)).toBe(0);
+    const parent = nodeToVec3({ x: 1, y: 0, ring: 1, order: 1, kind: 'group', depth: 1 });
+    const child = nodeToVec3({ x: 1, y: 0, ring: 1, order: 2, kind: 'group', depth: 2 });
+    expect(child.y - parent.y).toBeLessThan(-0.3);
     expect(core.y).toBeGreaterThan(agent.y);
   });
 
