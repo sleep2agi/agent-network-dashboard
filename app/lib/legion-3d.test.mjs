@@ -9,6 +9,8 @@ import {
   nodeToVec3,
   depthDrop,
   DEPTH_STEP,
+  DEPT_DISC_MIN_RX,
+  DEPT_DISC_ASPECT,
   projectPoint,
   projectScene,
   ringPath,
@@ -207,7 +209,7 @@ describe('#3D 军团拓扑 — 投影/深度/命中必须可断言，不能靠�
             const radius = Math.max(1.4, (sn.item.kind === 'group' ? deptWorldRadius(sn.item.depth ?? 1)
               : sn.item.kind === 'core' ? 0.085 : sn.item.kind === 'person' ? 0.033 : 0.021) * sn.projected.scale);
             const axes = sn.item.kind === 'group' ? departmentDisc(radius) : { rx: radius, ry: radius };
-            if (sn.item.kind === 'group') { expect(axes.rx).toBeGreaterThanOrEqual(16); expect(axes.ry).toBeCloseTo(axes.rx * 0.42); }
+            if (sn.item.kind === 'group') { expect(axes.rx).toBeGreaterThanOrEqual(DEPT_DISC_MIN_RX); expect(axes.ry).toBeCloseTo(axes.rx * DEPT_DISC_ASPECT); }
             return { x: sn.projected.x, y: sn.projected.y, rx: axes.rx + 6, ry: axes.ry + 6 };
           });
           for (const ring of layout.rings) bodies.push(...ringPath(ring.radius, RING_HEIGHT[ring.ring], camera, size, 64)

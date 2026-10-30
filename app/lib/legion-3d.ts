@@ -142,11 +142,14 @@ export interface ScreenAxes { rx: number; ry: number }
 export type FramingBody = { x: number; y: number } & (ScreenAxes | { radius: number });
 
 /** One department shape for paint, feedback, picking and label/framing bounds. */
+/** 部门盘的最小半宽（屏幕像素）与扁率：0.42 在小半径上会变成一条细缝，
+ *  子部门看不见是「盘」，只是一道灰弧；0.52 仍比一级部门薄，但读得出是部门。 */
+export const DEPT_DISC_MIN_RX = 16;
+export const DEPT_DISC_ASPECT = 0.52;
+
 export function departmentDisc(radius: number): ScreenAxes {
-  const rx = Math.max(16, 2.1 * radius);
-  // 0.42 的扁率在小半径上会变成一条细缝：子部门看不见是「盘」，只是一道灰弧。
-  // 抬到 0.52 后内层子部门仍比一级部门薄，但读得出是部门。
-  return { rx, ry: 0.52 * rx };
+  const rx = Math.max(DEPT_DISC_MIN_RX, 2.1 * radius);
+  return { rx, ry: DEPT_DISC_ASPECT * rx };
 }
 
 function bodyBounds(bodies: ReadonlyArray<FramingBody>) {
