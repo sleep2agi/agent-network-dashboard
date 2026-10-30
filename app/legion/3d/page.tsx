@@ -283,6 +283,8 @@ export default function Legion3DPage() {
   const lastInteract = useRef(0);
   const yawTarget = useRef<number | null>(null);
   const presentingRef = useRef(false);
+  const [shareInfo, setShareInfo] = useState('');
+  const sharedView = useRef<{ yaw: number; pitch: number; zoom: number } | null>(null);
   const tourRef = useRef(false);
   const tourAt = useRef(0);
   const tourIndex = useRef(-1);
@@ -323,6 +325,20 @@ export default function Legion3DPage() {
     setFocus(null);
     setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
   }
+  // 分享链接：`?view=yaw,pitch,zoom` 在首帧前写进 ref，等网络就绪后再应用，
+  // 免得被“换网络重置视角”覆盖。非法数值直接忽略，不报错也不假装生效。
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get('view');
+    if (!raw) return;
+    const [yaw, pitch, zoom] = raw.split(',').map(Number);
+    if (![yaw, pitch, zoom].every(Number.isFinite)) return;
+    sharedView.current = {
+      yaw,
+      pitch: Math.min(1.1, Math.max(-1.1, pitch)),
+      zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom)),
+    };
+  }, []);
+
   useEffect(() => {
     hoverRef.current = null;
     hoverPos.current = null;
@@ -332,6 +348,16 @@ export default function Legion3DPage() {
     fitPending.current = true;
     userAdjusted.current = false;
     lastFitSize.current = null;
+    const shared = sharedView.current;
+    if (shared) {
+      viewRef.current = { ...DEFAULT_VIEW, ...shared };
+      setZoomPct(Math.round(shared.zoom * 100));
+      userAdjusted.current = true;
+      introDone.current = true;
+      introRef.current = null;
+      fitPending.current = false;
+      sharedView.current = null;
+    }
   }, [networkId]);
 
   const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
@@ -1570,6 +1596,21 @@ export default function Legion3DPage() {
     lastInteract.current = performance.now();
   }, []);
 
+  const copyViewLink = useCallback(async () => {
+    const view = viewRef.current;
+    const params = new URLSearchParams({
+      view: `${view.yaw.toFixed(3)},${view.pitch.toFixed(3)},${view.zoom.toFixed(3)}`,
+    });
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareInfo('已复制视角链接');
+    } catch {
+      setShareInfo('复制失败，请手动复制地址栏');
+    }
+    window.setTimeout(() => setShareInfo(''), 2500);
+  }, []);
+
   const resetView = useCallback(() => {
     yawTarget.current = null;
     viewRef.current = { ...DEFAULT_VIEW };
@@ -2297,6 +2338,17 @@ export default function Legion3DPage() {
         >
           重置视角
         </button>
+        <button
+          type="button"
+          data-testid="legion-3d-copy-view"
+          onClick={() => void copyViewLink()}
+          className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+        >
+          复制视角链接
+        </button>
+        {shareInfo && (
+          <span role="status" data-testid="legion-3d-share-info" className="text-[11px] text-[var(--fg-muted)]">{shareInfo}</span>
+        )}
         <button
           type="button"
           onClick={() => {
