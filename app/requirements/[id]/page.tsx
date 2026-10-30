@@ -10,6 +10,8 @@ import CommentMarkdown from '../../components/CommentMarkdown';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { useNetworkId } from '../../lib/network-context';
 import { peopleOptions, readRequirementPeople, type PersonOption } from '../../lib/requirement-people';
+import { TagChip, useRequirementTags } from '../TagFilter';
+import { editorTagSuggestions, tagColor } from '../../lib/tag-catalog';
 
 /**
  * One requirement — #1633 (read-only).
@@ -100,6 +102,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   // Every read and write names the selected network: a user token can belong to
   // several networks and Hub then refuses to guess.
   const scope = `network_id=${encodeURIComponent(networkId)}`;
+  const { catalog: tagCatalog } = useRequirementTags(networkId);
 
   useEffect(() => {
     let alive = true;
@@ -278,8 +281,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
             <span className={`rounded border px-1.5 py-0.5 ${COLUMN_CHIP[req.column] || COLUMN_CHIP.abandoned}`}>{req.column}</span>
             <span>{req.priority}</span>
             {req.due && <span>due {String(req.due).slice(0, 10)}</span>}
-            {(req.tags || []).map(t => (
-              <span key={t} className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-gray-400">{t}</span>
+            {(req.tags || []).map(name => (
+              <TagChip key={name} name={name} color={tagColor(tagCatalog, name)} className="text-gray-400" />
             ))}
           </div>
           <h1 className="text-lg font-semibold text-white">{req.name}</h1>
@@ -400,6 +403,22 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               />
               <button type="button" data-testid="requirement-save-tags" disabled={busy} onClick={() => void saveTags()} className="rounded bg-[var(--hl)] px-2 py-0.5 text-[10px] text-[var(--bg)] disabled:opacity-60">保存</button>
               <button type="button" onClick={() => { setEditingTags(false); setEditError(''); }} className="text-[10px] text-gray-500 underline">取消</button>
+              {editorTagSuggestions(tagCatalog, tagsDraft).length > 0 && (
+                <span className="ml-1 flex flex-wrap items-center gap-1" data-testid="requirement-tag-suggestions">
+                  {editorTagSuggestions(tagCatalog, tagsDraft).map(suggestion => (
+                    <button
+                      key={suggestion.name}
+                      type="button"
+                      onClick={() => setTagsDraft(prev => (prev.trim() ? `${prev.trim().replace(/[,，]$/, '')}, ${suggestion.name}` : suggestion.name))}
+                      className="inline-flex items-center gap-1 rounded border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+                      data-testid={`requirement-tag-suggestion-${suggestion.name}`}
+                    >
+                      {suggestion.color && <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: suggestion.color }} />}
+                      {suggestion.name}
+                    </button>
+                  ))}
+                </span>
+              )}
             </span>
           ) : (
             <button type="button" data-testid="requirement-edit-tags" onClick={() => { setTagsDraft((req.tags || []).join(', ')); setEditError(''); setEditingTags(true); }} className="text-[11px] text-gray-500 underline hover:text-gray-300">编辑标签</button>
