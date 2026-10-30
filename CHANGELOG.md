@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.153 — 2026-10-31
+
+### Copy a requirement link
+
+- The detail header gains “复制链接”, which copies the absolute URL and confirms
+  with “已复制”; it is a plain clipboard call, so failures simply leave the label
+  unchanged instead of claiming success.
+
 ## 0.6.3-preview.152 — 2026-10-31
 
 ### Escape clears the requirement search
