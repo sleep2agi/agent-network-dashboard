@@ -12,6 +12,7 @@ import { useNetworkId } from '../../lib/network-context';
 import { peopleOptions, readRequirementPeople, type PersonOption } from '../../lib/requirement-people';
 import { TagChip, useRequirementTags } from '../TagFilter';
 import { editorTagSuggestions, tagColor } from '../../lib/tag-catalog';
+import { priorityLabel, priorityTitle } from '../../lib/requirement-priority';
 import { addChecklistItem, checklistPayload, moveChecklistItem, removeChecklistItem, validateChecklist, CHECKLIST_MAX_ITEMS, type ChecklistItem as EditableChecklistItem } from '../../lib/checklist-model';
 
 /**
@@ -308,7 +309,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
           <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
             <span className="tabular-nums">#{req.seq}</span>
             <span className={`rounded border px-1.5 py-0.5 ${COLUMN_CHIP[req.column] || COLUMN_CHIP.abandoned}`}>{req.column}</span>
-            <span>{req.priority}</span>
+            <span title={priorityTitle(req.priority)}>{priorityLabel(req.priority)}</span>
             {req.due && <span>due {String(req.due).slice(0, 10)}</span>}
             {(req.tags || []).map(name => (
               <TagChip key={name} name={name} color={tagColor(tagCatalog, name)} className="text-gray-400" />
@@ -355,7 +356,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               onChange={e => sendPatch({ priority: e.target.value })}
               className="rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs normal-case text-gray-200"
             >
-              {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+              {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{priorityLabel(p)} · {p}</option>)}
             </select>
           </label>
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-600">

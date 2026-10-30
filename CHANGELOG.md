@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.141 — 2026-10-31
+
+### Priorities read P0–P3
+
+- Lists, board cards and the detail header now show the APP’s P0–P3 labels
+  instead of the wire values, with a tooltip that keeps the exact value
+  (`P0 · high`) so nobody has to guess what the API means.
+- The detail priority select offers the same labels, and the wire values in
+  requests are unchanged.
+
 ## 0.6.3-preview.140 — 2026-10-31
 
 ### Priority chips on the requirement page
