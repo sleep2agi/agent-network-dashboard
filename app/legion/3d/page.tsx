@@ -260,7 +260,7 @@ export default function Legion3DPage() {
   const captureRef = useRef<null | {
     startedAt: number; startYaw: number; durationMs: number; mime: string;
     out: HTMLCanvasElement; octx: CanvasRenderingContext2D;
-    recorder: MediaRecorder; stream: MediaStream; chunks: Blob[]; finished: boolean; cancelled: boolean; timer: number | null;
+    recorder: MediaRecorder; stream: MediaStream; chunks: Blob[]; finished: boolean; cancelled: boolean; timer: number | null; safety: number | null;
   }>(null);
   // 交互中（拖动/缩放）先降特效，停手 180ms 后恢复 —— 大网络里保证跟手。
   const interactingUntil = useRef(0);
@@ -1778,6 +1778,7 @@ export default function Legion3DPage() {
       const capture = captureRef.current;
       if (!capture) return;
       if (capture.timer !== null) window.clearInterval(capture.timer);
+      if (capture.safety !== null) window.clearTimeout(capture.safety);
       for (const track of capture.stream.getTracks()) track.stop();
       captureRef.current = null;
       setCapturing(false);
@@ -1798,6 +1799,14 @@ export default function Legion3DPage() {
     };
 
     const startYaw = ((viewRef.current.yaw % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    // 后台标签页会停掉 rAF：循环内永远等不到收尾。兜底定时器保证一定会停，
+    // 即使那一次录出来的帧数不完整，也不会占着 MediaRecorder 不放。
+    const safety = window.setTimeout(() => {
+      const current = captureRef.current;
+      if (!current || current.finished) return;
+      current.finished = true;
+      try { if (current.recorder.state !== 'inactive') current.recorder.stop(); } catch { /* already stopped */ }
+    }, LOOP_DURATION_MS + 2000);
     recorder.start(250);
     captureRef.current = {
       startedAt: performance.now(), startYaw, durationMs: LOOP_DURATION_MS, mime, out, octx,
@@ -1806,6 +1815,7 @@ export default function Legion3DPage() {
         const current = captureRef.current;
         if (current) setCaptureProgress(loopProgress(performance.now() - current.startedAt, current.durationMs));
       }, 200),
+      safety,
     };
     setPresenting(true);
     setCleanView(true);
