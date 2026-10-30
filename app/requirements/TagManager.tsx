@@ -194,7 +194,7 @@ export function TagManager({ catalog, networkId, onClose, onApplied }: {
                   type="submit"
                   disabled={busy}
                   data-testid="tag-manager-submit"
-                  className={`rounded px-3 py-1.5 text-xs text-white disabled:opacity-60 ${confirming ? 'bg-[var(--danger)]' : 'bg-[var(--accent)]'}`}
+                  className={`rounded px-3 py-1.5 text-xs text-[var(--bg)] disabled:opacity-60 ${confirming ? 'bg-[var(--danger)]' : 'bg-[var(--accent)]'}`}
                 >
                   {busy ? '处理中…' : confirming ? '确认删除' : action.kind === 'delete' ? '删除' : '保存'}
                 </button>
