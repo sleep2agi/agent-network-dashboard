@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { buildLegionLayout, toPixel, RING_RADIUS, ORPHAN_GROUP, UNGROUPED, nearestDept } from './legion-layout';
+import { buildLegionLayout, toPixel, RING_RADIUS, ORPHAN_GROUP, UNGROUPED, UNKNOWN_DEPT, nearestDept } from './legion-layout';
 
 const person = (over = {}) => ({
   user_id: 'u1', username: 'vansin', display_name: 'Vincent', role: 'owner',
@@ -310,5 +310,107 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
     expect(nearestDept(ungroupedAgent.id, layout.nodes)).toBeNull();
     expect(nearestDept(orphanAgent.id, layout.nodes)).toBeNull();
     expect(nearestDept('missing', layout.nodes)).toBeNull();
+  });
+
+  // 2026-10-30（通信设计师真实部门树下 4/6 失败复现）：无主 Agent 不是「老 Hub 才有」。
+  // 真实部门树分支曾只放 people 就 return，2D/3D 直接漏画整类 Agent。
+  test('真实部门树：无主 Agent 全部可见，自己的部门优先、未知部门单独成组', () => {
+    const departments = [
+      { id: 'd1', name: '平台', parent_id: null },
+      { id: 'd2', name: '设计', parent_id: null },
+    ];
+    const layout = buildLegionLayout({
+      people: [person({ user_id: 'u1', display_name: 'A', department: { id: 'd1', name: '平台' }, agents: [agent(1)] })],
+      departments,
+      orphans: [
+        { node_id: 'n_none', alias: '无部门无主', department_id: null },
+        { node_id: 'n_known', alias: '已知部门无主', department_id: 'd2' },
+        { node_id: 'n_unknown', alias: '未知部门无主', department_id: 'd_gone' },
+      ],
+    });
+    const groups = layout.nodes.filter(n => n.kind === 'group');
+    const platform = groups.find(g => g.label === '平台');
+    const design = groups.find(g => g.label === '设计');
+    const orphanGroup = groups.find(g => g.label === ORPHAN_GROUP);
+    const unknownGroup = groups.find(g => g.label.startsWith(UNKNOWN_DEPT));
+    const byId = new Map(layout.nodes.map(n => [n.id, n]));
+
+    expect(byId.get('agent:n_known')?.parentId).toBe(design.id);
+    expect(byId.get('agent:n_none')?.parentId).toBe(orphanGroup.id);
+    expect(byId.get('agent:n_unknown')?.parentId).toBe(unknownGroup.id);
+    expect(unknownGroup.label).toContain('d_gone');
+    // 计数与折叠角标按真实可见内容算，不能只算 people。
+    expect(design.agentCount).toBe(1);
+    expect(orphanGroup.agentCount).toBe(1);
+    expect(unknownGroup.agentCount).toBe(1);
+    expect(platform.agentCount).toBe(1);
+    expect(layout.stats).toMatchObject({ people: 1, agents: 4, orphans: 3 });
+    expect(nearestDept('agent:n_unknown', layout.nodes)).toBeNull();
+    expect(nearestDept('agent:n_known', layout.nodes)?.id).toBe(design.id);
+  });
+
+  test('真实部门树：无主 Agent 折叠在部门里时计入隐藏角标，不另起孤立节点', () => {
+    const layout = buildLegionLayout({
+      people: [],
+      departments: [{ id: 'd1', name: '平台', parent_id: null }],
+      orphans: [{ node_id: 'n_1', alias: '被折叠的野生节点', department_id: 'd1' }],
+      collapsed: ['dept:d1'],
+    });
+    const group = layout.nodes.find(n => n.id === 'dept:d1');
+    expect(group.collapsed).toBe(true);
+    expect(group.hiddenAgents).toBe(1);
+    expect(layout.nodes.filter(n => n.kind === 'agent')).toHaveLength(0);
+    expect(layout.stats.collapsed).toBe(1);
+  });
+
+  test('真实部门树：合成分组 id 不与真实部门 id 相撞', () => {
+    const layout = buildLegionLayout({
+      people: [person({ user_id: 'u1', display_name: 'A', department: { id: 'orphans', name: '真orphans' }, agents: [agent(1)] })],
+      departments: [{ id: 'orphans', name: '真orphans', parent_id: null }],
+      orphans: [{ node_id: 'n_x', alias: '无主X', department_id: null }],
+    });
+    const groups = layout.nodes.filter(n => n.kind === 'group');
+    const ids = groups.map(g => g.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(groups.find(g => g.label === '真orphans')?.id).toBe('dept:orphans');
+    const orphanGroup = groups.find(g => g.label === ORPHAN_GROUP);
+    expect(orphanGroup.id).not.toBe('dept:orphans');
+    expect(layout.nodes.find(n => n.id === 'agent:n_x')?.parentId).toBe(orphanGroup.id);
+    expect(layout.nodes.find(n => n.id === 'agent:n_1')?.parentId).toBe('person:u1');
+  });
+
+  test('真实部门树：无主 Agent 的插入顺序不影响布局', () => {
+    const base = {
+      people: [],
+      departments: [{ id: 'd1', name: '平台', parent_id: null }],
+      orphans: [
+        { node_id: 'n_a', alias: 'A', department_id: null },
+        { node_id: 'n_b', alias: 'B', department_id: 'd1' },
+      ],
+    };
+    const a = buildLegionLayout(base);
+    const b = buildLegionLayout({ ...base, orphans: [...base.orphans].reverse() });
+    expect(a.nodes.map(n => [n.id, n.x.toFixed(6), n.y.toFixed(6)]))
+      .toEqual(b.nodes.map(n => [n.id, n.x.toFixed(6), n.y.toFixed(6)]));
+  });
+
+  test('圆心与导出统计把无主 Agent 算进 Agent 总数', () => {
+    const layout = buildLegionLayout({
+      people: [person({ agents: [agent(1)] })],
+      departments: [{ id: 'd1', name: '平台', parent_id: null }],
+      orphans: [{ node_id: 'n_2', alias: '野生', department_id: null }],
+    });
+    expect(layout.stats.agents).toBe(2);
+    expect(layout.stats.orphans).toBe(1);
+    expect(layout.nodes.find(n => n.id === 'core').agentCount).toBe(2);
+  });
+
+  test('真实部门恰好叫「未知部门」时不被当成合成分组', () => {
+    const layout = buildLegionLayout({
+      people: [person({ user_id: 'u1', department: { id: 'd1', name: '未知部门' }, agents: [agent(1)] })],
+      departments: [{ id: 'd1', name: '未知部门', parent_id: null }],
+    });
+    const dept = layout.nodes.find(n => n.kind === 'group');
+    expect(nearestDept('agent:n_1', layout.nodes)?.id).toBe(dept.id);
   });
 });

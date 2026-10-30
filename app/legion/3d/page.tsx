@@ -1051,9 +1051,10 @@ export default function Legion3DPage() {
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
         // 深一层部门在默认缩放下淡出：13 个部门全画会在内圈叠成一团，放大
         // （≥1.8×）或聚焦/选中时才实心显示。
-        // 空部门（memberCount 0）同样淡出：生产 13 个部门只有 1 个有人，
+        // 空部门（没有人也没有 Agent）同样淡出：生产 13 个部门只有 1 个有人，
         // 全实心会让画面全是空泡泡。放大/聚焦/选中时才回到实心。
-        const emptyDept = node.kind === 'group' && (node.memberCount ?? 0) === 0
+        // 「无主 Agent」这类只有 Agent 的分组不算空，否则它一出现就是灰的。
+        const emptyDept = node.kind === 'group' && (node.memberCount ?? 0) + (node.agentCount ?? 0) === 0
           && selectedRef.current !== node.id && !activeSet?.has(node.id) && view.zoom < 1.8;
         const deepDept = node.kind === 'group' && (node.depth ?? 1) > 1
           && view.zoom < 1.8 && selectedRef.current !== node.id && !activeSet?.has(node.id);
@@ -2173,7 +2174,7 @@ export default function Legion3DPage() {
               {selectedNode.kind === 'group' && (
                 <p className="mt-1 text-[11px] text-[var(--fg-muted)]">
                   {selectedNode.leader ? `负责人 ${selectedNode.leader} · ` : '未设负责人 · '}
-                  {selectedNode.memberCount} 人（含下级） · 第 {selectedNode.depth} 层
+                  {selectedNode.memberCount} 人（含下级） · {selectedNode.agentCount} Agent · 第 {selectedNode.depth} 层
                 </p>
               )}
               {selectedNode.kind === 'person' && (
