@@ -62,3 +62,24 @@ describe('tag management (Hub tags/ops)', () => {
     expect(tagColor(cleared, 'UI')).toBeNull();
   });
 });
+
+describe('tag tree create/move', () => {
+  test('create and move validation plus wording', async () => {
+    const { validateTagCreate, validateTagMove, tagTreeMessage, applyCreateToCatalog, applyMoveToCatalog } = await import('./tag-ops');
+    expect(validateTagCreate('子标签', null)).toBeNull();
+    expect(validateTagCreate('子标签', '需求')).toBeNull();
+    expect(validateTagCreate('x'.repeat(21), null)).toContain('不合法');
+    expect(validateTagCreate('ok', '')).toContain('父标签');
+    expect(validateTagMove('a', 'a')).toContain('自己');
+    expect(tagTreeMessage(409)).toContain('已经存在');
+    expect(tagTreeMessage(400, 'tag_parent_cycle')).toContain('子标签');
+    expect(tagTreeMessage(400, 'tag_depth_exceeded')).toContain('4 层');
+    expect(tagTreeMessage(404, 'tag_parent_not_found')).toContain('父标签');
+    expect(tagTreeMessage(400, 'invalid_tag_parent_id')).toContain('父标签');
+
+    const created = applyCreateToCatalog(catalog, '新子', 'UI');
+    expect(created.nodes.find(node => node.name === '新子')?.depth).toBe(2);
+    const moved = applyMoveToCatalog(created, '新子', null);
+    expect(moved.nodes.find(node => node.name === '新子')?.depth).toBe(1);
+  });
+});

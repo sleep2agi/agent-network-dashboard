@@ -154,3 +154,69 @@ export function editorTagSuggestions(catalog: TagCatalog | null, draft: string, 
   );
   return orderedTags(catalog).filter(row => !current.has(row.name)).slice(0, limit);
 }
+
+export interface TagTreeRow extends TagSuggestion {
+  parent: string | null;
+  depth: number;
+}
+
+/**
+ * Flatten the catalogue into display order: each root followed by its children,
+ * siblings by usage. Tags the Hub never registered still show as roots.
+ */
+export function tagTreeRows(catalog: TagCatalog | null): TagTreeRow[] {
+  if (!catalog) return [];
+  const rows = orderedTags(catalog);
+  const byParent = new Map<string | null, TagSuggestion[]>();
+  const names = new Set(rows.map(row => row.name));
+  const parentOf = new Map<string, string | null>();
+  const depthOf = new Map<string, number>();
+  for (const node of catalog.nodes) {
+    parentOf.set(node.name, node.parent_id);
+    depthOf.set(node.name, node.parent_id && names.has(node.parent_id) ? Math.max(2, node.depth) : 1);
+  }
+  const roots: TagSuggestion[] = [];
+  for (const row of rows) {
+    const parent = parentOf.get(row.name);
+    const resolved = parent && names.has(parent) && parent !== row.name ? parent : null;
+    if (!resolved) { roots.push(row); continue; }
+    const bucket = byParent.get(resolved) ?? [];
+    bucket.push(row);
+    byParent.set(resolved, bucket);
+  }
+  const out: TagTreeRow[] = [];
+  const seen = new Set<string>();
+  const walk = (row: TagSuggestion, depth: number, parent: string | null) => {
+    if (seen.has(row.name)) return;
+    seen.add(row.name);
+    out.push({ ...row, parent, depth });
+    for (const child of byParent.get(row.name) ?? []) walk(child, depth + 1, row.name);
+  };
+  for (const root of roots) walk(root, 1, null);
+  // A cycle in the Hub data must not hide tags: append anything unreachable.
+  for (const row of rows) if (!seen.has(row.name)) walk(row, 1, null);
+  return out;
+}
+
+/** Names that would create a cycle if `tag` were moved under them. */
+export function tagDescendants(catalog: TagCatalog | null, tag: string): Set<string> {
+  const blocked = new Set<string>([tag]);
+  if (!catalog) return blocked;
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const node of catalog.nodes) {
+      if (node.parent_id && blocked.has(node.parent_id) && !blocked.has(node.name)) {
+        blocked.add(node.name);
+        grew = true;
+      }
+    }
+  }
+  return blocked;
+}
+
+/** Parent candidates for a tree edit: depth < 4, not the tag itself or its subtree. */
+export function tagParentOptions(catalog: TagCatalog | null, tag?: string): TagTreeRow[] {
+  const blocked = tag ? tagDescendants(catalog, tag) : new Set<string>();
+  return tagTreeRows(catalog).filter(row => row.depth < 4 && !blocked.has(row.name));
+}

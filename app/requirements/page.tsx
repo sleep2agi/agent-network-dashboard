@@ -127,6 +127,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
   const { catalog: tagCatalog, refresh: refreshTagCatalog } = useRequirementTags(networkId);
   const [tagOpsSupported, setTagOpsSupported] = useState(false);
+  const [tagTreeSupported, setTagTreeSupported] = useState(false);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const personOptions = useMemo(() => peopleCatalog.status === 'ready' ? peopleOptions(peopleCatalog.people) : [], [peopleCatalog]);
   const personNames = useMemo(() => new Map(personOptions.map(p => [p.value, p.label])), [personOptions]);
@@ -250,6 +251,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         const roles = Array.isArray(caps) && caps.includes('agent_owner');
         setResponsibilitySupported(roles);
         setTagOpsSupported(Array.isArray(caps) && caps.includes('tag_ops'));
+        setTagTreeSupported(Array.isArray(caps) && caps.includes('tag_tree'));
         if ((owner || agent) && !roles) throw new Error('当前 Hub 未提供双角色筛选能力，请清空责任归属后重试');
       };
       checkProjects(data.capabilities);
@@ -900,6 +902,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           <TagManager
             catalog={tagCatalog}
             networkId={networkId}
+            treeSupported={tagTreeSupported}
             onClose={() => setTagManagerOpen(false)}
             onApplied={() => { refreshTagCatalog(); void load({ silent: true }); }}
           />
