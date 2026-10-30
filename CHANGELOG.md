@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.151 — 2026-10-31
+
+### Legion 2D: department head-count badges
+
+- Department discs now carry a small “N 人 · M A” line under the name, so the
+  chart shows team size without opening the side panel. It follows the existing
+  zoom rule (visible from ~90%, always for the selected/hovered department) and
+  is plain SVG text, so the PNG export and both themes keep working.
+
 ## 0.6.3-preview.150 — 2026-10-31
 
 ### The 3D legion view remembers where you were

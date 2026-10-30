@@ -186,6 +186,8 @@ The list can group loaded rows into a parent/child tree (`tree=1`).
 
 The 3D camera is remembered per network; `?view=` and reset take precedence.
 
+Department discs in the 2D chart show their head count.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
