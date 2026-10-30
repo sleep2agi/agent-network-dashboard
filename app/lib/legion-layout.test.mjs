@@ -344,7 +344,7 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
     expect(orphanGroup.agentCount).toBe(1);
     expect(unknownGroup.agentCount).toBe(1);
     expect(platform.agentCount).toBe(1);
-    expect(layout.stats).toMatchObject({ people: 1, agents: 1, orphans: 3 });
+    expect(layout.stats).toMatchObject({ people: 1, agents: 4, orphans: 3 });
     expect(nearestDept('agent:n_unknown', layout.nodes)).toBeNull();
     expect(nearestDept('agent:n_known', layout.nodes)?.id).toBe(design.id);
   });
@@ -392,5 +392,25 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
     const b = buildLegionLayout({ ...base, orphans: [...base.orphans].reverse() });
     expect(a.nodes.map(n => [n.id, n.x.toFixed(6), n.y.toFixed(6)]))
       .toEqual(b.nodes.map(n => [n.id, n.x.toFixed(6), n.y.toFixed(6)]));
+  });
+
+  test('圆心与导出统计把无主 Agent 算进 Agent 总数', () => {
+    const layout = buildLegionLayout({
+      people: [person({ agents: [agent(1)] })],
+      departments: [{ id: 'd1', name: '平台', parent_id: null }],
+      orphans: [{ node_id: 'n_2', alias: '野生', department_id: null }],
+    });
+    expect(layout.stats.agents).toBe(2);
+    expect(layout.stats.orphans).toBe(1);
+    expect(layout.nodes.find(n => n.id === 'core').agentCount).toBe(2);
+  });
+
+  test('真实部门恰好叫「未知部门」时不被当成合成分组', () => {
+    const layout = buildLegionLayout({
+      people: [person({ user_id: 'u1', department: { id: 'd1', name: '未知部门' }, agents: [agent(1)] })],
+      departments: [{ id: 'd1', name: '未知部门', parent_id: null }],
+    });
+    const dept = layout.nodes.find(n => n.kind === 'group');
+    expect(nearestDept('agent:n_1', layout.nodes)?.id).toBe(dept.id);
   });
 });

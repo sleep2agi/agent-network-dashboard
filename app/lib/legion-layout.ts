@@ -369,8 +369,11 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
   const edges: LegionEdge[] = [];
   const collapsed = new Set(input.collapsed ?? []);
   const title = input.title ?? '军团';
-  const agentCount = input.people.reduce((n, p) => n + p.agents.length, 0);
+  const ownedAgentCount = input.people.reduce((n, p) => n + p.agents.length, 0);
   const orphanCount = input.orphans?.length ?? 0;
+  // 「这张图上画了多少 Agent」：无主 Agent 也要算，否则圆心/导出副标题
+  // 与画布上的点数量对不上（统计 1、图上 4）。
+  const agentCount = ownedAgentCount + orphanCount;
   let order = 0;
 
   nodes.push({
@@ -544,7 +547,7 @@ export function nearestDept(nodeId: string, nodes: LegionNode[]): LegionNode | n
   if (!cur) return null;
   for (let parent = cur.parentId ? byId.get(cur.parentId) : null; parent; parent = parent.parentId ? byId.get(parent.parentId) : null) {
     if (parent.kind !== 'group') continue;
-    if (parent.label === UNGROUPED || parent.label === ORPHAN_GROUP || parent.label.startsWith(UNKNOWN_DEPT)) return null;
+    if (parent.label === UNGROUPED || parent.label === ORPHAN_GROUP || parent.id.startsWith('dept:unknown:')) return null;
     return parent;
   }
   return null;

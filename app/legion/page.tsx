@@ -968,11 +968,11 @@ export default function LegionPage() {
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); toggleCollapse(node.id); } }}
                                 tabIndex={0}
                                 role="button"
-                                aria-label={`展开 ${node.label}（${node.hiddenMembers ?? 0} 人）`}
+                                aria-label={`展开 ${node.label}（${node.hiddenMembers ?? 0} 人 · ${node.hiddenAgents ?? 0} Agent）`}
                               >
                                 <circle cx={r + 2} cy={-(r + 2)} r={9} fill="var(--bg)" stroke="var(--hl)" strokeWidth={1} />
                                 <text x={r + 2} y={-(r + 2) + 3} textAnchor="middle" className="fill-[var(--hl)] text-[9px]">
-                                  +{node.hiddenMembers ?? 0}
+                                  +{(node.hiddenMembers ?? 0) + (node.hiddenAgents ?? 0)}
                                 </text>
                               </g>
                             )}
