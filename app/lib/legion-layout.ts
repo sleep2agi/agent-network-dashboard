@@ -121,6 +121,8 @@ export interface LegionLayout {
 
 export const UNGROUPED = '未分组';
 export const ORPHAN_GROUP = '无主 Agent';
+/** Agent 自报了一个部门 id，但当前部门树里没有它：不能吞掉，也不能并入真实部门。 */
+export const UNKNOWN_DEPT = '未知部门';
 
 /** 环半径：部门贴近圆心，人第二层，Agent 在最外。 */
 export const RING_RADIUS = { core: 0, group: 0.5, person: 0.84, agent: 1 } as const;
@@ -244,6 +246,27 @@ function buildTree(input: LegionInput): { roots: DeptNode[]; depth: number } {
           return created;
         })();
       target.people.push(person);
+    }
+    // 无主 Agent（Hub agents_without_owner）同样必须落进这张树。
+    // 旧实现只在这个分支放 people 就 return，2D/3D 因此漏画整类 Agent。
+    // 归属优先级：Agent 自己的 department_id → 真实部门；null → 无主 Agent 组；
+    // 非空但部门树没定义 → 保留一个「未知部门」组，不静默并进别的部门。
+    const orphanRoot = (id: string, label: string): DeptNode => {
+      const existing = orphans.find(n => n.id === id);
+      if (existing) return existing;
+      const created: DeptNode = {
+        id, label, parentId: null, depth: 1, sort: 0,
+        children: [], people: [], orphans: [], weight: 1, memberCount: 0, agentCount: 0,
+      };
+      orphans.push(created);
+      return created;
+    };
+    for (const agent of [...(input.orphans ?? [])].sort((a, b) => a.alias.localeCompare(b.alias, 'zh-Hans-CN') || a.node_id.localeCompare(b.node_id))) {
+      const deptId = agent.department_id;
+      const dept = deptId ? byId.get(deptId) : undefined;
+      const target = dept
+        ?? (deptId ? orphanRoot(`dept:unknown:${deptId}`, `${UNKNOWN_DEPT} · ${deptId}`) : orphanRoot('dept:orphans', ORPHAN_GROUP));
+      target.orphans.push(agent);
     }
     // 部门存在但一个人都没有：仍然画出来（编制的空位也是信息）。
     const roots = [...orphans];
@@ -511,7 +534,7 @@ export function nearestDept(nodeId: string, nodes: LegionNode[]): LegionNode | n
   if (!cur) return null;
   for (let parent = cur.parentId ? byId.get(cur.parentId) : null; parent; parent = parent.parentId ? byId.get(parent.parentId) : null) {
     if (parent.kind !== 'group') continue;
-    if (parent.label === UNGROUPED || parent.label === ORPHAN_GROUP) return null;
+    if (parent.label === UNGROUPED || parent.label === ORPHAN_GROUP || parent.label.startsWith(UNKNOWN_DEPT)) return null;
     return parent;
   }
   return null;
