@@ -69,3 +69,4 @@ docs/screenshots/
 
 # 发版备份目录（.next.prev-*）不要进仓库
 /.next.prev-*
+.gstack/

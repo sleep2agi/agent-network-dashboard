@@ -14,7 +14,10 @@ Format: chronological release notes; each entry lists what *changed for a user* 
   levels, 24 people and ~36 agents. Both the 2D chart and the 3D topology are
   rendered and screenshotted at that size, so layout or label regressions show
   up before users see them (the previous fixture had 4 departments and 1 member).
-- No product change: this round only makes the evidence realistic.
+- The dense fixture immediately exposed two crowding problems, fixed in the same
+  release: member names are no longer drawn all at once past 16 people (they
+  appear on hover, selection or zoom), and the 3D view no longer repeats a
+  department name that already fits inside its disc.
 
 ## 0.6.3-preview.153 — 2026-10-31
 
