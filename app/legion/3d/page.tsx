@@ -970,8 +970,10 @@ export default function Legion3DPage() {
       if (selectedNode && !interacting) {
         const { rx, ry } = nodeBody(selectedNode, layout.stats.people);
         const halo = haloFor(tk.accent);
-        const hr = Math.max(120, (rx + ry) * 5.5);
-        ctx.globalAlpha = dark ? 0.5 : 0.3;
+        // 半径跟着节点走，但别把部门大的椭圆放大成一片背景光；
+        // 浅底上更要收，否则整块画布都被染绿。
+        const hr = Math.max(104, (rx + ry) * 3.2);
+        ctx.globalAlpha = dark ? 0.42 : 0.18;
         ctx.drawImage(halo, selectedNode.projected.x - hr / 2, selectedNode.projected.y - hr / 2, hr, hr);
         ctx.globalAlpha = 1;
       }
