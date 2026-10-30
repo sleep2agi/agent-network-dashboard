@@ -327,7 +327,7 @@ function buildTree(input: LegionInput): { roots: DeptNode[]; depth: number } {
 /** 深度 → 半径。一层时保持 v2 的 0.5，多层时在最内 0.30 与 0.50 之间插值。 */
 /** 部门节点在世界坐标里的半径：层级越深越小（内层环会挤，必须收）。 */
 export function deptWorldRadius(depth: number): number {
-  return depth <= 1 ? 0.05 : 0.036;
+  return depth <= 1 ? 0.05 : 0.042;
 }
 
 function deptRadius(depth: number, maxDepth: number): number {

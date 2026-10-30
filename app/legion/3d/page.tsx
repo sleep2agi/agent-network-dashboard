@@ -1373,7 +1373,7 @@ export default function Legion3DPage() {
         // 远看全是「白饼」（admin 截图里最扎眼的就是这个）。
         if (!dim) {
           const textColor = dark ? tk.bg : tk.fg;
-          if (node.kind === 'group' && radiusPx >= 11) {
+          if (node.kind === 'group' && radiusPx >= 9) {
             const short = Array.from(node.label.replace(/[*+\s]/g, '')).slice(0, rx >= 28 ? 3 : 2).join('');
             if (short) {
               const fs = Math.min(13, Math.max(11, ry * 1.25));
@@ -1430,7 +1430,7 @@ export default function Legion3DPage() {
         // 标签：Agent 太多，只有近处或高亮时才画，避免糊成一片。
         // 部门的短名已经写在圆点里；名字短到圆心能写全时，外面再画一个一样的
         // 名字只是重复（密集网络里尤其明显），只有悬停/选中才补。
-        const shortInside = node.kind === 'group' && radiusPx >= 11
+        const shortInside = node.kind === 'group' && radiusPx >= 9
           && Array.from(node.label.replace(/[*+\s]/g, '')).length <= (rx >= 28 ? 3 : 2);
         const groupWanted = node.kind === 'group'
           && ((node.span ?? 0) >= 1.0 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55);

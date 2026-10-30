@@ -144,7 +144,9 @@ export type FramingBody = { x: number; y: number } & (ScreenAxes | { radius: num
 /** One department shape for paint, feedback, picking and label/framing bounds. */
 export function departmentDisc(radius: number): ScreenAxes {
   const rx = Math.max(16, 2.1 * radius);
-  return { rx, ry: 0.42 * rx };
+  // 0.42 的扁率在小半径上会变成一条细缝：子部门看不见是「盘」，只是一道灰弧。
+  // 抬到 0.52 后内层子部门仍比一级部门薄，但读得出是部门。
+  return { rx, ry: 0.52 * rx };
 }
 
 function bodyBounds(bodies: ReadonlyArray<FramingBody>) {
