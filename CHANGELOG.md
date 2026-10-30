@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.146 — 2026-10-31
+
+### Parent breadcrumb on the requirement detail
+
+- A requirement that has a parent now shows “上级：#90 A 父需求” above its title,
+  with each ancestor linked; the chain walks up to three levels, stops on a read
+  failure or a cycle, and never invents a parent.
+
 ## 0.6.3-preview.145 — 2026-10-31
 
 ### “/” focuses the requirement search
