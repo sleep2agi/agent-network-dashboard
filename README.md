@@ -150,6 +150,8 @@ structure and export parameters.
 Department bands in the 3D view carry a seat dot per member and a gradient edge,
 still inside the single-colour hierarchy.
 
+A “我负责” chip narrows the list to requirements owned by the signed-in Hub user.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
