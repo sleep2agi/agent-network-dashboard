@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.125 — 2026-10-30
+
+### Bulk-move and bulk-prioritise board cards
+
+- A “批量” mode adds checkboxes to board cards and a bar with the selected count,
+  a target status, a priority, and “清空选择”.
+- Every selected item is written with the current `network_id`; successes refresh
+  silently, partial failures name the counts and Hub’s reason and keep only the
+  failed cards selected for retry. Leaving bulk mode or changing filters clears
+  the selection.
+
 ## 0.6.3-preview.124 — 2026-10-30
 
 ### Collapse board columns and tuck away abandoned work

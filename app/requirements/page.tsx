@@ -112,6 +112,11 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [createNotice, setCreateNotice] = useState('');
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [showAbandoned, setShowAbandoned] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState('');
+  const [bulkError, setBulkError] = useState('');
   const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
   const personOptions = useMemo(() => peopleCatalog.status === 'ready' ? peopleOptions(peopleCatalog.people) : [], [peopleCatalog]);
@@ -155,6 +160,13 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     } catch { /* ignore malformed preferences */ }
   }, []);
 
+  const toggleBulkMode = () => {
+    setBulkMode(value => {
+      if (value) { setSelectedIds(new Set()); setBulkMessage(''); setBulkError(''); }
+      return !value;
+    });
+  };
+
   const toggleColumn = useCallback((key: string) => {
     setCollapsedColumns(prev => {
       const next = new Set(prev);
@@ -165,6 +177,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   }, []);
 
   const setParam = useCallback((patch: Record<string, string>) => {
+    setSelectedIds(new Set());
     // This page fetches on the client. Next's native history integration makes
     // the real URL authoritative immediately, without a cancellable RSC trip.
     const next = new URLSearchParams(window.location.search);
@@ -321,6 +334,54 @@ function RequirementsContent({ networkId }: { networkId: string }) {
       setMovingId(null);
     }
   }, [columnOverrides, load, networkId]);
+
+  useEffect(() => {
+    setSelectedIds(prev => {
+      if (prev.size === 0) return prev;
+      const live = new Set(rows.map(row => row.id));
+      const next = new Set([...prev].filter(id => live.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [rows]);
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const bulkPatch = async (fields: Record<string, unknown>) => {
+    const ids = [...selectedIds];
+    if (!ids.length || bulkBusy) return;
+    setBulkBusy(true);
+    setBulkMessage('');
+    setBulkError('');
+    const results = await Promise.all(ids.map(async id => {
+      try {
+        const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}?network_id=${encodeURIComponent(networkId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fields),
+        });
+        const data = await res.json().catch(() => ({}));
+        return { id, error: res.ok && data.ok !== false ? null : (data?.message || data?.error || `hub_${res.status}`) };
+      } catch {
+        return { id, error: '网络错误' };
+      }
+    }));
+    const failures = results.filter(result => result.error);
+    if (failures.length) {
+      setBulkError(`成功 ${ids.length - failures.length} 项，失败 ${failures.length} 项：${failures[0].error}`);
+      setSelectedIds(new Set(failures.map(item => item.id)));
+    } else {
+      setBulkMessage(`已更新 ${ids.length} 项`);
+      setSelectedIds(new Set());
+    }
+    if (failures.length < ids.length) await load({ silent: true });
+    setBulkBusy(false);
+  };
 
   const counts = useMemo(() => {
     const out: Record<string, number> = {};
@@ -523,8 +584,17 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 {moveError || moveNotice}
               </p>
             )}
-          {status !== 'abandoned' && (
-            <div className="mb-2 flex justify-end">
+          <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              data-testid="requirements-bulk-toggle"
+              aria-pressed={bulkMode}
+              onClick={toggleBulkMode}
+              className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${bulkMode ? 'bg-[var(--bg-elevated)] text-[var(--fg)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+            >
+              {bulkMode ? '退出批量' : '批量'}
+            </button>
+            {status !== 'abandoned' && (
               <button
                 type="button"
                 data-testid="requirements-abandoned-toggle"
@@ -535,6 +605,35 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               >
                 {showAbandoned ? '收起已放弃' : `已放弃 ${counts.abandoned || 0}`}
               </button>
+            )}
+          </div>
+          {bulkMode && (
+            <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs" data-testid="requirements-bulk-bar">
+              <span className="text-[var(--fg-muted)]">已选 {selectedIds.size} 项</span>
+              <select
+                aria-label="批量移动到状态"
+                value=""
+                disabled={bulkBusy || selectedIds.size === 0}
+                onChange={event => { if (event.target.value) void bulkPatch({ column: event.target.value }); }}
+                className="rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+              >
+                <option value="">移到…</option>
+                {COLUMNS.filter(item => item.key).map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
+              </select>
+              <select
+                aria-label="批量设置优先级"
+                value=""
+                disabled={bulkBusy || selectedIds.size === 0}
+                onChange={event => { if (event.target.value) void bulkPatch({ priority: event.target.value }); }}
+                className="rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+              >
+                <option value="">优先级…</option>
+                {(['high', 'normal', 'low', 'lowest'] as const).map(value => <option key={value} value={value}>{value}</option>)}
+              </select>
+              <button type="button" onClick={() => setSelectedIds(new Set())} disabled={bulkBusy || selectedIds.size === 0} className="text-[11px] text-[var(--fg-muted)] underline disabled:opacity-50">清空选择</button>
+              {bulkBusy && <span className="text-[11px] text-[var(--fg-muted)]">批量写入中…</span>}
+              {bulkMessage && <span role="status" className="text-[11px] text-[var(--fg-muted)]">{bulkMessage}</span>}
+              {bulkError && <span role="alert" className="text-[11px] text-[var(--danger)]">{bulkError}</span>}
             </div>
           )}
           <div className="-mx-1 min-w-0 overflow-x-auto pb-1" data-testid="requirements-board">
@@ -644,7 +743,20 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                                 </span>
                               )}
                             </Link>
-                            <div className="flex items-center justify-end px-2 pb-1.5">
+                            <div className="flex items-center justify-end gap-2 px-2 pb-1.5">
+                              {bulkMode && (
+                                <label className="mr-auto flex items-center gap-1 text-[10px] text-[var(--fg-muted)]">
+                                  <input
+                                    type="checkbox"
+                                    aria-label={`选择 #${row.seq} ${row.name}`}
+                                    checked={selectedIds.has(row.id)}
+                                    disabled={bulkBusy}
+                                    onChange={() => toggleSelected(row.id)}
+                                    className="h-3.5 w-3.5 accent-[var(--hl)]"
+                                  />
+                                  选择
+                                </label>
+                              )}
                               <select
                                 aria-label={`移动到状态 ${row.seq}`}
                                 value={columnOf(row)}
