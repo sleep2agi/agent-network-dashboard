@@ -957,8 +957,9 @@ export default function Legion3DPage() {
       const coreCenter = byIdProbe();
       if (coreCenter) {
         const halo = ctx.createRadialGradient(coreCenter.x, coreCenter.y, 0, coreCenter.x, coreCenter.y, Math.min(size.width, size.height) * 0.34);
-        halo.addColorStop(0, hexToRgba(tk.accent, dark ? 0.16 : 0.08));
-        halo.addColorStop(0.45, hexToRgba(tk.accent, dark ? 0.05 : 0.025));
+        // 浅底上这层核心光晕是整张图泛绿的主因：只留到能看出重心为止。
+        halo.addColorStop(0, hexToRgba(tk.accent, dark ? 0.16 : 0.035));
+        halo.addColorStop(0.45, hexToRgba(tk.accent, dark ? 0.05 : 0.012));
         halo.addColorStop(1, hexToRgba(tk.accent, 0));
         ctx.fillStyle = halo;
         ctx.fillRect(0, 0, size.width, size.height);
