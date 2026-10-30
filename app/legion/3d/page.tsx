@@ -1436,7 +1436,8 @@ export default function Legion3DPage() {
           // 一定会压到邻居身上（生产截图里 6 个部门名叠成一团）。窄扇区在
           // 悬停/选中/放大时才出名字。
           (node.kind === 'group' && ((node.span ?? 0) >= 1.0 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55)) ||
-          (!heavy && node.kind === 'person' && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
+          (!heavy && node.kind === 'person' && layout.stats.people <= LEGION_LABEL_PEOPLE
+            && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
           (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
           hoverRef.current === node.id;
