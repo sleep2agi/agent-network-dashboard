@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.132 — 2026-10-30
+
+### Legion 3D: calmer light theme
+
+- The light theme no longer washes the canvas with a broad accent tint: the
+  centre glow is about half as strong, the far falloff is thinner, and a very
+  light vignette pulls the eye back to the middle.
+- Department bands and node outlines read a step stronger on light surfaces,
+  while the dark presentation look is unchanged.
+- No colours added for departments (the design rule stays “hierarchy by
+  lightness only”), and no camera/export changes.
+
 ## 0.6.3-preview.131 — 2026-10-30
 
 ### Legion 3D: spotlight, dust parallax and a stronger focus

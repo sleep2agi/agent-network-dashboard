@@ -702,8 +702,10 @@ export default function Legion3DPage() {
         size.width / 2, size.height * 0.5, 0,
         size.width / 2, size.height * 0.5, Math.max(size.width, size.height) * 0.7,
       );
-      grad.addColorStop(0, hexToRgba(tk.accent, dark ? 0.11 : 0.06));
-      grad.addColorStop(0.55, hexToRgba(tk.accent, dark ? 0.035 : 0.02));
+      // 浅底上大面积的 accent 晕染会把整张图洗成一片绿；白天只留很薄一层，
+      // 深底保持原来的呼吸感。
+      grad.addColorStop(0, hexToRgba(tk.accent, dark ? 0.11 : 0.032));
+      grad.addColorStop(0.55, hexToRgba(tk.accent, dark ? 0.035 : 0.012));
       grad.addColorStop(1, 'rgba(0,0,0,0)');
       g2.fillStyle = grad;
       g2.fillRect(0, 0, size.width, size.height);
@@ -715,6 +717,17 @@ export default function Legion3DPage() {
         g2.fill();
       }
       g2.globalAlpha = 1;
+      if (!dark) {
+        // 浅底没有暗部兜住画面，四周会散开；一层极轻的暗角把视线收回中心。
+        const vig = g2.createRadialGradient(
+          size.width / 2, size.height * 0.5, Math.min(size.width, size.height) * 0.28,
+          size.width / 2, size.height * 0.5, Math.max(size.width, size.height) * 0.78,
+        );
+        vig.addColorStop(0, hexToRgba(tk.fg, 0));
+        vig.addColorStop(1, hexToRgba(tk.fg, 0.055));
+        g2.fillStyle = vig;
+        g2.fillRect(0, 0, size.width, size.height);
+      }
       return cv;
     };
     const draw = (now: number) => {
@@ -931,9 +944,9 @@ export default function Legion3DPage() {
         ctx.closePath();
         ctx.fillStyle = lit ? tk.accent : tk.info;
         const dimAlpha = focusingDept ? 0.015 : 0.04;
-        ctx.globalAlpha = activeSet ? (lit ? (focusingDept ? 0.26 : 0.22) : dimAlpha) : 0.085;
+        ctx.globalAlpha = activeSet ? (lit ? (focusingDept ? 0.26 : 0.22) : dimAlpha) : (dark ? 0.085 : 0.11);
         ctx.fill();
-        ctx.globalAlpha = activeSet ? (lit ? (focusingDept ? 0.55 : 0.5) : (focusingDept ? 0.03 : 0.08)) : 0.22;
+        ctx.globalAlpha = activeSet ? (lit ? (focusingDept ? 0.55 : 0.5) : (focusingDept ? 0.03 : 0.08)) : (dark ? 0.22 : 0.3);
         ctx.strokeStyle = lit ? tk.accent : tk.info;
         ctx.lineWidth = 1;
         ctx.stroke();
@@ -944,8 +957,9 @@ export default function Legion3DPage() {
       const coreCenter = byIdProbe();
       if (coreCenter) {
         const halo = ctx.createRadialGradient(coreCenter.x, coreCenter.y, 0, coreCenter.x, coreCenter.y, Math.min(size.width, size.height) * 0.34);
-        halo.addColorStop(0, hexToRgba(tk.accent, dark ? 0.16 : 0.08));
-        halo.addColorStop(0.45, hexToRgba(tk.accent, dark ? 0.05 : 0.025));
+        // 浅底上这层核心光晕是整张图泛绿的主因：只留到能看出重心为止。
+        halo.addColorStop(0, hexToRgba(tk.accent, dark ? 0.16 : 0.035));
+        halo.addColorStop(0.45, hexToRgba(tk.accent, dark ? 0.05 : 0.012));
         halo.addColorStop(1, hexToRgba(tk.accent, 0));
         ctx.fillStyle = halo;
         ctx.fillRect(0, 0, size.width, size.height);
@@ -956,8 +970,10 @@ export default function Legion3DPage() {
       if (selectedNode && !interacting) {
         const { rx, ry } = nodeBody(selectedNode, layout.stats.people);
         const halo = haloFor(tk.accent);
-        const hr = Math.max(120, (rx + ry) * 5.5);
-        ctx.globalAlpha = dark ? 0.5 : 0.3;
+        // 半径跟着节点走，但别把部门大的椭圆放大成一片背景光；
+        // 浅底上更要收，否则整块画布都被染绿。
+        const hr = Math.max(104, (rx + ry) * 3.2);
+        ctx.globalAlpha = dark ? 0.42 : 0.18;
         ctx.drawImage(halo, selectedNode.projected.x - hr / 2, selectedNode.projected.y - hr / 2, hr, hr);
         ctx.globalAlpha = 1;
       }
@@ -1205,7 +1221,7 @@ export default function Legion3DPage() {
         } else {
           // 浅底（神明 phalanx18 的参数）：7px 彩色 .18 外圈 + 白芯 + 3.5px 描边。
           // 浅底不要辉光，靠描边定轮廓。
-          ctx.fillStyle = hexToRgba(color, 0.18);
+          ctx.fillStyle = hexToRgba(color, 0.14);
           ctx.beginPath();
           ctx.arc(p.x, p.y, radiusPx + 7, 0, Math.PI * 2);
           ctx.fill();
