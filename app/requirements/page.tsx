@@ -13,6 +13,7 @@ import { TagManager } from './TagManager';
 import { tagColor } from '../lib/tag-catalog';
 import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
 import { PRIORITY_KEYS, isPriorityKey, priorityLabel, priorityTitle } from '../lib/requirement-priority';
+import { buildTreeRows } from '../lib/requirement-tree';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
 import { ResponsibilityFilter, useRequirementPeople } from './ResponsibilityFilter';
@@ -41,6 +42,7 @@ interface Requirement {
   agent_owner?: RequirementPerson | null;
   participants?: RequirementPerson[];
   project_id?: string | null;
+  parent_id?: string | null;
   checklist_count?: { total: number; done: number };
   children?: { total: number; done: number };
   updatedAt?: string;
@@ -95,6 +97,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const includeArchived = searchParams.get('include_archived') !== '0';
   const searching = q.trim().length > 0;
   const board = searchParams.get('view') === 'board';
+  const treeMode = searchParams.get('tree') === '1';
+  const [collapsedTree, setCollapsedTree] = useState<Set<string>>(new Set());
   const sortSpec = parseSort(searchParams);
   const overdue = searchParams.get('overdue') === '1';
   const meId = useCurrentUserId();
@@ -454,6 +458,12 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     [participatingRows, sortSpec.key, sortSpec.dir],
   );
 
+  // 树状视图：只在列表里生效，按 parent_id 在已加载行上分组；父不在本页的行仍当根。
+  const treeRows = useMemo(
+    () => (treeMode ? buildTreeRows(orderedRows, collapsedTree) : null),
+    [treeMode, orderedRows, collapsedTree],
+  );
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-gray-200">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
@@ -511,6 +521,16 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 );
               })}
             </div>
+            <button
+              type="button"
+              aria-pressed={treeMode}
+              data-testid="requirements-view-tree"
+              title="按 parent_id 在已加载结果里分层显示"
+              onClick={() => setParam({ tree: treeMode ? '' : '1', q: qInput, tag: tagInput })}
+              className={`rounded-md border px-2 py-1 text-xs transition-colors ${treeMode ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
+            >
+              树状
+            </button>
           <button
             type="button"
             onClick={() => { setProjectRefresh(n => n + 1); void load(); }}
@@ -961,12 +981,33 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           </>
         ) : (
           <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
-            {orderedRows.map(row => {
+            {(treeRows ?? orderedRows.map(row => ({ row, depth: 0, hasChildren: false }))).map(({ row, depth, hasChildren }) => {
               const chk = row.checklist_count;
               const kids = row.children;
               return (
-                <li key={row.id} className="hover:bg-[var(--bg-secondary)]/60">
-                  <Link href={`/requirements/${row.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4">
+                <li key={row.id} data-depth={treeMode ? depth : undefined} className="hover:bg-[var(--bg-secondary)]/60">
+                  {treeMode && (
+                    <span className="inline-flex w-5 justify-center align-middle" style={{ marginLeft: 8 + depth * 16 }}>
+                      {hasChildren ? (
+                        <button
+                          type="button"
+                          aria-label={collapsedTree.has(row.id) ? `展开子需求 ${row.seq}` : `收起子需求 ${row.seq}`}
+                          data-testid={`requirements-tree-toggle-${row.id}`}
+                          onClick={() => setCollapsedTree(prev => {
+                            const next = new Set(prev);
+                            if (next.has(row.id)) next.delete(row.id); else next.add(row.id);
+                            return next;
+                          })}
+                          className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                        >
+                          {collapsedTree.has(row.id) ? '▸' : '▾'}
+                        </button>
+                      ) : (
+                        <span aria-hidden className="text-[11px] text-transparent">·</span>
+                      )}
+                    </span>
+                  )}
+                  <Link href={`/requirements/${row.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4" style={treeMode ? { paddingLeft: 8 + depth * 16 } : undefined}>
                     <span className="w-12 shrink-0 text-[11px] tabular-nums text-[var(--fg-muted)]">#{row.seq}</span>
                     <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${COLUMN_CHIP[row.column] || COLUMN_CHIP.abandoned}`}>
                       {row.column}
