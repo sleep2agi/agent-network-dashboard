@@ -463,7 +463,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                               <span className="tabular-nums">#{row.seq}</span>
                               <span className="flex items-center gap-2">
                                 <span className={priorityClass(row.priority)}>{row.priority}</span>
-                                <span>{dueLabel(row.due)}</span>
+                                {row.due && <span>{dueLabel(row.due)}</span>}
                               </span>
                             </span>
                             <span className="mt-1 block text-sm text-gray-100">
