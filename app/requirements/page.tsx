@@ -655,7 +655,15 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               title="按 / 聚焦搜索"
               value={qInput}
               onChange={e => setQInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') setParam({ q: qInput }); }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { setParam({ q: qInput }); return; }
+                // Esc：有内容先清空并撤掉 URL 里的 q；已经空了就离开输入框。
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  if (qInput) { setQInput(''); setParam({ q: '' }); }
+                  else e.currentTarget.blur();
+                }
+              }}
               onBlur={() => { if (qInput !== q) setParam({ q: qInput }); }}
               placeholder="搜索标题 / 人 / 标签"
               aria-label="搜索需求"

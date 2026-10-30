@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.152 — 2026-10-31
+
+### Escape clears the requirement search
+
+- With the search box focused, `Esc` clears the text and drops `q` from the URL;
+  when it is already empty, `Esc` leaves the field. `/` still focuses it, so the
+  two shortcuts form one loop.
+
 ## 0.6.3-preview.151 — 2026-10-31
 
 ### Legion 2D: department head-count badges
