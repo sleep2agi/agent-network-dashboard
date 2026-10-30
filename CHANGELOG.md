@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.120 — 2026-10-30
+
+### Create requirements from the dashboard
+
+- “新建需求” on `/requirements` opens a dialog for name, priority, status,
+  project, tags and description. Hub still owns validation; the dialog only
+  shapes the request and names the selected network.
+- A successful create closes the dialog, shows the new sequence and refreshes
+  the current list/board in place. Server validation, denied writes and network
+  errors keep the draft visible with the reason.
+- The project catalogue is optional: if it cannot be read, only that field is
+  disabled and the requirement can still be created without a project.
+
 ## 0.6.3-preview.119 — 2026-10-30
 
 ### Move requirement cards between board columns
