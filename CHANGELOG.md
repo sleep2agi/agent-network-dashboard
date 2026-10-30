@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.133 — 2026-10-30
+
+### Legion 3D: department bands with seats
+
+- Department bands now fade outward with a radial gradient and carry a brighter
+  inner edge, so a ring reads as “this arc belongs to that department” without
+  introducing any new colour.
+- Each seat in a department is marked with a dot along the band (capped at 24),
+  so a glance shows how big each team is and which one is lit.
+- Static geometry only: no camera, timing or export changes, and the recording
+  loop stays seamless.
+
 ## 0.6.3-preview.132 — 2026-10-30
 
 ### Legion 3D: calmer light theme
