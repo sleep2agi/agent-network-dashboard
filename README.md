@@ -98,6 +98,10 @@ The requirement detail page can change the human owner and responsible Agent
 from the same visible people directory; role mismatches are rejected and
 unknown identities keep their exact ID.
 
+The requirements page can switch to a status board (`view=board`). The board
+uses the same filters and pagination as the list, keeps the choice in the URL,
+and scrolls horizontally on narrow screens.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.

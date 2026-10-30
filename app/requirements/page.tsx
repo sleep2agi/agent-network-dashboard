@@ -84,6 +84,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const agent = searchParams.get('agent_owner') || '';
   const includeArchived = searchParams.get('include_archived') !== '0';
   const searching = q.trim().length > 0;
+  const board = searchParams.get('view') === 'board';
 
   // #1636: 替换态与追加态分开，追加时已加载的行不能进骨架屏。
   const [state, dispatch] = useReducer(
@@ -268,6 +269,24 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               只读视图。派单在 <Link href="/tasks" className="text-[var(--hl)] hover:underline">Tasks</Link>。
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <div role="group" aria-label="视图切换" className="flex items-center gap-0.5 rounded-md border border-[var(--border)] p-0.5">
+              {[{ key: '', label: '列表', test: 'list' }, { key: 'board', label: '看板', test: 'board' }].map(option => {
+                const active = (option.key === 'board') === board;
+                return (
+                  <button
+                    key={option.test}
+                    type="button"
+                    aria-pressed={active}
+                    data-testid={`requirements-view-${option.test}`}
+                    onClick={() => setParam({ view: option.key })}
+                    className={`rounded px-2.5 py-1 text-xs transition-colors ${active ? 'bg-[var(--bg-elevated)] text-gray-100' : 'text-[var(--fg-muted)] hover:text-gray-200'}`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
           <button
             type="button"
             onClick={() => { setProjectRefresh(n => n + 1); void load(); }}
@@ -275,6 +294,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           >
             Refresh
           </button>
+          </div>
         </div>
 
         {/* Status tabs */}
@@ -409,6 +429,79 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             sub={status || tag || q || project || owner || agent ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
             cta={status || tag || q || project || owner || agent ? { label: '清空筛选', onClick: clearFilters } : undefined}
           />
+        ) : board ? (
+          <div className="-mx-1 min-w-0 overflow-x-auto pb-1" data-testid="requirements-board">
+            <div className="grid auto-cols-[minmax(16rem,1fr)] snap-x grid-flow-col gap-3 px-1">
+              {COLUMNS.filter(col => col.key).filter(col => !status || col.key === status).map(col => {
+                const items = rows.filter(row => row.column === col.key);
+                return (
+                  <section
+                    key={col.key}
+                    aria-label={`${col.label}列`}
+                    data-testid={`requirements-column-${col.key}`}
+                    className="snap-start rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/60"
+                  >
+                    <header className="flex items-center justify-between gap-2 px-3 py-2">
+                      <span className={`rounded px-1.5 py-0.5 text-[11px] ${COLUMN_CHIP[col.key]}`}>{col.label}</span>
+                      <span className="text-[10px] tabular-nums text-[var(--fg-muted)]">{items.length}</span>
+                    </header>
+                    <div className="space-y-2 px-2 pb-3">
+                      {items.length === 0 ? (
+                        <p className="rounded-lg border border-dashed border-[var(--border)] px-3 py-6 text-center text-[11px] text-[var(--fg-muted)]">
+                          这一列没有需求
+                        </p>
+                      ) : items.map(row => {
+                        const chk = row.checklist_count;
+                        const kids = row.children;
+                        return (
+                          <Link
+                            key={row.id}
+                            href={`/requirements/${row.id}`}
+                            className="block rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 transition-colors hover:border-[var(--border-hover)] hover:bg-[var(--hover-tint)]"
+                          >
+                            <span className="flex items-center justify-between gap-2 text-[10px] text-[var(--fg-muted)]">
+                              <span className="tabular-nums">#{row.seq}</span>
+                              <span className="flex items-center gap-2">
+                                <span className={priorityClass(row.priority)}>{row.priority}</span>
+                                {row.due && <span>{dueLabel(row.due)}</span>}
+                              </span>
+                            </span>
+                            <span className="mt-1 block text-sm text-gray-100">
+                              <span className="line-clamp-2" title={row.name}>{row.name}</span>
+                            </span>
+                            {row.archived === true && (
+                              <span className="mt-1 inline-flex rounded border border-[var(--border)] bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] leading-4 text-[var(--fg-muted)]">已归档</span>
+                            )}
+                            {(row.tags || []).length > 0 && (
+                              <span className="mt-2 flex flex-wrap gap-1">
+                                {(row.tags || []).slice(0, 3).map(tag => (
+                                  <span key={tag} className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] text-gray-400">{tag}</span>
+                                ))}
+                              </span>
+                            )}
+                            <span
+                              data-responsibility
+                              className="mt-2 block text-[11px] leading-4 text-[var(--fg-muted)]"
+                              title={`负责人：${personLabel(row.owner, personNames)}；负责 Agent：${personLabel(row.agent_owner, personNames)}`}
+                            >
+                              <span className="block truncate">人 · {personLabel(row.owner, personNames)}</span>
+                              <span className="block truncate">Agent · {personLabel(row.agent_owner, personNames)}</span>
+                            </span>
+                            {(chk || kids) && (
+                              <span className="mt-1 flex gap-3 text-[10px] tabular-nums text-[var(--fg-muted)]">
+                                {chk && chk.total > 0 && <span>✓ {chk.done}/{chk.total}</span>}
+                                {kids && kids.total > 0 && <span>↳ {kids.done}/{kids.total}</span>}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          </div>
         ) : (
           <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
             {rows.map(row => {

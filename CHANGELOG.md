@@ -6,6 +6,21 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.118 — 2026-10-30
+
+### Requirement board view
+
+- Switch `/requirements` between the list and a status board (需求池 / 进行中 /
+  完成 / 已放弃). The choice lives in the URL as `view=board`, survives reload
+  and deep links, and does not disturb the existing filters.
+- Cards show sequence, priority, due date, tags, archived state, both owners and
+  checklist/child counts; clicking a card opens the detail page.
+- The board follows the same status, project, tag, text, owner and archive
+  filters; selecting a status tab narrows it to that column instead of showing a
+  silently unfiltered board.
+- Narrow screens scroll the board horizontally without widening the page. Empty
+  columns stay visible with an explicit placeholder.
+
 ## 0.6.3-preview.117 — 2026-10-30
 
 ### Edit owners from the requirement detail
