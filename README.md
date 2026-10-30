@@ -144,6 +144,9 @@ parent and moves existing ones, with the list indented by depth.
 The 3D legion view keeps its export parameters stable; visual changes are
 layered on top of the same camera and loop.
 
+The 3D legion view has separate light and dark treatments; both keep the same
+structure and export parameters.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
