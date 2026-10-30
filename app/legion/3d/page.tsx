@@ -183,6 +183,28 @@ function haloFor(color: string): HTMLCanvasElement {
   return cv;
 }
 
+/** 深空微尘：相位只跟 yaw 走，录屏绕一圈回到原点时微尘也回到原位，
+ *  所以无缝循环不会被它破坏；减少动态效果时相位固定为 0。 */
+function makeDust(count: number) {
+  let seed = 20261031;
+  const rand = () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648;
+  };
+  return Array.from({ length: count }, () => ({
+    x: rand(),
+    y: rand(),
+    r: 0.5 + rand() * 0.8,
+    a: 0.04 + rand() * 0.12,
+    par: 1 + Math.floor(rand() * 3), // 整数圈数，yaw+2π 时回到原位
+    amp: 6 + rand() * 20,
+    phase: rand() * Math.PI * 2,
+    tint: rand() < 0.22 ? 'accent' : 'fg',
+  }));
+}
+
+const DUST = typeof window === 'undefined' ? [] : makeDust(64);
+
 /** 确定性星空（同一块画布每次刷新星位一致，不会「闪」成噪点）。 */
 function makeStars(count: number) {
   let seed = 20261026;
@@ -777,6 +799,22 @@ export default function Legion3DPage() {
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+      // 极少量视差微尘：给纯色底一点空间深度，不参与命中或语义。
+      if (!interacting && DUST.length) {
+        const phase = motionPreference.matches ? 0 : view.yaw;
+        const tintAlpha = dark ? 1 : 0.55;
+        for (const speck of DUST) {
+          const x = speck.x * size.width + Math.sin(phase * speck.par + speck.phase) * speck.amp;
+          const y = speck.y * size.height + Math.cos(phase * speck.par + speck.phase) * speck.amp * 0.6;
+          ctx.globalAlpha = speck.a * tintAlpha;
+          ctx.fillStyle = speck.tint === 'accent' ? tk.accent : tk.fg;
+          ctx.beginPath();
+          ctx.arc(x, y, speck.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
       const toPoint = (n: LegionNode) => nodeToVec3({ ...n });
       let nodes = projectScene(layout.nodes, toPoint, cam, size);
 
@@ -911,6 +949,17 @@ export default function Legion3DPage() {
         halo.addColorStop(1, hexToRgba(tk.accent, 0));
         ctx.fillStyle = halo;
         ctx.fillRect(0, 0, size.width, size.height);
+      }
+
+      // 选中节点的聚光：把视线钉在被选中的那一个上，周围再按 activeSet 压暗。
+      const selectedNode = selectedRef.current ? byId.get(selectedRef.current) : null;
+      if (selectedNode && !interacting) {
+        const { rx, ry } = nodeBody(selectedNode, layout.stats.people);
+        const halo = haloFor(tk.accent);
+        const hr = Math.max(120, (rx + ry) * 5.5);
+        ctx.globalAlpha = dark ? 0.5 : 0.3;
+        ctx.drawImage(halo, selectedNode.projected.x - hr / 2, selectedNode.projected.y - hr / 2, hr, hr);
+        ctx.globalAlpha = 1;
       }
 
       // Structural light channels stay visible in a dense scene. Moving streaks
@@ -1079,7 +1128,7 @@ export default function Legion3DPage() {
           && selectedRef.current !== node.id && !activeSet?.has(node.id) && view.zoom < 1.8;
         const deepDept = node.kind === 'group' && (node.depth ?? 1) > 1
           && view.zoom < 1.8 && selectedRef.current !== node.id && !activeSet?.has(node.id);
-        let alpha = (1 - depthT * 0.55) * (dim ? 0.22 : 1) * (offline ? 0.42 : 1)
+        let alpha = (1 - depthT * 0.55) * (dim ? (selectedRef.current ? 0.14 : 0.22) : 1) * (offline ? 0.42 : 1)
           * (emptyDept ? 0.3 : deepDept ? 0.12 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
         const color = nodeColor(node, tk, statusByAlias);

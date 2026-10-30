@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.131 — 2026-10-30
+
+### Legion 3D: spotlight, dust parallax and a stronger focus
+
+- Selecting a node now lights a soft accent spotlight behind it and dims the
+  rest of the scene a step further, so “what am I looking at” reads at a glance.
+- A small deterministic dust field adds parallax depth. Its phase is driven by
+  the camera yaw, so a recording loop returns to exactly the same frame, and
+  reduced-motion keeps it still.
+- No camera, export or timing changes: the 720p loop and the existing controls
+  behave exactly as before.
+
 ## 0.6.3-preview.130 — 2026-10-30
 
 ### Tag tree: create tags and move them between parents
