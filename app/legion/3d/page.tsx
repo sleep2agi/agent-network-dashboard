@@ -27,7 +27,7 @@ import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { departmentDisc, fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
-import { EXPORT_FPS, EXPORT_HEIGHT, EXPORT_WIDTH, LOOP_DURATION_MS, containRect, loopProgress, loopYaw, pickRecordingMime, recordingFileName } from '../../lib/legion-recording';
+import { EXPORT_FPS, LOOP_DURATION_MS, containRect, exportDimensions, loopProgress, loopYaw, pickRecordingMime, recordingFileName } from '../../lib/legion-recording';
 import { EmptyState } from '../../components/EmptyState';
 import { getAvatarUrl } from '../../lib/avatars';
 import { LegionChat } from '../LegionChat';
@@ -284,6 +284,7 @@ export default function Legion3DPage() {
   const yawTarget = useRef<number | null>(null);
   const presentingRef = useRef(false);
   const [shareInfo, setShareInfo] = useState('');
+  const [exportHigh, setExportHigh] = useState(false);
   const sharedView = useRef<{ yaw: number; pitch: number; zoom: number } | null>(null);
   // 分享视角生效后先锁住自动取景：尺寸观察器晚一帧回调时也会触发 fit，
   // 不锁就会把链接里的角度立刻覆盖掉。"重置视角"会解锁。
@@ -292,7 +293,7 @@ export default function Legion3DPage() {
   const tourAt = useRef(0);
   const tourIndex = useRef(-1);
   const captureRef = useRef<null | {
-    startedAt: number; startYaw: number; durationMs: number; mime: string;
+    startedAt: number; startYaw: number; durationMs: number; mime: string; width: number; height: number;
     out: HTMLCanvasElement; octx: CanvasRenderingContext2D;
     recorder: MediaRecorder; stream: MediaStream; chunks: Blob[]; finished: boolean; cancelled: boolean; timer: number | null; safety: number | null;
   }>(null);
@@ -576,6 +577,12 @@ export default function Legion3DPage() {
   useEffect(() => { spinRef.current = spin; }, [spin]);
   useEffect(() => { presentingRef.current = presenting; }, [presenting]);
   useEffect(() => { tourRef.current = tour; }, [tour]);
+  useEffect(() => {
+    try { setExportHigh(localStorage.getItem('legion3d-export-1080') === '1'); } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem('legion3d-export-1080', exportHigh ? '1' : '0'); } catch { /* ignore */ }
+  }, [exportHigh]);
   // 退出演示就结束巡礼，别让下一次进入从一半开始。
   useEffect(() => {
     if (presenting) return;
@@ -1545,10 +1552,10 @@ export default function Legion3DPage() {
       ctx.globalAlpha = 1;
 
       if (capture) {
-        // 等比放进 1280×720：竖屏/宽屏都留主题底色，不把圆环拉成椭圆。
-        const rect = containRect(size.width, size.height, EXPORT_WIDTH, EXPORT_HEIGHT);
+        // 等比放进导出画幅（默认 1280×720）：竖屏/宽屏都留主题底色，不把圆环拉成椭圆。
+        const rect = containRect(size.width, size.height, capture.width, capture.height);
         capture.octx.fillStyle = tk.bg;
-        capture.octx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
+        capture.octx.fillRect(0, 0, capture.width, capture.height);
         capture.octx.drawImage(canvas, rect.x, rect.y, rect.width, rect.height);
         if (!capture.finished && loopProgress(now - capture.startedAt, capture.durationMs) >= 1) {
           capture.finished = true;
@@ -1948,22 +1955,23 @@ export default function Legion3DPage() {
     }
     const canvas = canvasRef.current;
     if (!canvas) { setCaptureError('画布尚未就绪'); return; }
+    const dims = exportDimensions(exportHigh);
     const out = document.createElement('canvas');
-    out.width = EXPORT_WIDTH;
-    out.height = EXPORT_HEIGHT;
+    out.width = dims.width;
+    out.height = dims.height;
     const octx = out.getContext('2d');
     if (!octx) { setCaptureError('浏览器不支持 canvas'); return; }
     const tk = readTokens();
     octx.fillStyle = tk.bg;
-    octx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
-    const rect = containRect(size.width, size.height, EXPORT_WIDTH, EXPORT_HEIGHT);
+    octx.fillRect(0, 0, dims.width, dims.height);
+    const rect = containRect(size.width, size.height, dims.width, dims.height);
     octx.drawImage(canvas, rect.x, rect.y, rect.width, rect.height);
 
     let stream: MediaStream;
     try { stream = out.captureStream(EXPORT_FPS); } catch { setCaptureError('无法捕获画布，无法导出视频'); return; }
     let recorder: MediaRecorder;
     try {
-      recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8_000_000 });
+      recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: exportHigh ? 14_000_000 : 8_000_000 });
     } catch {
       setCaptureError('视频编码器启动失败，请换一个浏览器再试');
       return;
@@ -1982,7 +1990,7 @@ export default function Legion3DPage() {
       if (capture.cancelled) { setCaptureInfo('已取消录屏，未生成文件。'); return; }
       const blob = new Blob(chunks, { type: mime });
       if (!blob.size) { setCaptureError('录屏没有产生数据，请重试'); return; }
-      const name = recordingFileName(mime, new Date());
+      const name = recordingFileName(mime, new Date(), dims.width, dims.height);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -2005,7 +2013,7 @@ export default function Legion3DPage() {
     }, LOOP_DURATION_MS + 2000);
     recorder.start(250);
     captureRef.current = {
-      startedAt: performance.now(), startYaw, durationMs: LOOP_DURATION_MS, mime, out, octx,
+      startedAt: performance.now(), startYaw, durationMs: LOOP_DURATION_MS, mime, width: dims.width, height: dims.height, out, octx,
       recorder, stream, chunks, finished: false, cancelled: false,
       timer: window.setInterval(() => {
         const current = captureRef.current;
@@ -2022,7 +2030,7 @@ export default function Legion3DPage() {
     hoverPos.current = null;
     yawTarget.current = null;
     wrapRef.current?.focus();
-  }, [size.width, size.height]);
+  }, [size.width, size.height, exportHigh]);
 
   /* ── 导出 ───────────────────────────────────────────────────────── */
 
@@ -2422,12 +2430,26 @@ export default function Legion3DPage() {
           type="button"
           onClick={startCapture}
           disabled={capturing}
-          title="录制一圈 16 秒，导出 1280×720 无缝循环视频"
+          title={`录制一圈 16 秒，导出 ${exportHigh ? '1920×1080' : '1280×720'} 无缝循环视频`}
           data-testid="legion-3d-record"
           className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-60"
         >
           {capturing ? `录屏 ${Math.round(captureProgress * 100)}%` : '导出循环'}
         </button>
+        <label
+          title="默认 720p（PPT 最稳）；1080p 仅用于其他场合"
+          className="flex items-center gap-1 rounded-md px-1.5 py-1.5 text-[10px] text-[var(--fg-muted)]"
+        >
+          <input
+            type="checkbox"
+            checked={exportHigh}
+            disabled={capturing}
+            onChange={event => setExportHigh(event.target.checked)}
+            data-testid="legion-3d-export-1080"
+            className="h-3.5 w-3.5 accent-[var(--hl)]"
+          />
+          1080p
+        </label>
         <button
           type="button"
           onClick={exportPng}

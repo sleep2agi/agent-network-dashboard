@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.143 — 2026-10-31
+
+### Optional 1080p recording
+
+- The recording toolbar gains a “1080p” checkbox. **Default stays 720p** (what
+  the deck needs); 1080p is only for other uses, and the choice is remembered
+  locally.
+- The export canvas, bitrate and file name follow the choice
+  (`legion-3d-loop-1920x1080-…`), while the 16-second seamless loop and the
+  presentation behaviour are unchanged.
+
 ## 0.6.3-preview.142 — 2026-10-31
 
 ### No dead end when a local filter empties the loaded page

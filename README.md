@@ -170,6 +170,8 @@ Priorities display as P0–P3 everywhere, while requests keep high/normal/low/lo
 
 Local filters that empty the loaded page offer “继续加载” instead of a dead end.
 
+Recordings default to 720p; 1080p is an opt-in with the same seamless loop.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
