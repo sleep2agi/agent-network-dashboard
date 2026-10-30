@@ -160,6 +160,8 @@ departments, people and agents.
 
 Checklists can be edited as a whole (add / reorder / delete) from the detail page.
 
+Presentation mode can tour departments one by one; recordings never auto-advance.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.

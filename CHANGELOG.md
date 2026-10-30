@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.138 — 2026-10-30
+
+### Legion 3D: a department tour for presentations
+
+- In presentation mode a “部门巡礼” button walks the camera through every
+  department: each step focuses one department, turns the view toward it, and
+  shows its name; a second click stops and clears the focus.
+- The tour only advances in presentation mode, never during a recording (the
+  loop must stay a single seamless orbit), and stays disabled under
+  `prefers-reduced-motion` with the label saying so.
+
 ## 0.6.3-preview.137 — 2026-10-30
 
 ### Checklist editing on the requirement detail
