@@ -141,6 +141,9 @@ requirement page; the Hub's permission answer is shown as-is.
 Tags form a tree when the Hub supports it: the manager creates tags under a
 parent and moves existing ones, with the list indented by depth.
 
+The 3D legion view keeps its export parameters stable; visual changes are
+layered on top of the same camera and loop.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
