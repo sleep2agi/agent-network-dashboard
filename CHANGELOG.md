@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.147 — 2026-10-31
+
+### Move a requirement under another parent
+
+- The detail page’s “改父级” opens a picker: search requirements by title,
+  choose one to become the parent, or “升为顶级” to detach. Each choice is one
+  `PATCH { parent_id }`, and the breadcrumb + children refresh from the Hub
+  afterwards.
+- The card itself is excluded from results; depth (≤5) and cycle rules stay
+  with the Hub and its refusal is shown as-is.
+- The detail proxy whitelists `parent_id` and rejects malformed ids first.
+
 ## 0.6.3-preview.146 — 2026-10-31
 
 ### Parent breadcrumb on the requirement detail
