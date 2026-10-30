@@ -6,19 +6,13 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
-## 0.6.3-preview.114 — 2026-10-28
+## 0.6.3-preview.115 — 2026-10-30
 
-### Show every Agent in the legion tree
+### Find requirements by responsibility
 
-- Agents without an owner now appear under a real department tree, not only in the legacy flat view. The Agent's own department wins; a missing department keeps the dedicated “无主 Agent” group; an undefined department ID keeps its own “未知部门” group instead of disappearing or being merged silently.
-- Department counts and collapse badges include those Agents. Both 2D and the real 3D view share this layout.
-
-### Keep requirements in the selected network
-
-- Wait for the current network before reading requirements and projects. Both proxies forward its exact ID with the existing user identity, fixing the project directory's `network_id_required` error for multi-network accounts.
-- Switching networks starts a fresh list, project directory, cursor and capability check. Late reads from the previous network cannot populate the new view.
-- An unresolved network selection has a clear prompt and retry; a successfully read empty project directory remains an empty state.
-
+- Filter requirements by a human owner, a responsible Agent or no assignment. “未分配” means both roles are empty; individual empty-role and combined URL conditions remain explicit.
+- Search the visible people directory without changing requirement results. Duplicate names retain distinct identities, full labels remain in title attributes, and result rows show human and Agent names separately.
+- Responsibility filters combine with project, status, tag and archived searches. Catalog failures, unknown identities and unsupported Hubs have explicit feedback; retries, clearing, history and late-response isolation preserve the selected conditions.
 
 ## 0.6.3-preview.113 — 2026-10-28
 

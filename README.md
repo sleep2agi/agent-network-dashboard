@@ -80,6 +80,11 @@ Requirements and their project directory follow the network selected in the
 sidebar. The page waits for that selection and starts fresh when it changes,
 including pagination and search capabilities. Hub verifies access using the
 existing signed-in user; an empty directory is distinct from a read failure.
+Responsibility filters distinguish the human owner from the responsible Agent;
+“未分配” requires both roles to be empty. Looking up a person only narrows the
+picker, while selecting them filters requirements by their exact identity.
+Combined owner/Agent URL conditions match both roles. The visible people
+directory also supplies separate human and Agent names in desktop result rows.
 
 ## Design language
 
