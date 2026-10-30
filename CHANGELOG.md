@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.136 — 2026-10-30
+
+### Legion 2D: soft halos on departments, people and agents
+
+- The flat two-dimensional org chart now uses the same visual language as the
+  3D view: a faint tint behind each department, a soft edge around people, and a
+  status-coloured halo around agents (offline stays dim instead of turning into
+  a grey dot).
+- Plain SVG circles only — no filters or gradients — so the PNG export keeps
+  working through the existing inliner, and the light/dark themes both pick it
+  up from tokens.
+
 ## 0.6.3-preview.135 — 2026-10-30
 
 ### “我参与” filter over the loaded results

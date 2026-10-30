@@ -944,6 +944,9 @@ export default function LegionPage() {
                           </>
                         ) : node.kind === 'group' ? (
                           <>
+                            {/* 部门外圈软光：和 3D 的编制带一个语言，纯 SVG 圆，
+                                导出时由 inline() 解析颜色，不依赖滤镜。 */}
+                            <circle r={r + 5} fill="var(--info)" opacity={0.07} />
                             <circle
                               r={r}
                               fill="var(--bg-elevated)"
@@ -979,6 +982,7 @@ export default function LegionPage() {
                           </>
                         ) : node.kind === 'person' ? (
                           <>
+                            <circle r={r + 4} fill="var(--fg)" opacity={0.05} />
                             <circle r={r} fill="var(--bg)" stroke={isSelected ? 'var(--hl)' : 'var(--fg)'} strokeWidth={isSelected ? 2 : 1} />
                             {(() => {
                               const url = getAvatarUrl(node.sublabel?.replace(/^@/, '') || node.label);
@@ -1017,6 +1021,8 @@ export default function LegionPage() {
                         ) : (
                           <>
                             <circle r={r + 3} fill="none" stroke="var(--bg-secondary)" strokeWidth={2} />
+                            {/* 状态色外圈：离线也保持低亮，不掉成灰点。 */}
+                            <circle r={r + 5} fill={statusTone(statusValue)} opacity={statusValue === 'offline' ? 0.08 : 0.16} />
                             <circle r={r} fill={statusTone(statusValue)} stroke={isSelected ? 'var(--hl)' : 'none'} strokeWidth={isSelected ? 2 : 0} />
                             {(view.k >= 1.4 || isSelected) && (
                               <text
