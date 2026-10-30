@@ -98,7 +98,7 @@ export function TagManager({ catalog, networkId, onClose, onApplied }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6" data-testid="tag-manager-backdrop">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[var(--scrim)] p-3 sm:p-6" data-testid="tag-manager-backdrop">
       <div
         ref={panelRef}
         role="dialog"
