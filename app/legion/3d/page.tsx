@@ -285,6 +285,9 @@ export default function Legion3DPage() {
   const presentingRef = useRef(false);
   const [shareInfo, setShareInfo] = useState('');
   const sharedView = useRef<{ yaw: number; pitch: number; zoom: number } | null>(null);
+  // 分享视角生效后先锁住自动取景：尺寸观察器晚一帧回调时也会触发 fit，
+  // 不锁就会把链接里的角度立刻覆盖掉。"重置视角"会解锁。
+  const sharedLock = useRef(false);
   const tourRef = useRef(false);
   const tourAt = useRef(0);
   const tourIndex = useRef(-1);
@@ -356,7 +359,7 @@ export default function Legion3DPage() {
       introDone.current = true;
       introRef.current = null;
       fitPending.current = false;
-      sharedView.current = null;
+      sharedLock.current = true;
     }
   }, [networkId]);
 
@@ -935,7 +938,7 @@ export default function Legion3DPage() {
       const sizeReady = size.width > 240 && size.height > 300;
       // 只有 core 时不取景；仅有部门的编制也有真实实体和轨道，需要避让展开控件。
       const dataReady = layout.stats.groups + layout.stats.people + layout.stats.agents > 0;
-      if (sizeReady && dataReady && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
+      if (sizeReady && dataReady && !sharedLock.current && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
         const fit = fitProjectedBodies(framingBodies, view, size, fitBounds, { min: MIN_ZOOM, max: MAX_ZOOM });
         // If controls exhaust the usable area, keep drawing the current scene.
         // A later valid bounds measurement will request another fit.
@@ -1612,6 +1615,7 @@ export default function Legion3DPage() {
   }, []);
 
   const resetView = useCallback(() => {
+    sharedLock.current = false;
     yawTarget.current = null;
     viewRef.current = { ...DEFAULT_VIEW };
     setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
