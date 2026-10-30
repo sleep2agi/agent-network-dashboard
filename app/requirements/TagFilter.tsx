@@ -11,7 +11,8 @@ import { catalogFromHub, tagColor, tagCount, tagSuggestions, type TagCatalog } f
  * plain text tags the rows already carry.
  */
 export function useRequirementTags(networkId: string) {
-  const key = JSON.stringify([networkId]);
+  const [attempt, setAttempt] = useState(0);
+  const key = JSON.stringify([networkId, attempt]);
   const [response, setResponse] = useState<{ key: string; catalog: TagCatalog | null } | null>(null);
   useEffect(() => {
     const controller = new AbortController();
@@ -29,7 +30,8 @@ export function useRequirementTags(networkId: string) {
     void read();
     return () => controller.abort();
   }, [key, networkId]);
-  return { catalog: response?.key === key ? response.catalog : null };
+  const refresh = useCallback(() => setAttempt(value => value + 1), []);
+  return { catalog: response?.key === key ? response.catalog : null, refresh };
 }
 
 /** One tag pill; a colour dot only when the Hub knows a colour for it. */

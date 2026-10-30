@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.129 — 2026-10-30
+
+### Manage tags for the whole network
+
+- A “管理标签” dialog (shown only when the Hub lists `tag_ops` and reports
+  `can_manage`) can rename, merge, delete and colour tags across the network.
+  Deleting asks for a second click; renaming/merging/deleting also repaint the
+  list and the chip colours from a fresh catalogue read.
+- Hub refusals are surfaced verbatim in operator language: 403 (owner/admin/all
+  tasks, node tokens), 404 `tag_not_found`, 400 `invalid_tag`, `invalid_tag_color`
+  and `same_tag`. Nothing is applied optimistically to cards.
+- Tag creation and the parent/child tree (`tags/create`, `reparent`) are not in
+  this dialog.
+
 ## 0.6.3-preview.128 — 2026-10-30
 
 ### Tag catalogue: colours, usage counts and suggestions

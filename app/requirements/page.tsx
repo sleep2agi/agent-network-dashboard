@@ -8,6 +8,7 @@ import { createLoadGate, initialPagingState, requirementsPaging } from '../lib/r
 import { ProjectFilter } from './ProjectFilter';
 import { CreateRequirement } from './CreateRequirement';
 import { TagChip, TagPicker, useRequirementTags } from './TagFilter';
+import { TagManager } from './TagManager';
 import { tagColor } from '../lib/tag-catalog';
 import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
@@ -124,7 +125,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [bulkError, setBulkError] = useState('');
   const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
-  const { catalog: tagCatalog } = useRequirementTags(networkId);
+  const { catalog: tagCatalog, refresh: refreshTagCatalog } = useRequirementTags(networkId);
+  const [tagOpsSupported, setTagOpsSupported] = useState(false);
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const personOptions = useMemo(() => peopleCatalog.status === 'ready' ? peopleOptions(peopleCatalog.people) : [], [peopleCatalog]);
   const personNames = useMemo(() => new Map(personOptions.map(p => [p.value, p.label])), [personOptions]);
 
@@ -246,6 +249,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         if (project && !supported) throw new Error('当前 Hub 未提供项目筛选能力，请清空项目筛选后重试');
         const roles = Array.isArray(caps) && caps.includes('agent_owner');
         setResponsibilitySupported(roles);
+        setTagOpsSupported(Array.isArray(caps) && caps.includes('tag_ops'));
         if ((owner || agent) && !roles) throw new Error('当前 Hub 未提供双角色筛选能力，请清空责任归属后重试');
       };
       checkProjects(data.capabilities);
@@ -539,6 +543,16 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             onDraftChange={setTagInput}
             onApply={next => setParam({ tag: next, q: qInput })}
           />
+          {tagCatalog?.canManage && tagOpsSupported && (
+            <button
+              type="button"
+              data-testid="requirements-manage-tags"
+              onClick={() => setTagManagerOpen(true)}
+              className="rounded-md px-2 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              管理标签
+            </button>
+          )}
           {archiveSupported === true && (
             <label className={`flex min-h-11 items-center gap-2 rounded-md px-2.5 text-xs sm:min-h-9 ${searching ? 'cursor-pointer text-[var(--fg)]' : 'text-[var(--fg-muted)]'}`}>
               <input
@@ -881,6 +895,14 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           >
             {loadingMore ? '加载中…' : '加载更多'}
           </button>
+        )}
+        {tagManagerOpen && tagCatalog?.canManage && (
+          <TagManager
+            catalog={tagCatalog}
+            networkId={networkId}
+            onClose={() => setTagManagerOpen(false)}
+            onApplied={() => { refreshTagCatalog(); void load({ silent: true }); }}
+          />
         )}
       </div>
     </div>

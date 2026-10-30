@@ -135,6 +135,9 @@ Tags come from the Hub catalogue: chips show the Hub colour, the tag box
 suggests the tags in use (by usage), and old Hubs without the endpoint fall back
 to plain text tags.
 
+Networks whose Hub supports it can rename, merge, delete and colour tags from the
+requirement page; the Hub's permission answer is shown as-is.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
