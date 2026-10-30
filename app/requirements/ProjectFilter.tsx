@@ -10,14 +10,15 @@ type Catalog =
   | { status: 'failed'; code: number };
 const LOADING: Catalog = { status: 'loading' };
 
-export function ProjectFilter({ value, supported, refreshKey, onChange }: {
+export function ProjectFilter({ networkId, value, supported, refreshKey, onChange }: {
+  networkId: string;
   value: string;
   supported: boolean | null;
   refreshKey: number;
   onChange: (value: string) => void;
 }) {
   const [retry, setRetry] = useState(0);
-  const requestKey = `${refreshKey}:${retry}`;
+  const requestKey = JSON.stringify([networkId, refreshKey, retry]);
   const [response, setResponse] = useState<{ key: string; catalog: Catalog } | null>(null);
   const catalog = response?.key === requestKey ? response.catalog : LOADING;
 
@@ -26,7 +27,8 @@ export function ProjectFilter({ value, supported, refreshKey, onChange }: {
     const setCatalog = (catalog: Catalog) => setResponse({ key: requestKey, catalog });
     async function read() {
       try {
-        const res = await fetch('/api/hub/requirements/projects', { cache: 'no-store', signal: controller.signal });
+        const params = new URLSearchParams({ network_id: networkId });
+        const res = await fetch(`/api/hub/requirements/projects?${params}`, { cache: 'no-store', signal: controller.signal });
         if (!res.ok) {
           if (!controller.signal.aborted) setCatalog({ status: 'failed', code: res.status });
           return;
@@ -45,7 +47,7 @@ export function ProjectFilter({ value, supported, refreshKey, onChange }: {
     }
     void read();
     return () => controller.abort();
-  }, [requestKey]);
+  }, [networkId, requestKey]);
 
   const options = useMemo(() => catalog.status === 'ready' ? projectOptions(catalog.projects) : [], [catalog]);
   const selected = options.find(p => p.id === value);

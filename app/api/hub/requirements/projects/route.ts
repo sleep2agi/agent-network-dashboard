@@ -3,13 +3,19 @@ import { requireDashboardAuth, getV3UserToken } from '@/app/lib/dashboard-auth';
 const HUB_URL = process.env.COMMHUB_URL || 'http://127.0.0.1:9200';
 
 /** Read the same user-visible project catalog as the requirement list. */
-export async function GET() {
+export async function GET(req: Request) {
   const authFailure = await requireDashboardAuth();
   if (authFailure) return authFailure;
 
+  // A user token can see several networks. Scope selection is separate from
+  // authentication; Hub still checks this user's access to the named network.
+  const networkId = new URL(req.url).searchParams.get('network_id');
+  const params = new URLSearchParams();
+  if (networkId) params.set('network_id', networkId);
+
   try {
     const token = await getV3UserToken();
-    const res = await fetch(`${HUB_URL}/api/requirements/projects`, {
+    const res = await fetch(`${HUB_URL}/api/requirements/projects?${params}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       cache: 'no-store',
       signal: AbortSignal.timeout(10_000),

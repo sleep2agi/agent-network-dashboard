@@ -13,6 +13,13 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 - Agents without an owner now appear under a real department tree, not only in the legacy flat view. The Agent's own department wins; a missing department keeps the dedicated “无主 Agent” group; an undefined department ID keeps its own “未知部门” group instead of disappearing or being merged silently.
 - Department counts and collapse badges include those Agents. Both 2D and the real 3D view share this layout.
 
+### Keep requirements in the selected network
+
+- Wait for the current network before reading requirements and projects. Both proxies forward its exact ID with the existing user identity, fixing the project directory's `network_id_required` error for multi-network accounts.
+- Switching networks starts a fresh list, project directory, cursor and capability check. Late reads from the previous network cannot populate the new view.
+- An unresolved network selection has a clear prompt and retry; a successfully read empty project directory remains an empty state.
+
+
 ## 0.6.3-preview.113 — 2026-10-28
 
 ### Filter requirements by project
