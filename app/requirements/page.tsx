@@ -88,6 +88,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const searching = q.trim().length > 0;
   const board = searchParams.get('view') === 'board';
   const sortSpec = parseSort(searchParams);
+  const overdue = searchParams.get('overdue') === '1';
 
   // #1636: 替换态与追加态分开，追加时已加载的行不能进骨架屏。
   const [state, dispatch] = useReducer(
@@ -197,7 +198,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
 
   const clearFilters = () => {
     setPeopleQuery('');
-    setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '' });
+    setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '', overdue: '' });
   };
 
 
@@ -218,6 +219,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
       if (project) params.set('project_id', project);
       if (owner) params.set('owner', owner);
       if (agent) params.set('agent_owner', agent);
+      if (overdue) params.set('overdue', '1');
       const wantsArchives = searching && includeArchived;
       if (wantsArchives && archiveSupport.current === true) params.set('include_archived', '1');
       params.set('limit', '200');
@@ -289,7 +291,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     } finally {
       gate.current.settle(gen);
     }
-  }, [networkId, status, tag, q, project, owner, agent, searching, includeArchived]);
+  }, [networkId, status, tag, q, project, owner, agent, overdue, searching, includeArchived]);
 
   useEffect(() => {
     void load();
@@ -488,6 +490,19 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           })}
         </div>
 
+        <div className="mb-4 flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            aria-pressed={overdue}
+            data-testid="requirements-overdue-toggle"
+            onClick={() => setParam({ overdue: overdue ? '' : '1', q: qInput, tag: tagInput })}
+            className={`rounded-md px-3 py-1.5 text-xs transition-colors ${overdue ? 'bg-[var(--bg-elevated)] text-[var(--danger)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+          >
+            已逾期
+          </button>
+          <span className="text-[10px] text-[var(--fg-dim)]">未完成且截止已过</span>
+        </div>
+
         <ProjectFilter
           networkId={networkId}
           value={project}
@@ -538,7 +553,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               包含已归档
             </label>
           )}
-          {(status || tag || q || project || owner || agent) && (
+          {(status || tag || q || project || owner || agent || overdue) && (
             <button
               type="button"
               onClick={clearFilters}
@@ -600,9 +615,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           // 那时说「需求池是空的」就是把鉴权/故障说成没数据，用户会以为需求丢了。
           <EmptyState
             variant="generic"
-            title={status || tag || q || project || owner || agent ? '没有符合筛选的需求' : '需求池是空的'}
-            sub={status || tag || q || project || owner || agent ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
-            cta={status || tag || q || project || owner || agent ? { label: '清空筛选', onClick: clearFilters } : undefined}
+            title={status || tag || q || project || owner || agent || overdue ? '没有符合筛选的需求' : '需求池是空的'}
+            sub={status || tag || q || project || owner || agent || overdue ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
+            cta={status || tag || q || project || owner || agent || overdue ? { label: '清空筛选', onClick: clearFilters } : undefined}
           />
         ) : board ? (
           <>
