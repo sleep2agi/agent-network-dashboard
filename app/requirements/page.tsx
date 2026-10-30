@@ -110,6 +110,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [columnOverrides, setColumnOverrides] = useState<Record<string, string>>({});
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [createNotice, setCreateNotice] = useState('');
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
+  const [showAbandoned, setShowAbandoned] = useState(false);
   const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
   const personOptions = useMemo(() => peopleCatalog.status === 'ready' ? peopleOptions(peopleCatalog.people) : [], [peopleCatalog]);
@@ -142,6 +144,24 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     };
     window.addEventListener('popstate', restore);
     return () => window.removeEventListener('popstate', restore);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('anet-requirements-board-collapsed');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) setCollapsedColumns(new Set(parsed.filter(key => typeof key === 'string')));
+    } catch { /* ignore malformed preferences */ }
+  }, []);
+
+  const toggleColumn = useCallback((key: string) => {
+    setCollapsedColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      try { localStorage.setItem('anet-requirements-board-collapsed', JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
   }, []);
 
   const setParam = useCallback((patch: Record<string, string>) => {
@@ -503,16 +523,33 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 {moveError || moveNotice}
               </p>
             )}
+          {status !== 'abandoned' && (
+            <div className="mb-2 flex justify-end">
+              <button
+                type="button"
+                data-testid="requirements-abandoned-toggle"
+                aria-label={showAbandoned ? '收起已放弃列' : '展开已放弃列'}
+                aria-pressed={showAbandoned}
+                onClick={() => setShowAbandoned(value => !value)}
+                className="rounded-md px-2.5 py-1 text-[11px] text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200"
+              >
+                {showAbandoned ? '收起已放弃' : `已放弃 ${counts.abandoned || 0}`}
+              </button>
+            </div>
+          )}
           <div className="-mx-1 min-w-0 overflow-x-auto pb-1" data-testid="requirements-board">
-            <div className="grid auto-cols-[minmax(16rem,1fr)] snap-x grid-flow-col gap-3 px-1">
-              {COLUMNS.filter(col => col.key).filter(col => !status || col.key === status).map(col => {
+            <div className="flex snap-x gap-3 px-1">
+              {COLUMNS.filter(col => col.key)
+                .filter(col => (!status || col.key === status) && (col.key !== 'abandoned' || showAbandoned || status === 'abandoned'))
+                .map(col => {
                 const items = rows.filter(row => columnOf(row) === col.key);
+                const isCollapsed = collapsedColumns.has(col.key);
                 return (
                   <section
                     key={col.key}
                     aria-label={`${col.label}列`}
                     data-testid={`requirements-column-${col.key}`}
-                    className={`snap-start rounded-xl border bg-[var(--bg-secondary)]/60 transition-colors ${dragOverColumn === col.key ? 'border-[var(--hl)] bg-[var(--hover-tint)]' : 'border-[var(--border)]'}`}
+                    className={`snap-start shrink-0 rounded-xl border bg-[var(--bg-secondary)]/60 transition-colors ${isCollapsed ? 'w-12' : 'w-72 sm:w-[19rem]'} ${dragOverColumn === col.key ? 'border-[var(--hl)] bg-[var(--hover-tint)]' : 'border-[var(--border)]'}`}
                     onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; setDragOverColumn(col.key); }}
                     onDragLeave={event => { if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) setDragOverColumn(null); }}
                     onDrop={event => {
@@ -523,9 +560,31 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                       if (row) void moveCard(row, col.key as Requirement['column']);
                     }}
                   >
+                    {isCollapsed ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleColumn(col.key)}
+                        aria-label={`${col.label} 展开`}
+                        data-testid={`requirements-column-expand-${col.key}`}
+                        className="flex h-44 w-full flex-col items-center justify-between gap-2 px-1 py-3"
+                      >
+                        <span className={`rounded px-1 py-0.5 text-[11px] tabular-nums ${COLUMN_CHIP[col.key]}`}>{items.length}</span>
+                        <span className="text-[11px] text-[var(--fg-muted)]" style={{ writingMode: 'vertical-rl' }}>{col.label}</span>
+                      </button>
+                    ) : (
+                    <>
                     <header className="flex items-center justify-between gap-2 px-3 py-2">
                       <span className={`rounded px-1.5 py-0.5 text-[11px] ${COLUMN_CHIP[col.key]}`}>{col.label}</span>
-                      <span className="text-[10px] tabular-nums text-[var(--fg-muted)]">{items.length}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-[10px] tabular-nums text-[var(--fg-muted)]">{items.length}</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleColumn(col.key)}
+                          aria-label={`${col.label} 折叠`}
+                          data-testid={`requirements-column-collapse-${col.key}`}
+                          className="rounded px-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+                        >−</button>
+                      </span>
                     </header>
                     <div className="space-y-2 px-2 pb-3">
                       {items.length === 0 ? (
@@ -603,6 +662,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                         );
                       })}
                     </div>
+                    </>
+                    )}
                   </section>
                 );
               })}

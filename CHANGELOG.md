@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.124 — 2026-10-30
+
+### Collapse board columns and tuck away abandoned work
+
+- Each board column can collapse into a narrow strip that keeps its name and
+  count; the choice persists in the browser. Collapsed columns still accept a
+  dropped card, so moving work stays possible when space is tight.
+- The abandoned column is hidden by default behind a “已放弃 N” toggle, and is
+  forced back whenever the status filter explicitly selects it.
+
 ## 0.6.3-preview.123 — 2026-10-30
 
 ### Edit description and tags from the requirement detail
