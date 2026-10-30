@@ -533,9 +533,10 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             />
           </div>
           <TagPicker
-            value={tag}
+            draft={tagInput}
+            applied={tag}
             catalog={tagCatalog}
-            query={q}
+            onDraftChange={setTagInput}
             onApply={next => setParam({ tag: next, q: qInput })}
           />
           {archiveSupported === true && (

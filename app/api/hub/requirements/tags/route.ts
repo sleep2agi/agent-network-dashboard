@@ -34,6 +34,11 @@ export async function GET(req: Request) {
     if (!contentType.includes('application/json')) {
       return Response.json({ ok: false, error: 'hub_not_json', status: res.status }, { status: 502 });
     }
+    if (res.status === 404) {
+      // Old Hub without the catalogue: an empty, explicitly-unsupported body so
+      // the UI falls back to plain text tags without a console 404 on every page.
+      return Response.json({ ok: true, tags: [], counts: {}, colors: {}, nodes: [], can_manage: false, unsupported: true });
+    }
     const data = await res.json();
     return Response.json(data, { status: res.status });
   } catch (e: unknown) {

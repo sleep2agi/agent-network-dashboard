@@ -61,27 +61,26 @@ export function TagChip({ name, color, count, className = '' }: {
  * select: Enter applies exactly what was typed, clicking a suggestion applies
  * that tag, and the already-applied tag is never offered back.
  */
-export function TagPicker({ value, catalog, query, onApply }: {
-  value: string;
+export function TagPicker({ draft, applied, catalog, onDraftChange, onApply }: {
+  /** What is typed right now — owned by the page so other controls see it. */
+  draft: string;
+  /** The tag actually filtering the list (from the URL). */
+  applied: string;
   catalog: TagCatalog | null;
-  query: string;
+  onDraftChange: (tag: string) => void;
   onApply: (tag: string) => void;
 }) {
-  const [draft, setDraft] = useState(value);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => { setDraft(value); }, [value]);
-
   const suggestions = useMemo(
-    () => (catalog ? tagSuggestions(catalog, draft === value ? '' : draft, value ? [value] : [], 8) : []),
-    [catalog, draft, value],
+    () => (catalog ? tagSuggestions(catalog, draft === applied ? '' : draft, applied ? [applied] : [], 8) : []),
+    [catalog, draft, applied],
   );
 
   const apply = useCallback((tag: string) => {
     onApply(tag.trim());
-    setDraft(tag.trim());
     setOpen(false);
     setActive(-1);
   }, [onApply]);
@@ -106,14 +105,14 @@ export function TagPicker({ value, catalog, query, onApply }: {
         setOpen(false);
         setActive(-1);
         // Same contract as before: leaving the box commits what is in it.
-        if (draft.trim() !== value) onApply(draft);
+        if (draft.trim() !== applied) onApply(draft);
       }}
     >
       <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 focus-within:border-[var(--border-hover)]">
-        {value && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tagColor(catalog, value) || 'var(--fg-dim)' }} />}
+        {applied && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tagColor(catalog, applied) || 'var(--fg-dim)' }} />}
         <input
           value={draft}
-          onChange={event => { setDraft(event.target.value); setOpen(true); setActive(-1); }}
+          onChange={event => { onDraftChange(event.target.value); setOpen(true); setActive(-1); }}
           onFocus={() => setOpen(true)}
           onKeyDown={event => {
             if (event.key === 'Enter') {
@@ -171,7 +170,7 @@ export function TagPicker({ value, catalog, query, onApply }: {
             );
           })}
           <li aria-hidden className="px-2.5 pt-1 text-[10px] text-[var(--fg-dim)]">
-            {query.trim() ? `回车按“${draft.trim() || query.trim()}”筛选` : '回车按输入内容筛选'}
+            {draft.trim() ? `回车按“${draft.trim()}”筛选` : '输入任意标签后回车筛选'}
           </li>
         </ul>
       )}
