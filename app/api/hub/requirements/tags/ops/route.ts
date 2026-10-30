@@ -9,7 +9,7 @@ async function hubHeaders(): Promise<Record<string, string>> {
   return h;
 }
 
-const OPS = new Set(['rename', 'merge', 'delete', 'color']);
+const OPS = new Set(['rename', 'merge', 'delete', 'color', 'reparent']);
 
 /**
  * Tag management proxy — APP parity (`POST /api/requirements/tags/ops`).
@@ -42,9 +42,13 @@ export async function POST(req: Request) {
     payload.to = body.to;
   } else if (op === 'delete') {
     payload.tag = body.tag;
-  } else {
+  } else if (op === 'color') {
     payload.tag = body.tag;
     payload.color = body.color ?? null;
+  } else {
+    // reparent: `parent` must be explicit — null is a root move, absent is invalid.
+    payload.tag = body.tag;
+    payload.parent = body.parent ?? null;
   }
 
   const networkId = new URL(req.url).searchParams.get('network_id');
