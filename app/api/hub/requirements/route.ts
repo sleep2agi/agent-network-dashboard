@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const params = new URLSearchParams();
-  for (const key of ['network_id', 'status', 'tag', 'project_id', 'owner', 'agent_owner', 'q', 'include_archived', 'limit', 'cursor', 'view', 'parent_id']) {
+  for (const key of ['network_id', 'status', 'tag', 'project_id', 'owner', 'agent_owner', 'q', 'include_archived', 'overdue', 'limit', 'cursor', 'view', 'parent_id']) {
     const value = searchParams.get(key);
     if (value) params.set(key, value);
   }

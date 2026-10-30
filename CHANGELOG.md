@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.127 — 2026-10-30
+
+### Overdue quick filter
+
+- A “已逾期” chip filters to unfinished requirements whose due date has passed,
+  matching the APP’s overdue quick filter. It composes with status, project, tag,
+  text, responsibility and archive filters, is kept in the URL and cleared with
+  the other filters.
+
 ## 0.6.3-preview.126 — 2026-10-30
 
 ### Sort the requirement list and board
