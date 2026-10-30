@@ -938,18 +938,59 @@ export default function Legion3DPage() {
         }
         if (outer.length < 2 || inner.length < 2) continue;
         const lit = activeSet?.has(node.id) ?? false;
+        const bandColor = lit ? tk.accent : tk.info;
+        const fillAlpha = activeSet
+          ? (lit ? (focusingDept ? 0.26 : 0.22) : (focusingDept ? 0.015 : 0.04))
+          : (dark ? 0.085 : 0.11);
+        const edgeAlpha = activeSet
+          ? (lit ? (focusingDept ? 0.55 : 0.5) : (focusingDept ? 0.03 : 0.08))
+          : (dark ? 0.22 : 0.3);
+
+        // 编制带：外侧渐隐的径向渐变 + 内侧高光，一眼看出「这块属于哪个部门」，
+        // 同时不新增颜色（仍用 accent/info 单色系）。
         ctx.beginPath();
         outer.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
         for (let i = inner.length - 1; i >= 0; i--) ctx.lineTo(inner[i].x, inner[i].y);
         ctx.closePath();
-        ctx.fillStyle = lit ? tk.accent : tk.info;
-        const dimAlpha = focusingDept ? 0.015 : 0.04;
-        ctx.globalAlpha = activeSet ? (lit ? (focusingDept ? 0.26 : 0.22) : dimAlpha) : (dark ? 0.085 : 0.11);
+        const midAngle = (node.spanStart ?? 0) + node.span / 2;
+        const outerMid = projectPoint({ x: Math.sin(midAngle) * rOuter, y, z: Math.cos(midAngle) * rOuter }, cam, size);
+        const innerMid = projectPoint({ x: Math.sin(midAngle) * rInner, y, z: Math.cos(midAngle) * rInner }, cam, size);
+        if (outerMid && innerMid) {
+          const band = ctx.createLinearGradient(innerMid.x, innerMid.y, outerMid.x, outerMid.y);
+          band.addColorStop(0, hexToRgba(bandColor, fillAlpha));
+          band.addColorStop(1, hexToRgba(bandColor, 0));
+          ctx.fillStyle = band;
+        } else {
+          ctx.fillStyle = hexToRgba(bandColor, fillAlpha);
+        }
+        ctx.globalAlpha = 1;
         ctx.fill();
-        ctx.globalAlpha = activeSet ? (lit ? (focusingDept ? 0.55 : 0.5) : (focusingDept ? 0.03 : 0.08)) : (dark ? 0.22 : 0.3);
-        ctx.strokeStyle = lit ? tk.accent : tk.info;
-        ctx.lineWidth = 1;
+
+        // 内侧高光：把带子的内缘勾出来，和轨道线区分开。
+        ctx.globalAlpha = edgeAlpha;
+        ctx.strokeStyle = bandColor;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        inner.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
         ctx.stroke();
+
+        // 编制刻度：每位成员一个点，沿带子中线分布；人数多的部门不铺满，
+        // 上限 24 个，仍然能看出规模差。
+        const seats = Math.min(node.memberCount ?? 0, 24);
+        if (seats > 0) {
+          const seatRadius = rInner + (rOuter - rInner) * 0.55;
+          ctx.globalAlpha = activeSet ? (lit ? 0.7 : 0.06) : (dark ? 0.5 : 0.42);
+          ctx.fillStyle = lit ? tk.accent : tk.fg;
+          for (let s = 0; s < seats; s++) {
+            const a = (node.spanStart ?? 0) + node.span * ((s + 0.5) / seats);
+            const pt = projectPoint({ x: Math.sin(a) * seatRadius, y, z: Math.cos(a) * seatRadius }, cam, size);
+            if (!pt) continue;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 1.6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.globalAlpha = 1;
       }
       ctx.globalAlpha = 1;
 
