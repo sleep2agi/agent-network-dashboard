@@ -90,6 +90,11 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [personChoices, setPersonChoices] = useState<PersonOption[] | null>(null);
   const [peopleError, setPeopleError] = useState('');
   const [peopleAttempt, setPeopleAttempt] = useState(0);
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [descriptionDraft, setDescriptionDraft] = useState('');
+  const [editingTags, setEditingTags] = useState(false);
+  const [tagsDraft, setTagsDraft] = useState('');
+  const [editError, setEditError] = useState('');
 
   const reload = () => setReloadKey(k => k + 1);
   // Every read and write names the selected network: a user token can belong to
@@ -115,8 +120,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     return () => { alive = false; };
   }, [scope, peopleAttempt]);
 
-  async function sendPatch(fields: Record<string, unknown>) {
-    if (!id || busy) return;
+  async function sendPatch(fields: Record<string, unknown>): Promise<boolean> {
+    if (!id || busy) return false;
     setBusy(true); setActionError('');
     try {
       const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}?${scope}`, {
@@ -125,10 +130,12 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         body: JSON.stringify(fields),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.ok === false) { setActionError(data?.error || `hub_${res.status}`); return; }
+      if (!res.ok || data.ok === false) { setActionError(data?.message || data?.error || `hub_${res.status}`); return false; }
       reload();
+      return true;
     } catch (e: unknown) {
       setActionError(e instanceof Error ? e.message : 'patch failed');
+      return false;
     } finally { setBusy(false); }
   }
 
@@ -151,6 +158,26 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
 
   async function changeParticipants(next: Person[]) {
     await sendPatch({ participants: next });
+  }
+
+  async function saveDescription() {
+    setEditError('');
+    if (descriptionDraft.length > 20_000) { setEditError('描述不能超过 20000 个字符'); return; }
+    if (await sendPatch({ description: descriptionDraft })) setEditingDescription(false);
+  }
+
+  function parseTags(draft: string): string[] | null {
+    const tags = [...new Set(draft.split(/[,，]/).map(tag => tag.trim()).filter(Boolean))];
+    if (tags.length > 10) { setEditError('最多 10 个标签'); return null; }
+    if (tags.some(tag => tag.length > 20)) { setEditError('单个标签不能超过 20 个字符'); return null; }
+    return tags;
+  }
+
+  async function saveTags() {
+    setEditError('');
+    const tags = parseTags(tagsDraft);
+    if (!tags) return;
+    if (await sendPatch({ tags })) setEditingTags(false);
   }
 
   async function submitComment() {
@@ -361,6 +388,23 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               <button type="button" onClick={() => setPeopleAttempt(n => n + 1)} className="ml-2 underline">重试人员目录</button>
             </span>
           )}
+          <span className="mx-1 h-4 w-px bg-[var(--border)]" />
+          {editingTags ? (
+            <span className="flex items-center gap-1">
+              <input
+                aria-label="标签"
+                value={tagsDraft}
+                onChange={event => setTagsDraft(event.target.value)}
+                placeholder="逗号分隔"
+                className="w-44 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs text-gray-200"
+              />
+              <button type="button" data-testid="requirement-save-tags" disabled={busy} onClick={() => void saveTags()} className="rounded bg-[var(--hl)] px-2 py-0.5 text-[10px] text-[var(--bg)] disabled:opacity-60">保存</button>
+              <button type="button" onClick={() => { setEditingTags(false); setEditError(''); }} className="text-[10px] text-gray-500 underline">取消</button>
+            </span>
+          ) : (
+            <button type="button" data-testid="requirement-edit-tags" onClick={() => { setTagsDraft((req.tags || []).join(', ')); setEditError(''); setEditingTags(true); }} className="text-[11px] text-gray-500 underline hover:text-gray-300">编辑标签</button>
+          )}
+          {editError && !editingDescription && <span role="alert" className="text-[11px] text-[var(--danger)]">{editError}</span>}
           {busy && <span className="text-[11px] text-gray-500">saving…</span>}
           {actionError && <span className="text-[11px] text-red-400">{actionError}</span>}
         </section>
@@ -418,8 +462,30 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         </section>
 
         <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
-          <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-500">Description</h2>
-          {req.description ? (
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-xs uppercase tracking-wide text-gray-500">Description</h2>
+            {!editingDescription ? (
+              <button type="button" data-testid="requirement-edit-description" onClick={() => { setDescriptionDraft(req.description || ''); setEditError(''); setEditingDescription(true); }} className="text-[11px] text-gray-400 underline hover:text-gray-200">编辑描述</button>
+            ) : (
+              <span className="flex items-center gap-2 text-[11px]">
+                <button type="button" data-testid="requirement-save-description" disabled={busy} onClick={() => void saveDescription()} className="rounded bg-[var(--hl)] px-2 py-0.5 text-[var(--bg)] disabled:opacity-60">保存</button>
+                <button type="button" onClick={() => { setEditingDescription(false); setEditError(''); }} className="text-gray-400 underline hover:text-gray-200">取消</button>
+              </span>
+            )}
+          </div>
+          {editingDescription ? (
+            <div>
+              <textarea
+                aria-label="描述"
+                value={descriptionDraft}
+                onChange={event => setDescriptionDraft(event.target.value)}
+                rows={8}
+                className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-2 font-mono text-xs text-gray-200 focus:border-[var(--border-hover)] focus:outline-none"
+              />
+              <p className="mt-1 text-[10px] text-[var(--fg-dim)]">{descriptionDraft.length}/20000 · 支持 Markdown</p>
+              {editError && <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">{editError}</p>}
+            </div>
+          ) : req.description ? (
             <div className="prose prose-invert max-w-none prose-sm prose-pre:bg-[var(--bg)] prose-pre:border prose-pre:border-[var(--border)]">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{req.description}</ReactMarkdown>
             </div>
