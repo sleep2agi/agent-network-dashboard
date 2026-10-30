@@ -109,6 +109,10 @@ The requirements page can create a requirement (name, priority, status, project,
 tags, description). Hub validates it; the page keeps the draft visible when the
 write is rejected.
 
+The project picker compares Hub's echoed network with the selected one: a
+different network blocks the catalogue, while a missing echo (older Hub) stays
+a silent success.
+
 ## Design language
 
 The dark theme adopts ANet's client palette, including the paired accent fill and foreground. [DESIGN.md](DESIGN.md) records the mapping, its canonical source, and the remaining migration scope.
