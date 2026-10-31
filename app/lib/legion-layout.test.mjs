@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { buildLegionLayout, toPixel, RING_RADIUS, ORPHAN_GROUP, UNGROUPED, UNKNOWN_DEPT, nearestDept } from './legion-layout';
+import { buildLegionLayout, toPixel, RING_RADIUS, ORPHAN_GROUP, UNGROUPED, UNKNOWN_DEPT, nearestDept, tourOrder } from './legion-layout';
 
 const person = (over = {}) => ({
   user_id: 'u1', username: 'vansin', display_name: 'Vincent', role: 'owner',
@@ -412,5 +412,18 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
     });
     const dept = layout.nodes.find(n => n.kind === 'group');
     expect(nearestDept('agent:n_1', layout.nodes)?.id).toBe(dept.id);
+  });
+});
+
+describe('演示巡礼顺序', () => {
+  test('先按楼层、再按方位角，非部门节点不参与', () => {
+    const nodes = [
+      { kind: 'group', id: 'b2', depth: 2, angle: 0.2 },
+      { kind: 'person', id: 'p', depth: 1, angle: 0.1 },
+      { kind: 'group', id: 'a1', depth: 1, angle: 1.5 },
+      { kind: 'group', id: 'b1', depth: 2, angle: 0.1 },
+      { kind: 'group', id: 'a2', depth: 1, angle: 0.4 },
+    ];
+    expect(tourOrder(nodes).map(n => n.id)).toEqual(['a2', 'a1', 'b1', 'b2']);
   });
 });

@@ -541,6 +541,16 @@ export function toPixel(
  * 为什么不直接看 parentId：`未分组` 与 `无主 Agent` 是合成分组，它们不是部门；
  * 对这两个分组下的节点，UI 不该出现「聚焦所在部门」。
  */
+/** 演示巡礼的出场顺序：先按楼层（浅 → 深），同层再按方位角。
+ *  原来只按布局数组顺序，镜头会在楼层之间来回跳，看不出「一层一层往下走」；
+ *  按层排之后，同一层的部门连续扫过去，再落到下一层。 */
+export function tourOrder<T extends { kind: string; depth?: number; angle: number }>(nodes: T[]): T[] {
+  return nodes
+    .filter(node => node.kind === 'group')
+    .slice()
+    .sort((a, b) => (a.depth ?? 1) - (b.depth ?? 1) || a.angle - b.angle);
+}
+
 export function nearestDept(nodeId: string, nodes: LegionNode[]): LegionNode | null {
   const byId = new Map(nodes.map(n => [n.id, n]));
   const cur = byId.get(nodeId);

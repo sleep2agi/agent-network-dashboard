@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { buildLegionLayout, nearestDept, deptWorldRadius, type LegionNode } from '../../lib/legion-layout';
+import { buildLegionLayout, nearestDept, deptWorldRadius, tourOrder, type LegionNode } from '../../lib/legion-layout';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
@@ -846,7 +846,8 @@ export default function Legion3DPage() {
       // 演示模式的部门巡礼：按顺序逐个聚焦，镜头同时转向该部门。
       // 录屏与减少动态效果时不自动推进（录屏必须保持一条无缝轨道）。
       if (presentingRef.current && tourRef.current && !capture && !motionPreference.matches) {
-        const depts = layout.nodes.filter(n => n.kind === 'group');
+        // 按楼层排序巡礼：浅层先走，深层后走（见 tourOrder 的注释）。
+        const depts = tourOrder(layout.nodes);
         if (depts.length > 1) {
           if (tourAt.current === 0) tourAt.current = now;
           if (now - tourAt.current >= TOUR_STEP_MS) {
@@ -2252,7 +2253,7 @@ export default function Legion3DPage() {
               setTour(next);
               tourAt.current = 0;
               if (!next) { setFocus(null); tourIndex.current = -1; return; }
-              const depts = layout.nodes.filter(n => n.kind === 'group');
+              const depts = tourOrder(layout.nodes);
               tourIndex.current = depts.length ? 0 : -1;
               if (depts[0]) { setFocus(depts[0].id); yawTarget.current = depts[0].angle; }
             }}
@@ -2262,7 +2263,12 @@ export default function Legion3DPage() {
           </button>
           {tour && (
             <span data-testid="legion-3d-tour-status" className="rounded-md bg-[var(--bg-secondary)]/90 px-2 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur">
-              {layout.nodes.find(n => n.id === focus)?.label ?? '巡礼中'}
+              {(() => {
+                const node = layout.nodes.find(n => n.id === focus);
+                if (!node) return '巡礼中';
+                // 分层之后光报部门名看不出「现在在第几层」，把层号一起报出来。
+                return `第 ${Math.max(1, node.depth ?? 1)} 层 · ${node.label}`;
+              })()}
             </span>
           )}
           <button
