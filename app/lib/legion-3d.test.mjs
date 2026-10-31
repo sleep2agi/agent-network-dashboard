@@ -8,6 +8,7 @@ import {
   jitterHeight,
   nodeToVec3,
   depthDrop,
+  dropSag,
   DEPTH_STEP,
   DEPT_DISC_MIN_RX,
   DEPT_DISC_ASPECT,
@@ -105,6 +106,12 @@ describe('#3D 军团拓扑 — 投影/深度/命中必须可断言，不能靠�
     const parent = nodeToVec3({ x: 1, y: 0, ring: 1, order: 1, kind: 'group', depth: 1 });
     const child = nodeToVec3({ x: 1, y: 0, ring: 1, order: 2, kind: 'group', depth: 2 });
     expect(child.y - parent.y).toBeLessThan(-0.3);
+    // 父子部门的连线要垂一层；同级或非部门之间不垂。
+    expect(dropSag(1, 1, 120)).toBe(0);
+    expect(dropSag(undefined, 2, 120)).toBe(0);
+    expect(dropSag(1, 2, 0)).toBe(10);
+    expect(dropSag(1, 2, 40)).toBeGreaterThan(10);
+    expect(dropSag(1, 4, 400)).toBe(30);
     expect(core.y).toBeGreaterThan(agent.y);
   });
 

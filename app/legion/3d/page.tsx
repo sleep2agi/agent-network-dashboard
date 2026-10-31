@@ -24,7 +24,7 @@ import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABE
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
-import { departmentDisc, fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
+import { departmentDisc, dropSag, fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
 import { EXPORT_FPS, LOOP_DURATION_MS, containRect, exportDimensions, loopProgress, loopYaw, pickRecordingMime, recordingFileName } from '../../lib/legion-recording';
@@ -1135,7 +1135,13 @@ export default function Legion3DPage() {
         if (!a || !b) return;
         const lit = !activeSet || (activeSet.has(edge.from) && activeSet.has(edge.to));
         const { cx, cy } = curveOf(a.projected.x, a.projected.y, b.projected.x, b.projected.y, i);
-        edgeDraws.push({ a, b, cx, cy, lit, trunk: b.item.kind === 'group' });
+        // 父子部门之间的连线向下垂一层，读得出「这条线是往下走的」。
+        const sag = dropSag(
+          a.item.kind === 'group' ? a.item.depth ?? 1 : undefined,
+          b.item.kind === 'group' ? b.item.depth ?? 1 : undefined,
+          b.projected.y - a.projected.y,
+        );
+        edgeDraws.push({ a, b, cx, cy: cy + sag, lit, trunk: b.item.kind === 'group' });
       });
 
       // Broad bloom is reserved for the hierarchy spine or an explicit selection.

@@ -81,6 +81,16 @@ export function nodeToVec3(
   };
 }
 
+/** 父部门 → 子部门这条线在屏幕上下垂多少像素。
+ *  楼层化之后父子部门本来就有高度差，但镜头一斜，这条边和成员线几乎平行地混在
+ *  一起；按「层数 + 端点屏幕落差」给控制点加一点下垂，连线才读得出「向下掉了一层」。
+ *  非部门之间、同级部门之间返回 0（成员/Agent 连线保持原样）。 */
+export function dropSag(fromDepth?: number, toDepth?: number, screenGap = 0): number {
+  if (fromDepth == null || toDepth == null || fromDepth === toDepth) return 0;
+  const tiers = Math.abs(toDepth - fromDepth);
+  return Math.min(30, 10 * tiers + Math.abs(screenGap) * 0.25);
+}
+
 /** 单个 3D 点 → 屏幕坐标。相机背后（depth <= 0.05）返回 null。 */
 export function projectPoint(
   p: Vec3,
