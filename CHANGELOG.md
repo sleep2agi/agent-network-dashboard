@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.176 — 2026-11-01
+
+### Move a requirement between projects
+
+- The detail page could not change a requirement's project: you picked one at
+  creation and could only filter by it afterwards. The status bar now has 项目
+  (with 无项目), writing `project_id` or `null`, and the header line names the
+  project.
+- The PATCH proxy had to learn `project_id` — it was another field the UI would
+  have sent into the void. The pinned allowlist test forced that to be an explicit
+  change rather than a silent drop.
+
 ## 0.6.4-preview.175 — 2026-11-01
 
 ### Bulk owner assignment

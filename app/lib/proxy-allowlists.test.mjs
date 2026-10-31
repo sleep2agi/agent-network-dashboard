@@ -33,13 +33,13 @@ describe('需求写入代理的字段白名单', () => {
   test('修改：详情页每个 writePath 都落在白名单内', () => {
     // 详情页（app/requirements/[id]/page.tsx）实际会发出去的字段
     const sentByDetail = ['column', 'priority', 'due', 'start', 'tags', 'description', 'owner', 'agent_owner',
-      'participants', 'checklist', 'parent_id', 'issues', 'archived'];
+      'participants', 'checklist', 'parent_id', 'issues', 'archived', 'project_id'];
     for (const field of sentByDetail) expect([...WRITABLE]).toContain(field);
   });
 
   test('修改：白名单与页面字段严格相等（多了就是没人发的死字段）', () => {
     const expected = ['column', 'priority', 'due', 'start', 'tags', 'name', 'description', 'owner', 'agent_owner',
-      'participants', 'checklist', 'parent_id', 'issues', 'archived'];
+      'participants', 'checklist', 'parent_id', 'issues', 'archived', 'project_id'];
     expect([...WRITABLE].sort()).toEqual(expected.sort());
   });
 
