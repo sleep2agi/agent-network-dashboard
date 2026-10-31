@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.156 — 2026-10-31
+
+### Floors, and one camera that shows them
+
+- Departments, people and agents now sit on four separate levels (core plane,
+  parent ring, people, agents) and sub-departments take their own step below
+  their parent, so the topology reads as a stack instead of a single sheet.
+- The default camera is closer and slightly higher (`pitch 0.60`, `dist 4.9`),
+  which restores perspective: near departments are visibly larger than far ones.
+- Agent aliases are only drawn automatically while there are at most 12 agents;
+  beyond that they appear on hover/selection. At the dense fixture (42 agents)
+  they used to cover the ring.
+
 ## 0.6.3-preview.155 — 2026-10-31
 
 ### The 3D chart shows its hierarchy
