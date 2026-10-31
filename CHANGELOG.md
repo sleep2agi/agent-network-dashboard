@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.187 — 2026-11-01
+
+### The bulk bar is one swipeable row on phones
+
+- With seven controls the bulk bar wrapped into a 322px block at 320px — most of
+  the screen before you reach a single card. On phones it is now a single
+  horizontally scrollable row (desktop still wraps, where there is room).
+- Controls no longer shrink or break their labels, and the selection count keeps
+  one line; the board suite now measures this at 320 (`narrow:bulkBarFitsAt320`).
+
 ## 0.6.4-preview.186 — 2026-11-01
 
 ### Creation and update times on the detail page
