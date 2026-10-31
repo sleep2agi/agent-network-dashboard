@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.161 — 2026-10-31
+
+### A due-date timeline for requirements
+
+- The requirements page gains a third view: 时间线. Rows are the loaded requirements
+  that have a due date, plotted as dots on a date axis, earliest first; overdue
+  dots are red, done ones grey, and a vertical line marks today.
+- It deliberately plots due dates only. The list API returns `due` but no `start`,
+  so drawing start→end bars would invent a schedule the data does not have; the
+  rows without a due date are counted under the chart instead of being dropped silently.
+- Works with the existing filters (search/status/tag/…), survives reload via
+  `?view=timeline`, and stays inside the card on a 390px screen.
+
 ## 0.6.3-preview.160 — 2026-10-31
 
 ### The 2D chart names its sub-departments
