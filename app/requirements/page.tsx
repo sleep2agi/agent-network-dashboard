@@ -753,7 +753,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               只读视图。派单在 <Link href="/tasks" className="text-[var(--hl)] hover:underline">Tasks</Link>。
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)]">
               <span className="hidden sm:inline">排序</span>
               <select
@@ -783,7 +783,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 void load();
               }}
             />
-            <div role="group" aria-label="视图切换" className="flex items-center gap-0.5 rounded-md border border-[var(--border)] p-0.5">
+            <div role="group" aria-label="视图切换" className="flex flex-wrap items-center gap-0.5 rounded-md border border-[var(--border)] p-0.5">
               {[{ key: '', label: '列表', test: 'list' }, { key: 'board', label: '看板', test: 'board' }, { key: 'timeline', label: '时间线', test: 'timeline' }].map(option => {
                 const active = timeline ? option.key === 'timeline' : (option.key === 'board') === board;
                 return (
@@ -793,7 +793,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                     aria-pressed={active}
                     data-testid={`requirements-view-${option.test}`}
                     onClick={() => setParam({ view: option.key })}
-                    className={`rounded px-2.5 py-1 text-xs transition-colors ${active ? 'bg-[var(--bg-elevated)] text-gray-100' : 'text-[var(--fg-muted)] hover:text-gray-200'}`}
+                    className={`whitespace-nowrap rounded px-2.5 py-1 text-xs transition-colors ${active ? 'bg-[var(--bg-elevated)] text-gray-100' : 'text-[var(--fg-muted)] hover:text-gray-200'}`}
                   >
                     {option.label}
                   </button>
@@ -807,7 +807,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               data-testid="requirements-summary-toggle"
               title="统计已加载结果的分布（不是全网总量）"
               onClick={() => setParam({ summary: summaryOpen ? '' : '1' })}
-              className={`rounded-md border px-2 py-1 text-xs transition-colors ${summaryOpen ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
+              className={`whitespace-nowrap rounded-md border px-2 py-1 text-xs transition-colors ${summaryOpen ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
             >
               汇总
             </button>
@@ -817,7 +817,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               data-testid="requirements-view-tree"
               title="按 parent_id 在已加载结果里分层显示"
               onClick={() => setParam({ tree: treeMode ? '' : '1', q: qInput, tag: tagInput })}
-              className={`rounded-md border px-2 py-1 text-xs transition-colors ${treeMode ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
+              className={`whitespace-nowrap rounded-md border px-2 py-1 text-xs transition-colors ${treeMode ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
             >
               树状
             </button>

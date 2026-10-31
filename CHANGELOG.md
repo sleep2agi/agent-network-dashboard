@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.181 — 2026-11-01
+
+### The requirements toolbar wraps instead of squeezing
+
+- At 320px the header cluster ran out of room: 时间线 broke into one character per
+  line and 汇总 was clipped at the right edge. It only became visible after the
+  view switch grew from two buttons to four.
+- The toolbar and the view group now wrap, and their labels never break mid-word,
+  so narrow screens get two clean rows (sort + 新建需求, then the views) instead of
+  a squeezed column.
+
 ## 0.6.4-preview.180 — 2026-11-01
 
 ### A frame-time floor for the legion chart
