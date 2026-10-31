@@ -36,6 +36,7 @@ interface Requirement {
   createdAt?: string; updatedAt?: string;
   external_ref?: string | null; external_url?: string | null;
   issues?: Array<{ url: string; title?: string }> | null;
+  archived?: boolean;
 }
 interface EventRow {
   id: string; kind: string; field?: string | null;
@@ -500,6 +501,18 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
           )}
           <div className="flex items-start justify-between gap-3">
             <h1 className="text-lg font-semibold text-white">{req.name}</h1>
+            {!req.archived && (
+              <button
+                type="button"
+                data-testid="requirement-archive"
+                disabled={busy}
+                title="归档后列表默认不显示，可在「包含已归档」里找到"
+                onClick={() => void sendPatch({ archived: true })}
+                className="shrink-0 rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-60"
+              >
+                归档
+              </button>
+            )}
             <button
               type="button"
               data-testid="requirement-copy-link"
@@ -517,6 +530,20 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               {copied ? '已复制' : '复制链接'}
             </button>
           </div>
+          {req.archived && (
+            <p data-testid="requirement-archived-banner" className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px] text-amber-300">
+              这条需求已归档，列表默认不显示它。
+              <button
+                type="button"
+                data-testid="requirement-restore"
+                disabled={busy}
+                onClick={() => void sendPatch({ archived: false })}
+                className="rounded border border-amber-400/30 px-2 py-0.5 text-amber-200 hover:bg-amber-400/10 disabled:opacity-60"
+              >
+                恢复到列表
+              </button>
+            </p>
+          )}
           <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-gray-500">
             <span>负责人 {req.owner ? optionLabel(ownerValue) : '—'}</span>
             <span>负责 Agent {req.agent_owner ? optionLabel(agentValue) : '—'}</span>
