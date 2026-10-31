@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.164 — 2026-10-31
+
+### Link GitHub issues from a requirement
+
+- The detail page gains 关联 Issue: the issues Hub already stores are listed with
+  their `owner/repo#123` link and title, and you can add or remove one.
+- Input accepts a full `https://github.com/.../issues/N` URL or the shorthand
+  `owner/repo#123`. The same rules as the client app are enforced before writing
+  (8 issues max, duplicates rejected, non-GitHub links rejected), and the write
+  goes back as `{url,title}` — the shape Hub validates.
+- If Hub returns something this page cannot parse, the section turns read-only and
+  says so instead of offering an editor that would erase the stored list.
+
 ## 0.6.3-preview.163 — 2026-10-31
 
 ### The summary groups by project, and filters on click

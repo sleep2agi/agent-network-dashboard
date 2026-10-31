@@ -52,7 +52,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
  * can say *why* instead of failing silently.
  */
 /** `owner` must be a human and `agent_owner` a node; Hub enforces this too. */
-const WRITABLE = ['column', 'priority', 'due', 'start', 'tags', 'name', 'description', 'owner', 'agent_owner', 'participants', 'checklist', 'parent_id'] as const;
+// issues：Hub 只接受 GitHub issue URL、上限 8 条；这里只放行字段，校验仍在 Hub（客户端另有一份同规则的前置校验）。
+const WRITABLE = ['column', 'priority', 'due', 'start', 'tags', 'name', 'description', 'owner', 'agent_owner', 'participants', 'checklist', 'parent_id', 'issues'] as const;
 
 function validPerson(value: unknown, kind: 'user' | 'node'): boolean {
   if (value === null) return true;
