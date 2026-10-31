@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.178 — 2026-11-01
+
+### One tag across the selection
+
+- The bulk bar can now add or remove a single tag for everything selected.
+- Each card is computed from its **own** current tags (`[...current, tag]` or
+  `current.filter(≠ tag)`), so cards keep their other tags; a card that would
+  exceed Hub's ten-tag limit is skipped and named in the failure line instead of
+  being silently truncated.
+- Cards that already have (or already lack) the tag are counted as done without a
+  request, so a mixed selection does not emit pointless writes.
+
 ## 0.6.4-preview.177 — 2026-11-01
 
 ### Rename a requirement

@@ -367,6 +367,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMessage, setBulkMessage] = useState('');
   const [bulkDue, setBulkDue] = useState('');
+  const [bulkTag, setBulkTag] = useState('');
   const [bulkError, setBulkError] = useState('');
   const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
@@ -623,6 +624,49 @@ function RequirementsContent({ networkId }: { networkId: string }) {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+  };
+
+  /** 批量打/去标签：每张卡的 tags 不同，必须按卡计算目标数组再逐张写。
+   *  超过 Hub 的 10 个上限时只跳过那一张，并在提示里说明，不静默截断。 */
+  const bulkTagChange = async (mode: 'add' | 'remove') => {
+    const tag = bulkTag.trim();
+    const ids = [...selectedIds];
+    if (!tag || !ids.length || bulkBusy) return;
+    setBulkBusy(true);
+    setBulkMessage('');
+    setBulkError('');
+    const failures: Array<{ id: string; error: string }> = [];
+    let changed = 0;
+    for (const id of ids) {
+      const row = rows.find(item => item.id === id);
+      const current = row?.tags || [];
+      const next = mode === 'add'
+        ? (current.includes(tag) ? current : [...current, tag])
+        : current.filter(item => item !== tag);
+      if (next.length > 10) { failures.push({ id, error: `「${tag}」超出每条 10 个标签的上限` }); continue; }
+      if (next.length === current.length) { changed += 1; continue; }
+      try {
+        const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}?network_id=${encodeURIComponent(networkId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tags: next }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) failures.push({ id, error: data?.message || data?.error || `hub_${res.status}` });
+        else changed += 1;
+      } catch {
+        failures.push({ id, error: '网络错误' });
+      }
+    }
+    if (failures.length) {
+      setBulkError(`成功 ${changed} 项，失败 ${failures.length} 项：${failures[0].error}`);
+      setSelectedIds(new Set(failures.map(item => item.id)));
+    } else {
+      setBulkMessage(mode === 'add' ? `已给 ${changed} 项加上「${tag}」` : `已从 ${changed} 项移除「${tag}」`);
+      setSelectedIds(new Set());
+    }
+    if (changed) await load({ silent: true });
+    setBulkBusy(false);
   };
 
   const bulkPatch = async (fields: Record<string, unknown>) => {
@@ -1108,6 +1152,37 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   </optgroup>
                 ))}
               </select>
+              <label className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)]">
+                标签
+                <input
+                  aria-label="批量标签"
+                  data-testid="requirements-bulk-tag"
+                  value={bulkTag}
+                  maxLength={40}
+                  disabled={bulkBusy || selectedIds.size === 0}
+                  onChange={event => setBulkTag(event.target.value)}
+                  placeholder="标签名"
+                  className="w-24 rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  data-testid="requirements-bulk-tag-add"
+                  disabled={bulkBusy || selectedIds.size === 0 || !bulkTag.trim()}
+                  onClick={() => { void bulkTagChange('add'); }}
+                  className="rounded border border-[var(--border)] px-1.5 py-1 text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] disabled:opacity-50"
+                >
+                  加上
+                </button>
+                <button
+                  type="button"
+                  data-testid="requirements-bulk-tag-remove"
+                  disabled={bulkBusy || selectedIds.size === 0 || !bulkTag.trim()}
+                  onClick={() => { void bulkTagChange('remove'); }}
+                  className="rounded border border-[var(--border)] px-1.5 py-1 text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] disabled:opacity-50"
+                >
+                  去掉
+                </button>
+              </label>
               <label className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)]">
                 截止
                 <input
