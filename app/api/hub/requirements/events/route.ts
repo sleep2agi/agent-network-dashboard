@@ -26,11 +26,15 @@ export async function GET(req: Request) {
   }
   const limit = searchParams.get('limit') || '100';
   const networkId = searchParams.get('network_id');
+  // 分页游标：Hub 用 next_cursor 往回翻（更早的动态）。不转发的话，超过一页的
+  // 动态在 Dashboard 上永远看不到，而客户端是能翻的。
+  const cursor = searchParams.get('cursor');
 
   try {
     const res = await fetch(
       `${HUB_URL}/api/requirements/events?requirement_id=${encodeURIComponent(requirementId)}&limit=${encodeURIComponent(limit)}`
-      + (networkId ? `&network_id=${encodeURIComponent(networkId)}` : ''),
+      + (networkId ? `&network_id=${encodeURIComponent(networkId)}` : '')
+      + (cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''),
       { headers: await hubHeaders(), next: { revalidate: 0 } },
     );
     const contentType = res.headers.get('content-type') || '';

@@ -84,6 +84,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const id = params?.id;
   const [req, setReq] = useState<Requirement | null>(null);
   const [events, setEvents] = useState<EventRow[]>([]);
+  const [eventCursor, setEventCursor] = useState<string | null>(null);
+  const [olderBusy, setOlderBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [needsLogin, setNeedsLogin] = useState(false);
@@ -187,6 +189,25 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     await sendPatch({ participants: next });
   }
 
+  async function loadOlderEvents() {
+    if (!id || olderBusy || !eventCursor) return;
+    setOlderBusy(true);
+    setActionError('');
+    try {
+      const res = await fetch(`/api/hub/requirements/events?requirement_id=${encodeURIComponent(id)}&limit=50&cursor=${encodeURIComponent(eventCursor)}&${scope}`, { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) { setActionError(data?.message || data?.error || `hub_${res.status}`); return; }
+      const older = (data.events || []) as EventRow[];
+      setEvents(prev => {
+        const seen = new Set(prev.map(item => item.id));
+        return [...prev, ...older.filter(item => !seen.has(item.id))];
+      });
+      setEventCursor(typeof data.next_cursor === 'string' && data.next_cursor ? data.next_cursor : null);
+    } catch (e: unknown) {
+      setActionError(e instanceof Error ? e.message : 'events failed');
+    } finally { setOlderBusy(false); }
+  }
+
   async function saveIssues(next: RequirementIssue[]) {
     const ok = await sendPatch({ issues: issuesWire(next) });
     if (ok) setIssues(next);
@@ -277,7 +298,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
       try {
         const [detailRes, eventsRes] = await Promise.all([
           fetch(`/api/hub/requirements/${encodeURIComponent(id)}?${scope}`, { cache: 'no-store' }),
-          fetch(`/api/hub/requirements/events?requirement_id=${encodeURIComponent(id)}&limit=100&${scope}`, { cache: 'no-store' }),
+          fetch(`/api/hub/requirements/events?requirement_id=${encodeURIComponent(id)}&limit=50&${scope}`, { cache: 'no-store' }),
         ]);
         if (detailRes.status === 401) { if (alive) { setNeedsLogin(true); } return; }
         const detail = await detailRes.json();
@@ -288,6 +309,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         // 读不懂就置 null：宁可显示「不支持」也不给一个会清空原始数据的编辑器。
         setIssues(issuesFromHub((detail.requirement as Requirement).issues) ?? null);
         setEvents((eventsJson.events || []) as EventRow[]);
+        setEventCursor(typeof eventsJson.next_cursor === 'string' && eventsJson.next_cursor ? eventsJson.next_cursor : null);
       } catch (e: unknown) {
         if (alive) setError(e instanceof Error ? e.message : 'fetch failed');
       } finally {
@@ -952,6 +974,17 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
                 );
               })}
             </ul>
+          )}
+          {eventCursor && (
+            <button
+              type="button"
+              data-testid="requirement-load-older-events"
+              disabled={olderBusy}
+              onClick={() => void loadOlderEvents()}
+              className="mt-2 rounded border border-[var(--border)] px-2 py-1 text-[11px] text-gray-400 hover:text-gray-200 disabled:opacity-60"
+            >
+              {olderBusy ? '读取中…' : '更早的评论'}
+            </button>
           )}
 
           <div className="mt-3 border-t border-[var(--border)] pt-3">
