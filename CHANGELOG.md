@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.183 — 2026-11-01
+
+### The 2D chart uses the height it has
+
+- The 2D canvas was fixed at 62vh, so on a 1440×900 screen roughly 230px below the
+  chart sat unused while the ring stayed small. Desktop now sizes it to the
+  viewport minus the header, which makes the ring ~30% larger with the same data
+  and the same 100% zoom.
+- Phones keep 62vh: a viewport-tall canvas on a 390×900 phone leaves the ring
+  floating in empty space, which is worse than a slightly smaller chart.
+
 ## 0.6.4-preview.182 — 2026-11-01
 
 ### The 3D chart fills more of the stage
