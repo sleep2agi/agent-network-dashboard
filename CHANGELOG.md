@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.186 — 2026-11-01
+
+### Creation and update times on the detail page
+
+- The header showed owner, agent, project and dates but never when the card was
+  created or last touched. Both are now shown as relative times (minutes / hours /
+  days, a plain date after a month) with the exact timestamp in the tooltip.
+- Hub already returned `createdAt` / `updatedAt`; nothing new is requested.
+
 ## 0.6.4-preview.185 — 2026-11-01
 
 ### Bulk participants, and release scripts are generated now
