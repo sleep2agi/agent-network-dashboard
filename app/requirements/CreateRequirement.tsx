@@ -31,8 +31,6 @@ export function CreateRequirement({ networkId, onCreated }: {
   const [project, setProject] = useState('');
   const [tags, setTags] = useState('');
   const [due, setDue] = useState('');
-  // 与 state 同步的一份引用：提交时读它，避免拿到旧闭包里的空值（日期输入实测踩到过）。
-  const dueRef = useRef('');
   const [description, setDescription] = useState('');
   const [projects, setProjects] = useState<RequirementProject[] | null>(null);
   const [projectError, setProjectError] = useState('');
@@ -69,7 +67,7 @@ export function CreateRequirement({ networkId, onCreated }: {
 
   const reset = () => {
     setName(''); setPriority('normal'); setColumn('pool'); setProject('');
-    setTags(''); setDue(''); dueRef.current = ''; setDescription(''); setError('');
+    setTags(''); setDue(''); setDescription(''); setError('');
   };
 
   const submit = async () => {
@@ -87,7 +85,7 @@ export function CreateRequirement({ networkId, onCreated }: {
           name: trimmed, priority, column,
           ...(project ? { project_id: project } : {}),
           ...(tagList.length ? { tags: tagList } : {}),
-          ...(dueRef.current ? { due: dueRef.current } : {}),
+          ...(due ? { due } : {}),
           ...(description.trim() ? { description: description.trim() } : {}),
         }),
       });
@@ -179,7 +177,7 @@ export function CreateRequirement({ networkId, onCreated }: {
               <label className="block">
                 <span className="mb-1 block text-xs text-[var(--fg-muted)]">截止日期（可选）</span>
                 <input type="date" value={due} onChange={event => setDue(event.target.value)} aria-label="截止日期"
-                  data-testid="requirements-create-due" data-state={due}
+                  data-testid="requirements-create-due"
                   className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--fg)]" />
               </label>
               <label className="block">
