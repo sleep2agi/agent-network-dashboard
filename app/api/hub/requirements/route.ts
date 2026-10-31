@@ -55,7 +55,7 @@ export async function GET(req: Request) {
 
 // due/start 之前漏在 allowlist 外：页面把日期放进了请求体，代理却丢掉了，
 // 用户建卡时填的截止日会静默消失（新建验收套件就是这样抓到的）。
-const CREATE_FIELDS = ['name', 'priority', 'column', 'project_id', 'tags', 'description', 'parent_id', 'due', 'start'] as const;
+export const CREATE_FIELDS = ['name', 'priority', 'column', 'project_id', 'tags', 'description', 'parent_id', 'due', 'start'] as const;
 
 /**
  * Create one requirement — APP parity. Hub owns validation (name length,

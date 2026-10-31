@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.173 — 2026-11-01
+
+### The proxy allowlists are pinned by tests
+
+- `.172` showed how a field can disappear silently: the page sent `due`, the POST
+  proxy's allowlist did not include it, and nothing complained. Two unit tests now
+  fix both allowlists in place — every field the create dialog or the detail page
+  sends must be listed, and no field Hub does not know may be added by accident.
+- The tests also forbid `network_id` / identity fields in a body (they travel in
+  the query string and the session, not in the payload), and the file explains in
+  its own header why it exists, so nobody deletes it as noise.
+- Audit result: the dashboard has exactly two requirement write allowlists
+  (`CREATE_FIELDS`, `WRITABLE`) and both now match what the UI actually sends.
+
 ## 0.6.4-preview.172 — 2026-10-31
 
 ### A due date can be set when creating a requirement — and is no longer dropped
