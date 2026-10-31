@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.175 — 2026-11-01
+
+### Bulk owner assignment
+
+- The bulk bar could set status, priority and due date; assigning a batch to one
+  person (or one agent) still meant opening every card. It now has 负责人… with
+  people and agents grouped, plus 清空负责人.
+- The select speaks the filter vocabulary (`user:…`, `node:…`, `none`) but writes
+  the shape the proxy validates: `{kind,id}` on the matching side and `null` on the
+  other, never the filter string. Sending `agent_owner: ''` was rejected with 400
+  in the first attempt and is now impossible.
+
 ## 0.6.4-preview.174 — 2026-11-01
 
 ### Bulk due dates
