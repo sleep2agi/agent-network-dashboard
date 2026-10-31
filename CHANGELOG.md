@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.180 — 2026-11-01
+
+### A frame-time floor for the legion chart
+
+- The 3D chart has been through a lot of visual work (floors, perspective, pools,
+  tour) and nothing measured whether it still animates smoothly. The acceptance
+  suite now samples `requestAnimationFrame` for 1.5s at the production-density
+  fixture (12 departments / 24 people / 42 agents) and fails if the median frame
+  interval leaves ~38fps, recording the number in the evidence.
+- Measured now: **median 16.7ms (60fps)**, 77 samples. The threshold is loose on
+  purpose — headless rendering is software rasterisation and the machine is shared.
+- No product change; this is the guard that makes later visual additions pay for
+  their cost.
+
 ## 0.6.4-preview.179 — 2026-11-01
 
 ### When was this last touched
