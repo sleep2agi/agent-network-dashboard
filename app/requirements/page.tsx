@@ -1164,7 +1164,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           </div>
           {bulkMode && (
             <div className="mb-2 flex flex-nowrap items-center gap-2 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs sm:flex-wrap sm:overflow-visible" data-testid="requirements-bulk-bar">
-              <span className="text-[var(--fg-muted)]">已选 {selectedIds.size} 项</span>
+              <span className="shrink-0 whitespace-nowrap text-[var(--fg-muted)]">已选 {selectedIds.size} 项</span>
               <select
                 aria-label="批量移动到状态"
                 value=""
