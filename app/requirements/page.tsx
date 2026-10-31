@@ -382,6 +382,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [bulkMessage, setBulkMessage] = useState('');
   const [bulkDue, setBulkDue] = useState('');
   const [bulkTag, setBulkTag] = useState('');
+  const [bulkParticipant, setBulkParticipant] = useState('');
   const [bulkError, setBulkError] = useState('');
   const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
@@ -642,6 +643,52 @@ function RequirementsContent({ networkId }: { networkId: string }) {
 
   /** 批量打/去标签：每张卡的 tags 不同，必须按卡计算目标数组再逐张写。
    *  超过 Hub 的 10 个上限时只跳过那一张，并在提示里说明，不静默截断。 */
+  /** 批量参与者：把一个人/Agent 加进每张卡（已存在则跳过），或从每张卡移出。
+   *  参与者是整表替换语义，所以按卡算好目标数组再写，不能直接发送增量。 */
+  const bulkParticipantChange = async (mode: 'add' | 'remove', ref: string) => {
+    const ids = [...selectedIds];
+    if (!ref || !ids.length || bulkBusy) return;
+    const [kind, ...rest] = ref.split(':');
+    const target = { kind, id: rest.join(':') };
+    if (!target.id) return;
+    setBulkBusy(true);
+    setBulkMessage('');
+    setBulkError('');
+    const failures: Array<{ id: string; error: string }> = [];
+    let changed = 0;
+    for (const id of ids) {
+      const row = rows.find(item => item.id === id);
+      const current = row?.participants || [];
+      const exists = current.some(item => item.kind === target.kind && item.id === target.id);
+      if (mode === 'add' && exists) { changed += 1; continue; }
+      if (mode === 'remove' && !exists) { changed += 1; continue; }
+      const next = mode === 'add'
+        ? [...current, target]
+        : current.filter(item => !(item.kind === target.kind && item.id === target.id));
+      try {
+        const res = await fetch(`/api/hub/requirements/${encodeURIComponent(id)}?network_id=${encodeURIComponent(networkId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ participants: next }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) failures.push({ id, error: data?.message || data?.error || `hub_${res.status}` });
+        else changed += 1;
+      } catch {
+        failures.push({ id, error: '网络错误' });
+      }
+    }
+    if (failures.length) {
+      setBulkError(`成功 ${changed} 项，失败 ${failures.length} 项：${failures[0].error}`);
+      setSelectedIds(new Set(failures.map(item => item.id)));
+    } else {
+      setBulkMessage(mode === 'add' ? `已把 ${changed} 项加入参与者` : `已从 ${changed} 项移出参与者`);
+      setSelectedIds(new Set());
+    }
+    if (changed) await load({ silent: true });
+    setBulkBusy(false);
+  };
+
   const bulkTagChange = async (mode: 'add' | 'remove') => {
     const tag = bulkTag.trim();
     const ids = [...selectedIds];
@@ -1181,6 +1228,34 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   <option key={project.id} value={project.id}>{project.name}</option>
                 ))}
               </select>
+              <select
+                aria-label="批量参与者"
+                data-testid="requirements-bulk-participant"
+                value=""
+                disabled={bulkBusy || selectedIds.size === 0 || personOptions.length === 0}
+                title={personOptions.length === 0 ? '人员目录未就绪' : '选一个人或 Agent 加进参与者的同时，可按右侧按钮移出'}
+                onChange={event => { if (event.target.value) { setBulkParticipant(event.target.value); void bulkParticipantChange('add', event.target.value); } }}
+                className="max-w-[11rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+              >
+                <option value="">参与者…</option>
+                {(['user', 'node'] as const).map(kind => (
+                  <optgroup key={kind} label={kind === 'user' ? '人' : 'Agent'}>
+                    {personOptions.filter(option => option.value.startsWith(`${kind}:`)).map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <button
+                type="button"
+                data-testid="requirements-bulk-participant-remove"
+                disabled={bulkBusy || selectedIds.size === 0 || !bulkParticipant}
+                title="把上面选中的人/Agent 从每张卡的参与者里移出"
+                onClick={() => { if (bulkParticipant) void bulkParticipantChange('remove', bulkParticipant); }}
+                className="rounded border border-[var(--border)] px-1.5 py-1 text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] disabled:opacity-50"
+              >
+                移出参与者
+              </button>
               <label className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)]">
                 标签
                 <input
