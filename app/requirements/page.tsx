@@ -1080,6 +1080,25 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 <option value="">优先级…</option>
                 {(['high', 'normal', 'low', 'lowest'] as const).map(value => <option key={value} value={value}>{value}</option>)}
               </select>
+              <select
+                aria-label="批量设置负责人"
+                data-testid="requirements-bulk-owner"
+                value=""
+                disabled={bulkBusy || selectedIds.size === 0 || personOptions.length === 0}
+                title={personOptions.length === 0 ? '人员目录未就绪' : '按人与 Agent 两种角色批量指派'}
+                onChange={event => { if (event.target.value) void bulkPatch({ ...responsibilityPatch(event.target.value) }); }}
+                className="max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+              >
+                <option value="">负责人…</option>
+                <option value="none">清空负责人</option>
+                {(['user', 'node'] as const).map(kind => (
+                  <optgroup key={kind} label={kind === 'user' ? '人' : 'Agent'}>
+                    {personOptions.filter(option => option.value.startsWith(`${kind}:`)).map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
               <label className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)]">
                 截止
                 <input
