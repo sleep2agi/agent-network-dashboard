@@ -769,7 +769,7 @@ export default function LegionPage() {
           <div className={`grid gap-4 ${cleanView ? 'lg:grid-cols-1' : 'lg:grid-cols-[1fr_280px]'}`}>
             <div
               ref={stageCallbackRef}
-              className={`relative overflow-hidden rounded-xl bg-[var(--bg-secondary)] ${cleanView ? 'h-[calc(100dvh-3rem)]' : isFullscreen ? 'h-[calc(100dvh-10rem)] min-h-[420px]' : 'h-[calc(100dvh-9.5rem)] min-h-[420px]'}`}
+              className={`relative overflow-hidden rounded-xl bg-[var(--bg-secondary)] ${cleanView ? 'h-[calc(100dvh-3rem)]' : isFullscreen ? 'h-[calc(100dvh-10rem)] min-h-[420px]' : 'h-[62vh] min-h-[420px] sm:h-[calc(100dvh-9.5rem)]'}`}
               onWheel={onWheel}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
