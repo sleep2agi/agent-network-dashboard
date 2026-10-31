@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.188 — 2026-11-01
+
+### Switching 2D ↔ 3D keeps the department you were looking at
+
+- Both pages link to each other plainly. If you had focused 部门 A in 2D and
+  clicked 3D 视图, you landed on the whole network and had to find A again (and the
+  same in reverse). Each link now carries `?focus=<label>` when a department is
+  focused, and both pages already knew how to apply it.
+- The focused-department chip in 3D gained a test id so the hand-off can be
+  asserted (`crossview:2dTo3dKeepsFocus`).
+
 ## 0.6.4-preview.187 — 2026-11-01
 
 ### The bulk bar is one swipeable row on phones
