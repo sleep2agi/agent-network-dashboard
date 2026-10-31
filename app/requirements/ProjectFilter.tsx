@@ -11,12 +11,14 @@ type Catalog =
   | { status: 'mismatch'; echoed: string };
 const LOADING: Catalog = { status: 'loading' };
 
-export function ProjectFilter({ networkId, value, supported, refreshKey, onChange }: {
+export function ProjectFilter({ networkId, value, supported, refreshKey, onChange, onCatalog }: {
   networkId: string;
   value: string;
   supported: boolean | null;
   refreshKey: number;
   onChange: (value: string) => void;
+  /** 汇总面板要按项目分组，需要项目名；这里把读到的目录同步一份出去，避免再发一次请求。 */
+  onCatalog?: (projects: RequirementProject[]) => void;
 }) {
   const [retry, setRetry] = useState(0);
   const requestKey = JSON.stringify([networkId, refreshKey, retry]);
@@ -54,6 +56,8 @@ export function ProjectFilter({ networkId, value, supported, refreshKey, onChang
     return () => controller.abort();
   }, [networkId, requestKey]);
 
+  const readyProjects = catalog.status === 'ready' ? catalog.projects : null;
+  useEffect(() => { if (readyProjects && onCatalog) onCatalog(readyProjects); }, [readyProjects, onCatalog]);
   const options = useMemo(() => catalog.status === 'ready' ? projectOptions(catalog.projects) : [], [catalog]);
   const selected = options.find(p => p.id === value);
   const unknown = value && value !== 'none' && !selected;
