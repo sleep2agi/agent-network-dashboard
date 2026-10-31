@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.157 — 2026-10-31
+
+### The line between floors looks like it drops
+
+- Parent-to-child department links bow downward (`dropSag`: 10px per tier plus a
+  share of the endpoints' screen gap, capped at 30px). With the floors of
+  preview.156 the link used to run almost parallel to the member lines, which
+  made “this department belongs to that one” ambiguous in dense networks.
+- Only department-to-department links sag; member and agent links are unchanged.
+- Pure function with unit tests (same tier → 0, missing depth → 0, capped at 30).
+
 ## 0.6.3-preview.156 — 2026-10-31
 
 ### Floors, and one camera that shows them
