@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.160 — 2026-10-31
+
+### The 2D chart names its sub-departments
+
+- In the 2D legion chart a department only showed its name when its sector was
+  at least one radian wide. With 13 departments each sector is ~0.48 rad, so the
+  eight sub-departments were blank discs that only said “2人 · 2A” — you could
+  not tell which department they were.
+- A department now shows its name whenever the disc can hold it: up to four
+  characters in a large disc, three in a small one, two in a tiny one. Three
+  characters keep the suffix, so “平台1组” reads as 平台1 instead of collapsing
+  into the parent’s “平台”.
+
 ## 0.6.3-preview.159 — 2026-10-31
 
 ### Every department casts a floor pool
