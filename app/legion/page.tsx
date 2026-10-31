@@ -902,6 +902,8 @@ export default function LegionPage() {
                     const deptR = node.kind === 'group' ? ((node.depth ?? 1) <= 1 ? 24 : 16) : 0;
                     const r = (node.kind === 'core' ? 48 : node.kind === 'group' ? deptR : node.kind === 'person' ? 16 : 7) * nodeScale * crowd;
                     const labelScale = Math.max(nodeScale, 0.85);
+                    // 大盘（r≥18 的一级部门）把名字与人数都写在盘内两行；小盘仍在盘下。
+                    const insideCount = node.kind === 'group' && (node.depth ?? 1) <= 1 && r >= 18;
                     return (
                       <g
                         key={node.id}
@@ -944,6 +946,7 @@ export default function LegionPage() {
                           </>
                         ) : node.kind === 'group' ? (
                           <>
+
                             {/* 部门外圈软光：和 3D 的编制带一个语言，纯 SVG 圆，
                                 导出时由 inline() 解析颜色，不依赖滤镜。 */}
                             <circle r={r + 5} fill="var(--info)" opacity={0.07} />
@@ -954,18 +957,18 @@ export default function LegionPage() {
                               strokeWidth={isSelected ? 2 : 1.4}
                               strokeDasharray={node.collapsed ? '3 3' : undefined}
                             />
-                            {/* 人数只在「有大盘 + 一级部门」时常显：生产密度下 13 个部门、
-                                每个盘外都压一行「N人·MA」，会盖到外圈头像上（实拍）。
-                                子部门/小盘的这行字改为悬停、选中或放大后出现，右侧面板本来就有总数。 */}
+                            {/* 人数行：大盘（r≥18 的一级部门）直接写进盘里第二行——放在盘外会
+                                被旁边的子部门盘盖住（研发 就是这样丢掉行的那一个）；小盘/子部门
+                                仍只在悬停、选中或放大后出现在盘下方，右侧面板本来也有总数。 */}
                             {((node.memberCount ?? 0) + (node.agentCount ?? 0)) > 0
                               && (isSelected || hovered === node.id || view.k >= 1.4
-                                || ((node.depth ?? 1) <= 1 && r >= 14 && view.k >= 0.9)) && (
+                                || (layout.stats.people <= LEGION_LABEL_PEOPLE && insideCount)) && (
                               <text
                                 textAnchor="middle"
-                                y={r + 13 * labelScale}
+                                y={insideCount ? r - 7 : r + 13 * labelScale}
                                 data-role="dept-count"
-                                className="fill-[var(--fg-muted)] [paint-order:stroke] [stroke:var(--bg-secondary)] [stroke-width:3px]"
-                                style={{ fontSize: 8.5 * labelScale }}
+                                className="fill-[var(--fg-muted)]"
+                                style={{ fontSize: (insideCount ? 7.5 : 8.5) * labelScale }}
                               >
                                 {node.memberCount ?? 0}人 · {node.agentCount ?? 0}A
                               </text>
