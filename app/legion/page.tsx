@@ -961,13 +961,14 @@ export default function LegionPage() {
                                 被旁边的子部门盘盖住（研发 就是这样丢掉行的那一个）；小盘/子部门
                                 仍只在悬停、选中或放大后出现在盘下方，右侧面板本来也有总数。 */}
                             {((node.memberCount ?? 0) + (node.agentCount ?? 0)) > 0
-                              && (isSelected || hovered === node.id || view.k >= 1.4 || insideCount) && (
+                              && (isSelected || hovered === node.id || view.k >= 1.4
+                                || (layout.stats.people <= LEGION_LABEL_PEOPLE && insideCount)) && (
                               <text
                                 textAnchor="middle"
                                 y={insideCount ? r - 7 : r + 13 * labelScale}
                                 data-role="dept-count"
-                                className={`${insideCount ? 'fill-[var(--fg-muted)]' : 'fill-[var(--fg-muted)] [paint-order:stroke] [stroke:var(--bg-secondary)] [stroke-width:3px]'}`}
-                                style={{ fontSize: (insideCount ? 8 : 8.5) * labelScale }}
+                                className="fill-[var(--fg-muted)]"
+                                style={{ fontSize: (insideCount ? 7.5 : 8.5) * labelScale }}
                               >
                                 {node.memberCount ?? 0}人 · {node.agentCount ?? 0}A
                               </text>
