@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.165 — 2026-10-31
+
+### Older activity is reachable
+
+- The detail page loaded 100 events in one shot and silently stopped there; a
+  requirement with a long history looked like it began a few screens ago. It now
+  loads 50 and offers 「更早的评论」 while Hub reports `next_cursor`, appending the
+  older page and hiding the button when the history ends.
+- The events proxy forwards `cursor` — without it the dashboard could never ask
+  for an older page even though the client app already does.
+- Posting a comment still refetches the first page (the new comment lands at the
+  top), so the list stays consistent instead of mixing a stale page with a new row.
+
 ## 0.6.4-preview.164 — 2026-10-31
 
 ### Link GitHub issues from a requirement
