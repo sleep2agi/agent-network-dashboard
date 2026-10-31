@@ -973,9 +973,9 @@ export default function LegionPage() {
                                 textAnchor="middle"
                                 y={3.5 * labelScale}
                                 className="fill-[var(--fg)]"
-                                style={{ fontSize: Math.min(10, Math.max(8, r * 0.42)) * labelScale }}
+                                style={{ fontSize: Math.min(10, Math.max(7.5, r * 0.4)) * labelScale }}
                               >
-                                {node.label.slice(0, r >= 26 ? 4 : 2)}
+                                {node.label.slice(0, r >= 24 ? 4 : r >= 12 ? 3 : 2)}
                               </text>
                             )}
                             {/* 部门不再画「N 人 · M Agent」：多层部门时这行字会压进圆心
