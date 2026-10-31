@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.169 — 2026-10-31
+
+### The parity list says what is missing, not just what exists
+
+- `docs/ui-client-parity-2026-10-25.md` gains a 2026-10-30/31 section: the
+  requirement features that were closed (issues, archive, activity paging,
+  summary, timeline, and the legion work), each with the suite that asserts it.
+- It also records what is **deliberately** not built — voice input, images in a
+  description, the share card, department groups, department-scoped tasks,
+  mobile-only editors — with the reason (no Hub contract, no hardware entry, or
+  phone Web is not a release gate).
+- Known boundaries and the next queue (needs Hub contracts) are written down so
+  later rounds pick work instead of rediscovering it.
+
 ## 0.6.4-preview.168 — 2026-10-31
 
 ### Per-department counts only where they fit
