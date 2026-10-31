@@ -37,6 +37,7 @@ interface Requirement {
   external_ref?: string | null; external_url?: string | null;
   issues?: Array<{ url: string; title?: string }> | null;
   archived?: boolean;
+  project_id?: string | null;
 }
 interface EventRow {
   id: string; kind: string; field?: string | null;
@@ -118,6 +119,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [issues, setIssues] = useState<RequirementIssue[] | null>([]);
   const [issueDraft, setIssueDraft] = useState('');
   const [issueError, setIssueError] = useState('');
+  const [projects, setProjects] = useState<Array<{ id: string; name: string; archived?: boolean }> | null>(null);
+  const [projectError, setProjectError] = useState('');
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [parentQuery, setParentQuery] = useState('');
   const [parentResults, setParentResults] = useState<Array<{ id: string; seq: number; name: string; column: string; priority: string }>>([]);
@@ -319,6 +322,23 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     })();
     return () => { alive = false; };
   }, [id, scope, reloadKey]);
+
+  // 项目目录：只用于「项目」下拉；读不到时不影响其它编辑，只是这一项不可选。
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/hub/requirements/projects?network_id=${encodeURIComponent(networkId || '')}`, { cache: 'no-store' });
+        const data = await res.json().catch(() => ({}));
+        if (!alive) return;
+        if (!res.ok || data.ok === false) { setProjectError(`项目目录读取失败（${res.status}）`); return; }
+        setProjects(Array.isArray(data.projects) ? data.projects : []);
+      } catch {
+        if (alive) setProjectError('项目目录读取失败');
+      }
+    })();
+    return () => { alive = false; };
+  }, [networkId]);
 
   useEffect(() => {
     if (!id) return;
@@ -548,6 +568,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
           <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-gray-500">
             <span>负责人 {req.owner ? optionLabel(ownerValue) : '—'}</span>
             <span>负责 Agent {req.agent_owner ? optionLabel(agentValue) : '—'}</span>
+            <span data-testid="requirement-project-label">项目 {req.project_id ? (projects?.find(item => item.id === req.project_id)?.name ?? req.project_id) : '—'}</span>
             {req.children && req.children.total > 0 && <span>子卡 {req.children.done}/{req.children.total}</span>}
             {req.external_url && (
               <a href={req.external_url} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">
@@ -586,6 +607,23 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               className="rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs normal-case text-gray-200"
             >
               {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{priorityLabel(p)} · {p}</option>)}
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-600">
+            项目
+            <select
+              aria-label="项目"
+              data-testid="requirement-project"
+              value={req.project_id || ''}
+              disabled={busy || projects === null}
+              onChange={event => sendPatch({ project_id: event.target.value || null })}
+              title={projectError || '移到另一个项目；选「无项目」= 明确不属于任何项目'}
+              className="max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs normal-case text-gray-200 disabled:opacity-60"
+            >
+              <option value="">无项目</option>
+              {(projects || []).map(project => (
+                <option key={project.id} value={project.id}>{project.name}{project.archived ? '（已归档）' : ''}</option>
+              ))}
             </select>
           </label>
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-600">
