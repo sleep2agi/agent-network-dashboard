@@ -184,7 +184,13 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
 /** 汇总条：已加载需求的分布（状态 / 负责人 / 逾期）。
  *  和 APP 的「仪表盘」对齐的是"一眼看出这堆卡长什么样"，但这里只统计**已加载**的
  *  页（Hub 列表没有聚合接口），所以面板上必须写清分母，不能让人当成全网总量。 */
-function SummaryPanel({ rows, labelFor }: { rows: Requirement[]; labelFor: (person?: RequirementPerson | null) => string }) {
+function SummaryPanel({ rows, labelFor, projects, onPickOwner, onPickProject }: {
+  rows: Requirement[];
+  labelFor: (person?: RequirementPerson | null) => string;
+  projects: Array<{ id: string; name: string }>;
+  onPickOwner: (person: RequirementPerson) => void;
+  onPickProject: (projectId: string) => void;
+}) {
   const today = new Date().toISOString().slice(0, 10);
   const statuses = [
     { key: 'pool' as const, label: '需求池', tone: 'bg-[var(--fg-dim)]' },
@@ -205,6 +211,18 @@ function SummaryPanel({ rows, labelFor }: { rows: Requirement[]; labelFor: (pers
   }
   const owners = [...byOwner.entries()].sort((a, b) => b[1].total - a[1].total).slice(0, 5);
   const widest = Math.max(1, ...owners.map(([, entry]) => entry.total));
+  const projectNames = new Map(projects.map(project => [project.id, project.name]));
+  const byProject = new Map<string, { label: string; total: number; done: number }>();
+  for (const row of rows) {
+    const key = row.project_id || 'none';
+    const label = row.project_id ? (projectNames.get(row.project_id) ?? row.project_id) : '无项目';
+    const entry = byProject.get(key) ?? { label, total: 0, done: 0 };
+    entry.total += 1;
+    if (row.column === 'done') entry.done += 1;
+    byProject.set(key, entry);
+  }
+  const projectRows = [...byProject.entries()].sort((a, b) => b[1].total - a[1].total).slice(0, 5);
+  const projectWidest = Math.max(1, ...projectRows.map(([, entry]) => entry.total));
   return (
     <section data-testid="requirements-summary" className="mb-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/40 p-3">
       <div className="flex flex-wrap items-center gap-4">
@@ -224,15 +242,47 @@ function SummaryPanel({ rows, labelFor }: { rows: Requirement[]; labelFor: (pers
       </div>
       <div data-testid="summary-owners" className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2 2xl:grid-cols-3">
         {owners.map(([key, entry]) => (
-          <div key={key} className="flex min-w-0 items-center gap-2 text-[11px] text-[var(--fg-muted)]">
+          <button
+            key={key}
+            type="button"
+            data-testid={`summary-owner-${key}`}
+            disabled={key === 'none'}
+            title={key === 'none' ? '没有负责人的需求不在这一行筛选' : `只看 ${entry.label}`}
+            onClick={() => {
+              const row = rows.find(item => (item.owner ? `${item.owner.kind}:${item.owner.id}` : 'none') === key);
+              if (row?.owner) onPickOwner(row.owner);
+            }}
+            className="flex min-w-0 items-center gap-2 rounded text-left text-[11px] text-[var(--fg-muted)] transition-colors enabled:hover:bg-[var(--hover-tint)] enabled:hover:text-[var(--fg)] disabled:cursor-default"
+          >
             <span className="w-20 shrink-0 truncate" title={entry.label}>{entry.label}</span>
             <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--bg-elevated)]">
               <span className="absolute inset-y-0 left-0 rounded-full bg-[var(--accent)]/70" style={{ width: `${(entry.total / widest) * 100}%` }} />
             </span>
             <span className="w-9 shrink-0 text-right tabular-nums text-[var(--fg-dim)]">{entry.done}/{entry.total}</span>
-          </div>
+          </button>
         ))}
       </div>
+      {projectRows.length > 0 && (
+        <div data-testid="summary-projects" className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 border-t border-[var(--border)]/60 pt-3 sm:grid-cols-2 2xl:grid-cols-3">
+          {projectRows.map(([key, entry]) => (
+            <button
+              key={key}
+              type="button"
+              data-testid={`summary-project-${key}`}
+              disabled={key === 'none'}
+              title={key === 'none' ? '无项目的需求不在这一行筛选' : `只看项目 ${entry.label}`}
+              onClick={() => onPickProject(key)}
+              className="flex min-w-0 items-center gap-2 rounded text-left text-[11px] text-[var(--fg-muted)] transition-colors enabled:hover:bg-[var(--hover-tint)] enabled:hover:text-[var(--fg)] disabled:cursor-default"
+            >
+              <span className="w-20 shrink-0 truncate" title={entry.label}>{entry.label}</span>
+              <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--bg-elevated)]">
+                <span className="absolute inset-y-0 left-0 rounded-full bg-[var(--info)]/60" style={{ width: `${(entry.total / projectWidest) * 100}%` }} />
+              </span>
+              <span className="w-9 shrink-0 text-right tabular-nums text-[var(--fg-dim)]">{entry.done}/{entry.total}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <p className="mt-2 text-[10px] text-[var(--fg-dim)]" data-testid="summary-scope">基于已加载的 {rows.length} 条（不是全网总量）；左侧数值是完成/总数。</p>
     </section>
   );
@@ -288,6 +338,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const pendingUrls = useRef(new Set<string>());
   const [projectSupported, setProjectSupported] = useState<boolean | null>(null);
   const [projectRefresh, setProjectRefresh] = useState(0);
+  const [projectCatalog, setProjectCatalog] = useState<Array<{ id: string; name: string }>>([]);
   const [peopleQuery, setPeopleQuery] = useState('');
   const [movingId, setMovingId] = useState<string | null>(null);
   const [moveError, setMoveError] = useState('');
@@ -803,7 +854,10 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         {summaryOpen && (
           <SummaryPanel
             rows={orderedRows}
+            projects={projectCatalog}
             labelFor={person => (person ? personNames.get(`${person.kind}:${person.id}`) || person.alias || person.id : '未分配')}
+            onPickOwner={person => setParam({ ...responsibilityPatch(`${person.kind}:${person.id}`), q: qInput, tag: tagInput })}
+            onPickProject={id => setParam({ project_id: id, q: qInput, tag: tagInput })}
           />
         )}
 
@@ -812,6 +866,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           value={project}
           supported={projectSupported}
           refreshKey={projectRefresh}
+          onCatalog={setProjectCatalog}
           onChange={value => setParam({ project_id: value, q: qInput, tag: tagInput })}
         />
 

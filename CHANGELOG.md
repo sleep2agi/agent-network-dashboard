@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.163 — 2026-10-31
+
+### The summary groups by project, and filters on click
+
+- The summary strip now adds a project section next to the owner bars: how much of
+  the loaded set sits in each project (top five, plus 无项目), with done/total.
+  Project names come from the catalog the project filter already loads — the filter
+  hands its result to the page instead of the page fetching a second copy.
+- Owner and project rows are buttons: clicking one filters the list to that person
+  or that project, using the same params the filters already write, so the URL
+  stays shareable and the “Clear filters” button still resets everything.
+- Rows with no owner / no project are not clickable — “none” is a valid Hub filter
+  but not a useful one to jump into from here.
+
 ## 0.6.3-preview.162 — 2026-10-31
 
 ### A summary strip for the loaded requirements
