@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.171 — 2026-10-31
+
+### The timeline draws a bar when it has both ends
+
+- Until now every row was a dot on its due date, because the list API has no
+  `start`. Since the detail page can edit 开始日期, some rows do have both ends:
+  those now draw a span (start → due) with the dot at the end, coloured by state
+  (overdue red, done grey, otherwise accent). Rows without a start stay dots.
+- The note under the axis still says rows without a due date are not drawn, and
+  the chart is still a due-date timeline rather than a full Gantt: no dependencies,
+  no durations inferred from anything but `start`/`due`.
+
 ## 0.6.4-preview.170 — 2026-10-31
 
 ### Start date, and the narrow screens are now guarded

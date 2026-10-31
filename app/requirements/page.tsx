@@ -37,6 +37,7 @@ interface Requirement {
   column: 'pool' | 'doing' | 'done' | 'abandoned';
   priority: 'high' | 'normal' | 'low' | 'lowest';
   due?: string;
+  start?: string;
   tags?: string[];
   owner?: RequirementPerson | null;
   agent_owner?: RequirementPerson | null;
@@ -142,6 +143,10 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
             />
             {dated.map(row => {
               const overdue = String(row.due).slice(0, 10) < today && row.column !== 'done';
+              const startDay = row.start ? String(row.start).slice(0, 10) : null;
+              const hasBar = !!startDay && startDay <= String(row.due).slice(0, 10);
+              const barLeft = hasBar ? Math.max(2, Math.min(96, at(startDay as string))) : 0;
+              const barRight = hasBar ? Math.max(2, Math.min(96, at(String(row.due)))) : 0;
               // 首尾都留 2%：贴边的点在圆角容器里会被切掉一半。
               const left = Math.max(2, Math.min(96, at(String(row.due))));
               return (
@@ -151,6 +156,15 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
                     {row.name}
                   </Link>
                   <div className="relative h-5 flex-1">
+                    {hasBar && (
+                      <span
+                        data-testid="timeline-bar"
+                        data-from={startDay}
+                        title={`${startDay} → ${String(row.due).slice(0, 10)}`}
+                        className={`absolute top-1/2 h-2 -translate-y-1/2 rounded-full ${overdue ? 'bg-[var(--danger)]/35' : row.column === 'done' ? 'bg-[var(--fg-dim)]/35' : 'bg-[var(--accent)]/30'}`}
+                        style={{ left: `${barLeft}%`, width: `${Math.max(0.6, barRight - barLeft)}%` }}
+                      />
+                    )}
                     <span
                       data-testid="timeline-dot"
                       data-overdue={overdue ? 'true' : undefined}
