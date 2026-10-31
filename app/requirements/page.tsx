@@ -180,6 +180,64 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
   );
 }
 
+
+/** 汇总条：已加载需求的分布（状态 / 负责人 / 逾期）。
+ *  和 APP 的「仪表盘」对齐的是"一眼看出这堆卡长什么样"，但这里只统计**已加载**的
+ *  页（Hub 列表没有聚合接口），所以面板上必须写清分母，不能让人当成全网总量。 */
+function SummaryPanel({ rows, labelFor }: { rows: Requirement[]; labelFor: (person?: RequirementPerson | null) => string }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const statuses = [
+    { key: 'pool' as const, label: '需求池', tone: 'bg-[var(--fg-dim)]' },
+    { key: 'doing' as const, label: '进行中', tone: 'bg-[var(--accent)]' },
+    { key: 'done' as const, label: '完成', tone: 'bg-[var(--ok,var(--accent))]' },
+    { key: 'abandoned' as const, label: '已放弃', tone: 'bg-[var(--danger)]' },
+  ];
+  const counts = statuses.map(status => ({ ...status, value: rows.filter(row => row.column === status.key).length }));
+  const overdue = rows.filter(row => row.due && String(row.due).slice(0, 10) < today && row.column !== 'done').length;
+  const undated = rows.filter(row => !row.due).length;
+  const byOwner = new Map<string, { label: string; total: number; done: number }>();
+  for (const row of rows) {
+    const key = row.owner ? `${row.owner.kind}:${row.owner.id}` : 'none';
+    const entry = byOwner.get(key) ?? { label: row.owner ? labelFor(row.owner) : '未分配', total: 0, done: 0 };
+    entry.total += 1;
+    if (row.column === 'done') entry.done += 1;
+    byOwner.set(key, entry);
+  }
+  const owners = [...byOwner.entries()].sort((a, b) => b[1].total - a[1].total).slice(0, 5);
+  const widest = Math.max(1, ...owners.map(([, entry]) => entry.total));
+  return (
+    <section data-testid="requirements-summary" className="mb-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/40 p-3">
+      <div className="flex flex-wrap items-center gap-4">
+        {counts.map(item => (
+          <div key={item.key} data-testid={`summary-status-${item.key}`} data-count={item.value} className="flex items-center gap-1.5 text-[11px] text-[var(--fg-muted)]">
+            <span className={`h-2 w-2 rounded-full ${item.tone}`} />
+            {item.label}
+            <span className="tabular-nums text-[var(--fg)]">{item.value}</span>
+          </div>
+        ))}
+        <div data-testid="summary-overdue" data-count={overdue} className={`flex items-center gap-1.5 text-[11px] ${overdue ? 'text-[var(--danger)]' : 'text-[var(--fg-muted)]'}`}>
+          逾期 <span className="tabular-nums">{overdue}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px] text-[var(--fg-muted)]">
+          无截止日 <span className="tabular-nums">{undated}</span>
+        </div>
+      </div>
+      <div data-testid="summary-owners" className="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+        {owners.map(([key, entry]) => (
+          <div key={key} className="flex items-center gap-2 text-[11px] text-[var(--fg-muted)]">
+            <span className="w-24 shrink-0 truncate" title={entry.label}>{entry.label}</span>
+            <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--bg-elevated)]">
+              <span className="absolute inset-y-0 left-0 rounded-full bg-[var(--accent)]/70" style={{ width: `${(entry.total / widest) * 100}%` }} />
+            </span>
+            <span className="tabular-nums text-[var(--fg-dim)]">{entry.done}/{entry.total}</span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-[10px] text-[var(--fg-dim)]" data-testid="summary-scope">基于已加载的 {rows.length} 条（不是全网总量）；左侧数值是完成/总数。</p>
+    </section>
+  );
+}
+
 function RequirementsContent({ networkId }: { networkId: string }) {
   const searchParams = useSearchParams();
 
@@ -193,6 +251,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const searching = q.trim().length > 0;
   const board = searchParams.get('view') === 'board';
   const timeline = searchParams.get('view') === 'timeline';
+  const summaryOpen = searchParams.get('summary') === '1';
   const treeMode = searchParams.get('tree') === '1';
   const [collapsedTree, setCollapsedTree] = useState<Set<string>>(new Set());
   const sortSpec = parseSort(searchParams);
@@ -619,6 +678,17 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             </div>
             <button
               type="button"
+              aria-pressed={summaryOpen}
+              aria-expanded={summaryOpen}
+              data-testid="requirements-summary-toggle"
+              title="统计已加载结果的分布（不是全网总量）"
+              onClick={() => setParam({ summary: summaryOpen ? '' : '1' })}
+              className={`rounded-md border px-2 py-1 text-xs transition-colors ${summaryOpen ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
+            >
+              汇总
+            </button>
+            <button
+              type="button"
               aria-pressed={treeMode}
               data-testid="requirements-view-tree"
               title="按 parent_id 在已加载结果里分层显示"
@@ -729,6 +799,13 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             </span>
           )}
         </div>
+
+        {summaryOpen && (
+          <SummaryPanel
+            rows={orderedRows}
+            labelFor={person => (person ? personNames.get(`${person.kind}:${person.id}`) || person.alias || person.id : '未分配')}
+          />
+        )}
 
         <ProjectFilter
           networkId={networkId}
