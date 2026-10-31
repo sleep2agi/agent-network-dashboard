@@ -484,6 +484,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
             <span className="tabular-nums">#{req.seq}</span>
             <span className={`rounded border px-1.5 py-0.5 ${COLUMN_CHIP[req.column] || COLUMN_CHIP.abandoned}`}>{req.column}</span>
             <span title={priorityTitle(req.priority)}>{priorityLabel(req.priority)}</span>
+            {req.start && <span>start {String(req.start).slice(0, 10)}</span>}
             {req.due && <span>due {String(req.due).slice(0, 10)}</span>}
             {(req.tags || []).map(name => (
               <TagChip key={name} name={name} color={tagColor(tagCatalog, name)} className="text-gray-400" />
@@ -588,9 +589,23 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
             </select>
           </label>
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-600">
+            Start
+            <input
+              type="date"
+              aria-label="开始日期"
+              data-testid="requirement-start"
+              value={req.start ? String(req.start).slice(0, 10) : ''}
+              disabled={busy}
+              onChange={e => sendPatch({ start: e.target.value })}
+              className="rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-1 text-xs normal-case text-gray-200"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-600">
             Due
             <input
               type="date"
+              aria-label="截止日期"
+              data-testid="requirement-due"
               value={req.due ? String(req.due).slice(0, 10) : ''}
               disabled={busy}
               onChange={e => sendPatch({ due: e.target.value })}
