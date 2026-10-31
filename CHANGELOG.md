@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.184 — 2026-11-01
+
+### Bulk project moves
+
+- The bulk bar could set status, priority, due date, owner and tags but not the
+  project — triaging a batch into the right project still meant opening each card.
+  It now has 项目… with 无项目, writing `project_id` or `null`.
+- Options come from the catalogue the project filter already loads (the page keeps
+  it for the summary panel), so no extra request is issued for this control; when
+  the catalogue is not ready the control is disabled with that stated in its title.
+
 ## 0.6.4-preview.183 — 2026-11-01
 
 ### The 2D chart uses the height it has

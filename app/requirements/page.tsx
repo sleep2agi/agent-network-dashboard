@@ -1166,6 +1166,21 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   </optgroup>
                 ))}
               </select>
+              <select
+                aria-label="批量设置项目"
+                data-testid="requirements-bulk-project"
+                value=""
+                disabled={bulkBusy || selectedIds.size === 0 || projectCatalog.length === 0}
+                title={projectCatalog.length === 0 ? '项目目录未就绪' : '把选中的卡移到同一个项目；「无项目」= 明确不属于任何项目'}
+                onChange={event => { if (event.target.value) void bulkPatch({ project_id: event.target.value === 'none' ? null : event.target.value }); }}
+                className="max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+              >
+                <option value="">项目…</option>
+                <option value="none">无项目</option>
+                {projectCatalog.map(project => (
+                  <option key={project.id} value={project.id}>{project.name}</option>
+                ))}
+              </select>
               <label className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)]">
                 标签
                 <input
