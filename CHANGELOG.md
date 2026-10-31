@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.158 — 2026-10-31
+
+### The tour walks the floors
+
+- Department tour order is now floor-first, then by angle (`tourOrder`), instead of
+  the order departments happened to be laid out. With the floors of preview.156
+  the camera used to jump between levels, so the tour never read as a building.
+- The tour badge names the floor (`第 2 层 · 研发1组`), not just the department,
+  and the button's first stop uses the same order as the rotation.
+
 ## 0.6.3-preview.157 — 2026-10-31
 
 ### The line between floors looks like it drops
