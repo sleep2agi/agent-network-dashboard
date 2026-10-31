@@ -954,12 +954,17 @@ export default function LegionPage() {
                               strokeWidth={isSelected ? 2 : 1.4}
                               strokeDasharray={node.collapsed ? '3 3' : undefined}
                             />
-                            {((node.memberCount ?? 0) + (node.agentCount ?? 0)) > 0 && (view.k >= 0.9 || isSelected || hovered === node.id) && (
+                            {/* 人数只在「有大盘 + 一级部门」时常显：生产密度下 13 个部门、
+                                每个盘外都压一行「N人·MA」，会盖到外圈头像上（实拍）。
+                                子部门/小盘的这行字改为悬停、选中或放大后出现，右侧面板本来就有总数。 */}
+                            {((node.memberCount ?? 0) + (node.agentCount ?? 0)) > 0
+                              && (isSelected || hovered === node.id || view.k >= 1.4
+                                || ((node.depth ?? 1) <= 1 && r >= 14 && view.k >= 0.9)) && (
                               <text
                                 textAnchor="middle"
-                                y={r + 12 * labelScale}
+                                y={r + 13 * labelScale}
                                 data-role="dept-count"
-                                className="fill-[var(--fg-muted)]"
+                                className="fill-[var(--fg-muted)] [paint-order:stroke] [stroke:var(--bg-secondary)] [stroke-width:3px]"
                                 style={{ fontSize: 8.5 * labelScale }}
                               >
                                 {node.memberCount ?? 0}人 · {node.agentCount ?? 0}A
