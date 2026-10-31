@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.168 — 2026-10-31
+
+### Per-department counts only where they fit
+
+- .166 moved the “N人 · MA” line off the avatar ring; that left one department
+  (研发) without a count, because a neighbouring sub-department disc covered it.
+  Moving the line inside the disc fixed that but made it 7.5px in a 24px disc —
+  technically present, practically unreadable.
+- So the rule is now by density, not by disc size: at ≤16 people every department
+  prints name + count inside its disc; above that, no per-department counts are
+  printed at all until hover, selection or ≥1.4× zoom. The totals stay in the
+  right-hand panel, and the dense chart stops carrying numbers it cannot show.
+
 ## 0.6.4-preview.167 — 2026-10-31
 
 ### Archive and restore a requirement
