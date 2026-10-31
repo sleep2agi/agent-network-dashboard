@@ -31,6 +31,8 @@ export function CreateRequirement({ networkId, onCreated }: {
   const [project, setProject] = useState('');
   const [tags, setTags] = useState('');
   const [due, setDue] = useState('');
+  // 与 state 同步的一份引用：提交时读它，避免拿到旧闭包里的空值（日期输入实测踩到过）。
+  const dueRef = useRef('');
   const [description, setDescription] = useState('');
   const [projects, setProjects] = useState<RequirementProject[] | null>(null);
   const [projectError, setProjectError] = useState('');
@@ -67,7 +69,7 @@ export function CreateRequirement({ networkId, onCreated }: {
 
   const reset = () => {
     setName(''); setPriority('normal'); setColumn('pool'); setProject('');
-    setTags(''); setDue(''); setDescription(''); setError('');
+    setTags(''); setDue(''); dueRef.current = ''; setDescription(''); setError('');
   };
 
   const submit = async () => {
@@ -85,7 +87,7 @@ export function CreateRequirement({ networkId, onCreated }: {
           name: trimmed, priority, column,
           ...(project ? { project_id: project } : {}),
           ...(tagList.length ? { tags: tagList } : {}),
-          ...(due ? { due } : {}),
+          ...(dueRef.current ? { due: dueRef.current } : {}),
           ...(description.trim() ? { description: description.trim() } : {}),
         }),
       });
