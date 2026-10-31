@@ -1086,7 +1086,16 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 value=""
                 disabled={bulkBusy || selectedIds.size === 0 || personOptions.length === 0}
                 title={personOptions.length === 0 ? '人员目录未就绪' : '按人与 Agent 两种角色批量指派'}
-                onChange={event => { if (event.target.value) void bulkPatch({ ...responsibilityPatch(event.target.value) }); }}
+                onChange={event => {
+                  const value = event.target.value;
+                  if (!value) return;
+                  // 批量写的是 {kind,id} 或 null（代理按此校验）；筛选用的 'user:x' / 'none'
+                  // 字符串不能直接当写入值，之前直接把字符串发过去会被 400 拒掉。
+                  if (value === 'none') { void bulkPatch({ owner: null, agent_owner: null }); return; }
+                  const [kind, ...rest] = value.split(':');
+                  const person = { kind, id: rest.join(':') };
+                  void bulkPatch(kind === 'node' ? { owner: null, agent_owner: person } : { owner: person, agent_owner: null });
+                }}
                 className="max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
               >
                 <option value="">负责人…</option>
