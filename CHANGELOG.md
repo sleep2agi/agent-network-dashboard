@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.174 — 2026-11-01
+
+### Bulk due dates
+
+- The board's bulk bar could set status and priority for the selected cards;
+  planning a batch of work also means giving them the same deadline. It now has
+  截止 + 应用 and 清空日期, both writing to the same selection.
+- Clearing sends `due: null` (an explicit “no date”), not an empty string, so the
+  Hub side removes the value instead of rejecting it.
+- Everything else about the bulk path is unchanged: per-card PATCH, partial
+  failures keep only the failed card selected, and the message counts what worked.
+
 ## 0.6.4-preview.173 — 2026-11-01
 
 ### The proxy allowlists are pinned by tests

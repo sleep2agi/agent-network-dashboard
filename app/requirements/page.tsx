@@ -366,6 +366,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMessage, setBulkMessage] = useState('');
+  const [bulkDue, setBulkDue] = useState('');
   const [bulkError, setBulkError] = useState('');
   const [responsibilitySupported, setResponsibilitySupported] = useState<boolean | null>(null);
   const { catalog: peopleCatalog, retry: retryPeople } = useRequirementPeople(projectRefresh, networkId);
@@ -1079,6 +1080,37 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 <option value="">优先级…</option>
                 {(['high', 'normal', 'low', 'lowest'] as const).map(value => <option key={value} value={value}>{value}</option>)}
               </select>
+              <label className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)]">
+                截止
+                <input
+                  type="date"
+                  aria-label="批量设置截止日期"
+                  data-testid="requirements-bulk-due"
+                  value={bulkDue}
+                  disabled={bulkBusy || selectedIds.size === 0}
+                  onChange={event => setBulkDue(event.target.value)}
+                  className="rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  data-testid="requirements-bulk-due-apply"
+                  disabled={bulkBusy || selectedIds.size === 0 || !bulkDue}
+                  onClick={() => { void bulkPatch({ due: bulkDue }); }}
+                  className="rounded border border-[var(--border)] px-1.5 py-1 text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] disabled:opacity-50"
+                >
+                  应用
+                </button>
+                <button
+                  type="button"
+                  data-testid="requirements-bulk-due-clear"
+                  title="把选中项的截止日期清空"
+                  disabled={bulkBusy || selectedIds.size === 0}
+                  onClick={() => { void bulkPatch({ due: null }); }}
+                  className="text-[11px] text-[var(--fg-muted)] underline disabled:opacity-50"
+                >
+                  清空日期
+                </button>
+              </label>
               <button type="button" onClick={() => setSelectedIds(new Set())} disabled={bulkBusy || selectedIds.size === 0} className="text-[11px] text-[var(--fg-muted)] underline disabled:opacity-50">清空选择</button>
               {bulkBusy && <span className="text-[11px] text-[var(--fg-muted)]">批量写入中…</span>}
               {bulkMessage && <span role="status" className="text-[11px] text-[var(--fg-muted)]">{bulkMessage}</span>}
