@@ -20,7 +20,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, nearestDept, deptWorldRadius, type LegionNode } from '../../lib/legion-layout';
-import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
+import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
@@ -1442,7 +1442,10 @@ export default function Legion3DPage() {
           (!heavy && node.kind === 'person' && layout.stats.people <= LEGION_LABEL_PEOPLE
             && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
-          (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
+          // Agent 名字在密集网络里是噪声：42 个运行时，标签会把环压满（实拍）。
+          // 少于 12 个 Agent 时仍按近处自动显示，其余靠悬停/选中。
+          (node.kind === 'agent' && (selectedRef.current === node.id || hoverRef.current === node.id
+            || (layout.stats.agents <= LEGION_LABEL_AGENTS && p.scale > cam.focal * 0.2))) ||
           hoverRef.current === node.id;
         // 状态筛选开着时，不匹配的 Agent 不要标签（否则压暗了还在喊自己）。
         const filteredOut = statusOnly !== null && node.kind === 'agent'
