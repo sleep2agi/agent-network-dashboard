@@ -85,6 +85,86 @@ function dueLabel(due?: string) {
   return overdue ? <span className="text-red-400">{day}</span> : <span className="text-gray-400">{day}</span>;
 }
 
+
+/** 时间线视图：按截止日期把需求排成一条横轴。
+ *  为什么只画截止日：列表接口给的是 due（没有 start），画「起止条」等于编一个开始时间，
+ *  用户会把它当成真实排期。所以这里是一个「到期时间线」：点在轴上、逾期变红、
+ *  没有截止日的排在下面并单独说明。 */
+function TimelineView({ rows }: { rows: Requirement[] }) {
+  const dated = rows.filter(row => row.due).sort((a, b) => String(a.due).localeCompare(String(b.due)));
+  const undated = rows.filter(row => !row.due);
+  const today = new Date().toISOString().slice(0, 10);
+  const day = (value: string) => Math.floor(new Date(`${value.slice(0, 10)}T00:00:00Z`).getTime() / 86400000);
+  const days = dated.map(row => day(String(row.due)));
+  const low = days.length ? Math.min(...days, day(today)) : day(today);
+  const high = days.length ? Math.max(...days, day(today)) : day(today) + 1;
+  const span = Math.max(1, high - low);
+  const at = (value: string) => ((day(value) - low) / span) * 100;
+  const ticks = Array.from({ length: 5 }, (_, i) => {
+    const ms = (low + (span * i) / 4) * 86400000;
+    return { left: (i / 4) * 100, label: new Date(ms).toISOString().slice(5, 10) };
+  });
+  return (
+    <div data-testid="requirements-timeline" className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/40 p-3">
+      {dated.length === 0 ? (
+        <p className="px-1 py-6 text-center text-xs text-[var(--fg-muted)]" data-testid="timeline-empty">
+          已加载的需求里都没有截止日期，先给需求补一个 due 再看时间线。
+        </p>
+      ) : (
+        <>
+          <div className="mb-1 flex items-center justify-between text-[10px] text-[var(--fg-dim)]">
+            <span>{dated.length} 条带截止日期的需求</span>
+            <span>逾期 {dated.filter(row => String(row.due).slice(0, 10) < today).length} 条</span>
+          </div>
+          <div className="relative ml-[38%] h-4 border-b border-[var(--border)]">
+            {ticks.map(tick => (
+              <span key={tick.left} className="absolute -translate-x-1/2 text-[10px] text-[var(--fg-dim)]" style={{ left: `${tick.left}%`, bottom: 2 }}>
+                {tick.label}
+              </span>
+            ))}
+          </div>
+          <div className="relative">
+            <span
+              data-testid="timeline-today"
+              aria-label={`今天 ${today}`}
+              className="pointer-events-none absolute bottom-0 top-0 ml-[38%] w-px bg-[var(--hl)]/40"
+              style={{ left: 0 }}
+            />
+            {dated.map(row => {
+              const overdue = String(row.due).slice(0, 10) < today && row.column !== 'done';
+              return (
+                <div key={row.id} className="flex items-center gap-2 border-b border-[var(--border)]/60 py-1 last:border-0" data-testid="timeline-row" data-column={row.column}>
+                  <Link href={`/requirements/${row.id}`} className="w-[34%] shrink-0 truncate text-xs text-gray-300 hover:underline" title={row.name}>
+                    <span className="mr-1 tabular-nums text-[10px] text-[var(--fg-dim)]">#{row.seq}</span>
+                    {row.name}
+                  </Link>
+                  <div className="relative h-5 flex-1">
+                    <span
+                      data-testid="timeline-dot"
+                      data-overdue={overdue ? 'true' : undefined}
+                      title={`${row.name} · 截止 ${String(row.due).slice(0, 10)}`}
+                      className={`absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${overdue ? 'bg-[var(--danger)]' : row.column === 'done' ? 'bg-[var(--fg-dim)]' : 'bg-[var(--accent)]'}`}
+                      style={{ left: `${Math.max(0, Math.min(100, at(String(row.due))))}%` }}
+                    />
+                    <span className={`absolute top-1/2 ml-2 -translate-y-1/2 text-[10px] ${overdue ? 'text-[var(--danger)]' : 'text-[var(--fg-dim)]'}`} style={{ left: `${Math.max(0, Math.min(100, at(String(row.due))))}%` }}>
+                      {String(row.due).slice(5, 10)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+      {undated.length > 0 && (
+        <p data-testid="timeline-undated" className="mt-2 text-[10px] text-[var(--fg-dim)]">
+          另有 {undated.length} 条没有截止日期，未画在轴上。
+        </p>
+      )}
+    </div>
+  );
+}
+
 function RequirementsContent({ networkId }: { networkId: string }) {
   const searchParams = useSearchParams();
 
@@ -97,6 +177,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const includeArchived = searchParams.get('include_archived') !== '0';
   const searching = q.trim().length > 0;
   const board = searchParams.get('view') === 'board';
+  const timeline = searchParams.get('view') === 'timeline';
   const treeMode = searchParams.get('tree') === '1';
   const [collapsedTree, setCollapsedTree] = useState<Set<string>>(new Set());
   const sortSpec = parseSort(searchParams);
@@ -505,8 +586,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               }}
             />
             <div role="group" aria-label="视图切换" className="flex items-center gap-0.5 rounded-md border border-[var(--border)] p-0.5">
-              {[{ key: '', label: '列表', test: 'list' }, { key: 'board', label: '看板', test: 'board' }].map(option => {
-                const active = (option.key === 'board') === board;
+              {[{ key: '', label: '列表', test: 'list' }, { key: 'board', label: '看板', test: 'board' }, { key: 'timeline', label: '时间线', test: 'timeline' }].map(option => {
+                const active = timeline ? option.key === 'timeline' : (option.key === 'board') === board;
                 return (
                   <button
                     key={option.test}
@@ -778,6 +859,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             sub={status || tag || q || project || owner || agent || overdue || participating || priorities ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
             cta={status || tag || q || project || owner || agent || overdue || participating || priorities ? { label: '清空筛选', onClick: clearFilters } : undefined}
           />
+        ) : timeline ? (
+          <TimelineView rows={rows} />
         ) : board ? (
           <>
             {(moveError || moveNotice) && (
