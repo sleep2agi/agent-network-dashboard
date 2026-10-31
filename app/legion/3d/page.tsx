@@ -1015,6 +1015,38 @@ export default function Legion3DPage() {
       const near = Math.max(0.2, cam.dist - 1.1);
       const far = cam.dist + 1.6;
 
+      // 楼层阴影：每个部门在最底下一层「地面」上投一片柔光斑。
+      // 高度差越大，光斑离本体越远——不转镜头也能读出这家部门在几层。
+      // 用径向渐变而不是实心椭圆：实心在浅色主题上像一块脏印（试过）。
+      {
+        const GROUND_Y = (RING_HEIGHT[3] ?? 0) - 0.12;
+        for (const node of layout.nodes) {
+          if (node.kind !== 'group') continue;
+          const sn = byId.get(node.id);
+          if (!sn) continue;
+          const v = nodeToVec3(node);
+          const hit = projectPoint({ x: v.x, y: GROUND_Y, z: v.z }, cam, size);
+          if (!hit) continue;
+          const { rx: bodyRx } = nodeBody(sn, layout.stats.people);
+          const nearness = Math.max(0.3, Math.min(1, hit.scale / (cam.focal / Math.max(0.6, cam.dist))));
+          const lit = selectedRef.current === node.id || hoverRef.current === node.id;
+          const strength = (lit ? 0.3 : dark ? 0.2 : 0.13) * nearness;
+          const radius = bodyRx * 1.7;
+          ctx.save();
+          ctx.translate(hit.x, hit.y);
+          ctx.scale(1, 0.42);
+          const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+          pool.addColorStop(0, lit ? `rgba(46, 196, 182, ${strength})` : `rgba(15, 23, 42, ${strength})`);
+          pool.addColorStop(0.55, lit ? `rgba(46, 196, 182, ${strength * 0.35})` : `rgba(15, 23, 42, ${strength * 0.3})`);
+          pool.addColorStop(1, 'rgba(15, 23, 42, 0)');
+          ctx.fillStyle = pool;
+          ctx.beginPath();
+          ctx.arc(0, 0, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
       // 部门扇区：把每个部门在环上占的弧度画成一段半透明弧带。
       // 只有一层环没有层级感；有了扇区，一眼能看出「这块是哪个部门」。
       for (const node of layout.nodes) {
