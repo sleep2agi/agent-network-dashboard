@@ -79,6 +79,20 @@ function personLabel(p: RequirementPerson | null | undefined, names: Map<string,
   return names.get(`${p.kind}:${p.id}`) || p.alias || p.id;
 }
 
+/** 相对时间：列表里「最近发生了什么」比绝对时间更好扫；title 保留精确值。 */
+function relativeTime(iso?: string) {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return null;
+  const diff = Date.now() - then;
+  const day = 86_400_000;
+  if (diff < 0) return { text: '刚刚', exact: iso };
+  if (diff < 3_600_000) return { text: `${Math.max(1, Math.round(diff / 60_000))} 分钟前`, exact: iso };
+  if (diff < day) return { text: `${Math.round(diff / 3_600_000)} 小时前`, exact: iso };
+  if (diff < 30 * day) return { text: `${Math.round(diff / day)} 天前`, exact: iso };
+  return { text: iso.slice(0, 10), exact: iso };
+}
+
 function dueLabel(due?: string) {
   if (!due) return '—';
   const day = due.slice(0, 10);
@@ -1415,6 +1429,14 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                       <span className="block truncate">Agent · {personLabel(row.agent_owner, personNames)}</span>
                     </span>
                     <span className="w-20 shrink-0 text-right text-[11px]">{dueLabel(row.due)}</span>
+                    {(() => {
+                      const updated = relativeTime(row.updatedAt);
+                      return updated ? (
+                        <span data-role="updated" className="hidden w-16 shrink-0 text-right text-[10px] text-[var(--fg-dim)] lg:inline" title={`更新于 ${updated.exact.replace('T', ' ').slice(0, 16)}`}>
+                          {updated.text}
+                        </span>
+                      ) : null;
+                    })()}
                     {chk && chk.total > 0 && (
                       <span className="hidden shrink-0 text-[10px] tabular-nums text-[var(--fg-muted)] sm:inline">
                         ✓ {chk.done}/{chk.total}
