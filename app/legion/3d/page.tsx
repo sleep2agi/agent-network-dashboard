@@ -1015,6 +1015,36 @@ export default function Legion3DPage() {
       const near = Math.max(0.2, cam.dist - 1.1);
       const far = cam.dist + 1.6;
 
+      // 楼层阴影：每个部门在最底下一层「地面」上投一个软椭圆。
+      // 高度差越大，投影离本体越远——不用转镜头也能读出这家部门在几层，
+      // 这是叠了几轮楼层之后唯一还缺的深度线索。
+      {
+        const GROUND_Y = (RING_HEIGHT[3] ?? 0) - 0.12;
+        for (const node of layout.nodes) {
+          if (node.kind !== 'group') continue;
+          const sn = byId.get(node.id);
+          if (!sn) continue;
+          const v = nodeToVec3(node);
+          const hit = projectPoint({ x: v.x, y: GROUND_Y, z: v.z }, cam, size);
+          if (!hit) continue;
+          const { rx: bodyRx } = nodeBody(sn, layout.stats.people);
+          const nearness = Math.max(0.35, Math.min(1, hit.scale / (cam.focal / Math.max(0.6, cam.dist))));
+          const base = (dark ? 0.26 : 0.18) * nearness;
+          const lit = selectedRef.current === node.id || hoverRef.current === node.id;
+          ctx.save();
+          ctx.fillStyle = lit ? tk.accent : (dark ? '#02121a' : '#0b1220');
+          ctx.globalAlpha = lit ? base * 0.9 : base;
+          ctx.beginPath();
+          ctx.ellipse(hit.x, hit.y, bodyRx * 1.35, bodyRx * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = (lit ? base : base * 0.7) * 0.55;
+          ctx.beginPath();
+          ctx.ellipse(hit.x, hit.y, bodyRx * 1.9, bodyRx * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
       // 部门扇区：把每个部门在环上占的弧度画成一段半透明弧带。
       // 只有一层环没有层级感；有了扇区，一眼能看出「这块是哪个部门」。
       for (const node of layout.nodes) {
