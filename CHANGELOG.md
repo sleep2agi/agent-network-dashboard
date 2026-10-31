@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.162 — 2026-10-31
+
+### A summary strip for the loaded requirements
+
+- 汇总 (next to the view switch, `?summary=1`) shows the distribution of the rows
+  already loaded: pool / doing / done / abandoned, overdue, and undated counts,
+  plus a per-owner bar with done/total.
+- It says whose numbers these are: “基于已加载的 N 条（不是全网总量）”. The Hub list
+  API has no aggregate endpoint, so presenting this as a network total would be
+  a lie; the strip also follows every filter, so the denominator changes with it.
+- Owner names come from the people directory the page already loads; an owner
+  outside the directory falls back to the alias rather than disappearing.
+
 ## 0.6.3-preview.161 — 2026-10-31
 
 ### A due-date timeline for requirements
