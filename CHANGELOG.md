@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.172 — 2026-10-31
+
+### A due date can be set when creating a requirement — and is no longer dropped
+
+- The create dialog now has 截止日期. While wiring it the acceptance suite caught a
+  real bug: the POST proxy's field allowlist was `name/priority/column/project_id/
+  tags/description/parent_id` — **`due` and `start` were dropped**, so a date set
+  in the form would vanish between the browser and Hub without any error.
+- Both fields are now forwarded (Hub still owns validation). Adding the field
+  without this fix would have shipped a control that silently did nothing.
+
 ## 0.6.4-preview.171 — 2026-10-31
 
 ### The timeline draws a bar when it has both ends
