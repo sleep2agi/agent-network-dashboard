@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.182 — 2026-11-01
+
+### The 3D chart fills more of the stage
+
+- Auto-fit aimed for 82% of the short axis, which left a wide empty margin: on a
+  1440×900 stage the dense chart sat in the middle at ~92% zoom with room it did
+  not use. The target is now 90%, so the same fixture lands at ~102% and reads
+  noticeably larger on a projector without touching the legend or the toolbar
+  (fit bounds already exclude them).
+- Drag, zoom, reset, share links, tour and export keep their behaviour; the frame
+  budget added in .180 still reports 60fps at the dense fixture.
+
 ## 0.6.4-preview.181 — 2026-11-01
 
 ### The requirements toolbar wraps instead of squeezing
