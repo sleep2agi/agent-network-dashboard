@@ -117,8 +117,12 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
             <span>逾期 {dated.filter(row => String(row.due).slice(0, 10) < today).length} 条</span>
           </div>
           <div className="relative ml-[38%] h-4 border-b border-[var(--border)]">
-            {ticks.map(tick => (
-              <span key={tick.left} className="absolute -translate-x-1/2 text-[10px] text-[var(--fg-dim)]" style={{ left: `${tick.left}%`, bottom: 2 }}>
+            {ticks.map((tick, index) => (
+              <span
+                key={tick.left}
+                className={`absolute text-[10px] text-[var(--fg-dim)] ${index === 0 ? '' : index === ticks.length - 1 ? '-translate-x-full' : '-translate-x-1/2'}`}
+                style={{ left: `${tick.left}%`, bottom: 2 }}
+              >
                 {tick.label}
               </span>
             ))}
@@ -132,6 +136,8 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
             />
             {dated.map(row => {
               const overdue = String(row.due).slice(0, 10) < today && row.column !== 'done';
+              // 首尾都留 2%：贴边的点在圆角容器里会被切掉一半。
+              const left = Math.max(2, Math.min(96, at(String(row.due))));
               return (
                 <div key={row.id} className="flex items-center gap-2 border-b border-[var(--border)]/60 py-1 last:border-0" data-testid="timeline-row" data-column={row.column}>
                   <Link href={`/requirements/${row.id}`} className="w-[34%] shrink-0 truncate text-xs text-gray-300 hover:underline" title={row.name}>
@@ -144,9 +150,12 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
                       data-overdue={overdue ? 'true' : undefined}
                       title={`${row.name} · 截止 ${String(row.due).slice(0, 10)}`}
                       className={`absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${overdue ? 'bg-[var(--danger)]' : row.column === 'done' ? 'bg-[var(--fg-dim)]' : 'bg-[var(--accent)]'}`}
-                      style={{ left: `${Math.max(0, Math.min(100, at(String(row.due))))}%` }}
+                      style={{ left: `${left}%` }}
                     />
-                    <span className={`absolute top-1/2 ml-2 -translate-y-1/2 text-[10px] ${overdue ? 'text-[var(--danger)]' : 'text-[var(--fg-dim)]'}`} style={{ left: `${Math.max(0, Math.min(100, at(String(row.due))))}%` }}>
+                    <span
+                      className={`absolute top-1/2 -translate-y-1/2 text-[10px] ${overdue ? 'text-[var(--danger)]' : 'text-[var(--fg-dim)]'}`}
+                      style={left > 88 ? { right: `${100 - left}%`, marginRight: 8 } : { left: `${left}%`, marginLeft: 8 }}
+                    >
                       {String(row.due).slice(5, 10)}
                     </span>
                   </div>
