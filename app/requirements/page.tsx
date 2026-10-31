@@ -254,6 +254,7 @@ function SummaryPanel({ rows, labelFor, projects, onPickOwner, onPickProject }: 
             }}
             className="flex min-w-0 items-center gap-2 rounded text-left text-[11px] text-[var(--fg-muted)] transition-colors enabled:hover:bg-[var(--hover-tint)] enabled:hover:text-[var(--fg)] disabled:cursor-default"
           >
+            <span className="w-20 shrink-0 truncate" title={entry.label}>{entry.label}</span>
             <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--bg-elevated)]">
               <span className="absolute inset-y-0 left-0 rounded-full bg-[var(--accent)]/70" style={{ width: `${(entry.total / widest) * 100}%` }} />
             </span>
