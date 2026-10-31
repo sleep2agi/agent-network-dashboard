@@ -67,6 +67,20 @@ function personLabel(p?: Person | null) {
   return p.alias || p.id;
 }
 
+/** 「3 天前」比 ISO 串更好扫；精确时间放 title。 */
+function relativeTime(iso?: string | null) {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return null;
+  const diff = Date.now() - then;
+  const day = 86_400_000;
+  if (diff < 60_000) return { text: '刚刚', exact: iso };
+  if (diff < 3_600_000) return { text: `${Math.round(diff / 60_000)} 分钟前`, exact: iso };
+  if (diff < day) return { text: `${Math.round(diff / 3_600_000)} 小时前`, exact: iso };
+  if (diff < 30 * day) return { text: `${Math.round(diff / day)} 天前`, exact: iso };
+  return { text: iso.slice(0, 10), exact: iso };
+}
+
 function describeEvent(ev: EventRow) {
   if (ev.kind === 'comment') {
     const text = typeof ev.new?.text === 'string' ? ev.new.text : '';
@@ -616,6 +630,16 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
           <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-gray-500">
             <span>负责人 {req.owner ? optionLabel(ownerValue) : '—'}</span>
             <span>负责 Agent {req.agent_owner ? optionLabel(agentValue) : '—'}</span>
+            {(() => {
+              const created = relativeTime(req.createdAt);
+              const updated = relativeTime(req.updatedAt);
+              return (
+                <>
+                  {created && <span data-testid="requirement-created" title={created.exact}>创建于 {created.text}</span>}
+                  {updated && <span data-testid="requirement-updated" title={updated.exact}>更新于 {updated.text}</span>}
+                </>
+              );
+            })()}
             <span data-testid="requirement-project-label">项目 {req.project_id ? (projects?.find(item => item.id === req.project_id)?.name ?? req.project_id) : '—'}</span>
             {req.children && req.children.total > 0 && <span>子卡 {req.children.done}/{req.children.total}</span>}
             {req.external_url && (
