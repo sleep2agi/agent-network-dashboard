@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.167 — 2026-10-31
+
+### Archive and restore a requirement
+
+- The list could already filter archived requirements (`包含已归档`), but nothing in
+  the dashboard could archive one — the client app has done it with
+  `PATCH {archived}` all along. The detail page now has 归档, and an archived
+  requirement shows a banner with 恢复到列表 instead.
+- The PATCH proxy forwards `archived`; Hub still decides who may archive.
+- Restoring goes through the same path, so the banner disappears only after Hub
+  confirms rather than optimistically.
+
 ## 0.6.4-preview.166 — 2026-10-31
 
 ### Department head-counts stop covering the avatars
