@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.166 — 2026-10-31
+
+### Department head-counts stop covering the avatars
+
+- On the 2D chart every department printed “N人 · MA” just below its disc. At the
+  dense fixture (13 departments, 24 people) those lines landed on the ring of
+  member avatars — you could see text on top of faces.
+- Counts are now printed for top-level departments with a large disc, and appear
+  on hover/selection or when zoomed in (≥1.4×). Sub-departments keep their name;
+  their counts are still in the right-hand panel and on hover.
+
 ## 0.6.4-preview.165 — 2026-10-31
 
 ### Older activity is reachable
