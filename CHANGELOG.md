@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.179 — 2026-11-01
+
+### When was this last touched
+
+- The list had a due column but nothing about recency, so “what changed while I
+  was away” meant opening cards. Each row now shows a relative updated time
+  (minutes / hours / days), with the exact timestamp in the tooltip; older than a
+  month falls back to the date.
+- The column is `lg` and up only — on narrow screens the row already carries
+  sequence, status, title, priority, owner and due date, and one more column would
+  squeeze the title.
+
 ## 0.6.4-preview.178 — 2026-11-01
 
 ### One tag across the selection
