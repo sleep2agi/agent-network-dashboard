@@ -100,9 +100,10 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
   const high = days.length ? Math.max(...days, day(today)) : day(today) + 1;
   const span = Math.max(1, high - low);
   const at = (value: string) => ((day(value) - low) / span) * 100;
-  const ticks = Array.from({ length: 5 }, (_, i) => {
-    const ms = (low + (span * i) / 4) * 86400000;
-    return { left: (i / 4) * 100, label: new Date(ms).toISOString().slice(5, 10) };
+  // 4 个刻度：第 5 个会贴在卡片右边缘，和右上角的「逾期 N 条」挤在一起（实拍）。
+  const ticks = Array.from({ length: 4 }, (_, i) => {
+    const ms = (low + (span * i) / 3) * 86400000;
+    return { left: (i / 3) * 100, label: new Date(ms).toISOString().slice(5, 10) };
   });
   return (
     <div data-testid="requirements-timeline" className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/40 p-3">
@@ -112,9 +113,9 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
         </p>
       ) : (
         <>
-          <div className="mb-1 flex items-center justify-between text-[10px] text-[var(--fg-dim)]">
-            <span>{dated.length} 条带截止日期的需求</span>
-            <span>逾期 {dated.filter(row => String(row.due).slice(0, 10) < today).length} 条</span>
+          <div className="mb-2 flex items-center justify-between gap-3 pr-1 text-[10px] text-[var(--fg-dim)]">
+            <span className="whitespace-nowrap">{dated.length} 条带截止日期的需求</span>
+            <span className="whitespace-nowrap">逾期 {dated.filter(row => String(row.due).slice(0, 10) < today && row.column !== 'done').length} 条</span>
           </div>
           <div className="relative ml-[38%] h-4 border-b border-[var(--border)]">
             {ticks.map((tick, index) => (
