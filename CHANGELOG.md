@@ -6,6 +6,21 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.3-preview.159 — 2026-10-31
+
+### Every department casts a floor pool
+
+- With four floors, height still had no anchor: a department floating higher looked
+  the same as one below. Each department now projects a soft radial pool onto the
+  bottom floor, so the distance between a disc and its pool reads as its height.
+- A solid ellipse was tried first and looked like a grey stain on the light theme;
+  the pool is a radial gradient that fades to nothing, and it picks up the accent
+  colour on hover/selection.
+- Legion acceptance now also captures a dense **dark-theme** frame, and the theme
+  is switched in place. The previous “3d-1440-cyber” capture was actually taken in
+  the light theme: its context re-applied the light theme on every navigation, so
+  writing localStorage and reloading could never stick.
+
 ## 0.6.3-preview.158 — 2026-10-31
 
 ### The tour walks the floors
