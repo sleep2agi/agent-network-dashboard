@@ -46,9 +46,9 @@ export interface ProjectedPoint {
 /** 每层的高度（场景单位）。ring 0 = 圆心。 */
 export const RING_HEIGHT: Record<number, number> = {
   0: 0,
-  1: -0.34,
-  2: -0.60,
-  3: -0.86,
+  1: -0.18,
+  2: -0.72,
+  3: -1.0,
 };
 
 /** 节点在环上的微小高度抖动：让同一环不是一张绝对平的薄片。
@@ -61,7 +61,7 @@ export function jitterHeight(order: number, ring: number): number {
 /** 部门每深一层下沉多少：一级部门留在环高度上，子部门依次往下。
  *  12 个部门的生产密度里，父子部门原本压在同一张平面上，只能靠半径区分，
  *  看起来是一圈薄片；分层下沉之后才真的像一张三维编制图。 */
-export const DEPTH_STEP = 0.42;
+export const DEPTH_STEP = 0.36;
 
 /** 部门层级的垂直偏移（非部门节点恒为 0，最多下沉两级）。 */
 export function depthDrop(kind?: string, depth?: number): number {

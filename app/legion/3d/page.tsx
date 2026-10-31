@@ -20,7 +20,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, nearestDept, deptWorldRadius, type LegionNode } from '../../lib/legion-layout';
-import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
+import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
@@ -36,7 +36,8 @@ import { LegionChat } from '../LegionChat';
 // （别用强广角，远景缩成点就没有军团体量感）、自转 0.02–0.03 rad/s。
 // 实现上把「透视强度」和「缩放」拆开：dist 固定大一点 = 透视更平，
 // 滚轮改的是 zoom（scale），不再同时改变透视。
-const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.52, dist: 6.0, zoom: 1.12, panX: 0, panY: 0 };
+// pitch 抬到 0.60：部门分三层之后需要一点俯角才看得见层级之间的落差。
+const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.60, dist: 4.9, zoom: 1.12, panX: 0, panY: 0 };
 // 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
 const MIN_ZOOM = 0.25;
@@ -1441,7 +1442,10 @@ export default function Legion3DPage() {
           (!heavy && node.kind === 'person' && layout.stats.people <= LEGION_LABEL_PEOPLE
             && (p.scale > cam.focal * 0.16 || activeSet?.has(node.id))) ||
           (heavy && !huge && activeSet?.has(node.id)) ||
-          (node.kind === 'agent' && (p.scale > cam.focal * 0.2 || selectedRef.current === node.id || hoverRef.current === node.id)) ||
+          // Agent 名字在密集网络里是噪声：42 个运行时，标签会把环压满（实拍）。
+          // 少于 12 个 Agent 时仍按近处自动显示，其余靠悬停/选中。
+          (node.kind === 'agent' && (selectedRef.current === node.id || hoverRef.current === node.id
+            || (layout.stats.agents <= LEGION_LABEL_AGENTS && p.scale > cam.focal * 0.2))) ||
           hoverRef.current === node.id;
         // 状态筛选开着时，不匹配的 Agent 不要标签（否则压暗了还在喊自己）。
         const filteredOut = statusOnly !== null && node.kind === 'agent'

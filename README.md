@@ -193,7 +193,8 @@ Department discs in the 2D chart show their head count.
 A requirement can be shared by copying its link from the detail header.
 
 Legion acceptance also renders a production-like dense fixture (12 departments).
-The 3D topology drops sub-departments below their parent so the hierarchy reads in depth.
+The 3D topology stacks core, departments, sub-departments, people and agents on
+separate levels, with a closer camera so the perspective keeps them apart.
 
 ## Design language
 

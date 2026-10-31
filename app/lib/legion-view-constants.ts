@@ -10,6 +10,10 @@
  *  8 个部门 24 人的实测里 60 太大：名字互相压住，缩到 16 后靠悬停/选中/放大再出名字。 */
 export const LEGION_LABEL_PEOPLE = 16;
 
+/** Agent 别名直接展示的最大数量：生产密度下 42 个 Agent 全带名字会盖住环，
+ *  超过就只在悬停/选中时出名字（图例、列表、搜索仍然能定位）。 */
+export const LEGION_LABEL_AGENTS = 12;
+
 /** 节点数超过这个值：开始降特效（标签预算、数据包抽稀、光晕只给高亮）。 */
 export const LEGION_HEAVY_NODES = 80;
 
