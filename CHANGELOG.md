@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.170 — 2026-10-31
+
+### Start date, and the narrow screens are now guarded
+
+- The detail page could edit `Due` but not `Start`, even though Hub stores both and
+  the PATCH proxy already forwards `start`. The status bar now has 开始日期, and
+  the header meta shows the range (`start … due …`) when a start exists.
+- Two 320px checks were added because the newest panels (summary, timeline,
+  issues, children) are the ones most likely to overflow on a small screen:
+  `summary:noOverflowAt320` (summary + timeline together) and
+  `layout:detailNoOverflowAt320` (detail with issues + children). Both pass, and
+  now fail loudly if a future panel breaks the layout.
+
 ## 0.6.4-preview.169 — 2026-10-31
 
 ### The parity list says what is missing, not just what exists
