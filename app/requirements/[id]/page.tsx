@@ -14,6 +14,7 @@ import { TagChip, useRequirementTags } from '../TagFilter';
 import { editorTagSuggestions, tagColor } from '../../lib/tag-catalog';
 import { priorityLabel, priorityTitle } from '../../lib/requirement-priority';
 import { addChecklistItem, checklistPayload, moveChecklistItem, removeChecklistItem, validateChecklist, CHECKLIST_MAX_ITEMS, type ChecklistItem as EditableChecklistItem } from '../../lib/checklist-model';
+import { addIssue, issueLabel, issuesFromHub, issuesWire, issueUrl, MAX_REQUIREMENT_ISSUES, type RequirementIssue } from '../../lib/requirement-issues';
 
 /**
  * One requirement — #1633 (read-only).
@@ -34,6 +35,7 @@ interface Requirement {
   description?: string; checklist?: ChecklistItem[];
   createdAt?: string; updatedAt?: string;
   external_ref?: string | null; external_url?: string | null;
+  issues?: Array<{ url: string; title?: string }> | null;
 }
 interface EventRow {
   id: string; kind: string; field?: string | null;
@@ -109,6 +111,10 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [childBusy, setChildBusy] = useState(false);
   const [ancestors, setAncestors] = useState<Array<{ id: string; seq: number; name: string }>>([]);
   const [copied, setCopied] = useState(false);
+  // issues 的可写副本：Hub 给的数据读不懂时保持 null，只读展示，不提供编辑。
+  const [issues, setIssues] = useState<RequirementIssue[] | null>([]);
+  const [issueDraft, setIssueDraft] = useState('');
+  const [issueError, setIssueError] = useState('');
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [parentQuery, setParentQuery] = useState('');
   const [parentResults, setParentResults] = useState<Array<{ id: string; seq: number; name: string; column: string; priority: string }>>([]);
@@ -179,6 +185,26 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
 
   async function changeParticipants(next: Person[]) {
     await sendPatch({ participants: next });
+  }
+
+  async function saveIssues(next: RequirementIssue[]) {
+    const ok = await sendPatch({ issues: issuesWire(next) });
+    if (ok) setIssues(next);
+    return ok;
+  }
+
+  function addIssueRow() {
+    if (issues === null) return;
+    const result = addIssue(issues, issueDraft);
+    if (!result.ok) { setIssueError(result.error); return; }
+    setIssueError('');
+    void saveIssues(result.issues).then(ok => { if (ok) setIssueDraft(''); });
+  }
+
+  function removeIssueRow(label: string) {
+    if (issues === null) return;
+    setIssueError('');
+    void saveIssues(issues.filter(item => issueLabel(item) !== label));
   }
 
   function startChecklistEdit() {
@@ -259,6 +285,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         const eventsJson = eventsRes.ok ? await eventsRes.json() : { events: [] };
         if (!alive) return;
         setReq(detail.requirement as Requirement);
+        // 读不懂就置 null：宁可显示「不支持」也不给一个会清空原始数据的编辑器。
+        setIssues(issuesFromHub((detail.requirement as Requirement).issues) ?? null);
         setEvents((eventsJson.events || []) as EventRow[]);
       } catch (e: unknown) {
         if (alive) setError(e instanceof Error ? e.message : 'fetch failed');
@@ -752,6 +780,63 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
                 </li>
               ))}
             </ul>
+          )}
+        </section>
+
+        <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4" data-testid="requirement-issues">
+          <h2 className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-gray-500">
+            关联 Issue
+            {issues && issues.length > 0 && <span className="text-gray-600">{issues.length}/{MAX_REQUIREMENT_ISSUES}</span>}
+          </h2>
+          {issues === null ? (
+            <p className="text-xs text-gray-500" data-testid="requirement-issues-unsupported">Hub 返回的 issue 列表读不懂，为避免覆盖原始数据，这里不提供编辑。</p>
+          ) : (
+            <>
+              {issues.length === 0 ? (
+                <p className="text-xs text-gray-500">还没有关联 GitHub issue。可以贴完整链接或 <code>owner/repo#123</code>。</p>
+              ) : (
+                <ul className="mb-2 space-y-1">
+                  {issues.map(issue => (
+                    <li key={issueLabel(issue)} data-testid="requirement-issue-row" className="flex items-center gap-2 text-xs">
+                      <a href={issueUrl(issue)} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">
+                        {issueLabel(issue)}
+                      </a>
+                      {issue.title && <span className="truncate text-gray-400">{issue.title}</span>}
+                      <button
+                        type="button"
+                        data-testid={`requirement-issue-remove-${issueLabel(issue)}`}
+                        disabled={busy}
+                        onClick={() => removeIssueRow(issueLabel(issue))}
+                        className="ml-auto shrink-0 rounded border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-gray-400 hover:text-gray-200 disabled:opacity-60"
+                      >
+                        移除
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  data-testid="requirement-issue-input"
+                  aria-label="关联 issue"
+                  value={issueDraft}
+                  placeholder="https://github.com/owner/repo/issues/123 或 owner/repo#123"
+                  onChange={event => { setIssueDraft(event.target.value); setIssueError(''); }}
+                  onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addIssueRow(); } }}
+                  className="min-w-0 flex-1 rounded border border-[var(--border)] bg-[var(--bg)] px-2 py-1 text-xs text-gray-200 focus:border-[var(--border-hover)] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  data-testid="requirement-issue-add"
+                  disabled={busy || !issueDraft.trim()}
+                  onClick={addIssueRow}
+                  className="rounded bg-[var(--hl)] px-2 py-1 text-xs text-[var(--bg)] disabled:opacity-60"
+                >
+                  添加
+                </button>
+              </div>
+              {issueError && <p role="alert" data-testid="requirement-issue-error" className="mt-1 text-[11px] text-[var(--danger)]">{issueError}</p>}
+            </>
           )}
         </section>
 
