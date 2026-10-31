@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.177 — 2026-11-01
+
+### Rename a requirement
+
+- The title was read-only: a typo in the name could only be fixed from the client
+  app. The detail header now has 重命名, an inline input with 保存/取消, Enter to
+  save and Esc to cancel.
+- Empty and over-80-character names are rejected locally with the reason, before a
+  request is made; Hub still has the final word and its message is surfaced.
+- The old title is kept in the `title` attribute so a long name stays readable
+  after truncation.
+
 ## 0.6.4-preview.176 — 2026-11-01
 
 ### Move a requirement between projects

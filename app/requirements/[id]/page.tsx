@@ -121,6 +121,9 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [issueError, setIssueError] = useState('');
   const [projects, setProjects] = useState<Array<{ id: string; name: string; archived?: boolean }> | null>(null);
   const [projectError, setProjectError] = useState('');
+  const [renaming, setRenaming] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [nameError, setNameError] = useState('');
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [parentQuery, setParentQuery] = useState('');
   const [parentResults, setParentResults] = useState<Array<{ id: string; seq: number; name: string; column: string; priority: string }>>([]);
@@ -210,6 +213,16 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     } catch (e: unknown) {
       setActionError(e instanceof Error ? e.message : 'events failed');
     } finally { setOlderBusy(false); }
+  }
+
+  async function saveName() {
+    const next = nameDraft.trim();
+    if (!next) { setNameError('名称不能为空'); return; }
+    if (next.length > 80) { setNameError('名称不能超过 80 个字符'); return; }
+    if (next === req?.name) { setRenaming(false); return; }
+    const ok = await sendPatch({ name: next });
+    if (ok) { setRenaming(false); setNameError(''); }
+    else setNameError('保存失败，见上方提示');
   }
 
   async function saveIssues(next: RequirementIssue[]) {
@@ -521,7 +534,42 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
             </p>
           )}
           <div className="flex items-start justify-between gap-3">
-            <h1 className="text-lg font-semibold text-white">{req.name}</h1>
+            {renaming ? (
+              <div className="min-w-0 flex-1">
+                <input
+                  aria-label="名称"
+                  data-testid="requirement-name-input"
+                  value={nameDraft}
+                  autoFocus
+                  maxLength={120}
+                  onChange={event => { setNameDraft(event.target.value); setNameError(''); }}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') { event.preventDefault(); void saveName(); }
+                    if (event.key === 'Escape') { event.preventDefault(); setRenaming(false); setNameError(''); }
+                  }}
+                  className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-2 py-1 text-lg font-semibold text-white focus:border-[var(--border-hover)] focus:outline-none"
+                />
+                <div className="mt-1 flex items-center gap-2 text-[11px]">
+                  <button type="button" data-testid="requirement-name-save" disabled={busy} onClick={() => void saveName()} className="rounded bg-[var(--hl)] px-2 py-0.5 text-[var(--bg)] disabled:opacity-60">保存</button>
+                  <button type="button" data-testid="requirement-name-cancel" onClick={() => { setRenaming(false); setNameError(''); }} className="text-gray-400 underline hover:text-gray-200">取消</button>
+                  {nameError && <span role="alert" data-testid="requirement-name-error" className="text-[var(--danger)]">{nameError}</span>}
+                </div>
+              </div>
+            ) : (
+              <div className="flex min-w-0 items-center gap-2">
+                <h1 className="truncate text-lg font-semibold text-white" title={req.name}>{req.name}</h1>
+                <button
+                  type="button"
+                  data-testid="requirement-rename"
+                  disabled={busy}
+                  title="重命名（Hub 校验 1–80 字）"
+                  onClick={() => { setNameDraft(req.name); setNameError(''); setRenaming(true); }}
+                  className="shrink-0 rounded border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-60"
+                >
+                  重命名
+                </button>
+              </div>
+            )}
             {!req.archived && (
               <button
                 type="button"
