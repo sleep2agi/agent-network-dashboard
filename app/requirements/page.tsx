@@ -1163,8 +1163,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             )}
           </div>
           {bulkMode && (
-            <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs" data-testid="requirements-bulk-bar">
-              <span className="text-[var(--fg-muted)]">已选 {selectedIds.size} 项</span>
+            <div className="mb-2 flex flex-nowrap items-center gap-2 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs sm:flex-wrap sm:overflow-visible" data-testid="requirements-bulk-bar">
+              <span className="shrink-0 whitespace-nowrap text-[var(--fg-muted)]">已选 {selectedIds.size} 项</span>
               <select
                 aria-label="批量移动到状态"
                 value=""
@@ -1201,7 +1201,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   const person = { kind, id: rest.join(':') };
                   void bulkPatch(kind === 'node' ? { owner: null, agent_owner: person } : { owner: person, agent_owner: null });
                 }}
-                className="max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+                className="shrink-0 max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
               >
                 <option value="">负责人…</option>
                 <option value="none">清空负责人</option>
@@ -1220,7 +1220,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 disabled={bulkBusy || selectedIds.size === 0 || projectCatalog.length === 0}
                 title={projectCatalog.length === 0 ? '项目目录未就绪' : '把选中的卡移到同一个项目；「无项目」= 明确不属于任何项目'}
                 onChange={event => { if (event.target.value) void bulkPatch({ project_id: event.target.value === 'none' ? null : event.target.value }); }}
-                className="max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+                className="shrink-0 max-w-[12rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
               >
                 <option value="">项目…</option>
                 <option value="none">无项目</option>
@@ -1235,7 +1235,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 disabled={bulkBusy || selectedIds.size === 0 || personOptions.length === 0}
                 title={personOptions.length === 0 ? '人员目录未就绪' : '选一个人或 Agent 加进参与者的同时，可按右侧按钮移出'}
                 onChange={event => { if (event.target.value) { setBulkParticipant(event.target.value); void bulkParticipantChange('add', event.target.value); } }}
-                className="max-w-[11rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+                className="shrink-0 max-w-[11rem] rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
               >
                 <option value="">参与者…</option>
                 {(['user', 'node'] as const).map(kind => (
@@ -1266,7 +1266,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   disabled={bulkBusy || selectedIds.size === 0}
                   onChange={event => setBulkTag(event.target.value)}
                   placeholder="标签名"
-                  className="w-24 rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
+                  className="w-24 shrink-0 rounded border border-[var(--border)] bg-[var(--bg)] px-1.5 py-1 text-xs text-[var(--fg)] disabled:opacity-50"
                 />
                 <button
                   type="button"
