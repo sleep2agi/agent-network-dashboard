@@ -191,6 +191,7 @@ Department discs in the 2D chart show their head count.
 `/` focuses the requirement search, `Esc` clears it and then leaves the field.
 
 A requirement can be shared by copying its link from the detail header.
+Its GitHub issues can be linked from the same page (full URL or `owner/repo#123`).
 
 Legion acceptance also renders a production-like dense fixture (12 departments).
 The 3D topology stacks core, departments, sub-departments, people and agents on
