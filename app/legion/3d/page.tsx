@@ -36,7 +36,8 @@ import { LegionChat } from '../LegionChat';
 // （别用强广角，远景缩成点就没有军团体量感）、自转 0.02–0.03 rad/s。
 // 实现上把「透视强度」和「缩放」拆开：dist 固定大一点 = 透视更平，
 // 滚轮改的是 zoom（scale），不再同时改变透视。
-const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.52, dist: 6.0, zoom: 1.12, panX: 0, panY: 0 };
+// pitch 抬到 0.60：部门分三层之后需要一点俯角才看得见层级之间的落差。
+const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.60, dist: 6.0, zoom: 1.12, panX: 0, panY: 0 };
 // 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
 const MIN_ZOOM = 0.25;
