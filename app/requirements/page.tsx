@@ -121,8 +121,13 @@ function TimelineView({ rows }: { rows: Requirement[] }) {
             {ticks.map((tick, index) => (
               <span
                 key={tick.left}
-                className={`absolute text-[10px] text-[var(--fg-dim)] ${index === 0 ? '' : index === ticks.length - 1 ? '-translate-x-full' : '-translate-x-1/2'}`}
-                style={{ left: `${tick.left}%`, bottom: 2 }}
+                className="absolute whitespace-nowrap text-[10px] text-[var(--fg-dim)]"
+                style={{
+                  // 贴边刻度改用 right 定位：left:100% 时绝对定位元素可用宽度为 0，文字会被折行
+                  // 成「11-」/「20」，正好压到右上角的「逾期 N 条」上（实拍）。
+                  ...(index === 0 ? { left: 0 } : index === ticks.length - 1 ? { right: 0 } : { left: `${tick.left}%`, transform: 'translateX(-50%)' }),
+                  bottom: 2,
+                }}
               >
                 {tick.label}
               </span>
