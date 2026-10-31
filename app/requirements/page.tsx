@@ -222,14 +222,14 @@ function SummaryPanel({ rows, labelFor }: { rows: Requirement[]; labelFor: (pers
           无截止日 <span className="tabular-nums">{undated}</span>
         </div>
       </div>
-      <div data-testid="summary-owners" className="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+      <div data-testid="summary-owners" className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2 2xl:grid-cols-3">
         {owners.map(([key, entry]) => (
-          <div key={key} className="flex items-center gap-2 text-[11px] text-[var(--fg-muted)]">
-            <span className="w-24 shrink-0 truncate" title={entry.label}>{entry.label}</span>
+          <div key={key} className="flex min-w-0 items-center gap-2 text-[11px] text-[var(--fg-muted)]">
+            <span className="w-20 shrink-0 truncate" title={entry.label}>{entry.label}</span>
             <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--bg-elevated)]">
               <span className="absolute inset-y-0 left-0 rounded-full bg-[var(--accent)]/70" style={{ width: `${(entry.total / widest) * 100}%` }} />
             </span>
-            <span className="tabular-nums text-[var(--fg-dim)]">{entry.done}/{entry.total}</span>
+            <span className="w-9 shrink-0 text-right tabular-nums text-[var(--fg-dim)]">{entry.done}/{entry.total}</span>
           </div>
         ))}
       </div>
