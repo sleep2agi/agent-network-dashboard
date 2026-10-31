@@ -965,9 +965,17 @@ export default function LegionPage() {
                                 {node.memberCount ?? 0}人 · {node.agentCount ?? 0}A
                               </text>
                             )}
-                            {((node.span ?? 0) >= 1.0 || isSelected || hovered === node.id || view.k >= 1.25) && (
-                              <text textAnchor="middle" y={3.5 * labelScale} className="fill-[var(--fg)]" style={{ fontSize: 10 * labelScale }}>
-                                {node.label.slice(0, 4)}
+                            {/* 生产密度（13 个部门）里每个扇区只有 0.48 rad，按扇区宽度
+                                判断名字的话，8 个子部门就是一圈没有名字的白盘。改成「盘装得下
+                                就写」：小盘写 2 个字，大盘写 4 个字。 */}
+                            {((node.span ?? 0) >= 1.0 || isSelected || hovered === node.id || view.k >= 1.25 || r >= 9) && (
+                              <text
+                                textAnchor="middle"
+                                y={3.5 * labelScale}
+                                className="fill-[var(--fg)]"
+                                style={{ fontSize: Math.min(10, Math.max(7.5, r * 0.4)) * labelScale }}
+                              >
+                                {node.label.slice(0, r >= 24 ? 4 : r >= 12 ? 3 : 2)}
                               </text>
                             )}
                             {/* 部门不再画「N 人 · M Agent」：多层部门时这行字会压进圆心
