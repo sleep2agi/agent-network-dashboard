@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.185 — 2026-11-01
+
+### Bulk participants, and release scripts are generated now
+
+- The bulk bar can put one person (or agent) into the participants of every
+  selected card, and take them out again. Participants are a whole-array field,
+  so each card is read, merged (or filtered) and written back; cards that already
+  match are counted without a request.
+- `deploy/next-release.py` generates the next release's four scripts (acceptance,
+  publish, pm2 config, CI collector) from the previous release's real files. Three
+  releases in a row lost time to a hand-edited label or a branch-vs-merge SHA; the
+  generator reads the previous SHA/BUILD_ID from disk instead of memory.
+
 ## 0.6.4-preview.184 — 2026-11-01
 
 ### Bulk project moves
