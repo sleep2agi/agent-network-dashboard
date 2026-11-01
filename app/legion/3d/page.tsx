@@ -2478,6 +2478,26 @@ export default function Legion3DPage() {
           </button>
         </div>
       )}
+      {/* 巡礼讲解条（左下角，像电视的 lower-third）：镜头转到哪个部门，就把它的层级、
+          人数和直属下级一起报出来——原来只有一行「第 N 层 · 名字」，录屏时观众看不出规模。
+          pointer-events-none：演示中点击仍归画布，不会误触。 */}
+      {presenting && tour && (() => {
+        const node = layout.nodes.find(n => n.id === focus && n.kind === 'group');
+        if (!node) return null;
+        const children = layout.nodes.filter(n => n.parentId === node.id && n.kind === 'group').length;
+        return (
+          <div
+            data-testid="legion-3d-caption"
+            className="pointer-events-none absolute bottom-5 left-4 z-20 max-w-[76vw] rounded-lg bg-[var(--bg-secondary)]/90 px-3 py-2 backdrop-blur sm:left-6"
+          >
+            <p data-testid="legion-3d-caption-title" className="text-base font-medium text-[var(--fg)] sm:text-lg">{node.label}</p>
+            <p data-testid="legion-3d-caption-meta" className="mt-0.5 text-[11px] text-[var(--fg-muted)]">
+              第 {Math.max(1, node.depth ?? 1)} 层 · {node.memberCount} 人 · 下级 {children}
+              {node.leader ? ` · 负责人 ${node.leader}` : ''}
+            </p>
+          </div>
+        );
+      })()}
       {capturing && (
         <div role="status" data-testid="legion-3d-capture-status" className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-md bg-[var(--bg-secondary)]/92 px-3 py-1 text-xs text-[var(--fg-muted)] backdrop-blur">
           <span>录屏中 {Math.round(captureProgress * 100)}% · {LOOP_DURATION_MS / 1000} 秒无缝循环</span>
