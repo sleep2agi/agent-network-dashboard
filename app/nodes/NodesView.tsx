@@ -214,6 +214,33 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
   //  ③ an explicit ✕ close must NOT be answered by an immediate re-select
   //    (the ✕ would look broken) — userClosedRef gates auto-select off for
   //    the rest of this mount.
+  // 键盘：`/` 聚焦节点搜索（和需求页一致，别让全局命令面板抢走）；
+  // 焦点在某张卡片上时，↑/↓ 在卡片之间移动，省得按几十次 Tab。
+  useEffect(() => {
+    const inField = () => {
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || !!el?.isContentEditable;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === '/' && !inField() && !document.querySelector('[role="dialog"]')) {
+        const box = document.querySelector<HTMLInputElement>('[data-testid="rail-search"]');
+        if (box) { e.preventDefault(); e.stopImmediatePropagation(); box.focus(); box.select(); }
+        return;
+      }
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const active = document.activeElement as HTMLElement | null;
+      if (!active || !active.matches('[data-node-card]')) return;
+      const cards = [...document.querySelectorAll<HTMLElement>('[data-node-card]')];
+      const i = cards.indexOf(active);
+      if (i < 0) return;
+      const next = cards[i + (e.key === 'ArrowDown' ? 1 : -1)];
+      if (next) { e.preventDefault(); next.focus(); next.scrollIntoView({ block: 'nearest' }); }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
+
   const [manageView, setManageView] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('anet-nodes-manage-view') === '1';
