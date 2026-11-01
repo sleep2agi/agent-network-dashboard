@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.207 — 2026-11-01
+
+### 2D 军团也标出「这个部门有谁」
+
+- 3D 那边选中部门会飞到正面并给成员描环（`.201` / `.205`），2D 只有“选中高亮”：
+  来回切视图时，同一个部门在两边的反馈不一样，人得重新找自己的位置。
+- 现在 2D 选中部门时，它名下的成员与 Agent 各描一圈淡 accent 环（跟着当前缩放走），
+  选中成员/Agent 则不标。
+- 与 3D 同名同义：`data-member-marks`（2D SVG）/ `data-member-halo`（3D canvas），
+  两个页面用同一套语义，探针能分别钉住。
+
 ## 0.6.4-preview.206 — 2026-11-01
 
 ### 远端部门的标签原来读不清（三主题实测都低于 4.5:1）
