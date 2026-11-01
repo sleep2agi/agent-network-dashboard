@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.248 — 2026-11-02
+
+### 3D 军团页其实一直在焦点规则之外
+
+- 军团的作用域焦点规则挂在 `[data-legion-root]` 上，但**只有 2D 页有这个属性**；
+  3D 页从没被覆盖过——工具栏、面板按钮只有零散的 `focus-visible` 类，多数控件仍是
+  浏览器默认焦点环。也就是说「军团整片界面都有可见焦点」这句话，对 3D 并不成立。
+- 现在 3D 页根节点也带 `data-legion-root`，与 2D 共用同一条规则。
+- 顺带核查了「批量写入成功/失败提示」：本来就是 `role="status"` / `role="alert"`，
+  无需改动。
+
 ## 0.6.4-preview.247 — 2026-11-02
 
 ### 表单控件也换上同一套键盘焦点
