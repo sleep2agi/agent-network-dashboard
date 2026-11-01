@@ -346,6 +346,7 @@ export function Sidebar() {
           Round 47: explicit ease-out curve + slight shadow so the drawer
           edge "leaves a trail" as it slides in. */}
       <aside
+        data-app-shell-nav="sidebar"
         data-anet-sidebar="true"
         data-sidebar-mode={mode}
         data-total-unread={totalUnread}

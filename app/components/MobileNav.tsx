@@ -87,7 +87,7 @@ export function MobileNav() {
   };
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#26262b] bg-[#111113]/95 px-1 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 backdrop-blur lg:hidden">
+    <nav data-app-shell-nav="mobile" className="fixed inset-x-0 bottom-0 z-40 border-t border-[#26262b] bg-[#111113]/95 px-1 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 backdrop-blur lg:hidden">
       <div className="mx-auto grid max-w-lg grid-cols-6 gap-1">
         {MOBILE_NAV_ITEMS.map(item => {
           const active = isActive(item.href);
