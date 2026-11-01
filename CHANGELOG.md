@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.216 — 2026-11-01
+
+### 归档/恢复需求后，焦点不再掉到 body
+
+- 这一轮先做**测量**再动手：在详情页点「归档」，记录操作后的 `document.activeElement`
+  ——结果是 `BODY`。原因是归档按钮被横幅取代（卸载），焦点无处可去。
+- 修法用稳定锚点：**归档后焦点交给弹出的横幅**（`tabIndex=-1`），**恢复后焦点交回
+  「归档」按钮**（它重新出现）。实测焦点分别落在 `P[data-testid=requirement-archived-banner]`
+  与按钮上，不再落到 `body`。
+- 判定仍走 `app/lib/focus-fallback.ts`（只在焦点确实丢了时接管）。
+
 ## 0.6.4-preview.215 — 2026-11-01
 
 ### 批量操作之后，焦点不再掉到 body
