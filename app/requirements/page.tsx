@@ -935,6 +935,19 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             >
               {sortSpec.dir === 'asc' ? '↑' : '↓'}
             </button>
+            {/* 放在共用工具栏里：列表和看板都要能用（树状/时间线有各自顺序，不掺和）。 */}
+            {!treeMode && !timeline && (
+              <button
+                type="button"
+                data-testid="requirements-urgency-sort"
+                aria-pressed={urgencySort}
+                title="只调整已加载条目的显示顺序（超期 → 今天 → 3 天内 → 其余），不改服务器排序，也不写任何数据"
+                onClick={toggleUrgencySort}
+                className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${urgencySort ? 'bg-[var(--bg-elevated)] text-[var(--danger)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+              >
+                按紧迫度
+              </button>
+            )}
             <CreateRequirement
               networkId={networkId}
               onCreated={seq => {
@@ -1264,18 +1277,6 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               </p>
             )}
           <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
-            {!treeMode && !timeline && (
-              <button
-                type="button"
-                data-testid="requirements-urgency-sort"
-                aria-pressed={urgencySort}
-                title="只调整已加载卡片的显示顺序（超期 → 今天 → 3 天内 → 其余），不改服务器排序，也不写任何数据"
-                onClick={toggleUrgencySort}
-                className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${urgencySort ? 'bg-[var(--bg-elevated)] text-[var(--danger)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
-              >
-                按紧迫度
-              </button>
-            )}
             <button
               type="button"
               data-testid="requirements-bulk-toggle"
