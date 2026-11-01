@@ -43,10 +43,13 @@ describe('军团 3D 页面契约', () => {
     expect(page).toContain('--accent');
   });
 
-  test('2D 与 3D 互达：/legion 有 3D 入口，3D 页有 2D 返回', () => {
+  test('2D 与 3D 互达，且切换时带上当前聚焦的部门', () => {
     const twoD = read('app/legion/page.tsx');
-    expect(twoD).toContain('href="/legion/3d"');
-    expect(page).toContain('href="/legion"');
+    // 入口与返回都在，且都把 focus 带过去（否则切换会丢掉正在看的部门）。
+    expect(twoD).toContain('data-testid="legion-3d-link"');
+    expect(twoD).toContain('/legion/3d?focus=');
+    expect(page).toContain('data-testid="legion-3d-2d"');
+    expect(page).toContain('/legion?focus=');
   });
 
   test('画布可访问：canvas 有 aria-label，舞台可聚焦（键盘旋转）', () => {
