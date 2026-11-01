@@ -97,6 +97,8 @@ export default function LegionPage() {
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
   const [hovered, setHovered] = useState<string | null>(null);
   const [focusGroup, setFocusGroup] = useState<string | null>(null);
+  // 大网络里节点列表很长：只列部门/圆心，键盘找部门时不用滚过几十个成员。
+  const [listDeptsOnly, setListDeptsOnly] = useState(false);
   // 深链 ?focus= 指向的部门不存在时，要明确告诉用户，而不是静默给一张没聚焦的图。
   const [focusMissing, setFocusMissing] = useState<string | null>(null);
   const [view, setView] = useState({ k: 1, tx: 0, ty: 0 });
@@ -832,9 +834,20 @@ export default function LegionPage() {
                   data-testid="legion-node-list"
                   className="absolute left-3 top-3 z-10 max-h-[70%] w-56 overflow-y-auto rounded-xl bg-[var(--bg)]/95 p-1.5 text-xs shadow-lg backdrop-blur sm:w-60"
                 >
+                  <label className="mb-1 flex items-center gap-1.5 rounded px-1.5 py-1 text-[10px] text-[var(--fg-muted)]">
+                    <input
+                      type="checkbox"
+                      data-testid="legion-list-depts-only"
+                      checked={listDeptsOnly}
+                      onChange={e => setListDeptsOnly(e.target.checked)}
+                      className="h-3 w-3"
+                    />
+                    只列部门与圆心
+                  </label>
                   {layout.nodes
                     // 与 3D 一致：成员 ≤60 时把 Agent 也列出来，键盘能直接走到 Agent 详情。
                     .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
+                    .filter(n => !listDeptsOnly || n.kind === 'core' || n.kind === 'group')
                     .map(n => (
                       <button
                         key={n.id}
