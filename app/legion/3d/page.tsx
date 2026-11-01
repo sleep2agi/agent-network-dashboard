@@ -2592,7 +2592,13 @@ export default function Legion3DPage() {
             onClick={() => { setFocus(null); yawTarget.current = null; }}
             className="pointer-events-auto mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--accent)]/12 px-3 py-1 text-[11px] text-[var(--fg)]"
           >
-            <span data-testid="legion-3d-focus">聚焦：{layout.nodes.find(n => n.id === focus)?.label ?? '部门'}</span>
+            <span data-testid="legion-3d-focus">聚焦：{(() => {
+              const node = layout.nodes.find(n => n.id === focus);
+              if (!node) return '部门';
+              // 与 2D 同口径：聚焦/演示时一并报出人数与直属下级。
+              const children = layout.nodes.filter(n => n.parentId === node.id && n.kind === 'group').length;
+              return `${node.label} · ${node.memberCount} 人 · 下级 ${children}`;
+            })()}</span>
             <span aria-hidden>✕</span>
           </button>
         )}
