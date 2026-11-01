@@ -99,6 +99,14 @@ export default function LegionPage() {
   const [focusGroup, setFocusGroup] = useState<string | null>(null);
   // 大网络里节点列表很长：只列部门/圆心，键盘找部门时不用滚过几十个成员。
   const [listDeptsOnly, setListDeptsOnly] = useState(false);
+  // 与 3D 共用同一个本地偏好：切视图后不用重新勾一次。
+  useEffect(() => {
+    setListDeptsOnly(window.localStorage.getItem('legion-list-depts-only') === '1');
+  }, []);
+  const toggleDeptsOnly = (next: boolean) => {
+    setListDeptsOnly(next);
+    window.localStorage.setItem('legion-list-depts-only', next ? '1' : '0');
+  };
   // 深链 ?focus= 指向的部门不存在时，要明确告诉用户，而不是静默给一张没聚焦的图。
   const [focusMissing, setFocusMissing] = useState<string | null>(null);
   const [view, setView] = useState({ k: 1, tx: 0, ty: 0 });
@@ -839,7 +847,7 @@ export default function LegionPage() {
                       type="checkbox"
                       data-testid="legion-list-depts-only"
                       checked={listDeptsOnly}
-                      onChange={e => setListDeptsOnly(e.target.checked)}
+                      onChange={e => toggleDeptsOnly(e.target.checked)}
                       className="h-3 w-3"
                     />
                     只列部门与圆心

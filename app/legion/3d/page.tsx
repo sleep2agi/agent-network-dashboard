@@ -261,6 +261,14 @@ export default function Legion3DPage() {
   const [presenting, setPresenting] = useState(false);
   // 与 2D 对齐：大网络里列表很长，可只看部门与圆心。
   const [listDeptsOnly, setListDeptsOnly] = useState(false);
+  // 与 2D 共用同一个本地偏好：切视图后不用重新勾一次。
+  useEffect(() => {
+    setListDeptsOnly(window.localStorage.getItem('legion-list-depts-only') === '1');
+  }, []);
+  const toggleDeptsOnly = (next: boolean) => {
+    setListDeptsOnly(next);
+    window.localStorage.setItem('legion-list-depts-only', next ? '1' : '0');
+  };
   const [tour, setTour] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [captureProgress, setCaptureProgress] = useState(0);
@@ -2847,7 +2855,7 @@ export default function Legion3DPage() {
               type="checkbox"
               data-testid="legion-3d-list-depts-only"
               checked={listDeptsOnly}
-              onChange={e => setListDeptsOnly(e.target.checked)}
+              onChange={e => toggleDeptsOnly(e.target.checked)}
               className="h-3 w-3"
             />
             只列部门与圆心
