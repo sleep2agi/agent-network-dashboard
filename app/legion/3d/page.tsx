@@ -830,10 +830,8 @@ export default function Legion3DPage() {
     const draw = (now: number) => {
       if (stopped) return;
       // 每 30 帧重读一次 token 就够跟手（主题切换不是逐帧事件）。
-      if (frame++ % 30 === 0) {
-        Object.assign(tk, readTokens());
-        dark = isDarkBg(tk.bg);
-      }
+      // 注意只能改写「实时那份」：演示配色是另一个对象，别被这行一起冲掉。
+      if (frame++ % 30 === 0) Object.assign(tkLive, readTokens());
       const view = viewRef.current;
       const dt = Math.min(0.05, (now - lastFrame) / 1000);
       lastFrame = now;
