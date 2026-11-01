@@ -1137,3 +1137,42 @@ skip link 上线后复走一遍，全程只用键盘：
 legion 82 · mine 22 · network 54 · nodes-kbd 9 · project 82 · recording 23 ·
 responsibility 88 · summary 18 · tags 20 · tag-ops 26 · timeline 16`（+ 设计师探针 6/6），
 外加单测 47 个文件、四项 main CI、本机与公网各 9/9。
+
+## 19. 2026-11-02 收口：计划健康度、键盘可达性与发布链路
+
+### 19.1 计划健康度（.217–.223）
+
+- `planHealth(start, due)` 是唯一口径：列表行、看板卡片、详情页共用，配色收在 `planHealthTone()`。
+- 四档颜色：超期 / 今天到期 / 3 天内 / 本周内（4–7 天，中性底色）。“本周内”用布尔量
+  `thisWeek` 承载，**不新增 kind**——kind 同时决定颜色与排序档位，新增一档会改语义。
+- 「按紧迫度」排序（`planHealthRank`）只改本地显示顺序，不发 `sort`/`dir`、不写数据。
+- 筛选行显示「已加载中 超期 N · 本周内 M」，文案写死“已加载中”，不冒充全库总量。
+
+### 19.2 键盘可达性（.229–.249）
+
+- 全站一条焦点规则 `:is(button, a[href], input, select, textarea, summary, [role="option"]):focus-visible`；
+  取代逐页 `data-*-root`（逐页方案漏过 3D 军团页）。
+- 军团 SVG 用 **roving tabindex**：整张图一个 Tab 停点，方向键移动；折叠角标不进 Tab 序列。
+- 列表 `j/k`、`w`（本周内）、`/`（搜索）逐条核实；帮助面板（`?`）新增 Legion 组。
+- 焦点兜底统一走 `restoreFocusAfterUnmount()`：清空筛选后落到搜索框、加载更多后回到列表容器。
+- 深链 `?focus=` 指向不存在的部门时，2D 与 3D 都给出明确提示（加载完成后才判定）。
+
+### 19.3 错误态与空态
+
+- 需求列表「读取失败」为 `role="alert"`，重试按钮键盘可用且真发请求；夹具支持 `fail_list` 注入 503。
+- 军团空态说明“绑定在客户端完成、本页自动刷新”，不给不存在的按钮（`/org` 只读）。
+- 总览页空态仅在 `presenceState === 'ready'` 时展示，避免把“看不见”当成“集群空了”。
+
+### 19.4 发布链路（防回归）
+
+- `should-release.py`：只有产物变化才发版（纯测试/文档轮次不产生版本号）。
+- `check-release.py --publish-script`：逐套打印 expected/actual，不一致即失败；另拒绝脚本里写死的证据日期。
+- `next-release.py` 生成后自检：版本引用形状校验（release/preview/版本号/套件标签）、期望值与上一版对照告警。
+- 已知教训：生成器只换版本号会漏“上一版记录”引用；全局替换要先确认“不该命中”的地方。
+
+### 19.5 当前发布门（`.249`，同一 SHA）
+
+`archive 70 · board 124 · chat 13 · contrast 27 · create 11 · detail 107 · hydration 7 ·
+legion 115 · mine 22 · network 54 · nodes-kbd 14 · plan-health 44 · project 82 · recording 23 ·
+responsibility 88 · summary 18 · tags 20 · tag-ops 26 · timeline 16`（+ 设计师探针 6/6），
+外加单测 49 个文件、四项 main CI、本机与公网各 9/9。
