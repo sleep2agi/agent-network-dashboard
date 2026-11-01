@@ -465,6 +465,25 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         setRowIndex(next);
         return;
       }
+      // 看板：焦点在卡片上时，↑/↓（或 j/k）在同一列内上下移动；Enter 由链接自身处理。
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'j' || event.key === 'k') {
+        const card = (document.activeElement as HTMLElement | null)?.closest?.('[data-board-card]');
+        if (card) {
+          const columnKey = card.getAttribute('data-column');
+          const cards = Array.from(document.querySelectorAll<HTMLElement>(`[data-board-card][data-column="${columnKey}"]`));
+          const from = cards.indexOf(card as HTMLElement);
+          if (from >= 0) {
+            const forward = event.key === 'ArrowDown' || event.key === 'j';
+            const next = Math.max(0, Math.min(cards.length - 1, from + (forward ? 1 : -1)));
+            if (next !== from) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              cards[next].querySelector<HTMLElement>('a[href^="/requirements/"]')?.focus();
+              return;
+            }
+          }
+        }
+      }
       // w：切换「本周内」本地筛选（和工具栏那枚统计同一个动作，只是不用鼠标）。
       if (event.key === 'w' && !event.metaKey && !event.ctrlKey && !event.altKey) {
         const el = event.target as HTMLElement | null;
@@ -1639,6 +1658,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                         return (
                           <div
                             key={row.id}
+                            data-board-card
+                            data-column={col.key}
                             data-urgency-rank={urgencySort ? rankOfRow(row) : undefined}
                             className={`rounded-lg border border-[var(--border)] bg-[var(--bg)] transition-opacity ${movingId === row.id ? 'opacity-60' : ''}`}
                           >
