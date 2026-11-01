@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.247 — 2026-11-02
+
+### 表单控件也换上同一套键盘焦点
+
+- 之前的作用域焦点规则只覆盖 `button` / 链接 / 选项；**`select`、`input`、`textarea` 没被覆盖**——
+  批量操作栏的状态/负责人/截止日期控件、搜索框都靠浏览器默认焦点环，与页面其它控件不一致。
+- 现在需求页与详情页的规则都包含 `input, select, textarea`，样式统一（2px `--hl`、偏移 2px）。
+- 顺手验证了「批量」按钮**键盘真的能用**：Enter 进入批量模式、再 Enter 退出，不只是看得见。
+
 ## 0.6.4-preview.246 — 2026-11-02
 
 ### 清空筛选后，焦点不再掉到 body
