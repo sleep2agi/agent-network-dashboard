@@ -380,6 +380,15 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  // 批量操作期间按钮被 disabled，焦点会掉到 body。这里不按「原元素」恢复
+  // （批量栏里的控件在刷新后会重建，元素引用失效），而是把焦点收回批量栏这个
+  // 稳定锚点，用户能立刻继续下一次操作。
+  const bulkBarRef = useRef<HTMLDivElement | null>(null);
+  const prevBulkBusy = useRef(false);
+  useEffect(() => {
+    if (prevBulkBusy.current && !bulkBusy) restoreFocusAfterUnmount(() => bulkBarRef.current);
+    prevBulkBusy.current = bulkBusy;
+  }, [bulkBusy]);
   const [bulkMessage, setBulkMessage] = useState('');
   const [bulkDue, setBulkDue] = useState('');
   const [bulkTag, setBulkTag] = useState('');
@@ -1254,7 +1263,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             )}
           </div>
           {bulkMode && (
-            <div className="mb-2 flex flex-nowrap items-center gap-2 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs sm:flex-wrap sm:overflow-visible" data-testid="requirements-bulk-bar">
+            <div ref={bulkBarRef} tabIndex={-1} className="mb-2 flex flex-nowrap items-center gap-2 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs outline-none sm:flex-wrap sm:overflow-visible" data-testid="requirements-bulk-bar">
               <span className="shrink-0 whitespace-nowrap text-[var(--fg-muted)]">已选 {selectedIds.size} 项</span>
               <select
                 aria-label="批量移动到状态"
