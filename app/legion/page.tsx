@@ -828,7 +828,7 @@ export default function LegionPage() {
                             setHovered(null);
                           }
                         }}
-                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors ${
+                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hl)] focus-visible:outline-offset-1 ${
                           selected === n.id
                             ? 'bg-[var(--accent)]/15 text-[var(--fg)]'
                             : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
