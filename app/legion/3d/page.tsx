@@ -2430,7 +2430,8 @@ export default function Legion3DPage() {
             </button>
           )}
           {tour && (
-            <span data-testid="legion-3d-tour-status" className="rounded-md bg-[var(--bg-secondary)]/90 px-2 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur">
+            <span role="status" aria-live="polite" data-testid="legion-3d-tour-status"
+              className="rounded-md bg-[var(--bg-secondary)]/90 px-2 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur">
               {(() => {
                 const node = layout.nodes.find(n => n.id === focus);
                 if (!node) return '巡礼中';
