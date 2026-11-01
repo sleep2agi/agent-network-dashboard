@@ -328,8 +328,9 @@ export default function LegionPage() {
     if (typeof window === 'undefined' || urlFocusSettled.current) return;
     const focus = new URLSearchParams(window.location.search).get('focus');
     if (!focus) { urlFocusSettled.current = true; return; }
-    // 图还没加载完时不能判定「找不到」，否则会把正常深链误判成失效。
-    if (layout.nodes.length === 0) return;
+    // 数据还在加载时绝不能判定「找不到」：部门是后到的，早判会把正常深链误判成失效
+    // （实测会把 ?focus=平台 判成不存在，而且 settle 之后再也不重试）。
+    if (loading || layout.nodes.length === 0) return;
     const node = layout.nodes.find(n => n.kind === 'group' && n.label === focus);
     urlFocusSettled.current = true;
     if (!node) { setFocusMissing(focus); return; }
