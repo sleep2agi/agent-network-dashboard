@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { EmptyState } from '../../components/EmptyState';
@@ -144,6 +144,54 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const [parentBusy, setParentBusy] = useState(false);
   const [parentError, setParentError] = useState('');
   const [editError, setEditError] = useState('');
+
+  const retryRouter = useRouter();
+  // 上一条 / 下一条：用列表页最近一次的筛选条件取同一份列表，在当前条目
+  // 前后各取一个。为什么不用「seq ± 1」：筛选后 seq 不连续，跨过筛选条件
+  // 会把人带到一条本来看不到的需求上。
+  const [navIds, setNavIds] = useState<{ prev: string | null; next: string | null }>({ prev: null, next: null });
+  const [navScope, setNavScope] = useState<{ prev: string; next: string } | null>(null);
+  useEffect(() => {
+    if (!id || !networkId) return;
+    let cancelled = false;
+    (async () => {
+      let stored = '';
+      try { stored = window.sessionStorage.getItem('anet_req_list_query') || ''; } catch {}
+      const params = new URLSearchParams(stored);
+      params.set('network_id', networkId);
+      params.set('limit', '200');
+      const res = await fetch(`/api/hub/requirements?${params.toString()}`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const rows = (data.requirements || []) as Array<{ id?: string; seq?: number; name?: string }>;
+      const idx = rows.findIndex(r => r.id === id);
+      if (cancelled || idx < 0) return;
+      const pick = (r?: { id?: string; seq?: number; name?: string }) => (r && r.id ? `${r.seq ? `#${r.seq} ` : ''}${(r.name || '').slice(0, 24)}` : '');
+      setNavIds({ prev: rows[idx - 1]?.id ?? null, next: rows[idx + 1]?.id ?? null });
+      setNavScope({ prev: pick(rows[idx - 1]), next: pick(rows[idx + 1]) });
+    })().catch(() => {});
+    return () => { cancelled = true; };
+  }, [id, networkId, reloadKey]);
+
+  // j / → 下一条，k / ← 上一条。焦点在输入框、或开着对话框时不抢键。
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) return;
+      if (document.querySelector('[role="dialog"]')) return;
+      const forward = e.key === 'j' || e.key === 'ArrowRight';
+      const backward = e.key === 'k' || e.key === 'ArrowLeft';
+      if (!forward && !backward) return;
+      const target = forward ? navIds.next : navIds.prev;
+      if (!target) return;
+      e.preventDefault();
+      retryRouter.push(`/requirements/${encodeURIComponent(target)}`);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [navIds, retryRouter]);
 
   const reload = () => setReloadKey(k => k + 1);
   // Every read and write names the selected network: a user token can belong to
@@ -596,6 +644,26 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
                 归档
               </button>
             )}
+            <button
+              type="button"
+              data-testid="requirement-prev"
+              disabled={!navIds.prev}
+              onClick={() => { if (navIds.prev) retryRouter.push(`/requirements/${encodeURIComponent(navIds.prev)}`); }}
+              title={navIds.prev ? `上一条（按列表当前筛选）${navScope?.prev ? `：${navScope.prev}` : ''} · k / ←` : '按列表当前筛选没有上一条'}
+              className="shrink-0 rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-40"
+            >
+              ← 上一条
+            </button>
+            <button
+              type="button"
+              data-testid="requirement-next"
+              disabled={!navIds.next}
+              onClick={() => { if (navIds.next) retryRouter.push(`/requirements/${encodeURIComponent(navIds.next)}`); }}
+              title={navIds.next ? `下一条（按列表当前筛选）${navScope?.next ? `：${navScope.next}` : ''} · j / →` : '按列表当前筛选没有下一条'}
+              className="shrink-0 rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-40"
+            >
+              下一条 →
+            </button>
             <button
               type="button"
               data-testid="requirement-copy-link"

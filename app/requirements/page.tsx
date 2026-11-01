@@ -494,6 +494,16 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   ].filter(Boolean) as string[];
   const hasActiveFilters = activeFilterLabels.length > 0;
 
+  // 详情页的「上一条/下一条」要沿用这里的筛选：把最近一次的查询串存下来
+  // （只存筛选，不含视图开关），离开列表后详情页据此取同一份列表。
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      for (const key of ['view', 'summary', 'tree']) params.delete(key);
+      window.sessionStorage.setItem('anet_req_list_query', params.toString());
+    } catch {}
+  }, [searchParams]);
+
   const clearFilters = () => {
     setPeopleQuery('');
     setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '', overdue: '', participant: '', priority: '' });
