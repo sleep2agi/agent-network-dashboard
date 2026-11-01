@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { planHealth } from './requirement-plan-health.ts';
+import { planHealth, planHealthRank } from './requirement-plan-health.ts';
 
 const TODAY = new Date(2026, 10, 1); // 2026-11-01
 
@@ -36,5 +36,18 @@ describe('计划健康度', () => {
 
   test('日期带时间戳也按日历日算（不吃时区偏移）', () => {
     expect(planHealth(null, '2026-11-03T23:59:59Z', TODAY)?.label).toBe('剩余 2 天');
+  });
+});
+
+describe('紧迫度档位', () => {
+  test('越紧急档位越小，无排期排最后', () => {
+    const rank = (due, start = null) => planHealthRank(planHealth(start, due, TODAY));
+    expect(rank('2026-10-28')).toBe(0); // 超期
+    expect(rank('2026-11-01')).toBe(1); // 今天到期
+    expect(rank('2026-11-03')).toBe(2); // 3 天内
+    expect(rank('2026-11-20')).toBe(3); // 还剩很多天
+    expect(rank(null, '2026-10-25')).toBe(4); // 只有开始日期
+    expect(rank(null, null)).toBe(5); // 什么都没排
+    expect(planHealthRank(null)).toBe(5); // 已完成的列
   });
 });
