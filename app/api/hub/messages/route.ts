@@ -12,6 +12,12 @@ export async function GET(req: Request) {
   const since = searchParams.get('since') || new Date(Date.now() - 7 * 86400000).toISOString().replace('T', ' ').slice(0, 19);
   const qs = new URLSearchParams({ limit, since });
   if (networkId) qs.set('network_id', networkId);
+  // 未读角标第二条取数：只看「发给当前用户」的那一窗。忙碌的网络上，
+  // 全网 200 条窗口大多是 agent 之间的往来，用户自己的消息会被挤出去
+  // （见 app/lib/chat-unread-feed.ts 的 mergeMessageFeeds）。这只是同一个
+  // 网络内换一个过滤条件，不是 #1636-P1 里被撤掉的「为空就放宽作用域」。
+  const alias = (searchParams.get('alias') || '').trim();
+  if (alias) qs.set('alias', alias);
   try {
     const res = await hubFetch(`/api/messages?${qs.toString()}`);
     // #1636 —— 401 原样上抛

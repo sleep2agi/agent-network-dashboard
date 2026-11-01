@@ -1,9 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import useSWR from 'swr';
+import useSWR, { useSWRConfig } from 'swr';
 import { useNetworkId } from './network-context';
 import { isMuted, useMuteVersion } from './chat-mute';
+import { currentUserAlias, mergeMessageFeeds } from './chat-unread-feed';
+import { useSSE } from './useSSE';
 
 const STORAGE_PREFIX = 'anet_chat_read_v1:';
 const UNREAD_EVENT = 'anet-chat-read-updated';
@@ -104,10 +106,34 @@ export function useChatUnread() {
   // a message to the originator (verified live: replied task + same-second
   // message, both present), so counting tasks too double-counted every
   // reply (E2E showed 4 where 2 was right).
+  const { mutate } = useSWRConfig();
+  const [me] = useState(() => (typeof window === 'undefined' ? null : currentUserAlias()));
+  const wideKey = withNetwork('/api/hub/messages?limit=200', networkId);
+  // 第二条取数只看「发给当前用户」的那一窗：忙碌网络上，用户自己的消息会被
+  // 全网 200 条窗口挤掉。两条**合并**而不是替换——合并只会多算，不会少算。
+  const inboxKey = me ? withNetwork(`/api/hub/messages?limit=200&alias=${encodeURIComponent(me)}`, networkId) : null;
+  // SSE 先到先算：角标以前要等下一轮 5s 轮询；hub 本来就会推事件，
+  // 有事件就立刻重取，轮询只做兜底（SSE 掉线时才回到 5s）。
+  const sseEnabled = process.env.NEXT_PUBLIC_DISABLE_SSE !== '1';
+  const { connected: sseConnected } = useSSE({
+    url: '/api/hub/events',
+    enabled: sseEnabled,
+    onEvent: (event) => {
+      if (!['new_task', 'new_message', 'new_reply', 'broadcast', 'chained_reply'].includes(event.type)) return;
+      void mutate(wideKey);
+      if (inboxKey) void mutate(inboxKey);
+    },
+  });
+  const refreshInterval = sseConnected ? 20000 : 5000;
   const { data: messagesData } = useSWR<{ messages?: ChatMessage[] }>(
-    withNetwork('/api/hub/messages?limit=200', networkId),
+    wideKey,
     fetcher,
-    { refreshInterval: 5000, dedupingInterval: 3000 },
+    { refreshInterval, dedupingInterval: 3000 },
+  );
+  const { data: inboxData } = useSWR<{ messages?: ChatMessage[] }>(
+    inboxKey,
+    fetcher,
+    { refreshInterval, dedupingInterval: 3000 },
   );
   const [readVersion, setReadVersion] = useState(0);
 
@@ -157,7 +183,8 @@ export function useChatUnread() {
     // Scope: only the USER'S conversation — a badge on X means "X has
     // something FOR YOU". Fleet chatter (X's messages to other agents)
     // must NOT inflate it.
-    for (const message of messagesData?.messages || []) {
+    const feed = mergeMessageFeeds(messagesData?.messages, inboxData?.messages) as ChatMessage[];
+    for (const message of feed) {
       const alias = message.from_alias?.trim();
       if (!alias || isUserish(alias)) continue;          // own sends never count
       if (!isUserish(message.to_alias)) continue;        // must be addressed to the user
@@ -165,7 +192,7 @@ export function useChatUnread() {
       if (at) bump(alias, at);
     }
     return { counts, lastActivity };
-  }, [messagesData, readMap]);
+  }, [messagesData, inboxData, readMap]);
 
   const hasUnread = useCallback((alias?: string | null) => {
     if (!alias) return false;
