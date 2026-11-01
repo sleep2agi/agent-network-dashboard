@@ -425,6 +425,23 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // 「/」聚焦搜索：和大多数列表页一致；在输入框/下拉里打字时不抢键。
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      // 列表行漫游：焦点在行上时 j/k 与 ↑/↓ 等价（roving index，见上面的 effect）。
+      if (event.key === 'j' || event.key === 'k' || event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const active = document.activeElement as HTMLElement | null;
+        const onRow = !!active?.closest?.('a[data-req-row]');
+        if (!onRow && rowIndex === null) return;
+        const rows = reqRows();
+        if (!rows.length) return;
+        const fromDom = active ? rows.indexOf(active as HTMLAnchorElement) : -1;
+        const base = fromDom >= 0 ? fromDom : (rowIndex ?? -1);
+        const delta = (event.key === 'j' || event.key === 'ArrowDown') ? 1 : -1;
+        const next = Math.max(0, Math.min(rows.length - 1, base + delta));
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        rowFocusPending.current = true;
+        setRowIndex(next);
+        return;
+      }
       if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName;
@@ -434,6 +451,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
       searchInputRef.current?.select();
     };
     window.addEventListener('keydown', onKey, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => window.removeEventListener('keydown', onKey, true);
   }, []);
 
@@ -493,6 +511,25 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     priorities && '优先级',
   ].filter(Boolean) as string[];
   const hasActiveFilters = activeFilterLabels.length > 0;
+
+  // 列表行的键盘漫游：`j`/`k` 或 ↑/↓ 逐条走，roving index + 渲染后聚焦
+  // （直接 focus(next) 会在列表重排时被替换掉——见 nodes 页那次的教训）。
+  const [rowIndex, setRowIndex] = useState<number | null>(null);
+  const rowFocusPending = useRef(false);
+  const reqRows = () => [...document.querySelectorAll<HTMLAnchorElement>('a[data-req-row]')]
+    .filter(el => el.getClientRects().length > 0);
+  useEffect(() => {
+    if (!rowFocusPending.current || rowIndex === null) return;
+    rowFocusPending.current = false;
+    const raf = requestAnimationFrame(() => {
+      const rows = reqRows();
+      const el = rows[Math.min(rowIndex, Math.max(0, rows.length - 1))];
+      if (!el) return;
+      el.focus({ preventScroll: true });
+      el.scrollIntoView({ block: 'nearest' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [rowIndex, rows.length]);
 
   // 详情页的「上一条/下一条」要沿用这里的筛选：把最近一次的查询串存下来
   // （只存筛选，不含视图开关），离开列表后详情页据此取同一份列表。
@@ -1535,7 +1572,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                       )}
                     </span>
                   )}
-                  <Link href={`/requirements/${row.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4" style={treeMode ? { paddingLeft: 8 + depth * 16 } : undefined}>
+                  <Link href={`/requirements/${row.id}`} data-req-row className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4" style={treeMode ? { paddingLeft: 8 + depth * 16 } : undefined}>
                     <span className="w-12 shrink-0 text-[11px] tabular-nums text-[var(--fg-muted)]">#{row.seq}</span>
                     <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${COLUMN_CHIP[row.column] || COLUMN_CHIP.abandoned}`}>
                       {row.column}
