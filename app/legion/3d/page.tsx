@@ -2341,6 +2341,7 @@ export default function Legion3DPage() {
   return (
     <div
       ref={wrapRef}
+      data-legion-root
       tabIndex={0}
       onKeyDown={onKeyDown}
       data-legion-stage="3d"
