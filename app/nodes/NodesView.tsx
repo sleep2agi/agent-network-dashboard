@@ -835,6 +835,16 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                   <div className="flex items-center gap-2.5">
                     <div className="relative shrink-0">
                       <AliasAvatar alias={s.alias} size={28} />
+                      {/* 手机上原来是「纯红点 + New 胶囊」；红点没有信息量，
+                          换成条数，静音会话才保留 New 这个词。 */}
+                      {unread && isMuted(s.alias) && (
+                        <span aria-label={t('有未读（已静音）', 'Unread (muted)')} className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500/80" />
+                      )}
+                      {unread && !isMuted(s.alias) && (
+                        <span aria-label={t(`${unreadCount(s.alias)} 条未读`, `${unreadCount(s.alias)} unread`)} className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-red-500 text-white text-[9px] font-semibold leading-[15px] text-center">
+                          {unreadCount(s.alias) > 99 ? '99+' : unreadCount(s.alias)}
+                        </span>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 min-w-0">
