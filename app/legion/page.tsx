@@ -611,6 +611,13 @@ export default function LegionPage() {
                 </button>
               </p>
             )}
+            {/* 搜索有匹配时也要有反馈：之前只有「0 结果」有文案，屏幕阅读器用户输入后
+                完全不知道筛出了几个节点。用 live region 播报数量。 */}
+            {query.trim() && matched && matched.size > 0 && (
+              <p role="status" aria-live="polite" data-testid="legion-search-status" className="mt-1 text-[11px] text-[var(--fg-muted)]">
+                匹配 {matched.size} 个节点
+              </p>
+            )}
             {!loading && !error && layout.stats.people === 0 && layout.stats.groups > 0 && (
               <p className="mt-1 text-[11px] text-[var(--fg-muted)]" data-testid="legion-empty-members">
                 已有 {layout.stats.groups} 个部门，还没有成员加入 —— 成员绑定 Agent 后会自动出现在环上。
