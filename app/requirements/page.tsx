@@ -472,7 +472,10 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         if (elTag === 'INPUT' || elTag === 'TEXTAREA' || elTag === 'SELECT' || el?.isContentEditable) return;
         event.preventDefault();
         event.stopImmediatePropagation();
-        setParam({ week: weekOnly ? '' : '1' });
+        // 这个监听器只在挂载时注册一次，闭包里的 weekOnly 是旧值——按一次 w 之后就再也关不掉，
+        // 所以从当前 URL 现读状态，而不是相信注册时的快照。
+        const weekOn = new URLSearchParams(window.location.search).get('week') === '1';
+        setParam({ week: weekOn ? '' : '1' });
         return;
       }
       if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
