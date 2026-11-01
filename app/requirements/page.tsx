@@ -13,6 +13,7 @@ import { TagManager } from './TagManager';
 import { tagColor } from '../lib/tag-catalog';
 import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
 import { PRIORITY_KEYS, isPriorityKey, priorityLabel, priorityTitle } from '../lib/requirement-priority';
+import { planHealth } from '../lib/requirement-plan-health';
 import { buildTreeRows } from '../lib/requirement-tree';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
@@ -1619,6 +1620,24 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                       <span className="block truncate">Agent · {personLabel(row.agent_owner, personNames)}</span>
                     </span>
                     <span className="w-20 shrink-0 text-right text-[11px]">{dueLabel(row.due)}</span>
+                    {(() => {
+                      // 计划健康度：「剩余 2 天」和「剩余 30 天」在列表里必须一眼可分，
+                      // 现有筛选只有「已逾期」这一个二元开关。
+                      const plan = planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned');
+                      if (!plan) return null;
+                      const tone = plan.kind === 'overdue'
+                        ? 'text-[var(--danger)] bg-[var(--danger)]/10'
+                        : plan.kind === 'dueToday' || plan.kind === 'dueSoon'
+                          ? 'text-[var(--warning)] bg-[var(--warning)]/10'
+                          : 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
+                      return (
+                        <span data-testid={`requirements-plan-${row.id}`} data-plan-kind={plan.kind}
+                          title={`开始：${row.start || '—'}；截止：${row.due || '—'}`}
+                          className={`hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] tabular-nums sm:inline-flex ${tone}`}>
+                          {plan.label}
+                        </span>
+                      );
+                    })()}
                     {(() => {
                       const updated = relativeTime(row.updatedAt);
                       return updated ? (
