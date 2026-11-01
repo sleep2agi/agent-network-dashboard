@@ -1652,6 +1652,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   : 'border-l-2 border-l-transparent';
               return (
                 <li key={row.id} data-depth={treeMode ? depth : undefined} data-urgency={plan?.kind ?? 'none'}
+                  data-urgency-rank={urgencySort ? rankOfRow(row) : undefined}
                   className={`${urgency} hover:bg-[var(--bg-secondary)]/60`}>
                   {treeMode && (
                     <span className="inline-flex w-5 justify-center align-middle" style={{ marginLeft: 8 + depth * 16 }}>
