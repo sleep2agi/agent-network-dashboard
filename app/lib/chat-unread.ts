@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { useNetworkId } from './network-context';
 import { isMuted, useMuteVersion } from './chat-mute';
-import { currentUserAlias, mergeMessageFeeds } from './chat-unread-feed';
+import { currentUserAlias, isUserRecipient, isUserSender, mergeMessageFeeds } from './chat-unread-feed';
 import { useSSE } from './useSSE';
 
 const STORAGE_PREFIX = 'anet_chat_read_v1:';
@@ -187,16 +187,11 @@ export function useChatUnread() {
     // 收件人判定必须同时认「登录用户名」：hub 把回复/消息直接写给 token 里的
     // username（例如 vansin），而 USERISH 只有那几个通用标签。只认 USERISH
     // 会让写给你本人的消息一条都不计数——角标永远不亮（#40）。
-    const meLower = (me || '').trim().toLowerCase();
-    const addressedToMe = (to?: string | null) => {
-      const t = (to || '').trim().toLowerCase();
-      return isUserish(t) || (!!meLower && t === meLower);
-    };
     const feed = mergeMessageFeeds(messagesData?.messages, inboxData?.messages) as ChatMessage[];
     for (const message of feed) {
       const alias = message.from_alias?.trim();
-      if (!alias || isUserish(alias) || (!!meLower && alias.toLowerCase() === meLower)) continue; // own sends never count
-      if (!addressedToMe(message.to_alias)) continue;     // must be addressed to the user
+      if (!alias || isUserSender(alias, me)) continue;    // own sends never count
+      if (!isUserRecipient(message.to_alias, me)) continue;  // must be addressed to the user
       const at = parseHubTime(message.created_at);
       if (at) bump(alias, at);
     }

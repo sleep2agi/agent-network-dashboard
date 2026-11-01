@@ -6,6 +6,31 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.195 — 2026-11-01
+
+### Unread is a number, and it finally counts your own inbox (#40)
+
+- The badge on a node said "something arrived" and nothing about how much.
+  Topology nodes and the node page's Chat tab now show the **count**
+  (capped at `99+`); the topology pill widens for two digits instead of
+  clipping.
+- **Two feeds, merged.** The network-wide read is capped at 200 rows and on a
+  busy fleet those rows are agent-to-agent chatter, so messages addressed to
+  you could fall out of the window and never be counted. A second,
+  inbox-scoped read (`alias=<you>`, same network) is merged in — merging can
+  only add, so it cannot introduce an undercount. Rows dedupe by message id.
+- **The recipient rule now accepts your username.** The hub writes replies to
+  the caller's token name (`vansin`, …), but the counter only recognised the
+  generic labels (`Dashboard`/`api`/`admin`/`hub`), so on a real account the
+  badge could stay at 0 while messages were sitting in the inbox. Rules now
+  live in `app/lib/chat-unread-feed.ts` with unit tests; unknown identity
+  falls back to the label set only, never to "anyone".
+- SSE revalidates immediately (polling drops to 20s while connected, back to
+  5s when it drops).
+- `app/api/hub/messages` forwards `alias` — one extra filter inside the same
+  network. It is **not** the "retry without network_id when empty" fallback
+  removed in #1636-P1.
+
 ## 0.6.4-preview.194 — 2026-11-01
 
 ### 清空筛选 is reachable while results still exist

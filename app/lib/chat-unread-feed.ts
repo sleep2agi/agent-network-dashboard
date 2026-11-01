@@ -71,3 +71,34 @@ export function mergeMessageFeeds(
   }
   return [...byId.values(), ...idless];
 }
+
+/**
+ * Is this message addressed to the dashboard user?
+ *
+ * Two spellings mean "the user" and both occur in hub data:
+ *  - the generic labels (`Dashboard`, `api`, `admin`, `hub`, empty), used when
+ *    the dashboard itself sends/derives the name;
+ *  - the signed-in **username** (`vansin`, …), which is what the hub writes
+ *    when it derives the recipient from the caller's token.
+ *
+ * Accepting only the labels is what made the unread badge stay at 0 on a real
+ * account (#40): every message the hub addressed to the username was filtered
+ * out before it could be counted. Accepting only the username would lose the
+ * label-spelled ones. So: either.
+ *
+ * `me` unknown (no identity snapshot yet) must not widen to "anyone" — it
+ * only ever falls back to the label set.
+ */
+const USER_LABELS = new Set(['', 'dashboard', 'admin', 'api', 'hub']);
+
+export function isUserRecipient(to: string | null | undefined, me: string | null | undefined): boolean {
+  const recipient = (to || '').trim().toLowerCase();
+  if (USER_LABELS.has(recipient)) return true;
+  const self = (me || '').trim().toLowerCase();
+  return self !== '' && recipient === self;
+}
+
+/** The reverse direction: a message *from* the user never counts as unread. */
+export function isUserSender(from: string | null | undefined, me: string | null | undefined): boolean {
+  return isUserRecipient(from, me);
+}

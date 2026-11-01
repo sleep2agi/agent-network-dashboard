@@ -57,3 +57,31 @@ describe('current user alias', () => {
     expect(currentUserAlias(undefined)).toBeNull();
   });
 });
+
+// #40：收件人判定必须认「登录用户名」。hub 把回复/消息写给 token 里的
+// username，而通用标签只有那几个 —— 只认标签会让角标永远不亮。
+describe('谁算「发给我的」', () => {
+  test('通用标签算', async () => {
+    const { isUserRecipient } = await import('./chat-unread-feed');
+    for (const v of ['', 'Dashboard', 'api', 'admin', 'hub', ' Hub ']) expect(isUserRecipient(v, 'vansin')).toBe(true);
+  });
+
+  test('登录用户名也算（大小写/空格无关）', async () => {
+    const { isUserRecipient } = await import('./chat-unread-feed');
+    expect(isUserRecipient('vansin', 'vansin')).toBe(true);
+    expect(isUserRecipient(' Vansin ', 'vansin')).toBe(true);
+  });
+
+  test('不知道我是谁时只认标签，绝不放宽成「任何人」', async () => {
+    const { isUserRecipient } = await import('./chat-unread-feed');
+    expect(isUserRecipient('vansin', null)).toBe(false);
+    expect(isUserRecipient('someone-else', 'vansin')).toBe(false);
+  });
+
+  test('自己发出的消息永远不算未读', async () => {
+    const { isUserSender } = await import('./chat-unread-feed');
+    expect(isUserSender('vansin', 'vansin')).toBe(true);
+    expect(isUserSender('api', null)).toBe(true);
+    expect(isUserSender('agent-a', 'vansin')).toBe(false);
+  });
+});
