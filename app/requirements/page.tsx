@@ -1432,6 +1432,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 .map(col => {
                 const items = orderedRows.filter(row => columnOf(row) === col.key);
                 const isCollapsed = collapsedColumns.has(col.key);
+                // 列头超期计数：看板一眼看不出「这一列里有几条已经晚了」，
+                // 数一下并给出可点的入口（点了就是已有的「已逾期」筛选，可再点取消）。
+                const overdueCount = items.filter(row => planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned')?.kind === 'overdue').length;
                 return (
                   <section
                     key={col.key}
@@ -1464,6 +1467,19 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                     <header className="flex items-center justify-between gap-2 px-3 py-2">
                       <span className={`rounded px-1.5 py-0.5 text-[11px] ${COLUMN_CHIP[col.key]}`}>{col.label}</span>
                       <span className="flex items-center gap-2">
+                        {overdueCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setParam({ overdue: overdue ? '' : '1', q: qInput, tag: tagInput })}
+                            title={`这一列有 ${overdueCount} 条已超期（点了只看超期，再点取消）`}
+                            data-testid={`requirements-column-overdue-${col.key}`}
+                            data-overdue-count={overdueCount}
+                            aria-pressed={overdue}
+                            className="rounded bg-[var(--danger)]/12 px-1 py-0.5 text-[10px] tabular-nums text-[var(--danger)] hover:bg-[var(--danger)]/20"
+                          >
+                            超期 {overdueCount}
+                          </button>
+                        )}
                         <span className="text-[10px] tabular-nums text-[var(--fg-muted)]">{items.length}</span>
                         <button
                           type="button"
