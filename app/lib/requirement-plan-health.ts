@@ -14,6 +14,12 @@ export interface PlanHealth {
   kind: PlanHealthKind;
   days: number;
   label: string;
+  /**
+   * 是否落在「本周内」——7 天及以内为真。
+   * 为什么不新增一个 kind：kind 决定颜色与排序档位，新增一档会改变已有的
+   * 「3 天内」语义和排序顺序；「本周」只是一个附加提示，用布尔量表达更稳。
+   */
+  thisWeek: boolean;
 }
 
 function dayNumber(value?: string | null): number | null {
@@ -39,15 +45,15 @@ export function planHealth(
   const dueDay = dayNumber(due);
   if (dueDay !== null) {
     const left = dueDay - todayDay;
-    if (left < 0) return { kind: 'overdue', days: -left, label: `已超期 ${-left} 天` };
-    if (left === 0) return { kind: 'dueToday', days: 0, label: '今天到期' };
-    if (left <= 3) return { kind: 'dueSoon', days: left, label: `剩余 ${left} 天` };
-    return { kind: 'daysLeft', days: left, label: `剩余 ${left} 天` };
+    if (left < 0) return { kind: 'overdue', days: -left, label: `已超期 ${-left} 天`, thisWeek: true };
+    if (left === 0) return { kind: 'dueToday', days: 0, label: '今天到期', thisWeek: true };
+    if (left <= 3) return { kind: 'dueSoon', days: left, label: `剩余 ${left} 天`, thisWeek: true };
+    return { kind: 'daysLeft', days: left, label: `剩余 ${left} 天`, thisWeek: left <= 7 };
   }
   const startDay = dayNumber(start);
   if (startDay !== null) {
     const elapsed = todayDay - startDay;
-    if (elapsed >= 1) return { kind: 'inProgress', days: elapsed, label: `已进行 ${elapsed} 天` };
+    if (elapsed >= 1) return { kind: 'inProgress', days: elapsed, label: `已进行 ${elapsed} 天`, thisWeek: false };
   }
   return null;
 }

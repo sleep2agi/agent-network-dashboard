@@ -1572,9 +1572,12 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                                   ? 'text-[var(--danger)] bg-[var(--danger)]/10'
                                   : plan.kind === 'dueToday' || plan.kind === 'dueSoon'
                                     ? 'text-[var(--warning)] bg-[var(--warning)]/10'
-                                    : 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
+                                    : plan.thisWeek
+                                      // 本周内但还有 4–7 天：比「剩余很多天」显眼，比 3 天内弱。
+                                      ? 'text-[var(--warning)] bg-[var(--warning)]/[0.06] ring-1 ring-inset ring-[var(--warning)]/25'
+                                      : 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
                                 return (
-                                  <span data-testid={`requirements-card-plan-${row.id}`} data-plan-kind={plan.kind}
+                                  <span data-testid={`requirements-card-plan-${row.id}`} data-plan-kind={plan.kind} data-this-week={plan.thisWeek ? 'true' : 'false'}
                                     className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[10px] tabular-nums ${tone}`}>
                                     {plan.label}
                                   </span>
@@ -1707,9 +1710,12 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                         ? 'text-[var(--danger)] bg-[var(--danger)]/10'
                         : plan.kind === 'dueToday' || plan.kind === 'dueSoon'
                           ? 'text-[var(--warning)] bg-[var(--warning)]/10'
-                          : 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
+                          : plan.thisWeek
+                            // 本周内但还有 4–7 天：比「剩余很多天」显眼，比 3 天内弱。
+                            ? 'text-[var(--warning)] bg-[var(--warning)]/[0.06] ring-1 ring-inset ring-[var(--warning)]/25'
+                            : 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
                       return (
-                        <span data-testid={`requirements-plan-${row.id}`} data-plan-kind={plan.kind}
+                        <span data-testid={`requirements-plan-${row.id}`} data-plan-kind={plan.kind} data-this-week={plan.thisWeek ? 'true' : 'false'}
                           title={`开始：${row.start || '—'}；截止：${row.due || '—'}`}
                           className={`hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] tabular-nums sm:inline-flex ${tone}`}>
                           {plan.label}

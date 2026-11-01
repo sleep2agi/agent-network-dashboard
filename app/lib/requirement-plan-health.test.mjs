@@ -51,3 +51,23 @@ describe('紧迫度档位', () => {
     expect(planHealthRank(null)).toBe(5); // 已完成的列
   });
 });
+
+describe('本周内提示', () => {
+  test('7 天及以内算本周，8 天起不算', () => {
+    const flag = due => planHealth(null, due, TODAY)?.thisWeek;
+    expect(flag('2026-11-08')).toBe(true); // 7 天
+    expect(flag('2026-11-09')).toBe(false); // 8 天
+    expect(flag('2026-11-03')).toBe(true); // 3 天内
+    expect(flag('2026-11-01')).toBe(true); // 今天
+    expect(flag('2026-10-30')).toBe(true); // 超期也算「已经在本周内该处理」
+    expect(planHealth('2026-10-25', null, TODAY)?.thisWeek).toBe(false); // 只有开始日期不算
+  });
+
+  test('本周标记不改变 kind 与排序档位', () => {
+    const week = planHealth(null, '2026-11-05', TODAY);
+    const far = planHealth(null, '2026-11-20', TODAY);
+    expect(week?.kind).toBe('daysLeft');
+    expect(far?.kind).toBe('daysLeft');
+    expect(planHealthRank(week)).toBe(planHealthRank(far));
+  });
+});
