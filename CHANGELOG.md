@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.189 — 2026-11-01
+
+### A selected department also carries over
+
+- `.188` carried the **focused** department when switching 2D → 3D. Selecting a
+  department (without pressing 聚焦) is the more common way to look at one, and it
+  did not carry — clicking 3D 视图 still dropped you back to the whole network.
+- The link now prefers the focused department, then the selected one, and only
+  when the selected node is actually a department.
+
 ## 0.6.4-preview.188 — 2026-11-01
 
 ### Switching 2D ↔ 3D keeps the department you were looking at

@@ -689,8 +689,13 @@ export default function LegionPage() {
               {listOpen ? '收起列表' : '节点列表'}
             </button>
             <Link
-              // 带着当前聚焦的部门跳过去：否则在 2D 里聚焦了「平台」，切到 3D 就丢了上下文。
-              href={focusGroup ? `/legion/3d?focus=${encodeURIComponent(layout.nodes.find(n => n.id === focusGroup)?.label || '')}` : '/legion/3d'}
+              // 带着上下文跳过去：优先「聚焦」的部门，其次「选中」的部门（两者都是用户
+              // 正在看的目标）；否则在 2D 看了半天，切到 3D 又要重新找。
+              href={(() => {
+                const target = focusGroup ?? selected;
+                const node = target ? layout.nodes.find(n => n.id === target) : null;
+                return node && node.kind === 'group' ? `/legion/3d?focus=${encodeURIComponent(node.label)}` : '/legion/3d';
+              })()}
               data-testid="legion-3d-link"
               className="rounded-md bg-[var(--accent)]/15 px-2.5 py-1.5 text-xs text-[var(--accent-text)] hover:bg-[var(--accent)]/25"
             >
