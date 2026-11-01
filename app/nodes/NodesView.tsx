@@ -235,6 +235,19 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
         if (box) { e.preventDefault(); e.stopImmediatePropagation(); box.focus(); box.select(); }
         return;
       }
+      // ↑/↓ 逐张移动；Home/End 直接到头尾（只在焦点已经在卡片上时生效，
+      // 否则会抢走页面本身的 Home/End 滚动）。
+      if (e.key === 'Home' || e.key === 'End') {
+        const active0 = document.activeElement as HTMLElement | null;
+        if (!active0?.matches('[data-node-card]') && kbIndex === null) return;
+        const list = visibleCards();
+        if (!list.length) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        kbFocusPending.current = true;
+        setKbIndex(e.key === 'Home' ? 0 : list.length - 1);
+        return;
+      }
       // ↑/↓ 在卡片之间移动焦点（见上面的 roving index effect）。
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         const cards = visibleCards();
