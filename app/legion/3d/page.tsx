@@ -1680,6 +1680,16 @@ export default function Legion3DPage() {
       while (delta < -Math.PI) delta += Math.PI * 2;
       yawTarget.current = viewRef.current.yaw + delta;
     }
+    // 从列表选部门时也闪一圈：和点画布是同一件事（相机已经转过去了，
+    // 但列表选项离画布很远，没有落点提示就不知道飞到了哪）。
+    if (node.kind === 'group') {
+      const onScene = screenRef.current.find(n => n.item.id === node.id);
+      if (onScene) {
+        setFlyFlash({ x: onScene.projected.x, y: onScene.projected.y, r: Math.max(26, (onScene.projected.scale || 1) * 34), label: node.label });
+        if (flyTimer.current) window.clearTimeout(flyTimer.current);
+        flyTimer.current = window.setTimeout(() => setFlyFlash(null), 1300);
+      }
+    }
     lastInteract.current = performance.now();
   }, []);
 
