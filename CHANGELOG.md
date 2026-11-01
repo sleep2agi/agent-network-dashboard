@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.260 — 2026-11-02
+
+### 3D 军团：巡礼多了一条讲解条
+
+- 演示模式的部门巡礼，原来只有一行「第 N 层 · 部门名」——录屏时看不出这个部门有多大。
+- 现在左下角有一条字幕样式的讲解条：部门名、`第 N 层 · M 人 · 下级 K`，有负责人时补「负责人 X」。
+- 不抢画布点击（pointer-events-none）；系统开启「减少动态效果」时静止显示，跟随巡礼换内容。
+
 ## 0.6.4-preview.259 — 2026-11-02
 
 ### 标签补全没结果时，面板别消失
