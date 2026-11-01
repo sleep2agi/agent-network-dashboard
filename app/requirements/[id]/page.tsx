@@ -607,7 +607,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     <div className="min-h-screen bg-[var(--bg)] text-gray-200">
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
         <div className="mb-4">
-          <Link href="/requirements" className="text-xs text-gray-500 hover:text-gray-300">← 需求列表</Link>
+          <Link href={backHref} className="text-xs text-gray-500 hover:text-gray-300" data-testid="requirement-back">← 需求列表</Link>
         </div>
 
         <header className="mb-5">
