@@ -1510,6 +1510,23 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                               {row.archived === true && (
                                 <span className="mt-1 inline-flex rounded border border-[var(--border)] bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[10px] leading-4 text-[var(--fg-muted)]">已归档</span>
                               )}
+                              {(() => {
+                                // 和列表行共用同一份 planHealth：同一批需求在两种视图里
+                                // 必须说同一句话，断言会比对两边的 data-plan-kind。
+                                const plan = planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned');
+                                if (!plan) return null;
+                                const tone = plan.kind === 'overdue'
+                                  ? 'text-[var(--danger)] bg-[var(--danger)]/10'
+                                  : plan.kind === 'dueToday' || plan.kind === 'dueSoon'
+                                    ? 'text-[var(--warning)] bg-[var(--warning)]/10'
+                                    : 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
+                                return (
+                                  <span data-testid={`requirements-card-plan-${row.id}`} data-plan-kind={plan.kind}
+                                    className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[10px] tabular-nums ${tone}`}>
+                                    {plan.label}
+                                  </span>
+                                );
+                              })()}
                               {(row.tags || []).length > 0 && (
                                 <span className="mt-2 flex flex-wrap gap-1">
                                   {(row.tags || []).slice(0, 3).map(name => (
