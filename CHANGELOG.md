@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.192 — 2026-11-01
+
+### Hub's own broadcasts no longer look like you wrote them (#35)
+
+- `tasks.from_name` defaults to `hub`, and Hub sends its broadcasts and system
+  notices through that path. The chat panel counted `hub` as one of "your"
+  identities (`Dashboard`, `api`), so those messages were signed **You** with no
+  sender badge — someone else's words read as your own.
+- Attribution now lives in `app/lib/chat-sender.ts`: only `Dashboard` / `api`
+  (case- and whitespace-insensitive) count as you; `hub` renders as **Hub** with
+  the `↳` badge. Any other alias is shown unchanged.
+- `app/lib/chat-sender.test.mjs` pins the table and asserts the panel goes
+  through it instead of inlining a name list again.
+
 ## 0.6.4-preview.191 — 2026-11-01
 
 ### The `?` shortcut panel is a user surface, not a changelog
