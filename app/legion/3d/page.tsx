@@ -2565,8 +2565,9 @@ export default function Legion3DPage() {
           </p>
         )}
         {!loading && layout.stats.people === 0 && layout.stats.groups > 0 && (
-          <p className="mt-1 text-[11px] text-[var(--fg-muted)]" data-testid="legion-3d-empty-members">
+          <p role="status" className="mt-1 text-[11px] text-[var(--fg-muted)]" data-testid="legion-3d-empty-members">
             已有 {layout.stats.groups} 个部门，还没有成员加入 —— 成员绑定 Agent 后会自动出现在环上。
+            <span className="text-[var(--fg-dim)]">绑定在客户端完成；本页会自动刷新，不用手动重载。</span>
           </p>
         )}
         {hierarchy.data === null && (
