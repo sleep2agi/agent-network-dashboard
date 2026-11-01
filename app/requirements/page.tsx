@@ -884,6 +884,42 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // 「我参与」在已加载结果上过滤；其它筛选仍交给 Hub。参与人只认 user 角色，
   // 与 APP 的 personKey 语义一致。
   const weekOnly = searchParams.get('week') === '1';
+  // 返回锚点：进详情前记下是哪一行；回来时把焦点放回那一行（浏览器会顺带把它带进视口），
+  // 长列表里不至于每次都从顶部重新找。只记一行，不存滚动像素——窗口高度一变像素就没有意义。
+  const rememberRowAnchor = useCallback((rowId: string) => {
+    try {
+      sessionStorage.setItem('requirements-return-anchor', JSON.stringify({ rowId, query: searchParams.toString() }));
+    } catch { /* 隐私模式下写不了就放弃恢复，不影响导航 */ }
+  }, [searchParams]);
+
+  useEffect(() => {
+    let raw: string | null = null;
+    try { raw = sessionStorage.getItem('requirements-return-anchor'); } catch { return; }
+    if (!raw) return;
+    let marker: { rowId?: string; query?: string } = {};
+    try { marker = JSON.parse(raw); } catch { return; }
+    if (!marker.rowId || marker.query !== searchParams.toString()) return;
+    const rowId = marker.rowId;
+    // 行是异步加载的，等它出现再接管焦点；最多等 2 秒，拿不到就算了。
+    let tries = 0;
+    let timer = 0 as unknown as ReturnType<typeof setTimeout>;
+    const attempt = () => {
+      const el = document.querySelector<HTMLElement>(`a[data-req-row][href^="/requirements/${rowId}?"], a[data-req-row][href="/requirements/${rowId}"]`);
+      if (el) {
+        el.focus({ preventScroll: true });
+        el.scrollIntoView({ block: 'center' });
+        try { sessionStorage.removeItem('requirements-return-anchor'); } catch { /* 忽略 */ }
+        return;
+      }
+      tries += 1;
+      if (tries < 20) timer = setTimeout(attempt, 100);
+    };
+    attempt();
+    return () => clearTimeout(timer);
+    // 只在首次挂载时尝试一次：之后用户自己滚动/切换筛选不该被拽回去。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 点进详情再返回时，列表的筛选/搜索/看板状态不能丢——把当前查询串塞进 from。
   const rowHref = useCallback((rowId: string) => {
     const query = searchParams.toString();
@@ -1608,6 +1644,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                           >
                             <Link
                               href={rowHref(row.id)}
+                              onClick={() => rememberRowAnchor(row.id)}
                               draggable
                               onDragStart={event => {
                                 event.dataTransfer.setData('text/plain', row.id);
@@ -1741,7 +1778,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                       )}
                     </span>
                   )}
-                  <Link href={rowHref(row.id)} data-req-row className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4" style={treeMode ? { paddingLeft: 8 + depth * 16 } : undefined}>
+                  <Link href={rowHref(row.id)} data-req-row onClick={() => rememberRowAnchor(row.id)} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4" style={treeMode ? { paddingLeft: 8 + depth * 16 } : undefined}>
                     <span className="w-12 shrink-0 text-[11px] tabular-nums text-[var(--fg-muted)]">#{row.seq}</span>
                     <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${COLUMN_CHIP[row.column] || COLUMN_CHIP.abandoned}`}>
                       {row.column}
