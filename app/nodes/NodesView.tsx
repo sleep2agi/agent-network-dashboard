@@ -229,7 +229,6 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
         return;
       }
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-      (window as unknown as { __nodesKbd?: number }).__nodesKbd = ((window as unknown as { __nodesKbd?: number }).__nodesKbd || 0) + 1;
       const active = document.activeElement as HTMLElement | null;
       if (!active || !active.matches('[data-node-card]')) return;
       const cards = [...document.querySelectorAll<HTMLElement>('[data-node-card]')];
