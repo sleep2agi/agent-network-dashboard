@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.256 — 2026-11-02
+
+### 3D 搜索也报「匹配 N 个节点」
+
+- 2D 的搜索框旁早有「匹配 N 个节点」的 live region；3D 没有，读屏器在 3D 输入搜索后
+  不知道筛出了几个节点。
+- 现在 3D 搜索框旁也有同样的一块（`role="status"` + `aria-live="polite"`），清空即消失。
+- 实现上不依赖命中集合是否已算出：**只要有查询词就先渲染**，数量用 `matchedSet?.size ?? 0`
+  兜底——否则用户刚敲第一个字时这块还不存在，首次播报会丢。
+
 ## 0.6.4-preview.255 — 2026-11-02
 
 ### 3D 的节点列表也跟着搜索走
