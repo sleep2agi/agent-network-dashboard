@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.233 — 2026-11-01
+
+### 军团：键盘走过节点列表时，能看见自己停在哪
+
+- 军团 2D 与 3D 其实**早就有**可键盘操作的节点列表（`role="listbox"`，方向键移动、
+  回车选中）——这一轮没有重复造功能，补的是缺的那一半：**选项没有可见焦点环**，
+  Tab 走过去屏幕上没有任何反馈。
+- 两处选项都加 `focus-visible` 描边（2px、`--hl`、偏移 1px）：只键盘聚焦时出现，
+  鼠标点击不闪。
+
 ## 0.6.4-preview.232 — 2026-11-01
 
 ### 连跳几条再返回，落点是你最后看的那条
