@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.196 — 2026-11-01
+
+### One unread marker per node card — the count
+
+- A card with unread showed three markers for one fact: the numeric badge, a
+  plain red dot almost on top of it, and a `New` pill next to the alias. The
+  dot sat at the same corner as the badge and visually collided with it.
+- The count is the useful one, so it stays. `New` now appears only for **muted**
+  conversations — there the number is deliberately hidden, and the word is the
+  only cue. The mobile row (which had no count at all) gained one too.
+- `tests/nodes-unread-marker.test.mjs` pins the invariant from the source: no
+  bare red dot alongside a count, a count wherever unread is rendered, and
+  `New` only under `isMuted(...)`.
+
 ## 0.6.4-preview.195 — 2026-11-01
 
 ### Unread is a number, and it finally counts your own inbox (#40)

@@ -707,13 +707,14 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                         </span>
                       )}
                     </span>
-                    {unread && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[var(--bg-secondary)] bg-red-500" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-base font-semibold text-white">{s.alias}</span>
                       <DraftMark alias={s.alias} />
-                      {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">New</span>}
+                      {/* 数字已经说了「几条」，同一个事实不再加一个 New 胶囊；
+                          静音会话不显示数字，才用这个词提示。 */}
+                      {unread && isMuted(s.alias) && <span className="shrink-0 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                       <StatusLabel statusKey={statusKey} />
                     </div>
                     <div className="mt-0.5 truncate text-xs text-gray-500">
@@ -799,11 +800,10 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                             </span>
                           )}
                         </span>
-                        {unread && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border border-[var(--bg-secondary)] bg-red-500" />}
                       </div>
                       <span className="truncate text-sm font-medium text-white">{s.alias}</span>
                       <DraftMark alias={s.alias} />
-                      {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">New</span>}
+                      {unread && isMuted(s.alias) && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                     </div>
                   </div>
                   <div className="col-span-2 truncate text-xs text-gray-400" title={s.server || ''}>
@@ -835,12 +835,21 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                   <div className="flex items-center gap-2.5">
                     <div className="relative shrink-0">
                       <AliasAvatar alias={s.alias} size={28} />
-                      {unread && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[var(--bg-secondary)] bg-red-500" />}
+                      {/* 手机上原来是「纯红点 + New 胶囊」；红点没有信息量，
+                          换成条数，静音会话才保留 New 这个词。 */}
+                      {unread && isMuted(s.alias) && (
+                        <span aria-label={t('有未读（已静音）', 'Unread (muted)')} className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500/80" />
+                      )}
+                      {unread && !isMuted(s.alias) && (
+                        <span aria-label={t(`${unreadCount(s.alias)} 条未读`, `${unreadCount(s.alias)} unread`)} className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-red-500 text-white text-[9px] font-semibold leading-[15px] text-center">
+                          {unreadCount(s.alias) > 99 ? '99+' : unreadCount(s.alias)}
+                        </span>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="truncate text-sm font-medium text-white">{s.alias}</div>
-                        {unread && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">New</span>}
+                        {unread && isMuted(s.alias) && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                       </div>
                       <div className="truncate text-[10px] text-gray-500">{s.agent || '—'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
                     </div>
