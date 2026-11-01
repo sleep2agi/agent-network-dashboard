@@ -759,8 +759,22 @@ export default function Legion3DPage() {
       canvas.height = Math.round(size.height * dpr * scale);
     };
     applyResolution(1);
-    const tk = readTokens();
-    // 主题切换后 canvas 不会重建，每帧读一次 token 并重算明暗（成本可忽略）。
+    const tkLive = readTokens();
+    // 演示模式用「深场」配色：整块画布（底色/文字/连线）切到深底浅字，
+    // 与真实深色主题同一套对比关系，所以不是临时凑的颜色——浅色皮肤下
+    // 演示时也不会出现「深底上写着深字」。
+    const presentingInk = {
+      ...tkLive,
+      bg: '#070b12',
+      surface: '#0d1420',
+      fg: '#e9eef5',
+      muted: '#a8b3c1',
+      dim: '#7f8b99',
+      border: '#2a3140',
+    };
+    // 每帧按「是否在演示」挑一份 token：进入/退出演示是运行时状态，
+    // 只在 effect 里选一次的话，切换后画布不会跟着换配色（踩过）。
+    let tk = presentingRef.current ? presentingInk : tkLive;
     let dark = isDarkBg(tk.bg);
     let raf = 0;
     let stopped = false;
@@ -786,8 +800,9 @@ export default function Legion3DPage() {
       );
       // 浅底上大面积的 accent 晕染会把整张图洗成一片绿；白天只留很薄一层，
       // 深底保持原来的呼吸感。
-      grad.addColorStop(0, hexToRgba(tk.accent, dark ? 0.11 : 0.032));
-      grad.addColorStop(0.55, hexToRgba(tk.accent, dark ? 0.035 : 0.012));
+      const present = presentingRef.current;
+      grad.addColorStop(0, hexToRgba(tk.accent, present ? 0.16 : dark ? 0.11 : 0.032));
+      grad.addColorStop(0.55, hexToRgba(tk.accent, present ? 0.055 : dark ? 0.035 : 0.012));
       grad.addColorStop(1, 'rgba(0,0,0,0)');
       g2.fillStyle = grad;
       g2.fillRect(0, 0, size.width, size.height);
@@ -815,13 +830,13 @@ export default function Legion3DPage() {
     const draw = (now: number) => {
       if (stopped) return;
       // 每 30 帧重读一次 token 就够跟手（主题切换不是逐帧事件）。
-      if (frame++ % 30 === 0) {
-        Object.assign(tk, readTokens());
-        dark = isDarkBg(tk.bg);
-      }
+      // 注意只能改写「实时那份」：演示配色是另一个对象，别被这行一起冲掉。
+      if (frame++ % 30 === 0) Object.assign(tkLive, readTokens());
       const view = viewRef.current;
       const dt = Math.min(0.05, (now - lastFrame) / 1000);
       lastFrame = now;
+      tk = presentingRef.current ? presentingInk : tkLive;
+      dark = isDarkBg(tk.bg);
       const capture = captureRef.current;
       if (capture) {
         // 录屏时 yaw 只由「已录时长」决定：一圈固定 2π，接缝不会因掉帧漂移。
@@ -2298,6 +2313,7 @@ export default function Legion3DPage() {
       data-testid="legion-3d-stage"
       data-zoom={zoomPct}
       data-fly-target={flyFlash?.label || ''}
+      data-present-ink={presenting ? 'dark' : ''}
     >
       <style>{`@keyframes legion-fly-flash {
         from { opacity: .9; transform: scale(.7); }
