@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.252 — 2026-11-02
+
+### 3D 的节点列表也能只看部门
+
+- 2D 上一轮加了「只列部门与圆心」；3D 的列表同样会在小网络里列出全部成员，
+  找部门一样要翻很久。
+- 现在 3D 列表顶部有同样的开关，两个视图的操作方式一致：勾选只看部门与圆心，取消恢复。
+
 ## 0.6.4-preview.251 — 2026-11-02
 
 ### 2D 节点列表可以只看部门

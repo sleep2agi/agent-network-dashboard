@@ -259,6 +259,8 @@ export default function Legion3DPage() {
   const [exportError, setExportError] = useState('');
   // 演示/录屏模式：隐藏鼠标与悬浮提示、匀速环绕，并可直接导出 16 秒循环。
   const [presenting, setPresenting] = useState(false);
+  // 与 2D 对齐：大网络里列表很长，可只看部门与圆心。
+  const [listDeptsOnly, setListDeptsOnly] = useState(false);
   const [tour, setTour] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [captureProgress, setCaptureProgress] = useState(0);
@@ -2840,9 +2842,20 @@ export default function Legion3DPage() {
           style={{ maxHeight: 'min(52vh, calc(100% - var(--legion-list-top, 11rem) - 12px))' }}
           className={`absolute left-3 top-[var(--legion-list-top,11rem)] z-10 w-64 overflow-y-auto rounded-xl bg-[var(--bg-secondary)]/96 p-1.5 text-xs shadow-lg backdrop-blur sm:block ${cleanView ? 'invisible' : 'visible'} ${listOpen ? 'block' : 'hidden'}`}
         >
+          <label className="mb-1 flex items-center gap-1.5 rounded px-1.5 py-1 text-[10px] text-[var(--fg-muted)]">
+            <input
+              type="checkbox"
+              data-testid="legion-3d-list-depts-only"
+              checked={listDeptsOnly}
+              onChange={e => setListDeptsOnly(e.target.checked)}
+              className="h-3 w-3"
+            />
+            只列部门与圆心
+          </label>
           {layout.nodes
             // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
             .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
+            .filter(n => !listDeptsOnly || n.kind === 'core' || n.kind === 'group')
             .map(n => (
               <button
                 key={n.id}
