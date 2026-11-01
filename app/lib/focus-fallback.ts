@@ -43,15 +43,23 @@ export function restoreFocusAfterUnmount(getTarget: () => HTMLElement | null): v
  * 语义仍然是「只在焦点确实丢了时才接管」，用户中途把焦点挪走就不抢。
  */
 export function useRestoreFocusAfterBusy(busy: boolean): void {
+  // 必须用 focusin 持续记录「最后一个拿到焦点的元素」：等 busy 变成 true 的 effect
+  // 里再读 activeElement 已经晚了——元素被 disabled 的那一刻浏览器就把它 blur 了，
+  // 那时读到的只会是 body（实测：焦点确实掉到 body，恢复没生效）。
+  const lastFocused = useRef<Element | null>(null);
   const wasBusy = useRef(false);
-  const previous = useRef<Element | null>(null);
   useEffect(() => {
-    if (busy && !wasBusy.current) previous.current = document.activeElement;
+    const onFocusIn = () => { lastFocused.current = document.activeElement; };
+    window.addEventListener('focusin', onFocusIn, true);
+    return () => window.removeEventListener('focusin', onFocusIn, true);
+  }, []);
+  useEffect(() => {
     if (!busy && wasBusy.current) {
-      const target = previous.current;
-      previous.current = null;
+      const target = lastFocused.current;
       if (shouldRestoreFocus(document.activeElement, document.body)
-        && target instanceof HTMLElement && target.isConnected && !(target as HTMLButtonElement).disabled) {
+        && target instanceof HTMLElement && target.isConnected
+        && !(target as HTMLButtonElement).disabled
+        && !(target as HTMLSelectElement).disabled) {
         target.focus({ preventScroll: true });
       }
     }
