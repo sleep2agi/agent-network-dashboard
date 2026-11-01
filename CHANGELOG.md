@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.214 — 2026-11-01
+
+### 点「加载更多」不再丢掉键盘焦点
+
+- 上一版给「加载更多 / 更早的评论」补了播报与兜底，但漏了一件事：加载中按钮是
+  `disabled` 的，**禁用会让焦点回到 `body`**——于是每次用键盘点一下，焦点就丢一次。
+  现在是：还有下一页 → 焦点还给按钮；到底了（按钮已卸载）→ 焦点收回列表/动态区。
+- 判定逻辑抽到 `app/lib/focus-fallback.ts`（`shouldRestoreFocus` 纯函数 +
+  `restoreFocusAfterUnmount`），需求列表与详情动态共用一份，避免两处各写一遍再分叉。
+- 单测 4 条覆盖判定：焦点在 body / 无焦点 / 焦点在别的控件（不抢）/ 拿不到 body 引用
+  （保守放行，不抢用户已经挪走的焦点）。
+
 ## 0.6.4-preview.213 — 2026-11-01
 
 ### 「加载更多 / 更早的评论」不再对键盘与读屏用户消失
