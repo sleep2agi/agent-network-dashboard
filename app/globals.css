@@ -2305,3 +2305,11 @@ html[data-legion-present='1'] [data-app-shell-nav] {
   outline: 2px solid var(--hl);
   outline-offset: 2px;
 }
+
+/* 需求页：键盘焦点统一成与军团页一致的样子。
+   之前这里没有规则，靠浏览器默认焦点环——深色主题下颜色/粗细不受控，
+   与军团页的 2px 高亮环也不一致。 */
+[data-requirements-root] :is(button, a[data-req-row], [role="option"]):focus-visible {
+  outline: 2px solid var(--hl);
+  outline-offset: 2px;
+}

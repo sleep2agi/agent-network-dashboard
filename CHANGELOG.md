@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.239 — 2026-11-02
+
+### 需求页的键盘焦点，和军团页长得一样了
+
+- 需求页此前没有焦点样式规则，靠浏览器默认焦点环——深色主题下颜色与粗细不受控，
+  也和军团页的 2px 高亮环不一致。
+- 现在需求页根节点带 `data-requirements-root`，一条作用域规则让页内 `button`、
+  列表行、选项在 `:focus-visible` 时统一为 2px `--hl` 描边（偏移 2px）。
+- 顺手验证了「清空筛选」不只是好看：焦点落到它、按 Enter **真的清掉筛选**
+  （URL 与计数都归零）。以及一条可判定的检查——用 `matches()` 确认该按钮确实被
+  统一规则命中，而不是「看起来有框」。
+
 ## 0.6.4-preview.238 — 2026-11-02
 
 ### 军团聚焦到某个部门时，读屏器也能知道
