@@ -214,6 +214,28 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
   //  ③ an explicit ✕ close must NOT be answered by an immediate re-select
   //    (the ✕ would look broken) — userClosedRef gates auto-select off for
   //    the rest of this mount.
+  // 键盘：`/` 聚焦节点搜索（和需求页一致，别让全局命令面板抢走）；
+  // 焦点在某张卡片上时，↑/↓ 在卡片之间移动，省得按几十次 Tab。
+  useEffect(() => {
+    const inField = () => {
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || !!el?.isContentEditable;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === '/' && !inField() && !document.querySelector('[role="dialog"]')) {
+        const box = document.querySelector<HTMLInputElement>('[data-testid="rail-search"]');
+        if (box) { e.preventDefault(); e.stopImmediatePropagation(); box.focus(); box.select(); }
+        return;
+      }
+      // ↑/↓ 移动焦点这件事这一轮没做成：按下后列表会重排一次，刚聚焦的卡片
+      // 立刻被替换掉，焦点掉回 body（探针实测 immediate.activeElement = BODY）。
+      // 留到「用选中态而不是 DOM 焦点来驱动」时再做，别在这里硬凑。
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
+
   const [manageView, setManageView] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('anet-nodes-manage-view') === '1';
