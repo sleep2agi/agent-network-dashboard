@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -149,6 +149,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   // 上一条 / 下一条：用列表页最近一次的筛选条件取同一份列表，在当前条目
   // 前后各取一个。为什么不用「seq ± 1」：筛选后 seq 不连续，跨过筛选条件
   // 会把人带到一条本来看不到的需求上。
+  const commentRef = useRef<HTMLTextAreaElement | null>(null);
   const [navIds, setNavIds] = useState<{ prev: string | null; next: string | null }>({ prev: null, next: null });
   const [navScope, setNavScope] = useState<{ prev: string; next: string } | null>(null);
   useEffect(() => {
@@ -181,6 +182,11 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
       const tag = el?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) return;
       if (document.querySelector('[role="dialog"]')) return;
+      // c：跳到评论框。评论是这个页面最常写的输入，鼠标点一次、回车发送都顺手，
+      // 只有「找到输入框」还得用鼠标。
+      if (e.key === 'c' || e.key === 'C') {
+        if (!e.shiftKey) { e.preventDefault(); commentRef.current?.focus(); return; }
+      }
       const forward = e.key === 'j' || e.key === 'ArrowRight';
       const backward = e.key === 'k' || e.key === 'ArrowLeft';
       if (!forward && !backward) return;
@@ -364,6 +370,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
       if (!res.ok || data.ok === false) { setActionError(data?.error || `hub_${res.status}`); return; }
       setComment('');
       reload();
+      // 连续写第二条时不用再点一次：等一帧让 React 更新完 value 再聚焦。
+      requestAnimationFrame(() => commentRef.current?.focus());
     } catch (e: unknown) {
       setActionError(e instanceof Error ? e.message : 'comment failed');
     } finally { setBusy(false); }
@@ -1209,6 +1217,9 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
 
           <div className="mt-3 border-t border-[var(--border)] pt-3">
             <textarea
+              ref={commentRef}
+              aria-keyshortcuts="c"
+              title="按 c 聚焦这里；Ctrl/⌘+Enter 发送"
               value={comment}
               onChange={e => setComment(e.target.value)}
               rows={2}
