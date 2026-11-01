@@ -884,6 +884,11 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // 「我参与」在已加载结果上过滤；其它筛选仍交给 Hub。参与人只认 user 角色，
   // 与 APP 的 personKey 语义一致。
   const weekOnly = searchParams.get('week') === '1';
+  // 点进详情再返回时，列表的筛选/搜索/看板状态不能丢——把当前查询串塞进 from。
+  const rowHref = useCallback((rowId: string) => {
+    const query = searchParams.toString();
+    return query ? `/requirements/${rowId}?from=${encodeURIComponent(query)}` : `/requirements/${rowId}`;
+  }, [searchParams]);
   const participatingRows = useMemo(
     () => rows.filter(row => {
       if (participating && meId && !(row.participants || []).some(person => person.kind === 'user' && person.id === meId)) return false;
@@ -1602,7 +1607,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                             className={`rounded-lg border border-[var(--border)] bg-[var(--bg)] transition-opacity ${movingId === row.id ? 'opacity-60' : ''}`}
                           >
                             <Link
-                              href={`/requirements/${row.id}`}
+                              href={rowHref(row.id)}
                               draggable
                               onDragStart={event => {
                                 event.dataTransfer.setData('text/plain', row.id);
@@ -1736,7 +1741,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                       )}
                     </span>
                   )}
-                  <Link href={`/requirements/${row.id}`} data-req-row className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4" style={treeMode ? { paddingLeft: 8 + depth * 16 } : undefined}>
+                  <Link href={rowHref(row.id)} data-req-row className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4" style={treeMode ? { paddingLeft: 8 + depth * 16 } : undefined}>
                     <span className="w-12 shrink-0 text-[11px] tabular-nums text-[var(--fg-muted)]">#{row.seq}</span>
                     <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${COLUMN_CHIP[row.column] || COLUMN_CHIP.abandoned}`}>
                       {row.column}

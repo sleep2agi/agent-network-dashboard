@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { EmptyState } from '../../components/EmptyState';
@@ -100,6 +100,12 @@ function describeEvent(ev: EventRow) {
 function RequirementDetailContent({ networkId }: { networkId: string }) {
   const params = useParams<{ id: string }>();
   const id = params?.id;
+  const searchParams = useSearchParams();
+  // 从列表点进来时带上了来路筛选：返回和上一条/下一条都回到同一个筛选视图，
+  // 而不是把用户丢回一个干净的列表、让他重新筛一遍。
+  const listBack = searchParams.get('from') || '';
+  const withBack = (path: string) => (listBack ? `${path}?from=${encodeURIComponent(listBack)}` : path);
+  const backHref = listBack ? `/requirements?${listBack}` : '/requirements';
   const [req, setReq] = useState<Requirement | null>(null);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [eventCursor, setEventCursor] = useState<string | null>(null);
@@ -584,7 +590,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
           <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
             {error ? `读取失败：${error}` : '这条需求不存在或不可见。'}
           </div>
-          <Link href="/requirements" className="text-sm text-blue-400 hover:underline">← 返回需求列表</Link>
+          <Link href={backHref} className="text-sm text-blue-400 hover:underline" data-testid="requirement-back">← 返回需求列表</Link>
         </div>
       </div>
     );
@@ -601,7 +607,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     <div className="min-h-screen bg-[var(--bg)] text-gray-200">
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
         <div className="mb-4">
-          <Link href="/requirements" className="text-xs text-gray-500 hover:text-gray-300">← 需求列表</Link>
+          <Link href={backHref} className="text-xs text-gray-500 hover:text-gray-300" data-testid="requirement-back">← 需求列表</Link>
         </div>
 
         <header className="mb-5">
@@ -690,7 +696,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               type="button"
               data-testid="requirement-prev"
               disabled={!navIds.prev}
-              onClick={() => { if (navIds.prev) retryRouter.push(`/requirements/${encodeURIComponent(navIds.prev)}`); }}
+              onClick={() => { if (navIds.prev) retryRouter.push(withBack(`/requirements/${encodeURIComponent(navIds.prev)}`)); }}
               title={navIds.prev ? `上一条（按列表当前筛选）${navScope?.prev ? `：${navScope.prev}` : ''} · k / ←` : '按列表当前筛选没有上一条'}
               className="shrink-0 rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-40"
             >
@@ -700,7 +706,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               type="button"
               data-testid="requirement-next"
               disabled={!navIds.next}
-              onClick={() => { if (navIds.next) retryRouter.push(`/requirements/${encodeURIComponent(navIds.next)}`); }}
+              onClick={() => { if (navIds.next) retryRouter.push(withBack(`/requirements/${encodeURIComponent(navIds.next)}`)); }}
               title={navIds.next ? `下一条（按列表当前筛选）${navScope?.next ? `：${navScope.next}` : ''} · j / →` : '按列表当前筛选没有下一条'}
               className="shrink-0 rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-40"
             >
