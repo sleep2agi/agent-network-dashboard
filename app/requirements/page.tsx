@@ -512,6 +512,24 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   ].filter(Boolean) as string[];
   const hasActiveFilters = activeFilterLabels.length > 0;
 
+  // 「加载更多」的可达性：① 追加完要有状态播报（读屏用户否则完全不知道又来了几条）；
+  // ② 走到最后一页时那个按钮会消失，键盘焦点不能掉到 body。
+  const [loadNotice, setLoadNotice] = useState('');
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const prevLoadingMore = useRef(false);
+  useEffect(() => {
+    if (prevLoadingMore.current && !loadingMore) {
+      setLoadNotice(`已加载 ${rows.length} 条${hasMore ? '，还有更多' : '，已到末尾'}`);
+      if (!hasMore) {
+        // 按钮刚被卸载：把焦点收回到列表容器，别让键盘用户「凭空消失」。
+        if (!document.activeElement || document.activeElement === document.body) {
+          requestAnimationFrame(() => listRef.current?.focus());
+        }
+      }
+    }
+    prevLoadingMore.current = loadingMore;
+  }, [loadingMore, rows.length, hasMore]);
+
   // 列表行的键盘漫游：`j`/`k` 或 ↑/↓ 逐条走，roving index + 渲染后聚焦
   // （直接 focus(next) 会在列表重排时被替换掉——见 nodes 页那次的教训）。
   const [rowIndex, setRowIndex] = useState<number | null>(null);
@@ -1618,9 +1636,13 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           </ul>
         )}
 
+        {/* 播报区：只在追加完成后说话，不打扰日常浏览。 */}
+        <p role="status" aria-live="polite" data-testid="requirements-load-notice" className="sr-only">{loadNotice}</p>
+        <div ref={listRef} tabIndex={-1} data-testid="requirements-list-end" className="outline-none" />
         {hasMore && !loading && (
           <button
             type="button"
+            data-testid="requirements-load-more"
             disabled={loadingMore}
             onClick={() => load({ cursor, append: true })}
             className="mx-auto mt-4 block rounded-md px-4 py-2 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200 disabled:opacity-50"

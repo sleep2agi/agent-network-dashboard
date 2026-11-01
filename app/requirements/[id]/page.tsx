@@ -264,6 +264,10 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     await sendPatch({ participants: next });
   }
 
+  // 「更早的评论」的可达性：追加后播报条数；拉到末尾按钮消失时把焦点收回动态列表。
+  const [eventsNotice, setEventsNotice] = useState('');
+  const eventsEndRef = useRef<HTMLDivElement | null>(null);
+
   async function loadOlderEvents() {
     if (!id || olderBusy || !eventCursor) return;
     setOlderBusy(true);
@@ -277,7 +281,13 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         const seen = new Set(prev.map(item => item.id));
         return [...prev, ...older.filter(item => !seen.has(item.id))];
       });
-      setEventCursor(typeof data.next_cursor === 'string' && data.next_cursor ? data.next_cursor : null);
+      const nextCursor = typeof data.next_cursor === 'string' && data.next_cursor ? data.next_cursor : null;
+      setEventCursor(nextCursor);
+      setEventsNotice(`又加载 ${older.length} 条动态${nextCursor ? '' : '，已到最早'}`);
+      if (!nextCursor && (!document.activeElement || document.activeElement === document.body)) {
+        // 按钮刚被卸载：焦点别掉到 body。
+        requestAnimationFrame(() => eventsEndRef.current?.focus());
+      }
     } catch (e: unknown) {
       setActionError(e instanceof Error ? e.message : 'events failed');
     } finally { setOlderBusy(false); }
@@ -1203,6 +1213,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               })}
             </ul>
           )}
+          <p role="status" aria-live="polite" data-testid="requirement-events-notice" className="sr-only">{eventsNotice}</p>
+          <div ref={eventsEndRef} tabIndex={-1} className="outline-none" />
           {eventCursor && (
             <button
               type="button"
