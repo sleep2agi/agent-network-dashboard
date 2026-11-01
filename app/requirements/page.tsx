@@ -1614,7 +1614,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                         onClick={() => toggleColumn(col.key)}
                         aria-label={`${col.label} 展开`}
                         data-testid={`requirements-column-expand-${col.key}`}
-                        className="flex h-44 w-full flex-col items-center justify-between gap-2 px-1 py-3"
+                        className="flex h-44 w-full flex-col items-center justify-between gap-2 rounded px-1 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hl)] focus-visible:outline-offset-1"
                       >
                         <span className={`rounded px-1 py-0.5 text-[11px] tabular-nums ${COLUMN_CHIP[col.key]}`}>{items.length}</span>
                         <span className="text-[11px] text-[var(--fg-muted)]" style={{ writingMode: 'vertical-rl' }}>{col.label}</span>
@@ -1643,7 +1643,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                           onClick={() => toggleColumn(col.key)}
                           aria-label={`${col.label} 折叠`}
                           data-testid={`requirements-column-collapse-${col.key}`}
-                          className="rounded px-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+                          className="rounded px-1 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hl)] focus-visible:outline-offset-1"
                         >−</button>
                       </span>
                     </header>
