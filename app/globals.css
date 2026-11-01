@@ -2313,3 +2313,10 @@ html[data-legion-present='1'] [data-app-shell-nav] {
   outline: 2px solid var(--hl);
   outline-offset: 2px;
 }
+
+/* 需求详情页：与列表页/军团页同一套键盘焦点视觉（此前详情页没有任何焦点规则，
+   靠浏览器默认环，深色主题下不一致也不够清楚）。 */
+[data-detail-root] :is(button, a):focus-visible {
+  outline: 2px solid var(--hl);
+  outline-offset: 2px;
+}
