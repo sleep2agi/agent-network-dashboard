@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.190 — 2026-11-01
+
+### ⌘K can finally reach legion, requirements and the other newer pages
+
+- The sidebar comment promises low-frequency pages stay reachable through ⌘K,
+  but the palette only knew Overview / Tasks / Nodes / Messages / Networks /
+  Settings / Logs / Server Logs / Admin. Legion (2D **and** 3D), Requirements,
+  Organization, Versions, Schedules, SkillHub, Servers and Providers were
+  reachable only by typing the URL or clicking the rail — so searching for
+  "军团" in the palette returned nothing.
+- `tests/command-palette-nav.test.mjs` keeps the two lists in step: every
+  `NAV_ITEMS` href must have a matching `r.push('<href>')`, and the 3D legion
+  view (a sub-view, not in the rail) is asserted separately.
+
 ## 0.6.4-preview.189 — 2026-11-01
 
 ### A selected department also carries over
