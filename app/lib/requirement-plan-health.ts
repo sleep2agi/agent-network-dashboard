@@ -51,3 +51,18 @@ export function planHealth(
   }
   return null;
 }
+
+/**
+ * 排序档位：数字越小越该先看。
+ * 看板/列表按「紧迫度」排序时只用这一份映射，避免两处各写一套顺序。
+ */
+export function planHealthRank(plan: PlanHealth | null): number {
+  switch (plan?.kind) {
+    case 'overdue': return 0;
+    case 'dueToday': return 1;
+    case 'dueSoon': return 2;
+    case 'daysLeft': return 3;
+    case 'inProgress': return 4;
+    default: return 5;
+  }
+}

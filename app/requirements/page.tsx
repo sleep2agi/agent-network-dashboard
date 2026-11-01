@@ -13,7 +13,7 @@ import { TagManager } from './TagManager';
 import { tagColor } from '../lib/tag-catalog';
 import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
 import { PRIORITY_KEYS, isPriorityKey, priorityLabel, priorityTitle } from '../lib/requirement-priority';
-import { planHealth } from '../lib/requirement-plan-health';
+import { planHealth, planHealthRank } from '../lib/requirement-plan-health';
 import { buildTreeRows } from '../lib/requirement-tree';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
@@ -375,6 +375,18 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [moveNotice, setMoveNotice] = useState('');
   const [columnOverrides, setColumnOverrides] = useState<Record<string, string>>({});
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  // 看板「按紧迫度」只是本地视图顺序，不影响 Hub 的 sort/dir，也不改任何数据。
+  const [urgencySort, setUrgencySort] = useState(false);
+  useEffect(() => {
+    setUrgencySort(window.localStorage.getItem('requirements-urgency-sort') === '1');
+  }, []);
+  const toggleUrgencySort = () => {
+    setUrgencySort(value => {
+      const next = !value;
+      window.localStorage.setItem('requirements-urgency-sort', next ? '1' : '0');
+      return next;
+    });
+  };
   const [createNotice, setCreateNotice] = useState('');
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [showAbandoned, setShowAbandoned] = useState(false);
@@ -1241,6 +1253,18 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               </p>
             )}
           <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
+            {board && (
+              <button
+                type="button"
+                data-testid="requirements-urgency-sort"
+                aria-pressed={urgencySort}
+                title="只调整已加载卡片的显示顺序（超期 → 今天 → 3 天内 → 其余），不改服务器排序，也不写任何数据"
+                onClick={toggleUrgencySort}
+                className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${urgencySort ? 'bg-[var(--bg-elevated)] text-[var(--danger)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+              >
+                按紧迫度
+              </button>
+            )}
             <button
               type="button"
               data-testid="requirements-bulk-toggle"
@@ -1430,7 +1454,10 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               {COLUMNS.filter(col => col.key)
                 .filter(col => (!status || col.key === status) && (col.key !== 'abandoned' || showAbandoned || status === 'abandoned'))
                 .map(col => {
-                const items = orderedRows.filter(row => columnOf(row) === col.key);
+                const unsorted = orderedRows.filter(row => columnOf(row) === col.key);
+                const rankOf = (row: Requirement) => planHealthRank(planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned'));
+                // 稳定排序：同档位保持服务器给的相对顺序，避免每次渲染都抖。
+                const items = urgencySort ? [...unsorted].sort((a, b) => rankOf(a) - rankOf(b)) : unsorted;
                 const isCollapsed = collapsedColumns.has(col.key);
                 // 列头超期计数：看板一眼看不出「这一列里有几条已经晚了」，
                 // 数一下并给出可点的入口（点了就是已有的「已逾期」筛选，可再点取消）。
@@ -1501,6 +1528,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                         return (
                           <div
                             key={row.id}
+                            data-urgency-rank={urgencySort ? rankOf(row) : undefined}
                             className={`rounded-lg border border-[var(--border)] bg-[var(--bg)] transition-opacity ${movingId === row.id ? 'opacity-60' : ''}`}
                           >
                             <Link
