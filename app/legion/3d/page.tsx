@@ -772,8 +772,9 @@ export default function Legion3DPage() {
       dim: '#7f8b99',
       border: '#2a3140',
     };
-    const tk = presentingRef.current ? presentingInk : tkLive;
-    // 主题切换后 canvas 不会重建，每帧读一次 token 并重算明暗（成本可忽略）。
+    // 每帧按「是否在演示」挑一份 token：进入/退出演示是运行时状态，
+    // 只在 effect 里选一次的话，切换后画布不会跟着换配色（踩过）。
+    let tk = presentingRef.current ? presentingInk : tkLive;
     let dark = isDarkBg(tk.bg);
     let raf = 0;
     let stopped = false;
@@ -836,6 +837,8 @@ export default function Legion3DPage() {
       const view = viewRef.current;
       const dt = Math.min(0.05, (now - lastFrame) / 1000);
       lastFrame = now;
+      tk = presentingRef.current ? presentingInk : tkLive;
+      dark = isDarkBg(tk.bg);
       const capture = captureRef.current;
       if (capture) {
         // 录屏时 yaw 只由「已录时长」决定：一圈固定 2π，接缝不会因掉帧漂移。
