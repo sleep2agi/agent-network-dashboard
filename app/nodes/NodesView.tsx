@@ -19,7 +19,7 @@ import type { Session } from '../components/types';
 import { SESSION_STATUS_TEXT_CLASS } from '../lib/status';
 import { SESSION_STATUS_DOT_HEX } from '../lib/status';
 import { useChatUnread } from '../lib/chat-unread';
-import { t } from '../lib/ui-lang';
+import { t, useT } from '../lib/ui-lang';
 
 /** Round 81: shorten long server hostnames (Alibaba `iZ…oyZ` style)
  *  for table display. Returns the original string unchanged when ≤12
@@ -71,12 +71,15 @@ function useIsDesktop(): boolean {
 
 /** R13 (草稿闭环还债): same [草稿] mark as AgentCard/CommandCenter tabs. */
 function DraftMark({ alias }: { alias: string }) {
+  const t = useT();
   const hasDraft = useHasDraft(alias);
   if (!hasDraft) return null;
   return <span className="shrink-0 text-[9px] text-red-400/90" aria-label={t('有未发送草稿', 'Unsent draft')}>{t('[草稿]', '[draft]')}</span>;
 }
 
 export function NodesView({ initialAlias = null }: { initialAlias?: string | null }) {
+  // 水合安全：首帧与 SSR 一致（英文），挂载后再切到浏览器语言（#182）。
+  const t = useT();
   const { sessions, isLoading: loading, error: loadError, mutate: mutateSessions } = useSessions();
   const { health } = useHealth();
   const { lifecycleByAlias, nodeIdByAlias, attrsByAlias } = useNodeLifecycle();
