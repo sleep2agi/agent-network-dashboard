@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.211 — 2026-11-01
+
+### 节点列表：Home / End 直达头尾
+
+- `.210` 让 ↑/↓ 能逐张走卡片，但几十个节点时要走到头还是一长串按键。现在焦点在卡片上时
+  `Home` / `End` 直接跳第一张 / 最后一张；焦点不在卡片上时不抢键，页面自己的
+  Home/End 滚动照旧。
+- 顺带记录一个发布流程的判断：这轮把「要不要发版」写成可执行规则
+  （`deploy/should-release.py`，在我的工作区，不在本仓）：只有产物会变（`app/`、
+  `scripts/`、`package*.json` 等）才发；纯文档/纯 tooling 的改动不发版，避免为了
+  文档制造一个线上完全相同的版本号。
+
 ## 0.6.4-preview.210 — 2026-11-01
 
 ### ↑/↓ 在节点卡片之间移动焦点（上次没做成，这次找到了真原因）
