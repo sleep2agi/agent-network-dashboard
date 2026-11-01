@@ -885,6 +885,19 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     [participatingRows, sortSpec.key, sortSpec.dir],
   );
 
+  // 已加载范围内的紧迫统计：只数当前这批结果，不冒充全库总量（面板里已有同样口径的提示）。
+  const loadedUrgency = useMemo(() => {
+    let overdue = 0;
+    let thisWeek = 0;
+    for (const row of orderedRows) {
+      const plan = planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned');
+      if (!plan) continue;
+      if (plan.kind === 'overdue') overdue += 1;
+      else if (plan.thisWeek) thisWeek += 1;
+    }
+    return { overdue, thisWeek };
+  }, [orderedRows]);
+
   // 「按紧迫度」：列表和看板共用同一份排序结果，避免两个视图各排各的。
   // 只影响显示顺序——不参与 sortRequirements 的服务器排序，也不写任何数据。
   const rankOfRow = (row: Requirement) =>
@@ -1037,6 +1050,20 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             已逾期
           </button>
           <span className="text-[10px] text-[var(--fg-dim)]">未完成且截止已过</span>
+          {(loadedUrgency.overdue > 0 || loadedUrgency.thisWeek > 0) && (
+            <span
+              data-testid="requirements-loaded-urgency"
+              data-overdue={loadedUrgency.overdue}
+              data-this-week={loadedUrgency.thisWeek}
+              title="只统计当前已加载的结果，不是全网总量"
+              className="ml-1 inline-flex items-center gap-1 rounded-md border border-[var(--border)] px-2 py-0.5 text-[10px] tabular-nums text-[var(--fg-muted)]"
+            >
+              <span className="text-[var(--fg-dim)]">已加载中</span>
+              {loadedUrgency.overdue > 0 && <span className="text-[var(--danger)]">超期 {loadedUrgency.overdue}</span>}
+              {loadedUrgency.overdue > 0 && loadedUrgency.thisWeek > 0 && <span className="text-[var(--fg-dim)]">·</span>}
+              {loadedUrgency.thisWeek > 0 && <span className="text-[var(--warning)]">本周内 {loadedUrgency.thisWeek}</span>}
+            </span>
+          )}
           {mineOwner && (
             <button
               type="button"
