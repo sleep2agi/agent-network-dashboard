@@ -44,6 +44,14 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
     items: Object.entries(GO_TARGETS).map(([key, target]) => ({ keys: ['g', key], label: `Go to ${target.label}` })),
   },
   {
+    group: 'Requirements list',
+    items: [
+      { keys: ['/'], label: 'Focus the search box' },
+      { keys: ['j', 'k'], label: 'Move between rows (↑/↓ too)' },
+      { keys: ['w'], label: 'Toggle “due this week” filter (loaded rows only)' },
+    ],
+  },
+  {
     group: 'Command palette',
     items: [
       { keys: ['↑', '↓'], label: 'Move selection' },

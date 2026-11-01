@@ -465,6 +465,16 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         setRowIndex(next);
         return;
       }
+      // w：切换「本周内」本地筛选（和工具栏那枚统计同一个动作，只是不用鼠标）。
+      if (event.key === 'w' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        const el = event.target as HTMLElement | null;
+        const elTag = el?.tagName;
+        if (elTag === 'INPUT' || elTag === 'TEXTAREA' || elTag === 'SELECT' || el?.isContentEditable) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setParam({ week: weekOnly ? '' : '1' });
+        return;
+      }
       if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName;
