@@ -321,6 +321,10 @@ export default function Legion3DPage() {
   // 悬停提示需要指针位置（canvas 坐标），只存在 ref 里，避免每帧 setState。
   const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
+  // 点部门：镜头转到它正面（沿用 yawTarget 的缓动），并在落点闪一圈，
+  // 让人知道「我飞到这里了」。闪圈用 HTML 覆盖层，不写进画布的每帧绘制。
+  const [flyFlash, setFlyFlash] = useState<{ x: number; y: number; r: number; label: string } | null>(null);
+  const flyTimer = useRef<number | null>(null);
 
   // 换数据 key 不会重置本地状态；旧节点 id 会让新网络所有节点落进淡出分支。
   // 只在网络身份改变时清理，同网络轮询/重新验证保留当前选择。
@@ -1676,6 +1680,16 @@ export default function Legion3DPage() {
       while (delta < -Math.PI) delta += Math.PI * 2;
       yawTarget.current = viewRef.current.yaw + delta;
     }
+    // 从列表选部门时也闪一圈：和点画布是同一件事（相机已经转过去了，
+    // 但列表选项离画布很远，没有落点提示就不知道飞到了哪）。
+    if (node.kind === 'group') {
+      const onScene = screenRef.current.find(n => n.item.id === node.id);
+      if (onScene) {
+        setFlyFlash({ x: onScene.projected.x, y: onScene.projected.y, r: Math.max(26, (onScene.projected.scale || 1) * 34), label: node.label });
+        if (flyTimer.current) window.clearTimeout(flyTimer.current);
+        flyTimer.current = window.setTimeout(() => setFlyFlash(null), 1300);
+      }
+    }
     lastInteract.current = performance.now();
   }, []);
 
@@ -1869,6 +1883,7 @@ export default function Legion3DPage() {
     pointersRef.current.delete(e.pointerId);
     if (pointersRef.current.size < 2) pinchRef.current = null;
     lastInteract.current = performance.now();
+    if (drag && drag.moved > 6) yawTarget.current = null;
     if (drag && drag.moved > 0) persistView();
     if (!drag) return;
     dragRef.current = null;
@@ -1881,6 +1896,17 @@ export default function Legion3DPage() {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const hit = hitTest(screenRef.current, e.clientX - rect.left, e.clientY - rect.top, 16, hitBody);
     setSelected(hit ? hit.item.id : null);
+    // 点部门：镜头转到它正面，并在落点闪一圈（成员/Agent 不做，避免每次点都动）。
+    const picked = hit ? screenRef.current.find(n => n.item.id === hit.item.id) : null;
+    if (hit && picked && hit.item.kind === 'group') {
+      let delta = picked.item.angle - viewRef.current.yaw;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      yawTarget.current = viewRef.current.yaw + delta;
+      setFlyFlash({ x: picked.projected.x, y: picked.projected.y, r: Math.max(26, (picked.projected.scale || 1) * 34), label: hit.item.label });
+      if (flyTimer.current) window.clearTimeout(flyTimer.current);
+      flyTimer.current = window.setTimeout(() => setFlyFlash(null), 1300);
+    }
   };
 
   const onDoubleClick = (e: React.MouseEvent) => {
@@ -2254,7 +2280,27 @@ export default function Legion3DPage() {
       aria-label="军团 3D 网络拓扑"
       data-testid="legion-3d-stage"
       data-zoom={zoomPct}
+      data-fly-target={flyFlash?.label || ''}
     >
+      <style>{`@keyframes legion-fly-flash {
+        from { opacity: .9; transform: scale(.7); }
+        to   { opacity: 0;  transform: scale(1.25); }
+      }`}</style>
+      {/* 点部门后镜头飞过去，落点闪一圈：只闪，不拦截指针。 */}
+      {flyFlash && (
+        <span
+          data-testid="legion-3d-fly-ring"
+          aria-hidden
+          className="pointer-events-none absolute rounded-full border-2 border-[var(--accent)]/70"
+          style={{
+            left: `${flyFlash.x - flyFlash.r}px`,
+            top: `${flyFlash.y - flyFlash.r}px`,
+            width: `${flyFlash.r * 2}px`,
+            height: `${flyFlash.r * 2}px`,
+            animation: 'legion-fly-flash 1.2s ease-out forwards',
+          }}
+        />
+      )}
       <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击 Agent 在页内对话，双击成员或部门进入组织列表；按 / 搜索，R 重置视角。</p>
       <canvas
         ref={canvasRef}
