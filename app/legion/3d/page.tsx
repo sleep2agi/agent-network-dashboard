@@ -2860,11 +2860,33 @@ export default function Legion3DPage() {
             />
             只列部门与圆心
           </label>
-          {layout.nodes
-            // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
-            .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
-            .filter(n => !listDeptsOnly || n.kind === 'core' || n.kind === 'group')
-            .map(n => (
+          {(() => {
+            const baseAll = layout.nodes
+              // 小网络里把 Agent 也列出来：键盘用户才可以直接走到 Agent 详情页。
+              .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
+              .filter(n => !listDeptsOnly || n.kind === 'core' || n.kind === 'group');
+            const qAll = query.trim().toLowerCase();
+            const shownAll = qAll ? baseAll.filter(n => (n.label || '').toLowerCase().includes(qAll)) : baseAll;
+            if (shownAll.length > 0) return null;
+            // 与 2D 同口径：空列表要说清是搜索没命中，还是被「只列部门」挡住了。
+            return (
+              <p data-testid="legion-3d-list-empty-hint" className="px-2 py-2 text-[10px] leading-relaxed text-[var(--fg-muted)]">
+                {listDeptsOnly ? '当前只列部门，可能被这个筛选挡住了。' : '没有匹配的节点。'}
+                {listDeptsOnly && (
+                  <button type="button" onClick={() => toggleDeptsOnly(false)} className="ml-1 underline hover:text-[var(--fg)]">
+                    取消只列部门
+                  </button>
+                )}
+              </p>
+            );
+          })()}
+          {(() => {
+            const base = layout.nodes
+              .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
+              .filter(n => !listDeptsOnly || n.kind === 'core' || n.kind === 'group');
+            const q = query.trim().toLowerCase();
+            return q ? base.filter(n => (n.label || '').toLowerCase().includes(q)) : base;
+          })().map(n => (
               <button
                 key={n.id}
                 type="button"
