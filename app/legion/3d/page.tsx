@@ -427,6 +427,8 @@ export default function Legion3DPage() {
   // 注意：URL 里的 focus 没应用完之前，不要往回写 URL —— StrictMode 会重跑
   // effect，一次性 guard 拦不住，会把 ?focus= 抹掉（踩过）。
   const urlFocusSettled = useRef(false);
+  // 深链指向的部门不存在时给明确提示（与 2D 同口径），而不是静默给一张没聚焦的图。
+  const [focusMissing, setFocusMissing] = useState<string | null>(null);
   useEffect(() => {
     if (typeof window === 'undefined' || urlFocusSettled.current) return;
     const want = new URLSearchParams(window.location.search).get('focus');
@@ -436,7 +438,7 @@ export default function Legion3DPage() {
     // 否则一上来就把 ?focus= 判死、参数被清掉。
     const loaded = layout.stats.people + layout.stats.agents > 0;
     if (!node) {
-      if (loaded) urlFocusSettled.current = true;
+      if (loaded) { urlFocusSettled.current = true; setFocusMissing(want); }
       return;
     }
     urlFocusSettled.current = true;
@@ -2553,6 +2555,14 @@ export default function Legion3DPage() {
             <span data-testid="legion-3d-focus">聚焦：{layout.nodes.find(n => n.id === focus)?.label ?? '部门'}</span>
             <span aria-hidden>✕</span>
           </button>
+        )}
+        {focusMissing && (
+          <p role="status" data-testid="legion-3d-focus-missing"
+            className="pointer-events-auto mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--danger)]/10 px-3 py-1 text-[11px] text-[var(--danger)]">
+            找不到部门「{focusMissing}」——可能已重命名或删除
+            <button type="button" onClick={() => setFocusMissing(null)} aria-label="忽略聚焦提示"
+              className="text-[var(--fg-muted)] hover:text-[var(--fg)]">✕</button>
+          </p>
         )}
         {!loading && layout.stats.people === 0 && layout.stats.groups > 0 && (
           <p className="mt-1 text-[11px] text-[var(--fg-muted)]" data-testid="legion-3d-empty-members">
