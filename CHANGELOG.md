@@ -6,6 +6,22 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.191 — 2026-11-01
+
+### The `?` shortcut panel is a user surface, not a changelog
+
+- 26 labels carried internal iteration tags — `(R133)`, `(R52)`, `(R60/R61)` — in
+  the panel users open to learn the keys. Tags removed; the text now says what
+  the gesture does.
+- The Navigate group was hand-written and listed five of the ten `g`-jumps; it
+  is now generated from `GO_TARGETS`, so a new page can't be forgotten.
+- `g l` now goes to **Legion** (the page people actually use) and `g L`
+  (Shift+L) to the audit log; matching is case-sensitive. Requirements gained
+  `g r`. Messages, Networks and Audit Log were previously undocumented there.
+- `tests/help-overlay.test.mjs` pins: no `(R##)` in labels, the group is
+  generated (no handwritten `g`+letter rows), every target resolves to a real
+  `app/**/page.tsx`, and the case-sensitive mapping holds.
+
 ## 0.6.4-preview.190 — 2026-11-01
 
 ### ⌘K can finally reach legion, requirements and the other newer pages
