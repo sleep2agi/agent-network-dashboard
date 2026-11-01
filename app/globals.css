@@ -2297,3 +2297,11 @@ html[data-legion-present='1'] [data-app-shell-nav] {
 [data-app-shell-nav] {
   transition: opacity 240ms ease, filter 240ms ease;
 }
+
+/* 军团页：面板/工具栏里的按钮与链接在键盘聚焦时必须看得见。
+   之前这些按钮都只有 hover 样式，Tab 过去屏幕上没有任何反馈；用一条作用域规则覆盖，
+   比给每个按钮单独加类名更不容易漏（新增按钮自动继承）。 */
+[data-legion-root] :is(button, a, [role="option"]):focus-visible {
+  outline: 2px solid var(--hl);
+  outline-offset: 2px;
+}

@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.234 — 2026-11-01
+
+### 军团：整片界面的交互控件都有可见焦点
+
+- `.233` 只补了节点列表选项。面板与工具栏里的按钮仍然只有 hover 样式：Tab 过去屏幕上没有反馈。
+- 现在军团页根节点带 `data-legion-root`，一条作用域规则让该范围内所有
+  `button` / `a` / `[role=option]` 在 `:focus-visible` 时显示 2px 描边。
+- 选择作用域规则而不是逐个加类名：**以后新增的按钮自动继承**，不再出现「新按钮忘了加
+  焦点样式」。
+- 已知未解决：SVG 图内部有几十个可聚焦的 `<g>`，Tab 会被它们吃掉——那是图的焦点模型
+  问题（应改为 roving tabindex，只保留一个 Tab 停点），不在本次范围内。
+
 ## 0.6.4-preview.233 — 2026-11-01
 
 ### 军团：键盘走过节点列表时，能看见自己停在哪
