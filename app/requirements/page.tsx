@@ -614,6 +614,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
 
   const clearFilters = () => {
     setPeopleQuery('');
+    // 「清空筛选」按完，这个按钮自己就消失了；不接管焦点的话会掉回 body，
+    // 键盘用户得从头 Tab 一遍。统一走已有的焦点兜底，落到搜索框上（下一步最可能操作的地方）。
+    restoreFocusAfterUnmount(() => searchInputRef.current);
     setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '', overdue: '', participant: '', priority: '' });
   };
 
