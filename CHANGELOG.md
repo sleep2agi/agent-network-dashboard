@@ -6,6 +6,21 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.194 — 2026-11-01
+
+### 清空筛选 is reachable while results still exist
+
+- The requirements page only offered 清空筛选 inside the empty state. With a
+  project + tag + responsibility + search combined, clearing meant undoing them
+  one at a time — the reset existed, it was just unreachable while the filter
+  still matched something.
+- The filter row now ends with `清空筛选 N` whenever any filter is active. `N`
+  counts the active ones (状态/标签/搜索/项目/责任归属/已逾期/我参与/优先级), and the
+  button's title lists them, so it is clear what is about to be cleared.
+- The three copies of the same truthiness chain (`status || tag || q || …`) that
+  drove the empty-state copy are now one derivation — adding a filter dimension
+  no longer means editing three places.
+
 ## 0.6.4-preview.193 — 2026-11-01
 
 ### The last channel can actually be switched off (#38)

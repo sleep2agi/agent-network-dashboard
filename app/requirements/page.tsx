@@ -479,6 +479,21 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     window.history.replaceState(null, '', qs ? `/requirements?${qs}` : '/requirements');
   }, []);
 
+  // 空态文案与「清空筛选」按钮共用这一份推导：以前是同一串布尔值抄了三遍，
+  // 加一个筛选维度就得改三处，而且「清空筛选」只在结果为空时够得着——
+  // 同时开着项目+标签+责任归属时，用户只能一个个点掉。
+  const activeFilterLabels = [
+    status && '状态',
+    tag && '标签',
+    q && '搜索',
+    project && '项目',
+    (owner || agent) && '责任归属',
+    overdue && '已逾期',
+    participating && '我参与',
+    priorities && '优先级',
+  ].filter(Boolean) as string[];
+  const hasActiveFilters = activeFilterLabels.length > 0;
+
   const clearFilters = () => {
     setPeopleQuery('');
     setParam({ status: '', tag: '', q: '', project_id: '', owner: '', agent_owner: '', overdue: '', participant: '', priority: '' });
@@ -969,6 +984,18 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               只筛已加载的 {rows.length} 条
             </span>
           )}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              data-testid="requirements-clear-filters"
+              onClick={clearFilters}
+              title={`清空这些筛选：${activeFilterLabels.join('、')}`}
+              className="ml-auto rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] underline decoration-dotted underline-offset-2 hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              清空筛选
+              <span className="ml-1 tabular-nums text-[var(--fg-dim)]" data-testid="requirements-active-filter-count">{activeFilterLabels.length}</span>
+            </button>
+          )}
         </div>
 
         {summaryOpen && (
@@ -1122,9 +1149,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           // 那时说「需求池是空的」就是把鉴权/故障说成没数据，用户会以为需求丢了。
           <EmptyState
             variant="generic"
-            title={status || tag || q || project || owner || agent || overdue || participating || priorities ? '没有符合筛选的需求' : '需求池是空的'}
-            sub={status || tag || q || project || owner || agent || overdue || participating || priorities ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
-            cta={status || tag || q || project || owner || agent || overdue || participating || priorities ? { label: '清空筛选', onClick: clearFilters } : undefined}
+            title={hasActiveFilters ? '没有符合筛选的需求' : '需求池是空的'}
+            sub={hasActiveFilters ? '清掉筛选再试，或换一个项目、责任归属或标签。' : '客户端建一条需求后，这里就会出现。'}
+            cta={hasActiveFilters ? { label: '清空筛选', onClick: clearFilters } : undefined}
           />
         ) : timeline ? (
           <TimelineView rows={rows} />
