@@ -7,7 +7,7 @@ import { Suspense } from 'react';
 import { TaskChatPanel } from '../components/TaskChatPanel';
 import { timeAgo } from '../components/utils';
 import { NodeDetailHeader } from '../components/NodeDetailHeader';
-import { useChatUnread } from '../lib/chat-unread';
+import { useChatUnread, badgeLabel } from '../lib/chat-unread';
 
 interface SessionDetail {
   resume_id: string;
@@ -318,7 +318,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
   alias: string; session: SessionDetail | null; sse: number; sendMsg: string; setSendMsg: (v: string) => void; sending: boolean; sendTask: () => void; sendError: string;
 }) {
   const [tab, setTab] = useState<'chat' | 'events' | 'info'>('chat');
-  const { hasUnread } = useChatUnread();
+  const { hasUnread, unreadCount } = useChatUnread();
   const [events, setEvents] = useState<Array<{ id: number; event_type: string; from_status: string; to_status: string; detail: string; created_at: string }>>([]);
   const [eventsLoaded, setEventsLoaded] = useState(false);
   const chatUnread = hasUnread(alias);
@@ -352,7 +352,14 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
             <span className="relative inline-flex items-center gap-2">
               {t.label}
               {t.id === 'chat' && chatUnread && tab !== 'chat' && (
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" aria-label="Unread chat messages" />
+                // 数字而不是光点：不切到 Chat 也知道积了几条。
+                <span
+                  data-testid="node-chat-unread"
+                  className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold leading-[18px] text-white tabular-nums"
+                  aria-label={`${unreadCount(alias)} 条未读消息`}
+                >
+                  {badgeLabel(unreadCount(alias))}
+                </span>
               )}
             </span>
           </button>
