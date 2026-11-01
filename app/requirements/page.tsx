@@ -1278,6 +1278,11 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               aria-label="搜索需求"
               className="w-40 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none sm:w-56"
             />
+            {qInput && qInput !== q && (
+              // 这个搜索要回车（或失焦）才生效，且服务端筛选；不提示的话
+              // 用户会以为「输入了没反应」。
+              <span data-testid="requirements-search-pending" className="text-[10px] text-[var(--fg-dim)]">回车搜索</span>
+            )}
             {qInput && (
               <button
                 type="button"
