@@ -1278,6 +1278,17 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               aria-label="搜索需求"
               className="w-40 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none sm:w-56"
             />
+            {qInput && (
+              <button
+                type="button"
+                data-testid="requirements-search-clear"
+                aria-label="清空搜索"
+                onClick={() => { setQInput(''); setParam({ q: '', tag: tagInput }); searchInputRef.current?.focus(); }}
+                className="rounded px-1 text-xs text-[var(--fg-dim)] hover:text-[var(--fg)]"
+              >
+                ✕
+              </button>
+            )}
           </div>
           <TagPicker
             draft={tagInput}

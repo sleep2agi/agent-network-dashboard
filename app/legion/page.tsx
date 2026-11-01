@@ -675,6 +675,17 @@ export default function LegionPage() {
                 aria-label="搜索军团成员"
                 className="w-40 bg-transparent text-sm text-white placeholder:text-[var(--fg-dim)] focus:outline-none sm:w-56"
               />
+              {query && (
+                <button
+                  type="button"
+                  data-testid="legion-search-clear"
+                  aria-label="清空搜索"
+                  onClick={() => { setQuery(''); searchRef.current?.focus(); }}
+                  className="rounded px-1 text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg)]"
+                >
+                  ✕
+                </button>
+              )}
             </div>
             {collapsed.size > 0 && (
               <button
