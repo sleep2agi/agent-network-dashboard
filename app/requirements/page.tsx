@@ -870,13 +870,18 @@ function RequirementsContent({ networkId }: { networkId: string }) {
 
   // 「我参与」在已加载结果上过滤；其它筛选仍交给 Hub。参与人只认 user 角色，
   // 与 APP 的 personKey 语义一致。
+  const weekOnly = searchParams.get('week') === '1';
   const participatingRows = useMemo(
     () => rows.filter(row => {
       if (participating && meId && !(row.participants || []).some(person => person.kind === 'user' && person.id === meId)) return false;
       if (priorities && !priorities.has(row.priority)) return false;
+      if (weekOnly) {
+        const plan = planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned');
+        if (!plan?.thisWeek) return false;
+      }
       return true;
     }),
-    [rows, participating, meId, priorities],
+    [rows, participating, meId, priorities, weekOnly],
   );
   const orderedRows = useMemo(
     () => sortRequirements(participatingRows, sortSpec),
@@ -889,14 +894,14 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const loadedUrgency = useMemo(() => {
     let overdue = 0;
     let thisWeek = 0;
-    for (const row of orderedRows) {
+    for (const row of rows) {
       const plan = planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned');
       if (!plan) continue;
       if (plan.kind === 'overdue') overdue += 1;
       else if (plan.thisWeek) thisWeek += 1;
     }
     return { overdue, thisWeek };
-  }, [orderedRows]);
+  }, [rows]);
 
   // 「按紧迫度」：列表和看板共用同一份排序结果，避免两个视图各排各的。
   // 只影响显示顺序——不参与 sortRequirements 的服务器排序，也不写任何数据。
@@ -1061,7 +1066,18 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               <span className="text-[var(--fg-dim)]">已加载中</span>
               {loadedUrgency.overdue > 0 && <span className="text-[var(--danger)]">超期 {loadedUrgency.overdue}</span>}
               {loadedUrgency.overdue > 0 && loadedUrgency.thisWeek > 0 && <span className="text-[var(--fg-dim)]">·</span>}
-              {loadedUrgency.thisWeek > 0 && <span className="text-[var(--warning)]">本周内 {loadedUrgency.thisWeek}</span>}
+              {loadedUrgency.thisWeek > 0 && (
+                <button
+                  type="button"
+                  data-testid="requirements-week-toggle"
+                  aria-pressed={weekOnly}
+                  title="只看这批已加载结果里本周内到期的（本地筛选，不重新请求）"
+                  onClick={() => setParam({ week: weekOnly ? '' : '1' })}
+                  className={`rounded px-1 transition-colors ${weekOnly ? 'bg-[var(--bg-elevated)] text-[var(--warning)]' : 'text-[var(--warning)] hover:bg-[var(--hover-tint)]'}`}
+                >
+                  本周内 {loadedUrgency.thisWeek}
+                </button>
+              )}
             </span>
           )}
           {mineOwner && (
@@ -1119,6 +1135,11 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           {priorities && (
             <span className="text-[10px] text-[var(--fg-dim)]" data-testid="requirements-priority-hint">
               只筛已加载的 {rows.length} 条
+            </span>
+          )}
+          {weekOnly && (
+            <span className="text-[10px] text-[var(--fg-dim)]" data-testid="requirements-week-hint">
+              只筛已加载的 {rows.length} 条中的本周内
             </span>
           )}
           {hasActiveFilters && (
