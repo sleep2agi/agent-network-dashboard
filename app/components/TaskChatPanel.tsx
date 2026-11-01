@@ -502,6 +502,7 @@ import { formatWeChatTime } from '../lib/time';
 import { t } from '../lib/ui-lang';
 import { chatOutboxForAlias, chatPrivateScope, putChatOutbox, removeChatOutbox } from '../lib/chat-outbox';
 import { newDashboardRequestId, normalizeChatSendResult, requestIdFromTaskMeta } from '../lib/chat-send-state';
+import { isOwnSender, senderLabelFor } from '../lib/chat-sender';
 
 /* Loop R14 (气泡子树稳定性): the renderer map used to be an OBJECT LITERAL
    OF INLINE ARROWS inside MarkdownContent's JSX — every render produced new
@@ -1587,11 +1588,13 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
             ) : null;
             // Distinguish task source so users can tell when a peer agent
             // forwarded a task vs when they themselves sent it from Dashboard.
-            const fromUser = !m.from_name || m.from_name === 'Dashboard' || m.from_name === 'api' || m.from_name === 'hub';
-            const senderLabel = fromUser ? 'You' : m.from_name;
+            // #35：`hub` 不是当前用户。它是 Hub 自己的发送身份（tasks.from_name
+            // 的默认值），广播/系统通知走这里；口径统一放在 chat-sender 里。
+            const fromUser = isOwnSender(m.from_name);
+            const senderLabel = senderLabelFor(m.from_name);
             const senderBadge = fromUser
               ? null
-              : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-[9px] text-purple-300 font-medium">↳ {m.from_name}</span>;
+              : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-[9px] text-purple-300 font-medium">↳ {senderLabel}</span>;
             if (event.kind === 'reply') {
               return (
                 <Fragment key={`${m.task_id}:reply`}>
