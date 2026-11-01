@@ -228,14 +228,9 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
         if (box) { e.preventDefault(); e.stopImmediatePropagation(); box.focus(); box.select(); }
         return;
       }
-      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-      const active = document.activeElement as HTMLElement | null;
-      if (!active || !active.matches('[data-node-card]')) return;
-      const cards = [...document.querySelectorAll<HTMLElement>('[data-node-card]')];
-      const i = cards.indexOf(active);
-      if (i < 0) return;
-      const next = cards[i + (e.key === 'ArrowDown' ? 1 : -1)];
-      if (next) { e.preventDefault(); next.focus(); next.scrollIntoView({ block: 'nearest' }); }
+      // ↑/↓ 移动焦点这件事这一轮没做成：按下后列表会重排一次，刚聚焦的卡片
+      // 立刻被替换掉，焦点掉回 body（探针实测 immediate.activeElement = BODY）。
+      // 留到「用选中态而不是 DOM 焦点来驱动」时再做，别在这里硬凑。
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
