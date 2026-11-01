@@ -72,3 +72,15 @@ export function planHealthRank(plan: PlanHealth | null): number {
     default: return 5;
   }
 }
+
+/**
+ * 标签配色。三个地方（列表行、看板卡片、详情页）都用这一份，
+ * 免得哪天只改了其中一处、同一需求在两个页面颜色不一样。
+ */
+export function planHealthTone(plan: PlanHealth | null): string {
+  if (!plan) return 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
+  if (plan.kind === 'overdue') return 'text-[var(--danger)] bg-[var(--danger)]/10';
+  if (plan.kind === 'dueToday' || plan.kind === 'dueSoon') return 'text-[var(--warning)] bg-[var(--warning)]/10';
+  if (plan.thisWeek) return 'text-[var(--warning)] bg-[var(--warning)]/[0.06] ring-1 ring-inset ring-[var(--warning)]/25';
+  return 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
+}

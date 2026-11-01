@@ -16,6 +16,7 @@ import { editorTagSuggestions, tagColor } from '../../lib/tag-catalog';
 import { priorityLabel, priorityTitle } from '../../lib/requirement-priority';
 import { addChecklistItem, checklistPayload, moveChecklistItem, removeChecklistItem, validateChecklist, CHECKLIST_MAX_ITEMS, type ChecklistItem as EditableChecklistItem } from '../../lib/checklist-model';
 import { addIssue, issueLabel, issuesFromHub, issuesWire, issueUrl, MAX_REQUIREMENT_ISSUES, type RequirementIssue } from '../../lib/requirement-issues';
+import { planHealth, planHealthTone } from '../../lib/requirement-plan-health';
 
 /**
  * One requirement — #1633 (read-only).
@@ -610,6 +611,17 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
             <span title={priorityTitle(req.priority)}>{priorityLabel(req.priority)}</span>
             {req.start && <span>start {String(req.start).slice(0, 10)}</span>}
             {req.due && <span>due {String(req.due).slice(0, 10)}</span>}
+            {/* 详情页也说同一句话：列表/看板有「还剩几天」，点进来不该反而没了。 */}
+            {(() => {
+              const plan = planHealth(req.start, req.due, new Date(), req.column === 'done' || req.column === 'abandoned');
+              if (!plan) return null;
+              return (
+                <span data-testid="requirement-plan-health" data-plan-kind={plan.kind} data-this-week={plan.thisWeek ? 'true' : 'false'}
+                  className={`rounded px-1.5 py-0.5 tabular-nums ${planHealthTone(plan)}`}>
+                  {plan.label}
+                </span>
+              );
+            })()}
             {(req.tags || []).map(name => (
               <TagChip key={name} name={name} color={tagColor(tagCatalog, name)} className="text-gray-400" />
             ))}
