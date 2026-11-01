@@ -2320,3 +2320,12 @@ html[data-legion-present='1'] [data-app-shell-nav] {
   outline: 2px solid var(--hl);
   outline-offset: 2px;
 }
+
+/* 全站键盘焦点：此前只有需求页、详情页、军团页各自配了作用域规则，其它页面
+   （总览、节点、任务、消息、组织、日志、设置…）全靠浏览器默认焦点环——深色主题下
+   颜色与粗细都不受控，切换页面时观感不一致。
+   用一条全站规则统一，避免再逐页补 data-*-root（那种做法已经漏过 3D 页）。 */
+:is(button, a[href], input, select, textarea, summary, [role="option"]):focus-visible {
+  outline: 2px solid var(--hl);
+  outline-offset: 2px;
+}
