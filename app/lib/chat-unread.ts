@@ -183,16 +183,25 @@ export function useChatUnread() {
     // Scope: only the USER'S conversation — a badge on X means "X has
     // something FOR YOU". Fleet chatter (X's messages to other agents)
     // must NOT inflate it.
+    //
+    // 收件人判定必须同时认「登录用户名」：hub 把回复/消息直接写给 token 里的
+    // username（例如 vansin），而 USERISH 只有那几个通用标签。只认 USERISH
+    // 会让写给你本人的消息一条都不计数——角标永远不亮（#40）。
+    const meLower = (me || '').trim().toLowerCase();
+    const addressedToMe = (to?: string | null) => {
+      const t = (to || '').trim().toLowerCase();
+      return isUserish(t) || (!!meLower && t === meLower);
+    };
     const feed = mergeMessageFeeds(messagesData?.messages, inboxData?.messages) as ChatMessage[];
     for (const message of feed) {
       const alias = message.from_alias?.trim();
-      if (!alias || isUserish(alias)) continue;          // own sends never count
-      if (!isUserish(message.to_alias)) continue;        // must be addressed to the user
+      if (!alias || isUserish(alias) || (!!meLower && alias.toLowerCase() === meLower)) continue; // own sends never count
+      if (!addressedToMe(message.to_alias)) continue;     // must be addressed to the user
       const at = parseHubTime(message.created_at);
       if (at) bump(alias, at);
     }
     return { counts, lastActivity };
-  }, [messagesData, inboxData, readMap]);
+  }, [messagesData, inboxData, readMap, me]);
 
   const hasUnread = useCallback((alias?: string | null) => {
     if (!alias) return false;
