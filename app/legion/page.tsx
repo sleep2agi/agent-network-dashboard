@@ -652,18 +652,24 @@ export default function LegionPage() {
                   className="text-[var(--fg-muted)] hover:text-[var(--fg)]">✕</button>
               </p>
             )}
-            {focusGroup && (
+            {focusGroup && (() => {
               // 聚焦状态不只是视觉胶囊：用 live region 播报，屏幕阅读器用户点完部门
               // 才知道「已经聚焦到哪个部门」，而不是只能靠眼神确认。
+              // 顺带报出规模：聚焦后画面只留这棵子树，不报人数就不知道该看多少人。
+              const node = layout.nodes.find(n => n.id === focusGroup);
+              const facts = node ? `${node.memberCount} 人 · 下级 ${layout.nodes.filter(n => n.parentId === node.id && n.kind === 'group').length}` : '';
+              return (
               <span role="status" aria-live="polite" data-testid="legion-focus-status"
                 className="mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-[var(--fg)]">
-                聚焦：{layout.nodes.find(n => n.id === focusGroup)?.label}
-                <span data-testid="legion-2d-focus" hidden>{layout.nodes.find(n => n.id === focusGroup)?.label}</span>
+                聚焦：{node?.label}
+                {facts && <span data-testid="legion-focus-facts" className="text-[var(--fg-muted)] tabular-nums">{facts}</span>}
+                <span data-testid="legion-2d-focus" hidden>{node?.label}</span>
                 <button type="button" onClick={() => setFocusGroup(null)} aria-label="取消聚焦" className="text-[var(--fg-muted)] hover:text-[var(--fg)]">
                   ✕
                 </button>
               </span>
-            )}
+              );
+            })()}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5">
