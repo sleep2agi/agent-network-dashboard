@@ -97,6 +97,8 @@ export default function LegionPage() {
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
   const [hovered, setHovered] = useState<string | null>(null);
   const [focusGroup, setFocusGroup] = useState<string | null>(null);
+  // 深链 ?focus= 指向的部门不存在时，要明确告诉用户，而不是静默给一张没聚焦的图。
+  const [focusMissing, setFocusMissing] = useState<string | null>(null);
   const [view, setView] = useState({ k: 1, tx: 0, ty: 0 });
   // 折叠的是布局节点 id（dept:xxx），不是 Hub 的 department_id。
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
@@ -326,9 +328,12 @@ export default function LegionPage() {
     if (typeof window === 'undefined' || urlFocusSettled.current) return;
     const focus = new URLSearchParams(window.location.search).get('focus');
     if (!focus) { urlFocusSettled.current = true; return; }
+    // 数据还在加载时绝不能判定「找不到」：部门是后到的，早判会把正常深链误判成失效
+    // （实测会把 ?focus=平台 判成不存在，而且 settle 之后再也不重试）。
+    if (loading || layout.nodes.length === 0) return;
     const node = layout.nodes.find(n => n.kind === 'group' && n.label === focus);
-    if (!node) return;
     urlFocusSettled.current = true;
+    if (!node) { setFocusMissing(focus); return; }
     setFocusGroup(node.id);
     setSelected(node.id);
   }, [layout.nodes]);
@@ -626,6 +631,14 @@ export default function LegionPage() {
             {hierarchy.data === null && (
               <p className="mt-1 text-[11px] text-[var(--fg-muted)]">
                 当前 Hub 没有部门树接口，编制按通讯录的部门名分组（升级 Hub 后自动变为真实层级）。
+              </p>
+            )}
+            {focusMissing && (
+              <p role="status" data-testid="legion-focus-missing"
+                className="mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--danger)]/10 px-3 py-1 text-[11px] text-[var(--danger)]">
+                找不到部门「{focusMissing}」——可能已重命名或删除
+                <button type="button" onClick={() => setFocusMissing(null)} aria-label="忽略聚焦提示"
+                  className="text-[var(--fg-muted)] hover:text-[var(--fg)]">✕</button>
               </p>
             )}
             {focusGroup && (
