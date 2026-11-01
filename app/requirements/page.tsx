@@ -1278,11 +1278,14 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               aria-label="搜索需求"
               className="w-40 bg-transparent text-sm text-white placeholder-gray-700 focus:outline-none sm:w-56"
             />
-            {qInput && qInput !== q && (
-              // 这个搜索要回车（或失焦）才生效，且服务端筛选；不提示的话
-              // 用户会以为「输入了没反应」。
-              <span data-testid="requirements-search-pending" className="text-[10px] text-[var(--fg-dim)]">回车搜索</span>
-            )}
+            {/* 这个搜索要回车（或失焦）才生效，且服务端筛选；不提示的话用户会以为「输入了没反应」。
+                提示常驻占位、只切可见性：它一旦按条件插入/移除，输入框区域就会伸缩，
+                点击紧邻的「清空筛选」时那一下会被挤空（实测：失焦写入草稿的同一帧里点击落空）。 */}
+            <span
+              data-testid="requirements-search-pending"
+              aria-hidden={!(qInput && qInput !== q)}
+              className={`text-[10px] text-[var(--fg-dim)] ${qInput && qInput !== q ? 'visible' : 'invisible'}`}
+            >回车搜索</span>
             {qInput && (
               <button
                 type="button"
