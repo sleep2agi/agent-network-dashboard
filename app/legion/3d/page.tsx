@@ -2430,7 +2430,6 @@ export default function Legion3DPage() {
             </button>
           )}
           {tour && (
-            {/* 巡礼每几秒自动切一个部门：不播报的话，读屏器用户完全不知道走到哪了。 */}
             <span role="status" aria-live="polite" data-testid="legion-3d-tour-status"
               className="rounded-md bg-[var(--bg-secondary)]/90 px-2 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur">
               {(() => {
