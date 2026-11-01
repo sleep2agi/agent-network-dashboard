@@ -106,6 +106,14 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const listBack = searchParams.get('from') || '';
   const withBack = (path: string) => (listBack ? `${path}?from=${encodeURIComponent(listBack)}` : path);
   const backHref = listBack ? `/requirements?${listBack}` : '/requirements';
+  // 锚点跟着你实际停留的那条走：连续按上一条/下一条之后再返回，
+  // 焦点要落在「最后看的那条」，而不是最初点开的那条。
+  useEffect(() => {
+    if (!listBack || !id) return;
+    try {
+      sessionStorage.setItem('requirements-return-anchor', JSON.stringify({ rowId: id, query: listBack }));
+    } catch { /* 隐私模式下写不了就放弃恢复 */ }
+  }, [id, listBack]);
   const [req, setReq] = useState<Requirement | null>(null);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [eventCursor, setEventCursor] = useState<string | null>(null);
