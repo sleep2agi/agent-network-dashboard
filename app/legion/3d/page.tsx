@@ -1374,7 +1374,11 @@ export default function Legion3DPage() {
           && selectedRef.current !== node.id && !activeSet?.has(node.id) && view.zoom < 1.8;
         const deepDept = node.kind === 'group' && (node.depth ?? 1) > 1
           && view.zoom < 1.8 && selectedRef.current !== node.id && !activeSet?.has(node.id);
-        let alpha = (1 - depthT * 0.55) * (dim ? (selectedRef.current ? 0.14 : 0.22) : 1) * (offline ? 0.42 : 1)
+        // 深度淡出：最远的标签会淡到 1-0.55=0.45，实测那是 4.04:1（浅色只有 2.95:1），
+        // 都低于 4.5 —— 远端标签「看得见但读不清」。底色深浅决定能淡多少：
+        // 深底 0.55、浅底 0.65，最差情况分别是 5.5:1 与 5.6:1。
+        const depthFade = dark ? 0.45 : 0.35;
+        let alpha = (1 - depthT * depthFade) * (dim ? (selectedRef.current ? 0.14 : 0.22) : 1) * (offline ? 0.42 : 1)
           * (emptyDept ? 0.3 : deepDept ? 0.12 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
         const color = nodeColor(node, tk, statusByAlias);
