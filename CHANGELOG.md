@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.240 — 2026-11-02
+
+### 详情页也换上同一套键盘焦点
+
+- 详情页此前**没有任何焦点样式规则**：按钮与链接全靠浏览器默认焦点环，深色主题下
+  颜色与粗细不受控，和列表页刚统一的那套不一致。
+- 现在详情页根节点带 `data-detail-root`，页内所有 `button` 与链接在 `:focus-visible`
+  时统一为 2px `--hl` 描边（偏移 2px）。
+- 至此列表、看板、详情、军团四个界面是同一套键盘焦点语言。
+
 ## 0.6.4-preview.239 — 2026-11-02
 
 ### 需求页的键盘焦点，和军团页长得一样了
