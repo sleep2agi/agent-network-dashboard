@@ -885,6 +885,17 @@ function RequirementsContent({ networkId }: { networkId: string }) {
     [participatingRows, sortSpec.key, sortSpec.dir],
   );
 
+  // 「按紧迫度」：列表和看板共用同一份排序结果，避免两个视图各排各的。
+  // 只影响显示顺序——不参与 sortRequirements 的服务器排序，也不写任何数据。
+  const rankOfRow = (row: Requirement) =>
+    planHealthRank(planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned'));
+  const viewRows = useMemo(
+    () => (urgencySort && !treeMode ? [...orderedRows].sort((a, b) => rankOfRow(a) - rankOfRow(b)) : orderedRows),
+    // rankOfRow 是纯函数式闭包，依赖只看这三项即可。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [urgencySort, treeMode, orderedRows],
+  );
+
   // 树状视图：只在列表里生效，按 parent_id 在已加载行上分组；父不在本页的行仍当根。
   const treeRows = useMemo(
     () => (treeMode ? buildTreeRows(orderedRows, collapsedTree) : null),
@@ -1253,7 +1264,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               </p>
             )}
           <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
-            {board && (
+            {!treeMode && !timeline && (
               <button
                 type="button"
                 data-testid="requirements-urgency-sort"
@@ -1454,10 +1465,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               {COLUMNS.filter(col => col.key)
                 .filter(col => (!status || col.key === status) && (col.key !== 'abandoned' || showAbandoned || status === 'abandoned'))
                 .map(col => {
-                const unsorted = orderedRows.filter(row => columnOf(row) === col.key);
-                const rankOf = (row: Requirement) => planHealthRank(planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned'));
-                // 稳定排序：同档位保持服务器给的相对顺序，避免每次渲染都抖。
-                const items = urgencySort ? [...unsorted].sort((a, b) => rankOf(a) - rankOf(b)) : unsorted;
+                const items = viewRows.filter(row => columnOf(row) === col.key);
                 const isCollapsed = collapsedColumns.has(col.key);
                 // 列头超期计数：看板一眼看不出「这一列里有几条已经晚了」，
                 // 数一下并给出可点的入口（点了就是已有的「已逾期」筛选，可再点取消）。
@@ -1528,7 +1536,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                         return (
                           <div
                             key={row.id}
-                            data-urgency-rank={urgencySort ? rankOf(row) : undefined}
+                            data-urgency-rank={urgencySort ? rankOfRow(row) : undefined}
                             className={`rounded-lg border border-[var(--border)] bg-[var(--bg)] transition-opacity ${movingId === row.id ? 'opacity-60' : ''}`}
                           >
                             <Link
@@ -1634,7 +1642,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           </>
         ) : (
           <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
-            {(treeRows ?? orderedRows.map(row => ({ row, depth: 0, hasChildren: false }))).map(({ row, depth, hasChildren }) => {
+            {(treeRows ?? viewRows.map(row => ({ row, depth: 0, hasChildren: false }))).map(({ row, depth, hasChildren }) => {
               const chk = row.checklist_count;
               const kids = row.children;
               // 行的紧迫度：超期/今天到期整行给一条左侧竖条，扫一眼就知道该先看哪条
