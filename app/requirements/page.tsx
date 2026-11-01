@@ -448,6 +448,25 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // 「/」聚焦搜索：和大多数列表页一致；在输入框/下拉里打字时不抢键。
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      // 看板：焦点在卡片上时，↑/↓（或 j/k）在同一列内上下移动；Enter 由链接自身处理。
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'j' || event.key === 'k') {
+        const card = (document.activeElement as HTMLElement | null)?.closest?.('[data-board-card]');
+        if (card) {
+          const columnKey = card.getAttribute('data-column');
+          const cards = Array.from(document.querySelectorAll<HTMLElement>(`[data-board-card][data-column="${columnKey}"]`));
+          const from = cards.indexOf(card as HTMLElement);
+          if (from >= 0) {
+            const forward = event.key === 'ArrowDown' || event.key === 'j';
+            const next = Math.max(0, Math.min(cards.length - 1, from + (forward ? 1 : -1)));
+            if (next !== from) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              cards[next].querySelector<HTMLElement>('a[href^="/requirements/"]')?.focus();
+              return;
+            }
+          }
+        }
+      }
       // 列表行漫游：焦点在行上时 j/k 与 ↑/↓ 等价（roving index，见上面的 effect）。
       if (event.key === 'j' || event.key === 'k' || event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         const active = document.activeElement as HTMLElement | null;
@@ -1639,6 +1658,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                         return (
                           <div
                             key={row.id}
+                            data-board-card
+                            data-column={col.key}
                             data-urgency-rank={urgencySort ? rankOfRow(row) : undefined}
                             className={`rounded-lg border border-[var(--border)] bg-[var(--bg)] transition-opacity ${movingId === row.id ? 'opacity-60' : ''}`}
                           >
