@@ -921,9 +921,12 @@ export default function LegionPage() {
                     return (
                       <g
                         key={node.id}
+                        data-node-id={node.id}
                         transform={`translate(${p.x} ${p.y})`}
                         opacity={dim || (statusOnly && node.kind === 'agent' && (statusValue ?? 'offline') !== statusOnly) ? 0.18 : 1}
-                        tabIndex={0}
+                        // roving tabindex：整张图只有一个 Tab 停点（选中项，未选中时是第一个节点），
+                        // 其余为 -1，靠方向键移动。之前每个节点都是 0，几十个停点会挡住后面的面板。
+                        tabIndex={(selected ?? layout.nodes[0]?.id) === node.id ? 0 : -1}
                         role="button"
                         aria-label={`${ringLabel(node)} ${node.label}`}
                         onMouseEnter={() => setHovered(node.id)}
@@ -933,6 +936,21 @@ export default function LegionPage() {
                         onClick={(e) => { e.stopPropagation(); setSelected(node.id); }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') { e.preventDefault(); setSelected(node.id); return; }
+                          if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                            const nodes = layout.nodes;
+                            const from = nodes.findIndex(n => n.id === node.id);
+                            if (from < 0 || nodes.length < 2) return;
+                            const forward = e.key === 'ArrowRight' || e.key === 'ArrowDown';
+                            const nextIndex = (from + (forward ? 1 : -1) + nodes.length) % nodes.length;
+                            const nextNode = nodes[nextIndex];
+                            e.preventDefault();
+                            setSelected(nextNode.id);
+                            // tabIndex 由 selected 驱动，等下一帧再聚焦新停点。
+                            requestAnimationFrame(() => {
+                              document.querySelector<SVGGElement>(`[data-node-id="${nextNode.id}"]`)?.focus();
+                            });
+                            return;
+                          }
                           if (e.key === ' ') {
                             e.preventDefault();
                             if (node.kind === 'group' && canCollapse(node.id)) toggleCollapse(node.id);
@@ -1013,7 +1031,9 @@ export default function LegionPage() {
                                 className="cursor-pointer"
                                 onClick={(e) => { e.stopPropagation(); toggleCollapse(node.id); }}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); toggleCollapse(node.id); } }}
-                                tabIndex={0}
+                                // 角标不进 Tab 序列（否则每个折叠部门再多一个停点）；
+                                // 键盘路径是「选中部门 → 空格折叠」，角标保留给鼠标。
+                                tabIndex={-1}
                                 role="button"
                                 aria-label={`展开 ${node.label}（${node.hiddenMembers ?? 0} 人 · ${node.hiddenAgents ?? 0} Agent）`}
                               >
