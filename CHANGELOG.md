@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.253 — 2026-11-02
+
+### 「只列部门」的勾选，切视图后还记得
+
+- 2D 与 3D 各有一个「只列部门与圆心」开关，但状态是各自的 `useState`：
+  **切到另一个视图就得重新勾一次**。
+- 现在两者共用同一个本地偏好（`legion-list-depts-only`）：勾上后切视图仍然生效，
+  刷新也保留。读取放在 effect 里，避免 SSR 与水合不一致。
+
 ## 0.6.4-preview.252 — 2026-11-02
 
 ### 3D 的节点列表也能只看部门
