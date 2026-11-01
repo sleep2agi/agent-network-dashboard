@@ -9,6 +9,7 @@ import { EmptyState } from '../../components/EmptyState';
 import CommentMarkdown from '../../components/CommentMarkdown';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { useNetworkId } from '../../lib/network-context';
+import { restoreFocusAfterUnmount } from '../../lib/focus-fallback';
 import { peopleOptions, readRequirementPeople, type PersonOption } from '../../lib/requirement-people';
 import { TagChip, useRequirementTags } from '../TagFilter';
 import { editorTagSuggestions, tagColor } from '../../lib/tag-catalog';
@@ -284,10 +285,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
       const nextCursor = typeof data.next_cursor === 'string' && data.next_cursor ? data.next_cursor : null;
       setEventCursor(nextCursor);
       setEventsNotice(`又加载 ${older.length} 条动态${nextCursor ? '' : '，已到最早'}`);
-      if (!nextCursor && (!document.activeElement || document.activeElement === document.body)) {
-        // 按钮刚被卸载：焦点别掉到 body。
-        requestAnimationFrame(() => eventsEndRef.current?.focus());
-      }
+      // 按钮刚被卸载：焦点别掉到 body（判定与需求列表共用一处实现）。
+      if (!nextCursor) restoreFocusAfterUnmount(() => eventsEndRef.current);
     } catch (e: unknown) {
       setActionError(e instanceof Error ? e.message : 'events failed');
     } finally { setOlderBusy(false); }

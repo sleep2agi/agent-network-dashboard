@@ -16,6 +16,7 @@ import { PRIORITY_KEYS, isPriorityKey, priorityLabel, priorityTitle } from '../l
 import { buildTreeRows } from '../lib/requirement-tree';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
+import { restoreFocusAfterUnmount } from '../lib/focus-fallback';
 import { ResponsibilityFilter, useRequirementPeople } from './ResponsibilityFilter';
 import { peopleOptions, responsibilityPatch, validResponsibility } from '../lib/requirement-people';
 
@@ -520,12 +521,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   useEffect(() => {
     if (prevLoadingMore.current && !loadingMore) {
       setLoadNotice(`已加载 ${rows.length} 条${hasMore ? '，还有更多' : '，已到末尾'}`);
-      if (!hasMore) {
-        // 按钮刚被卸载：把焦点收回到列表容器，别让键盘用户「凭空消失」。
-        if (!document.activeElement || document.activeElement === document.body) {
-          requestAnimationFrame(() => listRef.current?.focus());
-        }
-      }
+      // 按钮刚被卸载：把焦点收回到列表容器，别让键盘用户「凭空消失」。
+      if (!hasMore) restoreFocusAfterUnmount(() => listRef.current);
     }
     prevLoadingMore.current = loadingMore;
   }, [loadingMore, rows.length, hasMore]);
