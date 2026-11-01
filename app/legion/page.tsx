@@ -97,6 +97,9 @@ export default function LegionPage() {
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
   const [hovered, setHovered] = useState<string | null>(null);
   const [focusGroup, setFocusGroup] = useState<string | null>(null);
+  // 复制反馈：2D 早已把 focus/node 写回地址（链接可转人），但界面上没有复制入口，
+  // 3D 有「复制链接」+ 反馈。这里补齐，文案与 3D 一致。
+  const [shareInfo, setShareInfo] = useState('');
   // 大网络里节点列表很长：只列部门/圆心，键盘找部门时不用滚过几十个成员。
   const [listDeptsOnly, setListDeptsOnly] = useState(false);
   // 与 3D 共用同一个本地偏好：切视图后不用重新勾一次。
@@ -759,6 +762,33 @@ export default function LegionPage() {
             >
               3D 视图
             </Link>
+            <button
+              type="button"
+              data-testid="legion-2d-copy-view"
+              onClick={async () => {
+                const label = focusGroup ? layout.nodes.find(n => n.id === focusGroup)?.label : null;
+                const picked = !label && selected ? layout.nodes.find(n => n.id === selected) : null;
+                const params = new URLSearchParams(window.location.search);
+                // 地址栏由上面的 effect 同步；这里再按当前状态兜一次，避免复制到上一帧的链接。
+                if (label) params.set('focus', label); else params.delete('focus');
+                if (picked && picked.kind !== 'group' && picked.kind !== 'core') params.set('node', picked.label); else params.delete('node');
+                const qs = params.toString();
+                const url = `${window.location.origin}${window.location.pathname}${qs ? `?${qs}` : ''}`;
+                try {
+                  await navigator.clipboard.writeText(url);
+                  setShareInfo('已复制链接');
+                } catch {
+                  setShareInfo('复制失败，请手动复制地址栏');
+                }
+                window.setTimeout(() => setShareInfo(''), 2500);
+              }}
+              className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            >
+              复制链接
+            </button>
+            {shareInfo && (
+              <span role="status" data-testid="legion-2d-share-info" className="text-[11px] text-[var(--fg-muted)]">{shareInfo}</span>
+            )}
             <Link
               href="/legion/plaza"
               data-testid="legion-plaza-link"
