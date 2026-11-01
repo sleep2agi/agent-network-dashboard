@@ -242,6 +242,13 @@ export default function LegionPage() {
   }, [layout]);
 
   const selectedNode = layout.nodes.find(n => n.id === selected) ?? null;
+  // 选中部门时把它名下的成员/Agent 标出来：3D 那边已经这么做了（飞到正面 +
+  // 成员描环），2D 只有「选中高亮」，来回切视图会失去方向感。
+  const selectedMemberIds = useMemo(() => {
+    if (!selectedNode || selectedNode.kind !== 'group') return null;
+    const set = related(selectedNode.id);
+    return new Set(layout.nodes.filter(n => (n.kind === 'person' || n.kind === 'agent') && set.has(n.id)).map(n => n.id));
+  }, [layout.nodes, related, selectedNode]);
   const selectedChildren = selected
     ? layout.nodes.filter(n => n.parentId === selected)
     : [];
@@ -836,7 +843,7 @@ export default function LegionPage() {
                   )}
                 </div>
               )}
-              <svg ref={svgRef} width={size.width || 1} height={size.height || 1} className="block touch-none select-none" role="img" aria-label="军团组织架构图">
+              <svg ref={svgRef} width={size.width || 1} height={size.height || 1} className="block touch-none select-none" role="img" aria-label="军团组织架构图" data-member-marks={selectedMemberIds?.size ?? 0}>
                 <defs>
                   <radialGradient id="legion-core" cx="50%" cy="50%" r="50%">
                     <stop offset="0%" stopColor="var(--bg-elevated)" />
@@ -943,6 +950,9 @@ export default function LegionPage() {
                           fill="transparent"
                           style={{ pointerEvents: 'all' }}
                         />
+                        {selectedMemberIds?.has(node.id) && (
+                          <circle r={r + 3.5} fill="none" stroke="var(--accent)" strokeOpacity={0.55} strokeWidth={1.2} />
+                        )}
                         {node.kind === 'core' ? (
                           <>
                             <circle r={r} fill="url(#legion-core)" stroke={isSelected ? 'var(--hl)' : 'var(--border-hover)'} strokeWidth={isSelected ? 2 : 1} />
