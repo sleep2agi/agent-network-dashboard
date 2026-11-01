@@ -13,7 +13,7 @@ import { TagManager } from './TagManager';
 import { tagColor } from '../lib/tag-catalog';
 import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
 import { PRIORITY_KEYS, isPriorityKey, priorityLabel, priorityTitle } from '../lib/requirement-priority';
-import { planHealth, planHealthRank } from '../lib/requirement-plan-health';
+import { planHealth, planHealthRank, planHealthTone } from '../lib/requirement-plan-health';
 import { buildTreeRows } from '../lib/requirement-tree';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
@@ -1568,14 +1568,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                                 // 必须说同一句话，断言会比对两边的 data-plan-kind。
                                 const plan = planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned');
                                 if (!plan) return null;
-                                const tone = plan.kind === 'overdue'
-                                  ? 'text-[var(--danger)] bg-[var(--danger)]/10'
-                                  : plan.kind === 'dueToday' || plan.kind === 'dueSoon'
-                                    ? 'text-[var(--warning)] bg-[var(--warning)]/10'
-                                    : plan.thisWeek
-                                      // 本周内但还有 4–7 天：比「剩余很多天」显眼，比 3 天内弱。
-                                      ? 'text-[var(--warning)] bg-[var(--warning)]/[0.06] ring-1 ring-inset ring-[var(--warning)]/25'
-                                      : 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
+                                const tone = planHealthTone(plan);
                                 return (
                                   <span data-testid={`requirements-card-plan-${row.id}`} data-plan-kind={plan.kind} data-this-week={plan.thisWeek ? 'true' : 'false'}
                                     className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[10px] tabular-nums ${tone}`}>
@@ -1659,6 +1652,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   : 'border-l-2 border-l-transparent';
               return (
                 <li key={row.id} data-depth={treeMode ? depth : undefined} data-urgency={plan?.kind ?? 'none'}
+                  data-urgency-rank={urgencySort ? rankOfRow(row) : undefined}
                   className={`${urgency} hover:bg-[var(--bg-secondary)]/60`}>
                   {treeMode && (
                     <span className="inline-flex w-5 justify-center align-middle" style={{ marginLeft: 8 + depth * 16 }}>
@@ -1706,14 +1700,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                       // 计划健康度：「剩余 2 天」和「剩余 30 天」在列表里必须一眼可分，
                       // 现有筛选只有「已逾期」这一个二元开关。
                       if (!plan) return null;
-                      const tone = plan.kind === 'overdue'
-                        ? 'text-[var(--danger)] bg-[var(--danger)]/10'
-                        : plan.kind === 'dueToday' || plan.kind === 'dueSoon'
-                          ? 'text-[var(--warning)] bg-[var(--warning)]/10'
-                          : plan.thisWeek
-                            // 本周内但还有 4–7 天：比「剩余很多天」显眼，比 3 天内弱。
-                            ? 'text-[var(--warning)] bg-[var(--warning)]/[0.06] ring-1 ring-inset ring-[var(--warning)]/25'
-                            : 'text-[var(--fg-muted)] bg-[var(--hover-tint)]';
+                      const tone = planHealthTone(plan);
                       return (
                         <span data-testid={`requirements-plan-${row.id}`} data-plan-kind={plan.kind} data-this-week={plan.thisWeek ? 'true' : 'false'}
                           title={`开始：${row.start || '—'}；截止：${row.due || '—'}`}
