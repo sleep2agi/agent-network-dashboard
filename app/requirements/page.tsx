@@ -465,6 +465,19 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         setRowIndex(next);
         return;
       }
+      // w：切换「本周内」本地筛选（和工具栏那枚统计同一个动作，只是不用鼠标）。
+      if (event.key === 'w' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        const el = event.target as HTMLElement | null;
+        const elTag = el?.tagName;
+        if (elTag === 'INPUT' || elTag === 'TEXTAREA' || elTag === 'SELECT' || el?.isContentEditable) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        // 这个监听器只在挂载时注册一次，闭包里的 weekOnly 是旧值——按一次 w 之后就再也关不掉，
+        // 所以从当前 URL 现读状态，而不是相信注册时的快照。
+        const weekOn = new URLSearchParams(window.location.search).get('week') === '1';
+        setParam({ week: weekOn ? '' : '1' });
+        return;
+      }
       if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName;
