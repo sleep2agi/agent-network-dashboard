@@ -448,23 +448,6 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // 「/」聚焦搜索：和大多数列表页一致；在输入框/下拉里打字时不抢键。
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      // 列表行漫游：焦点在行上时 j/k 与 ↑/↓ 等价（roving index，见上面的 effect）。
-      if (event.key === 'j' || event.key === 'k' || event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-        const active = document.activeElement as HTMLElement | null;
-        const onRow = !!active?.closest?.('a[data-req-row]');
-        if (!onRow && rowIndex === null) return;
-        const rows = reqRows();
-        if (!rows.length) return;
-        const fromDom = active ? rows.indexOf(active as HTMLAnchorElement) : -1;
-        const base = fromDom >= 0 ? fromDom : (rowIndex ?? -1);
-        const delta = (event.key === 'j' || event.key === 'ArrowDown') ? 1 : -1;
-        const next = Math.max(0, Math.min(rows.length - 1, base + delta));
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        rowFocusPending.current = true;
-        setRowIndex(next);
-        return;
-      }
       // 看板：焦点在卡片上时，↑/↓（或 j/k）在同一列内上下移动；Enter 由链接自身处理。
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'j' || event.key === 'k') {
         const card = (document.activeElement as HTMLElement | null)?.closest?.('[data-board-card]');
@@ -483,6 +466,23 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             }
           }
         }
+      }
+      // 列表行漫游：焦点在行上时 j/k 与 ↑/↓ 等价（roving index，见上面的 effect）。
+      if (event.key === 'j' || event.key === 'k' || event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const active = document.activeElement as HTMLElement | null;
+        const onRow = !!active?.closest?.('a[data-req-row]');
+        if (!onRow && rowIndex === null) return;
+        const rows = reqRows();
+        if (!rows.length) return;
+        const fromDom = active ? rows.indexOf(active as HTMLAnchorElement) : -1;
+        const base = fromDom >= 0 ? fromDom : (rowIndex ?? -1);
+        const delta = (event.key === 'j' || event.key === 'ArrowDown') ? 1 : -1;
+        const next = Math.max(0, Math.min(rows.length - 1, base + delta));
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        rowFocusPending.current = true;
+        setRowIndex(next);
+        return;
       }
       // w：切换「本周内」本地筛选（和工具栏那枚统计同一个动作，只是不用鼠标）。
       if (event.key === 'w' && !event.metaKey && !event.ctrlKey && !event.altKey) {
