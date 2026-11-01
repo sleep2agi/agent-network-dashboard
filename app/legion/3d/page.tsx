@@ -590,6 +590,13 @@ export default function Legion3DPage() {
 
   // 搜索优先于聚焦/选中：正在找东西时，别让其它高亮盖掉命中结果。
   const activeSet = matchedSet ?? related ?? focusSet;
+  // 选中部门时，画布会把它名下的成员/Agent 各描一圈淡环；这里把人数同步成
+  // 一个属性，探针才能证明「这条路径真的走到了」，而不是只靠肉眼看截图。
+  const memberHaloCount = useMemo(() => {
+    const sel = layout.nodes.find(n => n.id === selected);
+    if (!sel || sel.kind !== 'group' || !related) return 0;
+    return layout.nodes.filter(n => (n.kind === 'person' || n.kind === 'agent') && related.has(n.id)).length;
+  }, [layout.nodes, selected, related]);
   // 只做部门聚焦（没有选中/搜索）时，把其余部门扇区再压低一档。
   const focusingDept = !!focusSet && !related && !matchedSet;
   const noMatch = matchedSet !== null && matchedSet.size === 0;
@@ -1341,6 +1348,10 @@ export default function Legion3DPage() {
       }
 
       // 节点：远→近（projectScene 已排序），近的盖住远的。
+      // 选中的是不是部门：是的话要给「它名下的人」描一圈，飞过去之后一眼看出
+      // 这个部门有谁。每帧算一次，别在每个节点里 linear find。
+      const selectedIsGroup = !!selectedRef.current
+        && layout.nodes.some(n => n.id === selectedRef.current && n.kind === 'group');
       const labelQueue: Array<{ node: LegionNode; text: string; anchor: LabelEllipse; alpha: number; dim: boolean; priority: number }> = [];
       const labelBodies: LabelEllipse[] = [];
       for (const sn of nodes) {
@@ -1484,6 +1495,18 @@ export default function Legion3DPage() {
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, rx + 5, ry + 5, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // 选中部门时：它名下的成员与 Agent 各描一圈淡环。
+        // 部门本身已经有扫描环，这里只标「这个部门有谁」，别的部门不描。
+        if (selectedIsGroup && selectedRef.current !== node.id && activeSet?.has(node.id)
+            && node.kind !== 'group' && node.kind !== 'core') {
+          ctx.globalAlpha = 0.45;
+          ctx.strokeStyle = tk.accent;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y, rx + 3.5, ry + 3.5, 0, 0, Math.PI * 2);
           ctx.stroke();
         }
 
@@ -2322,6 +2345,7 @@ export default function Legion3DPage() {
       data-zoom={zoomPct}
       data-fly-target={flyFlash?.label || ''}
       data-present-ink={presenting ? 'dark' : ''}
+      data-member-halo={memberHaloCount}
     >
       <style>{`@keyframes legion-fly-flash {
         from { opacity: .9; transform: scale(.7); }
