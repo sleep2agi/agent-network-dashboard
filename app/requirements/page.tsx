@@ -16,6 +16,7 @@ import { PRIORITY_KEYS, isPriorityKey, priorityLabel, priorityTitle } from '../l
 import { buildTreeRows } from '../lib/requirement-tree';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
+import { restoreFocusAfterUnmount } from '../lib/focus-fallback';
 import { ResponsibilityFilter, useRequirementPeople } from './ResponsibilityFilter';
 import { peopleOptions, responsibilityPatch, validResponsibility } from '../lib/requirement-people';
 
@@ -516,16 +517,14 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   // ② 走到最后一页时那个按钮会消失，键盘焦点不能掉到 body。
   const [loadNotice, setLoadNotice] = useState('');
   const listRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLButtonElement | null>(null);
   const prevLoadingMore = useRef(false);
   useEffect(() => {
     if (prevLoadingMore.current && !loadingMore) {
       setLoadNotice(`已加载 ${rows.length} 条${hasMore ? '，还有更多' : '，已到末尾'}`);
-      if (!hasMore) {
-        // 按钮刚被卸载：把焦点收回到列表容器，别让键盘用户「凭空消失」。
-        if (!document.activeElement || document.activeElement === document.body) {
-          requestAnimationFrame(() => listRef.current?.focus());
-        }
-      }
+      // 加载时按钮是先置灰的（disabled 会让焦点掉到 body），所以：
+      // 还有下一页就把焦点还给按钮；到底了（按钮已被卸载）就收回到列表容器。
+      restoreFocusAfterUnmount(() => (hasMore ? loadMoreRef.current : listRef.current));
     }
     prevLoadingMore.current = loadingMore;
   }, [loadingMore, rows.length, hasMore]);
@@ -1643,6 +1642,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           <button
             type="button"
             data-testid="requirements-load-more"
+            ref={loadMoreRef}
             disabled={loadingMore}
             onClick={() => load({ cursor, append: true })}
             className="mx-auto mt-4 block rounded-md px-4 py-2 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200 disabled:opacity-50"
