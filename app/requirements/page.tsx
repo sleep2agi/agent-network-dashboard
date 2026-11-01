@@ -1593,8 +1593,17 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             {(treeRows ?? orderedRows.map(row => ({ row, depth: 0, hasChildren: false }))).map(({ row, depth, hasChildren }) => {
               const chk = row.checklist_count;
               const kids = row.children;
+              // 行的紧迫度：超期/今天到期整行给一条左侧竖条，扫一眼就知道该先看哪条
+              // （标签只是小字，整列扫的时候容易被忽略）。
+              const plan = planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned');
+              const urgency = plan?.kind === 'overdue'
+                ? 'border-l-2 border-l-[var(--danger)]'
+                : plan?.kind === 'dueToday'
+                  ? 'border-l-2 border-l-[var(--warning)]'
+                  : 'border-l-2 border-l-transparent';
               return (
-                <li key={row.id} data-depth={treeMode ? depth : undefined} className="hover:bg-[var(--bg-secondary)]/60">
+                <li key={row.id} data-depth={treeMode ? depth : undefined} data-urgency={plan?.kind ?? 'none'}
+                  className={`${urgency} hover:bg-[var(--bg-secondary)]/60`}>
                   {treeMode && (
                     <span className="inline-flex w-5 justify-center align-middle" style={{ marginLeft: 8 + depth * 16 }}>
                       {hasChildren ? (
@@ -1640,7 +1649,6 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                     {(() => {
                       // 计划健康度：「剩余 2 天」和「剩余 30 天」在列表里必须一眼可分，
                       // 现有筛选只有「已逾期」这一个二元开关。
-                      const plan = planHealth(row.start, row.due, new Date(), row.column === 'done' || row.column === 'abandoned');
                       if (!plan) return null;
                       const tone = plan.kind === 'overdue'
                         ? 'text-[var(--danger)] bg-[var(--danger)]/10'
