@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useSyncExternalStore } from 'react';
+import { useState, useRef, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { timeAgo } from '../components/utils';
 import { useSessions, useHealth, useNodeLifecycle } from '../lib/hooks';
 import { useSWRConfig } from 'swr';
@@ -214,6 +214,13 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
   //  ③ an explicit ✕ close must NOT be answered by an immediate re-select
   //    (the ✕ would look broken) — userClosedRef gates auto-select off for
   //    the rest of this mount.
+  // 键盘位置（roving index）：状态要在下面的 keydown effect 之前声明。
+  const [kbIndex, setKbIndex] = useState<number | null>(null);
+  const kbFocusPending = useRef(false);
+  // 卡片清单只取「真的有盒子」的：这一页容器是定位布局，offsetParent 恒为 null。
+  const visibleCards = () => [...document.querySelectorAll<HTMLElement>('[data-node-card]')]
+    .filter(el => el.getClientRects().length > 0);
+
   // 键盘：`/` 聚焦节点搜索（和需求页一致，别让全局命令面板抢走）；
   // 焦点在某张卡片上时，↑/↓ 在卡片之间移动，省得按几十次 Tab。
   useEffect(() => {
@@ -228,13 +235,27 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
         if (box) { e.preventDefault(); e.stopImmediatePropagation(); box.focus(); box.select(); }
         return;
       }
+      // ↑/↓ 在卡片之间移动焦点（见上面的 roving index effect）。
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        const cards = visibleCards();
+        if (!cards.length) return;
+        const active = document.activeElement as HTMLElement | null;
+        const fromDom = active ? cards.indexOf(active) : -1;
+        const base = fromDom >= 0 ? fromDom : (kbIndex ?? -1);
+        const next = Math.max(0, Math.min(cards.length - 1, base + (e.key === 'ArrowDown' ? 1 : -1)));
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        kbFocusPending.current = true;
+        setKbIndex(next);
+        return;
+      }
       // ↑/↓ 移动焦点这件事这一轮没做成：按下后列表会重排一次，刚聚焦的卡片
       // 立刻被替换掉，焦点掉回 body（探针实测 immediate.activeElement = BODY）。
       // 留到「用选中态而不是 DOM 焦点来驱动」时再做，别在这里硬凑。
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, []);
+  }, [kbIndex]);
 
   const [manageView, setManageView] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -322,6 +343,23 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
     })
     .filter(s => !search || pinyinMatch(s.alias, search) || pinyinMatch(s.agent || '', search))
     .sort((a, b) => ((isPinned(b.alias) ? 1 : 0) - (isPinned(a.alias) ? 1 : 0)) || (sortOnline(b.alias, b.online) - sortOnline(a.alias, a.online)) || lastActivityAt(b.alias) - lastActivityAt(a.alias)); // R41 pin > R29 online-hysteresis > recency
+
+  // ↑/↓ 在卡片之间移动焦点：维护「当前键盘位置」，渲染后由 effect 聚焦。
+  // 不用直接 focus(next)：按下键后列表会重排，刚聚焦的元素可能已被替换。
+  const listSignature = useMemo(() => filtered.map(s => s.alias).join('|'), [filtered]);
+  useEffect(() => {
+    if (!kbFocusPending.current || kbIndex === null) return;
+    kbFocusPending.current = false;
+    const raf = requestAnimationFrame(() => {
+      const el = visibleCards()[Math.min(kbIndex, Math.max(0, visibleCards().length - 1))];
+      if (!el) return;
+      el.focus({ preventScroll: true });
+      el.scrollIntoView({ block: 'nearest' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [kbIndex, listSignature]);
+  // 列表变了（搜索/筛选）就作废位置。
+  useEffect(() => { setKbIndex(null); }, [listSignature]);
 
   const onlineCount = sessions.filter(s => sseFor(s)).length;
 
