@@ -2535,6 +2535,13 @@ export default function Legion3DPage() {
             data-testid="legion-3d-search"
             className="w-44 rounded-md bg-[var(--bg-secondary)]/85 px-2.5 py-1 text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] sm:w-56"
           />
+          {query.trim() && matchedSet && (
+            // 与 2D 同口径：搜索要有数量反馈，读屏器才知道筛出了几个节点。
+            <span role="status" aria-live="polite" data-testid="legion-3d-search-status"
+              className="text-[11px] text-[var(--fg-muted)]">
+              匹配 {matchedSet.size} 个节点
+            </span>
+          )}
           {query && (
             <button
               type="button"
