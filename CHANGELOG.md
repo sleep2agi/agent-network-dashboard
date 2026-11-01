@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.208 — 2026-11-01
+
+### 需求详情：按 `c` 直接开始写评论
+
+- 评论是这个页面最常写的输入，但「把光标放进评论框」还得用鼠标点一下。现在按
+  `c` 聚焦评论框（输入框里按 `c` 当然是打字，不会抢）；`Ctrl/⌘+Enter` 发送保持不变。
+- 发送成功后焦点**留在评论框**，连着写第二条不用再点一次。
+- 输入框带 `aria-keyshortcuts="c"` 与说明性 `title`，读屏也能发现这个快捷键。
+
 ## 0.6.4-preview.207 — 2026-11-01
 
 ### 2D 军团也标出「这个部门有谁」
