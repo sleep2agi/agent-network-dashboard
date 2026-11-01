@@ -6,6 +6,23 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.199 — 2026-11-01
+
+### pre-commit 不再把「eslint 跑不起来」报成「代码违规」(#44)
+
+- 提交钩子的探针只回答「eslint 这个**二进制**能不能跑」，而真正的 lint 需要
+  「配置文件能不能解析自己的 import」。两者不同：一个没有 node_modules 但装了
+  全局 eslint 的 worktree 里，`npx --no-install eslint --version` 退出 0，真正
+  跑 lint 却退出 2（`Cannot find package 'eslint' imported from eslint.config.mjs`）——
+  于是钩子把一次环境故障印成 `✗ react-hooks/rules-of-hooks violation`，
+  开发者会去找一个根本不存在的 hook 违规。
+- 判据改成 eslint 自己的退出码（就是那次我们真正关心的运行）：1 = 有 lint 问题，
+  2 = 致命（配置/CLI 跑不起来）。退出 2 时明确打印「这是环境问题，不是代码违规」，
+  并以 0 放行（与既有的 fail-open 语义一致）。
+- 实测 A/B（`evidence/hook-taxonomy-20261101/`）：同一份「配置跑不起来」的模拟环境，
+  旧钩子 `✗ violation … exit=1`，新钩子 `⚠ ENVIRONMENT … exit=0`；而真实的
+  rules-of-hooks 违规仍然 `✗ commit blocked … exit=1`。
+
 ## 0.6.4-preview.198 — 2026-11-01
 
 ### 水合巡检扩到全站（无用户可见改动）
