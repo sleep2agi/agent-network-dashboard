@@ -1772,6 +1772,26 @@ export default function Legion3DPage() {
     lastInteract.current = performance.now();
   }, []);
 
+  // 手动步进部门：巡礼在「减少动态效果」下按设计静止，但讲解需要能一个部门一个部门地过。
+  // 步进不改巡礼开关，只移动聚焦；减动效时干脆不做镜头滑动（否则等于变相动画）。
+  const stepDept = useCallback((dir: 1 | -1) => {
+    const depts = tourOrder(layout.nodes);
+    if (!depts.length) return;
+    const current = depts.findIndex(d => d.id === focus);
+    const nextIndex = current < 0 ? 0 : (current + dir + depts.length) % depts.length;
+    const target = depts[nextIndex];
+    setFocus(target.id);
+    tourIndex.current = nextIndex;
+    tourAt.current = 0;
+    if (reducedMotion) {
+      viewRef.current.yaw = target.angle;
+      yawTarget.current = null;
+    } else {
+      yawTarget.current = target.angle;
+    }
+    if (tourRef.current) setTourProgress({ index: nextIndex + 1, total: depts.length, frac: 0 });
+  }, [layout.nodes, focus, reducedMotion]);
+
   const copyViewLink = useCallback(async () => {
     const view = viewRef.current;
     const params = new URLSearchParams({
@@ -2401,6 +2421,26 @@ export default function Legion3DPage() {
 
       {presenting && (
         <div className="pointer-events-auto absolute right-3 top-3 z-20 flex items-center gap-2">
+          <button
+            type="button"
+            data-testid="legion-3d-step-prev"
+            onClick={() => stepDept(-1)}
+            aria-label="上一个部门"
+            title="上一个部门（减少动态效果时也可用）"
+            className="rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/90 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] backdrop-blur hover:text-[var(--fg)]"
+          >
+            ← 上一部门
+          </button>
+          <button
+            type="button"
+            data-testid="legion-3d-step-next"
+            onClick={() => stepDept(1)}
+            aria-label="下一个部门"
+            title="下一个部门（减少动态效果时也可用）"
+            className="rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/90 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] backdrop-blur hover:text-[var(--fg)]"
+          >
+            下一部门 →
+          </button>
           <button
             type="button"
             data-testid="legion-3d-tour"
