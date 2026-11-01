@@ -1170,9 +1170,37 @@ responsibility 88 · summary 18 · tags 20 · tag-ops 26 · timeline 16`（+ 设
 - `next-release.py` 生成后自检：版本引用形状校验（release/preview/版本号/套件标签）、期望值与上一版对照告警。
 - 已知教训：生成器只换版本号会漏“上一版记录”引用；全局替换要先确认“不该命中”的地方。
 
-### 19.5 当前发布门（`.249`，同一 SHA）
+### 19.5 当前发布门（`.261`，同一 SHA）
 
-`archive 70 · board 124 · chat 13 · contrast 27 · create 11 · detail 107 · hydration 7 ·
-legion 115 · mine 22 · network 54 · nodes-kbd 14 · plan-health 44 · project 82 · recording 23 ·
-responsibility 88 · summary 18 · tags 20 · tag-ops 26 · timeline 16`（+ 设计师探针 6/6），
+`archive 70 · board 129 · chat 13 · contrast 27 · create 11 · detail 107 · hydration 7 ·
+legion 142 · mine 22 · network 54 · nodes-kbd 14 · plan-health 44 · project 82 · recording 23 ·
+responsibility 88 · summary 18 · tags 22 · tag-ops 26 · timeline 16`（+ 设计师探针 6/6），
 外加单测 49 个文件、四项 main CI、本机与公网各 9/9。
+
+## 20. 2026-11-02 续：输入可提交性、误点回归与军团信息层（.257–.261）
+
+### 20.1 搜索与标签输入“看起来没反应”的三处静默
+
+- 需求搜索是服务端筛选，要回车（或失焦）才生效；此前无任何提示。`.258` 起在
+  `qInput !== q` 时显示「回车搜索」。
+- 同一提示第一版按条件插入，导致**真实误点**：失焦写草稿与移除提示同帧，行宽伸缩让
+  紧邻的「清空筛选」第一下点击落空（`.258` 修复为常驻占位、只切 `visible/invisible`）。
+  验收用 A/B 坐实：`.257` archive 70/70，含缺陷的 `f19fe16` 两次稳定卡住。
+- 标签「精确匹配」输入目录外词时补全面板整个消失（`.259` 起保留面板 + 「没有匹配的标签」）。
+- 三处搜索框（需求列表、军团 2D、3D）的清空入口统一为「有内容才显示的 ✕」，
+  清空后焦点回到输入框（`.257`）。
+
+### 20.2 军团 3D 的信息层（.260–.261）
+
+- 演示模式巡礼左下角讲解条：部门名 + `第 N 层 · M 人 · 下级 K`（有负责人补「负责人 X」），
+  `pointer-events-none`，reduced-motion 下静止显示。
+- 聚焦规模同口径：2D 聚焦胶囊 `legion-focus-facts`、3D 聚焦状态行都带 `N 人 · 下级 K`。
+- 仍不加“纯装饰”特效：悬停层级景深、窄屏半圆压缩都要求先定下可验收标准再做。
+
+### 20.3 发布链路的两次自身失误（已固化为步骤）
+
+- 发布验收进行中修改共享探针，会把“探针变严”误记为产品回归；`.259` 首轮即因此被判失败
+  （131 项检查全过但 expect 超前）。规则：**功能断言只在功能上 main 之后加**。
+- 套件运行器要求干净树且 `.next/BUILD_COMMIT == HEAD`；正确顺序固定为
+  **改代码 → 提交 → 构建 → 跑套件**。
+- `releases/` 里未发布的失败候选会被生成器当成“上一版”，导致自检拒绝；删除后再生成。
