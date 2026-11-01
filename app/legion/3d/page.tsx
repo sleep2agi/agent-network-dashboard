@@ -604,6 +604,14 @@ export default function Legion3DPage() {
 
   useEffect(() => { spinRef.current = spin; }, [spin]);
   useEffect(() => { presentingRef.current = presenting; }, [presenting]);
+  // 演示是「整屏」的事：侧栏/手机导航在应用壳里，读不到这个页面的状态，
+  // 所以用一个 html 级标记让它们一起淡出；退出或卸载时清掉。
+  useEffect(() => {
+    const root = document.documentElement;
+    if (presenting) root.setAttribute('data-legion-present', '1');
+    else root.removeAttribute('data-legion-present');
+    return () => { root.removeAttribute('data-legion-present'); };
+  }, [presenting]);
   useEffect(() => { tourRef.current = tour; }, [tour]);
   useEffect(() => {
     try { setExportHigh(localStorage.getItem('legion3d-export-1080') === '1'); } catch { /* ignore */ }
