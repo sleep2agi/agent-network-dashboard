@@ -16,7 +16,7 @@ import { PRIORITY_KEYS, isPriorityKey, priorityLabel, priorityTitle } from '../l
 import { buildTreeRows } from '../lib/requirement-tree';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 import { useNetworkId } from '../lib/network-context';
-import { restoreFocusAfterUnmount } from '../lib/focus-fallback';
+import { restoreFocusAfterUnmount, useRestoreFocusAfterBusy } from '../lib/focus-fallback';
 import { ResponsibilityFilter, useRequirementPeople } from './ResponsibilityFilter';
 import { peopleOptions, responsibilityPatch, validResponsibility } from '../lib/requirement-people';
 
@@ -380,6 +380,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  // 批量操作按钮在请求期间会被 disabled，结束把焦点还给触发它的那个按钮。
+  useRestoreFocusAfterBusy(bulkBusy);
   const [bulkMessage, setBulkMessage] = useState('');
   const [bulkDue, setBulkDue] = useState('');
   const [bulkTag, setBulkTag] = useState('');

@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 /**
  * 控件卸载后的焦点兜底。
  *
@@ -29,4 +31,30 @@ export function restoreFocusAfterUnmount(getTarget: () => HTMLElement | null): v
     if (!shouldRestoreFocus(document.activeElement, document.body)) return;
     el.focus({ preventScroll: true });
   });
+}
+
+/**
+ * busy 期间的焦点保护（hook）。
+ *
+ * 为什么需要：`disabled={busy}` 是这里最常见写法，而**禁用会让焦点回到 body**。
+ * 批量操作这类按钮在请求期间被禁用、请求后仍留在原处，用户本该继续停在这个
+ * 按钮上——否则连点两次批量操作就得重新 Tab 一大圈。
+ *
+ * 语义仍然是「只在焦点确实丢了时才接管」，用户中途把焦点挪走就不抢。
+ */
+export function useRestoreFocusAfterBusy(busy: boolean): void {
+  const wasBusy = useRef(false);
+  const previous = useRef<Element | null>(null);
+  useEffect(() => {
+    if (busy && !wasBusy.current) previous.current = document.activeElement;
+    if (!busy && wasBusy.current) {
+      const target = previous.current;
+      previous.current = null;
+      if (shouldRestoreFocus(document.activeElement, document.body)
+        && target instanceof HTMLElement && target.isConnected && !(target as HTMLButtonElement).disabled) {
+        target.focus({ preventScroll: true });
+      }
+    }
+    wasBusy.current = busy;
+  }, [busy]);
 }
