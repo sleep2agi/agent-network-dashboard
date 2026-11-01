@@ -13,6 +13,22 @@ interface Shortcut {
   label: string;
 }
 
+// vim 风格 `g` + 单键的跳转表。帮助面板的「Navigate」分组直接由这张表生成，
+// 免得再加页面时只改一处、另一处忘掉（军团/需求就是这样漏掉的）。
+// 大小写有意义：`g l` 去军团（常用），`g L`（Shift+L）才是审计日志。
+const GO_TARGETS: Record<string, { href: string; label: string }> = {
+  o: { href: '/', label: 'Overview' },
+  t: { href: '/tasks', label: 'Tasks' },
+  n: { href: '/nodes', label: 'Nodes' },
+  r: { href: '/requirements', label: 'Requirements' },
+  l: { href: '/legion', label: 'Legion' },
+  m: { href: '/messages', label: 'Messages' },
+  w: { href: '/settings/networks', label: 'Networks' },
+  a: { href: '/admin', label: 'Admin' },
+  s: { href: '/settings', label: 'Settings' },
+  L: { href: '/logs', label: 'Audit Log' },
+};
+
 const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
   {
     group: 'Global',
@@ -24,14 +40,8 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
     ],
   },
   {
-    group: 'Navigate (vim-style)',
-    items: [
-      { keys: ['g', 'o'], label: 'Go to Overview' },
-      { keys: ['g', 't'], label: 'Go to Tasks' },
-      { keys: ['g', 'n'], label: 'Go to Nodes' },
-      { keys: ['g', 'a'], label: 'Go to Admin' },
-      { keys: ['g', 's'], label: 'Go to Settings' },
-    ],
+    group: 'Navigate (vim-style: g then…)',
+    items: Object.entries(GO_TARGETS).map(([key, target]) => ({ keys: ['g', key], label: `Go to ${target.label}` })),
   },
   {
     group: 'Command palette',
@@ -61,71 +71,71 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // R52 (hub click), R55 (legend status hover), R56 (recent-signal
       // row hover). All three live inside the topology canvas, so this
       // is the right group for the new entries.
-      { keys: ['click hub'], label: 'Fit topology to canvas (R52)' },
-      { keys: ['hover legend'], label: 'Highlight nodes of a status (R55)' },
-      { keys: ['hover signal'], label: 'Highlight one flow edge (R56)' },
+      { keys: ['click hub'], label: 'Fit topology to canvas' },
+      { keys: ['hover legend'], label: 'Highlight nodes of a status' },
+      { keys: ['hover signal'], label: 'Highlight one flow edge' },
       // Round 62 / Loop: R60 + R61 added click-to-pin on the pressure
       // chip and legend rows; R62 added Esc to release the pin. Pin
       // gives users a sticky filter (vs R55 transient hover).
-      { keys: ['click chip'], label: 'Pin a status filter (R60/R61)' },
-      { keys: ['Esc'], label: 'Clear pinned filter (R62) — or close chat' },
+      { keys: ['click chip'], label: 'Pin a status filter' },
+      { keys: ['Esc'], label: 'Clear pinned filter — or close chat' },
       // Round 65 / Loop: R63 added group-pin via group label click; R64
       // added active-filter pills in the chip row with per-pill ×
       // clear. Both compose with the R62 Esc keystroke (single press
       // clears everything pinned).
-      { keys: ['click group'], label: 'Pin a team focus (R63)' },
-      { keys: ['click ×'], label: 'Clear one filter (R64) — Esc clears all' },
+      { keys: ['click group'], label: 'Pin a team focus' },
+      { keys: ['click ×'], label: 'Clear one filter — Esc clears all' },
       // Round 70 / Loop: R69 added 4 Cmd+K palette actions that pin/
       // clear topology filters from anywhere. Surface them so keyboard
       // power users find the shortcut without spelunking the palette.
-      { keys: ['⌘', 'K'], label: 'Pin / clear filters via palette → "Pin topology filter…" (R69)' },
+      { keys: ['⌘', 'K'], label: 'Pin / clear filters via palette → "Pin topology filter…"' },
       // Round 74 / Loop: palette also exposes layout + view actions —
       // a search-friendly alternative to the `l` (R32) and `f` (R29)
       // keyboard shortcuts for users who can't remember them.
-      { keys: ['⌘', 'K'], label: 'Toggle layout / Fit canvas via palette (R74)' },
+      { keys: ['⌘', 'K'], label: 'Toggle layout / Fit canvas via palette' },
       // Round 78 / Loop: surface R73 (whole pill body is a click target)
       // and R77 (active-links chip hover → boost all flow edges) —
       // both are real user gestures that weren't in the help overlay.
-      { keys: ['click pill'], label: 'Clear filter — click anywhere on the pill body (R73)' },
-      { keys: ['hover chip'], label: 'Brighten all active flows — hover "N active links" (R77)' },
+      { keys: ['click pill'], label: 'Clear filter — click anywhere on the pill body' },
+      { keys: ['hover chip'], label: 'Brighten all active flows — hover "N active links"' },
       // Round 81 / Loop: catch up on the two newest chip-row affordances
       // — R79 working/online chips and R80 vendor-letter chips. All
       // four chip hovers feed the same dim mechanic the R55 legend
       // rows use.
-      { keys: ['hover N working'], label: 'Highlight working nodes — chip-row sibling of legend (R79)' },
-      { keys: ['hover vendor'], label: 'Highlight one vendor — hover A/O/书/? in the chip row (R80)' },
+      { keys: ['hover N working'], label: 'Highlight working nodes — chip-row sibling of legend' },
+      { keys: ['hover vendor'], label: 'Highlight one vendor — hover A/O/书/? in the chip row' },
       // Round 87 / Loop: catch up on the two newest hover-preview
       // gestures that close click-only gaps from earlier rounds.
       // R83 added preview-before-pin on the pressure-bar segments;
       // R86 did the same for group labels. Both compose with their
       // existing click-pin (R60 / R63) — hover transient, click
       // sticky, Esc clears (R62).
-      { keys: ['hover seg'], label: 'Preview a status filter — hover a pressure-bar segment (R83)' },
-      { keys: ['hover group'], label: 'Preview a team focus — hover a group label (R86)' },
+      { keys: ['hover seg'], label: 'Preview a status filter — hover a pressure-bar segment' },
+      { keys: ['hover group'], label: 'Preview a team focus — hover a group label' },
       // Round 91 / Loop: catch up on vendor pin (R88) and granular
       // Cmd+K vendor-clear (R90). Vendor was the last filter
       // dimension without a sticky pin; the click-to-pin gesture
       // and palette clear command both deserve discovery entries.
       // R89's third "filter:" pill is already covered by the
       // generic "click pill" (R73) and "click ×" (R64) entries.
-      { keys: ['click vendor'], label: 'Pin a vendor filter — click A/O/书/? in the chip row (R88)' },
-      { keys: ['⌘', 'K'], label: 'Clear vendor pin only via palette → "Clear topology vendor filter" (R90)' },
+      { keys: ['click vendor'], label: 'Pin a vendor filter — click A/O/书/? in the chip row' },
+      { keys: ['⌘', 'K'], label: 'Clear vendor pin only via palette → "Clear topology vendor filter"' },
       // Round 109 / Loop: catch up on R108 — palette gained
       // pin-vendor commands for the three major vendors. Mirror of
       // R69's pin-status entry; closes the symmetric gap so the
       // palette can both pin AND clear every filter dimension.
-      { keys: ['⌘', 'K'], label: 'Pin vendor: Anthropic/OpenAI/书生 via palette → "Pin topology filter…" (R108)' },
+      { keys: ['⌘', 'K'], label: 'Pin vendor: Anthropic/OpenAI/书生 via palette → "Pin topology filter…"' },
       // Round 118 / Loop: catch up on R116 (recent-signal row click
       // pins the edge — the 4th pin dim, completing the hover→pin
       // sweep) and R117 (granular Cmd+K clear-edge command).
-      { keys: ['click row'], label: 'Pin a flow filter — click a recent-signal row to lock the edge (R116)' },
-      { keys: ['⌘', 'K'], label: 'Clear edge pin only via palette → "Clear topology edge pin" (R117)' },
+      { keys: ['click row'], label: 'Pin a flow filter — click a recent-signal row to lock the edge' },
+      { keys: ['⌘', 'K'], label: 'Clear edge pin only via palette → "Clear topology edge pin"' },
       // Round 123 / Loop: catch up on R121 — the edge midpoint count
       // badge (R100) became a click-to-pin affordance, giving the
       // canvas side a peer to R116's row-pin. R122 made hovering the
       // badge mirror line hover; doesn't need its own entry — it's
       // the natural hover partner of this click gesture.
-      { keys: ['click badge'], label: 'Pin a flow filter from the canvas — click an edge midpoint count badge (R121)' },
+      { keys: ['click badge'], label: 'Pin a flow filter from the canvas — click an edge midpoint count badge' },
       // Round 134 / Loop: catch up on R133 — the recent-signal panel's
       // "+ N more flows" truncation footer (R128) became a clickable
       // nav to /messages. First TopoGraph affordance that reaches OUT
@@ -134,7 +144,7 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // operators know the path exists. R124-R132 were all passive
       // visuals / motion / readouts with no new gestures, so this is
       // the only new entry since R123.
-      { keys: ['click footer'], label: 'See all flows — click "+ N more flows" in the recent-signal panel (R133)' },
+      { keys: ['click footer'], label: 'See all flows — click "+ N more flows" in the recent-signal panel' },
       // Round 137 / Loop: catch up on R136 — the "N active links"
       // chip in the chip row gained a real onClick → /messages
       // navigation (it already had cursor:pointer since R77 but the
@@ -143,7 +153,7 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // side panel and only shows when flowLinks > 3; R136 lives at
       // the chip row and triggers whenever flowLinks > 0 — a broader
       // entry point for the same "show me the full list" jump.
-      { keys: ['click chip'], label: 'See all flows — click the "N active links" chip in the chip row (R136)' },
+      { keys: ['click chip'], label: 'See all flows — click the "N active links" chip in the chip row' },
       // Round 141 / Loop: catch up on R139 + R140 — the chip-row
       // "N working" and "N online" chips finally honour the cursor:
       // pointer they've carried since R79. Working pins
@@ -152,8 +162,8 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // /nodes (pinning 'idle' would misrepresent the chip, which
       // semantically means working+idle). Two entries this round
       // because two new gestures landed since R137's catch-up.
-      { keys: ['click chip'], label: 'Pin "working" status — click "N working" in the chip row (R139)' },
-      { keys: ['click chip'], label: 'Open the agent list — click "N online" in the chip row (R140)' },
+      { keys: ['click chip'], label: 'Pin "working" status — click "N working" in the chip row' },
+      { keys: ['click chip'], label: 'Open the agent list — click "N online" in the chip row' },
       // Round 153 / Loop: catch up on R151 — node <g> gained role=button
       // + tabIndex=0 + aria-pressed + onKeyDown so keyboard-only users
       // can Tab to a node and press Enter / Space to open the chat
@@ -164,21 +174,11 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
       // of the existing R63 click-group entry, so it doesn't earn a new
       // line). The chat-open path didn't exist as a keyboard gesture
       // before R151, so this is the discoverability entry for it.
-      { keys: ['Tab', 'Enter'], label: 'Open chat on a focused node (also Space) — keyboard parallel of click-to-chat (R151)' },
+      { keys: ['Tab', 'Enter'], label: 'Open chat on a focused node (also Space) — keyboard parallel of click-to-chat' },
     ],
   },
 ];
 
-const GO_TARGETS: Record<string, string> = {
-  o: '/',
-  t: '/tasks',
-  n: '/nodes',
-  m: '/messages',
-  w: '/settings/networks',
-  a: '/admin',
-  l: '/logs',
-  s: '/settings',
-};
 
 export function HelpOverlay() {
   const [open, setOpen] = useState(false);
@@ -209,11 +209,11 @@ export function HelpOverlay() {
         return;
       }
       if (Date.now() - gAtRef.current < 1500) {
-        const target = GO_TARGETS[e.key.toLowerCase()];
+        const target = GO_TARGETS[e.key];
         if (target) {
           e.preventDefault();
           gAtRef.current = 0;
-          router.push(target);
+          router.push(target.href);
         }
       }
     };
