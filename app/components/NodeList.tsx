@@ -252,6 +252,10 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
         const tag = active.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
         if (active.isContentEditable) return;
+        // 焦点在主列表的卡片上时，方向键归卡片列表（NodesView 自己处理）。
+        // 不加这一条的话，这里会把方向键当成「切换侧栏选中项」，直接切到会话视图、
+        // 主列表整片卸载——表现就是「按了方向键，卡片全没了」（实测）。
+        if (active.closest('[data-node-card]')) return;
       }
       const { sessions: s, selectedAlias: sel, onSelect: pick } = stateRef.current;
       if (s.length === 0) return;
