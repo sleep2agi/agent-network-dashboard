@@ -6,6 +6,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.249 — 2026-11-02
+
+### 全站一条键盘焦点规则，不再逐页补
+
+- 之前只有需求页、详情页、军团页各配了 `.data-*-root` 作用域规则；**总览、节点、任务、
+  消息、组织、日志、设置**等页面全靠浏览器默认焦点环——深色主题下颜色与粗细不受控，
+  切页面观感不一致。
+- 逐页补的做法已经漏过一次（3D 页），所以这次改成**一条全站规则**：
+  `:is(button, a[href], input, select, textarea, summary, [role="option"]):focus-visible`
+  统一 2px `--hl` 描边。原有页面级规则与组件级特例特异性更高，仍然优先。
+- 用**此前完全没有作用域配置的节点页**验证「全站」不是空话：搜索框与按钮都被规则实测命中。
+
 ## 0.6.4-preview.248 — 2026-11-02
 
 ### 3D 军团页其实一直在焦点规则之外
