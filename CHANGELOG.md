@@ -6,6 +6,21 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.193 — 2026-11-01
+
+### The last channel can actually be switched off (#38)
+
+- `channels` reaches the hub as a replace-set, so the dashboard's allowlist
+  decides what the hub sees. Ours carried `commhub`; the hub's never has —
+  commhub is the RPC transport every node speaks, not a per-node toggle.
+- With `commhub` in a node's snapshot, turning off the only real channel sent
+  `["commhub"]`, which the hub reads as "every entry is invalid" rather than
+  "disable all": the save failed with `channels_all_invalid`, i.e. the user
+  could not switch a channel off and got an error pointing at the wrong thing.
+- `buildPatch`/allowlists now live in `app/lib/node-config-patch.ts` with
+  `EDITABLE_CHANNELS = ['telegram', 'feishu']`, matching the hub. The
+  decisive case is asserted on the filtered output: `["commhub"] → []`.
+
 ## 0.6.4-preview.192 — 2026-11-01
 
 ### Hub's own broadcasts no longer look like you wrote them (#35)
