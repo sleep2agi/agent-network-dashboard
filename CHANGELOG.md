@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.198 — 2026-11-01
+
+### 水合巡检扩到全站（无用户可见改动）
+
+- `.197` 修的是 `/nodes` 一页的水合不一致。这一版把检查从「一页」扩成「一轮」：
+  发布套件现在用更丰富的桩数据（3 个会话、2 条需求、任务与消息各一条）逐页加载
+  `/`、`/nodes`、`/tasks`、`/messages`、`/requirements`、`/org`、`/versions`、
+  `/servers`、`/providers`、`/scheduled-tasks`、`/skillhub`、`/settings`、
+  `/legion`、`/legion/3d`，**任何一页出现 `#418` / `Hydration failed` 都算失败**，
+  并把失败页与首条错误写进 `sweep-failures.json`。
+- 为什么值得单开一版：这类错误只在真实水合时出现，单元测试与构建都看不见；
+  `.196` 之前它已经存在很久（探针在 `.194` 的构建上同样能复现），没有任何门会红。
+- 本轮实测：14 个路由全部干净（dev 构建 + 生产构建各扫一遍）。
+
 ## 0.6.4-preview.197 — 2026-11-01
 
 ### /nodes no longer trips React hydration (#182)
