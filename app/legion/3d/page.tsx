@@ -20,6 +20,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, nearestDept, deptWorldRadius, tourOrder, type LegionNode } from '../../lib/legion-layout';
+import { tourStepMs } from '../../lib/legion-tour';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
@@ -206,8 +207,7 @@ function makeDust(count: number) {
 
 const DUST = typeof window === 'undefined' ? [] : makeDust(64);
 
-/** 演示模式的部门巡礼：每步停留时长，跟着 yaw 一起走。 */
-const TOUR_STEP_MS = 3600;
+
 
 /** 确定性星空（同一块画布每次刷新星位一致，不会「闪」成噪点）。 */
 function makeStars(count: number) {
@@ -295,6 +295,13 @@ export default function Legion3DPage() {
   // 演示/录屏的镜头呼吸相位（只在 0–1 之间循环，录屏首尾自然对齐）。
   const breathRef = useRef(0);
   const tourIndex = useRef(-1);
+  // 巡礼可以暂停：讲解时不会被动跟着镜头跑。
+  const tourPausedRef = useRef(false);
+  const [tourPaused, setTourPaused] = useState(false);
+  // 进度条（第 N/M 步 + 本步剩余比例）。每帧 setState 会把画布拖垮，
+  // 所以节流到 ~4Hz。
+  const [tourProgress, setTourProgress] = useState<{ index: number; total: number; frac: number } | null>(null);
+  const tourProgressAt = useRef(0);
   const captureRef = useRef<null | {
     startedAt: number; startYaw: number; durationMs: number; mime: string; width: number; height: number;
     out: HTMLCanvasElement; octx: CanvasRenderingContext2D;
@@ -610,6 +617,9 @@ export default function Legion3DPage() {
     setTour(false);
     tourIndex.current = -1;
     tourAt.current = 0;
+    tourPausedRef.current = false;
+    setTourPaused(false);
+    setTourProgress(null);
   }, [presenting]);
   useEffect(() => { flowRef.current = flow; }, [flow]);
   useEffect(() => {
@@ -854,12 +864,19 @@ export default function Legion3DPage() {
         const depts = tourOrder(layout.nodes);
         if (depts.length > 1) {
           if (tourAt.current === 0) tourAt.current = now;
-          if (now - tourAt.current >= TOUR_STEP_MS) {
+          const current = depts[Math.max(0, tourIndex.current % depts.length)];
+          const stepMs = tourStepMs(current?.memberCount ?? 0, current?.agentCount ?? 0);
+          if (!tourPausedRef.current && now - tourAt.current >= stepMs) {
             tourAt.current = now;
             tourIndex.current = (tourIndex.current + 1) % depts.length;
             const next = depts[tourIndex.current];
             setFocus(next.id);
             yawTarget.current = next.angle;
+          }
+          if (now - tourProgressAt.current > 250) {
+            tourProgressAt.current = now;
+            const idx = ((tourIndex.current % depts.length) + depts.length) % depts.length;
+            setTourProgress({ index: idx + 1, total: depts.length, frac: Math.min(1, (now - tourAt.current) / stepMs) });
           }
         }
       }
@@ -2340,6 +2357,24 @@ export default function Legion3DPage() {
             部门巡礼{reducedMotion ? '（静止）' : ''}
           </button>
           {tour && (
+            <button
+              type="button"
+              data-testid="legion-3d-tour-pause"
+              aria-pressed={tourPaused}
+              title={tourPaused ? '继续巡礼' : '暂停巡礼（讲解时用）'}
+              onClick={() => {
+                const next = !tourPaused;
+                setTourPaused(next);
+                tourPausedRef.current = next;
+                // 恢复时把本步的计时起点往后挪，避免一恢复就立刻跳到下一步。
+                if (!next) tourAt.current = 0;
+              }}
+              className={`rounded-md border px-2.5 py-1.5 text-xs backdrop-blur transition-colors ${tourPaused ? 'border-[var(--accent)] bg-[var(--bg-secondary)]/90 text-[var(--accent-text)]' : 'border-[var(--border)] bg-[var(--bg-secondary)]/90 text-[var(--fg-muted)] hover:text-[var(--fg)]'}`}
+            >
+              {tourPaused ? '继续' : '暂停'}
+            </button>
+          )}
+          {tour && (
             <span data-testid="legion-3d-tour-status" className="rounded-md bg-[var(--bg-secondary)]/90 px-2 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur">
               {(() => {
                 const node = layout.nodes.find(n => n.id === focus);
@@ -2347,6 +2382,24 @@ export default function Legion3DPage() {
                 // 分层之后光报部门名看不出「现在在第几层」，把层号一起报出来。
                 return `第 ${Math.max(1, node.depth ?? 1)} 层 · ${node.label}`;
               })()}
+              {tourProgress && (
+                <span data-testid="legion-3d-tour-step" className="ml-2 tabular-nums text-[var(--fg-dim)]">
+                  {tourProgress.index}/{tourProgress.total}
+                </span>
+              )}
+            </span>
+          )}
+          {tour && tourProgress && (
+            // 本步进度：讲解时知道「还有多久切下一个」，而不是突然切走。
+            <span
+              data-testid="legion-3d-tour-progress"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(tourProgress.frac * 100)}
+              className="h-1 w-16 overflow-hidden rounded-full bg-[var(--border)]/60 backdrop-blur"
+            >
+              <span className="block h-full rounded-full bg-[var(--accent)]/70 transition-[width] duration-200" style={{ width: `${Math.round(tourProgress.frac * 100)}%` }} />
             </span>
           )}
           <button
