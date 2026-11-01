@@ -629,7 +629,10 @@ export default function LegionPage() {
               </p>
             )}
             {focusGroup && (
-              <span className="mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-[var(--fg)]">
+              // 聚焦状态不只是视觉胶囊：用 live region 播报，屏幕阅读器用户点完部门
+              // 才知道「已经聚焦到哪个部门」，而不是只能靠眼神确认。
+              <span role="status" aria-live="polite" data-testid="legion-focus-status"
+                className="mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-[var(--fg)]">
                 聚焦：{layout.nodes.find(n => n.id === focusGroup)?.label}
                 <span data-testid="legion-2d-focus" hidden>{layout.nodes.find(n => n.id === focusGroup)?.label}</span>
                 <button type="button" onClick={() => setFocusGroup(null)} aria-label="取消聚焦" className="text-[var(--fg-muted)] hover:text-[var(--fg)]">
