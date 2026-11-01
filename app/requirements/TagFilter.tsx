@@ -98,7 +98,9 @@ export function TagPicker({ draft, applied, catalog, onDraftChange, onApply }: {
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, [open]);
 
-  const listOpen = open && suggestions.length > 0;
+  // 带内容就开面板：标签目录没有匹配项时面板原本整个消失，看起来像「补全挂了」，
+  // 也看不到「回车按 X 筛选」这句说明（自由输入其实仍然可用）。
+  const listOpen = open && (suggestions.length > 0 || draft.trim() !== '');
 
   return (
     <div
@@ -173,6 +175,11 @@ export function TagPicker({ draft, applied, catalog, onDraftChange, onApply }: {
               </li>
             );
           })}
+          {suggestions.length === 0 && (
+            <li role="status" data-testid="tag-suggestions-empty" className="px-2.5 py-1.5 text-[10px] text-[var(--fg-muted)]">
+              没有匹配的标签
+            </li>
+          )}
           <li aria-hidden className="px-2.5 pt-1 text-[10px] text-[var(--fg-dim)]">
             {draft.trim() ? `回车按“${draft.trim()}”筛选` : '输入任意标签后回车筛选'}
           </li>
