@@ -64,6 +64,19 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
   // Help overlay (the canonical discovery surface) a single place to
   // learn the canvas controls.
   {
+    group: 'Legion (2D / 3D)',
+    items: [
+      { keys: ['↑', '↓', '←', '→'], label: '2D: move between nodes · 3D: orbit the camera' },
+      { keys: ['+', '−'], label: '3D: zoom in / out' },
+      { keys: ['R'], label: '3D: reset the camera' },
+      { keys: ['↵'], label: 'Open the selected node (agent page / org)' },
+      { keys: ['Space'], label: 'Collapse or expand the selected department' },
+      { keys: ['/'], label: 'Search nodes on this page' },
+      { keys: ['Esc'], label: 'Clear the node filter' },
+      { keys: ['list'], label: 'The graph has one Tab stop; use the node list for the rest' },
+    ],
+  },
+  {
     group: 'Topology canvas',
     items: [
       { keys: ['+'], label: 'Zoom in (also =)' },
