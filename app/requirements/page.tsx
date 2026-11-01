@@ -1359,7 +1359,9 @@ function RequirementsContent({ networkId }: { networkId: string }) {
           </div>
         )}
         {error && !needsLogin && (
-          <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+          // role="alert"：失败是突发事件，读屏器应当主动播报，而不是等用户 Tab 到才听见。
+          <div role="alert" data-testid="requirements-error"
+            className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
             读取失败：{error}
             <button
               type="button"
