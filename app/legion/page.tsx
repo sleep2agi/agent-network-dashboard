@@ -853,28 +853,35 @@ export default function LegionPage() {
                     只列部门与圆心
                   </label>
                   {(() => {
-                    const shown = layout.nodes
+                    const baseAll = layout.nodes
                       .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
                       .filter(n => !listDeptsOnly || n.kind === 'core' || n.kind === 'group');
-                    // 搜索命中成员、但勾着「只列部门」时交集可能为空：说清楚原因并给一键取消，
-                    // 而不是让列表静静变空。
-                    if (shown.length === 0 && listDeptsOnly && query.trim()) {
-                      return (
-                        <p data-testid="legion-list-empty-hint" className="px-2 py-2 text-[10px] leading-relaxed text-[var(--fg-muted)]">
-                          当前只列部门，搜索命中的可能是成员。
+                    const qAll = query.trim().toLowerCase();
+                    const shownAll = qAll ? baseAll.filter(n => (n.label || '').toLowerCase().includes(qAll)) : baseAll;
+                    if (shownAll.length > 0) return null;
+                    return (
+                      <p data-testid="legion-list-empty-hint" className="px-2 py-2 text-[10px] leading-relaxed text-[var(--fg-muted)]">
+                        {listDeptsOnly
+                          ? '当前只列部门，可能被这个筛选挡住了。'
+                          : '没有匹配的节点。'}
+                        {listDeptsOnly && (
                           <button type="button" onClick={() => toggleDeptsOnly(false)} className="ml-1 underline hover:text-[var(--fg)]">
                             取消只列部门
                           </button>
-                        </p>
-                      );
-                    }
-                    return null;
+                        )}
+                      </p>
+                    );
                   })()}
-                  {layout.nodes
-                    // 与 3D 一致：成员 ≤60 时把 Agent 也列出来，键盘能直接走到 Agent 详情。
-                    .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
-                    .filter(n => !listDeptsOnly || n.kind === 'core' || n.kind === 'group')
-                    .map(n => (
+                  {(() => {
+                    // 列表与搜索保持一致：之前搜索只影响图上的高亮，列表仍列全部，
+                    // 用户搜了名字却看到一长串无关条目。
+                    const base = layout.nodes
+                      // 与 3D 一致：成员 ≤60 时把 Agent 也列出来，键盘能直接走到 Agent 详情。
+                      .filter(n => n.kind === 'core' || n.kind === 'group' || layout.stats.people <= LEGION_LABEL_PEOPLE)
+                      .filter(n => !listDeptsOnly || n.kind === 'core' || n.kind === 'group');
+                    const q = query.trim().toLowerCase();
+                    return q ? base.filter(n => (n.label || '').toLowerCase().includes(q)) : base;
+                  })().map(n => (
                       <button
                         key={n.id}
                         type="button"
