@@ -268,6 +268,18 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   // 「更早的评论」的可达性：追加后播报条数；拉到末尾按钮消失时把焦点收回动态列表。
   const [eventsNotice, setEventsNotice] = useState('');
   const eventsEndRef = useRef<HTMLDivElement | null>(null);
+  // 归档/恢复会切换按钮与横幅（一侧卸载、另一侧出现）：手机/键盘用户点完
+  // 不该把焦点丢在 body 上。归档 → 焦点给横幅，恢复 → 焦点给「归档」按钮。
+  const archivedBannerRef = useRef<HTMLParagraphElement | null>(null);
+  const archiveButtonRef = useRef<HTMLButtonElement | null>(null);
+  const wasArchived = useRef<boolean | null>(null);
+  useEffect(() => {
+    const archived = req?.archived === true;
+    if (wasArchived.current !== null && wasArchived.current !== archived) {
+      restoreFocusAfterUnmount(() => (archived ? archivedBannerRef.current : archiveButtonRef.current));
+    }
+    wasArchived.current = archived;
+  }, [req?.archived]);
 
   async function loadOlderEvents() {
     if (!id || olderBusy || !eventCursor) return;
@@ -653,6 +665,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               <button
                 type="button"
                 data-testid="requirement-archive"
+                ref={archiveButtonRef}
                 disabled={busy}
                 title="归档后列表默认不显示，可在「包含已归档」里找到"
                 onClick={() => void sendPatch({ archived: true })}
@@ -699,7 +712,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
             </button>
           </div>
           {req.archived && (
-            <p data-testid="requirement-archived-banner" className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px] text-amber-300">
+            <p ref={archivedBannerRef} tabIndex={-1} data-testid="requirement-archived-banner" className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px] text-amber-300">
               这条需求已归档，列表默认不显示它。
               <button
                 type="button"
