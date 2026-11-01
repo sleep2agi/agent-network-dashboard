@@ -6,6 +6,31 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.197 — 2026-11-01
+
+### /nodes no longer trips React hydration (#182)
+
+- `t()` read `navigator.language` **during render**, so the server rendered
+  English (`Hide node list`, `Dense`) while a zh browser's first client render
+  produced Chinese. React reported `#418` and threw the server tree away to
+  regenerate it on the client — a visible flash plus a permanent console error
+  on `/nodes`.
+- The file that owns `t()` claimed "all call sites render only after client
+  interaction/data (never in SSR HTML)". That was true when it was written; the
+  node page's rail/manage toggles are now in the SSR output.
+- Fix: `useT()` / `useIsZh()` resolve the language through
+  `useSyncExternalStore` — the server snapshot is `false` (English), so the
+  first client render always matches the HTML, and the real language lands
+  right after hydration. Call sites are unchanged: `const t = useT();` in the
+  component shadows the module-level `t`.
+- Cost, stated plainly: a zh user may see English on those few labels for one
+  frame. The alternative was discarding the server-rendered subtree on every
+  load.
+- Pinned by a new release suite (`deploy/run-hydration-acceptance.py`): loads
+  `/nodes` under `locale: zh-CN` and asserts no hydration error, no console
+  hydration warning, that the language does switch after hydration, and that
+  the node is still on screen.
+
 ## 0.6.4-preview.196 — 2026-11-01
 
 ### One unread marker per node card — the count
