@@ -2399,7 +2399,7 @@ export default function Legion3DPage() {
             onClick={() => { setFocus(null); yawTarget.current = null; }}
             className="pointer-events-auto mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--accent)]/12 px-3 py-1 text-[11px] text-[var(--fg)]"
           >
-            聚焦：{layout.nodes.find(n => n.id === focus)?.label ?? '部门'}
+            <span data-testid="legion-3d-focus">聚焦：{layout.nodes.find(n => n.id === focus)?.label ?? '部门'}</span>
             <span aria-hidden>✕</span>
           </button>
         )}
@@ -2570,7 +2570,7 @@ export default function Legion3DPage() {
         <p className="col-span-3 px-2 py-1 text-[11px] text-[var(--fg-muted)] sm:hidden">净屏后轻点画布恢复，也可按 Esc。</p>
         </div>
         <Link
-          href="/legion"
+          href={focus ? `/legion?focus=${encodeURIComponent(layout.nodes.find(n => n.id === focus)?.label || '')}` : '/legion'}
           data-testid="legion-3d-2d"
           className="absolute right-0 top-0 flex min-h-11 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:static sm:min-h-0 sm:border-0 sm:bg-transparent"
         >

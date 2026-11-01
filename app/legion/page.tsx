@@ -617,6 +617,7 @@ export default function LegionPage() {
             {focusGroup && (
               <span className="mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-[var(--fg)]">
                 聚焦：{layout.nodes.find(n => n.id === focusGroup)?.label}
+                <span data-testid="legion-2d-focus" hidden>{layout.nodes.find(n => n.id === focusGroup)?.label}</span>
                 <button type="button" onClick={() => setFocusGroup(null)} aria-label="取消聚焦" className="text-[var(--fg-muted)] hover:text-[var(--fg)]">
                   ✕
                 </button>
@@ -688,7 +689,8 @@ export default function LegionPage() {
               {listOpen ? '收起列表' : '节点列表'}
             </button>
             <Link
-              href="/legion/3d"
+              // 带着当前聚焦的部门跳过去：否则在 2D 里聚焦了「平台」，切到 3D 就丢了上下文。
+              href={focusGroup ? `/legion/3d?focus=${encodeURIComponent(layout.nodes.find(n => n.id === focusGroup)?.label || '')}` : '/legion/3d'}
               data-testid="legion-3d-link"
               className="rounded-md bg-[var(--accent)]/15 px-2.5 py-1.5 text-xs text-[var(--accent-text)] hover:bg-[var(--accent)]/25"
             >
