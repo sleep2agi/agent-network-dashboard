@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.270 — 2026-11-02
+
+### 3D 军团：关闭详情后焦点回到画布
+
+- 详情面板的 ✕ 会把面板整体卸载，焦点随之落到 body——和 2D「返回全体」同一类问题。
+- 现在关闭后由画布接管焦点（`tabIndex={-1}`），键盘用户可以直接继续环绕/缩放，
+  同样走 `restoreFocusAfterUnmount`：只在焦点真丢了时才接管。
+
 ## 0.6.4-preview.269 — 2026-11-02
 
 ### 军团 2D：「返回全体」之后焦点不再掉回 body
