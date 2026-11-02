@@ -100,6 +100,8 @@ export default function LegionPage() {
   // 复制反馈：2D 早已把 focus/node 写回地址（链接可转人），但界面上没有复制入口，
   // 3D 有「复制链接」+ 反馈。这里补齐，文案与 3D 一致。
   const [shareInfo, setShareInfo] = useState('');
+  // 窄屏把「次要操作」收进「更多」：390 宽下工具栏会折成两行，把图往下压掉 100 多像素。
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   // 大网络里节点列表很长：只列部门/圆心，键盘找部门时不用滚过几十个成员。
   const [listDeptsOnly, setListDeptsOnly] = useState(false);
   // 与 3D 共用同一个本地偏好：切视图后不用重新勾一次。
@@ -707,6 +709,21 @@ export default function LegionPage() {
             )}
             <button
               type="button"
+              data-testid="legion-more-tools"
+              aria-expanded={mobileToolsOpen}
+              aria-controls="legion-more-tools-panel"
+              onClick={() => setMobileToolsOpen(v => !v)}
+              className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:hidden"
+            >
+              {mobileToolsOpen ? '收起操作' : '更多操作'}
+            </button>
+            <span
+              id="legion-more-tools-panel"
+              // contents 让这些按钮仍按原来的 flex 排列；移动端收起时整块隐藏。
+              className={mobileToolsOpen ? 'contents' : 'hidden sm:contents'}
+            >
+            <button
+              type="button"
               onClick={toggleFullscreen}
               aria-pressed={isFullscreen}
               aria-label={isFullscreen ? '退出全屏' : '全屏查看'}
@@ -799,6 +816,7 @@ export default function LegionPage() {
             <Link href="/org" className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
               列表视图
             </Link>
+            </span>
           </div>
         </div>
 
