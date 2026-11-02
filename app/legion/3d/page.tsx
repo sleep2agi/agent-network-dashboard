@@ -343,6 +343,7 @@ export default function Legion3DPage() {
   const hoverRef = useRef<string | null>(null);
   // 呼吸相位：-1 = 当前没有聚焦/选中的部门（不呼吸），0..1 = 绘制实际使用的相位。
   const breathePhaseRef = useRef(-1);
+  const lastViewExpose = useRef(0);
   // 聚焦部门时请求一次重新取景：镜头会重新框住画面，并保底 1.35×，
   // 让「只看这个部门」在画面上也有换视角的实感。走的是既有取景逻辑，
   // 不另起一套动画——之前那版独立缓动就是被取景覆盖掉的（实测停在 86%）。
@@ -1406,6 +1407,13 @@ export default function Legion3DPage() {
           breathePhaseRef.current = phase;
           const canvasEl = canvasRef.current;
           if (canvasEl) canvasEl.dataset.pulsePhase = phase.toFixed(3);
+        }
+        // 镜头朝向也镜像到画布上（节流 200ms）：入场/巡礼结束是否真的停住，
+        // 需要能读到「当前 yaw」而不是靠截图猜。
+        if (now - lastViewExpose.current > 200) {
+          lastViewExpose.current = now;
+          const canvasEl = canvasRef.current;
+          if (canvasEl) canvasEl.dataset.viewYaw = view.yaw.toFixed(3);
         }
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
         // 深一层部门在默认缩放下淡出：13 个部门全画会在内圈叠成一团，放大
