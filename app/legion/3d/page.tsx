@@ -335,6 +335,15 @@ export default function Legion3DPage() {
   const screenRef = useRef<Array<SceneNode<LegionNode>>>([]);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const hoverRef = useRef<string | null>(null);
+  // 层级预览：鼠标停在某部门（或键盘停在列表某行）时，其它层压暗、同层保持，
+  // 并在画面上标明「第 N 层 · 同层 M 个部门」。渲染读 ref，DOM 角标读 state。
+  const depthPreviewRef = useRef<number | null>(null);
+  const [depthPreview, setDepthPreview] = useState<number | null>(null);
+  const applyDepthPreview = useCallback((depth: number | null) => {
+    if (depthPreviewRef.current === depth) return;
+    depthPreviewRef.current = depth;
+    setDepthPreview(depth);
+  }, []);
   // 悬停提示需要指针位置（canvas 坐标），只存在 ref 里，避免每帧 setState。
   const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
@@ -1390,8 +1399,13 @@ export default function Legion3DPage() {
         // 都低于 4.5 —— 远端标签「看得见但读不清」。底色深浅决定能淡多少：
         // 深底 0.55、浅底 0.65，最差情况分别是 5.5:1 与 5.6:1。
         const depthFade = dark ? 0.45 : 0.35;
+        // 层级预览：停在某部门时，其它层的部门退到背景（成员/Agent 不动，
+        // 否则会连「这个部门有谁」一起看不清）。
+        const previewDepth = depthPreviewRef.current;
+        const offLayer = previewDepth !== null && node.kind === 'group' && Math.max(1, node.depth ?? 1) !== previewDepth;
         let alpha = (1 - depthT * depthFade) * (dim ? (selectedRef.current ? 0.14 : 0.22) : 1) * (offline ? 0.42 : 1)
-          * (emptyDept ? 0.3 : deepDept ? 0.12 : 1);
+          * (emptyDept ? 0.3 : deepDept ? 0.12 : 1)
+          * (offLayer ? 0.34 : 1);
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
         const color = nodeColor(node, tk, statusByAlias);
         // Stable core size keeps the logo crisp and its labels still.
@@ -1959,6 +1973,9 @@ export default function Legion3DPage() {
       hoverPos.current = next ? { x: e.clientX - rect.left, y: e.clientY - rect.top } : null;
       if (next !== hoverRef.current) {
         hoverRef.current = next;
+        // 与画布 hover 同一处更新：同一条规则驱动渲染与角标，不另造一份判断。
+        const hoverNode = next ? layout.nodes.find(n => n.id === next) : null;
+        applyDepthPreview(hoverNode && hoverNode.kind === 'group' ? Math.max(1, hoverNode.depth ?? 1) : null);
         (e.currentTarget as HTMLElement).style.cursor = next ? 'pointer' : 'grab';
       }
       return;
@@ -2379,6 +2396,7 @@ export default function Legion3DPage() {
       className="relative w-full overflow-hidden bg-[var(--bg)] outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
       aria-label="军团 3D 网络拓扑"
       data-testid="legion-3d-stage"
+      data-hover-depth={depthPreview ?? ''}
       data-zoom={zoomPct}
       data-fly-target={flyFlash?.label || ''}
       data-present-ink={presenting ? 'dark' : ''}
@@ -2419,6 +2437,15 @@ export default function Legion3DPage() {
         tabIndex={-1}
       />
 
+      {!presenting && depthPreview !== null && (
+        <span
+          role="status"
+          data-testid="legion-3d-depth-chip"
+          className="pointer-events-none absolute bottom-3 left-3 z-20 rounded-md bg-[var(--bg-secondary)]/92 px-2 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur"
+        >
+          第 {depthPreview} 层 · 同层 {layout.nodes.filter(n => n.kind === 'group' && Math.max(1, n.depth ?? 1) === depthPreview).length} 个部门
+        </span>
+      )}
       {presenting && (
         // 演示控制条放右下角：右上角是工具栏（导出循环、复制视角…），
         // 放在同一角会直接盖住那些按钮——鼠标点不到，实测导出按钮被拦截。
@@ -2719,6 +2746,8 @@ export default function Legion3DPage() {
             setToolsOpen(false);
             setListOpen(v => {
               const next = !v;
+              // 收起列表时清掉层级预览：角标不能留在屏幕上却没有对应来源。
+              if (!next) applyDepthPreview(null);
               if (next) requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>('[role="option"]')?.focus());
               return next;
             });
@@ -2969,6 +2998,9 @@ export default function Legion3DPage() {
                 role="option"
                 aria-selected={selected === n.id}
                 data-selected={selected === n.id ? 'true' : undefined}
+                onFocus={() => applyDepthPreview(n.kind === 'group' ? Math.max(1, n.depth ?? 1) : null)}
+                onMouseEnter={() => applyDepthPreview(n.kind === 'group' ? Math.max(1, n.depth ?? 1) : null)}
+                onBlur={() => applyDepthPreview(null)}
                 ref={el => { if (selected === n.id && el) el.scrollIntoView({ block: 'nearest' }); }}
                 onClick={() => {
                   // 已经选中过 → 再点一次就是打开（与「回车两次」一致）
