@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { buildLegionLayout, nearestDept, deptWorldRadius, tourOrder, type LegionNode } from '../../lib/legion-layout';
 import { tourStepMs } from '../../lib/legion-tour';
+import { restoreFocusAfterUnmount } from '../../lib/focus-fallback';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
@@ -3122,7 +3123,12 @@ export default function Legion3DPage() {
             </div>
             <button
               type="button"
-              onClick={() => setSelected(null)}
+              onClick={() => {
+                // 详情面板会整体卸载；不接管焦点就掉回 body，键盘用户凭空消失。
+                // 回到画布（tabIndex=-1，键盘仍可继续环绕/缩放）。
+                restoreFocusAfterUnmount(() => canvasRef.current);
+                setSelected(null);
+              }}
               aria-label="关闭详情"
               className="shrink-0 rounded-md px-1.5 py-0.5 text-xs text-[var(--fg-dim)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
