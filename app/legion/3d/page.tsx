@@ -43,6 +43,8 @@ const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.60, dist: 4.9, zoom: 1.12, panX: 0, p
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 8;
+// 聚焦部门时的取景保底倍率：低于它就看不出「只看这个部门」的实感。
+const FOCUS_ZOOM = 1.35;
 const SPIN_RAD_PER_SEC = 0.027;
 const IDLE_BEFORE_SPIN = 3000;
 
@@ -335,6 +337,10 @@ export default function Legion3DPage() {
   const screenRef = useRef<Array<SceneNode<LegionNode>>>([]);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const hoverRef = useRef<string | null>(null);
+  // 聚焦部门时请求一次重新取景：镜头会重新框住画面，并保底 1.35×，
+  // 让「只看这个部门」在画面上也有换视角的实感。走的是既有取景逻辑，
+  // 不另起一套动画——之前那版独立缓动就是被取景覆盖掉的（实测停在 86%）。
+  const focusZoomRef = useRef(false);
   // 层级预览：鼠标停在某部门（或键盘停在列表某行）时，其它层压暗、同层保持，
   // 并在画面上标明「第 N 层 · 同层 M 个部门」。渲染读 ref，DOM 角标读 state。
   const depthPreviewRef = useRef<number | null>(null);
@@ -1051,8 +1057,8 @@ export default function Legion3DPage() {
         // If controls exhaust the usable area, keep drawing the current scene.
         // A later valid bounds measurement will request another fit.
         if (fit) {
-          const want = fit.zoom;
-          Object.assign(view, fit);
+          const want = Math.min(MAX_ZOOM, Math.max(fit.zoom, focusZoomRef.current ? FOCUS_ZOOM : 0));
+          Object.assign(view, { ...fit, zoom: want });
           setZoomPct(Math.round(want * 100));
           // 首次进入：先落在 62% 处，再缓动到目标（镜头推近的感觉）。
           if (!introDone.current) {
@@ -1788,6 +1794,13 @@ export default function Legion3DPage() {
 
   // 手动步进部门：巡礼在「减少动态效果」下按设计静止，但讲解需要能一个部门一个部门地过。
   // 步进不改巡礼开关，只移动聚焦；减动效时干脆不做镜头滑动（否则等于变相动画）。
+  // 聚焦部门 → 请求一次重新取景（取景时按 FOCUS_ZOOM 保底）；解除聚焦 → 回到自然取景。
+  useEffect(() => {
+    const node = focus ? layout.nodes.find(n => n.id === focus) : null;
+    focusZoomRef.current = Boolean(node && node.kind === 'group');
+    fitPending.current = true;
+  }, [focus, layout.nodes]);
+
   const stepDept = useCallback((dir: 1 | -1) => {
     const depts = tourOrder(layout.nodes);
     if (!depts.length) return;
