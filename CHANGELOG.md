@@ -6,6 +6,13 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.264 — 2026-11-02
+
+### 3D 节点列表：每行直接写清规模
+
+- 列表里「平台」和「平台2组」看起来一样大，挑部门得先点开详情才知道人数。
+- 现在部门行显示 `N 人 · 下级 K`，成员 / Agent 行显示 `M Agent`；圆心留空。
+
 ## 0.6.4-preview.263 — 2026-11-02
 
 ### 3D 军团：巡礼可以手动一步步走
