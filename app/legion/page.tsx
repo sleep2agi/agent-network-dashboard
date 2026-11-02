@@ -23,6 +23,7 @@ import { LEGION_LABEL_PEOPLE } from '../lib/legion-view-constants';
 import { getAvatarUrl, useAvatarsVersion } from '../lib/avatars';
 import { legionFetcher as fetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
+import { restoreFocusAfterUnmount } from '../lib/focus-fallback';
 import { useNetworkId } from '../lib/network-context';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 
@@ -93,6 +94,8 @@ export default function LegionPage() {
   const avatarsVersion = useAvatarsVersion();
   void avatarsVersion;
   const stageRef = useRef<HTMLDivElement | null>(null);
+  // 「返回全体」点完按钮就卸载；不接管焦点就会掉回 body。
+  const panelRef = useRef<HTMLElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   // 悬停/聚焦只影响亮度，不改布局：图不能因为鼠标划过就重排。
   const [hovered, setHovered] = useState<string | null>(null);
@@ -1275,13 +1278,21 @@ export default function LegionPage() {
               </div>
             </div>
 
-            <aside data-testid="legion-panel" data-clean={cleanView ? '1' : '0'} role="status" aria-live="polite" className={`rounded-xl bg-[var(--bg-secondary)] p-4 ${cleanView ? 'hidden' : ''}`}>
+            <aside ref={panelRef} tabIndex={-1} data-testid="legion-panel" data-clean={cleanView ? '1' : '0'} role="status" aria-live="polite" className={`rounded-xl bg-[var(--bg-secondary)] p-4 ${cleanView ? 'hidden' : ''} focus:outline-none`}>
               <div className="flex items-baseline justify-between">
                 <h2 className="text-xs uppercase tracking-wide text-[var(--fg-muted)]">
                   {selectedNode ? ringLabel(selectedNode) : '编制'}
                 </h2>
                 {selectedNode && (
-                  <button type="button" onClick={() => setSelected(null)} className="text-[10px] text-[var(--fg-muted)] hover:text-[var(--fg)]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // 这个按钮点完就消失；把焦点交给面板，键盘用户不会掉回 body。
+                      restoreFocusAfterUnmount(() => panelRef.current);
+                      setSelected(null);
+                    }}
+                    className="text-[10px] text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                  >
                     返回全体
                   </button>
                 )}
