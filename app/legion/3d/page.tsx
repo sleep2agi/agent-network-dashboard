@@ -46,6 +46,8 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 8;
 // 聚焦部门时的取景保底倍率：低于它就看不出「只看这个部门」的实感。
 const FOCUS_ZOOM = 1.35;
+// 镜头转向的固定时长：巡礼切层/跳转都在这个时间内停稳，可被测。
+const YAW_ANIM_MS = 480;
 // 越往下的层级，镜头推得越近：顶层部门先看全貌，子部门再凑近看细节。
 // 巡礼因此有了「由外向内」的层次感，而不是每一步都同倍率。
 const FOCUS_ZOOM_BY_DEPTH = (depth: number) => Math.min(2, FOCUS_ZOOM + 0.35 * (Math.max(1, depth) - 1));
@@ -334,6 +336,7 @@ export default function Legion3DPage() {
   // 首次进入的「镜头推近」：从 0.62× 缓动到取景比例，约 0.9 秒。
   // 只在第一次打开时跑一次（sessionStorage 记住），并尊重 prefers-reduced-motion。
   const introRef = useRef<{ t0: number; from: number; to: number } | null>(null);
+  const yawAnimRef = useRef<{ t0: number; from: number; to: number } | null>(null);
   const introDone = useRef(false);
   const dragRef = useRef<{ x: number; y: number; yaw: number; pitch: number; moved: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
@@ -393,6 +396,7 @@ export default function Legion3DPage() {
     hoverRef.current = null;
     hoverPos.current = null;
     yawTarget.current = null;
+    yawAnimRef.current = null;
     introRef.current = null;
     viewRef.current = { ...DEFAULT_VIEW };
     fitPending.current = true;
@@ -894,12 +898,19 @@ export default function Legion3DPage() {
       if (capture) {
         // 已由循环函数接管
       } else if (yawTarget.current !== null) {
-        const diff = yawTarget.current - view.yaw;
-        if (Math.abs(diff) < 0.01) {
-          view.yaw = yawTarget.current;
+        // 定时缓动（ease-out cubic，480ms）：与指数逼近不同，这里保证「一定在 0.48s 内停稳」，
+        // 巡礼切层因此可以断言「多久之后镜头不再动」，而不是只能看着像停了。
+        if (!yawAnimRef.current) {
+          yawAnimRef.current = { t0: now, from: view.yaw, to: yawTarget.current };
+        }
+        const anim = yawAnimRef.current;
+        const progress = Math.min(1, (now - anim.t0) / YAW_ANIM_MS);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        view.yaw = anim.from + (anim.to - anim.from) * ease;
+        if (progress >= 1) {
+          view.yaw = anim.to;
           yawTarget.current = null;
-        } else {
-          view.yaw += diff * Math.min(1, dt * 4.5);
+          yawAnimRef.current = null;
         }
       } else if (!capture && !motionPreference.matches && spinRef.current && now - lastInteract.current > IDLE_BEFORE_SPIN) {
         view.yaw += SPIN_RAD_PER_SEC * dt;
@@ -1789,6 +1800,7 @@ export default function Legion3DPage() {
       setToolsOpen(false);
       setChatAlias(node.label);
       yawTarget.current = null;
+    yawAnimRef.current = null;
       lastInteract.current = performance.now();
     }
     else if (node.kind === 'person' || node.kind === 'group') router.push('/org');
