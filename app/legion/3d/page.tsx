@@ -2420,7 +2420,9 @@ export default function Legion3DPage() {
       />
 
       {presenting && (
-        <div className="pointer-events-auto absolute right-3 top-3 z-20 flex items-center gap-2">
+        // 演示控制条放右下角：右上角是工具栏（导出循环、复制视角…），
+        // 放在同一角会直接盖住那些按钮——鼠标点不到，实测导出按钮被拦截。
+        <div className="pointer-events-auto absolute bottom-3 right-3 z-20 flex max-w-[70vw] flex-wrap items-center justify-end gap-2">
           <button
             type="button"
             data-testid="legion-3d-step-prev"
