@@ -328,6 +328,8 @@ export default function Legion3DPage() {
   // 首次进入的「镜头推近」：从 0.62× 缓动到取景比例，约 0.9 秒。
   // 只在第一次打开时跑一次（sessionStorage 记住），并尊重 prefers-reduced-motion。
   const introRef = useRef<{ t0: number; from: number; to: number } | null>(null);
+  // 聚焦部门时的「镜头轻推近」：只往前推，不往回拉（用户自己缩放过的不会被降回去）。
+  const zoomAnimRef = useRef<{ t0: number; from: number; to: number } | null>(null);
   const introDone = useRef(false);
   const dragRef = useRef<{ x: number; y: number; yaw: number; pitch: number; moved: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
@@ -893,6 +895,17 @@ export default function Legion3DPage() {
       }
       // 小屏用更长的焦距把图放大：375 宽时 min(w,h) 只有 375，
       // 按桌面系数算整张图只有硬币大，留白像坏了。
+      if (!introRef.current && zoomAnimRef.current) {
+        const a = zoomAnimRef.current;
+        const t1 = Math.min(1, (now - a.t0) / 520);
+        const ease1 = 1 - Math.pow(1 - t1, 3);
+        view.zoom = a.from + (a.to - a.from) * ease1;
+        if (t1 >= 1) {
+          view.zoom = a.to;
+          zoomAnimRef.current = null;
+          setZoomPct(Math.round(a.to * 100));
+        }
+      }
       if (introRef.current) {
         const a = introRef.current;
         const t = Math.min(1, (now - a.t0) / 900);
@@ -1788,6 +1801,22 @@ export default function Legion3DPage() {
 
   // 手动步进部门：巡礼在「减少动态效果」下按设计静止，但讲解需要能一个部门一个部门地过。
   // 步进不改巡礼开关，只移动聚焦；减动效时干脆不做镜头滑动（否则等于变相动画）。
+  // 聚焦部门 → 镜头推近一点，让「只看这个部门」在画面上也像换了个视角（不只是压暗）。
+  useEffect(() => {
+    if (!focus) return;
+    const node = layout.nodes.find(n => n.id === focus);
+    if (!node || node.kind !== 'group') return;
+    const current = viewRef.current.zoom;
+    const target = Math.max(current, 1.35);
+    if (target <= current + 0.001) return;
+    if (reducedMotion) {
+      viewRef.current.zoom = target;
+      setZoomPct(Math.round(target * 100));
+      return;
+    }
+    zoomAnimRef.current = { t0: performance.now(), from: current, to: target };
+  }, [focus, layout.nodes, reducedMotion]);
+
   const stepDept = useCallback((dir: 1 | -1) => {
     const depts = tourOrder(layout.nodes);
     if (!depts.length) return;
