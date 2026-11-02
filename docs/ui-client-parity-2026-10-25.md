@@ -1170,12 +1170,31 @@ responsibility 88 · summary 18 · tags 20 · tag-ops 26 · timeline 16`（+ 设
 - `next-release.py` 生成后自检：版本引用形状校验（release/preview/版本号/套件标签）、期望值与上一版对照告警。
 - 已知教训：生成器只换版本号会漏“上一版记录”引用；全局替换要先确认“不该命中”的地方。
 
-### 19.5 当前发布门（`.267`，同一 SHA）
+### 19.5 当前发布门（`.275`，同一 SHA）
 
 `archive 70 · board 129 · chat 13 · contrast 27 · create 11 · detail 107 · hydration 7 ·
-legion 157 · mine 22 · network 54 · nodes-kbd 14 · plan-health 44 · project 82 · recording 23 ·
+legion 168 · mine 22 · network 54 · nodes-kbd 14 · plan-health 44 · project 82 · recording 23 ·
 responsibility 88 · summary 18 · tags 22 · tag-ops 26 · timeline 16`（+ 设计师探针 6/6），
 外加单测 49 个文件、四项 main CI、本机与公网各 9/9。
+
+## 22. 2026-11-02 续三：军团的镜头与动效（.267–.275）
+
+### 22.1 镜头
+
+- 聚焦部门 = 一次重新取景，倍率按层级保底：顶层 1.35×，每深一层 +0.35×，封顶 2×（`.271`）。
+  首版试过独立缓动，被 `fitProjectedBodies` 覆盖（实测停在 86%），改为 `max(fit.zoom, floor)`。
+- 入场结束后镜头必须停住：画布节流镜像 `data-view-yaw`，与 `data-zoom` 一起断言两次读取一致（`.275`，实测 0.620 / 102%）。
+
+### 22.2 动效（全部双上下文验证）
+
+| 位置 | 效果 | reduce 下 | no-preference 下 |
+|---|---|---|---|
+| 2D 入场 | 淡入 + 96.5%→100%，0.5s | `animationName: none` | `legion-plate-in, legion-plate-scale` |
+| 2D 聚焦 | 呼吸光弧 1.8s | `none` | `1.8s infinite` |
+| 3D 选中 | 呼吸 ±6%，1.8s | 不写相位 | `data-pulse-phase` 跨帧变化 |
+
+教训：断言动效前必须先确认**上下文动效偏好**与**元素属于哪个视图**；两次误判都出在这两点上。
+暂停某个功能时，必须同时移除它的断言，否则探针会变成多个分支期望的并集（`.272` 因此两次验收失败）。
 
 ## 20. 2026-11-02 续：输入可提交性、误点回归与军团信息层（.257–.261）
 
