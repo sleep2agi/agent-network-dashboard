@@ -1008,16 +1008,31 @@ export default function LegionPage() {
                     const on = !activeSet || activeSet.has(node.id);
                     const focused = focusGroup === node.id;
                     return (
-                      <path
-                        key={`sector:${node.id}`}
-                        data-role="sector"
-                        d={arcPath(size.width / 2, size.height / 2, baseRadius * 0.33, node.spanStart!, node.span!)}
-                        fill="none"
-                        stroke={focused ? 'var(--hl)' : 'var(--border-hover)'}
-                        strokeWidth={focused ? 3 : 2}
-                        strokeLinecap="butt"
-                        opacity={on ? (focused ? 0.95 : 0.55) : 0.08}
-                      />
+                      <g key={`sector:${node.id}`}>
+                        <path
+                          data-role="sector"
+                          d={arcPath(size.width / 2, size.height / 2, baseRadius * 0.33, node.spanStart!, node.span!)}
+                          fill="none"
+                          stroke={focused ? 'var(--hl)' : 'var(--border-hover)'}
+                          strokeWidth={focused ? 3 : 2}
+                          strokeLinecap="butt"
+                          opacity={on ? (focused ? 0.95 : 0.55) : 0.08}
+                        />
+                        {/* 聚焦部门加一圈呼吸光弧：静态描边只能说「选中了」，动起来才像「镜头停在这儿」。
+                            reduced-motion 下由 CSS 关掉动画，退化成静态弧。 */}
+                        {focused && (
+                          <path
+                            data-role="focus-pulse"
+                            d={arcPath(size.width / 2, size.height / 2, baseRadius * 0.33, node.spanStart!, node.span!)}
+                            fill="none"
+                            stroke="var(--hl)"
+                            strokeWidth={6}
+                            strokeLinecap="round"
+                            opacity={0.6}
+                            pointerEvents="none"
+                          />
+                        )}
+                      </g>
                     );
                   })}
 

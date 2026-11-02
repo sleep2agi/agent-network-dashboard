@@ -2329,3 +2329,15 @@ html[data-legion-present='1'] [data-app-shell-nav] {
   outline: 2px solid var(--hl);
   outline-offset: 2px;
 }
+
+/* 军团 2D：聚焦部门的光弧呼吸。只在聚焦时渲染，reduced-motion 下退化为静态弧。 */
+@keyframes legion-focus-pulse {
+  0%, 100% { opacity: 0.15; stroke-width: 5; }
+  50% { opacity: 0.55; stroke-width: 8; }
+}
+[data-legion-root] [data-role="focus-pulse"] {
+  animation: legion-focus-pulse 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-legion-root] [data-role="focus-pulse"] { animation: none; opacity: 0.5; }
+}
