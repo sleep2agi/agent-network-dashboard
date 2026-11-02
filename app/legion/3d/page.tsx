@@ -341,6 +341,8 @@ export default function Legion3DPage() {
   const screenRef = useRef<Array<SceneNode<LegionNode>>>([]);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const hoverRef = useRef<string | null>(null);
+  // 呼吸相位：-1 = 当前没有聚焦/选中的部门（不呼吸），0..1 = 绘制实际使用的相位。
+  const breathePhaseRef = useRef(-1);
   // 聚焦部门时请求一次重新取景：镜头会重新框住画面，并保底 1.35×，
   // 让「只看这个部门」在画面上也有换视角的实感。走的是既有取景逻辑，
   // 不另起一套动画——之前那版独立缓动就是被取景覆盖掉的（实测停在 86%）。
@@ -1395,6 +1397,16 @@ export default function Legion3DPage() {
         const st = node.kind === 'agent' ? (statusByAlias.get(node.label) ?? 'offline') : null;
         const statusMiss = statusOnly !== null && node.kind === 'agent' && st !== statusOnly;
         const dim = (activeSet && !activeSet.has(node.id)) || statusMiss;
+        // 聚焦/选中的部门轻微呼吸：相位由同一次 now 算出，并写回画布 DOM，
+        // 让断言读到的就是绘制用的那个数（不另造一份给测试用）。
+        const breatheTarget = !motionPreference.matches && node.kind === 'group'
+          && (selectedRef.current === node.id || activeSet?.has(node.id));
+        if (breatheTarget) {
+          const phase = ((now % 1800) / 1800);
+          breathePhaseRef.current = phase;
+          const canvasEl = canvasRef.current;
+          if (canvasEl) canvasEl.dataset.pulsePhase = phase.toFixed(3);
+        }
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
         // 深一层部门在默认缩放下淡出：13 个部门全画会在内圈叠成一团，放大
         // （≥1.8×）或聚焦/选中时才实心显示。
@@ -1413,9 +1425,12 @@ export default function Legion3DPage() {
         // 否则会连「这个部门有谁」一起看不清）。
         const previewDepth = depthPreviewRef.current;
         const offLayer = previewDepth !== null && node.kind === 'group' && Math.max(1, node.depth ?? 1) !== previewDepth;
+        const breathe = breatheTarget && breathePhaseRef.current >= 0
+          ? 1 - Math.abs(0.5 - breathePhaseRef.current) * 0.12
+          : 1;
         let alpha = (1 - depthT * depthFade) * (dim ? (selectedRef.current ? 0.14 : 0.22) : 1) * (offline ? 0.42 : 1)
           * (emptyDept ? 0.3 : deepDept ? 0.12 : 1)
-          * (offLayer ? 0.34 : 1);
+          * (offLayer ? 0.34 : 1) * breathe;
         if (node.kind === 'core') alpha = Math.min(1, alpha + 0.15);
         const color = nodeColor(node, tk, statusByAlias);
         // Stable core size keeps the logo crisp and its labels still.

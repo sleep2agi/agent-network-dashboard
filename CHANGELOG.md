@@ -6,6 +6,13 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.273 — 2026-11-02
+
+### 3D 军团：选中的部门会轻微呼吸
+
+- 画布里被选中/聚焦的部门透明度按 1.8 秒周期轻微起伏（±6%），让「盯着这个部门」有活的感觉。
+- 相位由绘制用的同一时间值算出，并写回画布 `data-pulse-phase`；系统开启「减少动态效果」时不呼吸。
+
 ## 0.6.4-preview.272 — 2026-11-02
 
 ### 军团 2D：聚焦部门亮起呼吸光弧
