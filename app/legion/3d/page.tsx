@@ -3011,7 +3011,12 @@ export default function Legion3DPage() {
                 role="option"
                 aria-selected={selected === n.id}
                 data-selected={selected === n.id ? 'true' : undefined}
-                onFocus={() => applyDepthPreview(n.kind === 'group' ? Math.max(1, n.depth ?? 1) : null)}
+                onFocus={e => {
+                  applyDepthPreview(n.kind === 'group' ? Math.max(1, n.depth ?? 1) : null);
+                  // 列表有最大高度：方向键往下走时，焦点会跑到看不见的地方。
+                  // 滚动到可见（nearest 不会把整页带动）。
+                  e.currentTarget.scrollIntoView({ block: 'nearest' });
+                }}
                 onMouseEnter={() => applyDepthPreview(n.kind === 'group' ? Math.max(1, n.depth ?? 1) : null)}
                 onBlur={() => applyDepthPreview(null)}
                 ref={el => { if (selected === n.id && el) el.scrollIntoView({ block: 'nearest' }); }}
