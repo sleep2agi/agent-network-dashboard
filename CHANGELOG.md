@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.269 — 2026-11-02
+
+### 军团 2D：「返回全体」之后焦点不再掉回 body
+
+- 点「返回全体」时这个按钮自己就消失了，焦点随之落到 body，键盘用户得从头 Tab。
+- 现在按钮消失后由面板接管焦点（面板 `tabIndex={-1}`，走项目既有的
+  `restoreFocusAfterUnmount`：只在焦点真丢了时才接管，不会抢用户已经挪走的焦点）。
+
 ## 0.6.4-preview.268 — 2026-11-02
 
 ### 3D 节点列表：方向键不会把焦点带出可视区
