@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.275 — 2026-11-02
+
+### 3D 军团：入场镜头会停住（可观测）
+
+- 画布把镜头朝向节流镜像到 `data-view-yaw`，配合已有的 `data-zoom`，就能验证「入场结束后镜头不再漂」，
+  而不是只看截图。
+- 验收在入场 1.3 秒后连读两次（间隔 700 毫秒）：倍率与朝向都必须相同（本次实测 102% / 0.620 两次一致）。
+
 ## 0.6.4-preview.274 — 2026-11-02
 
 ### 军团 2D：编制图进场那一刻有「推到位」的感觉
