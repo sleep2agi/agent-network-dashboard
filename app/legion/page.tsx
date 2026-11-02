@@ -1011,14 +1011,17 @@ export default function LegionPage() {
                     const focused = focusGroup === node.id;
                     return (
                       <g key={`sector:${node.id}`}>
+                        {/* 扇区厚度随层级递进：外层部门粗而淡（表示「一大类」），
+                            内层部门细而实（表示「具体科室」）。层级不再只靠半径区分。 */}
                         <path
                           data-role="sector"
+                          data-depth={node.depth ?? 1}
                           d={arcPath(size.width / 2, size.height / 2, baseRadius * 0.33, node.spanStart!, node.span!)}
                           fill="none"
                           stroke={focused ? 'var(--hl)' : 'var(--border-hover)'}
-                          strokeWidth={focused ? 3 : 2}
+                          strokeWidth={focused ? 3 : Math.min(4.5, 1.6 + 0.8 * (Math.max(1, node.depth ?? 1) - 1))}
                           strokeLinecap="butt"
-                          opacity={on ? (focused ? 0.95 : 0.55) : 0.08}
+                          opacity={on ? (focused ? 0.95 : Math.max(0.34, 0.62 - 0.12 * (Math.max(1, node.depth ?? 1) - 1))) : 0.08}
                         />
                         {/* 聚焦部门加一圈呼吸光弧：静态描边只能说「选中了」，动起来才像「镜头停在这儿」。
                             reduced-motion 下由 CSS 关掉动画，退化成静态弧。 */}
