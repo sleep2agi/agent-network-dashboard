@@ -2983,6 +2983,14 @@ export default function Legion3DPage() {
               >
                 <span className="w-8 shrink-0 text-[11px] text-[var(--fg-dim)]">{KIND_LABEL[n.kind]}</span>
                 <span className="truncate">{n.label}</span>
+                {/* 列表里直接给规模：挑部门时不必先点开看详情，也免得「平台」和「平台2组」看起来一样大。 */}
+                <span className="ml-auto shrink-0 tabular-nums text-[10px] text-[var(--fg-dim)]" data-testid={`legion-3d-list-facts-${n.id}`}>
+                  {n.kind === 'group'
+                    ? `${n.memberCount} 人 · ${layout.nodes.filter(x => x.parentId === n.id && x.kind === 'group').length} 下级`
+                    : n.kind === 'core'
+                      ? ''
+                      : `${n.agentCount} Agent`}
+                </span>
               </button>
             ))}
           {layout.stats.people > LEGION_LABEL_PEOPLE && (
