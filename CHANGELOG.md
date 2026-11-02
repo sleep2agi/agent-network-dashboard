@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.274 — 2026-11-02
+
+### 军团 2D：编制图进场那一刻有「推到位」的感觉
+
+- 打开军团 2D 时，编制图在 500 毫秒内淡入并轻微放大（96.5% → 100%），只播一次。
+- 缩放围绕图形自身中心（`transform-box: fill-box`），不会因为画布坐标偏移而跑位；
+  交互用的平移/缩放照旧，动画只叠在 CSS 层；减少动态效果下直接跳过。
+
 ## 0.6.4-preview.273 — 2026-11-02
 
 ### 3D 军团：选中的部门会轻微呼吸

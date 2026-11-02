@@ -988,7 +988,9 @@ export default function LegionPage() {
                     <stop offset="100%" stopColor="var(--bg-secondary)" />
                   </radialGradient>
                 </defs>
-                <g transform={`translate(${view.tx} ${view.ty}) scale(${view.k})`}>
+                {/* 入场：整张编制图轻微放大淡入，像镜头把这张图「推到位」。
+                    只在首帧挂一次；reduced-motion 下由 CSS 直接跳过。 */}
+                <g data-role="legion-plate" transform={`translate(${view.tx} ${view.ty}) scale(${view.k})`}>
                   {layout.rings.map(ring => (
                     <circle
                       key={ring.ring}

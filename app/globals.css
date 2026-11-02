@@ -2341,3 +2341,21 @@ html[data-legion-present='1'] [data-app-shell-nav] {
 @media (prefers-reduced-motion: reduce) {
   [data-legion-root] [data-role="focus-pulse"] { animation: none; opacity: 0.5; }
 }
+
+/* 军团 2D：编制图入场淡入 + 轻微放大。一次性动画，不占常驻帧。 */
+@keyframes legion-plate-in {
+  from { opacity: 0; transform-origin: center; }
+  to { opacity: 1; }
+}
+@keyframes legion-plate-scale {
+  from { transform: scale(0.965); }
+  to { transform: scale(1); }
+}
+[data-legion-root] [data-role="legion-plate"] {
+  animation: legion-plate-in .5s ease-out both, legion-plate-scale .5s ease-out both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-legion-root] [data-role="legion-plate"] { animation: none; }
+}
