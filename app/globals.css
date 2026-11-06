@@ -196,12 +196,7 @@ nothing blurs. */
   padding-top: 12px !important;
   padding-bottom: 12px !important;
 }
-[data-density="compact"] [data-nav-item] {
-  min-height: 34px !important;
-}
-[data-density="comfortable"] [data-nav-item] {
-  min-height: 44px !important;
-}
+/* 侧栏是「图标轨」：44×44 的方块，改高度只会让图标错位，不纳入密度作用面。 */
 
 /* Command palette modal surface — bumped depth so it sits clearly above
    the page content in both themes. Light/mint: white shell with a real
