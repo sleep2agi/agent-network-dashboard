@@ -22,7 +22,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useAnetConfig, useHealth } from '../lib/hooks';
 import { applyTheme } from '../components/ThemeSwitcher';
-import { DENSITY_OPTIONS, applyDensity, readDensity, type DensityPref } from '../lib/density';
+import { DENSITY_OPTIONS, applyDensity, useDensity } from '../lib/density';
 import { DASHBOARD_VERSION } from '../lib/version';
 import { clearPrivateChatStorage } from '../lib/chat-outbox';
 import { SETTINGS_SECTIONS, SETTINGS_LINKS, SETTINGS_THEMES } from '../lib/settings-model';
@@ -62,8 +62,7 @@ export default function SettingsPage() {
   // hydration 不匹配：服务端渲染 cyber，客户端首帧读 localStorage 得到 light。
   // 挂载后再同步到真实选择（这时已经 hydrate 完，不会打架）。
   const [theme, setTheme] = useState<string>('cyber');
-  const [density, setDensity] = useState<DensityPref>('standard');
-  useEffect(() => { setDensity(readDensity()); }, []);
+  const density = useDensity();
   const [notifyHint, setNotifyHint] = useState('');
   const notifyOn = useSyncExternalStore(subscribeNotify, notifySnapshot, () => false);
   useEffect(() => {
@@ -292,7 +291,6 @@ export default function SettingsPage() {
                     onClick={() => {
                       try { localStorage.setItem('anet-density', opt.key); } catch {}
                       applyDensity(opt.key);
-                      setDensity(opt.key);
                     }}
                     aria-pressed={density === opt.key}
                     title={opt.hint}

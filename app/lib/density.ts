@@ -9,7 +9,7 @@
  * 这些行高来自 Tailwind 的 py-* / min-h-* 类，变量接不进去；只覆盖这三处
  * 高频列表（侧栏导航 / 节点列表 / 需求列表）是可控且可断言的。
  */
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 export type DensityPref = 'compact' | 'standard' | 'comfortable';
 
@@ -42,20 +42,24 @@ export function applyDensity(pref: DensityPref): void {
   window.dispatchEvent(new Event(DENSITY_EVENT));
 }
 
-/** 组件里读当前密度；切档时自动重渲染。 */
+function subscribeDensity(onChange: () => void): () => void {
+  window.addEventListener(DENSITY_EVENT, onChange);
+  window.addEventListener('storage', onChange);
+  return () => {
+    window.removeEventListener(DENSITY_EVENT, onChange);
+    window.removeEventListener('storage', onChange);
+  };
+}
+
+/**
+ * 组件里读当前密度；切档时自动重渲染。
+ *
+ * 用 `useSyncExternalStore` 而不是 `useEffect` + `setState`：后者会被仓库的
+ * `react-hooks/set-state-in-effect` 规则拦下（也确实会多一次级联渲染）。
+ * 快照是字符串，直接读 localStorage 不会造成无限循环。
+ */
 export function useDensity(): DensityPref {
-  const [pref, setPref] = useState<DensityPref>('standard');
-  useEffect(() => {
-    setPref(readDensity());
-    const sync = () => setPref(readDensity());
-    window.addEventListener(DENSITY_EVENT, sync);
-    window.addEventListener('storage', sync);
-    return () => {
-      window.removeEventListener(DENSITY_EVENT, sync);
-      window.removeEventListener('storage', sync);
-    };
-  }, []);
-  return pref;
+  return useSyncExternalStore(subscribeDensity, readDensity, () => 'standard' as DensityPref);
 }
 
 /** 头像尺寸随密度变化（与客户端一致：密度会缩放 AliasAvatar，不只是行高）。 */
