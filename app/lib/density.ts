@@ -9,6 +9,8 @@
  * 这些行高来自 Tailwind 的 py-* / min-h-* 类，变量接不进去；只覆盖这三处
  * 高频列表（侧栏导航 / 节点列表 / 需求列表）是可控且可断言的。
  */
+import { useEffect, useState } from 'react';
+
 export type DensityPref = 'compact' | 'standard' | 'comfortable';
 
 export const DENSITY_STORAGE_KEY = 'anet-density';
@@ -29,9 +31,36 @@ export function readDensity(): DensityPref {
   }
 }
 
+const DENSITY_EVENT = 'anet-density-change';
+
 export function applyDensity(pref: DensityPref): void {
   if (typeof document === 'undefined') return;
   const el = document.documentElement;
   if (pref === 'standard') el.removeAttribute('data-density');
   else el.setAttribute('data-density', pref);
+  // 同一标签页内其它组件（例如头像尺寸）也要立刻跟着变；storage 事件只在别的标签页触发。
+  window.dispatchEvent(new Event(DENSITY_EVENT));
+}
+
+/** 组件里读当前密度；切档时自动重渲染。 */
+export function useDensity(): DensityPref {
+  const [pref, setPref] = useState<DensityPref>('standard');
+  useEffect(() => {
+    setPref(readDensity());
+    const sync = () => setPref(readDensity());
+    window.addEventListener(DENSITY_EVENT, sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(DENSITY_EVENT, sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+  return pref;
+}
+
+/** 头像尺寸随密度变化（与客户端一致：密度会缩放 AliasAvatar，不只是行高）。 */
+export function densityAvatarSize(pref: DensityPref, standard = 32): number {
+  if (pref === 'compact') return Math.round(standard * 0.82);
+  if (pref === 'comfortable') return Math.round(standard * 1.15);
+  return standard;
 }

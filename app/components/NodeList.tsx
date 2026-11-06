@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AliasAvatar } from './AliasAvatar';
+import { densityAvatarSize, useDensity } from '../lib/density';
 import { useChatUnread } from '../lib/chat-unread';
 import { useHasDraft } from '../lib/chat-drafts';
 import { usePinned } from '../lib/chat-pin';
@@ -72,6 +73,7 @@ interface NodeListRowProps {
 function NodeListRow({ session: s, selected, unread, onSelect, onContextMenu }: NodeListRowProps) {
   const pinned = usePinned(s.alias);
   const muted = useMuted(s.alias);
+  const density = useDensity();
   return (
     <button
       key={s.alias}
@@ -112,7 +114,7 @@ function NodeListRow({ session: s, selected, unread, onSelect, onContextMenu }: 
       }`}
     >
       <div className="relative shrink-0">
-        <AliasAvatar alias={s.alias} size={32} />
+        <AliasAvatar alias={s.alias} size={densityAvatarSize(density, 32)} />
         {s.online && (
           <span
             aria-hidden
