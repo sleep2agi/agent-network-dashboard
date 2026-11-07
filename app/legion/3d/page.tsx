@@ -494,7 +494,7 @@ export default function Legion3DPage() {
       orphans,
       departments: hierarchy.data?.departments,
       members: hierarchy.data?.members,
-    }),
+    }, { projected: true }),
     [peopleList, orphans, hierarchy.data],
   );
 
