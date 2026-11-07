@@ -70,10 +70,16 @@ const WORLD_R: Record<LegionNode['kind'], number> = {
   agent: 0.021,
 };
 
-function nodeBody({ item, projected: p }: SceneNode<LegionNode>, people: number) {
+function nodeBody({ item, projected: p }: SceneNode<LegionNode>, people: number, agents = 0) {
   const crowd = item.kind === 'person' && people > LEGION_LABEL_PEOPLE ? 0.78 : 1;
+  // Agent 头像随规模收缩：331 个时环上相邻点实测只有 ~9.5px 间距，而头像直径 12.4px，
+  // 必然对叠成一团（2026-11-07 实测 124 对）。用 sqrt(200/n) 收缩到 0.78，
+  // 让「每像素多少个点」保持稳定；200 个以下不缩，小规模时头像仍然够大。
+  const agentShrink = item.kind === 'agent' && agents > 200
+    ? Math.max(0.62, Math.sqrt(200 / agents))
+    : 1;
   const worldR = item.kind === 'group' ? deptWorldRadius(item.depth ?? 1) : WORLD_R[item.kind];
-  const radius = Math.max(1.4, worldR * p.scale * crowd);
+  const radius = Math.max(1.4, worldR * p.scale * crowd * agentShrink);
   return { radius, ...(item.kind === 'group' ? departmentDisc(radius) : { rx: radius, ry: radius }) };
 }
 
@@ -399,6 +405,9 @@ export default function Legion3DPage() {
   // 悬停提示需要指针位置（canvas 坐标），只存在 ref 里，避免每帧 setState。
   const hoverPos = useRef<{ x: number; y: number } | null>(null);
   const starsRef = useRef(makeStars(160));
+  // 布局取证用：?debug=1 时把每帧投影结果（屏幕坐标 + 半径）挂到 window，
+  // 供叠压/中心空洞/盘面遮挡这类**构图指标**量化。只读导出，不参与渲染。
+  const debugProjRef = useRef(typeof window !== 'undefined' && window.location.search.includes('debug=1'));
   // 点部门：镜头转到它正面（沿用 yawTarget 的缓动），并在落点闪一圈，
   // 让人知道「我飞到这里了」。闪圈用 HTML 覆盖层，不写进画布的每帧绘制。
   const [flyFlash, setFlyFlash] = useState<{ x: number; y: number; r: number; label: string } | null>(null);
@@ -1188,6 +1197,32 @@ export default function Legion3DPage() {
       const toPoint = (n: LegionNode) => nodeToVec3({ ...n });
       let nodes = projectScene(layout.nodes, toPoint, cam, size);
 
+      // 布局取证导出（?debug=1）：每 12 帧写一次，量「头像叠压对数 / 中心空洞比 /
+      // 部门盘被压面积」。放在投影之后、绘制之前，不影响任何渲染结果。
+      if (debugProjRef.current && frame % 12 === 0) {
+        (window as unknown as { __legionProjected?: unknown }).__legionProjected = {
+          frame,
+          width: size.width,
+          height: size.height,
+          zoom: view.zoom,
+          nodes: nodes.map((sn) => {
+            const body = nodeBody(sn, layout.stats.people, layout.stats.agents);
+            return {
+              id: sn.item.id,
+              kind: sn.item.kind,
+              label: sn.item.label,
+              depth: sn.item.depth ?? null,
+              wr: Math.round(sn.item.radius * 1000) / 1000,
+              ang: Math.round(sn.item.angle * 1000) / 1000,
+              x: Math.round(sn.projected.x * 10) / 10,
+              y: Math.round(sn.projected.y * 10) / 10,
+              rx: Math.round((body.rx ?? body.radius) * 10) / 10,
+              ry: Math.round((body.ry ?? body.radius) * 10) / 10,
+            };
+          }),
+        };
+      }
+
       // 自动取景：默认 zoom=1.12 时整张图只占画布 40% 左右，剩下大半是空的。
       // 首屏和「重置视角」后按节点实体包围盒取景，留出实测标题/工具栏和图例。
       // 只在结构/尺寸变化时做，不跟用户的拖动/缩放抢。
@@ -1200,7 +1235,7 @@ export default function Legion3DPage() {
         const fittingCam = { ...cam, focal: cam.focal * zoom / initialZoom };
         const projected = zoom === initialZoom ? nodes : projectScene(layout.nodes, toPoint, fittingCam, size);
         const bodies = projected.map(sn => {
-          const { rx, ry } = nodeBody(sn, layout.stats.people);
+          const { rx, ry } = nodeBody(sn, layout.stats.people, layout.stats.agents);
           // Includes the widest hover/selection stroke, also at the pixel floor.
           return { x: sn.projected.x, y: sn.projected.y, rx: rx + 6, ry: ry + 6 };
         });
@@ -1308,7 +1343,7 @@ export default function Legion3DPage() {
           const v = nodeToVec3(node);
           const hit = projectPoint({ x: v.x, y: GROUND_Y, z: v.z }, cam, size);
           if (!hit) continue;
-          const { rx: bodyRx } = nodeBody(sn, layout.stats.people);
+          const { rx: bodyRx } = nodeBody(sn, layout.stats.people, layout.stats.agents);
           const nearness = Math.max(0.3, Math.min(1, hit.scale / (cam.focal / Math.max(0.6, cam.dist))));
           const lit = selectedRef.current === node.id || hoverRef.current === node.id;
           const strength = (lit ? 0.3 : dark ? 0.2 : 0.13) * nearness;
@@ -1464,7 +1499,7 @@ export default function Legion3DPage() {
       // 选中节点的聚光：把视线钉在被选中的那一个上，周围再按 activeSet 压暗。
       const selectedNode = selectedRef.current ? byId.get(selectedRef.current) : null;
       if (selectedNode && !interacting) {
-        const { rx, ry } = nodeBody(selectedNode, layout.stats.people);
+        const { rx, ry } = nodeBody(selectedNode, layout.stats.people, layout.stats.agents);
         const halo = haloFor(tk.accent);
         // 半径跟着节点走，但别把部门大的椭圆放大成一片背景光；
         // 浅底上更要收，否则整块画布都被染绿。
@@ -1645,7 +1680,7 @@ export default function Legion3DPage() {
         const p = sn.projected;
         // 人多的时候成员环会连成一条「白香肠」：100 个人挤在一圈上，半径再大
         // 就互相吃掉轮廓。>60 人时把成员点收小一档，让环重新变成一颗颗。
-        const { radius: r, rx, ry } = nodeBody(sn, layout.stats.people);
+        const { radius: r, rx, ry } = nodeBody(sn, layout.stats.people, layout.stats.agents);
         const depthT = Math.min(1, Math.max(0, (p.depth - near) / (far - near)));
         const st = node.kind === 'agent' ? (statusByAlias.get(node.label) ?? 'offline') : null;
         const statusMiss = statusOnly !== null && node.kind === 'agent' && st !== statusOnly;
@@ -1669,7 +1704,7 @@ export default function Legion3DPage() {
           if (canvasEl) {
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             for (const sn of nodes) {
-              const { rx, ry } = nodeBody(sn, layout.stats.people);
+              const { rx, ry } = nodeBody(sn, layout.stats.people, layout.stats.agents);
               minX = Math.min(minX, sn.projected.x - rx);
               minY = Math.min(minY, sn.projected.y - ry);
               maxX = Math.max(maxX, sn.projected.x + rx);
@@ -1710,7 +1745,7 @@ export default function Legion3DPage() {
             {
               let agents = 0, offlineAgents = 0, area = 0;
               for (const sn of nodes) {
-                const { rx, ry } = nodeBody(sn, layout.stats.people);
+                const { rx, ry } = nodeBody(sn, layout.stats.people, layout.stats.agents);
                 area += Math.PI * rx * ry;
                 if (sn.item.kind === 'agent') {
                   agents += 1;
@@ -2364,7 +2399,7 @@ export default function Legion3DPage() {
   }, []);
 
   const hitBody = (sn: SceneNode<LegionNode>) => {
-    const { rx, ry } = nodeBody(sn, layout.stats.people);
+    const { rx, ry } = nodeBody(sn, layout.stats.people, layout.stats.agents);
     return { rx: rx + 6, ry: ry + 6 };
   };
 
