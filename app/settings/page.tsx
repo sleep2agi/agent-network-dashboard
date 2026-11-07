@@ -168,10 +168,13 @@ export default function SettingsPage() {
               <p className="mb-3 text-xs text-[var(--fg-muted)]">
                 这些设备正以你的账号登录 Hub。退出后该设备需要重新登录。
               </p>
-              {devicesNote && <p className="text-xs text-[var(--fg-muted)]" data-devices-note>{devicesNote}</p>}
-              {!devicesNote && devices === null && <p className="text-xs text-[var(--fg-muted)]">读取中…</p>}
-              {!devicesNote && devices?.length === 0 && <p className="text-xs text-[var(--fg-muted)]">没有其他登录设备。</p>}
-              {!devicesNote && !!devices?.length && (
+              {/* 提示语与列表是两件事：退出成功后要显示「已退出其他设备」，
+                  但列表不能跟着消失（2026-11-07 模拟 Hub 实测：旧写法用 !devicesNote
+                  统一门控，导致成功后整块列表凭空不见）。 */}
+              {devices === null && !devicesNote && <p className="text-xs text-[var(--fg-muted)]">读取中…</p>}
+              {devices?.length === 0 && !devicesNote && <p className="text-xs text-[var(--fg-muted)]">没有其他登录设备。</p>}
+              {devicesNote && <p className="mb-2 text-xs text-[var(--fg-muted)]" data-devices-note>{devicesNote}</p>}
+              {!!devices?.length && (
                 <ul className="space-y-2">
                   {devices.map((d, i) => {
                     const id = String(d.id ?? d.session_id ?? i);
@@ -186,8 +189,12 @@ export default function SettingsPage() {
                         <button
                           onClick={async () => {
                             const res = await fetch(`/api/hub/auth-sessions?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-                            if (res.ok) { setDevices(prev => (prev ? prev.filter((_, idx) => idx !== i) : prev)); setDevicesNote(''); }
-                            else setDevicesNote('退出失败：Hub 拒绝了该请求');
+                            if (res.ok) {
+                              const listRes = await fetch('/api/hub/auth-sessions');
+                              const listData = await listRes.json().catch(() => null);
+                              if (listRes.ok && Array.isArray(listData?.sessions)) setDevices(listData.sessions);
+                              setDevicesNote('');
+                            } else setDevicesNote('退出失败：Hub 拒绝了该请求');
                           }}
                           className="shrink-0 rounded-lg bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)]"
                         >退出</button>
@@ -200,8 +207,14 @@ export default function SettingsPage() {
                 <button
                   onClick={async () => {
                     const res = await fetch('/api/hub/auth-sessions?action=revoke-others', { method: 'POST' });
-                    if (res.ok) { setDevices(prev => (prev ? prev.slice(0, 1) : prev)); setDevicesNote('已退出其他设备'); }
-                    else setDevicesNote('退出其他设备失败：Hub 拒绝了该请求');
+                    if (res.ok) {
+                      // 重新拉一次真实列表：本地 slice 只是猜「应该剩 1 台」，
+                      // 服务端可能保留了不止一台（拒绝/部分成功），猜错就会显示不存在的设备。
+                      const listRes = await fetch('/api/hub/auth-sessions');
+                      const listData = await listRes.json().catch(() => null);
+                      if (listRes.ok && Array.isArray(listData?.sessions)) setDevices(listData.sessions);
+                      setDevicesNote('已退出其他设备');
+                    } else setDevicesNote('退出其他设备失败：Hub 拒绝了该请求');
                   }}
                   className="mt-3 rounded-lg bg-[var(--bg-elevated)] px-4 py-2 text-sm text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)]"
                 >退出其他所有设备</button>
