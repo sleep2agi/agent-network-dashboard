@@ -485,9 +485,17 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
     // 世界半径 0.028 的间距，投到屏幕上只有 ~8px，而头像直径 12.4px —— 所以 6 档时
     // 相邻档必然对叠（实测 132 对）。反过来每档至少要让出 0.06 世界半径（≈17px 屏幕），
     // 于是 0.86–1.0 这个区间只放得下 3 档；点数再多才拓到 4 档（内层 0.79）。
-    const bandCount = Math.min(4, Math.max(3, Math.ceil(agentNodes.length / 110)));
-    const innerBand = bandCount === 4 ? 0.84 : 0.86;
-    const step = bandCount > 1 ? (1 - innerBand) / (bandCount - 1) : 0;
+    // 小规模（<80）保持原样：稀疏场景本来就排得开，改了反而会把「最左/最右」的点挪开，
+    // 演示态构图包围盒被部门盘拉偏（2026-11-07 实测 present:stillCentred 70px）。
+    const sparse = agentNodes.length < 80;
+    const bandCount = sparse ? 3 : Math.min(4, Math.ceil(agentNodes.length / 110));
+    // 内层 0.88：人环在 0.84，Agent 内档压到 0.84 就会和人头像插在同一圈上。
+    // 内 0.86 / 外 1.04：内层要躲开人环 0.84，外层略越过 1.00 的轨道线，
+    // 这样 4 档之间的径向间距能到 0.06（≈17px 屏幕），比压在 1.0 以内（0.04，≈11px）
+    // 少一半叠压（实测 74 → 待测）。
+    const innerBand = sparse ? 0.86 : 0.86;
+    const outerBand = sparse ? 1 : 1.04;
+    const step = bandCount > 1 ? (outerBand - innerBand) / (bandCount - 1) : 0;
     const perBand = agentNodes.length / bandCount;
     // 角度不能均分：投影把 y 压扁了约 30%，均分角度会让**左右两端**的点在屏幕上挤成
     // 一堆（实测 109/136 对叠压都在两侧）。改成按「投影后的弧长」均分——顶部/底部走得快，
@@ -516,8 +524,11 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
       const slot = Math.floor(i / bandCount);
       // 交错：奇数档整体偏移半个槽位，两档的点不会落在同一条半径线上。
       const stagger = band % 2 === 0 ? 0 : 0.5;
-      const angle = angleAtArc((slot + 0.5 + stagger) / perBand);
-      const radius = RING_RADIUS.agent * (1 - step * band);
+      // 稀疏场景用原来的等角均分，保持与 .399 完全一致的构图。
+      const angle = sparse
+        ? ((i + 0.5) / agentNodes.length) * TAU
+        : angleAtArc((slot + 0.5 + stagger) / perBand);
+      const radius = RING_RADIUS.agent * (innerBand + step * band);
       agent.angle = angle;
       agent.radius = radius;
       const pt = polar(radius, angle);
