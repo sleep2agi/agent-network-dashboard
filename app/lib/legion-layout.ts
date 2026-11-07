@@ -466,7 +466,13 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
 
   // Agent 外层均匀铺满整圈：按所属成员方位排序后再均分。否则一个部门占
   // 9/16 人时，它的几百个 Agent 会全挤在同一侧（admin 截图里的「半边糊、半边空」）。
-  // 半径保留 3 档交错，外层仍有一点纹理。
+  //
+  // 环带数量随规模自适应（2026-11-07）。原来固定 3 档：331 个 Agent 时每档约 110 个，
+  // 相邻角间隔 2π/110，屏幕半径 ~460px 下弧长只有 ~26px，而头像直径约 12–22px（含
+  // 透视压缩），实测出现 125 对叠压、最狠的一对几乎完全重合（叠压率 0.96）——
+  // 截图里「环底糊成一团」就是这个。改成每档目标 ≤48 个（最多 6 档），间距直接翻倍。
+  // 半径在 [0.72, 1] 之间均匀铺开，内层顺便补一点层次感；相邻档错开半个步长，
+  // 避免两档在同一角度叠成竖列。同部门 Agent 仍按 parentId 排序后连续分配，方位不变。
   const agentNodes = nodes.filter(n => n.kind === 'agent');
   if (agentNodes.length > 1) {
     const byIdMap = new Map(nodes.map(n => [n.id, n]));
@@ -475,10 +481,43 @@ export function buildLegionLayout(input: LegionInput): LegionLayout {
       const pb = byIdMap.get(b.parentId ?? '')?.angle ?? 0;
       return pa - pb || a.order - b.order;
     });
-    const bands = [1, 0.93, 0.86];
+    // 环带数量与径向跨度（2026-11-07 实测校准）：
+    // 世界半径 0.028 的间距，投到屏幕上只有 ~8px，而头像直径 12.4px —— 所以 6 档时
+    // 相邻档必然对叠（实测 132 对）。反过来每档至少要让出 0.06 世界半径（≈17px 屏幕），
+    // 于是 0.86–1.0 这个区间只放得下 3 档；点数再多才拓到 4 档（内层 0.79）。
+    const bandCount = Math.min(4, Math.max(3, Math.ceil(agentNodes.length / 110)));
+    const innerBand = bandCount === 4 ? 0.84 : 0.86;
+    const step = bandCount > 1 ? (1 - innerBand) / (bandCount - 1) : 0;
+    const perBand = agentNodes.length / bandCount;
+    // 角度不能均分：投影把 y 压扁了约 30%，均分角度会让**左右两端**的点在屏幕上挤成
+    // 一堆（实测 109/136 对叠压都在两侧）。改成按「投影后的弧长」均分——顶部/底部走得快，
+    // 就多给角度；两侧走得慢，就少给角度。q 是实测的投影压缩比（|dy|/|dx| ≈ 0.7）。
+    const q = 0.7;
+    const SAMPLES = 720;
+    const cum: number[] = [0];
+    for (let k = 1; k <= SAMPLES; k += 1) {
+      const th = (k / SAMPLES) * TAU;
+      cum.push(cum[k - 1] + Math.hypot(Math.cos(th), q * Math.sin(th)));
+    }
+    const totalArc = cum[SAMPLES];
+    const angleAtArc = (fraction: number) => {
+      const target = fraction * totalArc;
+      let lo = 0;
+      let hi = SAMPLES;
+      while (lo < hi - 1) {
+        const mid = (lo + hi) >> 1;
+        if (cum[mid] < target) lo = mid; else hi = mid;
+      }
+      const span = cum[hi] - cum[lo] || 1;
+      return ((lo + (target - cum[lo]) / span) / SAMPLES) * TAU;
+    };
     agentNodes.forEach((agent, i) => {
-      const angle = ((i + 0.5) / agentNodes.length) * TAU;
-      const radius = RING_RADIUS.agent * bands[i % bands.length];
+      const band = i % bandCount;
+      const slot = Math.floor(i / bandCount);
+      // 交错：奇数档整体偏移半个槽位，两档的点不会落在同一条半径线上。
+      const stagger = band % 2 === 0 ? 0 : 0.5;
+      const angle = angleAtArc((slot + 0.5 + stagger) / perBand);
+      const radius = RING_RADIUS.agent * (1 - step * band);
       agent.angle = angle;
       agent.radius = radius;
       const pt = polar(radius, angle);
