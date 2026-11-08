@@ -1571,11 +1571,11 @@ export default function Legion3DPage() {
         // 中心聚焦（2026-11-08）：主干更亮更粗，外围细线按「离中心多远」再压一档，
         // 让视线先落在军团核心、再顺骨架往外读；不再是一整片等亮的发丝。
         // depthFade：部门(radius≈0.5)≈0.84，Agent 环(0.86–1.04)≈0.68。
-        const depthFade = 1 - 0.32 * Math.min(1, e.b.item.radius ?? 1);
+        const depthFade = 1 - 0.5 * Math.min(1, e.b.item.radius ?? 1);
         ctx.globalAlpha = e.lit
           ? (activeSet ? 0.65 : e.trunk ? (dark ? 0.72 : 0.62) : (dark ? 0.2 * depthFade : 0.2 * depthFade))
           : 0.045;
-        ctx.lineWidth = e.trunk ? 1.8 : huge ? 0.7 : e.lit && activeSet ? 1.4 : dark ? 0.95 : 0.8;
+        ctx.lineWidth = e.trunk ? 1.8 : huge ? 0.7 : e.lit && activeSet ? 1.4 : dark ? 0.75 : 0.8;
         ctx.stroke();
       }
       // Continuous tapered trails read as light flow rather than scattered dots.
