@@ -6,6 +6,14 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.403 — 2026-11-08
+
+### 军团 2D：相邻人员的名字不再互相压住
+
+- 2D 组织架构图里，相邻人员的外圈名字此前会重叠（chengshi/chuqi 横向重叠 21px）。
+  现在按角度间距稀疏显示，放大到 115% 以上、或选中/悬停时仍显示全部名字。
+- 3D 视图、布局、配色、交互均未改动。
+
 ## 0.6.4-preview.402 — 2026-11-08
 
 ### 军团 3D：视线先落在核心
