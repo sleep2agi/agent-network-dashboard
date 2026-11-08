@@ -494,9 +494,12 @@ export function buildLegionLayout(input: LegionInput, options: LegionLayoutOptio
     // 小规模（<80）保持 .399 原样：稀疏场景本来就排得开，改了会把最左/最右的点挪开，
     // 演示态构图包围盒被不对称部门盘拉偏（实测 present:stillCentred 70px）。
     const sparse = agentNodes.length < 80;
-    const bandCount = sparse ? 3 : Math.min(4, Math.ceil(agentNodes.length / 110));
+    // 档数用「规模阈值」而不是 ceil(n/110)（2026-11-09 实测）：
+    // 旧公式在 330/331 之间跳变（3 档 ↔ 4 档），同一个网络 ±1 个 Agent 就让叠压
+    // 从 52 对变 9 对。现在 >220 恒 4 档，80–220 用 3 档并贴回 1.0 轨道线。
+    const bandCount = sparse ? 3 : agentNodes.length > 220 ? 4 : 3;
     const innerBand = 0.86;
-    const outerBand = sparse ? 1 : 1.04;
+    const outerBand = bandCount === 4 ? 1.04 : 1;
     const step = bandCount > 1 ? (outerBand - innerBand) / (bandCount - 1) : 0;
     const perBand = agentNodes.length / bandCount;
     // 角度不能均分：投影把 y 压扁了约 30%，均分角度会让**左右两端**的点在屏幕上挤成
