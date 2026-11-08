@@ -1568,8 +1568,14 @@ export default function Legion3DPage() {
         ctx.strokeStyle = e.lit && (activeSet || e.trunk) ? tk.accent : tk.info;
         // 暗场实测：叶子连线 0.13/0.8px 在深底上几乎读不出来，整张图看着像散点。
         // 只提暗场（浅底 0.2 已经足够），并把主干提高到 0.62——层级关系要一眼看见。
-        ctx.globalAlpha = e.lit ? (activeSet ? 0.65 : e.trunk ? (dark ? 0.62 : 0.58) : (dark ? 0.2 : 0.2)) : 0.045;
-        ctx.lineWidth = e.trunk ? 1.5 : huge ? 0.7 : e.lit && activeSet ? 1.4 : dark ? 0.95 : 0.8;
+        // 中心聚焦（2026-11-08）：主干更亮更粗，外围细线按「离中心多远」再压一档，
+        // 让视线先落在军团核心、再顺骨架往外读；不再是一整片等亮的发丝。
+        // depthFade：部门(radius≈0.5)≈0.84，Agent 环(0.86–1.04)≈0.68。
+        const depthFade = 1 - 0.32 * Math.min(1, e.b.item.radius ?? 1);
+        ctx.globalAlpha = e.lit
+          ? (activeSet ? 0.65 : e.trunk ? (dark ? 0.72 : 0.62) : (dark ? 0.2 * depthFade : 0.2 * depthFade))
+          : 0.045;
+        ctx.lineWidth = e.trunk ? 1.8 : huge ? 0.7 : e.lit && activeSet ? 1.4 : dark ? 0.95 : 0.8;
         ctx.stroke();
       }
       // Continuous tapered trails read as light flow rather than scattered dots.
