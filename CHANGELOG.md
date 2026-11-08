@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.406 — 2026-11-09
+
+### 军团 3D：环带层数不再随 Agent 数 ±1 跳变
+
+- 之前层数按 `ceil(Agent 数 / 110)` 计算：331 个是 4 层、330 个变 3 层，
+  同一个网络里掉一个 Agent，整张图的层次就会变、头像叠压从个位数涨到几十。
+- 现在改为规模阈值：超过 220 个 Agent 恒为 4 层，80–220 用 3 层并贴回外圈轨道线。
+- 连线、配色、视角、交互均未改动。
+
 ## 0.6.4-preview.405 — 2026-11-08
 
 ### 军团 3D：默认视角更立体
