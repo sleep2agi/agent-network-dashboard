@@ -188,6 +188,27 @@ export default function LegionPage() {
     }),
     [peopleList, orphans, hierarchy.data, collapsed],
   );
+  // 人员标签稀疏化（2026-11-08）：2D 上相邻人员的外围名字会互相压住
+  // （实测 chengshi/chuqi 横向重叠 21px）。按角度间距做贪心筛选：
+  // 与上一个「已显示」的人员角度间隔不足 0.14 rad 的，先不显示名字，
+  // 放大（k≥1.15）或选中/悬停时仍会显示——这是「密集时少画几个」，
+  // 不是永久隐藏信息。
+  const personLabelAllowed = useMemo(() => {
+    const persons = layout.nodes
+      .filter((n) => n.kind === 'person')
+      .slice()
+      .sort((a, b) => a.angle - b.angle);
+    const keep = new Set<string>();
+    let last = Number.NEGATIVE_INFINITY;
+    for (const person of persons) {
+      if (person.angle - last >= 0.14) {
+        keep.add(person.id);
+        last = person.angle;
+      }
+    }
+    return keep;
+  }, [layout]);
+
   const statusByAlias = useMemo(() => {
     const map = new Map<string, string>();
     for (const s of status.data?.sessions ?? []) map.set(s.alias, s.status);
@@ -1399,7 +1420,7 @@ export default function LegionPage() {
                                 {(node.label || '?').slice(0, 1).toUpperCase()}
                               </text>
                             )}
-                            {(layout.stats.people <= LEGION_LABEL_PEOPLE || view.k >= 1.15 || isSelected || hovered === node.id) && (
+                            {((layout.stats.people <= LEGION_LABEL_PEOPLE && personLabelAllowed.has(node.id)) || view.k >= 1.15 || isSelected || hovered === node.id) && (
                               <text
                                 textAnchor="middle"
                                 x={-Math.sin(node.angle) * (r + 22 * labelScale)}
