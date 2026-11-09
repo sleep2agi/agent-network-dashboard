@@ -41,6 +41,11 @@ import { LegionChat } from '../LegionChat';
 // 滚轮改的是 zoom（scale），不再同时改变透视。
 // pitch 抬到 0.60：部门分三层之后需要一点俯角才看得见层级之间的落差。
 const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.85, dist: 4.9, zoom: 1.12, panX: 0, panY: 0 };
+/** 窄屏（< 640）的默认俯角。390 视口下盘面被压成宽扁椭圆：fill.mjs 实测
+ *  内容只占屏高 25%（宽 70%），竖向空间大量浪费。抬到 1.02 rad（≈58°）让盘更接近
+ *  正圆，把高度用起来；桌面端保持 0.85（49° 的分层视角是定稿值，不再动）。
+ *  只影响「首次进入 / 重置视角」，不覆盖用户已保存的视角。 */
+const NARROW_PITCH = 1.02;
 // 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
 const MIN_ZOOM = 0.25;
@@ -470,6 +475,11 @@ export default function Legion3DPage() {
       };
       setZoomPct(Math.round(viewRef.current.zoom * 100));
       sharedLock.current = true;
+      return;
+    }
+    // 没有保存过视角 + 窄屏：用更陡的俯角，竖向空间别浪费。
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      viewRef.current = { ...DEFAULT_VIEW, pitch: NARROW_PITCH };
     }
   }, [networkId]);
 
@@ -2361,7 +2371,8 @@ export default function Legion3DPage() {
     sharedLock.current = false;
     try { localStorage.removeItem(`legion3d-view:${networkId}`); } catch { /* ignore */ }
     yawTarget.current = null;
-    viewRef.current = { ...DEFAULT_VIEW };
+    const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
+    viewRef.current = { ...DEFAULT_VIEW, pitch: narrow ? NARROW_PITCH : DEFAULT_VIEW.pitch };
     setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
     fitPending.current = true;
     userAdjusted.current = false;
