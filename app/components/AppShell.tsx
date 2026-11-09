@@ -4,11 +4,21 @@ import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { HealthBanner } from './HealthBanner';
 import UpdateBanner from './UpdateBanner';
-import { CommandPalette } from './CommandPalette';
+import dynamic from 'next/dynamic';
+// 命令面板只在 ⌘K 时才需要。静态 import 会把它和它的索引逻辑塞进**每个页面**的首屏包，
+// 而 2026-11-09 的时间线显示：JS 264KB 在 1.15s 下完、首个 API 请求在 2.97s，
+// 中间 1.8s 全是执行 + 水合 —— 首屏最大的成本在这里，不在接口。
+// 改成 dynamic + 「idle 或首次按 ⌘K 才挂载」：不改变行为，只把它挪出关键路径。
+const CommandPalette = dynamic(() => import('./CommandPalette').then(m => m.CommandPalette), {
+  ssr: false,
+  loading: () => null,
+});
 import { HelpOverlay } from './HelpOverlay';
 import { ServersDrawer } from './ServersDrawer';
 import { MobileNav } from './MobileNav';
 import { useRadiusTier } from '../lib/useRadiusTier';
+import { useIdle } from '../lib/use-idle';
+import { useEffect, useState } from 'react';
 
 const NO_SHELL_PATHS = ['/login'];
 
@@ -16,6 +26,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   // 小控件圆角（item=8）：客户端按渲染高度定义，CSS 选不到，只能在挂载后量一次。
   useRadiusTier();
+  // 命令面板：idle 后挂载；若用户在这之前就按了 ⌘K / Ctrl+K，立刻挂载（行为不变）。
+  const idle = useIdle(2000);
+  const [paletteForced, setPaletteForced] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') setPaletteForced(true);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   if (NO_SHELL_PATHS.includes(pathname)) {
     return <>{children}</>;
@@ -49,7 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1 min-w-0 max-w-full overflow-x-hidden pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
       </main>
       <MobileNav />
-      <CommandPalette />
+      {(idle || paletteForced) && <CommandPalette />}
       <HelpOverlay />
       <ServersDrawer />
     </div>
