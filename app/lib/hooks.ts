@@ -58,6 +58,10 @@ export function useSessions(options?: { lite?: boolean }) {
 // Absent alias → caller defaults to 'active'.
 interface NodeAttrsSnapshot {
   display_name: string | null;
+  /** 节点权限模式（normal / readonly / restricted），未上报为 null。 */
+  permission_mode: string | null;
+  /** 当前登录是否可以修改权限（来自 viewer_can.permission_mode）。 */
+  can_edit_permission: boolean;
   team: string | null;
   tags: string[];
   attrs_revision: number;
@@ -74,6 +78,9 @@ interface NodesResp { nodes?: Array<{
   attrs_revision?: number;
   // avatar 接线单: cross-device custom avatar (hub #462 projection)
   avatar_url?: string | null;
+  // 节点权限（RFC-041）：normal / readonly / restricted；viewer_can 表示当前登录能否改。
+  permission_mode?: string | null;
+  viewer_can?: { permission_mode?: boolean } | null;
 }>; }
 export function useNodeLifecycle() {
   const { networkId, ready } = useNetworkId();
@@ -96,6 +103,8 @@ export function useNodeLifecycle() {
     if (n.alias) {
       attrsByAlias[n.alias] = {
         display_name: typeof n.display_name === 'string' ? n.display_name : null,
+        permission_mode: typeof n.permission_mode === 'string' ? n.permission_mode : null,
+        can_edit_permission: n.viewer_can?.permission_mode === true,
         team: typeof n.team === 'string' ? n.team : null,
         tags: Array.isArray(n.tags) ? n.tags : [],
         attrs_revision: typeof n.attrs_revision === 'number' ? n.attrs_revision : 0,

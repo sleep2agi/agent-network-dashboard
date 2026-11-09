@@ -37,7 +37,10 @@ function nodesFromSessions(sessions: Array<Record<string, unknown>>, requestedNe
  *  （2026-11-09 抓到的首屏时间线：/api/hub/nodes 394 KB + 一次 2953 ms 长任务，
  *   首行被压到 11.7 s。）*/
 const NODE_LITE_KEEP = ['alias', 'node_id', 'network_id', 'lifecycle_state', 'avatar_url',
-  'display_name', 'team', 'tags', 'attrs_revision', 'status', 'agent'] as const;
+  'display_name', 'team', 'tags', 'attrs_revision', 'status', 'agent',
+  // 权限模式（.439）：与 APP 对齐的只读展示。viewer_can.permission_mode 决定是否可改，
+  // 两个都是小字段（字符串 + 布尔对象），对 63KB 的 lite 体积影响可忽略。
+  'permission_mode', 'viewer_can'] as const;
 
 type NodesPayload = { nodes?: Array<Record<string, unknown>> } & Record<string, unknown>;
 

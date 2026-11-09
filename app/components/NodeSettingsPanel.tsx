@@ -375,6 +375,8 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
    *  the app stays interactive. */
   positioning?: 'fixed' | 'absolute';
 }) {
+  // 权限模式展示：与 AvatarSection 共用同一个 SWR 缓存（lite nodes），不额外发请求。
+  const { attrsByAlias } = useNodeLifecycle();
   useReturnFocus();
   const runtime = s.runtime || '—';
   const initialModel = s.model || s.agent || '';
@@ -810,6 +812,16 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
               <InfoRow label="所属 network" value={s.network_id || '—'} />
               <InfoRow label="当前 session" value={s.session_id || '—'} />
               <InfoRow label="在线状态" value={s.status || '—'} />
+              <InfoRow
+                label="权限模式"
+                value={(() => {
+                  const p = attrsByAlias[s.alias];
+                  if (!p?.permission_mode) return '—';
+                  const label = p.permission_mode === 'readonly' ? '只读'
+                    : p.permission_mode === 'restricted' ? '受限' : '正常';
+                  return p.can_edit_permission ? `${label}（可管理）` : label;
+                })()}
+              />
             </div>
           </section>
 
