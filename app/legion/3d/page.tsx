@@ -59,6 +59,12 @@ const LOOK_SPEED = LOOK_PARAM === 'slow' ? 0.55 : 1;
 // 判据（deploy/legion-metrics/tier.mjs）：相邻环中心场景 Y 距 ≥ 默认 ×1.3，
 // 且头部叠压对数不增加（不能为了高差把节点挤到一起）。默认 1 = 完全不变。
 const LOOK_TIER = LOOK_PARAM === 'tier' ? 1.3 : 1;
+// `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
+// `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
+// 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
+// 判据见 deploy/legion-metrics/link-light.mjs：差集像素的平均亮度应 ≥ 默认 ×1.3。
+const LINK_BOOST = LOOK_PARAM === 'light' ? 1.6 : 1;
+const LINKS_OFF = LOOK_PARAM === 'nolinks';
 // 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
 const MIN_ZOOM = 0.25;
@@ -1565,6 +1571,9 @@ export default function Legion3DPage() {
         edgeDraws.push({ a, b, cx, cy: cy + sag, lit, trunk: b.item.kind === 'group' });
       });
 
+      // 测量开关：只关连线，保留节点/标签/地面光斑，便于画布差集量「连线可见像素」。
+      if (LINKS_OFF) edgeDraws.length = 0;
+
       // Broad bloom is reserved for the hierarchy spine or an explicit selection.
       // No per-edge blur; bounded strokes keep large networks responsive.
       const glowBudget = huge ? 24 : heavy ? 40 : 64;
@@ -1598,9 +1607,10 @@ export default function Legion3DPage() {
         // 让视线先落在军团核心、再顺骨架往外读；不再是一整片等亮的发丝。
         // depthFade：部门(radius≈0.5)≈0.84，Agent 环(0.86–1.04)≈0.68。
         const depthFade = 1 - 0.5 * Math.min(1, e.b.item.radius ?? 1);
-        ctx.globalAlpha = e.lit
+        const baseAlpha = e.lit
           ? (activeSet ? 0.65 : e.trunk ? (dark ? 0.72 : 0.62) : (dark ? 0.2 * depthFade : 0.2 * depthFade))
           : 0.045;
+        ctx.globalAlpha = Math.min(1, baseAlpha * LINK_BOOST);
         ctx.lineWidth = e.trunk ? 1.8 : huge ? 0.7 : e.lit && activeSet ? 1.4 : dark ? 0.75 : 0.8;
         ctx.stroke();
       }
@@ -1649,6 +1659,7 @@ export default function Legion3DPage() {
       ctx.globalAlpha = 1;
 
       // 部门内部短弧线（神明 phalanx18 的 pr 弧）：同部门相邻成员之间一条
+      if (!LINKS_OFF)
       // 朝圆心收的二次曲线 —— 细彩线打底 + 白色短划，比部门间连线细一档。
       {
         const kids = new Map<string, LegionNode[]>();
