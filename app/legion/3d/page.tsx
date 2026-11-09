@@ -66,7 +66,12 @@ const LOOK_TIER = TIER_PARAM === '0' ? 1 : 1.3;
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
 // 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
 // 判据见 deploy/legion-metrics/link-light.mjs：差集像素的平均亮度应 ≥ 默认 ×1.3。
-const LINK_BOOST = LOOK_PARAM === 'light' ? 2 : 1;
+// `?look=light` 的提亮系数按视口分档：桌面 ×2 实测「连线光能 ×1.52 / 区域绝对亮度 ×1.18」达标；
+// 手机同样 ×2 只有 ×1.18 / ×1.07（连线像素占比 5.64%，区域里叠了大量节点，提亮被稀释），
+// 因此窄屏提到 ×3 再测。判据同 deploy/legion-metrics/link-light.mjs（能量 ≥1.3 且绝对 ≥1.15）。
+const LINK_BOOST = LOOK_PARAM !== 'light'
+  ? 1
+  : (typeof window !== 'undefined' && window.innerWidth < 640 ? 3 : 2);
 // 测量开关只在 `?debug=1` 下生效，避免误加参数时线上出现「没有连线」的画布。
 const DEBUG_PROJ = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('debug') === '1';
