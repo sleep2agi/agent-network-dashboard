@@ -65,7 +65,8 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
 
   // Round 37 / Loop: pull the target session out of the SWR cache that
   // TopoGraph already populates — same URL, so no extra network fetch.
-  const { sessions } = useSessions();
+  // 与 NodesView/ChatPane 同 key（lite=1），避免同页重复拉全量。
+  const { sessions } = useSessions({ lite: true });
   const { health } = useHealth();
   const session = useMemo(() => sessions.find(s => s.alias === alias), [sessions, alias]);
   // #515: presence via SSE-reachability, same source of truth as the
