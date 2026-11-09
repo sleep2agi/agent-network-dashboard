@@ -31,6 +31,26 @@ function nodesFromSessions(sessions: Array<Record<string, unknown>>, requestedNe
     }));
 }
 
+/** lite=1：只保留 /nodes 页真正读取的字段。
+ *  实测：402 个节点的全量响应 394 KB，而 useNodeLifecycle 只用
+ *  alias / node_id / lifecycle_state / avatar_url / display_name / team / tags / attrs_revision。
+ *  （2026-11-09 抓到的首屏时间线：/api/hub/nodes 394 KB + 一次 2953 ms 长任务，
+ *   首行被压到 11.7 s。）*/
+const NODE_LITE_KEEP = ['alias', 'node_id', 'network_id', 'lifecycle_state', 'avatar_url',
+  'display_name', 'team', 'tags', 'attrs_revision', 'status', 'agent'] as const;
+
+function projectNodes(data: any, lite: boolean) {
+  if (!lite) return data;
+  if (Array.isArray(data?.nodes)) {
+    data.nodes = data.nodes.map((n: Record<string, unknown>) => {
+      const out: Record<string, unknown> = {};
+      for (const k of NODE_LITE_KEEP) if (k in n) out[k] = n[k];
+      return out;
+    });
+  }
+  return data;
+}
+
 export async function GET(req: Request) {
   const authFailure = await requireDashboardAuth();
   if (authFailure) return authFailure;
@@ -57,7 +77,8 @@ export async function GET(req: Request) {
     const contentType = res.headers.get('content-type') || '';
     if (res.ok && contentType.includes('application/json')) {
       const data = await res.json();
-      if (data.nodes && data.nodes.length > 0) return Response.json(data);
+      const lite = searchParams.get('lite') === '1';
+      if (data.nodes && data.nodes.length > 0) return Response.json(projectNodes(data, lite));
       // nodes table empty — fall back to sessions, map to node shape
       const statusUrl = `${HUB_URL}/api/status${params.toString() ? '?' + params.toString() : ''}`;
       const statusRes = await fetch(statusUrl, { headers: await hubHeaders(), next: { revalidate: 0 } });
@@ -65,9 +86,9 @@ export async function GET(req: Request) {
       if (statusRes.ok) {
         const statusData = await statusRes.json();
         const nodes = nodesFromSessions(statusData.sessions || [], requestedNetworkId);
-        return Response.json({ ok: true, nodes, count: nodes.length, source: 'sessions' });
+        return Response.json(projectNodes({ ok: true, nodes, count: nodes.length, source: 'sessions' }, lite));
       }
-      return Response.json(data);
+      return Response.json(projectNodes(data, lite));
     }
     // 老 Hub 没有 /api/nodes（404）：用 /api/status 兜底是设计好的降级。
     // 但 5xx 不是「没有节点」，两个上游都失败时必须报错，否则
@@ -77,7 +98,8 @@ export async function GET(req: Request) {
     if (statusRes.ok) {
       const statusData = await statusRes.json();
       const nodes = nodesFromSessions(statusData.sessions || [], requestedNetworkId);
-      return Response.json({ ok: true, nodes, count: nodes.length, source: 'sessions' });
+      const liteFallback = searchParams.get('lite') === '1';
+      return Response.json(projectNodes({ ok: true, nodes, count: nodes.length, source: 'sessions' }, liteFallback));
     }
     // —— 旧 Hub 回退链的**第二跳**也可能 401（主路由 404 → /api/status 401）。
     // 那是「没有登录」，不是「这次查不到节点」：必须原样上抛。
