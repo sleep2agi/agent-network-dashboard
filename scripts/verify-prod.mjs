@@ -121,6 +121,12 @@ if (USE_BROWSER) {
     await page.goto(`${BASE}/login`, { waitUntil: 'networkidle', timeout: 25000 });
     const hasForm = await page.locator('input[type="password"]').count();
     await page.goto(`${BASE}/legion/3d`, { waitUntil: 'networkidle', timeout: 25000 });
+    // 未登录的跳转是**客户端**做的：API 401 后由组件执行 window.location.assign('/login')。
+    // networkidle 只保证「没有在途请求」，不保证那次跳转已经执行 —— load 48 时 JS 事件
+    // 循环延迟可达 1 秒。实测（2026-11-09，公网 .406 连跑 5 次）有 1 次读到跳转前的
+    // /legion/3d：签名 {"hasForm":1,"landed":"/legion/3d","errs":[]}，与 .407 发布被拦那次完全一致。
+    // 这里改成等 URL 真的变成 /login（判据没变：最终仍必须是 /login）。
+    await page.waitForURL(u => new URL(u).pathname === '/login', { timeout: 15000 }).catch(() => {});
     const landed = new URL(page.url()).pathname;
     await b.close();
     errs.length === 0 && hasForm > 0 && landed === '/login'
