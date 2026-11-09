@@ -6,6 +6,16 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.423 — 2026-11-09
+
+### 军团 3D：新增可选「更强中心聚焦」观感（`?look=glow`）
+
+- 默认行为完全不变。加上 `?look=glow` 后，核心光晕的浓度与半径放大（alpha ×1.8、半径 ×1.15），
+  中心更亮、外环相对更暗。
+- 判据不是「看起来更亮」，而是画布采样：中心区平均亮度 / 外环平均亮度 的比值应上升 ≥15%。
+
+---
+
 ## 0.6.4-preview.422 — 2026-11-09
 
 ### 节点详情：手机上版本不再被省略号吃掉
