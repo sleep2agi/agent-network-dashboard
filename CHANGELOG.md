@@ -6,6 +6,22 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.439 — 2026-11-10
+
+### 节点设置面板：新增「权限模式」展示
+
+- 基础信息里新增一行「权限模式」：正常 / 只读 / 受限；当前登录若能改，
+  会标注「（可管理）」。未上报时显示「—」，不做猜测。
+- 数据来自节点列表接口的 `permission_mode` 与 `viewer_can.permission_mode`（与 APP 同源）。
+
+实测：接口值 `permission_mode=normal`、`viewer_can.permission_mode=false`，
+面板显示「正常」（不带「可管理」），与接口一致。
+
+> 说明：这是只读展示。修改权限需要 `PUT /api/nodes/:id/permission-mode`，
+> 该端点的入参与权限仍在与 Hub 侧确认中，未在本版开放。
+
+---
+
 ## 0.6.4-preview.438 — 2026-11-10
 
 ### 节点「规则文件」支持编辑与写入
