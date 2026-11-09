@@ -6,6 +6,7 @@ import { useNetworkId } from './network-context';
 import { isMuted, useMuteVersion } from './chat-mute';
 import { currentUserAlias, isUserRecipient, isUserSender, mergeMessageFeeds } from './chat-unread-feed';
 import { useSSE } from './useSSE';
+import { useIdle } from './use-idle';
 
 const STORAGE_PREFIX = 'anet_chat_read_v1:';
 const UNREAD_EVENT = 'anet-chat-read-updated';
@@ -101,6 +102,8 @@ export function markChatRead(alias: string, networkId: string) {
 }
 
 export function useChatUnread() {
+  // 角标是次要信息：首屏先把节点列表放出去，200 条的 messages 请求等 idle。
+  const idle = useIdle();
   const { networkId, ready } = useNetworkId();
   // Messages are the ONLY count source: the hub mirrors every task reply as
   // a message to the originator (verified live: replied task + same-second
@@ -112,10 +115,10 @@ export function useChatUnread() {
   // 等于先打一枪全网的、等 networkId 到了再打一枪带作用域的（实测 /api/hub/messages
   // 在 4.1s 与 6.2s 各来一次）。null key 在 SWR 里表示「不发请求」。
   // lite=1：角标只合并 from/to/时间戳，不需要消息正文（正文占该请求体积的绝大部分）。
-  const wideKey = ready && networkId ? withNetwork('/api/hub/messages?limit=200&lite=1', networkId) : null;
+  const wideKey = idle && ready && networkId ? withNetwork('/api/hub/messages?limit=200&lite=1', networkId) : null;
   // 第二条取数只看「发给当前用户」的那一窗：忙碌网络上，用户自己的消息会被
   // 全网 200 条窗口挤掉。两条**合并**而不是替换——合并只会多算，不会少算。
-  const inboxKey = me && ready && networkId ? withNetwork(`/api/hub/messages?limit=200&alias=${encodeURIComponent(me)}&lite=1`, networkId) : null;
+  const inboxKey = idle && me && ready && networkId ? withNetwork(`/api/hub/messages?limit=200&alias=${encodeURIComponent(me)}&lite=1`, networkId) : null;
   // SSE 先到先算：角标以前要等下一轮 5s 轮询；hub 本来就会推事件，
   // 有事件就立刻重取，轮询只做兜底（SSE 掉线时才回到 5s）。
   const sseEnabled = process.env.NEXT_PUBLIC_DISABLE_SSE !== '1';

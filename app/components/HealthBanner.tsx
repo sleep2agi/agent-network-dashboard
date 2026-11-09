@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { parseHubTime } from '../lib/time';
 import { presenceStatus, type SseSessionsMap } from '../lib/presence';
+import { useIdle } from '../lib/use-idle';
 
 interface StatsResponse {
   ok?: boolean;
@@ -35,6 +36,8 @@ const fetcher = async (url: string) => {
  * Never blocks content; sits as a 28px-tall sticky strip above page.
  */
 export function HealthBanner() {
+  // 失败任务横幅是次要信息：首屏先让节点列表拿到连接与主线程，task-stats 等 idle。
+  const idle = useIdle();
   const { data: stats, error: statsErr } = useSWR<StatsResponse>('/api/hub/stats', fetcher, {
     refreshInterval: 15000,
     dedupingInterval: 5000,
@@ -59,7 +62,7 @@ export function HealthBanner() {
   // 旧实现拉 tasks?status=failed&limit=100（含 result 全文，生产实测约 400 KB），
   // 再在前端按时间过滤计数；现在服务端数好只回一个数字。
   const { data: failedStat } = useSWR<{ ok: boolean; recent?: number }>(
-    allTimeFailed > 0 ? '/api/hub/task-stats?status=failed&sinceHours=24' : null,
+    idle && allTimeFailed > 0 ? '/api/hub/task-stats?status=failed&sinceHours=24' : null,
     fetcher,
     { refreshInterval: 60000, dedupingInterval: 30000, shouldRetryOnError: false },
   );
