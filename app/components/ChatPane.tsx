@@ -116,6 +116,15 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
                     <span title={`模型 / Model: ${session.model}`} data-testid="chat-pane-model">{shortModel(session.model)}</span>
                   </>
                 )}
+                {/* 版本：客户端 APP 的节点详情头部就是「运行时 / 模型 / 版本 / 主机」四个 chip
+                    （src/NodeDetailScreen.tsx 的 headerCard）。Dashboard 之前只有前三项缺版本，
+                    这里补齐，字段来自 /api/hub/status 的 session.version。 */}
+                {session.version && (
+                  <>
+                    <span className="text-[var(--fg-dim)] mx-1">·</span>
+                    <span title={`运行时版本 / Version: ${session.version}`} data-testid="chat-pane-version">{session.version}</span>
+                  </>
+                )}
               </div>
             )}
           </div>
