@@ -14,6 +14,7 @@ import { ChatPaneOverflowMenu } from './ChatPaneOverflowMenu';
 import { NodeRulesDialog } from './NodeRulesDialog';
 import { NodeSkillsDialog } from './NodeSkillsDialog';
 import { useSessions } from '../lib/hooks';
+import type { Session } from './types';
 import { shortModel, shortServer } from '../lib/node-format';
 import { t } from '../lib/ui-lang';
 
@@ -230,11 +231,15 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           undefined briefly during SWR revalidation; guard so the
           drawer doesn't open with no data (button was clicked before
           sessions loaded — rare but possible). */}
-      {skillsOpen && session && (
-        <NodeSkillsDialog session={session} onClose={() => setSkillsOpen(false)} />
+      {skillsOpen && (
+        <SessionGate alias={alias} onClose={() => setSkillsOpen(false)} label={t('技能', 'Skills')}>
+          {(s) => <NodeSkillsDialog session={s} onClose={() => setSkillsOpen(false)} />}
+        </SessionGate>
       )}
-      {rulesOpen && session && (
-        <NodeRulesDialog session={session} onClose={() => setRulesOpen(false)} />
+      {rulesOpen && (
+        <SessionGate alias={alias} onClose={() => setRulesOpen(false)} label={t('规则文件', 'Rules file')}>
+          {(s) => <NodeRulesDialog session={s} onClose={() => setRulesOpen(false)} />}
+        </SessionGate>
       )}
       {settingsOpen && session && (
         <NodeSettingsPanel
@@ -249,10 +254,41 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           anchorRef={overflowAnchorRef}
           onClose={() => setOverflowOpen(false)}
           onOpenSettings={() => setSettingsOpen(true)}
-          onOpenRules={session ? () => setRulesOpen(true) : undefined}
-          onOpenSkills={session ? () => setSkillsOpen(true) : undefined}
+          onOpenRules={() => setRulesOpen(true)}
+          onOpenSkills={() => setSkillsOpen(true)}
         />
       )}
     </aside>
   );
+}
+
+/**
+ * 会话数据是异步的：菜单项点开时可能还没拿到该 alias 的会话行。
+ * 这里只做一件事——等会话到了再渲染真正的对话框，避免「点开发现没反应」。
+ * （不把「可能为空」扩散进对话框内部：两者的职责分开。）
+ */
+function SessionGate({ alias, onClose, label, children }: {
+  alias: string;
+  onClose: () => void;
+  label: string;
+  children: (session: Session) => React.ReactNode;
+}) {
+  const { sessions } = useSessions({ lite: true });
+  const session = sessions.find(s => s.alias === alias);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  if (!session) {
+    return (
+      <div className="fixed inset-0 z-[300] flex items-center justify-center bg-[var(--scrim)] p-3"
+        role="dialog" aria-modal="true" data-testid="session-gate-loading">
+        <div className="rounded-lg border border-[var(--col-line-strong)] bg-[var(--bg-elevated)] px-4 py-3 text-[12px] text-[var(--fg-muted)]">
+          {label}：正在读取会话信息…
+        </div>
+      </div>
+    );
+  }
+  return <>{children(session)}</>;
 }
