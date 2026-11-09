@@ -54,6 +54,9 @@ export interface ChatPaneProps {
 }
 
 export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPaneProps) {
+  // 2026-11-10：菜单里的「规则文件/技能」曾按能力旗决定是否渲染，而能力旗随会话数据异步到达，
+  // 线上实测 1440 直达时 5 次里 2 次「菜单里没有这两项」（本地 6/6 正常，属时序）。
+  // 现在改为「只要拿到会话就渲染」，能力在对话框内即时判定（不支持直接说明，不发门铃、不等 25 秒）。
   const [rulesOpen, setRulesOpen] = useState(false);
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -246,8 +249,8 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           anchorRef={overflowAnchorRef}
           onClose={() => setOverflowOpen(false)}
           onOpenSettings={() => setSettingsOpen(true)}
-          onOpenRules={session?.rules_file_capable ? () => setRulesOpen(true) : undefined}
-          onOpenSkills={session?.skills_capable ? () => setSkillsOpen(true) : undefined}
+          onOpenRules={session ? () => setRulesOpen(true) : undefined}
+          onOpenSkills={session ? () => setSkillsOpen(true) : undefined}
         />
       )}
     </aside>

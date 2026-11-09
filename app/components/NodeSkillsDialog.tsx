@@ -67,6 +67,7 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
 
   useEffect(() => {
     cancelled.current = false;
+    if (session.skills_capable === false) return () => { cancelled.current = true; };
     (async () => {
       setPhase({ kind: 'loading' });
       const args: Record<string, string> = nodeId ? { node_id: nodeId } : { alias };
@@ -82,7 +83,7 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
       setPhase({ kind: 'done', skills: parsed.skills });
     })();
     return () => { cancelled.current = true; };
-  }, [attempt, nodeId, alias, ring]);
+  }, [attempt, nodeId, alias, ring, session.skills_capable]);
 
   const openSkill = async (skill: Skill) => {
     setOpen({ skill, content: null });
@@ -105,6 +106,8 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose, open]);
+
+  const notCapable = session.skills_capable === false;
 
   return (
     <div
@@ -158,20 +161,25 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto px-3 py-2">
-          {phase.kind === 'loading' && (
+          {notCapable && (
+            <div className="py-6 text-center text-[12px] text-[var(--danger)]" data-testid="node-skills-error">
+              {t('该节点未上报「技能」能力', 'This node does not report skills support')}
+            </div>
+          )}
+          {!notCapable && phase.kind === 'loading' && (
             <div className="py-6 text-center text-[12px] text-[var(--fg-muted)]" data-testid="node-skills-loading">
               {t('正在向节点读取技能列表…', 'Reading skills from node…')}
             </div>
           )}
-          {phase.kind === 'error' && (
+          {!notCapable && phase.kind === 'error' && (
             <div className="py-6 text-center text-[12px] text-[var(--danger)]" data-testid="node-skills-error">{phase.message}</div>
           )}
-          {phase.kind === 'done' && phase.skills.length === 0 && (
+          {!notCapable && phase.kind === 'done' && phase.skills.length === 0 && (
             <div className="py-6 text-center text-[12px] text-[var(--fg-muted)]" data-testid="node-skills-empty">
               {t('该节点没有技能', 'This node has no skills')}
             </div>
           )}
-          {phase.kind === 'done' && phase.skills.length > 0 && !open && (
+          {!notCapable && phase.kind === 'done' && phase.skills.length > 0 && !open && (
             <ul className="flex flex-col" data-testid="node-skills-list">
               {phase.skills.map(s => (
                 <li key={s.name}>
