@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { AliasAvatar } from './AliasAvatar';
 import { TaskChatPanel } from './TaskChatPanel';
-import { NodeSettingsPanel } from './NodeSettingsPanel';
+import dynamic from 'next/dynamic';
+// 首屏拆包第 2 步：节点设置面板 1084 行，只在点开「会话设置」时才需要。
+// 之前静态引入，会参与 /nodes 首屏解析与水合。判据同第 1 步：ltTotal 不退化。
+const NodeSettingsPanel = dynamic(
+  () => import('./NodeSettingsPanel').then((m) => ({ default: m.NodeSettingsPanel })),
+  { ssr: false },
+);
 import { ChatPaneOverflowMenu } from './ChatPaneOverflowMenu';
 import { useSessions } from '../lib/hooks';
 import { shortModel, shortServer } from '../lib/node-format';
