@@ -29,6 +29,16 @@ function shortServer(server: string | null | undefined): string {
   return server.length > 12 ? `${server.slice(0, 8)}…` : server;
 }
 
+/** 模型短名：`deepseek/deepseek-flash` → `deepseek-flash`。
+ *  详情头那一行要同时放 agent / server / model，厂商前缀（provider/）会把
+ *  服务器名挤掉；完整值留在 title 里，悬停可见。没有 model 时返回空串，
+ *  调用方据此整段不渲染——不留一个孤零零的分隔点。 */
+export function shortModel(model: string | null | undefined): string {
+  if (!model) return '';
+  const slash = model.lastIndexOf('/');
+  return slash >= 0 ? model.slice(slash + 1) : model;
+}
+
 type ViewMode = 'list' | 'grid';
 
 /** 节点状态：圆点 + 文字，不再是带边框的彩色胶囊。
@@ -790,6 +800,16 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                     </div>
                     <div className="mt-0.5 truncate text-xs text-gray-500">
                       {(s.agent || '—')}<span className="text-gray-700 mx-1.5">·</span><span title={s.server || ''}>{shortServer(s.server)}</span>
+                      {/* 模型行（2026-11-09）：Hub 的 session-status 本来就带 model，
+                          Dashboard 的 /api/hub/status 也一直 select 它，但详情头没显示，
+                          于是「这个节点跑的是什么模型」只能在设置面板里看到。
+                          没有 model 的会话整段不渲染，不出现多余的 `·`。 */}
+                      {shortModel(s.model) && (
+                        <>
+                          <span className="text-gray-700 mx-1.5">·</span>
+                          <span title={`模型 / Model: ${s.model}`}>{shortModel(s.model)}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <span className="hidden shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[11px] text-cyan-300/70 sm:inline">Tap to chat</span>
@@ -877,7 +897,7 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                       {unread && isMuted(s.alias) && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                     </div>
                   </div>
-                  <div className="col-span-2 truncate text-xs text-gray-400" title={s.server || ''}>
+                  <div className="col-span-2 truncate text-xs text-gray-400" title={[s.agent, s.model, s.server].filter(Boolean).join(' · ')}>
                     <span className="truncate">{s.agent || '--'}<span className="text-gray-700 mx-1.5">·</span>{shortServer(s.server)}</span>
                   </div>
                   <div className="col-span-4 truncate text-xs text-gray-500" title={s.task || ''}>{s.task || '--'}</div>
