@@ -774,7 +774,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     // status so we can filter by presence.isOnline (SSE-reachable)
     // rather than the retired `status !== 'offline'` predicate.
     Promise.all([
-      fetch('/api/hub/status').then(r => r.ok ? r.json() : { sessions: [] }),
+      // lite=1：这里只用到 alias/status/network_id（@ 提及候选与别名→网络映射）。
+      // 全量 649 KB 在 load 40 时要 6.6s，而聊天面板在 /nodes 首页就会挂载 —— 实测
+      // 首行出现因此被拖到 7–13s（页面内 MutationObserver 测量，2026-11-09）。
+      fetch('/api/hub/status?lite=1').then(r => r.ok ? r.json() : { sessions: [] }),
       fetch('/api/hub/health').then(r => r.ok ? r.json() : {}),
     ]).then(([d, health]: [{ sessions?: { alias: string; status: string; network_id?: string }[] }, { sse_sessions?: Record<string, number> }]) => {
       const sessions = d.sessions || [];
