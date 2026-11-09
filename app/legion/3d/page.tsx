@@ -1720,6 +1720,16 @@ export default function Legion3DPage() {
           const canvasEl = canvasRef.current;
           if (canvasEl) canvasEl.dataset.pulsePhase = phase.toFixed(3);
         }
+        // 调试导出（仅 ?debug=1）：把核心自转相位与光流时间镜像到 canvas DOM。
+        // 为什么需要：`data-pulse-phase` 只反映「被选中部门的呼吸」，与核心自转不是同一个量，
+        // 用它去验证 ?look=slow 会得出「两版都测不到」（2026-11-09 实际踩过）。
+        if (debugProjRef.current) {
+          const canvasEl = canvasRef.current;
+          if (canvasEl) {
+            canvasEl.dataset.corePhase = corePhaseRef.current.toFixed(4);
+            canvasEl.dataset.flowTime = flowTimeRef.current.toFixed(4);
+          }
+        }
         // 镜头朝向也镜像到画布上（节流 200ms）：入场/巡礼结束是否真的停住，
         // 需要能读到「当前 yaw」而不是靠截图猜。
         // 节点包围盒实测（含描边余量）：窄屏是否把整张图装进画布，用数字说话。
