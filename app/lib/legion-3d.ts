@@ -69,14 +69,18 @@ export function depthDrop(kind?: string, depth?: number): number {
   return -Math.min(depth - 1, 2) * DEPTH_STEP;
 }
 
-/** 2D 布局节点 → 3D 坐标。x/z 用平面坐标，y 用环高度 + 部门层级 + 抖动。 */
+/** 2D 布局节点 → 3D 坐标。x/z 用平面坐标，y 用环高度 + 部门层级 + 抖动。
+ *  tierBoost 只作用于「层高」（环高度 + 部门下沉），默认 1 = 行为不变；
+ *  `?look=tier` 用它把落差放大，抖动不缩放（否则同层会重新变糊）。 */
 export function nodeToVec3(
   node: { x: number; y: number; ring: number; order: number; kind?: string; depth?: number },
   scale = 1,
+  tierBoost = 1,
 ): Vec3 {
+  const tier = (RING_HEIGHT[node.ring] ?? 0) + depthDrop(node.kind, node.depth);
   return {
     x: node.x * scale,
-    y: (RING_HEIGHT[node.ring] ?? 0) + depthDrop(node.kind, node.depth) + jitterHeight(node.order, node.ring),
+    y: tier * tierBoost + jitterHeight(node.order, node.ring),
     z: node.y * scale,
   };
 }
