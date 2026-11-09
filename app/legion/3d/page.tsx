@@ -1043,7 +1043,9 @@ export default function Legion3DPage() {
       // 被这行每帧覆盖 → 实测中心/外环亮度比 1.732 与默认完全相同（0.0%），
       // 也就是「参数写进去了但画布没变」。判据见 deploy/legion-metrics/glow.mjs。
       if (LOOK_PARAM === 'glow' && FX) {
-        FX = { ...FX, haloAlpha: Math.min(0.6, FX.haloAlpha * 1.8), haloRadius: FX.haloRadius * 1.15 };
+        // 「更聚焦」= 中心更浓 + 半径更小（`.424` 只放大半径 → 内外一起亮，比值仅 +2.7%）。
+        // 目标：中心/外环亮度比 ≥ 默认 × 1.15（默认约 1.795 ⇒ 目标 ≥ 2.06）。
+        FX = { ...FX, haloAlpha: Math.min(0.6, FX.haloAlpha * 1.9), haloRadius: FX.haloRadius * 0.82 };
       }
       // 每帧都会重挑 token，FX 的强调色必须在这里再套一次，否则只有背景换色、
       // 边线与扇区仍是原色（2026-11-06 实测：棕底蓝线）。
