@@ -63,7 +63,7 @@ const LOOK_TIER = LOOK_PARAM === 'tier' ? 1.3 : 1;
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
 // 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
 // 判据见 deploy/legion-metrics/link-light.mjs：差集像素的平均亮度应 ≥ 默认 ×1.3。
-const LINK_BOOST = LOOK_PARAM === 'light' ? 1.6 : 1;
+const LINK_BOOST = LOOK_PARAM === 'light' ? 2 : 1;
 const LINKS_OFF = LOOK_PARAM === 'nolinks';
 // 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
