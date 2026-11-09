@@ -108,8 +108,12 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
             {session && (
               <div className="mt-0.5 truncate text-[11px] text-[var(--fg-muted)]" data-testid="chat-pane-meta">
                 {session.agent || '—'}
-                <span className="text-[var(--fg-dim)] mx-1">·</span>
-                <span title={session.server || ''}>{shortServer(session.server)}</span>
+                {/* 窄屏让位：手机上一行只有约 148px，主机名是最长且最不常用的一项。
+                    桌面保持「运行时 · 主机 · 模型 · 版本」四件套（对齐客户端 APP 头部），
+                    手机只显示「运行时 · 模型 · 版本」，让模型/版本不被省略号吃掉。
+                    实测（.418，390×844）：带主机名时内容超宽 102px，靠 truncate 截断。 */}
+                <span className="hidden sm:inline text-[var(--fg-dim)] mx-1">·</span>
+                <span className="hidden sm:inline" title={session.server || ''}>{shortServer(session.server)}</span>
                 {shortModel(session.model) && (
                   <>
                     <span className="text-[var(--fg-dim)] mx-1">·</span>
