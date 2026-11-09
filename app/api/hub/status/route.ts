@@ -43,7 +43,7 @@ export async function GET(req: Request) {
         // 节点能力旗：会话详情按它决定是否显示「规则文件」等分区（与 APP 一致）。
         // 2026-11-10 教训：UI 开始读一个被投影掉的字段时，typecheck 不会报错，
         // 只有真的点一次才会发现「菜单项根本不出现」。
-        'rules_file_capable','logs_capable','files_capable','node_secrets_capable'] as const;
+        'rules_file_capable','logs_capable','files_capable','node_secrets_capable','skills_capable'] as const;
       data.sessions = data.sessions.map((s: Record<string, unknown>) => {
         const out: Record<string, unknown> = {};
         for (const k of KEEP) if (k in s) out[k] = s[k];

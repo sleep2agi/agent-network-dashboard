@@ -31,6 +31,7 @@ export interface Session {
   logs_capable?: boolean;
   files_capable?: boolean;
   node_secrets_capable?: boolean;
+  skills_capable?: boolean;
 }
 
 export interface Health {

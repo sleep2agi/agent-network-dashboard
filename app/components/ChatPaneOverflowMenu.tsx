@@ -29,11 +29,13 @@ export interface ChatPaneOverflowMenuProps {
   onOpenSettings: () => void;
   /** 提供时显示「规则文件」项（调用方按 rules_file_capable 决定是否传）。 */
   onOpenRules?: () => void;
+  /** 提供时显示「技能」项（调用方按 skills_capable 决定是否传）。 */
+  onOpenSkills?: () => void;
 }
 
 const EDGE = 8;
 
-export function ChatPaneOverflowMenu({ alias, anchorRef, onClose, onOpenSettings, onOpenRules }: ChatPaneOverflowMenuProps) {
+export function ChatPaneOverflowMenu({ alias, anchorRef, onClose, onOpenSettings, onOpenRules, onOpenSkills }: ChatPaneOverflowMenuProps) {
   // 菜单在 DOM 末尾（portal），打开后焦点若不进来，键盘用户要 Tab 穿过整页才能到达。
   // 按 role=menu 的标准模式：打开聚焦第一项，↑/↓ 循环，Esc 关闭并归还焦点。
   useReturnFocus();
@@ -140,6 +142,14 @@ export function ChatPaneOverflowMenu({ alias, anchorRef, onClose, onOpenSettings
       >
         {t('查看任务', 'View tasks')}
       </MenuItemLink>
+      {onOpenSkills && (
+        <MenuItem
+          testid="chat-pane-skills"
+          onClick={() => { onOpenSkills(); onClose(); }}
+        >
+          {t('技能', 'Skills')}
+        </MenuItem>
+      )}
       {onOpenRules && (
         <MenuItem
           testid="chat-pane-rules"
