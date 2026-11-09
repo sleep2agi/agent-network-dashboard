@@ -121,7 +121,7 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-3"
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-[var(--scrim)] p-3"
       role="dialog"
       aria-modal="true"
       aria-label={t('节点规则文件', 'Node rules file')}
@@ -131,7 +131,7 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
       <div className="flex max-h-[85vh] w-full max-w-[720px] flex-col overflow-hidden rounded-lg border border-[var(--col-line-strong)] bg-[var(--bg-elevated)] shadow-xl">
         <div className="flex items-center justify-between gap-2 border-b border-[var(--col-line-strong)] px-3 py-2">
           <div className="min-w-0">
-            <div className="truncate text-[13px] text-gray-100">
+            <div className="truncate text-[14px] text-[var(--fg)]">
               {t('规则文件', 'Rules file')}
               <span className="ml-2 text-[11px] text-[var(--fg-muted)]">{session.alias}</span>
             </div>
@@ -144,7 +144,7 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
               type="button"
               onClick={() => setAttempt((n) => n + 1)}
               data-testid="node-rules-retry"
-              className="rounded-md px-2 py-1 text-[11px] text-gray-300 hover:bg-[var(--bg-sunken)]"
+              className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-sunken)]"
             >
               {t('重新读取', 'Reload')}
             </button>
@@ -153,7 +153,7 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
               onClick={copy}
               disabled={phase.kind !== 'done'}
               data-testid="node-rules-copy"
-              className="rounded-md px-2 py-1 text-[11px] text-gray-300 hover:bg-[var(--bg-sunken)] disabled:opacity-40"
+              className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-sunken)] disabled:opacity-40"
             >
               {copied ? t('已复制', 'Copied') : t('复制', 'Copy')}
             </button>
@@ -162,7 +162,7 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
               onClick={onClose}
               data-testid="node-rules-close"
               aria-label={t('关闭', 'Close')}
-              className="rounded-md px-2 py-1 text-[11px] text-gray-400 hover:bg-[var(--bg-sunken)]"
+              className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-dim)] hover:bg-[var(--bg-sunken)]"
             >
               ✕
             </button>
@@ -176,14 +176,14 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
             </div>
           )}
           {phase.kind === 'error' && (
-            <div className="py-6 text-center text-[12px] text-red-300" data-testid="node-rules-error">{phase.message}</div>
+            <div className="py-6 text-center text-[12px] text-[var(--danger)]" data-testid="node-rules-error">{phase.message}</div>
           )}
           {phase.kind === 'done' && (!phase.exists
             ? <div className="py-6 text-center text-[12px] text-[var(--fg-muted)]" data-testid="node-rules-empty">{t('该节点没有规则文件', 'This node has no rules file')}</div>
             : (
               <pre
                 data-testid="node-rules-content"
-                className="whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-gray-200"
+                className="whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-[var(--fg)]"
               >{phase.content}</pre>
             ))}
         </div>
