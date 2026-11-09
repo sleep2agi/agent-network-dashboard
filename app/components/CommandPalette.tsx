@@ -367,7 +367,8 @@ export function CommandPalette() {
     (async () => {
       try {
         const [sRes, tRes] = await Promise.all([
-          fetch('/api/hub/status').then(r => r.ok ? r.json() : { sessions: [] }),
+          // 只用到 alias/agent/status；用 lite 投影避免每次打开命令面板拉 649 KB。
+          fetch('/api/hub/status?lite=1').then(r => r.ok ? r.json() : { sessions: [] }),
           fetch('/api/hub/tasks?limit=20').then(r => r.ok ? r.json() : { tasks: [] }),
         ]);
         if (cancelled) return;
