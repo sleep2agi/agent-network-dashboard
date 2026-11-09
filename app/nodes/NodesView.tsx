@@ -798,6 +798,12 @@ export function NodesView({ initialAlias = null }: { initialAlias?: string | nul
                           <span title={`模型 / Model: ${s.model}`}>{shortModel(s.model)}</span>
                         </>
                       )}
+                      {s.version && (
+                        <>
+                          <span className="text-gray-700 mx-1.5">·</span>
+                          <span title={`运行时版本 / Version: ${s.version}`}>{s.version}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <span className="hidden shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[11px] text-cyan-300/70 sm:inline">Tap to chat</span>
