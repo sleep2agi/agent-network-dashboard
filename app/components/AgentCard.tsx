@@ -8,7 +8,12 @@ import { AliasAvatar } from './AliasAvatar';
 import { useHasDraft } from '../lib/chat-drafts';
 import { useMuted } from '../lib/chat-mute';
 import { usePinned } from '../lib/chat-pin';
-import { NodeSettingsPanel } from './NodeSettingsPanel';
+import dynamic from 'next/dynamic';
+// 同上：仅在打开设置时需要，避免参与首屏水合。
+const NodeSettingsPanel = dynamic(
+  () => import('./NodeSettingsPanel').then((m) => ({ default: m.NodeSettingsPanel })),
+  { ssr: false },
+);
 import { t } from '../lib/ui-lang';
 
 interface AgentCardProps {
