@@ -105,8 +105,12 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
             {/* 副行：agent · server · model（2026-11-09）。此前桌面三栏的聊天头只有别名，
                 想确认「这个节点跑什么模型」得进设置面板翻。
                 model 缺失时整段不渲染，不留下孤立的分隔点；窄屏靠 truncate 收尾。 */}
+            {/* 窄屏不截断、改换行：`.421` 只隐藏了主机名，但 390 下列宽仅 148px，
+                「运行时 · 模型 · 版本」仍放不下（测得溢出 142px），而 truncate 会吃掉
+                **末尾的版本**——那正是这一行要显示的东西。现在 <640 允许换行，
+                ≥640 维持单行 truncate。 */}
             {session && (
-              <div className="mt-0.5 truncate text-[11px] text-[var(--fg-muted)]" data-testid="chat-pane-meta">
+              <div className="mt-0.5 text-[11px] leading-4 text-[var(--fg-muted)] sm:truncate" data-testid="chat-pane-meta">
                 {session.agent || '—'}
                 {/* 窄屏让位：手机上一行只有约 148px，主机名是最长且最不常用的一项。
                     桌面保持「运行时 · 主机 · 模型 · 版本」四件套（对齐客户端 APP 头部），
