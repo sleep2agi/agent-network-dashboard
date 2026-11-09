@@ -106,13 +106,13 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
                 想确认「这个节点跑什么模型」得进设置面板翻。
                 model 缺失时整段不渲染，不留下孤立的分隔点；窄屏靠 truncate 收尾。 */}
             {session && (
-              <div className="mt-0.5 truncate text-[11px] text-gray-500" data-testid="chat-pane-meta">
+              <div className="mt-0.5 truncate text-[11px] text-[var(--fg-muted)]" data-testid="chat-pane-meta">
                 {session.agent || '—'}
-                <span className="text-gray-700 mx-1">·</span>
+                <span className="text-[var(--fg-dim)] mx-1">·</span>
                 <span title={session.server || ''}>{shortServer(session.server)}</span>
                 {shortModel(session.model) && (
                   <>
-                    <span className="text-gray-700 mx-1">·</span>
+                    <span className="text-[var(--fg-dim)] mx-1">·</span>
                     <span title={`模型 / Model: ${session.model}`} data-testid="chat-pane-model">{shortModel(session.model)}</span>
                   </>
                 )}
