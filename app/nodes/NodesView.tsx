@@ -4,7 +4,14 @@ import { useState, useRef, useEffect, useMemo, useSyncExternalStore } from 'reac
 import { timeAgo } from '../components/utils';
 import { useSessions, useHealth, useNodeLifecycle } from '../lib/hooks';
 import { useSWRConfig } from 'swr';
-import { CreateNodeWizard } from '../components/CreateNodeWizard';
+import dynamic from 'next/dynamic';
+// 首屏拆包第 1 步：新建节点向导 386 行，只有点「新建」才需要，
+// 静态引入会让它参与首屏水合。改成按需加载（ssr:false，弹层本身只在交互后出现）。
+// 判据见 deploy/perf/first-paint.mjs：ltTotal 不增加、firstRow 不退化。
+const CreateNodeWizard = dynamic(
+  () => import('../components/CreateNodeWizard').then((m) => ({ default: m.CreateNodeWizard })),
+  { ssr: false },
+);
 import { NodeLifecycleMenu } from '../components/NodeLifecycleMenu';
 import { EmptyState, NodesEmptyState } from '../components/EmptyState';
 import { AliasAvatar } from '../components/AliasAvatar';
