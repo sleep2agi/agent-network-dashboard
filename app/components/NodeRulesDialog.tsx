@@ -48,6 +48,8 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
   useEffect(() => {
     cancelled.current = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    // 能力不足时什么都不做：界面在渲染期直接显示原因（effect 内同步 setState 会触发级联渲染）。
+    if (session.rules_file_capable === false) return () => { cancelled.current = true; };
     // 每次打开/重读都重新构造：node_id 优先，没有就按 alias（与 APP 的取值顺序一致）
     const target: Record<string, string> = nodeId ? { node_id: nodeId } : { alias };
 
@@ -102,7 +104,7 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
       cancelled.current = true;
       if (timer) clearTimeout(timer);
     };
-  }, [attempt, call, nodeId, alias]);
+  }, [attempt, call, nodeId, alias, session.rules_file_capable]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -118,6 +120,8 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
       setTimeout(() => setCopied(false), 1500);
     } catch { /* 剪贴板不可用时静默，不弹错误 */ }
   };
+
+  const notCapable = session.rules_file_capable === false;
 
   return (
     <div
@@ -170,15 +174,20 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto px-3 py-2">
-          {phase.kind === 'loading' && (
+          {notCapable && (
+            <div className="py-6 text-center text-[12px] text-[var(--danger)]" data-testid="node-rules-error">
+              {t('该节点未上报「规则文件」能力', 'This node does not report rules-file support')}
+            </div>
+          )}
+          {!notCapable && phase.kind === 'loading' && (
             <div className="py-6 text-center text-[12px] text-[var(--fg-muted)]" data-testid="node-rules-loading">
               {t('正在向节点读取…', 'Reading from node…')}
             </div>
           )}
-          {phase.kind === 'error' && (
+          {!notCapable && phase.kind === 'error' && (
             <div className="py-6 text-center text-[12px] text-[var(--danger)]" data-testid="node-rules-error">{phase.message}</div>
           )}
-          {phase.kind === 'done' && (!phase.exists
+          {!notCapable && phase.kind === 'done' && (!phase.exists
             ? <div className="py-6 text-center text-[12px] text-[var(--fg-muted)]" data-testid="node-rules-empty">{t('该节点没有规则文件', 'This node has no rules file')}</div>
             : (
               <pre
