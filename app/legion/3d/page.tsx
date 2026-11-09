@@ -55,6 +55,10 @@ const LOOK_PARAM = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).get('look') || ''
   : '';
 const LOOK_SPEED = LOOK_PARAM === 'slow' ? 0.55 : 1;
+// `?look=tier`：把「环高度 + 部门下沉」统一放大到 1.3 倍，让层级落差读得出来。
+// 判据（deploy/legion-metrics/tier.mjs）：相邻环中心场景 Y 距 ≥ 默认 ×1.3，
+// 且头部叠压对数不增加（不能为了高差把节点挤到一起）。默认 1 = 完全不变。
+const LOOK_TIER = LOOK_PARAM === 'tier' ? 1.3 : 1;
 // 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
 const MIN_ZOOM = 0.25;
@@ -1214,7 +1218,7 @@ export default function Legion3DPage() {
         ctx.globalAlpha = 1;
       }
 
-      const toPoint = (n: LegionNode) => nodeToVec3({ ...n });
+      const toPoint = (n: LegionNode) => nodeToVec3({ ...n }, 1, LOOK_TIER);
       let nodes = projectScene(layout.nodes, toPoint, cam, size);
 
       // 布局取证导出（?debug=1）：每 12 帧写一次，量「头像叠压对数 / 中心空洞比 /
@@ -1238,6 +1242,8 @@ export default function Legion3DPage() {
               y: Math.round(sn.projected.y * 10) / 10,
               rx: Math.round((body.rx ?? body.radius) * 10) / 10,
               ry: Math.round((body.ry ?? body.radius) * 10) / 10,
+              // 场景 Y（层高）也导出：`tier.mjs` 要直接量「相邻层落差」，不靠猜。
+              sy: Math.round(nodeToVec3({ ...sn.item }, 1, LOOK_TIER).y * 1000) / 1000,
             };
           }),
         };
@@ -1355,12 +1361,12 @@ export default function Legion3DPage() {
       // 高度差越大，光斑离本体越远——不转镜头也能读出这家部门在几层。
       // 用径向渐变而不是实心椭圆：实心在浅色主题上像一块脏印（试过）。
       {
-        const GROUND_Y = (RING_HEIGHT[3] ?? 0) - 0.12;
+        const GROUND_Y = (RING_HEIGHT[3] ?? 0) * LOOK_TIER - 0.12;
         for (const node of layout.nodes) {
           if (node.kind !== 'group') continue;
           const sn = byId.get(node.id);
           if (!sn) continue;
-          const v = nodeToVec3(node);
+          const v = nodeToVec3(node, 1, LOOK_TIER);
           const hit = projectPoint({ x: v.x, y: GROUND_Y, z: v.z }, cam, size);
           if (!hit) continue;
           const { rx: bodyRx } = nodeBody(sn, layout.stats.people, layout.stats.agents);

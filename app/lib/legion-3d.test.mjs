@@ -103,6 +103,10 @@ describe('#3D 军团拓扑 — 投影/深度/命中必须可断言，不能靠�
     expect(depthDrop('group', 2)).toBe(-DEPTH_STEP);
     expect(depthDrop('group', 5)).toBe(-2 * DEPTH_STEP);
     expect(depthDrop('person', 3)).toBe(0);
+    // 观感变体：tierBoost 只放大层高（抖动不缩放），默认 1 时行为完全不变。
+    const boosted = nodeToVec3({ x: 1, y: 0, ring: 3, order: 7 }, 1, 1.3);
+    expect(boosted.y).toBeCloseTo(agent.y - 0.3, 5);
+    expect(nodeToVec3({ x: 1, y: 0, ring: 3, order: 7 }, 1, 1).y).toBe(agent.y);
     const parent = nodeToVec3({ x: 1, y: 0, ring: 1, order: 1, kind: 'group', depth: 1 });
     const child = nodeToVec3({ x: 1, y: 0, ring: 1, order: 2, kind: 'group', depth: 2 });
     expect(child.y - parent.y).toBeLessThan(-0.3);
