@@ -55,16 +55,22 @@ const LOOK_PARAM = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).get('look') || ''
   : '';
 const LOOK_SPEED = LOOK_PARAM === 'slow' ? 0.55 : 1;
-// `?look=tier`：把「环高度 + 部门下沉」统一放大到 1.3 倍，让层级落差读得出来。
-// 判据（deploy/legion-metrics/tier.mjs）：相邻环中心场景 Y 距 ≥ 默认 ×1.3，
-// 且头部叠压对数不增加（不能为了高差把节点挤到一起）。默认 1 = 完全不变。
-const LOOK_TIER = LOOK_PARAM === 'tier' ? 1.3 : 1;
+// 层级落差：环高度 + 部门下沉统一放大 1.3 倍（`.431` 起为默认）。
+// 依据（两端实测）：相邻层场景 Y 距 ×1.287；桌面叠压 13→6 对、手机 0→0；手机内容 280→298px（视口 844，不溢出）。
+// 关闭方式：`?tier=0`（保留原值 1.0），用于 A/B 对照与快速回滚判断。
+const TIER_PARAM = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('tier')
+  : null;
+const LOOK_TIER = TIER_PARAM === '0' ? 1 : 1.3;
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
 // 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
 // 判据见 deploy/legion-metrics/link-light.mjs：差集像素的平均亮度应 ≥ 默认 ×1.3。
 const LINK_BOOST = LOOK_PARAM === 'light' ? 2 : 1;
-const LINKS_OFF = LOOK_PARAM === 'nolinks';
+// 测量开关只在 `?debug=1` 下生效，避免误加参数时线上出现「没有连线」的画布。
+const DEBUG_PROJ = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('debug') === '1';
+const LINKS_OFF = LOOK_PARAM === 'nolinks' && DEBUG_PROJ;
 // 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
 const MIN_ZOOM = 0.25;
