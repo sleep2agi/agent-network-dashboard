@@ -39,7 +39,11 @@ export async function GET(req: Request) {
       // 只有真实 DOM 复核才会发现「渲染出来是空的」。tests/lite-status-projection.test.mjs
       // 现在把「页面要读的字段必须留在 KEEP 里」写成契约。
       const KEEP = ['alias','status','agent','server','task','progress','updated_at','node_id','session_id',
-        'last_seen_at','network_id','project_dir','model','runtime','lifecycle_state','channels','version'] as const;
+        'last_seen_at','network_id','project_dir','model','runtime','lifecycle_state','channels','version',
+        // 节点能力旗：会话详情按它决定是否显示「规则文件」等分区（与 APP 一致）。
+        // 2026-11-10 教训：UI 开始读一个被投影掉的字段时，typecheck 不会报错，
+        // 只有真的点一次才会发现「菜单项根本不出现」。
+        'rules_file_capable','logs_capable','files_capable','node_secrets_capable'] as const;
       data.sessions = data.sessions.map((s: Record<string, unknown>) => {
         const out: Record<string, unknown> = {};
         for (const k of KEEP) if (k in s) out[k] = s[k];
