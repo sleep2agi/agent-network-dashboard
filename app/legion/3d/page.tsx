@@ -969,7 +969,13 @@ export default function Legion3DPage() {
       deep: { bg: '#05070f', accent: '#6f86ff', info: '#5b8cff', haloRadius: 0.38, haloAlpha: 0.22, starBoost: 1.3 },
       warm: { bg: '#0f0b08', accent: '#d99a3c', info: '#c08a45', haloRadius: 0.30, haloAlpha: 0.20, starBoost: 0.9 },
     } as const;
-    let FX = PALETTES[paletteRef.current];
+    // 观感变体 ?look=glow：只放大核心光晕（更亮 / 更强中心聚焦），默认完全不变。
+    // 判据：画布「中心区平均亮度 / 外环平均亮度」的比值应显著上升（见 deploy/legion-metrics/glow.mjs）。
+    type Fx = { bg: string; accent: string; info?: string; haloRadius: number; haloAlpha: number; starBoost: number };
+    let FX: Fx = PALETTES[paletteRef.current] as Fx;
+    if (LOOK_PARAM === 'glow') {
+      FX = { ...FX, haloAlpha: Math.min(0.6, FX.haloAlpha * 1.8), haloRadius: FX.haloRadius * 1.15 };
+    }
     let tk = presentingRef.current ? presentingInk : tkLive;
     const fxOn = () => Boolean(FX) && isDarkBg(tk.bg) && !presentingRef.current;
     if (FX?.accent && fxOn()) tk = { ...tk, accent: FX.accent, info: FX.info ?? tk.info };
