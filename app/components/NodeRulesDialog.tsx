@@ -29,6 +29,14 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
   const [attempt, setAttempt] = useState(0);
   const { node_id: nodeId, alias } = session;
   const [copied, setCopied] = useState(false);
+  // 写入（.438）：编辑草稿、确认覆盖、保存中/保存结果。写入前必须显式确认——
+  // 规则文件是节点真在用的资产，一次误覆盖会直接影响该节点的行为。
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
   const cancelled = useRef(false);
 
   const call = useCallback(async (tool: string, args: Record<string, unknown>) => {
@@ -112,6 +120,38 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  /** 通用门铃：发起 → 轮询结果。读写共用（写入也需要同样的 request_id 流程）。 */
+  const ring = useCallback(async (tool: string, args: Record<string, unknown>) => {
+    const started = await call(tool, args);
+    if (!started.ok) return { ok: false as const, message: started.error ?? t('请求失败', 'Request failed') };
+    const requestId = String((started.payload as { request_id?: string } | undefined)?.request_id ?? '');
+    if (!requestId) return { ok: false as const, message: t('Hub 没有返回请求号', 'No request id') };
+    for (let i = 0; i < POLL_MAX; i += 1) {
+      await new Promise((r) => setTimeout(r, i === 0 ? 300 : POLL_INTERVAL_MS));
+      if (cancelled.current) return { ok: false as const, message: t('已取消', 'Cancelled') };
+      const r = await call('get_rules_file_result', { request_id: requestId });
+      if (!r.ok) return { ok: false as const, message: r.error ?? t('读取失败', 'Failed') };
+      const pl = (r.payload ?? {}) as { status?: string; content?: string; error?: string | null };
+      if (pl.status === 'done') return { ok: true as const, content: typeof pl.content === 'string' ? pl.content : '' };
+      if (pl.status === 'error') return { ok: false as const, message: pl.error ?? t('节点返回错误', 'Node error') };
+    }
+    return { ok: false as const, message: t('等待超时：节点可能未响应', 'Timed out waiting for the node') };
+  }, [call]);
+
+  const save = async () => {
+    setConfirming(false);
+    setSaving(true);
+    setSaveError(null);
+    const args: Record<string, string> = { ...(nodeId ? { node_id: nodeId } : { alias }), content: draft };
+    const r = await ring('write_node_rules_file', args);
+    setSaving(false);
+    if (!r.ok) { setSaveError(r.message); return; }
+    setSavedAt(Date.now());
+    setEditing(false);
+    // 写完后重新读一遍，确认落盘内容就是刚才写的（不信「接口说成功」）
+    setAttempt((n) => n + 1);
+  };
+
   const copy = async () => {
     if (phase.kind !== 'done') return;
     try {
@@ -152,6 +192,38 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
             >
               {t('重新读取', 'Reload')}
             </button>
+            {phase.kind === 'done' && !editing && (
+              <button
+                type="button"
+                onClick={() => { setDraft(phase.content); setEditing(true); setSavedAt(null); }}
+                data-testid="node-rules-edit"
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-sunken)]"
+              >
+                {t('编辑', 'Edit')}
+              </button>
+            )}
+            {editing && (
+              <button
+                type="button"
+                onClick={() => setConfirming(true)}
+                disabled={saving}
+                data-testid="node-rules-save"
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--accent)] hover:bg-[var(--bg-sunken)] disabled:opacity-40"
+              >
+                {saving ? t('保存中…', 'Saving…') : t('保存', 'Save')}
+              </button>
+            )}
+            {editing && (
+              <button
+                type="button"
+                onClick={() => { setEditing(false); setSavedAt(null); }}
+                disabled={saving}
+                data-testid="node-rules-edit-cancel"
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-dim)] hover:bg-[var(--bg-sunken)] disabled:opacity-40"
+              >
+                {t('取消编辑', 'Cancel')}
+              </button>
+            )}
             <button
               type="button"
               onClick={copy}
@@ -190,12 +262,45 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
           {!notCapable && phase.kind === 'done' && (!phase.exists
             ? <div className="py-6 text-center text-[12px] text-[var(--fg-muted)]" data-testid="node-rules-empty">{t('该节点没有规则文件', 'This node has no rules file')}</div>
             : (
-              <pre
-                data-testid="node-rules-content"
-                className="whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-[var(--fg)]"
-              >{phase.content}</pre>
+              editing
+                ? <textarea
+                    data-testid="node-rules-textarea"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    spellCheck={false}
+                    className="h-[50vh] w-full resize-none rounded-lg border border-[var(--col-line-strong)] bg-[var(--bg-sunken)] p-2 font-mono text-[11px] leading-5 text-[var(--fg)] outline-none"
+                  />
+                : <pre
+                    data-testid="node-rules-content"
+                    className="whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-[var(--fg)]"
+                  >{phase.content}</pre>
             ))}
         </div>
+        {(saveError || savedAt) && (
+          <div className="border-t border-[var(--col-line-strong)] px-3 py-1.5 text-[11px]"
+            data-testid={saveError ? 'node-rules-save-error' : 'node-rules-saved'}>
+            {saveError
+              ? <span className="text-[var(--danger)]">{t('保存失败：', 'Save failed: ')}{saveError}</span>
+              : <span className="text-[var(--success)]">{t('已写入，并已重新读取确认', 'Saved and re-read to confirm')}</span>}
+          </div>
+        )}
+        {confirming && (
+          <div className="border-t border-[var(--col-line-strong)] bg-[var(--bg-sunken)] px-3 py-2" data-testid="node-rules-confirm-bar">
+            <div className="text-[11px] text-[var(--warning)]">
+              {t('将覆盖该节点上的规则文件，节点会立即使用新内容。确定写入？', 'This overwrites the node rules file and takes effect immediately. Continue?')}
+            </div>
+            <div className="mt-1 flex gap-2">
+              <button type="button" onClick={() => void save()} data-testid="node-rules-confirm"
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--danger)] hover:bg-[var(--bg-elevated)]">
+                {t('确定写入', 'Overwrite')}
+              </button>
+              <button type="button" onClick={() => setConfirming(false)} data-testid="node-rules-confirm-cancel"
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)]">
+                {t('取消', 'Cancel')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
