@@ -82,6 +82,11 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
     <aside
       data-testid="chat-pane"
       data-chat-alias={alias}
+      data-debug-session={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debugsession') === '1'
+        ? (session
+          ? `found|fields=${Object.keys(session).length}|net=${session.network_id ?? ''}|rules=${!!session.rules_file_capable}|skills=${!!session.skills_capable}|total=${sessions.length}`
+          : `missing|total=${sessions.length}`)
+        : undefined}
       // `relative` so the settings drawer (positioning='absolute')
       // scopes to this <aside>, not the viewport. Without this the
       // drawer would cover the whole page — the exact regression
