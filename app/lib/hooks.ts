@@ -78,7 +78,8 @@ interface NodesResp { nodes?: Array<{
 export function useNodeLifecycle() {
   const { networkId, ready } = useNetworkId();
   const { data, error, mutate } = useSWR<NodesResp>(
-    scopedOrNull('/api/hub/nodes', networkId, ready),
+    // lite=1：全量 394 KB（402 节点），本 hook 只用 alias/node_id/lifecycle_state/avatar/attrs。
+    scopedOrNull('/api/hub/nodes?lite=1', networkId, ready),
     fetcher,
     SWR_OPTIONS,
   );
