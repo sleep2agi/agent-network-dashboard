@@ -39,10 +39,12 @@ function nodesFromSessions(sessions: Array<Record<string, unknown>>, requestedNe
 const NODE_LITE_KEEP = ['alias', 'node_id', 'network_id', 'lifecycle_state', 'avatar_url',
   'display_name', 'team', 'tags', 'attrs_revision', 'status', 'agent'] as const;
 
-function projectNodes(data: any, lite: boolean) {
+type NodesPayload = { nodes?: Array<Record<string, unknown>> } & Record<string, unknown>;
+
+function projectNodes<T extends NodesPayload>(data: T, lite: boolean): T {
   if (!lite) return data;
-  if (Array.isArray(data?.nodes)) {
-    data.nodes = data.nodes.map((n: Record<string, unknown>) => {
+  if (Array.isArray(data.nodes)) {
+    data.nodes = data.nodes.map((n) => {
       const out: Record<string, unknown> = {};
       for (const k of NODE_LITE_KEEP) if (k in n) out[k] = n[k];
       return out;
