@@ -6,6 +6,7 @@ import { TaskChatPanel } from './TaskChatPanel';
 import { NodeSettingsPanel } from './NodeSettingsPanel';
 import { ChatPaneOverflowMenu } from './ChatPaneOverflowMenu';
 import { useSessions } from '../lib/hooks';
+import { shortModel, shortServer } from '../lib/node-format';
 import { t } from '../lib/ui-lang';
 
 // #Stage B (dashboard 3-col): the persistent right chat column on /nodes.
@@ -53,7 +54,8 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
   // Look up session for NodeSettingsPanel — it requires the full row.
   // useSessions is SWR-cached (same key as NodesView), so no extra
   // network cost.
-  const { sessions } = useSessions();
+  // 与 NodesView 同一个 SWR key（lite=1）：两边 key 不一致会导致同一页发起两次请求。
+  const { sessions } = useSessions({ lite: true });
   const session = sessions.find(s => s.alias === alias);
 
   // 抽屉关闭后把焦点还给 ⋮：触屏上按钮不会被 focus，useReturnFocus 记不到来源
@@ -98,7 +100,25 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
             </button>
           )}
           <AliasAvatar alias={alias} size={26} />
-          <span className="truncate text-sm font-semibold text-white">{alias}</span>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold text-white">{alias}</div>
+            {/* 副行：agent · server · model（2026-11-09）。此前桌面三栏的聊天头只有别名，
+                想确认「这个节点跑什么模型」得进设置面板翻。
+                model 缺失时整段不渲染，不留下孤立的分隔点；窄屏靠 truncate 收尾。 */}
+            {session && (
+              <div className="mt-0.5 truncate text-[11px] text-gray-500" data-testid="chat-pane-meta">
+                {session.agent || '—'}
+                <span className="text-gray-700 mx-1">·</span>
+                <span title={session.server || ''}>{shortServer(session.server)}</span>
+                {shortModel(session.model) && (
+                  <>
+                    <span className="text-gray-700 mx-1">·</span>
+                    <span title={`模型 / Model: ${session.model}`} data-testid="chat-pane-model">{shortModel(session.model)}</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         {/* SPEC §12 (this batch): four header controls.
             - ⋮ chat-pane-more     opens overflow dropdown (4 items)

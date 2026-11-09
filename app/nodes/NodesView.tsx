@@ -13,6 +13,7 @@ import { isMuted, useMuteVersion } from '../lib/chat-mute';
 import { isPinned, usePinVersion } from '../lib/chat-pin';
 import { pinyinMatch, usePinyinReady } from '../lib/pinyin-match';
 import { useCollapsibleSearch } from '../components/CollapsibleSearch';
+import { shortModel, shortServer } from '../lib/node-format';
 import { NodeList } from '../components/NodeList';
 import { ChatPane } from '../components/ChatPane';
 import type { Session } from '../components/types';
@@ -21,23 +22,7 @@ import { SESSION_STATUS_DOT_HEX } from '../lib/status';
 import { useChatUnread } from '../lib/chat-unread';
 import { t, useT } from '../lib/ui-lang';
 
-/** Round 81: shorten long server hostnames (Alibaba `iZ…oyZ` style)
- *  for table display. Returns the original string unchanged when ≤12
- *  chars. Full value should stay in `title=` for hover + screen-readers. */
-function shortServer(server: string | null | undefined): string {
-  if (!server) return '—';
-  return server.length > 12 ? `${server.slice(0, 8)}…` : server;
-}
 
-/** 模型短名：`deepseek/deepseek-flash` → `deepseek-flash`。
- *  详情头那一行要同时放 agent / server / model，厂商前缀（provider/）会把
- *  服务器名挤掉；完整值留在 title 里，悬停可见。没有 model 时返回空串，
- *  调用方据此整段不渲染——不留一个孤零零的分隔点。 */
-export function shortModel(model: string | null | undefined): string {
-  if (!model) return '';
-  const slash = model.lastIndexOf('/');
-  return slash >= 0 ? model.slice(slash + 1) : model;
-}
 
 type ViewMode = 'list' | 'grid';
 
@@ -90,7 +75,10 @@ function DraftMark({ alias }: { alias: string }) {
 export function NodesView({ initialAlias = null }: { initialAlias?: string | null }) {
   // 水合安全：首帧与 SSR 一致（英文），挂载后再切到浏览器语言（#182）。
   const t = useT();
-  const { sessions, isLoading: loading, error: loadError, mutate: mutateSessions } = useSessions();
+  // lite=1：/api/status 全量 713 KB（402 会话，实测 2.9s；load 48 时 8.5s），
+  // 而列表只用 alias/status/agent/server/task/progress/model/… 这些字段。
+  // 投影后 204 KB（−71%）。ChatPane / ChatPopover 必须用同一个 key，否则会变成两次请求。
+  const { sessions, isLoading: loading, error: loadError, mutate: mutateSessions } = useSessions({ lite: true });
   const { health } = useHealth();
   const { lifecycleByAlias, nodeIdByAlias, attrsByAlias } = useNodeLifecycle();
   const { hasUnread, unreadCount, lastActivityAt } = useChatUnread();
