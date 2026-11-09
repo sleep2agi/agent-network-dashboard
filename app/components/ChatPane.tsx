@@ -11,6 +11,7 @@ const NodeSettingsPanel = dynamic(
   { ssr: false },
 );
 import { ChatPaneOverflowMenu } from './ChatPaneOverflowMenu';
+import { NodeRulesDialog } from './NodeRulesDialog';
 import { useSessions } from '../lib/hooks';
 import { shortModel, shortServer } from '../lib/node-format';
 import { t } from '../lib/ui-lang';
@@ -52,6 +53,7 @@ export interface ChatPaneProps {
 }
 
 export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPaneProps) {
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // 07-31 通信龙 batch (SPEC §12 remaining): ⋮ opens overflow menu
   // (not settings direct). Menu items include 会话设置 as one of four.
@@ -223,6 +225,9 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           undefined briefly during SWR revalidation; guard so the
           drawer doesn't open with no data (button was clicked before
           sessions loaded — rare but possible). */}
+      {rulesOpen && session && (
+        <NodeRulesDialog session={session} onClose={() => setRulesOpen(false)} />
+      )}
       {settingsOpen && session && (
         <NodeSettingsPanel
           session={session}
@@ -236,6 +241,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           anchorRef={overflowAnchorRef}
           onClose={() => setOverflowOpen(false)}
           onOpenSettings={() => setSettingsOpen(true)}
+          onOpenRules={session?.rules_file_capable ? () => setRulesOpen(true) : undefined}
         />
       )}
     </aside>

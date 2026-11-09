@@ -25,6 +25,12 @@ export interface Session {
   // merged into Session client-side via useNodeLifecycle hook. Absent →
   // treated as 'active' so older sessions/hubs don't break the menu.
   lifecycle_state?: string | null;
+  // 节点能力旗（agent-node 上报；缺省视为不具备 —— 不具备就不显示对应分区，
+  // 与 APP 一致，避免用户点进去空等 60 秒）。见 agent-network-app/src/node-rules.ts。
+  rules_file_capable?: boolean;
+  logs_capable?: boolean;
+  files_capable?: boolean;
+  node_secrets_capable?: boolean;
 }
 
 export interface Health {
