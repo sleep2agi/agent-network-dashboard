@@ -46,6 +46,15 @@ const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.85, dist: 4.9, zoom: 1.12, panX: 0, p
  *  正圆，把高度用起来；桌面端保持 0.85（49° 的分层视角是定稿值，不再动）。
  *  只影响「首次进入 / 重置视角」，不覆盖用户已保存的视角。 */
 const NARROW_PITCH = 1.02;
+
+/** 观感变体（默认关闭，只由 URL 参数 ?look= 打开）。
+ *  为什么做成参数而不是直接改默认值：3D 的观感选择属于产品判断，需要有具体的可比较对象，
+ *  而不是我在参数空间里猜。?look=slow 会把核心自转与光流速度降到 0.55 倍，
+ *  方便和默认版并排看「更慢是否更耐看」；默认行为完全不变。 */
+const LOOK_PARAM = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('look') || ''
+  : '';
+const LOOK_SPEED = LOOK_PARAM === 'slow' ? 0.55 : 1;
 // 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
 const MIN_ZOOM = 0.25;
@@ -1168,10 +1177,10 @@ export default function Legion3DPage() {
       // 交互中：大网络先不画标签与数据包，停手后自动恢复（跟手优先）。
       const interacting = huge && now < interactingUntil.current;
       // Pause also freezes the new core ornament; reduced-motion is read live.
-      if (!capture && !motionPreference.matches && spinRef.current && !interacting) corePhaseRef.current += dt * 0.24;
+      if (!capture && !motionPreference.matches && spinRef.current && !interacting) corePhaseRef.current += dt * 0.24 * LOOK_SPEED;
       // A local clock freezes every relationship/ring ornament together. Using
       // wall time here would jump the streaks when resuming or switching tabs.
-      if (!capture && !motionPreference.matches && flowRef.current && !interacting) flowTimeRef.current += dt;
+      if (!capture && !motionPreference.matches && flowRef.current && !interacting) flowTimeRef.current += dt * LOOK_SPEED;
       const flowTime = flowTimeRef.current;
       applyResolution(interacting ? RES_LOW : 1);
 
