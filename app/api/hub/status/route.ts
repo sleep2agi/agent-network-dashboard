@@ -32,9 +32,14 @@ export async function GET(req: Request) {
       // AgentCard / StatsBar / CommandCenter 都没有引用）：
       //   config_path 29.8 KB · version 10.2 KB · channels 7.1 KB（按 394 条会话实测）
       // project_dir 保留：TopoGraph 的悬停 title 会显示「cwd: …」。
-      // channels 必须保留：NodeSettingsPanel 的频道开关用它初始化（7.1 KB / 394 条，代价可忽略）。
+      // channels / version 必须保留：
+      //  - channels：NodeSettingsPanel 的频道开关用它初始化（7.1 KB / 394 条）
+      //  - version：节点详情副行的「版本」chip（与客户端 APP 头部四件套对齐）读它
+      // 2026-11-09 教训：UI 开始读一个被投影掉的字段时，typecheck 不会报错，
+      // 只有真实 DOM 复核才会发现「渲染出来是空的」。tests/lite-status-projection.test.mjs
+      // 现在把「页面要读的字段必须留在 KEEP 里」写成契约。
       const KEEP = ['alias','status','agent','server','task','progress','updated_at','node_id','session_id',
-        'last_seen_at','network_id','project_dir','model','runtime','lifecycle_state','channels'] as const;
+        'last_seen_at','network_id','project_dir','model','runtime','lifecycle_state','channels','version'] as const;
       data.sessions = data.sessions.map((s: Record<string, unknown>) => {
         const out: Record<string, unknown> = {};
         for (const k of KEEP) if (k in s) out[k] = s[k];
