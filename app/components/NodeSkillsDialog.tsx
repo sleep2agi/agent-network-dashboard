@@ -31,6 +31,10 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
   const [attempt, setAttempt] = useState(0);
   const [open, setOpen] = useState<{ skill: Skill; content: string | null; error?: string } | null>(null);
   const cancelled = useRef(false);
+  // 复制反馈（.443）：技能名 / SKILL.md 全文各一个复制入口，点完 1.5s 内显示「已复制」。
+  // 不提供「在 SkillHub 打开」：node 技能只有 name/scope/path_rel，没有 skill_id，
+  // 拼 /skillhub?skill_id= 会是假链接（SkillHub 页按 skill_id 定位）。
+  const [copied, setCopied] = useState<'name' | 'content' | null>(null);
   const { node_id: nodeId, alias } = session;
 
   const call = useCallback(async (tool: string, args: Record<string, unknown>) => {
@@ -101,6 +105,14 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
     setOpen({ skill, content: body });
   };
 
+  const copyText = async (kind: 'name' | 'content', text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 1500);
+    } catch { /* 剪贴板不可用时静默，不弹错误（与规则面板一致） */ }
+  };
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (open) setOpen(null); else onClose(); } };
     window.addEventListener('keydown', onKey);
@@ -138,6 +150,26 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
                 className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-sunken)]"
               >
                 {t('返回列表', 'Back')}
+              </button>
+            )}
+            {open && (
+              <button
+                type="button"
+                onClick={() => void copyText('name', open.skill.name)}
+                data-testid="node-skill-copy-name"
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-sunken)]"
+              >
+                {copied === 'name' ? t('已复制', 'Copied') : t('复制名字', 'Copy name')}
+              </button>
+            )}
+            {open && open.content !== null && (
+              <button
+                type="button"
+                onClick={() => void copyText('content', open.content ?? '')}
+                data-testid="node-skill-copy-content"
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-sunken)]"
+              >
+                {copied === 'content' ? t('已复制', 'Copied') : t('复制全文', 'Copy full')}
               </button>
             )}
             <button
@@ -182,12 +214,12 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
           {!notCapable && phase.kind === 'done' && phase.skills.length > 0 && !open && (
             <ul className="flex flex-col" data-testid="node-skills-list">
               {phase.skills.map(s => (
-                <li key={s.name}>
+                <li key={s.name} className="flex items-start gap-1">
                   <button
                     type="button"
                     onClick={() => void openSkill(s)}
                     data-testid="node-skills-item"
-                    className="w-full rounded-lg px-2 py-2 text-left hover:bg-[var(--bg-sunken)]"
+                    className="min-w-0 flex-1 rounded-lg px-2 py-2 text-left hover:bg-[var(--bg-sunken)]"
                   >
                     <div className="truncate text-[12px] text-[var(--fg)]">{s.name}</div>
                     <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]">
@@ -196,6 +228,15 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
                     {s.description && (
                       <div className="mt-0.5 line-clamp-2 text-[11px] text-[var(--fg-muted)]">{s.description}</div>
                     )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void copyText('name', s.name)}
+                    data-testid="node-skills-copy-name"
+                    aria-label={t(`复制技能名 ${s.name}`, `Copy skill name ${s.name}`)}
+                    className="shrink-0 rounded-lg px-2 py-1 text-[11px] text-[var(--fg-dim)] hover:bg-[var(--bg-sunken)] hover:text-[var(--fg-muted)]"
+                  >
+                    {copied === 'name' ? t('已复制', 'Copied') : t('复制', 'Copy')}
                   </button>
                 </li>
               ))}
