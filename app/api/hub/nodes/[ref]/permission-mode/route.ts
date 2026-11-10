@@ -3,9 +3,12 @@ import { requireDashboardAuth, getV3UserToken } from '@/app/lib/dashboard-auth';
 const HUB_URL = process.env.COMMHUB_URL || 'http://127.0.0.1:9200';
 
 /**
- * PUT /api/hub/nodes/:ref/permission-mode —— 代理 Hub 的 RFC-041 权限模式端点
- * （/home/vansin/.commhub/src-94cef5d9/server/src/server.ts:4082，允许值见
- *  server/src/node-permissions.ts:22 NODE_PERMISSION_MODES）。
+ * PUT /api/hub/nodes/:ref/permission-mode —— 代理 Hub 的 RFC-041 权限模式端点。
+ * 合同（Hub 侧已存在的 REST 接口，非本仓库自造）：
+ *   路径 PUT /api/nodes/:id/permission-mode · body {"mode": "normal"|"readonly"|"restricted"}
+ *   成功返回 {ok:true, permission_mode, previous}
+ *   授权：用户令牌 + 节点主人 / 网络 owner·admin / Hub 管理员；节点令牌会被拒绝
+ *         （403 user_token_required —— 作用于用户账号的端点不接受节点令牌）
  *
  * 为什么要在这一层再校验一次：Hub 的取值是 normal|readonly|restricted，
  * 前端下拉是展示层，任何直接打接口的调用都应该被同一个白名单挡住。
