@@ -106,9 +106,19 @@ const LINK_KEEP = Number.isFinite(LINKS_RAW) && LINKS_RAW > 0 && LINKS_RAW <= 1 
 // 这属于视角层面的改变（不是某个元素变亮），失败也不会影响信息可读性。
 // 默认仍是 `zoom`（纯推镜），只有 `?intro=fly` 才启用；判据见 deploy/legion-metrics/intro-fly.mjs：
 //   pitch 单调抬升、终点等于目标视角（不残留偏差）、稳定耗时 ≤ 3200ms、反向 0、zoom 幅度不劣化。
-const INTRO_MODE = typeof window !== 'undefined'
-  ? (new URLSearchParams(window.location.search).get('intro') === 'fly' ? 'fly' : 'zoom')
-  : 'zoom';
+// `.457` 起：**桌面默认 fly**（≥768px），窄屏保持纯推镜。
+// 依据（§78.5pre，生产实测）：1440 俯仰 +0.386、稳定 742ms、0 反向、缩放幅度 0.325 不劣化；
+// 窄屏虽然也达标（+0.437 / 791ms），但 390 视口视野窄，低俯仰起手时画面切得更狠，
+// 需要在真机上单独量一轮再决定 —— 与 `.445` 的 depth 默认分档同一处理方式。
+// 回退：`?intro=zoom`（桌面回到纯推镜）；强制：窄屏加 `?intro=fly`。
+const INTRO_PARAM = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('intro')
+  : null;
+const INTRO_MODE: 'fly' | 'zoom' = INTRO_PARAM === 'fly'
+  ? 'fly'
+  : INTRO_PARAM === 'zoom'
+    ? 'zoom'
+    : (typeof window !== 'undefined' && window.innerWidth >= 768 ? 'fly' : 'zoom');
 const INTRO_PITCH_DELTA = 0.55;
 
 function keepEdge(from: string, to: string): boolean {
