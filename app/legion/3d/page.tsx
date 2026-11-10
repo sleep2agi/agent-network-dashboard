@@ -1198,10 +1198,20 @@ export default function Legion3DPage() {
             view.pitch = a.pitchTo;
             introRef.current = null;
             userAdjusted.current = false;
-            if (canvasRef.current) canvasRef.current.dataset.introAborted = '1';
+            if (canvasRef.current) {
+              // 语义是「已中止并且已到位」：把落点也写出来，避免只看到「aborted=1」
+              // 却不知道它落在哪（评审指出的：aborted 不等于 landed）。
+              canvasRef.current.dataset.introAborted = '1';
+              canvasRef.current.dataset.introAbortedZoom = view.zoom.toFixed(3);
+              canvasRef.current.dataset.introAbortedPitch = view.pitch.toFixed(3);
+            }
             setZoomPct(Math.round(a.to * 100));
           }
         }
+        // 降级命中后本帧必须停止插值：否则下面几行会用「起点附近」的值覆盖刚刚设好的终态，
+        // 而下一帧 introRef 已是 null、入场分支不再运行 ⇒ 画面冻结在 0.62× 低俯角，
+        // 而维度标签已经写成 100%（评审 2026-11-11 读码发现，实测路径确实只有慢设备才会走到）。
+        if (introRef.current) {
         const t = Math.min(1, (now - a.t0) / 900);
         const ease = 1 - Math.pow(1 - t, 3);
         view.zoom = a.from + (a.to - a.from) * ease;
@@ -1222,6 +1232,7 @@ export default function Legion3DPage() {
           setZoomPct(Math.round(a.to * 100));
           // 动画结束就把「保护标记」放下：之后尺寸/结构变化可以正常重新取景。
           userAdjusted.current = false;
+        }
         }
       }
 
