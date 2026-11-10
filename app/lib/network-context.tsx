@@ -16,6 +16,24 @@ interface NetworkContextType {
   ready: boolean;
 }
 
+
+/** 当前网络的 cookie 名：与 sessionStorage 同名，但两者独立存储。
+ *  为什么要 cookie：服务端（SSR / 服务端取数）读不到 sessionStorage，
+ *  而首屏要按「当前网络」过滤数据。服务端可读 cookie 之后，/nodes 才有机会把行内容随 HTML 下发。 */
+const NETWORK_COOKIE = 'anet_network_id';
+
+function readNetworkCookie(): string {
+  if (typeof document === 'undefined') return '';
+  const hit = document.cookie.split('; ').find((c) => c.startsWith(`${NETWORK_COOKIE}=`));
+  return hit ? decodeURIComponent(hit.slice(NETWORK_COOKIE.length + 1)) : '';
+}
+
+function writeNetworkCookie(id: string): void {
+  if (typeof document === 'undefined') return;
+  // 一年有效期、path=/、SameSite=Lax：和登录态一致，不做 HttpOnly（前端要读）
+  document.cookie = `${NETWORK_COOKIE}=${encodeURIComponent(id)}; path=/; max-age=31536000; samesite=lax`;
+}
+
 const NetworkContext = createContext<NetworkContextType>({ networkId: '', setNetworkId: () => {}, ready: false });
 
 export function NetworkProvider({ children }: { children: ReactNode }) {
@@ -23,7 +41,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem('anet_network_id');
+    const saved = sessionStorage.getItem('anet_network_id') || readNetworkCookie();
     // Hydration-safe restore (see UserBar note).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) { setNetworkId(saved); setReady(true); return; }
@@ -42,6 +60,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
         if (id) {
           setNetworkId(id);
           try { sessionStorage.setItem('anet_network_id', id); } catch { /* ignore */ }
+          writeNetworkCookie(id);
         }
         // 有值没值都算「解析结束」：没有网络可选的用户也要能看到页面自己的「请选择网络」提示，
         // 而不是永远停在 loading。
@@ -55,6 +74,8 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const setAndPersist = (id: string) => {
     setNetworkId(id);
     sessionStorage.setItem('anet_network_id', id);
+    // 写 cookie：服务端据此做首屏取数（sessionStorage 服务端读不到）
+    writeNetworkCookie(id);
   };
 
   return (
