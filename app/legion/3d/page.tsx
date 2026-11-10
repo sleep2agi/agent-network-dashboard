@@ -76,6 +76,29 @@ const LINK_BOOST = LOOK_PARAM !== 'light'
 const DEBUG_PROJ = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('debug') === '1';
 const LINKS_OFF = LOOK_PARAM === 'nolinks' && DEBUG_PROJ;
+// `?depth=`（.444）：景深 / 透视强度。相机是自研投影（dist + focal），
+// 让两者同比例反向缩放 = dolly-zoom：画面尺寸几乎不变，近大远小的落差变大。
+// 默认 1（等于现状）。实测（deploy/legion-metrics/depth.mjs，桌面 1440）：
+//   ?depth=1.5 → 尺度落差 ×1.07（不足）、?depth=2.0 → ×1.13（过阈值）、?depth=3.0 → ×1.24（形变风险高）
+// 因此取值域 0.4–2.2，推荐 2.0；是否设默认留给产品判断（纵深感是主观偏好），不在此处擅自改默认。
+const DEPTH_RAW = typeof window !== 'undefined'
+  ? Number(new URLSearchParams(window.location.search).get('depth') || '')
+  : NaN;
+const LOOK_DEPTH = Number.isFinite(DEPTH_RAW) && DEPTH_RAW >= 0.4 && DEPTH_RAW <= 2.2 ? DEPTH_RAW : 1;
+// `?links=`（.444）：连线密度。按**确定性哈希**抽样 leaf 边，主干（父子部门）永远保留，
+// 保证层级骨架可读。默认 1（全画）；判定见 deploy/legion-metrics/links.mjs。
+// 不用随机数：同一张图每次必抽同一批，否则刷新后拓扑变样会被当成网络在抖。
+const LINKS_RAW = typeof window !== 'undefined'
+  ? Number(new URLSearchParams(window.location.search).get('links') || '')
+  : NaN;
+const LINK_KEEP = Number.isFinite(LINKS_RAW) && LINKS_RAW > 0 && LINKS_RAW <= 1 ? LINKS_RAW : 1;
+function keepEdge(from: string, to: string): boolean {
+  if (LINK_KEEP >= 1) return true;
+  const key = `${from}|${to}`;
+  let h = 5381;
+  for (let i = 0; i < key.length; i += 1) h = ((h << 5) + h + key.charCodeAt(i)) >>> 0;
+  return (h % 1000) < LINK_KEEP * 1000;
+}
 // 缩放范围：之前 0.62–2.4 太窄（自动取景后就剩 1.6× 可用），
 // admin 反馈「滚轮能滚动的幅度太少」。放到 0.25–8，并让每格滚轮快一点。
 const MIN_ZOOM = 0.25;
@@ -1185,8 +1208,8 @@ export default function Legion3DPage() {
       const cam = {
         yaw: view.yaw,
         pitch: view.pitch + (breathe ? Math.sin(breathe * Math.PI * 2 + Math.PI / 2) * 0.012 : 0),
-        dist: view.dist * dolly * (1 + camArc),
-        focal: Math.min(size.width, size.height) * (narrow ? 2.4 : 1.73) * view.zoom,
+        dist: (view.dist * dolly * (1 + camArc)) / LOOK_DEPTH,
+        focal: (Math.min(size.width, size.height) * (narrow ? 2.4 : 1.73) * view.zoom) / LOOK_DEPTH,
         cx: size.width / 2 + view.panX,
         cy: size.height / 2 + view.panY,
       };
@@ -1579,9 +1602,17 @@ export default function Legion3DPage() {
           b.item.kind === 'group' ? b.item.depth ?? 1 : undefined,
           b.projected.y - a.projected.y,
         );
+        // ?links= 抽样：只抽叶子边；主干（b 是 group = 父子部门）永远画，层级骨架不动。
+        if (b.item.kind !== 'group' && !keepEdge(edge.from, edge.to)) return;
         edgeDraws.push({ a, b, cx, cy: cy + sag, lit, trunk: b.item.kind === 'group' });
       });
 
+      // 连线计数导出（?links= 的判据用）：主干（父子部门）与叶子分开数，
+      // 因为抽样策略承诺「主干永不抽」，这条必须可被探针独立核验。
+      if (canvasRef.current) {
+        const trunkN = edgeDraws.reduce((n, e) => n + (e.trunk ? 1 : 0), 0);
+        canvasRef.current.dataset.edges = `${trunkN}/${edgeDraws.length - trunkN}`;
+      }
       // 测量开关：只关连线，保留节点/标签/地面光斑，便于画布差集量「连线可见像素」。
       if (LINKS_OFF) edgeDraws.length = 0;
 
@@ -1826,6 +1857,7 @@ export default function Legion3DPage() {
           lastViewExpose.current = now;
           const canvasEl = canvasRef.current;
           if (canvasEl) canvasEl.dataset.viewYaw = view.yaw.toFixed(3);
+          if (canvasEl) canvasEl.dataset.variant = `depth=${LOOK_DEPTH},links=${LINK_KEEP}`;
         }
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
         // 深一层部门在默认缩放下淡出：13 个部门全画会在内圈叠成一团，放大
