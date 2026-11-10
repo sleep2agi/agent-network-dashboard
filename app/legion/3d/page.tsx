@@ -100,6 +100,17 @@ const LINKS_RAW = typeof window !== 'undefined'
 // 桌面保持全量（信息优先）。回退：`?links=1`。
 const LINK_DEFAULT = typeof window !== 'undefined' && window.innerWidth < 640 ? 0.6 : 1;
 const LINK_KEEP = Number.isFinite(LINKS_RAW) && LINKS_RAW > 0 && LINKS_RAW <= 1 ? LINKS_RAW : LINK_DEFAULT;
+// `?intro=fly`（.457 变体）：入场的「穿层」版本 —— 除了 0.62×→1.0× 的推镜，
+// 镜头还从更低的角度（pitch 小 0.55 rad）抬升到最终视角，像从层间斜插进来再立起。
+// 为什么值得试：现有入场是纯缩放，观感是「放大」；加俯仰变化后是「换了个观察位置」，
+// 这属于视角层面的改变（不是某个元素变亮），失败也不会影响信息可读性。
+// 默认仍是 `zoom`（纯推镜），只有 `?intro=fly` 才启用；判据见 deploy/legion-metrics/intro-fly.mjs：
+//   pitch 单调抬升、终点等于目标视角（不残留偏差）、稳定耗时 ≤ 3200ms、反向 0、zoom 幅度不劣化。
+const INTRO_MODE = typeof window !== 'undefined'
+  ? (new URLSearchParams(window.location.search).get('intro') === 'fly' ? 'fly' : 'zoom')
+  : 'zoom';
+const INTRO_PITCH_DELTA = 0.55;
+
 function keepEdge(from: string, to: string): boolean {
   if (LINK_KEEP >= 1) return true;
   const key = `${from}|${to}`;
@@ -434,7 +445,7 @@ export default function Legion3DPage() {
   const userAdjusted = useRef(false);
   // 首次进入的「镜头推近」：从 0.62× 缓动到取景比例，约 0.9 秒。
   // 只在第一次打开时跑一次（sessionStorage 记住），并尊重 prefers-reduced-motion。
-  const introRef = useRef<{ t0: number; from: number; to: number } | null>(null);
+  const introRef = useRef<{ t0: number; from: number; to: number; pitchFrom: number; pitchTo: number } | null>(null);
   const yawAnimRef = useRef<{ t0: number; from: number; to: number } | null>(null);
   const introDone = useRef(false);
   // 入场第二段：部门环依次点亮。跟 intro 同时启动，但比镜头缓动（480ms）活得久，
@@ -1158,14 +1169,19 @@ export default function Legion3DPage() {
         const t = Math.min(1, (now - a.t0) / 900);
         const ease = 1 - Math.pow(1 - t, 3);
         view.zoom = a.from + (a.to - a.from) * ease;
+        // `?intro=fly` 的俯仰段：与缩放同一条缓动曲线，终点精确落在目标视角上（不留偏差）。
+        if (a.pitchFrom !== a.pitchTo) view.pitch = a.pitchFrom + (a.pitchTo - a.pitchFrom) * ease;
         // 只读取证（§77）：入场分支到底有没有把 zoom 写进去。
         // 若这里在变、而 __legionProjected.zoom 不变，说明写进去之后又被覆盖了。
         if (canvasRef.current) {
           canvasRef.current.dataset.introApplied = view.zoom.toFixed(3);
           canvasRef.current.dataset.introT2 = String(Math.round(now - a.t0));
+          canvasRef.current.dataset.introPitch = view.pitch.toFixed(3);
+          canvasRef.current.dataset.introMode = INTRO_MODE;
         }
         if (t >= 1) {
           view.zoom = a.to;
+          view.pitch = a.pitchTo;
           introRef.current = null;
           setZoomPct(Math.round(a.to * 100));
           // 动画结束就把「保护标记」放下：之后尺寸/结构变化可以正常重新取景。
@@ -1385,9 +1401,15 @@ export default function Legion3DPage() {
               view.yaw -= 0.35;
               yawTarget.current = view.yaw + 0.35;
               view.zoom = want * 0.62;
+              // `?intro=fly`：从更低的角度进场，再抬升到最终视角（默认仍是纯推镜）。
+              const pitchTo = view.pitch;
+              const pitchFrom = INTRO_MODE === 'fly'
+                ? Math.max(-1.1, pitchTo - INTRO_PITCH_DELTA)
+                : pitchTo;
+              view.pitch = pitchFrom;
               // 动画期间也别让「尺寸漂移」触发重算。
               userAdjusted.current = true;
-              introRef.current = { t0: now, from: want * 0.62, to: want };
+              introRef.current = { t0: now, from: want * 0.62, to: want, pitchFrom, pitchTo };
               // 镜头推进之外，部门环再按顺序亮起（第二段入场）。
               revealT0.current = now;
               try { sessionStorage.setItem('legion3d-intro', '1'); } catch {}
