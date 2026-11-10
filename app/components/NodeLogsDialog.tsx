@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useId } from 'react';
 import type { Session } from './types';
+import { DialogTitle } from './DialogTitle';
 import { t } from '../lib/ui-lang';
 
 /**
@@ -61,6 +62,7 @@ const LEVEL_CLASS: Record<string, string> = {
 };
 
 export function NodeLogsDialog({ session, onClose }: { session: Session; onClose: () => void }) {
+  const titleId = useId();
   const { node_id: nodeId, alias } = session;
   const [phase, setPhase] = useState<Phase>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);
@@ -201,23 +203,25 @@ export function NodeLogsDialog({ session, onClose }: { session: Session; onClose
       className="fixed inset-0 z-[300] flex items-center justify-center bg-[var(--scrim)] p-3"
       role="dialog"
       aria-modal="true"
-      aria-label={t('节点运行日志', 'Node run log')}
+      aria-labelledby={titleId}
       data-testid="node-logs-dialog"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex min-h-[40vh] max-h-[85vh] w-full max-w-[760px] flex-col overflow-hidden rounded-lg border border-[var(--col-line-strong)] bg-[var(--bg-elevated)] shadow-xl">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--col-line-strong)] px-3 py-2">
-          <div className="min-w-0">
-            {/* 标题档 14px：全仓 5 处标题同一档（非特例）。若将来抽 --fs-title，这里一起换。 */}
-            <div className="truncate text-[14px] text-[var(--fg)]">
-              {t('运行日志', 'Run log')}
-              <span className="ml-2 text-[11px] text-[var(--fg-muted)]">{session.alias}</span>
-            </div>
-            <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]" data-testid="node-logs-subtitle">
-              {windowLabel}
-              {nowTs ? ` · ${t('观测于', 'observed')} ${new Date(nowTs).toLocaleTimeString()}` : ''}
-            </div>
-          </div>
+          <DialogTitle
+            id={titleId}
+            title={t('运行日志', 'Run log')}
+            hint={session.alias}
+            subtitle={
+              <>
+                {windowLabel}
+                {nowTs ? ` · ${t('观测于', 'observed')} ${new Date(nowTs).toLocaleTimeString()}` : ''}
+              </>
+            }
+            subtitleTestId="node-logs-subtitle"
+          />
+
           <div className="flex shrink-0 items-center gap-1">
             <input
               value={grep}

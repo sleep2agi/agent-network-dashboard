@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useId } from 'react';
 import type { Session } from './types';
+import { DialogTitle } from './DialogTitle';
 import { t } from '../lib/ui-lang';
 
 /**
@@ -58,6 +59,7 @@ type ListPhase = { kind: 'loading' } | { kind: 'error'; message: string } | { ki
 type FilePhase = { kind: 'idle' } | { kind: 'loading'; path: string } | { kind: 'error'; message: string; path: string } | { kind: 'done'; payload: FilePayload };
 
 export function NodeFilesDialog({ session, onClose }: { session: Session; onClose: () => void }) {
+  const titleId = useId();
   const { node_id: nodeId, alias } = session;
   const [dir, setDir] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -144,31 +146,35 @@ export function NodeFilesDialog({ session, onClose }: { session: Session; onClos
       className="fixed inset-0 z-[300] flex items-center justify-center bg-[var(--scrim)] p-3"
       role="dialog"
       aria-modal="true"
-      aria-label={t('节点项目文件夹', 'Node workdir')}
+      aria-labelledby={titleId}
       data-testid="node-files-dialog"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex min-h-[40vh] max-h-[85vh] w-full max-w-[760px] flex-col overflow-hidden rounded-lg border border-[var(--col-line-strong)] bg-[var(--bg-elevated)] shadow-xl" /* exception: 与运行日志面板同高，避免两个面板跳变 */>
         <div className="flex items-center justify-between gap-2 border-b border-[var(--col-line-strong)] px-3 py-2">
-          <div className="min-w-0">
-            <div className="truncate text-[14px] text-[var(--fg)]">
-              {t('项目文件夹', 'Workdir')}
-              <span className="ml-2 text-[11px] text-[var(--fg-muted)]">{session.alias}</span>
-            </div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-[var(--fg-dim)]" data-testid="node-files-path">
-              <button type="button" onClick={() => setDir('')} className="hover:text-[var(--fg-muted)]">/</button>
-              {segments.map((seg, i) => (
-                <span key={`${seg}-${i}`} className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setDir(segments.slice(0, i + 1).join('/'))}
-                    className="hover:text-[var(--fg-muted)]"
-                  >{seg}</button>
-                  {i < segments.length - 1 && <span>/</span>}
-                </span>
-              ))}
-            </div>
-          </div>
+          <DialogTitle
+            id={titleId}
+            title={t('项目文件夹', 'Workdir')}
+            hint={session.alias}
+            subtitle={
+              <>
+                <button type="button" onClick={() => setDir('')} className="hover:text-[var(--fg-muted)]">/</button>
+                {segments.map((seg, i) => (
+                  <span key={`${seg}-${i}`} className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setDir(segments.slice(0, i + 1).join('/'))}
+                      className="hover:text-[var(--fg-muted)]"
+                    >{seg}</button>
+                    {i < segments.length - 1 && <span>/</span>}
+                  </span>
+                ))}
+              </>
+            }
+            subtitleTestId="node-files-path"
+            subtitleClassName="flex flex-wrap items-center gap-1"
+          />
+
           <div className="flex shrink-0 items-center gap-1">
             {file.kind !== 'idle' && (
               <button

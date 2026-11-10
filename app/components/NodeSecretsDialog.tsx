@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useId } from 'react';
 import type { Session } from './types';
+import { DialogTitle } from './DialogTitle';
 import { t } from '../lib/ui-lang';
 
 /**
@@ -31,6 +32,7 @@ function classifyError(msg: string): 'forbidden' | 'unreachable' | 'hub' {
 }
 
 export function NodeSecretsDialog({ session, onClose }: { session: Session; onClose: () => void }) {
+  const titleId = useId();
   const { node_id: nodeId, alias } = session;
   const [phase, setPhase] = useState<Phase>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);
@@ -86,24 +88,27 @@ export function NodeSecretsDialog({ session, onClose }: { session: Session; onCl
       className="fixed inset-0 z-[300] flex items-center justify-center bg-[var(--scrim)] p-3"
       role="dialog"
       aria-modal="true"
-      aria-label={t('节点密钥名称', 'Node secret names')}
+      aria-labelledby={titleId}
       data-testid="node-secrets-dialog"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex min-h-[40vh] max-h-[85vh] w-full max-w-[760px] flex-col overflow-hidden rounded-lg border border-[var(--col-line-strong)] bg-[var(--bg-elevated)] shadow-xl" /* exception: 与运行日志/项目文件夹同高 */>
         <div className="flex items-center justify-between gap-2 border-b border-[var(--col-line-strong)] px-3 py-2">
-          <div className="min-w-0">
-            <div className="truncate text-[14px] text-[var(--fg)]">
-              {t('密钥名称', 'Secret names')}
-              <span className="ml-2 text-[11px] text-[var(--fg-muted)]">{session.alias}</span>
-            </div>
-            <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]" data-testid="node-secrets-subtitle">
-              {phase.kind === 'done'
-                ? t(`共 ${phase.keys.length} 个${typeof phase.revision === 'number' ? ` · revision ${phase.revision}` : ''}`, `${phase.keys.length} key(s)`)
-                : '—'}
-              <span className="ml-2">{t('（仅名称，值不可读）', '(names only — values are not readable)')}</span>
-            </div>
-          </div>
+          <DialogTitle
+            id={titleId}
+            title={t('密钥名称', 'Secret names')}
+            hint={session.alias}
+            subtitle={
+              <>
+                {phase.kind === 'done'
+                  ? t(`共 ${phase.keys.length} 个${typeof phase.revision === 'number' ? ` · revision ${phase.revision}` : ''}`, `${phase.keys.length} key(s)`)
+                  : '—'}
+                <span className="ml-2">{t('（仅名称，值不可读）', '(names only — values are not readable)')}</span>
+              </>
+            }
+            subtitleTestId="node-secrets-subtitle"
+          />
+
           <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"

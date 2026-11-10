@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useId } from 'react';
 import type { Session } from './types';
+import { DialogTitle } from './DialogTitle';
 import { t } from '../lib/ui-lang';
 
 /**
@@ -25,6 +26,7 @@ const POLL_INTERVAL_MS = 2500;
 const POLL_MAX = 10;
 
 export function NodeRulesDialog({ session, onClose }: { session: Session; onClose: () => void }) {
+  const titleId = useId();
   const [phase, setPhase] = useState<Phase>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const { node_id: nodeId, alias } = session;
@@ -209,21 +211,20 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
       className="fixed inset-0 z-[300] flex items-center justify-center bg-[var(--scrim)] p-3"
       role="dialog"
       aria-modal="true"
-      aria-label={t('节点规则文件', 'Node rules file')}
+      aria-labelledby={titleId}
       data-testid="node-rules-dialog"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex max-h-[85vh] w-full max-w-[720px] flex-col overflow-hidden rounded-lg border border-[var(--col-line-strong)] bg-[var(--bg-elevated)] shadow-xl">
         <div className="flex items-center justify-between gap-2 border-b border-[var(--col-line-strong)] px-3 py-2">
-          <div className="min-w-0">
-            <div className="truncate text-[14px] text-[var(--fg)]">
-              {t('规则文件', 'Rules file')}
-              <span className="ml-2 text-[11px] text-[var(--fg-muted)]">{session.alias}</span>
-            </div>
-            <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]" data-testid="node-rules-file-name">
-              {phase.kind === 'done' ? (phase.fileName ?? t('（节点未返回文件名）', '(no file name)')) : '—'}
-            </div>
-          </div>
+          <DialogTitle
+            id={titleId}
+            title={t('规则文件', 'Rules file')}
+            hint={session.alias}
+            subtitle={phase.kind === 'done' ? (phase.fileName ?? t('（节点未返回文件名）', '(no file name)')) : '—'}
+            subtitleTestId="node-rules-file-name"
+          />
+
           <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
