@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useId } from 'react';
 import type { Session } from './types';
 import { DialogTitle } from './DialogTitle';
+import { useDialogFocus } from './useDialogFocus';
 import { t } from '../lib/ui-lang';
 
 /**
@@ -33,6 +34,8 @@ function classifyError(msg: string): 'forbidden' | 'unreachable' | 'hub' {
 
 export function NodeSecretsDialog({ session, onClose }: { session: Session; onClose: () => void }) {
   const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useDialogFocus(dialogRef, '[data-testid="chat-pane-more"]');
   const { node_id: nodeId, alias } = session;
   const [phase, setPhase] = useState<Phase>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);
@@ -89,6 +92,7 @@ export function NodeSecretsDialog({ session, onClose }: { session: Session; onCl
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
+      ref={dialogRef}
       data-testid="node-secrets-dialog"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
