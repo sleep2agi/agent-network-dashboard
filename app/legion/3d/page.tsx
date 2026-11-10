@@ -95,7 +95,11 @@ const LOOK_DEPTH = Number.isFinite(DEPTH_RAW) && DEPTH_RAW >= 0.4 && DEPTH_RAW <
 const LINKS_RAW = typeof window !== 'undefined'
   ? Number(new URLSearchParams(window.location.search).get('links') || '')
   : NaN;
-const LINK_KEEP = Number.isFinite(LINKS_RAW) && LINKS_RAW > 0 && LINKS_RAW <= 1 ? LINKS_RAW : 1;
+// `.446` 起：**窄屏默认 0.6**（叶子连线保留 64%，主干 14 条全留）。
+// 依据：390 视口上连线像素占比高、节点本来就密，抽掉 36% 叶子边后骨架更读得出来；
+// 桌面保持全量（信息优先）。回退：`?links=1`。
+const LINK_DEFAULT = typeof window !== 'undefined' && window.innerWidth < 640 ? 0.6 : 1;
+const LINK_KEEP = Number.isFinite(LINKS_RAW) && LINKS_RAW > 0 && LINKS_RAW <= 1 ? LINKS_RAW : LINK_DEFAULT;
 function keepEdge(from: string, to: string): boolean {
   if (LINK_KEEP >= 1) return true;
   const key = `${from}|${to}`;
