@@ -33,11 +33,12 @@ export interface ChatPaneOverflowMenuProps {
   onOpenSkills?: () => void;
   onOpenLogs?: () => void;
   onOpenFiles?: () => void;
+  onOpenSecrets?: () => void;
 }
 
 const EDGE = 8;
 
-export function ChatPaneOverflowMenu({ alias, anchorRef, onClose, onOpenSettings, onOpenRules, onOpenSkills, onOpenLogs, onOpenFiles }: ChatPaneOverflowMenuProps) {
+export function ChatPaneOverflowMenu({ alias, anchorRef, onClose, onOpenSettings, onOpenRules, onOpenSkills, onOpenLogs, onOpenFiles, onOpenSecrets }: ChatPaneOverflowMenuProps) {
   // 菜单在 DOM 末尾（portal），打开后焦点若不进来，键盘用户要 Tab 穿过整页才能到达。
   // 按 role=menu 的标准模式：打开聚焦第一项，↑/↓ 循环，Esc 关闭并归还焦点。
   useReturnFocus();
@@ -166,6 +167,14 @@ export function ChatPaneOverflowMenu({ alias, anchorRef, onClose, onOpenSettings
           onClick={() => { onOpenFiles(); onClose(); }}
         >
           {t('项目文件夹', 'Workdir')}
+        </MenuItem>
+      )}
+      {onOpenSecrets && (
+        <MenuItem
+          testid="chat-pane-secrets"
+          onClick={() => { onOpenSecrets(); onClose(); }}
+        >
+          {t('密钥名称', 'Secret names')}
         </MenuItem>
       )}
       {onOpenRules && (

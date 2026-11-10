@@ -15,6 +15,7 @@ import { NodeRulesDialog } from './NodeRulesDialog';
 import { NodeSkillsDialog } from './NodeSkillsDialog';
 import { NodeLogsDialog } from './NodeLogsDialog';
 import { NodeFilesDialog } from './NodeFilesDialog';
+import { NodeSecretsDialog } from './NodeSecretsDialog';
 import { useSessions } from '../lib/hooks';
 import type { Session } from './types';
 import { shortModel, shortServer } from '../lib/node-format';
@@ -63,6 +64,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
   const [rulesOpen, setRulesOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
+  const [secretsOpen, setSecretsOpen] = useState(false);
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // 07-31 通信龙 batch (SPEC §12 remaining): ⋮ opens overflow menu
@@ -255,6 +257,11 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           {(s) => <NodeFilesDialog session={s} onClose={() => setFilesOpen(false)} />}
         </SessionGate>
       )}
+      {secretsOpen && (
+        <SessionGate alias={alias} onClose={() => setSecretsOpen(false)} label={t('密钥名称', 'Secret names')}>
+          {(s) => <NodeSecretsDialog session={s} onClose={() => setSecretsOpen(false)} />}
+        </SessionGate>
+      )}
       {settingsOpen && session && (
         <NodeSettingsPanel
           session={session}
@@ -271,6 +278,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           onOpenRules={() => setRulesOpen(true)}
           onOpenLogs={() => setLogsOpen(true)}
           onOpenFiles={() => setFilesOpen(true)}
+          onOpenSecrets={() => setSecretsOpen(true)}
           onOpenSkills={() => setSkillsOpen(true)}
         />
       )}
