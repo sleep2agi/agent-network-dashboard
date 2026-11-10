@@ -6,6 +6,20 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.440 — 2026-11-10
+
+### 内部改进：当前网络同时写入 cookie（为「首屏服务端取数」铺路）
+
+- 以前「当前网络」只存在 sessionStorage —— 浏览器端才有，服务端读不到，
+  所以首屏必须等客户端跑起来才知道该拉哪个网络的数据（实测第一行要 ~2.3 秒）。
+- 现在切换/自动选中网络时会同时写一份 `anet_network_id` cookie（一年、path=/、SameSite=Lax），
+  读取时 sessionStorage 优先、cookie 兜底。
+
+**行为没有变化**：页面仍以 sessionStorage 为准，只是多了一份服务端可读的记录。
+实测：sessionStorage 与 cookie 值一致（`net_399bdf86f528`）。
+
+---
+
 ## 0.6.4-preview.439 — 2026-11-10
 
 ### 节点设置面板：新增「权限模式」展示
