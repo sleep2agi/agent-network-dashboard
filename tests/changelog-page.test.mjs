@@ -34,7 +34,11 @@ for (const tag of ['p', 'li', 'h3']) {
 
 // 内容新鲜度：页面在、内容旧是最容易被忽略的坏法——`.319` 上线了页面，
 // 但 CHANGELOG 最新条目停在 `.290`，页面展示了 33 个预览版之前的说明。
-// 这里要求「最新条目」与 package.json 的 preview 号相差不超过 12。
+//
+// `.454` 把「相差不超过 12」收紧成「必须相等」：
+// 之前留 12 的余量，结果是连续 13 个版本没人写说明，公开的 /changelog 页
+// 挂着半天前的内容却没人发现。余量等于「允许欠账」，欠账一定会累积。
+// 现在 release 提交必须把 bump 与 CHANGELOG 条目放在同一个提交里（逐提交判定，不看 PR 最终态）。
 const pkg = JSON.parse(read('package.json'));
 const pkgPreview = Number((pkg.version || '').match(/preview\.(\d+)/)?.[1] ?? NaN);
 const newest = Number([...changelog.matchAll(/^## \d+\.\d+\.\d+-preview\.(\d+)/gm)]
@@ -42,7 +46,8 @@ const newest = Number([...changelog.matchAll(/^## \d+\.\d+\.\d+-preview\.(\d+)/g
 assert.ok(Number.isFinite(pkgPreview), 'package.json 必须是 preview 版本号');
 assert.ok(Number.isFinite(newest), 'CHANGELOG 里必须至少有一条 preview 条目');
 const gap = pkgPreview - newest;
-assert.ok(gap >= 0 && gap <= 12,
-  `CHANGELOG 最新条目 .${newest} 落后 package.json .${pkgPreview} 共 ${gap} 个版本（上限 12）：请补写发布说明`);
+assert.ok(gap === 0,
+  `CHANGELOG 最新条目 .${newest} 与 package.json .${pkgPreview} 相差 ${gap} 个版本（要求 0）：`
+  + '发布提交必须同时 include CHANGELOG 对应小节');
 
 console.log(`changelog page contract ok (${versions.length} versions, wrap guarded)`);

@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useId } from 'react';
 import type { Session } from './types';
+import { DialogTitle } from './DialogTitle';
 import { t } from '../lib/ui-lang';
 
 /**
@@ -27,6 +28,7 @@ const POLL_INTERVAL_MS = 2500;
 const POLL_MAX = 10;
 
 export function NodeSkillsDialog({ session, onClose }: { session: Session; onClose: () => void }) {
+  const titleId = useId();
   const [phase, setPhase] = useState<ListPhase>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [open, setOpen] = useState<{ skill: Skill; content: string | null; error?: string } | null>(null);
@@ -126,21 +128,20 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
       className="fixed inset-0 z-[300] flex items-center justify-center bg-[var(--scrim)] p-3"
       role="dialog"
       aria-modal="true"
-      aria-label={t('节点技能', 'Node skills')}
+      aria-labelledby={titleId}
       data-testid="node-skills-dialog"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex max-h-[85vh] w-full max-w-[760px] flex-col overflow-hidden rounded-lg border border-[var(--col-line-strong)] bg-[var(--bg-elevated)] shadow-xl">
         <div className="flex items-center justify-between gap-2 border-b border-[var(--col-line-strong)] px-3 py-2">
-          <div className="min-w-0">
-            <div className="truncate text-[14px] text-[var(--fg)]">
-              {open ? t('技能内容', 'Skill') : t('技能', 'Skills')}
-              <span className="ml-2 text-[11px] text-[var(--fg-muted)]">{session.alias}</span>
-            </div>
-            <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]" data-testid="node-skills-subtitle">
-              {open ? open.skill.name : (phase.kind === 'done' ? t(`${phase.skills.length} 个技能`, `${phase.skills.length} skills`) : '—')}
-            </div>
-          </div>
+          <DialogTitle
+            id={titleId}
+            title={open ? t('技能内容', 'Skill') : t('技能', 'Skills')}
+            hint={session.alias}
+            subtitle={open ? open.skill.name : (phase.kind === 'done' ? t(`${phase.skills.length} 个技能`, `${phase.skills.length} skills`) : '—')}
+            subtitleTestId="node-skills-subtitle"
+          />
+
           <div className="flex shrink-0 items-center gap-1">
             {open && (
               <button

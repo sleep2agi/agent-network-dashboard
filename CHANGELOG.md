@@ -6,6 +6,25 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.454 — 2026-11-10
+
+### 可用性：五个节点面板改用统一标题块，模态框终于有名字了
+
+- 抽 `DialogTitle`：语义 `<h2>` + 别名 + 副标题，一处定义标题的字号/颜色/截断策略。
+  规则、技能、日志、文件、密钥五个面板不再各自复制同一段标题结构
+  （相同标题串 5 处 → 1 处，`text-[14px]` 全仓 7 → 3）。
+- 五个模态框从 `aria-label` 改为 `aria-labelledby` 指向标题：屏幕阅读器打开时会念
+  「运行日志 / 项目文件夹 / …」，而不是笼统的「对话框」。
+- 各面板的副标题测试 id（`node-logs-subtitle` 等）原样保留，探针选择器不变。
+
+### 工程门禁：发布必须同时写发布说明（漂移 12 → 0）
+
+- `tests/changelog-page.test.mjs` 原来允许 CHANGELOG 落后 package.json 12 个版本，
+  结果连续 13 个版本没人补说明，公开的 `/changelog` 页挂着半天前的内容。
+- 现在要求两者**完全相等**：发布提交必须把版本号与 CHANGELOG 条目放在同一个提交里。
+
+---
+
 ## 0.6.4-preview.453 — 2026-11-10
 
 ### 修复：工具被拒绝时显示真实原因（不再只报「Hub 没有返回请求号」）
