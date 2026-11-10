@@ -1384,6 +1384,10 @@ export default function Legion3DPage() {
       const sizeDrift = !lastFitSize.current
         || Math.abs(size.width - lastFitSize.current.w) > 8
         || Math.abs(size.height - lastFitSize.current.h) > 8;
+      // 「静默窗口」只静默「入场后的自动纠正」，不静默「用户主动改尺寸」：
+      // 转屏/改窗口时立刻解除静默，否则慢设备上会停在旧尺寸的取景里等窗口结束。
+      // （属 §79 的「条件组合」类缺陷：只在 慢设备 + 900ms 内转屏 时出现，验收覆盖不到。）
+      if (sizeDrift && abortQuietUntilRef.current !== 0) abortQuietUntilRef.current = 0;
       const fitBounds = fitBoundsRef.current ?? { x1: 24, y1: 24, x2: size.width - 24, y2: size.height - 24 };
       const initialZoom = view.zoom;
       const framingBodies = (zoom = initialZoom) => {
