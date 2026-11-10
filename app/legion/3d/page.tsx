@@ -1993,6 +1993,14 @@ export default function Legion3DPage() {
               const body = nodeBody(sn, layout.stats.people, layout.stats.agents);
               return {
                 kind: sn.item.kind,
+                // 部门需要 depth / parentId 才能把「父子嵌套」和「同层碰撞」分开统计
+                // （2026-11-11：14 对相交可能全是嵌套，不能直接当「过密」）。
+                depth: (sn.item as { depth?: number }).depth ?? null,
+                parentId: (sn.item as { parentId?: string | null }).parentId ?? null,
+                // 判定「最差对」是否为空部门淡出（alpha×0.3）造成的假碰撞
+                label: (sn.item as { label?: string }).label ?? null,
+                memberCount: (sn.item as { memberCount?: number }).memberCount ?? null,
+                agentCount: (sn.item as { agentCount?: number }).agentCount ?? null,
                 x: Math.round(sn.projected.x), y: Math.round(sn.projected.y),
                 rx: Math.round(body.rx ?? body.radius), ry: Math.round(body.ry ?? body.radius),
               };
