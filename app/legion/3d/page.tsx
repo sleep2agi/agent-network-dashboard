@@ -2192,8 +2192,11 @@ export default function Legion3DPage() {
         // 名字只是重复（密集网络里尤其明显），只有悬停/选中才补。
         const shortInside = node.kind === 'group' && radiusPx >= 9
           && Array.from(node.label.replace(/[*+\s]/g, '')).length <= (rx >= 28 ? 3 : 2);
+        // 一级部门是「结构骨架」：即使占位面积小也要尝试画名字（放在最低优先级之后排，
+        // 由 placeLegionLabel 决定能不能放下），否则 14 个部门里只有 6 个看得到名字。
         const groupWanted = node.kind === 'group'
-          && ((node.span ?? 0) >= 1.0 || selectedRef.current === node.id || hoverRef.current === node.id || p.scale > cam.focal * 0.55);
+          && ((node.span ?? 0) >= 1.0 || selectedRef.current === node.id || hoverRef.current === node.id
+            || p.scale > cam.focal * 0.55 || (node.depth ?? 1) <= 1);
         const showLabel =
           node.kind === 'core' ||
           (groupWanted && !shortInside) ||
