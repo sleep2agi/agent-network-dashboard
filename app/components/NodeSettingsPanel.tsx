@@ -377,6 +377,33 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
 }) {
   // 权限模式展示：与 AvatarSection 共用同一个 SWR 缓存（lite nodes），不额外发请求。
   const { attrsByAlias } = useNodeLifecycle();
+  // 权限模式写入（.447）：只在 viewer_can.permission_mode 为真时给下拉。
+  // 失败必须如实回显原因（Hub 的 invalid_permission_mode / permission_denied 都是可解释的），
+  // 不允许「看起来改了」——成功后由 SWR 刷新回读真实值。
+  const [permBusy, setPermBusy] = useState(false);
+  const [permMsg, setPermMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  const permLabel = (m: string) => (m === 'readonly' ? '只读' : m === 'restricted' ? '受限' : '正常');
+  const changePermissionMode = async (alias: string, mode: string) => {
+    setPermBusy(true);
+    setPermMsg(null);
+    try {
+      const res = await fetch(`/api/hub/nodes/${encodeURIComponent(alias)}/permission-mode`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { ok?: boolean; permission_mode?: string; message?: string };
+      if (!res.ok || body.ok === false) {
+        setPermMsg({ kind: 'err', text: body.message || `HTTP ${res.status}` });
+        return;
+      }
+      setPermMsg({ kind: 'ok', text: `已切换为「${permLabel(body.permission_mode ?? mode)}」（等待回读确认）` });
+    } catch (e) {
+      setPermMsg({ kind: 'err', text: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setPermBusy(false);
+    }
+  };
   useReturnFocus();
   const runtime = s.runtime || '—';
   const initialModel = s.model || s.agent || '';
@@ -812,16 +839,35 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
               <InfoRow label="所属 network" value={s.network_id || '—'} />
               <InfoRow label="当前 session" value={s.session_id || '—'} />
               <InfoRow label="在线状态" value={s.status || '—'} />
-              <InfoRow
-                label="权限模式"
-                value={(() => {
-                  const p = attrsByAlias[s.alias];
-                  if (!p?.permission_mode) return '—';
-                  const label = p.permission_mode === 'readonly' ? '只读'
-                    : p.permission_mode === 'restricted' ? '受限' : '正常';
-                  return p.can_edit_permission ? `${label}（可管理）` : label;
-                })()}
-              />
+              {(() => {
+                const p = attrsByAlias[s.alias];
+                if (!p?.permission_mode) return <InfoRow label="权限模式" value="—" />;
+                if (!p.can_edit_permission) return <InfoRow label="权限模式" value={permLabel(p.permission_mode)} />;
+                return (
+                  <div className="flex items-center justify-between gap-2 px-3 py-2">
+                    <span className="text-[11px] text-[var(--fg-muted)]">权限模式</span>
+                    <select
+                      data-testid="permission-mode-select"
+                      value={p.permission_mode}
+                      disabled={permBusy}
+                      onChange={(e) => void changePermissionMode(s.alias, e.target.value)}
+                      className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2 py-1 text-[12px] text-[var(--fg)] disabled:opacity-50"
+                    >
+                      <option value="normal">正常</option>
+                      <option value="readonly">只读</option>
+                      <option value="restricted">受限</option>
+                    </select>
+                  </div>
+                );
+              })()}
+              {permMsg && (
+                <div
+                  data-testid="permission-mode-msg"
+                  className={`px-3 py-1.5 text-[11px] ${permMsg.kind === 'ok' ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}
+                >
+                  {permMsg.text}
+                </div>
+              )}
             </div>
           </section>
 
