@@ -114,11 +114,10 @@ const LINK_KEEP = Number.isFinite(LINKS_RAW) && LINKS_RAW > 0 && LINKS_RAW <= 1 
 const INTRO_PARAM = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).get('intro')
   : null;
-const INTRO_MODE: 'fly' | 'zoom' = INTRO_PARAM === 'fly' || INTRO_PARAM === 'full'
-  ? 'fly'
-  : INTRO_PARAM === 'zoom'
-    ? 'zoom'
-    : (typeof window !== 'undefined' && window.innerWidth >= 768 ? 'fly' : 'zoom');
+// `.460` 起：**全宽默认 fly**（含窄屏）。依据（§78.5quater）：390 视口 + fly 在
+// 「无 GPU 的软件渲染」机器上没有触发降级，且终态/标签/边界四条不变量全过。
+// 兜底仍在：守不住 30fps 会自动秒到位；回退：`?intro=zoom`；强制完整：`?intro=full`。
+const INTRO_MODE: 'fly' | 'zoom' = INTRO_PARAM === 'zoom' ? 'zoom' : 'fly';
 // `.458` 自适应降级：入场期间如果这台设备连 30fps 都守不住，就别硬飞完 900ms ——
 // 低端机/软件渲染上「卡着飞一半」比「直接到位」更难受。判据：最近 6 帧的中位帧间隔 > 33ms。
 // 关闭方式：`?intro=full`（测量几何、或想强制看完整入场时用）。
@@ -465,6 +464,10 @@ export default function Legion3DPage() {
   // 降级发生次数。结构上 introRef=null 后不会再进分支，但显式计数才可断言「一次入场只降级一次」
   // （评审 2026-11-11：怕将来有人把 abort 挪到别处，变成每帧都降级）。
   const introAbortCountRef = useRef(0);
+  // 降级后的「取景静默窗口」：实测降级那一帧之后，fit 会立刻启动一次 zoomAnim，
+  // 把落点从 a.to 改成 1.28–1.36（且每次不同，取决于当时 content 比例）。
+  // 静默到「入场本该结束的时刻」，让降级路径的终态稳定且不近于完整入场。
+  const abortQuietUntilRef = useRef(0);
   const yawAnimRef = useRef<{ t0: number; from: number; to: number } | null>(null);
   const introDone = useRef(false);
   // 入场第二段：部门环依次点亮。跟 intro 同时启动，但比镜头缓动（480ms）活得久，
@@ -1176,6 +1179,7 @@ export default function Legion3DPage() {
       // 小屏用更长的焦距把图放大：375 宽时 min(w,h) 只有 375，
       // 按桌面系数算整张图只有硬币大，留白像坏了。
       if (zoomAnimRef.current && !introRef.current) {
+        if (debugProjRef.current && canvasRef.current) canvasRef.current.dataset.zoomWriter = 'zoomAnim';
         const a = zoomAnimRef.current;
         const t = Math.min(1, (now - a.t0) / 420);
         const ease = 1 - Math.pow(1 - t, 3);
@@ -1187,6 +1191,7 @@ export default function Legion3DPage() {
         }
       }
       if (introRef.current) {
+        if (debugProjRef.current && canvasRef.current) canvasRef.current.dataset.zoomWriter = 'intro';
         const a = introRef.current;
         // 自适应降级：把最近帧间隔塞进环形缓冲，入场期间若中位数 > 33ms 就直接到位。
         // 用「中位数」不用「平均」：一次 GC 长帧不该把入场砍掉。
@@ -1201,6 +1206,8 @@ export default function Legion3DPage() {
             view.pitch = a.pitchTo;
             introRef.current = null;
             userAdjusted.current = false;
+            abortQuietUntilRef.current = now + 900;
+            if (debugProjRef.current && canvasRef.current) canvasRef.current.dataset.zoomWriter = 'abort';
             if (canvasRef.current) {
               // 语义是「已中止并且已到位」：把落点也写出来，避免只看到「aborted=1」
               // 却不知道它落在哪（评审指出的：aborted 不等于 landed）。
@@ -1431,10 +1438,12 @@ export default function Legion3DPage() {
           const boost = focusZoomRef.current > 0 && size.width >= 640 ? 1.1 : 1;
           const want = Math.min(MAX_ZOOM, Math.max(fit.zoom, focusZoomRef.current) * boost);
           const prevZoom = view.zoom;
+          if (debugProjRef.current && canvasRef.current) canvasRef.current.dataset.zoomWriter = 'fit';
           Object.assign(view, { ...fit, zoom: want });
           const reduceMotion = typeof window !== 'undefined'
             && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-          if (Math.abs(want - prevZoom) > 0.005 && !reduceMotion && !introRef.current) {
+          const quiet = now < abortQuietUntilRef.current;
+          if (Math.abs(want - prevZoom) > 0.005 && !reduceMotion && !introRef.current && !quiet) {
             view.zoom = prevZoom;
             zoomAnimRef.current = { t0: now, from: prevZoom, to: want };
           } else {
