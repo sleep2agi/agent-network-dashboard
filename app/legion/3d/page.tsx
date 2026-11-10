@@ -28,7 +28,7 @@ import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABE
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
-import { departmentDisc, dropSag, fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
+import { buildLegionCamera, departmentDisc, dropSag, fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
 import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
 import { EXPORT_FPS, LOOP_DURATION_MS, containRect, exportDimensions, loopProgress, loopYaw, pickRecordingMime, recordingFileName } from '../../lib/legion-recording';
@@ -1317,14 +1317,16 @@ export default function Legion3DPage() {
         if (p >= 1) camArcRef.current = { t0: 0, peak: 0 };
       }
       if (canvasRef.current) canvasRef.current.dataset.camArc = camArc.toFixed(3);
-      const cam = {
-        yaw: view.yaw,
-        pitch: view.pitch + (breathe ? Math.sin(breathe * Math.PI * 2 + Math.PI / 2) * 0.012 : 0),
-        dist: (view.dist * dolly * (1 + camArc)) / LOOK_DEPTH,
-        focal: (Math.min(size.width, size.height) * (narrow ? 2.4 : 1.73) * view.zoom) / LOOK_DEPTH,
-        cx: size.width / 2 + view.panX,
-        cy: size.height / 2 + view.panY,
-      };
+      // 相机参数只有一处来源（lib）：既保证渲染端自洽，也保证排布优化端算的是同一个相机。
+      const cam = buildLegionCamera(
+        {
+          ...view,
+          pitch: view.pitch + (breathe ? Math.sin(breathe * Math.PI * 2 + Math.PI / 2) * 0.012 : 0),
+          dist: view.dist * dolly * (1 + camArc),
+        },
+        size,
+        LOOK_DEPTH,
+      );
 
       // 大网络降级：200 个节点的网络里，逐节点 shadowBlur + 逐边光晕会把
       // 帧率打到个位数。装饰性开销按规模递减，结构和信息一律不减。

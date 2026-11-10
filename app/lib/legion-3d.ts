@@ -126,6 +126,44 @@ export function projectPoint(
   };
 }
 
+/** 军团视图参数（与页面里的 viewRef 同构） */
+export interface LegionView {
+  yaw: number;
+  pitch: number;
+  dist: number;
+  zoom: number;
+  panX?: number;
+  panY?: number;
+}
+
+/** 桌面默认视角；窄屏只改俯角（见 NARROW_PITCH） */
+export const LEGION_VIEW_DEFAULT: LegionView = { yaw: 0.62, pitch: 0.85, dist: 4.9, zoom: 1.12, panX: 0, panY: 0 };
+/** 窄屏俯角更陡：竖向空间别浪费 */
+export const LEGION_PITCH_NARROW = 1.02;
+
+/**
+ * **相机参数的唯一来源**。渲染端与排布优化端都必须调用它。
+ *
+ * 2026-11-11：这两处曾经各写一份，结果 390 用 1.02 渲染、优化器却按 0.85 求最优
+ * （「为另一个相机优化」）。单一实现 + 下面的同源测试，保证不会再分叉。
+ */
+export function buildLegionCamera(
+  view: LegionView,
+  size: { width: number; height: number },
+  lookDepth: number,
+): Camera3D {
+  const narrow = size.width < 720;
+  const depth = Number.isFinite(lookDepth) && lookDepth > 0 ? lookDepth : 1;
+  return {
+    yaw: view.yaw,
+    pitch: view.pitch,
+    dist: view.dist / depth,
+    focal: (Math.min(size.width, size.height) * (narrow ? 2.4 : 1.73) * view.zoom) / depth,
+    cx: size.width / 2 + (view.panX ?? 0),
+    cy: size.height / 2 + (view.panY ?? 0),
+  };
+}
+
 export interface SceneNode<T> {
   item: T;
   point: Vec3;

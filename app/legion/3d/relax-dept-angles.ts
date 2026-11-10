@@ -19,7 +19,7 @@
  *   3. maxAngleΔ  ≤ 0.45 rad（约 26°：部门不至于跑到别人的扇区去）
  */
 import type { LegionNode } from '../../lib/legion-layout';
-import { nodeToVec3, projectPoint } from '../../lib/legion-3d';
+import { buildLegionCamera, LEGION_PITCH_NARROW, LEGION_VIEW_DEFAULT, nodeToVec3, projectPoint } from '../../lib/legion-3d';
 
 type GroupNode = LegionNode & { angle: number; radius: number; depth?: number };
 
@@ -137,21 +137,20 @@ function minDistOf(a: GroupNode, b: GroupNode): number {
 // （2026-11-11 实测：maxAngleDelta = 0，等于没跑）。改成按 need 归一化后，权重取 3。
 const PEAK_WEIGHT = 3;
 
+// 每个视口带自己的俯角与 LOOK_DEPTH：390 的渲染俯角是 1.02，不是 0.85。
+// （2026-11-11 实测缺陷：两处各写一份相机参数 ⇒ 390 被按「另一个相机」优化。）
 const VIEWPORTS = [
-  { width: 1440, height: 1000 },
-  { width: 390, height: 844 },
+  { width: 1440, height: 1000, pitch: LEGION_VIEW_DEFAULT.pitch, lookDepth: 2 },
+  { width: 390, height: 844, pitch: LEGION_PITCH_NARROW, lookDepth: 1 },
 ];
 const YAWS = [0.62, 1.95, 3.25];
-const PITCH = 0.85;
 
-function cameraFor(yaw: number, w: number, h: number) {
-  const narrow = w < 720;
-  return {
-    yaw,
-    pitch: PITCH,
-    dist: 4.9,
-    focal: Math.min(w, h) * (narrow ? 2.4 : 1.73) * 1.12,
-  };
+function cameraFor(yaw: number, vp: { width: number; height: number; pitch: number; lookDepth: number }) {
+  return buildLegionCamera(
+    { ...LEGION_VIEW_DEFAULT, yaw, pitch: vp.pitch },
+    { width: vp.width, height: vp.height },
+    vp.lookDepth,
+  );
 }
 
 /** 椭圆支撑函数：沿单位方向 (ux,uy) 的半径 */
@@ -164,7 +163,7 @@ function projectedCost(pairs: Array<[GroupNode, GroupNode]>): number {
   let peak = 0;
   for (const vp of VIEWPORTS) {
     for (const yaw of YAWS) {
-      const cam = cameraFor(yaw, vp.width, vp.height);
+      const cam = cameraFor(yaw, vp);
       for (const [a, b] of pairs) {
         const va = nodeToVec3({ x: a.x, y: a.y, ring: a.ring, order: a.order ?? 0, kind: a.kind, depth: a.depth });
         const vb = nodeToVec3({ x: b.x, y: b.y, ring: b.ring, order: b.order ?? 0, kind: b.kind, depth: b.depth });
