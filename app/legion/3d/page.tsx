@@ -1158,6 +1158,12 @@ export default function Legion3DPage() {
         const t = Math.min(1, (now - a.t0) / 900);
         const ease = 1 - Math.pow(1 - t, 3);
         view.zoom = a.from + (a.to - a.from) * ease;
+        // 只读取证（§77）：入场分支到底有没有把 zoom 写进去。
+        // 若这里在变、而 __legionProjected.zoom 不变，说明写进去之后又被覆盖了。
+        if (canvasRef.current) {
+          canvasRef.current.dataset.introApplied = view.zoom.toFixed(3);
+          canvasRef.current.dataset.introT2 = String(Math.round(now - a.t0));
+        }
         if (t >= 1) {
           view.zoom = a.to;
           introRef.current = null;
@@ -1866,6 +1872,19 @@ export default function Legion3DPage() {
           const canvasEl = canvasRef.current;
           if (canvasEl) canvasEl.dataset.viewYaw = view.yaw.toFixed(3);
           if (canvasEl) canvasEl.dataset.variant = `depth=${LOOK_DEPTH},links=${LINK_KEEP}`;
+          // 入场推镜的只读探针（§77）：入场到底是「没跑」还是「跑了但测量口径错」，
+          // 光看 zoom 分辨不出来 —— 把状态机本身暴露出来，外部一眼定性。
+          if (canvasEl) {
+            const a = introRef.current;
+            canvasEl.dataset.introState = a ? 'running' : introDone.current ? 'done' : 'idle';
+            if (a) {
+              // 入场结束后保留「最近一次」的起止值：判断 a）目标被夹 还是 b）从未跑，
+              // 靠的是「from/to 是否留下过、比值多大」，所以不能在结束时删掉。
+              canvasEl.dataset.introFrom = a.from.toFixed(3);
+              canvasEl.dataset.introTo = a.to.toFixed(3);
+              canvasEl.dataset.introT = String(Math.round(now - a.t0));
+            }
+          }
         }
         const offline = node.kind === 'agent' && !statusByAlias.get(node.label);
         // 深一层部门在默认缩放下淡出：13 个部门全画会在内圈叠成一团，放大
