@@ -462,6 +462,9 @@ export default function Legion3DPage() {
   const introRef = useRef<{ t0: number; from: number; to: number; pitchFrom: number; pitchTo: number } | null>(null);
   // 入场自适应降级用的最近帧间隔（毫秒）。只保留 6 个样本，稳态零开销。
   const frameGapsRef = useRef<number[]>([]);
+  // 降级发生次数。结构上 introRef=null 后不会再进分支，但显式计数才可断言「一次入场只降级一次」
+  // （评审 2026-11-11：怕将来有人把 abort 挪到别处，变成每帧都降级）。
+  const introAbortCountRef = useRef(0);
   const yawAnimRef = useRef<{ t0: number; from: number; to: number } | null>(null);
   const introDone = useRef(false);
   // 入场第二段：部门环依次点亮。跟 intro 同时启动，但比镜头缓动（480ms）活得久，
@@ -1201,7 +1204,9 @@ export default function Legion3DPage() {
             if (canvasRef.current) {
               // 语义是「已中止并且已到位」：把落点也写出来，避免只看到「aborted=1」
               // 却不知道它落在哪（评审指出的：aborted 不等于 landed）。
+              introAbortCountRef.current += 1;
               canvasRef.current.dataset.introAborted = '1';
+              canvasRef.current.dataset.introAbortCount = String(introAbortCountRef.current);
               canvasRef.current.dataset.introAbortedZoom = view.zoom.toFixed(3);
               canvasRef.current.dataset.introAbortedPitch = view.pitch.toFixed(3);
             }
