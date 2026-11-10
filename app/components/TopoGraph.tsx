@@ -253,7 +253,7 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
   const baseClass = "hidden sm:inline px-2.5 py-1 rounded-md font-mono font-medium tabular-nums border transition-colors duration-300";
   const colorClass = stale
     ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
-    : "bg-gray-500/10 text-gray-400 border-gray-500/20";
+    : "bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border-[var(--border)]";
   /* Round 275 / Loop: simplification per Vincent 5214/5215-5217 visual
      audit (clutter cleanup for Twitter screenshot). Pre-R275 the chip
      ALWAYS rendered — "live · 5s" gray-on-gray at rest, "lag · 15s"
@@ -2464,7 +2464,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               telegraphs "this is a label, not a sentence" without
               changing color or size, deepening the editorial
               hierarchy R267 set up between kicker and h2. */}
-          {/* Round 296 / Loop: kicker text-gray-600 → text-gray-500
+          {/* Round 296 / Loop: kicker text-gray-600 → text-[var(--fg-dim)]
               for slightly better legibility on the dark cyber backdrop.
               gray-600 (#4b5563) read as a near-invisible label on
               cyber (the canvas + side rail are deeply dark); gray-500
@@ -2498,13 +2498,13 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               Picks up the small-label SPREAD direction (R554 banked
               "small labels SPREAD on hover / large headlines TIGHTEN"
               — kicker is xs uppercase, definitely a small label) plus
-              a color brighten (text-gray-500 #6b7280 → text-gray-400
+              a color brighten (text-[var(--fg-dim)] #6b7280 → text-[var(--fg-muted)]
               #9ca3af).
               Spread: tracking-widest (0.1em rest) → 0.13em hover —
               +30% kerning bump. At text-xs (12px) the per-gap shift
               is 1.2px → 1.56px (+0.36px/gap), legible without
               overshooting the rest's tracking-widest editorial base.
-              Color: text-gray-500 → text-gray-400 — one tier lighter,
+              Color: text-[var(--fg-dim)] → text-[var(--fg-muted)] — one tier lighter,
               same idiom as R296 (kicker rest tone-up from gray-600 to
               gray-500), now extended at the hover-state tier.
               transition-[letter-spacing,color] duration-200 ease-out
@@ -2531,7 +2531,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               breathing pulse cycle (`anet-current-step-pulse-kf` family
               cousins exist) but the kicker eyebrow itself was static.
               R699 adds a 6s respiration — visible but never agitating.
-              When hovered, the group-hover:text-gray-400 (R685 halo +
+              When hovered, the group-hover:text-[var(--fg-muted)] (R685 halo +
               R555 tracking-expand) takes over, so the breath only
               registers at rest. prefers-reduced-motion neutralizes the
               keyframe (animation: none) inside the CSS class.
@@ -2545,7 +2545,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
               data-topo-section-kicker-breath="6s" attr surfaces the
               cadence for tests. */}
-          <div className="anet-topo-kicker-breath text-xs uppercase text-gray-500 group-hover:text-gray-400 tracking-widest group-hover:tracking-[0.13em] transition-[letter-spacing,color] duration-200 ease-out leading-tight font-medium" data-topo-section-kicker data-topo-section-kicker-hover-tracking="0.13em" data-topo-section-kicker-hover-color="text-gray-400" data-topo-section-kicker-halo-layers="2" data-topo-section-kicker-breath="6s">Network Topology</div>
+          <div className="anet-topo-kicker-breath text-xs uppercase text-[var(--fg-dim)] group-hover:text-[var(--fg-muted)] tracking-widest group-hover:tracking-[0.13em] transition-[letter-spacing,color] duration-200 ease-out leading-tight font-medium" data-topo-section-kicker data-topo-section-kicker-hover-tracking="0.13em" data-topo-section-kicker-hover-color="text-[var(--fg-muted)]" data-topo-section-kicker-halo-layers="2" data-topo-section-kicker-breath="6s">Network Topology</div>
           {/* Round 286 / Loop: title 'Command mesh' adopts tracking-tight
               (-0.025em) to complement R285 kicker tracking-widest. Wide
               eyebrow + tight headline is the conventional editorial
@@ -2706,7 +2706,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           {/* Round 268 / Loop: Layout toggle border unified with the
               chrome strip's theme-aware borderColor. Pre-R268 the
               wrapper + Grid button's internal divider used hardcoded
-              `border-gray-500/25` (pale gray, fixed in both themes)
+              `border-[var(--border)]` (pale gray, fixed in both themes)
               while the bottom-right chrome strip (nodeSize, zoom)
               used pal.containerBorder (cyber #26262b dark indigo ↔
               light #e3e6eb pale gray). Visible mismatch in cyber
@@ -2908,7 +2908,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    Fscrn  (line ~13030)      isFullscreen
                  Pre-R552 the active variant's hover state only deepened bg
                  (cyan-500/15 → /20); text stayed planted at cyan-300. The
-                 inactive variant already lifts text on hover (text-gray-400
+                 inactive variant already lifts text on hover (text-[var(--fg-muted)]
                  → text-cyan-300). R552 brings parity: active variant lifts
                  text one tier brighter (cyan-300 → cyan-200) on hover,
                  mirroring the inactive variant's "text brightens on hover"
@@ -2924,7 +2924,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  hover-color brighten family extension at the chrome strip
                  active-variant scope; sibling to the inactive variant's
                  R163/R178/R179/R270 hover:text-cyan-300 idiom. */
-              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide hover:brightness-[1.15] active:scale-95 transform-gpu ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide hover:brightness-[1.15] active:scale-95 transform-gpu ${layout === 'ring' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-[var(--accent)] active:bg-cyan-500/25' : 'text-[var(--fg-muted)] hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-ring' ? ' anet-chrome-pop' : ''}`}
               data-topo-chrome-layout-hover-preview-fw={layout === 'ring' ? null : '500'}
               data-topo-chrome-layout-ring-brightness-hover="1.15"
               /* R597 — Ring/Grid segmented buttons gain hover:
@@ -2974,7 +2974,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                  inactive variant gains `hover:font-medium` typography
                  preview + font-weight 150ms in inline transition list.
                  Same idiom, same family (R522 chrome layout). */
-              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide hover:brightness-[1.15] active:scale-95 transform-gpu ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide hover:brightness-[1.15] active:scale-95 transform-gpu ${layout === 'grid' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-[var(--accent)] active:bg-cyan-500/25' : 'text-[var(--fg-muted)] hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-grid' ? ' anet-chrome-pop' : ''}`}
               data-topo-chrome-layout-hover-preview-fw={layout === 'grid' ? null : '500'}
               data-topo-chrome-layout-grid-brightness-hover="1.15"
               /* Round 268 / Loop: Grid button's left border (the
@@ -3015,7 +3015,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               data-topo-chrome-layout="tree"
               data-topo-chrome-layout-active={layout === 'tree' ? 'true' : 'false'}
               data-topo-chrome-layout-tree-popping={chromePopping === 'layout-tree' ? 'true' : 'false'}
-              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide hover:brightness-[1.15] active:scale-95 transform-gpu ${layout === 'tree' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-tree' ? ' anet-chrome-pop' : ''}`}
+              className={`px-2.5 py-1 border-l focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:tracking-wide hover:brightness-[1.15] active:scale-95 transform-gpu ${layout === 'tree' ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-[var(--accent)] active:bg-cyan-500/25' : 'text-[var(--fg-muted)] hover:text-cyan-300 hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'} ${chromePopping === 'layout-tree' ? ' anet-chrome-pop' : ''}`}
               style={{
                 borderColor: pal.containerBorder,
                 transition: 'background-color 150ms ease, color 150ms ease, border-color 200ms ease-out, letter-spacing 200ms ease-out, transform 150ms ease-out, font-weight 150ms ease, filter 150ms ease',
@@ -3338,7 +3338,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      gate is `hoveredAliasTierKey === 'idle'`. */
                   className={`group tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     onlineNodes.length > 0
-                      ? `${isOnlineChipLit ? 'bg-cyan-500/15 border-cyan-500/30' : 'bg-cyan-500/10 border-cyan-500/20'} text-cyan-300 hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:-translate-y-px active:scale-95`
+                      ? `${isOnlineChipLit ? 'bg-cyan-500/15 border-cyan-500/30' : 'bg-cyan-500/10 border-cyan-500/20'} text-cyan-300 hover:bg-cyan-500/15 hover:border-[var(--accent)]/30 hover:-translate-y-px active:scale-95`
                       : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
                   }`}
                   data-chip-hover-lift={onlineNodes.length > 0 ? 'true' : 'false'}
@@ -3608,7 +3608,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // counts (kept visible) anyway.
             return (
               <span
-                className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
+                className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border border-[var(--border)] font-mono"
                 title={`${w} working · ${i} idle · ${o} offline`}
                 data-fleet-pressure
               >
@@ -4382,7 +4382,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               Continues the R275-R280 simplification arc. */}
           {vendorDist.length > 2 && (
             <span
-              className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 font-mono"
+              className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border border-[var(--border)] font-mono"
               title="Hover to highlight; click to pin"
               /* Round 698 — vendor-distribution chip-row outer wrapper
                  joins the R697 wrapper-level :has() halo family. Pre-R698
@@ -4606,7 +4606,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         fontWeight 600 (font-semibold). The glyph is the
                         vendor identifier — the DATA the operator scans
                         in this chip (A / O / 书 / C / G / ?). R333 set
-                        the count suffix `:N` to text-gray-400 + tabular-
+                        the count suffix `:N` to text-[var(--fg-muted)] + tabular-
                         nums and (via parent inheritance) fw 500. Pre-
                         R369 the LETTER also inherited fw 500 from the
                         chip's font-medium — letter and count read at
@@ -4680,7 +4680,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         opacity-100 brightens on chip hover. Inner-span
                         hover-brighten family (3rd anchor) — sibling to
                         R355 filter pill prefix/suffix and R414 chip-row
-                        unit. Effective shade at rest: text-gray-400 ×
+                        unit. Effective shade at rest: text-[var(--fg-muted)] ×
                         70 % alpha; on hover: full gray-400. The label-
                         tier-vs-glyph differentiation persists on hover
                         since the glyph (R369 fw=600) stays at full
@@ -4700,7 +4700,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                         transition list extends with 'filter 200ms ease-out'.
                         48th anchor in family. */}
                     <span
-                      className="text-gray-400 tabular-nums opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide"
+                      className="text-[var(--fg-muted)] tabular-nums opacity-70 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide"
                       data-vendor-letter-count-suffix
                       /* R690 sibling — count suffix halo gate extends from
                          hover-only to (hover || pin). Closes vendor chip
@@ -4783,7 +4783,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               <span
                 // Round 206 / Loop: extend the R204/R205 empty-recede
                 // family to the active-links chip. Pre-R206 "0 active
-                // links" rendered at the same bg-gray-500/10 + full
+                // links" rendered at the same bg-[var(--fg-muted)]/10 + full
                 // opacity as "12 active links" — same eye-no-signal
                 // problem the legend count (R204) and working/online
                 // chips (R205) just solved at their own grain levels.
@@ -4829,8 +4829,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // conditional pattern used for hover-lift.
                 className={`group tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu ${
                   isInteractive
-                    ? 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-cyan-500/10 hover:text-cyan-200 hover:border-cyan-500/30 hover:-translate-y-px active:scale-95'
-                    : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                    ? 'bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border-[var(--border)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover:border-[var(--accent)]/30 hover:-translate-y-px active:scale-95'
+                    : 'bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border-[var(--border)]'
                 }`}
                 data-chip-hover-lift={isInteractive ? 'true' : 'false'}
                 data-chip-group-hover-brighten="true"
@@ -4915,7 +4915,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     ? `rgba(13, 148, 136, ${alpha.toFixed(2)})`
                     : `rgba(34, 211, 238, ${alpha.toFixed(2)})`;
                   // Round 342 / Loop: active-links chip freshness suffix
-                  // wrapper text-gray-500 → text-gray-400 (R317
+                  // wrapper text-[var(--fg-dim)] → text-[var(--fg-muted)] (R317
                   // subordinate-text-lift family applied to chrome
                   // inactive Layout toggle + R333 vendor count suffix).
                   // The "last 5s ago" suffix is chip-subordinate
@@ -4943,11 +4943,11 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     // Joins the R224-R232 info-density tabular-nums
                     // sweep at the chip-row freshness scope. Pure
                     // paint-level change, no geometry shift on rest.
-                    // The R342 text-gray-400 lift + R161 dot freshness
+                    // The R342 text-[var(--fg-muted)] lift + R161 dot freshness
                     // alpha ramp + R317 subordinate-text-lift family
                     // all preserved. data-active-links-freshness-
                     // wrapper attr exposes the wrapper for tests.
-                    <span className="text-gray-400 tabular-nums" data-active-links-freshness-wrapper>
+                    <span className="text-[var(--fg-muted)] tabular-nums" data-active-links-freshness-wrapper>
                       <span
                         data-active-links-freshness-dot
                         data-active-links-freshness-alpha={alpha.toFixed(2)}
@@ -15888,7 +15888,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    brightness is pure paint, no geometric break.
                    data-topo-chrome-nodesize-brightness-hover='1.15'
                    attr documents the hover value for tests. */
-                className={`px-2 py-1 [transition-property:color,background-color,transform,font-weight,filter] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:brightness-[1.15] ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
+                className={`px-2 py-1 [transition-property:color,background-color,transform,font-weight,filter] duration-200 ease-out transform-gpu active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 focus-visible:ring-inset hover:brightness-[1.15] ${idx > 0 ? 'border-l' : ''} ${nodeScale === v ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-[var(--accent)] active:bg-cyan-500/25' : 'hover:bg-cyan-500/5 active:bg-cyan-500/15 hover:font-medium'}${chromePopping === popKey ? ' anet-chrome-pop' : ''}`}
                 data-topo-chrome-nodesize-hover-preview-fw={nodeScale === v ? null : '500'}
                 data-topo-chrome-nodesize-brightness-hover="1.15"
                 style={{
@@ -16503,7 +16503,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // reset above: lift-and-compress compound transform on press).
             className={`anet-topo-chrome-fullscreen-breath group p-1.5 rounded-md border hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
-                ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-cyan-200 active:bg-cyan-500/25'
+                ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-[var(--accent)] active:bg-cyan-500/25'
                 : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'
             }${chromePopping === 'fullscreen' ? ' anet-chrome-pop' : ''}`}
             data-topo-chrome-fullscreen-hover-lift="true"
