@@ -149,7 +149,7 @@ export default function LegionPlazaPage() {
             <button type="button" onClick={() => setSceneMode('2d')} aria-pressed={sceneMode === '2d'} className={`${control} ${sceneMode === '2d' ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : ''}`} data-testid="plaza-mode-2d">2D 平台</button>
             <button type="button" onClick={() => setSceneMode('3d')} aria-pressed={sceneMode === '3d'} className={`${control} ${sceneMode === '3d' ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : ''}`} data-testid="plaza-mode-3d">3D 平台</button>
           </div>
-          <Link href="/legion/3d" className={control}>3D 拓扑</Link><Link href="/legion" className={control}>2D 同心环</Link>
+          <Link href="/legion/3d" className={control}>3D 拓扑</Link><Link href="/legion/org" className={control}>组织 3D</Link><Link href="/legion" className={control}>2D 同心环</Link>
           <button type="button" className={`${control} bg-[var(--bg-elevated)]`} onClick={() => void toggleFullscreen()} aria-pressed={fullscreen} data-testid="plaza-fullscreen">{fullscreen ? '退出全屏' : '全屏'}</button>
         </nav>
       </header>

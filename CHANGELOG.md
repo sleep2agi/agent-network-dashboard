@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## Unreleased
+
+### 新增：组织 3D（`/legion/org`）
+
+- 按部门聚团的三维组织图：一个部门一块圆盘（互不重叠，子部门挨着父部门），
+  同一负责人的 Agent 聚成小丘，成员悬浮在小丘上方；部门与成员标签始终可读、互不遮挡。
+- 悬停看摘要，点击在右侧看部门 / 成员 / Agent 详情，双击或搜索聚焦；图例可按状态筛选。
+- 入口：3D 拓扑、2D 同心环、平台视角、组织列表页与命令面板（Go to Org (3D)）。
+
+---
+
 ## 0.6.4-preview.440 — 2026-11-10
 
 ### 内部改进：当前网络同时写入 cookie（为「首屏服务端取数」铺路）
