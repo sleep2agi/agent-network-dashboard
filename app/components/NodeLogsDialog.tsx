@@ -71,7 +71,11 @@ export function NodeLogsDialog({ session, onClose }: { session: Session; onClose
   const [lines, setLines] = useState(500);
   const [sinceMinutes, setSinceMinutes] = useState<number | ''>('');
   const [follow, setFollow] = useState(true);
-  const cancelled = useRef(false);
+  // 每一轮请求的令牌。不能用「共享的 cancelled 布尔」：
+  // 下一个 effect 一开始会把布尔重置成 false，上一轮还在 await 的请求返回时
+  // 读到 false 就照样回写，旧结果覆盖新结果（实测：快速改 grep 会闪回上一次的列表，
+  // 切换错误模式后重开会残留上一次的 done）。自增令牌天然区分「哪一轮」。
+  const runIdRef = useRef(0);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const followRef = useRef(true);
   useEffect(() => { followRef.current = follow; }, [follow]);
@@ -94,10 +98,11 @@ export function NodeLogsDialog({ session, onClose }: { session: Session; onClose
   }, []);
 
   useEffect(() => {
-    cancelled.current = false;
+    const myRun = ++runIdRef.current;
+    const alive = () => runIdRef.current === myRun;
     let timer: ReturnType<typeof setTimeout> | null = null;
     // 能力不足：渲染期直接给原因（effect 里同步 setState 会触发级联渲染）
-    if (session.logs_capable === false) return () => { cancelled.current = true; };
+    if (session.logs_capable === false) return () => {};
 
     const target: Record<string, unknown> = nodeId ? { node_id: nodeId } : { alias };
     // 入参白名单：这里只放 Hub 允许的五个键，别的什么都不发
@@ -116,7 +121,7 @@ export function NodeLogsDialog({ session, onClose }: { session: Session; onClose
       setPhase({ kind: 'loading' });
       setSeenLen(0);
       const started = await call('tail_node_logs', args);
-      if (cancelled.current) return;
+      if (!alive()) return;
       if (!started.ok) {
         setPhase({
           kind: 'error',
@@ -135,7 +140,7 @@ export function NodeLogsDialog({ session, onClose }: { session: Session; onClose
       const poll = async () => {
         tries += 1;
         const r = await call('get_rules_file_result', { request_id: requestId });
-        if (cancelled.current) return;
+        if (!alive()) return;
         if (!r.ok) {
           setPhase({ kind: 'error', message: r.error ?? t('读取失败', 'Failed') });
           return;
@@ -167,7 +172,7 @@ export function NodeLogsDialog({ session, onClose }: { session: Session; onClose
 
     void run();
     return () => {
-      cancelled.current = true;
+      // 只清定时器；令牌由下一轮自增取代（旧轮的 await 回来会因为 !alive() 直接丢弃）
       if (timer) clearTimeout(timer);
     };
   }, [attempt, call, nodeId, alias, session.logs_capable, grep, level, lines, sinceMinutes]);
