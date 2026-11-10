@@ -63,7 +63,7 @@
     "app/components/TaskDetail.tsx": 14,
     "app/components/TaskDrawer.tsx": 14,
     "app/components/TaskList.tsx": 1,
-    "app/components/TopoGraph.tsx": 97,
+    "app/components/TopoGraph.tsx": 65,
     "app/components/UserBar.tsx": 2,
     "app/legion/3d/page.tsx": 2,
     "app/legion/page.tsx": 6,
