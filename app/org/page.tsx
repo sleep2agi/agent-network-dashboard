@@ -341,6 +341,12 @@ function OrgContent() {
             >
               军团图
             </Link>
+            <Link
+              href="/legion/org"
+              className="inline-flex min-h-11 items-center rounded-lg px-2.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0 sm:py-1.5"
+            >
+              组织 3D
+            </Link>
             <button
               type="button"
               onClick={() => load(offset, true)}

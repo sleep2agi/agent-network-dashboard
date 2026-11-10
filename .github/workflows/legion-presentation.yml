@@ -18,6 +18,8 @@ on:
     paths:
       - 'app/legion/**'
       - 'app/lib/legion*.ts'
+      - 'app/lib/org-3d.ts'
+      - 'tests/e2e-legion-org3d.spec.ts'
       - 'app/globals.css'
       - 'tests/e2e-legion-presentation.spec.ts'
       - '.github/workflows/legion-presentation.yml'
@@ -54,3 +56,10 @@ jobs:
           ANET_DASHBOARD_PASSWORD: admin123
           TEST_URL: http://localhost:3000
         run: npx playwright test tests/e2e-legion-presentation.spec.ts --reporter=line
+
+      # 两条规格都在 9999 上起 stub Hub，不能并行：单独一步串行跑。
+      - name: Org 3D contract
+        env:
+          ANET_DASHBOARD_PASSWORD: admin123
+          TEST_URL: http://localhost:3000
+        run: npx playwright test tests/e2e-legion-org3d.spec.ts --reporter=line
