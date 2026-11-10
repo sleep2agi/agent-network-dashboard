@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLegionPalette, type LegionPalette } from '../../lib/legion-palette';
 import { buildLegionLayout, nearestDept, deptWorldRadius, tourOrder, type LegionNode } from '../../lib/legion-layout';
+import { polarMaxDeviation, relaxDepartmentAngles } from './relax-dept-angles';
 import { tourStepMs } from '../../lib/legion-tour';
 import { restoreFocusAfterUnmount } from '../../lib/focus-fallback';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
@@ -612,15 +613,17 @@ export default function Legion3DPage() {
 
   const peopleList = people.data?.people ?? [];
   const orphans = people.data?.agents_without_owner ?? [];
-  const layout = useMemo(
-    () => buildLegionLayout({
+  const layout = useMemo(() => {
+    const built = buildLegionLayout({
       people: peopleList,
       orphans,
       departments: hierarchy.data?.departments,
       members: hierarchy.data?.members,
-    }, { projected: true }),
-    [peopleList, orphans, hierarchy.data],
-  );
+    }, { projected: true });
+    // 3D 专用：同深度、跨父部门的盘做角度松弛（§89：三对深碰撞全是 d2↔d2）。
+    // 只改 angle，不动 radius/ring；2D 页面完全不经过这里（共享布局未改）。
+    return { ...built, nodes: relaxDepartmentAngles(built.nodes) };
+  }, [peopleList, orphans, hierarchy.data]);
 
   // 只在「结构变了」（人数/部门数/节点数）时重新取景；30s 轮询刷新同一批人
   // 不能把用户拖好的视角弹回去。
@@ -2005,6 +2008,9 @@ export default function Legion3DPage() {
                 rx: Math.round(body.rx ?? body.radius), ry: Math.round(body.ry ?? body.radius),
               };
             }));
+            // 不变量导出（§89 教训）：angle/radius 与 x/y 的派生偏差。
+            // 分辨「机制没生效」与「机制生效但效果不足」——前者这一项会很大。
+            canvasEl.dataset.polarDev = String(polarMaxDeviation(layout.nodes));
           }
           // 入场推镜的只读探针（§77）：入场到底是「没跑」还是「跑了但测量口径错」，
           // 光看 zoom 分辨不出来 —— 把状态机本身暴露出来，外部一眼定性。
