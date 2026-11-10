@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLegionPalette, type LegionPalette } from '../../lib/legion-palette';
 import { buildLegionLayout, nearestDept, deptWorldRadius, tourOrder, type LegionNode } from '../../lib/legion-layout';
-import { polarMaxDeviation, relaxDepartmentAngles } from './relax-dept-angles';
+import { getLastRelaxStats, polarMaxDeviation, relaxDepartmentAngles } from './relax-dept-angles';
 import { tourStepMs } from '../../lib/legion-tour';
 import { restoreFocusAfterUnmount } from '../../lib/focus-fallback';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
@@ -2011,6 +2011,16 @@ export default function Legion3DPage() {
             // 不变量导出（§89 教训）：angle/radius 与 x/y 的派生偏差。
             // 分辨「机制没生效」与「机制生效但效果不足」——前者这一项会很大。
             canvasEl.dataset.polarDev = String(polarMaxDeviation(layout.nodes));
+            // 三条不变量的数值证据（§90）：半径偏移必须为 0，角度位移必须在上限内。
+            const st = getLastRelaxStats();
+            canvasEl.dataset.relaxStats = JSON.stringify({
+              radiusShift: Number(st.radiusShift.toFixed(6)),
+              maxAngleDelta: Number(st.maxAngleDelta.toFixed(4)),
+              overlapBefore: Number(st.overlapBefore.toFixed(6)),
+              overlapAfter: Number(st.overlapAfter.toFixed(6)),
+              overlappingPairs: st.overlappingPairs,
+              deepest: Number(st.deepest.toFixed(4)),
+            });
           }
           // 入场推镜的只读探针（§77）：入场到底是「没跑」还是「跑了但测量口径错」，
           // 光看 zoom 分辨不出来 —— 把状态机本身暴露出来，外部一眼定性。
