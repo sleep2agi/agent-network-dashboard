@@ -84,7 +84,11 @@ const LINKS_OFF = LOOK_PARAM === 'nolinks' && DEBUG_PROJ;
 const DEPTH_RAW = typeof window !== 'undefined'
   ? Number(new URLSearchParams(window.location.search).get('depth') || '')
   : NaN;
-const LOOK_DEPTH = Number.isFinite(DEPTH_RAW) && DEPTH_RAW >= 0.4 && DEPTH_RAW <= 2.2 ? DEPTH_RAW : 1;
+// `.445` 起：**桌面默认 2.0**（实测投影尺度落差 ×1.13，叠压反而少 1 对）；
+// 窄屏保持 1.0（同样 2.0 在 390 只有 ×1.06，视觉上等于没变）。
+// 想回到旧观感：`?depth=1`；想更强：最大 2.2（再大会明显形变）。
+const DEPTH_DEFAULT = typeof window !== 'undefined' && window.innerWidth >= 768 ? 2 : 1;
+const LOOK_DEPTH = Number.isFinite(DEPTH_RAW) && DEPTH_RAW >= 0.4 && DEPTH_RAW <= 2.2 ? DEPTH_RAW : DEPTH_DEFAULT;
 // `?links=`（.444）：连线密度。按**确定性哈希**抽样 leaf 边，主干（父子部门）永远保留，
 // 保证层级骨架可读。默认 1（全画）；判定见 deploy/legion-metrics/links.mjs。
 // 不用随机数：同一张图每次必抽同一批，否则刷新后拓扑变样会被当成网络在抖。
