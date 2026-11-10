@@ -114,11 +114,15 @@ const LINK_KEEP = Number.isFinite(LINKS_RAW) && LINKS_RAW > 0 && LINKS_RAW <= 1 
 const INTRO_PARAM = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).get('intro')
   : null;
-const INTRO_MODE: 'fly' | 'zoom' = INTRO_PARAM === 'fly'
+const INTRO_MODE: 'fly' | 'zoom' = INTRO_PARAM === 'fly' || INTRO_PARAM === 'full'
   ? 'fly'
   : INTRO_PARAM === 'zoom'
     ? 'zoom'
     : (typeof window !== 'undefined' && window.innerWidth >= 768 ? 'fly' : 'zoom');
+// `.458` 自适应降级：入场期间如果这台设备连 30fps 都守不住，就别硬飞完 900ms ——
+// 低端机/软件渲染上「卡着飞一半」比「直接到位」更难受。判据：最近 6 帧的中位帧间隔 > 33ms。
+// 关闭方式：`?intro=full`（测量几何、或想强制看完整入场时用）。
+const INTRO_ADAPTIVE = INTRO_PARAM !== 'full';
 const INTRO_PITCH_DELTA = 0.55;
 
 function keepEdge(from: string, to: string): boolean {
@@ -456,6 +460,8 @@ export default function Legion3DPage() {
   // 首次进入的「镜头推近」：从 0.62× 缓动到取景比例，约 0.9 秒。
   // 只在第一次打开时跑一次（sessionStorage 记住），并尊重 prefers-reduced-motion。
   const introRef = useRef<{ t0: number; from: number; to: number; pitchFrom: number; pitchTo: number } | null>(null);
+  // 入场自适应降级用的最近帧间隔（毫秒）。只保留 6 个样本，稳态零开销。
+  const frameGapsRef = useRef<number[]>([]);
   const yawAnimRef = useRef<{ t0: number; from: number; to: number } | null>(null);
   const introDone = useRef(false);
   // 入场第二段：部门环依次点亮。跟 intro 同时启动，但比镜头缓动（480ms）活得久，
@@ -1107,7 +1113,10 @@ export default function Legion3DPage() {
       // 注意只能改写「实时那份」：演示配色是另一个对象，别被这行一起冲掉。
       if (frame++ % 30 === 0) Object.assign(tkLive, readTokens());
       const view = viewRef.current;
-      const dt = Math.min(0.05, (now - lastFrame) / 1000);
+      // 原始帧间隔必须先存下来：lastFrame 下一行就被覆盖了，
+      // 之后再用 (now - lastFrame) 永远是 0 —— 入场自适应降级第一版就是这么「永不触发」的（实测 aborted=false）。
+      const frameMsRaw = now - lastFrame;
+      const dt = Math.min(0.05, frameMsRaw / 1000);
       lastFrame = now;
       tk = presentingRef.current ? presentingInk : tkLive;
       FX = PALETTES[paletteRef.current];
@@ -1176,6 +1185,23 @@ export default function Legion3DPage() {
       }
       if (introRef.current) {
         const a = introRef.current;
+        // 自适应降级：把最近帧间隔塞进环形缓冲，入场期间若中位数 > 33ms 就直接到位。
+        // 用「中位数」不用「平均」：一次 GC 长帧不该把入场砍掉。
+        const gaps = frameGapsRef.current;
+        gaps.push(frameMsRaw);
+        if (gaps.length > 6) gaps.shift();
+        if (INTRO_ADAPTIVE && gaps.length >= 6) {
+          const sorted = [...gaps].sort((x, y) => x - y);
+          const median = (sorted[2] + sorted[3]) / 2;
+          if (median > 33) {
+            view.zoom = a.to;
+            view.pitch = a.pitchTo;
+            introRef.current = null;
+            userAdjusted.current = false;
+            if (canvasRef.current) canvasRef.current.dataset.introAborted = '1';
+            setZoomPct(Math.round(a.to * 100));
+          }
+        }
         const t = Math.min(1, (now - a.t0) / 900);
         const ease = 1 - Math.pow(1 - t, 3);
         view.zoom = a.from + (a.to - a.from) * ease;
