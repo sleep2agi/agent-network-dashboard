@@ -122,6 +122,11 @@ const INTRO_MODE: 'fly' | 'zoom' = INTRO_PARAM === 'zoom' ? 'zoom' : 'fly';
 // 低端机/软件渲染上「卡着飞一半」比「直接到位」更难受。判据：最近 6 帧的中位帧间隔 > 33ms。
 // 关闭方式：`?intro=full`（测量几何、或想强制看完整入场时用）。
 const INTRO_ADAPTIVE = INTRO_PARAM !== 'full';
+// `?labels=legacy`：回到「一级部门也必须 span≥1/放大才画名字」的旧行为。
+// 用途：同一个构建内做 A/B（否则改前产物没有坐标探针，两组数根本不可比 —— 2026-11-11 踩过）。
+const LABELS_MODE = typeof window !== 'undefined'
+  ? (new URLSearchParams(window.location.search).get('labels') === 'legacy' ? 'legacy' : 'all')
+  : 'all';
 const INTRO_PITCH_DELTA = 0.55;
 
 function keepEdge(from: string, to: string): boolean {
@@ -464,6 +469,21 @@ export default function Legion3DPage() {
   // 降级发生次数。结构上 introRef=null 后不会再进分支，但显式计数才可断言「一次入场只降级一次」
   // （评审 2026-11-11：怕将来有人把 abort 挪到别处，变成每帧都降级）。
   const introAbortCountRef = useRef(0);
+  // 本帧已放置的标签矩形（仅 debug 导出用）。用 ref 是因为导出点在绘制之前、
+  // 标签块在之后；ref 让「导出上一帧的快照」在稳态下等价（1 帧延迟肉眼无差）。
+  const labelRectsRef = useRef<Array<{ text: string; kind: string; depth: number | null; x: number; y: number; w: number; h: number; ownerId: string; ownX: number; ownY: number }>>([]);
+  // 标签三计数（attempted / placed / dropped）+ 「进入队列的一级部门数」。
+  // 评审 2026-11-11：只报「画了几个」无法定位「少给的那几个」发生在哪一步，
+  // 三个数一出就能区分「过滤阶段 / 放置阶段 / 导出阶段」。
+  // 条件引线计数（.466）：用于断言「引线数 == 歧义数」，避免引线数量悄悄漂移。
+  const leaderCountRef = useRef(0);
+  // 「需挪标签而不是画线」的计数（引线会穿过误认对象的椭圆时）
+  const movePendingRef = useRef(0);
+  // 以及「线太短等于没画」的退化情形
+  const degenerateRef = useRef(0);
+  // 引线几何快照（仅 debug）：让「线是否指向自己的椭圆」可被坐标校验，而不是只数条数。
+  const leaderRectsRef = useRef<Array<{ text: string; fromX: number; fromY: number; toX: number; toY: number; ownX: number; ownY: number; ownRx: number; ownRy: number; dOwn: number; dOther: number; len: number; crossesOther: boolean; prescription: 'leader-line' | 'move-label-pending' | 'degenerate' }>>([]);
+  const labelStatsRef = useRef<{ attempted: number; placed: number; dropped: number; wantedDepth1: number }>({ attempted: 0, placed: 0, dropped: 0, wantedDepth1: 0 });
   // 降级后的「取景静默窗口」：实测降级那一帧之后，fit 会立刻启动一次 zoomAnim，
   // 把落点从 a.to 改成 1.28–1.36（且每次不同，取决于当时 content 比例）。
   // 静默到「入场本该结束的时刻」，让降级路径的终态稳定且不近于完整入场。
@@ -1861,6 +1881,7 @@ export default function Legion3DPage() {
       const visBoundsRef = visBoundsAcc.current;
       visBoundsAcc.current = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity, count: 0 };
       const thisFrameVis = visBoundsAcc.current;
+      let wantDepth1 = 0;
       for (const sn of nodes) {
         const node = sn.item;
         const p = sn.projected;
@@ -1959,6 +1980,24 @@ export default function Legion3DPage() {
           const canvasEl = canvasRef.current;
           if (canvasEl) canvasEl.dataset.viewYaw = view.yaw.toFixed(3);
           if (canvasEl) canvasEl.dataset.variant = `depth=${LOOK_DEPTH},links=${LINK_KEEP}`;
+          if (canvasEl) {
+            // 3D 标签/节点的坐标快照（仅 debug）：让「标签压没压到点阵」可以被外部按坐标算，
+            // 而不是靠肉眼或拿 2D 的 svg 量具冒充（2026-11-11 踩过：量具名通用、对象是 2D）。
+            canvasEl.dataset.labelRects = JSON.stringify(labelRectsRef.current);
+            canvasEl.dataset.labelStats = JSON.stringify(labelStatsRef.current);
+            canvasEl.dataset.leaderCount = String(leaderCountRef.current);
+            canvasEl.dataset.leaderRects = JSON.stringify(leaderRectsRef.current);
+            canvasEl.dataset.movePending = String(movePendingRef.current);
+            canvasEl.dataset.degenerateLeaders = String(degenerateRef.current);
+            canvasEl.dataset.nodeRects = JSON.stringify(nodes.map((sn) => {
+              const body = nodeBody(sn, layout.stats.people, layout.stats.agents);
+              return {
+                kind: sn.item.kind,
+                x: Math.round(sn.projected.x), y: Math.round(sn.projected.y),
+                rx: Math.round(body.rx ?? body.radius), ry: Math.round(body.ry ?? body.radius),
+              };
+            }));
+          }
           // 入场推镜的只读探针（§77）：入场到底是「没跑」还是「跑了但测量口径错」，
           // 光看 zoom 分辨不出来 —— 把状态机本身暴露出来，外部一眼定性。
           if (canvasEl) {
@@ -2196,7 +2235,7 @@ export default function Legion3DPage() {
         // 由 placeLegionLabel 决定能不能放下），否则 14 个部门里只有 6 个看得到名字。
         const groupWanted = node.kind === 'group'
           && ((node.span ?? 0) >= 1.0 || selectedRef.current === node.id || hoverRef.current === node.id
-            || p.scale > cam.focal * 0.55 || (node.depth ?? 1) <= 1);
+            || p.scale > cam.focal * 0.55 || (LABELS_MODE === 'all' && (node.depth ?? 1) <= 1));
         const showLabel =
           node.kind === 'core' ||
           (groupWanted && !shortInside) ||
@@ -2213,6 +2252,7 @@ export default function Legion3DPage() {
         const filteredOut = statusOnly !== null && node.kind === 'agent'
           && (statusByAlias.get(node.label ?? '') ?? 'offline') !== statusOnly;
         if (showLabel && !interacting && !filteredOut) {
+          if (node.kind === 'group' && (node.depth ?? 1) <= 1) wantDepth1 += 1;
           labelQueue.push({
             node,
             text: node.kind !== 'group' && node.label.length > 12 ? `${node.label.slice(0, 11)}…` : node.label,
@@ -2232,6 +2272,11 @@ export default function Legion3DPage() {
       // 保留现有可见性/优先级；文字避开实体、已有标签和控件。
       // 部门全文换行，没有可读位置时留白，详情里仍可读完整名称。
       {
+        labelRectsRef.current = [];
+        leaderCountRef.current = 0;
+        movePendingRef.current = 0;
+        degenerateRef.current = 0;
+        leaderRectsRef.current = [];
         labelQueue.sort((a, b) => a.priority - b.priority);
         const placed: LabelRect[] = [...labelUiRectsRef.current];
         const leaders: Array<{ anchor: LabelEllipse; rect: LabelRect; alpha: number }> = [];
@@ -2263,8 +2308,112 @@ export default function Legion3DPage() {
             bounds: { x1: 12, y1: 12, x2: size.width - 12, y2: size.height - 12 }, occupied: placed, bodies: labelBodies });
           if (!spot) continue;
           placed.push(spot);
+          if (debugProjRef.current) {
+            labelRectsRef.current.push({
+              text: item.text,
+              kind: item.node.kind,
+              depth: item.node.depth ?? null,
+              x: Math.round(spot.x1), y: Math.round(spot.y1),
+              w: Math.round(spot.x2 - spot.x1), h: Math.round(spot.y2 - spot.y1),
+              // 归属判据需要「这个标签标的是哪个椭圆」：导出它自己的锚点（中心 + 半径）。
+              // 记的是 id 而不是文字，避免同名部门被误配（评审 2026-11-11 的归属歧义判据）。
+              ownerId: item.node.id,
+              ownX: Math.round(item.anchor.x ?? 0),
+              ownY: Math.round(item.anchor.y ?? 0),
+            });
+          }
           drawnLabels++;
           if (item.node.kind === 'group') leaders.push({ anchor: item.anchor, rect: spot, alpha: item.alpha });
+          // 条件引线（.466）：只有当「标签离别的椭圆比离自己的更近」时才画一条 8px 短线。
+          // 视觉元素的数量由证据决定（评审 2026-11-11 选定方案 C）：
+          // 触发条件 d_own × 1.2 > d_other —— 与 label-ownership.mjs 的判据同一套几何。
+          if (item.node.kind === 'group' && item.anchor) {
+            const ownA = item.anchor;
+            const cxL = spot.x1 + (spot.x2 - spot.x1) / 2;
+            const cyL = spot.y1 + (spot.y2 - spot.y1) / 2;
+            const eDist = (px: number, py: number, ex: number, ey: number, rx: number, ry: number) => {
+              const dx = (px - ex) / Math.max(1, rx);
+              const dy = (py - ey) / Math.max(1, ry);
+              return Math.abs(Math.hypot(dx, dy) - 1) * Math.min(rx, ry);
+            };
+            const dOwn = eDist(cxL, cyL, ownA.x, ownA.y, ownA.rx, ownA.ry);
+            let dOther = Number.POSITIVE_INFINITY;
+            for (const gn of nodes) {
+              if (gn.item.kind !== 'group' || gn.item.id === item.node.id) continue;
+              const gA = departmentDisc(nodeBody(gn, layout.stats.people, layout.stats.agents).radius);
+              const d = eDist(cxL, cyL, gn.projected.x, gn.projected.y, gA.rx, gA.ry);
+              if (d < dOther) dOther = d;
+            }
+            if (Number.isFinite(dOther) && dOwn * 1.2 > dOther) {
+              // 线长自适应：一直连到【自身椭圆边界】（距边界留 2px），
+              // 因为歧义现场标签与椭圆相距 30–40px，8px 的短线只能停在半空（评审 2026-11-11）。
+              const dx = ownA.x - cxL;
+              const dy = ownA.y - cyL;
+              const len = Math.max(1, Math.hypot(dx, dy));
+              const ux = dx / len;
+              const uy = dy / len;
+              // 起点：标签矩形在 (ux,uy) 方向上的边界点
+              const halfW = (spot.x2 - spot.x1) / 2 + 1;
+              const halfH = (spot.y2 - spot.y1) / 2 + 1;
+              const tEdge = Math.min(halfW / Math.max(0.001, Math.abs(ux)), halfH / Math.max(0.001, Math.abs(uy)));
+              const sx = cxL + ux * tEdge;
+              const sy = cyL + uy * tEdge;
+              // 终点：沿同一方向到自身椭圆边界的距离（椭圆参数解），再回退 2px
+              const tBoundary = 1 / Math.max(0.001, Math.hypot(ux / Math.max(1, ownA.rx), uy / Math.max(1, ownA.ry)));
+              const inner = Math.max(tEdge + 2, tBoundary - 2);
+              const ex = cxL + ux * inner;
+              const ey = cyL + uy * inner;
+              // 「线是否穿过别的椭圆」：歧义意味着标签离别人的盘更近，
+              // 那么连线很可能从那个盘里穿出来——视觉上反而把两者连在一起（评审 2026-11-11）。
+              // 穿过 ⇒ 这条线的处方错了，应改为「挪标签」，不能画。
+              const segLen = Math.hypot(ex - sx, ey - sy);
+              let crossesOther = false;
+              const steps = Math.max(2, Math.ceil(segLen / 2));
+              for (let k = 1; k < steps; k += 1) {
+                const px = sx + ((ex - sx) * k) / steps;
+                const py = sy + ((ey - sy) * k) / steps;
+                for (const gn of nodes) {
+                  if (gn.item.kind !== 'group' || gn.item.id === item.node.id) continue;
+                  const gA = departmentDisc(nodeBody(gn, layout.stats.people, layout.stats.agents).radius);
+                  const nx = (px - gn.projected.x) / Math.max(1, gA.rx);
+                  const ny = (py - gn.projected.y) / Math.max(1, gA.ry);
+                  if (nx * nx + ny * ny < 1) { crossesOther = true; break; }
+                }
+                if (crossesOther) break;
+              }
+              if (crossesOther) {
+                // 处方是「挪标签」，但本版**没有实现挪**（评审 2026-11-11：处方写出来 ≠ 被执行）。
+                // 因此如实记为 pending，并单独计数，绝不写成 handled。
+                movePendingRef.current += 1;
+                degenerateRef.current += 1;
+              } else if (segLen < 6) {
+                // 线太短（390 实测有一条 len=2）看起来等于没画，记为 degenerate，不画也不假装处理
+                degenerateRef.current += 1;
+              } else {
+                ctx.globalAlpha = 0.55 * item.alpha;
+                ctx.strokeStyle = tk.info;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(ex, ey);
+                ctx.stroke();
+                leaderCountRef.current += 1;
+              }
+              if (debugProjRef.current) {
+                leaderRectsRef.current.push({
+                  text: item.text,
+                  fromX: Math.round(sx), fromY: Math.round(sy),
+                  toX: Math.round(ex), toY: Math.round(ey),
+                  ownX: Math.round(ownA.x), ownY: Math.round(ownA.y),
+                  ownRx: Math.round(ownA.rx), ownRy: Math.round(ownA.ry),
+                  dOwn: Number(dOwn.toFixed(1)), dOther: Number(dOther.toFixed(1)),
+                  len: Math.round(Math.hypot(ex - sx, ey - sy)),
+                  crossesOther,
+                  prescription: crossesOther ? 'move-label-pending' : (segLen < 6 ? 'degenerate' : 'leader-line'),
+                });
+              }
+            }
+          }
           if (heavy || item.node.kind === 'group') {
             ctx.globalAlpha = 0.42 * item.alpha;
             ctx.fillStyle = tk.bg;
@@ -3696,7 +3845,10 @@ export default function Legion3DPage() {
           })}
         </div>
         <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · / 搜索 · 回车打开选中 · R 重置</p>
-        <p className="text-[var(--fg-muted)]">光流示意组织连接，节点状态以图例为准。</p>
+        <p className="text-[var(--fg-muted)]">
+          光流示意组织连接，节点状态以图例为准。
+          部门名在静息时可能留白（避免挤在一起），<strong>悬停该部门或选中它会立即显示名字</strong> —— 看不到名字不代表没有这个部门。
+        </p>
       </div>
 
       {/* 键盘/读屏的节点列表：canvas 不可 Tab，靠这张列表选节点 */}
