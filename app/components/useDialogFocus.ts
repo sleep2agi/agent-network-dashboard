@@ -42,14 +42,19 @@ export function useDialogFocus(ref: RefObject<HTMLElement | null>, fallbackSelec
     //   ② 调用方给的 selector（兜底：菜单是 portal、opener 已脱离原容器时 closest 找不到）
     // 只用 ② 会在「桌面/手机双挂载」或将来「并列两栏」时可能还焦点到另一个窗格的按钮，
     // 而且这种 bug 验收基本发现不了（评审 2026-11-11）。
-    // 注意（实测 2026-11-11）：当前 UI 的下拉菜单是 **portal**，菜单项已不在 ⋮ 按钮的 DOM 子树里，
-    // 所以 closest('[aria-haspopup]') 恒为 null ——「就近」这一支今天不可达，保留它只为将来把菜单改回内联渲染。
-    // 现在实际生效的是 fallbackSelector（全局）。这条由探针的 data-focus-return 记录，避免「写了但没人验」。
-    const nearest = opener?.closest<HTMLElement>('[aria-haspopup]') ?? null;
-    const fallback = nearest ?? (fallbackSelector ? document.querySelector<HTMLElement>(fallbackSelector) : null);
+    // 归还目标：调用方给的 selector（全局）。
+    //
+    // 曾经写过「就近优先：opener.closest('[aria-haspopup]')」这一支，但实测**不可达**：
+    // 当前下拉菜单是 portal，菜单项不在 ⋮ 按钮的 DOM 子树里，closest 恒为 null；
+    // 也做过注入式用例（临时给菜单项父容器打 aria-haspopup），仍走不到该分支
+    // （React 重渲染会替换容器节点）。
+    // 按评审意见（通信设计师 2026-11-11）：「注释记录意图，用例记录事实」——
+    // 构造不出能跑通它的用例，就不保留这条代码，避免「看起来像活代码的死代码」。
+    // 若将来菜单改为内联渲染，再把 opener.closest('[aria-haspopup]') 加回来，并同时补用例。
+    const fallback = fallbackSelector ? document.querySelector<HTMLElement>(fallbackSelector) : null;
     // 只读探针（§79 的「分支是否被验证过」）：把实际走了哪条归还分支写到 data-* 上，
     // 否则「就近分支」或「全局兜底分支」里总有一条从没被任何用例碰到（同 .458 的降级路径）。
-    const branch: 'nearest' | 'global' | 'none' = nearest ? 'nearest' : (fallbackSelector && fallback ? 'global' : 'none');
+    const branch: 'global' | 'none' = fallbackSelector && fallback ? 'global' : 'none';
     const markBranch = () => { root.dataset.focusReturn = branch; };
     markBranch();
 
