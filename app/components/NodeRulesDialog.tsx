@@ -37,6 +37,12 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  // 写入冲突（.442）：进入编辑时记下「基线内容」，保存前先重读一次。
+  // 若节点侧在编辑期间被改过，直接保存就会静默覆盖别的 Agent/人刚写的规则——
+  // 规则文件是节点真在用的资产，这种覆盖要显式让人确认，而不是靠事后发现。
+  const [baseline, setBaseline] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [conflict, setConflict] = useState<{ remote: string; summary: string } | null>(null);
   const cancelled = useRef(false);
 
   const call = useCallback(async (tool: string, args: Record<string, unknown>) => {
@@ -138,6 +144,39 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
     return { ok: false as const, message: t('等待超时：节点可能未响应', 'Timed out waiting for the node') };
   }, [call]);
 
+  /** 编辑器基线 vs 节点当前内容：只给「行数变化」摘要，不做好几小时的分支合并。 */
+  const diffSummary = (mine: string, theirs: string) => {
+    const a = mine.split('\n'); const b = theirs.split('\n');
+    const setA = new Map<string, number>();
+    for (const line of a) setA.set(line, (setA.get(line) ?? 0) + 1);
+    let onlyTheirs = 0;
+    for (const line of b) {
+      const n = setA.get(line) ?? 0;
+      if (n > 0) setA.set(line, n - 1); else onlyTheirs += 1;
+    }
+    let onlyMine = 0;
+    for (const n of setA.values()) onlyMine += n;
+    return t(
+      `节点侧新增/改动 ${onlyTheirs} 行，你的版本独有 ${onlyMine} 行（共 ${b.length} 行）`,
+      `${onlyTheirs} line(s) added or changed on the node, ${onlyMine} only in yours (${b.length} lines total)`,
+    );
+  };
+
+  /** 保存前先重读一次：内容变了就把选择权交回给人。读失败不阻断保存（读能力可能弱于写能力）。 */
+  const beforeSave = async () => {
+    if (checking) return;
+    setSaveError(null);
+    setChecking(true);
+    const target: Record<string, string> = nodeId ? { node_id: nodeId } : { alias };
+    const r = await ring('read_node_rules_file', target);
+    setChecking(false);
+    if (r.ok && baseline !== null && r.content !== baseline) {
+      setConflict({ remote: r.content, summary: diffSummary(baseline, r.content) });
+      return;
+    }
+    setConfirming(true);
+  };
+
   const save = async () => {
     setConfirming(false);
     setSaving(true);
@@ -147,6 +186,8 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
     setSaving(false);
     if (!r.ok) { setSaveError(r.message); return; }
     setSavedAt(Date.now());
+    setBaseline(draft);
+    setConflict(null);
     setEditing(false);
     // 写完后重新读一遍，确认落盘内容就是刚才写的（不信「接口说成功」）
     setAttempt((n) => n + 1);
@@ -195,7 +236,7 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
             {phase.kind === 'done' && !editing && (
               <button
                 type="button"
-                onClick={() => { setDraft(phase.content); setEditing(true); setSavedAt(null); }}
+                onClick={() => { setDraft(phase.content); setBaseline(phase.content); setConflict(null); setEditing(true); setSavedAt(null); }}
                 data-testid="node-rules-edit"
                 className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-sunken)]"
               >
@@ -205,12 +246,12 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
             {editing && (
               <button
                 type="button"
-                onClick={() => setConfirming(true)}
-                disabled={saving}
+                onClick={() => void beforeSave()}
+                disabled={saving || checking}
                 data-testid="node-rules-save"
                 className="rounded-lg px-2 py-1 text-[11px] text-[var(--accent)] hover:bg-[var(--bg-sunken)] disabled:opacity-40"
               >
-                {saving ? t('保存中…', 'Saving…') : t('保存', 'Save')}
+                {saving ? t('保存中…', 'Saving…') : checking ? t('检查中…', 'Checking…') : t('保存', 'Save')}
               </button>
             )}
             {editing && (
@@ -282,6 +323,31 @@ export function NodeRulesDialog({ session, onClose }: { session: Session; onClos
             {saveError
               ? <span className="text-[var(--danger)]">{t('保存失败：', 'Save failed: ')}{saveError}</span>
               : <span className="text-[var(--success)]">{t('已写入，并已重新读取确认', 'Saved and re-read to confirm')}</span>}
+          </div>
+        )}
+        {conflict && (
+          <div className="border-t border-[var(--col-line-strong)] bg-[var(--bg-sunken)] px-3 py-2" data-testid="node-rules-conflict-bar">
+            <div className="text-[11px] text-[var(--warning)]">
+              {t('这个文件在你编辑期间被改动过，直接保存会覆盖别人的修改。', 'This file changed while you were editing; saving now would overwrite those changes.')}
+            </div>
+            <div className="mt-0.5 text-[11px] text-[var(--fg-dim)]" data-testid="node-rules-conflict-summary">{conflict.summary}</div>
+            <div className="mt-1 flex flex-wrap gap-2">
+              <button type="button" data-testid="node-rules-conflict-reload"
+                onClick={() => { setDraft(conflict.remote); setBaseline(conflict.remote); setConflict(null); }}
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--accent)] hover:bg-[var(--bg-elevated)]">
+                {t('放弃我的改动，载入最新', 'Discard mine, load latest')}
+              </button>
+              <button type="button" data-testid="node-rules-conflict-keep"
+                onClick={() => setConflict(null)}
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)]">
+                {t('保留我的改动继续编辑', 'Keep mine, keep editing')}
+              </button>
+              <button type="button" data-testid="node-rules-conflict-overwrite"
+                onClick={() => { setConflict(null); setConfirming(true); }}
+                className="rounded-lg px-2 py-1 text-[11px] text-[var(--danger)] hover:bg-[var(--bg-elevated)]">
+                {t('仍然用我的版本覆盖', 'Overwrite anyway')}
+              </button>
+            </div>
           </div>
         )}
         {confirming && (
