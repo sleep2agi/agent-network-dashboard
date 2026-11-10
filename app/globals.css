@@ -52,6 +52,9 @@ body {
   --bg:           #111113;
   --bg-secondary: #18181b;
   --bg-elevated:  #222227;
+  /* 控件高度刻度（.448）：日志面板的行内控件统一 22px。
+     之前同一个数值被抄了 4 份，调一次要改 4 处——这里定义为变量，引用它。 */
+  --control-h:    22px;
   --fg:           #ededef;
   --fg-muted:     #a1a1aa;
   --fg-dim:       #8b8b95;

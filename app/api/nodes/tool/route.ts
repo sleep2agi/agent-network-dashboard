@@ -22,7 +22,25 @@ const ALLOWED = new Set([
   'get_rules_file_result',
   'list_node_skills',
   'read_node_skill',
+  'tail_node_logs',
 ]);
+
+/** 入参白名单（.448）：日志工具只接受这几个键，其余在边界丢弃。
+ *  lines 上限 2000（与 Hub LOGS_MAX_LINES 对齐）、grep ≤200 字符、since_ts 只收数值。 */
+function sanitizeArgs(tool: string, args: Record<string, unknown>): Record<string, unknown> {
+  if (tool !== 'tail_node_logs') return args;
+  const out: Record<string, unknown> = {};
+  for (const key of ['node_id', 'child_node_id', 'alias', 'network_id'] as const) {
+    if (typeof args[key] === 'string' && args[key]) out[key] = args[key];
+  }
+  const n = Number(args.lines);
+  out.lines = Number.isFinite(n) ? Math.max(1, Math.min(2000, Math.trunc(n))) : 500;
+  if (args.level === 'info' || args.level === 'warn' || args.level === 'error') out.level = args.level;
+  if (typeof args.grep === 'string' && args.grep.trim()) out.grep = args.grep.trim().slice(0, 200);
+  const since = Number(args.since_ts);
+  if (Number.isFinite(since) && since >= 0) out.since_ts = Math.trunc(since);
+  return out;
+}
 
 function parseMcp(text: string, contentType: string): { kind: 'payload'; payload: unknown } | { kind: 'error'; error: string } {
   const tryJson = (raw: string) => {

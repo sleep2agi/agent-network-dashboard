@@ -13,6 +13,7 @@ const NodeSettingsPanel = dynamic(
 import { ChatPaneOverflowMenu } from './ChatPaneOverflowMenu';
 import { NodeRulesDialog } from './NodeRulesDialog';
 import { NodeSkillsDialog } from './NodeSkillsDialog';
+import { NodeLogsDialog } from './NodeLogsDialog';
 import { useSessions } from '../lib/hooks';
 import type { Session } from './types';
 import { shortModel, shortServer } from '../lib/node-format';
@@ -59,6 +60,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
   // 线上实测 1440 直达时 5 次里 2 次「菜单里没有这两项」（本地 6/6 正常，属时序）。
   // 现在改为「只要拿到会话就渲染」，能力在对话框内即时判定（不支持直接说明，不发门铃、不等 25 秒）。
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [logsOpen, setLogsOpen] = useState(false);
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // 07-31 通信龙 batch (SPEC §12 remaining): ⋮ opens overflow menu
@@ -241,6 +243,11 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           {(s) => <NodeRulesDialog session={s} onClose={() => setRulesOpen(false)} />}
         </SessionGate>
       )}
+      {logsOpen && (
+        <SessionGate alias={alias} onClose={() => setLogsOpen(false)} label={t('运行日志', 'Run log')}>
+          {(s) => <NodeLogsDialog session={s} onClose={() => setLogsOpen(false)} />}
+        </SessionGate>
+      )}
       {settingsOpen && session && (
         <NodeSettingsPanel
           session={session}
@@ -255,6 +262,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           onClose={() => setOverflowOpen(false)}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenRules={() => setRulesOpen(true)}
+          onOpenLogs={() => setLogsOpen(true)}
           onOpenSkills={() => setSkillsOpen(true)}
         />
       )}
