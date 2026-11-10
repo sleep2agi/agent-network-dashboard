@@ -134,6 +134,17 @@ export async function POST(req: Request) {
     const text = await res.text();
     const parsed = parseMcp(text, res.headers.get('content-type') ?? '');
     if (parsed.kind === 'error') return Response.json({ ok: false, error: parsed.error }, { status: 200 });
+    // 工具层拒绝：Hub 会以 {ok:false, error, message} 的形式放在 payload 里（例如
+    // node_token_cannot_read_logs）。以前这里原样当成功返回，界面只能显示
+    // 「Hub 没有返回请求号」——把真实原因盖掉了。这里提升为 ok:false 使上游能看到原因。
+    const denied = parsed.payload as { ok?: boolean; error?: string; message?: string } | null;
+    if (denied && typeof denied === 'object' && denied.ok === false) {
+      return Response.json({
+        ok: false,
+        kind: 'denied',
+        error: denied.message || denied.error || '该工具被 Hub 拒绝',
+      }, { status: 200 });
+    }
     return Response.json({ ok: true, payload: parsed.payload });
   } catch (e: unknown) {
     return Response.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, { status: 502 });
