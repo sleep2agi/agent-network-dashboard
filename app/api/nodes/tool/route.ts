@@ -23,11 +23,26 @@ const ALLOWED = new Set([
   'list_node_skills',
   'read_node_skill',
   'tail_node_logs',
+  'list_node_files',
+  'read_node_file',
 ]);
 
 /** 入参白名单（.448）：日志工具只接受这几个键，其余在边界丢弃。
  *  lines 上限 2000（与 Hub LOGS_MAX_LINES 对齐）、grep ≤200 字符、since_ts 只收数值。 */
 function sanitizeArgs(tool: string, args: Record<string, unknown>): Record<string, unknown> {
+  if (tool === 'list_node_files' || tool === 'read_node_file') {
+    const out: Record<string, unknown> = {};
+    for (const key of ['node_id', 'child_node_id', 'alias', 'network_id'] as const) {
+      if (typeof args[key] === 'string' && args[key]) out[key] = args[key];
+    }
+    const rel = typeof args.path === 'string' ? args.path.trim() : '';
+    // 相对路径守卫：拒绝绝对路径与 ..；长度上限 1024（服务端还会再判一次）
+    if (rel.length > 1024 || rel.startsWith('/') || rel.includes('..')) {
+      return { __invalid_path: true };
+    }
+    if (rel) out.path = rel.replace(/^\.\//, '').replace(/\/{2,}/g, '/');
+    return out;
+  }
   if (tool !== 'tail_node_logs') return args;
   const out: Record<string, unknown> = {};
   for (const key of ['node_id', 'child_node_id', 'alias', 'network_id'] as const) {
@@ -90,6 +105,13 @@ export async function POST(req: Request) {
     return Response.json({ ok: false, error: `不支持的工具：${tool || '(空)'}` }, { status: 400 });
   }
 
+  // 入参白名单在边界生效（.448/.450）：日志与文件工具的字段在这里收敛，
+  // 非法相对路径直接 400，不把可疑 path 发给 Hub。
+  const args = sanitizeArgs(tool, (body.args ?? {}) as Record<string, unknown>);
+  if ((args as { __invalid_path?: boolean }).__invalid_path) {
+    return Response.json({ ok: false, error: '路径不合法（只接受相对路径，且不得包含 ..）' }, { status: 400 });
+  }
+
   try {
     const res = await hubFetch('/mcp', {
       method: 'POST',
@@ -98,7 +120,7 @@ export async function POST(req: Request) {
         Accept: 'application/json, text/event-stream',
         'MCP-Protocol-Version': '2025-03-26',
       },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: tool, arguments: body.args ?? {} } }),
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: tool, arguments: args } }),
     });
 
     // 老 Hub 没有该工具时常见 404 / 501：如实转成「不支持」，不要伪装成成功

@@ -14,6 +14,7 @@ import { ChatPaneOverflowMenu } from './ChatPaneOverflowMenu';
 import { NodeRulesDialog } from './NodeRulesDialog';
 import { NodeSkillsDialog } from './NodeSkillsDialog';
 import { NodeLogsDialog } from './NodeLogsDialog';
+import { NodeFilesDialog } from './NodeFilesDialog';
 import { useSessions } from '../lib/hooks';
 import type { Session } from './types';
 import { shortModel, shortServer } from '../lib/node-format';
@@ -61,6 +62,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
   // 现在改为「只要拿到会话就渲染」，能力在对话框内即时判定（不支持直接说明，不发门铃、不等 25 秒）。
   const [rulesOpen, setRulesOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
+  const [filesOpen, setFilesOpen] = useState(false);
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // 07-31 通信龙 batch (SPEC §12 remaining): ⋮ opens overflow menu
@@ -248,6 +250,11 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           {(s) => <NodeLogsDialog session={s} onClose={() => setLogsOpen(false)} />}
         </SessionGate>
       )}
+      {filesOpen && (
+        <SessionGate alias={alias} onClose={() => setFilesOpen(false)} label={t('项目文件夹', 'Workdir')}>
+          {(s) => <NodeFilesDialog session={s} onClose={() => setFilesOpen(false)} />}
+        </SessionGate>
+      )}
       {settingsOpen && session && (
         <NodeSettingsPanel
           session={session}
@@ -263,6 +270,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenRules={() => setRulesOpen(true)}
           onOpenLogs={() => setLogsOpen(true)}
+          onOpenFiles={() => setFilesOpen(true)}
           onOpenSkills={() => setSkillsOpen(true)}
         />
       )}
