@@ -12,13 +12,16 @@ import { fileURLToPath } from 'node:url';
 // 注意：`import.meta.dir` 只有 bun 有，node ESM 里是 undefined（这里被 node 跑时会崩）。
 // 用 fileURLToPath + dirname 兼容两边。
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const route = readFileSync(join(root, 'app/api/hub/status/route.ts'), 'utf8');
+// 2026-11-10：投影抽到 app/lib/lite-status.ts（唯一实现）；契约跟着走，且不再读路由文件。
+const route = readFileSync(join(root, 'app/lib/lite-status.ts'), 'utf8');
 
 // 页面读取的字段（有新增读取时，这里同步加；两份清单必须一致）
 const REQUIRED = [
   'alias', 'status', 'agent', 'server', 'task', 'progress', 'updated_at',
   'node_id', 'session_id', 'last_seen_at', 'network_id', 'model', 'runtime',
   'lifecycle_state', 'channels', 'version',
+  // 节点级分区（.434–.439）：页面按这些旗决定是否显示「规则文件/技能/日志/文件夹/密钥」
+  'rules_file_capable', 'logs_capable', 'files_capable', 'node_secrets_capable', 'skills_capable',
 ];
 
 const m = route.match(/const KEEP = \[([\s\S]*?)\] as const/);

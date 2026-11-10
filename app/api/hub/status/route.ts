@@ -1,6 +1,8 @@
 import { requireDashboardAuth } from '@/app/lib/dashboard-auth';
 import { hubFetch } from '@/app/lib/hub';
 import { normalizeSessions } from '@/app/lib/session-normalize';
+import { projectLiteSessions } from '@/app/lib/lite-status';
+import type { Session } from '@/app/components/types';
 
 export async function GET(req: Request) {
   const authFailure = await requireDashboardAuth();
@@ -38,18 +40,7 @@ export async function GET(req: Request) {
       // 2026-11-09 教训：UI 开始读一个被投影掉的字段时，typecheck 不会报错，
       // 只有真实 DOM 复核才会发现「渲染出来是空的」。tests/lite-status-projection.test.mjs
       // 现在把「页面要读的字段必须留在 KEEP 里」写成契约。
-      const KEEP = ['alias','status','agent','server','task','progress','updated_at','node_id','session_id',
-        'last_seen_at','network_id','project_dir','model','runtime','lifecycle_state','channels','version',
-        // 节点能力旗：会话详情按它决定是否显示「规则文件」等分区（与 APP 一致）。
-        // 2026-11-10 教训：UI 开始读一个被投影掉的字段时，typecheck 不会报错，
-        // 只有真的点一次才会发现「菜单项根本不出现」。
-        'rules_file_capable','logs_capable','files_capable','node_secrets_capable','skills_capable'] as const;
-      data.sessions = data.sessions.map((s: Record<string, unknown>) => {
-        const out: Record<string, unknown> = {};
-        for (const k of KEEP) if (k in s) out[k] = s[k];
-        if (typeof out.task === 'string' && out.task.length > 120) out.task = `${out.task.slice(0, 120)}…`;
-        return out;
-      });
+      data.sessions = projectLiteSessions(data.sessions as Session[]);
     }
 
     // If filtered result is empty, fetch global count for empty-state hint

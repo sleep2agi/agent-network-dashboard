@@ -79,13 +79,13 @@ function DraftMark({ alias }: { alias: string }) {
   return <span className="shrink-0 text-[11px] text-red-400/90" aria-label={t('有未发送草稿', 'Unsent draft')}>{t('[草稿]', '[draft]')}</span>;
 }
 
-export function NodesView({ initialAlias = null }: { initialAlias?: string | null }) {
+export function NodesView({ initialAlias = null, initialSessions = null }: { initialAlias?: string | null; initialSessions?: Session[] | null }) {
   // 水合安全：首帧与 SSR 一致（英文），挂载后再切到浏览器语言（#182）。
   const t = useT();
   // lite=1：/api/status 全量 713 KB（402 会话，实测 2.9s；load 48 时 8.5s），
   // 而列表只用 alias/status/agent/server/task/progress/model/… 这些字段。
   // 投影后 204 KB（−71%）。ChatPane / ChatPopover 必须用同一个 key，否则会变成两次请求。
-  const { sessions, isLoading: loading, error: loadError, mutate: mutateSessions } = useSessions({ lite: true });
+  const { sessions, isLoading: loading, error: loadError, mutate: mutateSessions } = useSessions({ lite: true, initial: initialSessions });
   const { health } = useHealth();
   const { lifecycleByAlias, nodeIdByAlias, attrsByAlias } = useNodeLifecycle();
   const { hasUnread, unreadCount, lastActivityAt } = useChatUnread();

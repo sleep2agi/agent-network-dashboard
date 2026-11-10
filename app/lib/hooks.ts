@@ -41,12 +41,17 @@ function withNetwork(url: string, networkId: string): string {
   return `${url}${sep}network_id=${encodeURIComponent(networkId)}`;
 }
 
-export function useSessions(options?: { lite?: boolean }) {
+export function useSessions(options?: { lite?: boolean; initial?: Session[] | null }) {
   const { networkId, ready } = useNetworkId();
+  // initial：服务端已按 cookie 取好的首帧数据（.441）。SWR 会先渲染它，随后照常刷新。
+  // 不传时为 undefined ⇒ 与以前完全一致。
+  const fallback = options?.initial && options.initial.length
+    ? { sessions: options.initial }
+    : undefined;
   const { data, error, isLoading, mutate } = useSWR<{ sessions: Session[]; _hint?: { global_count?: number; filtered_network?: string } }>(
     scopedOrNull(options?.lite ? '/api/hub/status?lite=1' : '/api/hub/status', networkId, ready),
     fetcher,
-    SWR_OPTIONS,
+    { ...SWR_OPTIONS, ...(fallback ? { fallbackData: fallback } : {}) },
   );
   return { sessions: data?.sessions || [], hint: data?._hint, error, isLoading, mutate };
 }

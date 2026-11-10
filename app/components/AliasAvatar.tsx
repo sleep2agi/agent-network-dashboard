@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useAvatarUrl } from '../lib/avatars';
 
 /** Hue-hashed avatar pill for agent aliases. Same alias → same color across
@@ -45,12 +45,25 @@ export function AliasAvatar({ alias, size = 28, className = '' }: AliasAvatarPro
   // wins over every generated style — ONE seam, all 13 avatar surfaces.
   // Shimmer while loading, silent fallback to the pill on error.
   const url = useAvatarUrl(alias);
+  // 水合一致性（.441）：头像 URL 来自「localStorage / hub 映射 / 清单文件」，
+  // 这些都是浏览器侧的东西 —— 服务端拿不到，只能画首字药丸。
+  // 若客户端第一次渲染就画插画，React 会判定文本节点不一致（#418）并整段重渲染。
+  // 所以首帧刻意与服务端保持一致（药丸），挂载后再升级成插画。
+  // 视觉上不多闪一次：插画清单本来就是异步 fetch，今天也是先药丸后插画。
+  // 用 useSyncExternalStore 做「是否已挂载」：服务端快照 false、客户端首帧 false，
+  // 订阅后重渲染拿到 true。这是 React 官方推荐的「水合安全」写法
+  // （比 useEffect + setState 少一轮级联渲染，也避开 lint 的 cascading-render 规则）。
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [imgState, setImgState] = useState<'loading' | 'ready' | 'error'>('loading');
   // Reset when the url changes — React's endorsed adjust-during-render
   // pattern (no effect, no extra commit).
   const [prevUrl, setPrevUrl] = useState(url);
   if (url !== prevUrl) { setPrevUrl(url); setImgState('loading'); }
-  if (url && imgState !== 'error') {
+  if (mounted && url && imgState !== 'error') {
     return (
       <span
         className={`anet-alias-avatar relative inline-flex shrink-0 overflow-hidden rounded-full border border-[var(--border)] ${imgState === 'loading' ? 'animate-pulse bg-[var(--bg-elevated)]' : ''} ${className}`}
