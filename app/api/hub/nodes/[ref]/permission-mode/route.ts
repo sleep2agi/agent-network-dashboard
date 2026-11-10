@@ -70,11 +70,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ ref: str
   }
   let hubBody: Record<string, unknown> = {};
   try { hubBody = (await hubRes.json()) as Record<string, unknown>; } catch { /* 非 JSON 就当失败处理 */ }
+  // 响应同样走白名单（与请求对称）：只回 { ok, permission_mode, previous } + 可读 message。
+  // 整包透传会让 Hub 将来新增的任意字段直接落到浏览器——「白名单只做一半」等于没做。
+  const pick = (b: Record<string, unknown>) => ({
+    ok: b.ok !== false,
+    permission_mode: typeof b.permission_mode === 'string' ? b.permission_mode : undefined,
+    previous: typeof b.previous === 'string' ? b.previous : undefined,
+  });
   if (!hubRes.ok || hubBody.ok === false) {
     return Response.json(
-      { ok: false, ...hubBody, message: userMessage(hubRes.status, hubBody as { error?: string; message?: string }) },
+      { ...pick(hubBody), ok: false, message: userMessage(hubRes.status, hubBody as { error?: string; message?: string }) },
       { status: hubRes.ok ? 400 : hubRes.status },
     );
   }
-  return Response.json(hubBody);
+  return Response.json(pick(hubBody));
 }

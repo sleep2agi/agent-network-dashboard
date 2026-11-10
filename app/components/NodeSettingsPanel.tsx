@@ -286,6 +286,17 @@ function AvatarSection({ alias }: { alias: string }) {
   );
 }
 
+/** Label + control row. 与 InfoRow 同一套 padding/gap/字号——
+ *  同一个列表里不允许手写第二套行结构（否则 py-1.5 vs py-2、gap-3 vs gap-2 摆一起就被看出来）。 */
+function InfoRowControl({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-3 py-1.5 text-[12px]">
+      <span className="text-[var(--fg-muted)] shrink-0" title={hint}>{label}</span>
+      <span className="flex items-center gap-2">{children}</span>
+    </div>
+  );
+}
+
 /** Read-only label/value row. */
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -382,10 +393,48 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
   // 不允许「看起来改了」——成功后由 SWR 刷新回读真实值。
   const [permBusy, setPermBusy] = useState(false);
   const [permMsg, setPermMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  // 已提交但 SWR 还没回读到的目标值：期间下拉显示它，避免「选完立刻弹回旧值」。
+  // SWR 的 refreshInterval 是 5000ms，不做这一层最长会有 5 秒的「文案说改了、控件没改」。
+  // 记 observed0（提交前的观测值）而不是只记目标值：清除判据是「观测值变了」，
+  // 这样 Hub 对 mode 做归一化/新增取值时，pending 也会被清掉——
+  // 否则 pending 会一直挂着一个 Hub 并不处于的状态（比弹回更糟）。
+  const [permPending, setPermPending] = useState<{ mode: string; observed0: string } | null>(null);
+  const permObserved = attrsByAlias[s.alias]?.permission_mode ?? null;
   const permLabel = (m: string) => (m === 'readonly' ? '只读' : m === 'restricted' ? '受限' : '正常');
+  // 回读一旦变化：清 pending，并把文案从「等待回读确认」收敛为「已生效：X」。
+  // 不收敛的话，成功之后那句「等待回读确认」会永久留在页面上冒充实时状态——
+  // 用户会怀疑到底改没改成，而他其实已经成功了（三态纪律：文案也必须收敛）。
+  useEffect(() => {
+    if (!permPending) return;
+    // 三态收敛（缺一个都会挂死或误记功）：
+    //   a) 观测值变成「我提交的那个」        → 已生效：X
+    //   b) 观测值变了但不是「我提交的那个」  → 已被其他改动覆盖为 X（不替别人记功）
+    //   c) 15s 内观测值一直没变             → 未确认，请刷新重试（「不确定」必须能显示出来）
+    if (permObserved !== permPending.observed0) {
+      setPermPending(null);
+      if (permObserved === permPending.mode) {
+        setPermMsg({ kind: 'ok', text: `已生效：${permLabel(permPending.mode)}` });
+      } else {
+        setPermMsg({
+          kind: 'err',
+          text: `已被其他改动覆盖为「${permLabel(permObserved ?? '')}」（请刷新核对）`,
+        });
+      }
+      return;
+    }
+    const timer = setTimeout(() => {
+      setPermMsg({ kind: 'err', text: '未确认：界面未收到新值，请刷新重试' });
+      setPermPending(null);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [permObserved, permPending]);
   const changePermissionMode = async (alias: string, mode: string) => {
+    // 状态门挡在函数里，不只挡在控件上：键盘 Enter / 快速连选都可能绕过 disabled。
+    if (permBusy) return;
+    const observed0 = attrsByAlias[alias]?.permission_mode ?? 'normal';
     setPermBusy(true);
     setPermMsg(null);
+    setPermPending({ mode, observed0 });
     try {
       const res = await fetch(`/api/hub/nodes/${encodeURIComponent(alias)}/permission-mode`, {
         method: 'PUT',
@@ -394,12 +443,15 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
       });
       const body = (await res.json().catch(() => ({}))) as { ok?: boolean; permission_mode?: string; message?: string };
       if (!res.ok || body.ok === false) {
+        setPermPending(null);
         setPermMsg({ kind: 'err', text: body.message || `HTTP ${res.status}` });
         return;
       }
       setPermMsg({ kind: 'ok', text: `已切换为「${permLabel(body.permission_mode ?? mode)}」（等待回读确认）` });
-    } catch (e) {
-      setPermMsg({ kind: 'err', text: e instanceof Error ? e.message : String(e) });
+    } catch {
+      // 网络层失败与「Hub 拒绝」要分开说：前者不能让人以为权限被改了
+      setPermPending(null);
+      setPermMsg({ kind: 'err', text: '网络异常，请重试（权限模式未改变）' });
     } finally {
       setPermBusy(false);
     }
@@ -842,22 +894,29 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
               {(() => {
                 const p = attrsByAlias[s.alias];
                 if (!p?.permission_mode) return <InfoRow label="权限模式" value="—" />;
-                if (!p.can_edit_permission) return <InfoRow label="权限模式" value={permLabel(p.permission_mode)} />;
+                if (!p.can_edit_permission) {
+                  return (
+                    <InfoRow
+                      label="权限模式"
+                      value={`${permLabel(p.permission_mode)}（仅节点主人 / 网络管理员可改）`}
+                    />
+                  );
+                }
+                const shown = permPending?.mode ?? p.permission_mode;
                 return (
-                  <div className="flex items-center justify-between gap-2 px-3 py-2">
-                    <span className="text-[11px] text-[var(--fg-muted)]">权限模式</span>
+                  <InfoRowControl label="权限模式" hint="仅节点主人 / 网络管理员可改">
                     <select
                       data-testid="permission-mode-select"
-                      value={p.permission_mode}
+                      value={shown}
                       disabled={permBusy}
                       onChange={(e) => void changePermissionMode(s.alias, e.target.value)}
-                      className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2 py-1 text-[12px] text-[var(--fg)] disabled:opacity-50"
+                      className="h-[22px] rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2 leading-none text-[12px] text-[var(--fg)] disabled:opacity-50"
                     >
                       <option value="normal">正常</option>
                       <option value="readonly">只读</option>
                       <option value="restricted">受限</option>
                     </select>
-                  </div>
+                  </InfoRowControl>
                 );
               })()}
               {permMsg && (
