@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useId } from 'react';
 import type { Session } from './types';
 import { DialogTitle } from './DialogTitle';
+import { useDialogFocus } from './useDialogFocus';
 import { t } from '../lib/ui-lang';
 
 /**
@@ -29,6 +30,8 @@ const POLL_MAX = 10;
 
 export function NodeSkillsDialog({ session, onClose }: { session: Session; onClose: () => void }) {
   const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useDialogFocus(dialogRef, '[data-testid="chat-pane-more"]');
   const [phase, setPhase] = useState<ListPhase>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [open, setOpen] = useState<{ skill: Skill; content: string | null; error?: string } | null>(null);
@@ -129,6 +132,7 @@ export function NodeSkillsDialog({ session, onClose }: { session: Session; onClo
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
+      ref={dialogRef}
       data-testid="node-skills-dialog"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
