@@ -19,6 +19,7 @@
  *   3. maxAngleΔ  ≤ 0.45 rad（约 26°：部门不至于跑到别人的扇区去）
  */
 import type { LegionNode } from '../../lib/legion-layout';
+import { nodeToVec3, projectPoint } from '../../lib/legion-3d';
 
 type GroupNode = LegionNode & { angle: number; radius: number; depth?: number };
 
@@ -121,31 +122,74 @@ function minDistOf(a: GroupNode, b: GroupNode): number {
 }
 
 /**
- * 目标函数：Σ 重叠² + 30·最深重叠²
+ * 目标函数：**投影后屏幕空间**的重叠（跨视角、跨视口）
  *
- * 为什么不是纯平方和（2026-11-11 实测）：纯平方和会把「一对深重叠」换成
- * 「多对浅重叠」——总代价下降，但屏幕上的**最差那一对反而更深**
- * （1440@0.666 从 −31.7 恶化到 −41.2，而总对数从 5 降到 4）。
- * 人眼看到的是「最深的那一处糊」，所以必须对最深值加权。
+ * 为什么不用世界坐标：世界坐标只保证「平面距离够」，但相机把 z 方向压到
+ * cos(pitch)≈0.66 倍、盘本身又是椭圆（ry = 0.52·rx）。实测 1440@1.99 的那一对
+ * 世界坐标已分开、屏幕上仍叠 −29.8px（§91.5），而单纯放大余量只会把问题换个形状
+ * （余量 1.25 的结果：对数 −1、最深 +4.6px）。
+ *
+ * 所以这里直接用渲染器的投影函数（nodeToVec3 + projectPoint）算屏幕距离，
+ * 对 3 个视角 × 2 个视口一起求：Σ 重叠² + PEAK·最深²。
  */
-const PEAK_WEIGHT = 30;
+// 峰值权重要和「归一化后的重叠」配套：像素尺度的重叠是几十到上百，
+// 若直接用 30·peak²，峰值项会压倒一切，任何单步移动都降不下来 ⇒ 优化器原地不动
+// （2026-11-11 实测：maxAngleDelta = 0，等于没跑）。改成按 need 归一化后，权重取 3。
+const PEAK_WEIGHT = 3;
 
-function overlapCost(pairs: Array<[GroupNode, GroupNode]>): number {
-  let cost = 0;
+const VIEWPORTS = [
+  { width: 1440, height: 1000 },
+  { width: 390, height: 844 },
+];
+const YAWS = [0.62, 1.95, 3.25];
+const PITCH = 0.85;
+
+function cameraFor(yaw: number, w: number, h: number) {
+  const narrow = w < 720;
+  return {
+    yaw,
+    pitch: PITCH,
+    dist: 4.9,
+    focal: Math.min(w, h) * (narrow ? 2.4 : 1.73) * 1.12,
+  };
+}
+
+/** 椭圆支撑函数：沿单位方向 (ux,uy) 的半径 */
+function ellipseSupport(rx: number, ry: number, ux: number, uy: number): number {
+  return Math.hypot(rx * ux, ry * uy);
+}
+
+function projectedCost(pairs: Array<[GroupNode, GroupNode]>): number {
+  let total = 0;
   let peak = 0;
-  for (const [a, b] of pairs) {
-    const ax = a.radius * Math.sin(a.angle);
-    const ay = -a.radius * Math.cos(a.angle);
-    const bx = b.radius * Math.sin(b.angle);
-    const by = -b.radius * Math.cos(b.angle);
-    const d = Math.hypot(bx - ax, by - ay);
-    const over = minDistOf(a, b) - d;
-    if (over > 0) {
-      cost += over * over;
-      if (over > peak) peak = over;
+  for (const vp of VIEWPORTS) {
+    for (const yaw of YAWS) {
+      const cam = cameraFor(yaw, vp.width, vp.height);
+      for (const [a, b] of pairs) {
+        const va = nodeToVec3({ x: a.x, y: a.y, ring: a.ring, order: a.order ?? 0, kind: a.kind, depth: a.depth });
+        const vb = nodeToVec3({ x: b.x, y: b.y, ring: b.ring, order: b.order ?? 0, kind: b.kind, depth: b.depth });
+        const pa = projectPoint(va, cam, vp);
+        const pb = projectPoint(vb, cam, vp);
+        if (!pa || !pb) continue;
+        const dx = pb.x - pa.x;
+        const dy = pb.y - pa.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const ux = dx / d;
+        const uy = dy / d;
+        // 渲染器画出来的盘：rx = max(16, 2.1 × 世界半径 × 投影 scale)，ry = 0.52 × rx
+        const rax = Math.max(16, 2.1 * deptWorldRadius(a.depth ?? 1) * pa.scale);
+        const rbx = Math.max(16, 2.1 * deptWorldRadius(b.depth ?? 1) * pb.scale);
+        const need = ellipseSupport(rax, 0.52 * rax, ux, uy) + ellipseSupport(rbx, 0.52 * rbx, ux, uy);
+        const over = need - d;
+        if (over > 0) {
+          const rel = over / Math.max(1, need); // 归一化：0..1 的覆盖比例
+          total += rel * rel;
+          if (rel > peak) peak = rel;
+        }
+      }
     }
   }
-  return cost + PEAK_WEIGHT * peak * peak;
+  return total + PEAK_WEIGHT * peak * peak;
 }
 
 /**
@@ -165,7 +209,7 @@ export function relaxDepartmentAngles<T extends LegionNode>(nodes: T[]): T[] {
   }
 
   const pairs = buildPairs(groups);
-  const overlapBefore = overlapCost(pairs);
+  const overlapBefore = projectedCost(pairs);
 
   const steps = [0.08, 0.04, 0.02, 0.01, 0.005];
   for (let s = 0; s < steps.length; s += 1) {
@@ -176,14 +220,18 @@ export function relaxDepartmentAngles<T extends LegionNode>(nodes: T[]): T[] {
         const base = angleBefore.get(g.id) ?? g.angle;
         const current = g.angle;
         let best = current;
-        let bestCost = overlapCost(pairs);
+        let bestCost = projectedCost(pairs);
         for (const dir of [1, -1]) {
           const candidate = current + dir * step;
           // 约束：不许跑出自己的扇区太远
           const delta = Math.abs(((candidate - base + Math.PI * 3) % TAU) - Math.PI);
           if (delta > MAX_ANGLE_DELTA) continue;
           g.angle = (candidate + TAU) % TAU;
-          const cost = overlapCost(pairs);
+          // 必须在求值前同步 x/y：目标函数读的是 x/y（渲染器读的那个量），
+          // 只改 angle 会让所有候选的代价完全相同 ⇒ 优化器原地不动
+          // （2026-11-11 第二次栽在同一处，见 §92）。
+          syncXY(g);
+          const cost = projectedCost(pairs);
           if (cost < bestCost - 1e-12) {
             bestCost = cost;
             best = g.angle;
@@ -200,7 +248,7 @@ export function relaxDepartmentAngles<T extends LegionNode>(nodes: T[]): T[] {
   // 收尾同步（坐标下降过程中每次落定都会 syncXY，这里兜底）
   for (const g of groups) syncXY(g);
 
-  const overlapAfter = overlapCost(pairs);
+  const overlapAfter = projectedCost(pairs);
   let radiusShift = 0;
   let maxAngleDelta = 0;
   for (const g of groups) {
