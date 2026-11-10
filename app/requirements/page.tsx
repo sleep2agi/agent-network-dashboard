@@ -257,7 +257,7 @@ function SummaryPanel({ rows, labelFor, projects, onPickOwner, onPickProject }: 
   const projectWidest = Math.max(1, ...projectRows.map(([, entry]) => entry.total));
   return (
     <section data-testid="requirements-summary" className="mb-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]/40 p-3">
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
         {counts.map(item => (
           <div key={item.key} data-testid={`summary-status-${item.key}`} data-count={item.value} className="flex items-center gap-1.5 text-[11px] text-[var(--fg-muted)]">
             <span className={`h-2 w-2 rounded-full ${item.tone}`} />
