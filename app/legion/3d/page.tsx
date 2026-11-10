@@ -482,7 +482,7 @@ export default function Legion3DPage() {
   // 以及「线太短等于没画」的退化情形
   const degenerateRef = useRef(0);
   // 引线几何快照（仅 debug）：让「线是否指向自己的椭圆」可被坐标校验，而不是只数条数。
-  const leaderRectsRef = useRef<Array<{ text: string; fromX: number; fromY: number; toX: number; toY: number; ownX: number; ownY: number; ownRx: number; ownRy: number; dOwn: number; dOther: number; len: number; crossesOther: boolean; prescription: 'leader-line' | 'move-label-pending' | 'degenerate' }>>([]);
+  const leaderRectsRef = useRef<Array<{ text: string; fromX: number; fromY: number; toX: number; toY: number; ownX: number; ownY: number; ownRx: number; ownRy: number; dOwnB: number; dOtherB: number; labelEdgeFromCenter: number; len: number; crossesOther: boolean; prescription: 'leader-line' | 'move-label-pending' | 'degenerate' }>>([]);
   const labelStatsRef = useRef<{ attempted: number; placed: number; dropped: number; wantedDepth1: number }>({ attempted: 0, placed: 0, dropped: 0, wantedDepth1: 0 });
   // 降级后的「取景静默窗口」：实测降级那一帧之后，fit 会立刻启动一次 zoomAnim，
   // 把落点从 a.to 改成 1.28–1.36（且每次不同，取决于当时 content 比例）。
@@ -2336,22 +2336,42 @@ export default function Legion3DPage() {
               const dy = (py - ey) / Math.max(1, ry);
               return Math.abs(Math.hypot(dx, dy) - 1) * Math.min(rx, ry);
             };
-            const dOwn = eDist(cxL, cyL, ownA.x, ownA.y, ownA.rx, ownA.ry);
-            let dOther = Number.POSITIVE_INFINITY;
+            // 统一口径（评审 2026-11-11）：dOwnB / dOtherB / 触发都用「到椭圆边界的最短距离」。
+            // 之前 dOwn 与 len 混用了不同定义，导致 21.3 vs 13px 这种对不上的数。
+            // 单一几何定义：沿「标签中心 → 目标椭圆中心」方向，量到该椭圆边界的距离，
+            // 再减去标签自身在该方向上的半宽（tEdge），得到「标签边缘到该椭圆边界」的距离。
+            // dOwnB / dOtherB / len 都由这一个定义导出 ⇒ 三个数天然互洽，
+            // 不会出现 2026-11-11 那种「21.3 vs 13px 凑不出同一个常数」。
+            const tAlong = (ex: number, ey: number, rx: number, ry: number) => {
+              const dx2 = ex - cxL;
+              const dy2 = ey - cyL;
+              const l2 = Math.max(1, Math.hypot(dx2, dy2));
+              const ux2 = dx2 / l2;
+              const uy2 = dy2 / l2;
+              const tb = 1 / Math.max(0.001, Math.hypot(ux2 / Math.max(1, rx), uy2 / Math.max(1, ry)));
+              return { t: tb, ux: ux2, uy: uy2 };
+            };
+            const halfW0 = (spot.x2 - spot.x1) / 2 + 1;
+            const halfH0 = (spot.y2 - spot.y1) / 2 + 1;
+            const ownT0 = tAlong(ownA.x, ownA.y, ownA.rx, ownA.ry);
+            const tEdge0 = Math.min(halfW0 / Math.max(0.001, Math.abs(ownT0.ux)), halfH0 / Math.max(0.001, Math.abs(ownT0.uy)));
+            const tEdge = tEdge0;
+            const ownT = ownT0;
+            const dOwnB = Math.max(0, ownT.t - tEdge);
+            let dOtherB = Number.POSITIVE_INFINITY;
             for (const gn of nodes) {
               if (gn.item.kind !== 'group' || gn.item.id === item.node.id) continue;
               const gA = departmentDisc(nodeBody(gn, layout.stats.people, layout.stats.agents).radius);
-              const d = eDist(cxL, cyL, gn.projected.x, gn.projected.y, gA.rx, gA.ry);
-              if (d < dOther) dOther = d;
+              const o = tAlong(gn.projected.x, gn.projected.y, gA.rx, gA.ry);
+              const d = Math.max(0, o.t - tEdge);
+              if (d < dOtherB) dOtherB = d;
             }
-            if (Number.isFinite(dOther) && dOwn * 1.2 > dOther) {
+            const dOther = dOtherB;
+            if (Number.isFinite(dOther) && dOwnB * 1.2 > dOther) {
               // 线长自适应：一直连到【自身椭圆边界】（距边界留 2px），
               // 因为歧义现场标签与椭圆相距 30–40px，8px 的短线只能停在半空（评审 2026-11-11）。
-              const dx = ownA.x - cxL;
-              const dy = ownA.y - cyL;
-              const len = Math.max(1, Math.hypot(dx, dy));
-              const ux = dx / len;
-              const uy = dy / len;
+              const ux = ownT.ux;
+              const uy = ownT.uy;
               // 起点：标签矩形在 (ux,uy) 方向上的边界点
               const halfW = (spot.x2 - spot.x1) / 2 + 1;
               const halfH = (spot.y2 - spot.y1) / 2 + 1;
@@ -2359,7 +2379,7 @@ export default function Legion3DPage() {
               const sx = cxL + ux * tEdge;
               const sy = cyL + uy * tEdge;
               // 终点：沿同一方向到自身椭圆边界的距离（椭圆参数解），再回退 2px
-              const tBoundary = 1 / Math.max(0.001, Math.hypot(ux / Math.max(1, ownA.rx), uy / Math.max(1, ownA.ry)));
+              const tBoundary = ownT.t;
               const inner = Math.max(tEdge + 2, tBoundary - 2);
               const ex = cxL + ux * inner;
               const ey = cyL + uy * inner;
@@ -2406,7 +2426,8 @@ export default function Legion3DPage() {
                   toX: Math.round(ex), toY: Math.round(ey),
                   ownX: Math.round(ownA.x), ownY: Math.round(ownA.y),
                   ownRx: Math.round(ownA.rx), ownRy: Math.round(ownA.ry),
-                  dOwn: Number(dOwn.toFixed(1)), dOther: Number(dOther.toFixed(1)),
+                  dOwnB: Number(dOwnB.toFixed(1)), dOtherB: Number(dOther.toFixed(1)),
+                  labelEdgeFromCenter: Math.round(tEdge),
                   len: Math.round(Math.hypot(ex - sx, ey - sy)),
                   crossesOther,
                   prescription: crossesOther ? 'move-label-pending' : (segLen < 6 ? 'degenerate' : 'leader-line'),
