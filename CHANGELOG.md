@@ -6,6 +6,15 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.463 — 2026-11-11
+
+### 可用性：面板关闭后的焦点归还更可靠
+
+- 焦点归还的解析改为「就近优先、全局兜底」；若两者都不可聚焦（例如界面结构发生变化），
+  焦点退到聊天面板主区域，而不是丢给页面 body（此前会回到页面开头且没有可见焦点）。
+- Tab 圈定会跳过 `visibility:hidden` 的控件（此前只排除了 `display:none`）。
+- 内部：新增只读标记 `data-focus-return`（nearest / global / none），便于核对每条归还路径是否真的被验证过。
+
 ## 0.6.4-preview.462 — 2026-11-11
 
 ### 可用性：节点面板支持完整的键盘操作
