@@ -38,11 +38,18 @@ const ARB_RE = /\b(?:max|min)-w-\[(\d+)px\]|\b(?:max|min)-h-\[(\d+)vh\]|\btext-\
 const ARB_ALLOW = { w: new Set([760, 480]), hvh: new Set([85, 50]), text: new Set([11, 12, 14]), hpx: new Set([]) };
 function countArbitrary(src) {
   let n = 0;
-  for (const m of src.matchAll(ARB_RE)) {
-    const [tok] = m;
-    const num = Number(m[1] ?? m[2] ?? m[3] ?? m[4]);
-    const kind = tok.includes('-w-[') ? 'w' : tok.includes('-h-[') && tok.includes('vh]') ? 'hvh' : tok.startsWith('text-') ? 'text' : 'hpx';
-    if (!ARB_ALLOW[kind].has(num)) n++;
+  // 按行扫：同一行里写 `/* exception: 原因 */` 即跳过该行（特例必须能真的生效，
+  // 否则开发者被卡住后唯一出路就是 --update —— 那正好是第二个洞）。
+  // 本族都是单行 class 串，按行扫不会漏掉跨行拼接的场景。
+  for (const rawLine of src.split('\n')) {
+    if (rawLine.includes('exception:')) continue; // 先看原始行（注释还没被去掉）
+    const line = rawLine.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of line.matchAll(ARB_RE)) {
+      const [tok] = m;
+      const num = Number(m[1] ?? m[2] ?? m[3] ?? m[4]);
+      const kind = tok.includes('-w-[') ? 'w' : tok.includes('-h-[') && tok.includes('vh]') ? 'hvh' : tok.startsWith('text-') ? 'text' : 'hpx';
+      if (!ARB_ALLOW[kind].has(num)) n++;
+    }
   }
   return n;
 }
@@ -81,14 +88,15 @@ const arbCounts = {};
 let scanned = 0, total = 0, paletteTotal = 0, scaleTotal = 0, arbTotal = 0;
 for (const f of walk(join(ROOT, 'app'))) {
   scanned++;
-  const src = stripComments(readFileSync(f, 'utf8'));
+  const raw = readFileSync(f, 'utf8');
+  const src = stripComments(raw);
   const n = (src.match(RE) || []).length;
   if (n > 0) { counts[relative(ROOT, f)] = n; total += n; }
   const pn = (src.match(PALETTE_RE) || []).length;
   if (pn > 0) { paletteCounts[relative(ROOT, f)] = pn; paletteTotal += pn; }
   const sn = (src.match(SCALE_RE) || []).length;
   if (sn > 0) { scaleCounts[relative(ROOT, f)] = sn; scaleTotal += sn; }
-  const an = countArbitrary(src);
+  const an = countArbitrary(raw);
   if (an > 0) { arbCounts[relative(ROOT, f)] = an; arbTotal += an; }
 }
 if (scanned === 0) {
@@ -97,6 +105,35 @@ if (scanned === 0) {
 }
 
 if (process.argv.includes('--update')) {
+  const force = process.argv.includes('--force');
+  let prev = null;
+  try { prev = JSON.parse(readFileSync(BASELINE_PATH, 'utf8')); } catch { prev = null; }
+  if (prev && !force) {
+    const families = [['hardcoded', counts], ['palette', paletteCounts], ['scale', scaleCounts], ['arbitrary', arbCounts]];
+    const increases = [];
+    const decreases = [];
+    for (const [key, cur] of families) {
+      const oldMap = prev[key] ?? {};
+      for (const [f, n] of Object.entries(cur)) {
+        const base = oldMap[f] ?? 0;
+        if (n > base) increases.push(`${key} ${f}: ${base} → ${n} (+${n - base})`);
+      }
+      for (const [f, base] of Object.entries(oldMap)) {
+        const n = cur[f] ?? 0;
+        if (n < base) decreases.push(`${key} ${f}: ${base} → ${n} (−${base - n})`);
+      }
+    }
+    if (increases.length) {
+      console.error('color-ratchet: 🔴 --update 拒绝写入：基线只能收紧，不能抬高。以下文件变多了：');
+      for (const r of increases) console.error('  ' + r);
+      console.error('  如果确实要新增债务，请显式加 --force（会在评审里被看见）。');
+      process.exit(1);
+    }
+    if (decreases.length) {
+      console.log(`color-ratchet: 基线收紧 ${decreases.length} 处：`);
+      for (const r of decreases) console.log('  ' + r);
+    }
+  }
   writeFileSync(BASELINE_PATH, JSON.stringify({ hardcoded: counts, palette: paletteCounts, scale: scaleCounts, arbitrary: arbCounts }, null, 2) + '\n');
   console.log(`color-ratchet: baseline updated — ${scanned} files scanned, ${total} hardcoded color classes across ${Object.keys(counts).length} files; ${paletteTotal} named-palette classes across ${Object.keys(paletteCounts).length} files; ${scaleTotal} off-scale size classes across ${Object.keys(scaleCounts).length} files; ${arbTotal} off-whitelist arbitrary sizes across ${Object.keys(arbCounts).length} files.`);
   process.exit(0);
