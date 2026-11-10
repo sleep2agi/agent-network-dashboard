@@ -31,6 +31,22 @@ const RE = /(bg|text|border|ring)-\[#[0-9a-fA-F]{3,8}\]|(bg|text|border|ring|div
 // 字号 `text-[9px]|[10px]|[13px]` 不在 11/12/14/16/20 内。实测这两组一周内还在净增
 // （rounded-md 178→206、text-[10px] 144→208），所以先拦新增、再分批迁移。
 const SCALE_RE = /\brounded-md\b|\btext-\[(?:9|10|13)px\](?![0-9a-zA-Z])/g;
+// 第五族（.449）：任意值（尺寸类）。规则来自设计侧 spec 的「两档 + 三档字号」：
+//   宽度 760 / 480 · 高度 85vh / 50vh · 字号 11 / 12 / 14 · 行内控件高 var(--control-h)
+// 白名单之外视为特例，必须同行注释 `/* exception: 原因 */`；存量走基线（grandfather），只拦新增。
+const ARB_RE = /\b(?:max|min)-w-\[(\d+)px\]|\b(?:max|min)-h-\[(\d+)vh\]|\btext-\[(\d+)px\]|\bh-\[(\d+)px\]/g;
+const ARB_ALLOW = { w: new Set([760, 480]), hvh: new Set([85, 50]), text: new Set([11, 12, 14]), hpx: new Set([]) };
+function countArbitrary(src) {
+  let n = 0;
+  for (const m of src.matchAll(ARB_RE)) {
+    const [tok] = m;
+    const num = Number(m[1] ?? m[2] ?? m[3] ?? m[4]);
+    const kind = tok.includes('-w-[') ? 'w' : tok.includes('-h-[') && tok.includes('vh]') ? 'hvh' : tok.startsWith('text-') ? 'text' : 'hpx';
+    if (!ARB_ALLOW[kind].has(num)) n++;
+  }
+  return n;
+}
+
 const PALETTE_RE = /(?:bg|text|border|ring|divide|from|to|via|fill|stroke)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/g;
 // 基线放在同一个文件里（{ hardcoded, palette }），不新增 scripts 文件：
 // OSS readiness 只允许已评审的 scripts 清单，新增数据文件会被判 unknown。
@@ -61,7 +77,8 @@ function stripComments(text) {
 const counts = {};
 const paletteCounts = {};
 const scaleCounts = {};
-let scanned = 0, total = 0, paletteTotal = 0, scaleTotal = 0;
+const arbCounts = {};
+let scanned = 0, total = 0, paletteTotal = 0, scaleTotal = 0, arbTotal = 0;
 for (const f of walk(join(ROOT, 'app'))) {
   scanned++;
   const src = stripComments(readFileSync(f, 'utf8'));
@@ -71,6 +88,8 @@ for (const f of walk(join(ROOT, 'app'))) {
   if (pn > 0) { paletteCounts[relative(ROOT, f)] = pn; paletteTotal += pn; }
   const sn = (src.match(SCALE_RE) || []).length;
   if (sn > 0) { scaleCounts[relative(ROOT, f)] = sn; scaleTotal += sn; }
+  const an = countArbitrary(src);
+  if (an > 0) { arbCounts[relative(ROOT, f)] = an; arbTotal += an; }
 }
 if (scanned === 0) {
   console.error('color-ratchet: 🔴 scanned ZERO files — scope regression, refusing to pass.');
@@ -78,8 +97,8 @@ if (scanned === 0) {
 }
 
 if (process.argv.includes('--update')) {
-  writeFileSync(BASELINE_PATH, JSON.stringify({ hardcoded: counts, palette: paletteCounts, scale: scaleCounts }, null, 2) + '\n');
-  console.log(`color-ratchet: baseline updated — ${scanned} files scanned, ${total} hardcoded color classes across ${Object.keys(counts).length} files; ${paletteTotal} named-palette classes across ${Object.keys(paletteCounts).length} files; ${scaleTotal} off-scale size classes across ${Object.keys(scaleCounts).length} files.`);
+  writeFileSync(BASELINE_PATH, JSON.stringify({ hardcoded: counts, palette: paletteCounts, scale: scaleCounts, arbitrary: arbCounts }, null, 2) + '\n');
+  console.log(`color-ratchet: baseline updated — ${scanned} files scanned, ${total} hardcoded color classes across ${Object.keys(counts).length} files; ${paletteTotal} named-palette classes across ${Object.keys(paletteCounts).length} files; ${scaleTotal} off-scale size classes across ${Object.keys(scaleCounts).length} files; ${arbTotal} off-whitelist arbitrary sizes across ${Object.keys(arbCounts).length} files.`);
   process.exit(0);
 }
 
@@ -147,4 +166,22 @@ if (scaleRegressions.length) {
   for (const r of scaleRegressions) console.error('  ' + r);
   process.exit(1);
 }
+const arbBaseline = baselineFile.arbitrary ?? null;
+if (arbBaseline === null) {
+  console.error(`color-ratchet: 🔴 arbitrary baseline missing in ${BASELINE_PATH}. Generate with --update.`);
+  process.exit(2);
+}
+const arbTotalBaseline = Object.values(arbBaseline).reduce((a, b) => a + b, 0);
+const arbRegressions = [];
+for (const [file, n] of Object.entries(arbCounts)) {
+  const base = arbBaseline[file] ?? 0;
+  if (n > base) arbRegressions.push(`${file}: ${base} → ${n} (+${n - base})${arbBaseline[file] === undefined ? ' (was clean/new)' : ''}`);
+}
+console.log(`color-ratchet: ${arbTotal} off-whitelist arbitrary sizes in ${Object.keys(arbCounts).length} files (baseline ${arbTotalBaseline}).`);
+if (arbRegressions.length) {
+  console.error('color-ratchet: 🔴 arbitrary sizes INCREASED — 白名单：宽 760/480 · 高 85vh/50vh · 字号 11/12/14 · h-[var(--control-h)]；特例行需注 /* exception: 原因 */：');
+  for (const r of arbRegressions) console.error('  ' + r);
+  process.exit(1);
+}
+
 console.log('color-ratchet: ✓ no file exceeds its baseline.');
