@@ -25,7 +25,7 @@ const POLL_MS = 1500;
 const POLL_MAX = 20;
 
 function classifyError(msg: string): 'forbidden' | 'unreachable' | 'hub' {
-  if (/权限|permission|forbidden|\b403\b|owner|管理员|refused/i.test(msg)) return 'forbidden';
+  if (/权限|permission|forbidden|\b403\b|owner|管理员|refused|user login|登录|cannot/i.test(msg)) return 'forbidden';
   if (/超时|timed ?out|未响应|unreachable|离线|offline|expired|过期/i.test(msg)) return 'unreachable';
   return 'hub';
 }
