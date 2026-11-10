@@ -37,13 +37,31 @@ export function useDialogFocus(ref: RefObject<HTMLElement | null>, fallbackSelec
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     // 菜单项常常在关闭时一起卸载（例如 ⋮ 菜单里的「运行日志」），此时 opener 已不在文档里。
     // 退到「打开它的那个菜单按钮」（aria-haspopup 的祖先），比把焦点丢给 body 好得多。
-    const fallback = (fallbackSelector
-      ? document.querySelector<HTMLElement>(fallbackSelector)
-      : opener?.closest<HTMLElement>('[aria-haspopup]')) ?? null;
+    // 归还目标优先级：
+    //   ① opener 最近的 [aria-haspopup] 祖先（就近、天然对；多窗格并存时也不会还错）
+    //   ② 调用方给的 selector（兜底：菜单是 portal、opener 已脱离原容器时 closest 找不到）
+    // 只用 ② 会在「桌面/手机双挂载」或将来「并列两栏」时可能还焦点到另一个窗格的按钮，
+    // 而且这种 bug 验收基本发现不了（评审 2026-11-11）。
+    // 注意（实测 2026-11-11）：当前 UI 的下拉菜单是 **portal**，菜单项已不在 ⋮ 按钮的 DOM 子树里，
+    // 所以 closest('[aria-haspopup]') 恒为 null ——「就近」这一支今天不可达，保留它只为将来把菜单改回内联渲染。
+    // 现在实际生效的是 fallbackSelector（全局）。这条由探针的 data-focus-return 记录，避免「写了但没人验」。
+    const nearest = opener?.closest<HTMLElement>('[aria-haspopup]') ?? null;
+    const fallback = nearest ?? (fallbackSelector ? document.querySelector<HTMLElement>(fallbackSelector) : null);
+    // 只读探针（§79 的「分支是否被验证过」）：把实际走了哪条归还分支写到 data-* 上，
+    // 否则「就近分支」或「全局兜底分支」里总有一条从没被任何用例碰到（同 .458 的降级路径）。
+    const branch: 'nearest' | 'global' | 'none' = nearest ? 'nearest' : (fallbackSelector && fallback ? 'global' : 'none');
+    const markBranch = () => { root.dataset.focusReturn = branch; };
+    markBranch();
 
     const focusables = () => Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE))
       // 隐藏元素（display:none / visibility:hidden）不参与循环，否则 Tab 会「消失」
-      .filter((el) => el.offsetParent !== null || el === document.activeElement);
+      .filter((el) => {
+        if (el === document.activeElement) return true;
+        if (el.offsetParent === null) return false;
+        // offsetParent 对 visibility:hidden 仍非空 ⇒ 再查一次 computed style，
+        // 否则 Tab 可能落到「看不见但可聚焦」的控件上。
+        return getComputedStyle(el).visibility !== 'hidden';
+      });
 
     // ① 初始焦点：优先第一个可聚焦元素；没有就让容器自己接（tabIndex=-1）
     const first = focusables()[0];
@@ -78,6 +96,16 @@ export function useDialogFocus(ref: RefObject<HTMLElement | null>, fallbackSelec
       const canFocus = (el: HTMLElement | null): el is HTMLElement => !!el && document.contains(el) && el.offsetParent !== null;
       if (canFocus(opener)) opener.focus();
       else if (canFocus(fallback)) fallback.focus();
+      else {
+        // 第三条分支（none）：opener 与 fallback 都不可聚焦，例如 UI 结构变更。
+        // 明确退到「聊天面板主区域」，而不是把焦点丢给 body ——
+        // 丢给 body 会让键盘用户回到页面开头，且没有任何可见焦点。
+        const pane = document.querySelector<HTMLElement>('[data-testid="chat-pane"]');
+        if (pane) {
+          if (!pane.hasAttribute('tabindex')) pane.setAttribute('tabindex', '-1');
+          pane.focus();
+        }
+      }
     };
   }, [ref]);
 }
