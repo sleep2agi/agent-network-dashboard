@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.507` |
-| commit | `846f84aafb7d64e8719b29ef94d2badb41bf6277` |
+| 版本 | `0.6.4-preview.508` |
+| commit | `9f6ca9003a36f8d108ace6b4819923f9039a59ed` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.507-846f84a` |
-| 回滚锚点 | `preview.506-7a11f10`（切 cwd + `pm2 restart anet-dashboard`） |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.508-9f6ca90` |
+| 回滚锚点 | `preview.507-846f84a`（切 cwd + `pm2 restart anet-dashboard`） |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -137,7 +137,7 @@
 |---|---|---|
 | `.499` | 构建过、未发布 | 性能断言挂了一条（`perf:denseMedianFrame`），内容并入 `.500` |
 | `.502` | 构建过两次、未发布 | CHANGELOG 出现两段互相矛盾的说明；内容并入 `.503` |
-| **`.508`** | **验收 20 套全绿、未发布** | **CI 四条 workflow 全部 `queued`（GitHub 托管 runner，仓库无自托管；排队 > 1.5h），按"CI 未绿不发布"规则保持未上线** |
+| `.508`（旧 SHA `db15a5ce`） | 验收通过但**未发布** | 该 SHA 的四条 CI run 卡在 `queued` 不推进；改用空提交 `9f6ca900`（代码树相同）重建并发布 |
 
 `.508` 的内容：任务页 `From`/`To` 输入框补 `aria-label`（可访问名称 2 → 0）。
 一旦 CI 放行：`collect-508-main-ci.py` → `publish-508.py` → `post-release-check.sh`。
