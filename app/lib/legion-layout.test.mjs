@@ -355,6 +355,22 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
     expect(nearestDept('agent:n_known', layout.nodes)?.id).toBe(design.id);
   });
 
+  test('未知部门聚合组的 sublabel 带语义；agent 的 sublabel 仍是头像地址', () => {
+    const layout = buildLegionLayout({
+      people: [{ user_id: 'u1', username: 'alice', display_name: 'A', role: 'member', department: { id: 'd1', name: '平台' }, agents: [agent(1)] }],
+      departments: [{ id: 'd1', name: '平台', parent_id: null }],
+      orphans: [{ node_id: 'n_x', alias: '未知', department_id: 'ghost-1' }],
+    });
+    const group = layout.nodes.find(n => n.kind === 'group' && /^\d+ 个$/.test(n.label));
+    expect(group?.sublabel || '').toContain('未登记部门');
+    // agent 的 sublabel 用于头像地址（getAvatarUrl），必须保持 @username 形态
+    const agents = layout.nodes.filter(n => n.kind === 'agent');
+    expect(agents.length).toBeGreaterThan(0);
+    // 有的 agent 节点没有 sublabel（无主 Agent 直接用 label 兜底），所以断言是「若有则必须是 @ 开头」，
+    // 而不是「必须存在」——否则会把合法形态误判成缺陷。
+    expect(agents.every(a => a.sublabel == null || String(a.sublabel).startsWith('@'))).toBe(true);
+  });
+
   test('多个不同未知部门 id 聚合为一个分组（#3070）', () => {
     const layout = buildLegionLayout({
       people: [],
