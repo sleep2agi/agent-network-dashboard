@@ -2963,6 +2963,24 @@ export default function Legion3DPage() {
         capture.octx.fillStyle = tk.bg;
         capture.octx.fillRect(0, 0, capture.width, capture.height);
         capture.octx.drawImage(canvas, rect.x, rect.y, rect.width, rect.height);
+        // `.509`：录屏产物里补一行规模说明。导出 PNG 已经带标题/计数/图例，
+        // 但录屏只把主画布等比放进画幅，页眉是 DOM、不进画面 ⇒ 视频离开页面就读不出规模。
+        // 只画在导出画幅上，**不影响正常浏览**（主画布不画）。
+        {
+          const fs = Math.max(14, Math.round(capture.height * 0.026));
+          capture.octx.save();
+          capture.octx.font = `500 ${fs}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+          capture.octx.fillStyle = tk.fg;
+          capture.octx.globalAlpha = 0.88;
+          capture.octx.textBaseline = 'alphabetic';
+          capture.octx.fillText(
+            `${layout.stats.agents} Agent · ${layout.stats.groups} 部门 · ${layout.stats.people} 成员`,
+            Math.round(capture.width * 0.03),
+            capture.height - Math.round(capture.height * 0.05),
+          );
+          capture.octx.restore();
+          if (canvasRef.current) canvasRef.current.dataset.captureStamp = '1';
+        }
         if (!capture.finished && loopProgress(now - capture.startedAt, capture.durationMs) >= 1) {
           capture.finished = true;
           try { if (capture.recorder.state !== 'inactive') capture.recorder.stop(); } catch { /* stopped already */ }
