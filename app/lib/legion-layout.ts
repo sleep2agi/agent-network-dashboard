@@ -643,7 +643,15 @@ export function nearestDept(nodeId: string, nodes: LegionNode[]): LegionNode | n
   if (!cur) return null;
   for (let parent = cur.parentId ? byId.get(cur.parentId) : null; parent; parent = parent.parentId ? byId.get(parent.parentId) : null) {
     if (parent.kind !== 'group') continue;
-    if (parent.label === UNGROUPED || parent.label === ORPHAN_GROUP || parent.id.startsWith('dept:unknown:')) return null;
+    // 合成分组（无部门 / 无主 / 未知部门）不是真实部门，不能当「所属部门」返回。
+    // 2026-11-11（#3070）：未知部门改为**聚合**后 id 变成 `dept:unknown`（不再带 `:<id>` 后缀），
+    // 原来的 startsWith('dept:unknown:') 就漏掉了它 ⇒ 聚合组会被当成真实部门返回。
+    // 这里改成按「合成 id 前缀」判断，并把冲突后缀（~2）一并覆盖。
+    const synthetic = (id: string) =>
+      id === 'dept:none' || id.startsWith('dept:none~') ||
+      id === 'dept:orphans' || id.startsWith('dept:orphans~') ||
+      id === 'dept:unknown' || id.startsWith('dept:unknown~');
+    if (parent.label === UNGROUPED || parent.label === ORPHAN_GROUP || synthetic(parent.id)) return null;
     return parent;
   }
   return null;
