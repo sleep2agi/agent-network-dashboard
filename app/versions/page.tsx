@@ -16,7 +16,9 @@ function isAgentNode(s: Session) {
 }
 
 export default function VersionsPage() {
-  const { sessions, isLoading, error, mutate } = useSessions({ lite: true }) // 只读 alias/status/network_id/version：lite 投影已包含（app/lib/lite-status.ts KEEP）
+  const { sessions, isLoading, error, mutate } = useSessions({ lite: true, refreshInterval: 30_000 })
+  // 版本分布变化很慢：默认 5s 轮询会让本页每分钟拉 12 次 lite status（约 3 MB）。
+  // 30s 足够（节点升级不会在 5s 内改变整体分布），每分钟降到 2 次（约 0.5 MB）。 // 只读 alias/status/network_id/version：lite 投影已包含（app/lib/lite-status.ts KEEP）
   // 全量 /api/hub/status 实测 735 KB（413 会话），lite 266 KB ⇒ 本页每访省约 470 KB;
   const live = sessions.filter(online);
   const nodes = live.filter(isAgentNode);

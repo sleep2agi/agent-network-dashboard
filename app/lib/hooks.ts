@@ -41,7 +41,12 @@ function withNetwork(url: string, networkId: string): string {
   return `${url}${sep}network_id=${encodeURIComponent(networkId)}`;
 }
 
-export function useSessions(options?: { lite?: boolean; initial?: Session[] | null }) {
+export function useSessions(options?: {
+  lite?: boolean;
+  initial?: Session[] | null;
+  /** 覆盖默认 5s 轮询。只给"数据变化很慢"的页面用（如版本分布），别给需要实时性的页。 */
+  refreshInterval?: number;
+}) {
   const { networkId, ready } = useNetworkId();
   // initial：服务端已按 cookie 取好的首帧数据（.441）。SWR 会先渲染它，随后照常刷新。
   // 不传时为 undefined ⇒ 与以前完全一致。
@@ -51,7 +56,7 @@ export function useSessions(options?: { lite?: boolean; initial?: Session[] | nu
   const { data, error, isLoading, mutate } = useSWR<{ sessions: Session[]; _hint?: { global_count?: number; filtered_network?: string } }>(
     scopedOrNull(options?.lite ? '/api/hub/status?lite=1' : '/api/hub/status', networkId, ready),
     fetcher,
-    { ...SWR_OPTIONS, ...(fallback ? { fallbackData: fallback } : {}) },
+    { ...SWR_OPTIONS, ...(options?.refreshInterval ? { refreshInterval: options.refreshInterval } : {}), ...(fallback ? { fallbackData: fallback } : {}) },
   );
   return { sessions: data?.sessions || [], hint: data?._hint, error, isLoading, mutate };
 }
