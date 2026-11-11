@@ -219,6 +219,24 @@ function bodyBounds(bodies: ReadonlyArray<FramingBody>) {
 
 /** Fit bodies and complete orbits clear of controls. A projector recomputes
  * pixel minima and fixed-width strokes at the final zoom, with the old pan. */
+/**
+ * 二分搜索「满足 predicate 的最大 zoom」。predicate 必须在 zoom 上单调（span 随 zoom 增大）。
+ */
+function searchFit(
+  predicate: (zoom: number) => boolean,
+  limits: { min: number; max: number },
+): number | null {
+  let low = limits.min;
+  let high = limits.max;
+  if (!predicate(low)) return null;
+  for (let i = 0; i < 24; i++) {
+    const mid = (low + high) / 2;
+    if (predicate(mid)) low = mid;
+    else high = mid;
+  }
+  return low;
+}
+
 export function fitProjectedBodies(
   bodies: ReadonlyArray<FramingBody> | ((zoom: number) => ReadonlyArray<FramingBody>),
   view: { zoom: number; panX: number; panY: number },
@@ -233,7 +251,7 @@ export function fitProjectedBodies(
   // 0.90 → 0.94：实测 1440 演示态填充 0.740 → 0.772、390 0.312 → 0.326，
   // 且内容包围盒仍完整落在画布内（1440 四边留白 373/89/336/116，390 为 58/280/43/289）。
   // 再往上（0.96+）边际收益变小、边缘标签更容易放不下，故停在这里。
-  const target = Math.min(bounds.x2 - bounds.x1, bounds.y2 - bounds.y1) * 0.94;
+  const target = Math.min(bounds.x2 - bounds.x1, bounds.y2 - bounds.y1) * 0.98;
   if (typeof bodies === 'function') {
     // Extents are monotonic in zoom for a fixed orientation. Binary search
     // handles the 16px disc floor without pretending that it scales down.
@@ -245,7 +263,20 @@ export function fitProjectedBodies(
       else high = mid;
     }
     const b = bodyBounds(bodies(low));
-    if (b.maxX - b.minX > bounds.x2 - bounds.x1 || b.maxY - b.minY > bounds.y2 - bounds.y1) return null;
+    if (b.maxX - b.minX > bounds.x2 - bounds.x1 || b.maxY - b.minY > bounds.y2 - bounds.y1) {
+      // `.497`：目标比例放不下时**不要直接放弃取景**（那一刻会退回默认 zoom，
+      // 实测桌面 133px 边距、且俯角一大就复现）。改为按"容纳"再搜一次：
+      // 只要内容能塞进 bounds 就用它，宁可四周留白不均，也不要停在默认视角。
+      const contain = searchFit((z) => {
+        const bb = bodyBounds(bodies(z));
+        return bb.maxX - bb.minX <= bounds.x2 - bounds.x1 && bb.maxY - bb.minY <= bounds.y2 - bounds.y1;
+      }, limits);
+      if (contain === null) return null;
+      const cb = bodyBounds(bodies(contain));
+      return { zoom: contain,
+        panX: (bounds.x1 + bounds.x2 - cb.minX - cb.maxX) / 2 + view.panX,
+        panY: (bounds.y1 + bounds.y2 - cb.minY - cb.maxY) / 2 + view.panY };
+    }
     return { zoom: low,
       panX: (bounds.x1 + bounds.x2 - b.minX - b.maxX) / 2 + view.panX,
       panY: (bounds.y1 + bounds.y2 - b.minY - b.maxY) / 2 + view.panY };
