@@ -6,6 +6,30 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.487 — 2026-11-11
+
+### 修复：命令面板（Ctrl/⌘+K）会列出其它网络的 Agent 与任务
+
+- 打开命令面板时会发两次**不带网络作用域**的请求（`status` 与 `tasks`），
+  于是「跳到某个 Agent」「跳到某个任务」的候选里会混入其它网络的条目。
+- 修复：两处取数都带上 `network_id`（与页面其它取数同一作用域）。
+- 附带：其中 `status` 那次裸取还绕过了 SWR 缓存，多付一次约 258 KB；一并去掉。
+
+### 已验证（同机前后，判据含「面板仍能打开」）
+
+- 面板期间的请求：
+  - 修复前（`.486`）：`unscopedDuringPalette = 2`（`status` + `tasks` 各一次）
+  - 修复后：`unscopedDuringPalette = 0`，两次请求均带 `network_id`
+- 面板功能未受影响：两侧 `paletteOpen` 均为真
+- `tsc` 通过 · 单测 58/58 · 构建通过 · 主 CI 4/4
+
+### 未验证 / 已知残余
+
+- `TopoGraph` 的 `flow-lite` 取数同样缺作用域，但该组件已无 JSX 使用（33 处提及均为注释）
+  ⇒ 属遗留代码，未在本版处理；若将来复活该组件需一并补作用域。
+- `TaskDrawer` 的 `tasks?task_id=…` 不需要作用域（id 全局唯一），保持原样。
+- A/B 两个军团预览开关仍默认关闭（默认值待 admin 决定）。
+
 ## 0.6.4-preview.486 — 2026-11-11
 
 ### 性能：三处「每次访问都在重复付」的流量
