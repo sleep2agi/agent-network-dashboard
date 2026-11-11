@@ -47,6 +47,19 @@ const DEFAULT_VIEW = { yaw: 0.62, pitch: 0.85, dist: 4.9, zoom: 1.12, panX: 0, p
  *  正圆，把高度用起来；桌面端保持 0.85（49° 的分层视角是定稿值，不再动）。
  *  只影响「首次进入 / 重置视角」，不覆盖用户已保存的视角。 */
 const NARROW_PITCH = 1.02;
+/**
+ * 俯角诊断参数（`.497`）：`?pitch=0.85`。只影响 canvas 绘制、不改变 DOM 结构，
+ * 所以不会引入水合差异（对比 `.494` 修的 ?perf=1）。存在的理由是量测：
+ * 画面"不够满"的根因是投影椭圆与画布长宽比不匹配，靠一次构建扫多个角度最省时间。
+ */
+const PITCH_PARAM = (() => {
+  if (typeof window === 'undefined') return null;
+  const raw = new URLSearchParams(window.location.search).get('pitch');
+  if (raw === null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0.2 && n <= 1.45 ? n : null;
+})();
+const pitchDefault = (narrow: boolean) => PITCH_PARAM ?? (narrow ? NARROW_PITCH : DEFAULT_VIEW.pitch);
 
 /** 观感变体（默认关闭，只由 URL 参数 ?look= 打开）。
  *  为什么做成参数而不是直接改默认值：3D 的观感选择属于产品判断，需要有具体的可比较对象，
@@ -513,7 +526,7 @@ export default function Legion3DPage() {
   useEffect(() => {
     if (PERF_HUD) setPerfHudOn(true);
   }, []);
-  const viewRef = useRef({ ...DEFAULT_VIEW });
+  const viewRef = useRef({ ...DEFAULT_VIEW, pitch: pitchDefault(typeof window !== 'undefined' && window.innerWidth < 640) });
   const spinRef = useRef(true);
   const selectedRef = useRef<string | null>(null);
   const lastInteract = useRef(0);
@@ -687,13 +700,14 @@ export default function Legion3DPage() {
         pitch: Math.min(1.1, Math.max(-1.1, saved.pitch as number)),
         zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, saved.zoom as number)),
       };
+      if (PITCH_PARAM !== null) viewRef.current.pitch = PITCH_PARAM;
       setZoomPct(Math.round(viewRef.current.zoom * 100));
       sharedLock.current = true;
       return;
     }
     // 没有保存过视角 + 窄屏：用更陡的俯角，竖向空间别浪费。
     if (typeof window !== 'undefined' && window.innerWidth < 640) {
-      viewRef.current = { ...DEFAULT_VIEW, pitch: NARROW_PITCH };
+      viewRef.current = { ...DEFAULT_VIEW, pitch: pitchDefault(true) };
     }
   }, [networkId]);
 
@@ -1094,6 +1108,20 @@ export default function Legion3DPage() {
     };
   }, []);
 
+  // 数据就绪 / 编制变化是**明确事件**，直接在那一刻请求一次取景（`.497`）。
+  // 之前只靠「尺寸漂移」这一条件推断"该重新取景了"，而数据晚到与尺寸已定常常错开：
+  // 实测同一参数连续加载，桌面有时 zoom=120（取景生效）、有时 112（退回默认，边距 133px）。
+  // 用编制签名做键，避免 SWR 每次刷新（数组新引用但内容相同）都把用户视角重置。
+  const layoutKeyRef = useRef<string>('');
+  useEffect(() => {
+    const key = `${layout.stats.groups}:${layout.stats.people}:${layout.stats.agents}:${layout.nodes.length}`;
+    if (layoutKeyRef.current === key) return;
+    layoutKeyRef.current = key;
+    if (key === '0:0:0:0') return; // 空编制不取景
+    fitPending.current = true;
+    userAdjusted.current = false;
+  }, [layout]);
+
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
@@ -1214,6 +1242,9 @@ export default function Legion3DPage() {
     let lastFrame = performance.now();
 
     let frame = 0;
+    // 诊断（?perf=1）：绘制循环被重建几次、这一轮画了多少帧、拿到的 size。
+    // 空白画布那次排查需要区分「没启动」「被反复重建」「size 为 0」三种情况。
+    const runId = (window as unknown as { __legion3dRun?: number }).__legion3dRun = ((window as unknown as { __legion3dRun?: number }).__legion3dRun ?? 0) + 1;
     let bgLayer: HTMLCanvasElement | null = null;
     let bgKey = '';
     const buildBackdrop = () => {
@@ -1271,7 +1302,12 @@ export default function Legion3DPage() {
       const frameMsRaw = now - lastFrame;
       // `?perf=1`：只读采样，不改变任何绘制路径
       if (PERF_HUD && perfElRef.current) {
-        hudGaps.push(frameMsRaw);
+        // `.497`：帧间隔必须是**正数**才进样本。切后台 / 双 rAF / 首帧时 `now` 可能早于
+        // 上一帧的 `lastFrame`，塞进负值会让均值被拉低、fps 顶到 1000.0、p50 变成 -287.9ms（实测）。
+        // 尺子坏了，后面所有"帧率没退化"的结论都不成立。
+        // 不丢弃异常样本，改为夹到合理区间：丢弃会让样本长期为空（实测出现「fps —（采样中）」），
+        // 而夹值既保留"这一帧很慢"的信息，又不会污染成 1000fps 的假读数。
+        if (Number.isFinite(frameMsRaw)) hudGaps.push(Math.min(1000, Math.max(1, frameMsRaw)));
         if (hudGaps.length > 60) hudGaps.shift();
         if (now - hudWrittenAt > 500) {
           hudWrittenAt = now;
@@ -1282,10 +1318,14 @@ export default function Legion3DPage() {
           const margin = vb.count > 0
             ? Math.round(Math.min(vb.minX, vb.minY, canvas.width - vb.maxX, canvas.height - vb.maxY))
             : null;
-          perfElRef.current.textContent =
-            `fps ${(1000 / Math.max(1, avg)).toFixed(1)} · p50 ${p50.toFixed(1)}ms`
+          // 样本为空时给占位；注意这里**不能 return** —— 绘制循环必须照常往下走。
+          if (s2.length === 0) {
+            perfElRef.current.textContent = 'fps —（采样中）';
+          } else perfElRef.current.textContent =
+            `fps ${Math.min(240, 1000 / Math.max(1, avg)).toFixed(1)} · p50 ${p50.toFixed(1)}ms`
             + ` · 背板 ${canvas.width}×${canvas.height} · dpr ${dpr.toFixed(2)} · scale ${resScale.toFixed(2)}`
-            + (margin !== null ? ` · 边距 ${margin}px` : '');
+            + (margin !== null ? ` · 边距 ${margin}px` : '')
+            + ` · run${runId}/f${frame}/s${size.width}×${size.height}`;
         }
       }
       const dt = Math.min(0.05, frameMsRaw / 1000);
@@ -1576,6 +1616,11 @@ export default function Legion3DPage() {
           for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, fittingCam, size, 64)) {
             bodies.push({ x: p.x, y: p.y, rx: 4, ry: 4 });
           }
+        }
+        // 部门标签是最外侧的可见元素（`.497`）：不并入包围盒的话，一旦把画面收拢，
+        // 先出界的不是节点而是标签名。用上一帧实测的标签矩形（1 帧滞后，取景后自我收敛）。
+        for (const r of labelRectsRef.current) {
+          bodies.push({ x: r.x + r.w / 2, y: r.y + r.h / 2, rx: r.w / 2, ry: r.h / 2 });
         }
         return bodies;
       };
@@ -2958,7 +3003,7 @@ export default function Legion3DPage() {
     try { localStorage.removeItem(`legion3d-view:${networkId}`); } catch { /* ignore */ }
     yawTarget.current = null;
     const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
-    viewRef.current = { ...DEFAULT_VIEW, pitch: narrow ? NARROW_PITCH : DEFAULT_VIEW.pitch };
+    viewRef.current = { ...DEFAULT_VIEW, pitch: pitchDefault(narrow) };
     setZoomPct(Math.round(DEFAULT_VIEW.zoom * 100));
     fitPending.current = true;
     userAdjusted.current = false;
