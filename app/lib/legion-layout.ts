@@ -301,7 +301,7 @@ function buildTree(input: LegionInput): { roots: DeptNode[]; depth: number } {
       // 写成「未知部门 · N 个未登记」时 390 上只剩「未知部」——数量被截掉，
       // 等于修了聚合、又丢了「有多少」这个核心信息。
       // 数量在前：390 截到 2~4 字符时仍保留数字（如「50」「50 个」）。
-      unknownAgg.node.label = `${unknownAgg.ids.size} 个未登记`;
+      unknownAgg.node.label = `${unknownAgg.ids.size} 个`;
     }
     // 部门存在但一个人都没有：仍然画出来（编制的空位也是信息）。
     const roots = [...orphans];
