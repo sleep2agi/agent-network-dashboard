@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.489` |
-| commit | `293150296fd55977772b54ad30ed9bde8fd02e1f` |
+| 版本 | `0.6.4-preview.493` |
+| commit | `0d5859551750ede44255a9c52d81275ad481e5bd` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.489-2931502` |
-| 回滚锚点 | `preview.488-a16fb69`（切换目录 + `pm2 restart anet-dashboard`） |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.493-0d58595` |
+| 回滚锚点 | `preview.492-f1956e3`（切 cwd + `pm2 restart anet-dashboard`）—— **锚点随发布前移**，`.490` 目录已清理 |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -22,6 +22,33 @@
 | `.486` | 三处重复流量：`/versions`·`/admin` 切 lite、`/versions` 轮询 30s、聊天面板 SWR 去重 | `/nodes` status 3→2 次（775→517 KB）；`/versions` 35s 7→2 次（8606→891 KB/分） |
 | `.487` | 命令面板两处取数带网络作用域 | Ctrl+K 期间 unscoped 2→0，面板仍可开 |
 | `.488` | 服务器页每台机器可展开看节点清单（只读） | 3→3 条、90→40+余数行、1→1 条 |
+| `.489` | 圆角 R1 批次（153×6→8px，7 处保留）+ 门禁口径 + 运行时矩阵预览 | 2D 几何 0 差异（同时刻、同节点集）；hydration 19/19 |
+| `.490` | R1 越界修复（`.489` 遗留） | 16px 控件不再被 8px 强制 |
+| `.492` | 小控件圆角改「上限 + 判据」：h≥24→8 · 18≤h<24→6 · h<18→4；CSS 默认取 4px | 生产实测 16→4 · 20→6 · 28→8 · 32→8；HTML 陈旧值 0；首帧≠稳态 0 条 |
+## 圆角现场口径（`.492` 实测，可复现）
+
+```
+探针：evidence/radius-492-20261111/{probe-item-radius,probe-exact-height,probe-stale-var,stale-by-tag}
+三条路由 /legion · /nodes · /board，共 415 个 [data-radius-tier="item"]
+
+结论一：三档全部正确（16→4 · 20→6 · 28→8 · 32→8），HTML 控件陈旧值 = 0（500ms/2s/5s 三时刻）
+结论二：349 个 `<g role="button">`（3D 军团节点组）被误当控件打标，345 个变量与高度不符
+        —— 不是分档错，是**对象选错**：border-radius 对 SVG `<g>` 无视觉效果，其"高度"是坐标缩放产物
+        `.493` 起打标只作用于 HTMLElement
+结论三：`.492` 的"首帧会先按 8px 渲染"前提**被实测推翻**
+        打标与写变量在同一语句序列、CSS 规则依赖该属性选择器 ⇒ 不存在"有 tier 没有变量"的窗口
+        默认 4px 保留，但定位改为防御（防 SSR 打标 / 防将来拆开这两步）
+```
+
+## 门禁（今天新增，均可独立运行）
+
+| 工具 | 判据 |
+|---|---|
+| `deploy/next-release.py` | 允许集 = { live, target }，由线上 health 派生；`--from` 不符即在生成任何文件前拒绝 |
+| `deploy/assert-docs-ahead.py` | `产物SHA..main` 的差异必须全部匹配 `docs/` 或 `*.md`，否则退出 1 |
+| `deploy/publish-NNN.py` | 同上判据内联在发布脚本里（docs-ahead 是断言，不是声明） |
+| `deploy/diff-guard.py` | 视图差异分类：结构/文本/类名/数据必须 0 差异；chunk 引用/buildId/哈希允许并记录 |
+| `evidence/probes/geom-compare.mjs` | 几何对照先锁节点集，集合不同 ⇒ INVALID，不得输出位移数字 |
 
 ## 基线（绑定 `.487`/`.488`）
 
