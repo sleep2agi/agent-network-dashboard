@@ -81,3 +81,12 @@ near(got.wide.focal, 968.8, '桌面焦距');
 near(got.narrow.pitch, 1.02, '窄屏俯角（必须与页面渲染一致）');
 near(got.narrow.dist, 4.9, '窄屏相机距离');
 near(got.narrow.focal, 1048.32, '窄屏焦距');
+
+
+// 层高（tierBoost）也必须同源：渲染端用 LOOK_TIER，排布优化必须收到同一个值。
+// 2026-11-11（§94）：relax 原来用默认 tierBoost=1，而渲染端是 1.3，
+// 等于「为不存在的几何求最优」。这条断言防第三次分叉。
+const relaxSrc = read('app/legion/3d/relax-dept-angles.ts');
+assert.match(relaxSrc, /relaxDepartmentAngles<T extends LegionNode>\(nodes: T\[\], tierBoost = 1\)/, 'relax 必须接受 tierBoost 参数');
+assert.match(relaxSrc, /nodeToVec3\([^)]*tierBoost\)/, 'relax 的投影必须使用传入的 tierBoost');
+assert.match(page, /relaxDepartmentAngles\(built\.nodes, LOOK_TIER\)/, 'page 必须把 LOOK_TIER 传给 relax（tierBoost 同源）');
