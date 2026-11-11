@@ -58,3 +58,32 @@ CI：gates（含字号/颜色两条审美棘轮）· unit tests · scrub-guard �
 发布链：生成器（版本已涨自检）→ 同 SHA 构建（BUILD_COMMIT 断言）→ 20 套验收 →
         collect-*-main-ci.py（四条 headSha 必须等于本版）→ publish（缺 --source 会拒绝执行）
 ```
+
+## 口径说明（对外提问的答案，避免重复猜测）
+
+### `/servers` 匿名返回 200：公开外壳 + 认证数据
+
+```
+无登录态：/servers 200（外壳 37328 B）· /legion 200（38877 B）· /changelog 200 · /nodes 307（SSR 需 cookie）
+匿名 HTML：主机名命中 0 · 节点别名命中 0
+数据接口：未登录一律 401（/api/hub/servers、/api/hub/nodes …）
+⇒ 与 /legion、/changelog 同型；非 .488 引入（本版未改鉴权）
+⇒ 若要求"外壳也需登录"，属一批页面的统一口径变更，需 admin 定
+```
+
+### 2D 页字节变化（`.488`：39,016 → 39,785，+769）
+
+```
+几何对照（.487 vs .488，同一探针 evidence/probes/geom2d.mjs）：
+  80 节点 · 共同 id 80 · 坐标不同 0 · 两侧独有 id 0
+⇒ 2D 视图节点位置未变；字节差异属产物层（共享 hooks / lite 字段清单进入客户端 chunk）
+⇒ 能证明的只有"几何 0 差异"，"chunk 引用变化"是与之一致的推测，不作结论
+证据：evidence/legion-2d-488/{geom-487.json, geom-488.json}
+```
+
+### 历史版本对照跑法（跨轮次进程需脱离会话）
+
+```
+setsid nohup env PORT=3301 npx next start -p 3301 > log 2>&1 < /dev/null &
+export PLAYWRIGHT_BROWSERS_PATH=/home/vansin/.cache/ms-playwright   # 独立调用探针时必须带上
+```
