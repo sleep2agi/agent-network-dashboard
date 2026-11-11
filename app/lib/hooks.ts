@@ -56,7 +56,13 @@ export function useSessions(options?: {
   const { data, error, isLoading, mutate } = useSWR<{ sessions: Session[]; _hint?: { global_count?: number; filtered_network?: string } }>(
     scopedOrNull(options?.lite ? '/api/hub/status?lite=1' : '/api/hub/status', networkId, ready),
     fetcher,
-    { ...SWR_OPTIONS, ...(options?.refreshInterval ? { refreshInterval: options.refreshInterval } : {}), ...(fallback ? { fallbackData: fallback } : {}) },
+        {
+      ...SWR_OPTIONS,
+      ...(options?.refreshInterval ? { refreshInterval: options.refreshInterval } : {}),
+      // 有 SSR 注入的首帧数据时不再立刻重验证：那份数据就是本次请求刚取的，
+      // 立刻再拉一次等于把同一份 258 KB 付两遍（实测 /nodes 6s 内 status 3 次 ≈ 772 KB）。
+      ...(fallback ? { fallbackData: fallback, revalidateOnMount: false } : {}),
+    },
   );
   return { sessions: data?.sessions || [], hint: data?._hint, error, isLoading, mutate };
 }

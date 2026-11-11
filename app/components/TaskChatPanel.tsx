@@ -493,7 +493,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useSSE } from '../lib/useSSE';
 import { useNetworkId } from '../lib/network-context';
-import { useHealth } from '../lib/hooks';
+import { useHealth, useSessions } from '../lib/hooks';
 import { useMuted } from '../lib/chat-mute';
 import { markChatRead } from '../lib/chat-unread';
 import { readDraft, writeDraft } from '../lib/chat-drafts';
@@ -654,6 +654,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
   // (#214 "one definition"); useHealth is SWR-deduped with the page-level
   // poll, so this adds no extra requests while Overview is mounted.
   const { health } = useHealth();
+  // @ 提及候选：用与页面**同一个 SWR key**（status?lite=1&network_id=…）取会话，
+  // 而不是裸 fetch —— 裸 fetch 会绕过 SWR 缓存，在 /nodes 首页额外打一次 258 KB
+  // （实测 6.5s 窗口内 status 出现 3 次：页面 1 + 本次裸取 1 + 轮询 1）。
+  const { sessions: mentionSessions } = useSessions({ lite: true });
   const chatMuted = useMuted(alias);
   const sseOnline = (() => {
     const m = health?.sse_sessions;
@@ -773,20 +777,15 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     // "hub row hasn't flipped to offline yet". Fetch health alongside
     // status so we can filter by presence.isOnline (SSE-reachable)
     // rather than the retired `status !== 'offline'` predicate.
-    Promise.all([
-      // lite=1：这里只用到 alias/status/network_id（@ 提及候选与别名→网络映射）。
-      // 全量 649 KB 在 load 40 时要 6.6s，而聊天面板在 /nodes 首页就会挂载 —— 实测
-      // 首行出现因此被拖到 7–13s（页面内 MutationObserver 测量，2026-11-09）。
-      fetch('/api/hub/status?lite=1').then(r => r.ok ? r.json() : { sessions: [] }),
-      fetch('/api/hub/health').then(r => r.ok ? r.json() : {}),
-    ]).then(([d, health]: [{ sessions?: { alias: string; status: string; network_id?: string }[] }, { sse_sessions?: Record<string, number> }]) => {
-      const sessions = d.sessions || [];
-      const map: Record<string, string> = {};
-      for (const s of sessions) if (s.network_id) map[s.alias] = s.network_id;
-      aliasNetRef.current = map;
-      setMentionNodes(sessions.filter(s => presenceIsOnline(s, health?.sse_sessions)).map(s => s.alias));
-    }).catch(() => {});
-  }, [availableNodes]);
+    // 数据来自 useSessions（与页面同 key，SWR 去重）与 useHealth，二者都已在上方订阅；
+    // 这里只做投影与状态写入，不再发起任何网络请求。
+    const sessions = (mentionSessions ?? []) as { alias: string; status: string; network_id?: string }[];
+    if (!sessions.length) return;
+    const map: Record<string, string> = {};
+    for (const s of sessions) if (s.network_id) map[s.alias] = s.network_id;
+    aliasNetRef.current = map;
+    setMentionNodes(sessions.filter(s => presenceIsOnline(s, health?.sse_sessions)).map(s => s.alias));
+  }, [availableNodes, mentionSessions, health]);
 
   // Loop R9 (微信草稿): unsent text survives closing the panel, switching
   // conversations and refreshing, per conversation. Text only — File
