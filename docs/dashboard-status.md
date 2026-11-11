@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.488` |
-| commit | `a16fb6908b8aaed3d120f739ca12231f6060104a` |
+| 版本 | `0.6.4-preview.489` |
+| commit | `293150296fd55977772b54ad30ed9bde8fd02e1f` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.488-a16fb69` |
-| 回滚锚点 | `preview.487-413614f`（切换目录 + `pm2 restart anet-dashboard`） |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.489-2931502` |
+| 回滚锚点 | `preview.488-a16fb69`（切换目录 + `pm2 restart anet-dashboard`） |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -99,4 +99,21 @@ export PLAYWRIGHT_BROWSERS_PATH=<workdir>   # 独立调用探针时必须带上
    原因：提交时用了 `git add -A app`，把同在工作区的改动一起带走
 ② 因此「矩阵预览」没有独立提交；功能已进 main，仅提交信息未单列
 ⇒ 规则改成：提交前先 `git status --porcelain` 看清单，再按清单逐项 add（不用 -A）
+```
+
+## 视觉门禁（2026-11-11 新增）
+
+```
+三件套（都可本地跑、都可复跑）：
+1) r/h 比例规则：圆角/高度 ≤ 1/3；> 0.4 视为药丸。实测高度，不用 className 估算。
+   · 153 处 6→8px；7 处保留 6px（5 个小 chip + HealthBanner 关闭按钮 + 1 注释）
+2) 两条棘轮：scripts/check-scale-ratchet.mjs（rounded-md 7 / text-9,10 = 0）
+             scripts/check-color-ratchet.mjs（131 / 1037 / 6 / 66，注释不计债、exception 仍生效）
+   · 注意：一次回退要同时改两条基线（两处都数 rounded-md）
+3) deploy/diff-guard.py：视图差异分类
+   · 必须为 0：标签结构 / 可见文本 / class 集合 / data-*
+   · 允许并记录：chunk 引用、buildId、URL 哈希
+   · 声明式样式改动：--allow-class-change 'rounded-md,rounded-lg'（超出即 FAIL）
+   · 相对时间归一化为 REL_AGO（时间流过 ≠ 视图变了，与 #418 同源）
+   · 首跑 .488→.489：四路由 artifact-only，diff-guard: PASS
 ```
