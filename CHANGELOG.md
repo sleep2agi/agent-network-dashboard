@@ -6,7 +6,7 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
-## 0.6.4-preview.491 — 2026-11-11
+## 0.6.4-preview.492 — 2026-11-11
 
 ### 更正与修复：小控件圆角改为「上限 + 判据」两条规则协作
 
@@ -28,6 +28,10 @@ tier 决定「上限 8px」；r/h 决定「能否到这个上限」：
 ```
 实现：`[data-radius-tier="item"]` 改为 `border-radius: var(--item-radius, 8px) !important`，
 由 `useRadiusTier.ts` 按渲染高度算出具体值写入变量。**两条规则从此不可能互相覆盖。**
+
+**首帧修正（.492 追加）**：`--item-radius` 由客户端 JS 写入，若 CSS 默认取上界 8px，
+16px 控件会先按 8px 渲染、水合后再变 4px —— 一次可见的圆角跳变（与 `.482` reduced-motion 同源）。
+默认值改为**下界 4px**：占多数的小控件首帧即正确，只有 ≥18px 控件会 4→6/8 变圆一次（方向更不刺眼）。
 
 ### 已验证
 
