@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { applyTheme } from './ThemeSwitcher';
 import { useRouter } from 'next/navigation';
 import { clearPrivateChatStorage } from '../lib/chat-outbox';
+import { useNetworkId } from '../lib/network-context';
 
 /** Command palette — ⌘K / Ctrl+K / `/` opens; Esc closes;
  *  ↑↓ navigates results; Enter activates.
@@ -307,6 +308,8 @@ const COMMANDS: Command[] = [
 ];
 
 export function CommandPalette() {
+  // 当前网络：命令面板取数必须带作用域（否则会列出其它网络的 Agent）
+  const { networkId } = useNetworkId();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -331,7 +334,7 @@ export function CommandPalette() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, [open, networkId]);
 
   // Reset state on open + auto-focus input
   const lastFocusRef = useRef<HTMLElement | null>(null);
@@ -368,7 +371,10 @@ export function CommandPalette() {
       try {
         const [sRes, tRes] = await Promise.all([
           // 只用到 alias/agent/status；用 lite 投影避免每次打开命令面板拉 649 KB。
-          fetch('/api/hub/status?lite=1').then(r => r.ok ? r.json() : { sessions: [] }),
+          // 作用域必须带上：不带 network_id 会拿到**全网络**会话，而命令面板的
+          // 「跳到某个 Agent」应当限于当前网络（与页面其它取数同一个 scope）。
+          fetch(`/api/hub/status?lite=1${networkId ? `&network_id=${encodeURIComponent(networkId)}` : ''}`)
+            .then(r => r.ok ? r.json() : { sessions: [] }),
           fetch('/api/hub/tasks?limit=20').then(r => r.ok ? r.json() : { tasks: [] }),
         ]);
         if (cancelled) return;
