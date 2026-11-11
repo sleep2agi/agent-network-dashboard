@@ -117,3 +117,36 @@ export PLAYWRIGHT_BROWSERS_PATH=<workdir>   # 独立调用探针时必须带上
    · 相对时间归一化为 REL_AGO（时间流过 ≠ 视图变了，与 #418 同源）
    · 首跑 .488→.489：四路由 artifact-only，diff-guard: PASS
 ```
+
+## 几何对照口径（2026-11-11 新增，工具：evidence/probes/geom-compare.mjs）
+
+```
+判决顺序：先锁集合，再比坐标
+① 集合不同 ⇒ INVALID（exit 2），列出 only-A / only-B，**不输出位移数字**
+② 集合同 ⇒ 位移 >0.5px 的节点数 + 最大位移（exit 0 = PASS）
+③ --allow-subset --reason '…' ⇒ 用共同子集再算，结果标 SUBSET=true
+```
+```
+实测（真实发生过的一次误读）：
+A. geom-488 vs geom-489（跨时刻）：only-A 1 / only-B 1 ⇒ INVALID
+B. same-488 vs same-489（同时刻同集合）：位移 0/80 · 最大 0px ⇒ PASS
+C. A 两份 + --allow-subset：SUBSET=true · 共同 79 · 位移 60 · 最大 65.4px
+⇒ 与设计师独立算出的 60 / 65.4 完全一致，说明"61/80 位移"确由 1 个 agent 换人引起
+```
+
+## 未决：两套圆角标准在 16–32px 区间冲突（2026-11-11）
+
+```
+· tier 规则（既有，与客户端对齐）：useRadiusTier.ts 给渲染高度 ≤32px 的控件打
+  data-radius-tier="item"，globals.css 强制 border-radius: 8px !important
+· r/h 规则（今日新立）：圆角/高度 ≤ 1/3；>0.4 视为药丸
+⇒ 16px 按钮：tier 要 8px（0.5），r/h 要 6px（0.375）⇒ 直接冲突，且 class 改不动 !important
+
+三条候选（已发设计师裁定）：
+A. 保留 tier 8px，r/h 规则显式排除 ≤20px 控件（代价：只改规则与探针口径）
+B. 保留 r/h，tier 分档 ≤20px→6px / 21–32→8px（代价：改 CSS+阈值，需重跑 7 页+20 套，1.5–2 h）
+C. 去掉 tier 的 !important（代价：大量小控件回 6px，回归风险最高）
+
+⇒ 未裁定前 R2–R6 圆角批次暂停，避免在冲突区间反复返工。
+⇒ `.490` 的 CHANGELOG 写"失败横幅按钮已修"不准确：该按钮被 tier 覆盖，视觉未变，需更正。
+```
