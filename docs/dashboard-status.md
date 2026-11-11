@@ -115,6 +115,22 @@
 ```
 
 
+## 发布流程（每一步都有门禁，缺一步就不算发完）
+
+```
+1  生成：deploy/next-release.py --from <live> --to <target> --sha <main-sha>
+   · 允许集与基准由 live（线上 health）派生；--from 不等于 live 时**在生成任何文件前**拒绝
+   · 拒绝覆盖已存在的 run/publish 脚本（防旧脚本发新产物）
+2  验收：deploy/run-NNN-final-acceptance.py
+   · 20 套；拒绝复用陈旧 evidence（防旧结果冒充新结果）
+3  发布：deploy/publish-NNN.py --source releases/preview.NNN-xxxxxxx
+4  发布后：deploy/post-release-check.sh <产物SHA>
+   · ① docs-ahead：产物 SHA..main 的差异必须全是文档
+   · ② docs-consistency：状态板的 版本/commit/cwd/证据路径 必须与线上一致
+   ⇒ 全部 PASS 才算发完；任一 FAIL 都要先修再收工
+```
+
+
 ## 两条原理（今日沉淀，来自实际返工）
 
 ```
