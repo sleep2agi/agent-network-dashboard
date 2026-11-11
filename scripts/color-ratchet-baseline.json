@@ -84,6 +84,7 @@
   },
   "scale": {
     "app/components/AgentCard.tsx": 1,
+    "app/components/HealthBanner.tsx": 1,
     "app/components/TaskChatPanel.tsx": 1,
     "app/org/page.tsx": 2,
     "app/requirements/page.tsx": 1
