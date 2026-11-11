@@ -95,6 +95,23 @@ const HIER_WEIGHTS = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('weights') === '1';
 const DEPT_STROKE = { primary: 2.5, secondary: 1.5, base: 1.6 };
 
+// B 案（神明 2026-11-11 决定）：「从中心展开」入场——中枢先亮，再按层由内向外点亮，连线随之长出。
+// · 只改**不透明度**，不改几何 ⇒ 展开过程中不可能引入新的重叠；
+// · 总时长 1500ms（神明上限），慢设备沿用既有降级（本改动不参与降级判定）；
+// · 默认关闭，`?intro2=1` 打开；是否设默认由 admin 决定。
+const INTRO2 = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('intro2') === '1';
+const INTRO2_MS = 1500;
+// 每一层的点亮窗口（占总时长的比例）：枢纽 → 一级部门 → 成员 → Agent
+const INTRO2_WINDOWS: Array<[number, number]> = [[0, 0.12], [0.05, 0.45], [0.35, 0.80], [0.60, 1.0]];
+
+function intro2Reveal(ring: number, p: number): number {
+  const w = INTRO2_WINDOWS[Math.min(3, Math.max(0, ring))] ?? [0, 1];
+  if (p <= w[0]) return 0;
+  if (p >= w[1]) return 1;
+  return (p - w[0]) / Math.max(1e-6, w[1] - w[0]);
+}
+
 const LOOK_DEPTH = Number.isFinite(DEPTH_RAW) && DEPTH_RAW >= 0.4 && DEPTH_RAW <= 2.2 ? DEPTH_RAW : DEPTH_DEFAULT;
 // `?links=`（.444）：连线密度。按**确定性哈希**抽样 leaf 边，主干（父子部门）永远保留，
 // 保证层级骨架可读。默认 1（全画）；判定见 deploy/legion-metrics/links.mjs。
@@ -471,6 +488,7 @@ export default function Legion3DPage() {
   // 首次进入的「镜头推近」：从 0.62× 缓动到取景比例，约 0.9 秒。
   // 只在第一次打开时跑一次（sessionStorage 记住），并尊重 prefers-reduced-motion。
   const introRef = useRef<{ t0: number; from: number; to: number; pitchFrom: number; pitchTo: number } | null>(null);
+  const intro2T0Ref = useRef<number | null>(null);
   // 入场自适应降级用的最近帧间隔（毫秒）。只保留 6 个样本，稳态零开销。
   const frameGapsRef = useRef<number[]>([]);
   // 降级发生次数。结构上 introRef=null 后不会再进分支，但显式计数才可断言「一次入场只降级一次」
@@ -1784,7 +1802,11 @@ export default function Legion3DPage() {
         const baseAlpha = e.lit
           ? (activeSet ? 0.65 : e.trunk ? (dark ? 0.72 : 0.62) : (dark ? 0.2 * depthFade : 0.2 * depthFade))
           : 0.045;
-        ctx.globalAlpha = Math.min(1, baseAlpha * LINK_BOOST);
+        // B 案：连线跟随目标所在层点亮（「连线随之长出」）
+        const edgeReveal = INTRO2
+          ? intro2Reveal((e.b.item.ring ?? 3), Math.min(1, Math.max(0, (performance.now() - (intro2T0Ref.current ?? performance.now())) / INTRO2_MS)))
+          : 1;
+        ctx.globalAlpha = Math.min(1, baseAlpha * LINK_BOOST * edgeReveal);
         ctx.lineWidth = e.trunk ? 1.8 : huge ? 0.7 : e.lit && activeSet ? 1.4 : dark ? 0.75 : 0.8;
         ctx.stroke();
       }
@@ -2020,6 +2042,11 @@ export default function Legion3DPage() {
             // 分辨「机制没生效」与「机制生效但效果不足」——前者这一项会很大。
             canvasEl.dataset.polarDev = String(polarMaxDeviation(layout.nodes));
             canvasEl.dataset.hierWeights = HIER_WEIGHTS ? '1' : '0';
+            canvasEl.dataset.intro2 = INTRO2 ? '1' : '0';
+            if (INTRO2) {
+              const t0 = intro2T0Ref.current ?? performance.now();
+              canvasEl.dataset.intro2P = Math.min(1, Math.max(0, (performance.now() - t0) / INTRO2_MS)).toFixed(3);
+            }
             // 三条不变量的数值证据（§90）：半径偏移必须为 0，角度位移必须在上限内。
             const st = getLastRelaxStats();
             canvasEl.dataset.relaxStats = JSON.stringify({
@@ -2106,7 +2133,13 @@ export default function Legion3DPage() {
         // label. Every painted body participates, even when it has no label.
         labelBodies.push(anchor);
 
-        ctx.globalAlpha = alpha;
+        // B 案：入场「由内向外点亮」——只乘不透明度，不改几何。
+        const intro2P = INTRO2
+          ? Math.min(1, Math.max(0, ((intro2T0Ref.current ?? (intro2T0Ref.current = performance.now())) , (performance.now() - (intro2T0Ref.current ?? 0)) / INTRO2_MS)))
+          : 1;
+        // 与既有「部门依次点亮」相乘：两者都只影响不透明度，互不覆盖
+        const intro2Rev = INTRO2 ? intro2Reveal(node.ring ?? 3, intro2P) : 1;
+        ctx.globalAlpha = alpha * reveal * intro2Rev;
         const ring = Math.max(1.4, Math.min(3.5, radiusPx * 0.34));
 
         // 头像：成员用 display_name、Agent 用 alias 取头像（和列表页同一套解析链）。
