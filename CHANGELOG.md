@@ -40,6 +40,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 | 其它 7 个页面 | 保持 0（无一被本次改动影响） |
 | 单测 / tsc | 58/58 · 0 错误 |
 
+
+### 发布过程记录（可复现）
+
+```
+旧 SHA db15a5ce：四条 CI run 一直 queued（同仓其它 SHA 几分钟跑完 ⇒ 单条队列项卡死，非额度/故障）
+处置：推空提交 9f6ca900（代码树与候选相同，仅多 2 个 docs 文件）→ 新 SHA 新 run
+CI 结果：unit tests · scrub-guard · OSS readiness gates = success；gates = **skipped:paths-filter**
+         （空提交未改动任何文件 ⇒ 触发条件不满足，**gates 未对本次改动做判断**，不写成"4/4 绿"）
+验收：20 套**在新树上重跑**（不是复用旧候选结果）
+相对 .507 的唯一代码变化：app/tasks/TasksView.tsx +2 行 aria-label；package.json 版本号 1 行
+```
+
+
 ---
 
 ## 0.6.4-preview.507 — 2026-11-12
