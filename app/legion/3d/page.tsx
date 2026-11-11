@@ -1066,17 +1066,28 @@ export default function Legion3DPage() {
     // 于是舞台按「没有横幅」的高度算完就再也不会重算 —— 实测桌面溢出 31px（docScrollH 1031 > 1000），
     // 窄屏溢出 57px。这里在挂载后的前 5 秒监听 body 结构变化，一有变化就重量一次：
     // 高度必须是「剩余空间」的派生值，而不是某个时刻的快照（与 tier/字体同族）。
+    // 观察必须带 subtree: `.495` 用了 subtree:false，结果横幅插在更深的容器里根本没被看到，
+    // 溢出原封不动（桌面仍 1031 > 1000，实测）。这里带 subtree 并用 rAF 合并回调，
+    // 加一路 3 秒内每 500ms 的兜底量测：横幅是异步数据，宁可多量几次，也不要猜。
     let mo: MutationObserver | null = null;
+    let moRaf = 0;
+    const scheduleFit = () => {
+      if (moRaf) return;
+      moRaf = requestAnimationFrame(() => { moRaf = 0; fit(); });
+    };
     if (typeof MutationObserver !== 'undefined') {
-      mo = new MutationObserver(() => fit());
-      mo.observe(document.body, { childList: true, subtree: false });
+      mo = new MutationObserver(scheduleFit);
+      mo.observe(document.body, { childList: true, subtree: true });
       setTimeout(() => { mo?.disconnect(); mo = null; }, 5000);
     }
+    const poll = [500, 1000, 1500, 2000, 2500, 3000].map(ms => setTimeout(fit, ms));
     window.addEventListener('resize', fit);
     window.addEventListener('orientationchange', fit);
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(t);
+      if (moRaf) cancelAnimationFrame(moRaf);
+      poll.forEach(clearTimeout);
       mo?.disconnect();
       window.removeEventListener('resize', fit);
       window.removeEventListener('orientationchange', fit);
