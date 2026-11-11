@@ -1605,7 +1605,11 @@ export default function Legion3DPage() {
         ctx.globalAlpha = 1;
       }
 
-      const toPoint = (n: LegionNode) => nodeToVec3({ ...n }, 1, LOOK_TIER);
+      // 部门几何的**单一来源**（`.503`，设计师 .502 评审）：部门盘、盘底光斑、sy 导出
+      // 必须由同一个函数产出 —— 之前盘走 toPoint、光斑直接调 nodeToVec3，
+      // 一旦 toPoint 里加入任何变换（例如 A 案的 1.02 外推），两层就会错开约 4px。
+      const groupPoint = (n: LegionNode) => nodeToVec3({ ...n }, 1, LOOK_TIER);
+      const toPoint = (n: LegionNode) => groupPoint(n);
       let nodes = projectScene(layout.nodes, toPoint, cam, size);
 
       // 布局取证导出（?debug=1）：每 12 帧写一次，量「头像叠压对数 / 中心空洞比 /
@@ -1630,7 +1634,7 @@ export default function Legion3DPage() {
               rx: Math.round((body.rx ?? body.radius) * 10) / 10,
               ry: Math.round((body.ry ?? body.radius) * 10) / 10,
               // 场景 Y（层高）也导出：`tier.mjs` 要直接量「相邻层落差」，不靠猜。
-              sy: Math.round(nodeToVec3({ ...sn.item }, 1, LOOK_TIER).y * 1000) / 1000,
+              sy: Math.round(groupPoint(sn.item).y * 1000) / 1000,
             };
           }),
         };
@@ -1778,7 +1782,7 @@ export default function Legion3DPage() {
           if (node.kind !== 'group') continue;
           const sn = byId.get(node.id);
           if (!sn) continue;
-          const v = nodeToVec3(node, 1, LOOK_TIER);
+          const v = groupPoint(node);
           const hit = projectPoint({ x: v.x, y: GROUND_Y, z: v.z }, cam, size);
           if (!hit) continue;
           const { rx: bodyRx } = nodeBody(sn, layout.stats.people, layout.stats.agents);
@@ -2227,6 +2231,17 @@ export default function Legion3DPage() {
                   }
                 }
                 if (Number.isFinite(rx1)) canvasEl.dataset.ringBounds = `${Math.round(rx1)},${Math.round(ry1)},${Math.round(rx2)},${Math.round(ry2)}`;
+                // `.503` 判据：同一部门「盘中心」与「盘底光斑中心」的屏幕差应 < 0.5px。
+                {
+                  let maxDelta = 0;
+                  for (const gn of nodes) {
+                    if (gn.item.kind !== 'group') continue;
+                    const gp = projectPoint(groupPoint(gn.item), cam, size);
+                    if (!gp) continue;
+                    maxDelta = Math.max(maxDelta, Math.hypot(gp.x - gn.projected.x, gp.y - gn.projected.y));
+                  }
+                  canvasEl.dataset.groupPointDelta = maxDelta.toFixed(3);
+                }
               }
               // 选中节点的屏幕坐标：手机上的详情卡会不会挡住焦点，用坐标判断。
               const focusedSn = nodes.find(sn => sn.item.id === selectedRef.current);
