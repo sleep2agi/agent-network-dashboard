@@ -628,7 +628,7 @@ export default function Legion3DPage() {
     }, { projected: true });
     // 3D 专用：同深度、跨父部门的盘做角度松弛（§89：三对深碰撞全是 d2↔d2）。
     // 只改 angle，不动 radius/ring；2D 页面完全不经过这里（共享布局未改）。
-    return { ...built, nodes: relaxDepartmentAngles(built.nodes) };
+    return { ...built, nodes: relaxDepartmentAngles(built.nodes, LOOK_TIER) };
   }, [peopleList, orphans, hierarchy.data]);
 
   // 只在「结构变了」（人数/部门数/节点数）时重新取景；30s 轮询刷新同一批人

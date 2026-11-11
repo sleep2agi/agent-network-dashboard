@@ -137,6 +137,10 @@ function minDistOf(a: GroupNode, b: GroupNode): number {
 // （2026-11-11 实测：maxAngleDelta = 0，等于没跑）。改成按 need 归一化后，权重取 3。
 const PEAK_WEIGHT = 3;
 
+// 2026-11-11（§94）：层高（tierBoost）也是「模型 ≠ 渲染器」的分叉点之一。
+// 渲染端 nodeToVec3(..., LOOK_TIER) 默认 1.3；优化端若用默认 1，排布就在为「不存在的几何」求最优。
+// 因此 tierBoost 必须由调用方传入，本文件不设默认值以外的心智假设。
+
 // 每个视口带自己的俯角与 LOOK_DEPTH：390 的渲染俯角是 1.02，不是 0.85。
 // （2026-11-11 实测缺陷：两处各写一份相机参数 ⇒ 390 被按「另一个相机」优化。）
 const VIEWPORTS = [
@@ -158,15 +162,15 @@ function ellipseSupport(rx: number, ry: number, ux: number, uy: number): number 
   return Math.hypot(rx * ux, ry * uy);
 }
 
-function projectedCost(pairs: Array<[GroupNode, GroupNode]>): number {
+function projectedCost(pairs: Array<[GroupNode, GroupNode]>, tierBoost: number): number {
   let total = 0;
   let peak = 0;
   for (const vp of VIEWPORTS) {
     for (const yaw of YAWS) {
       const cam = cameraFor(yaw, vp);
       for (const [a, b] of pairs) {
-        const va = nodeToVec3({ x: a.x, y: a.y, ring: a.ring, order: a.order ?? 0, kind: a.kind, depth: a.depth });
-        const vb = nodeToVec3({ x: b.x, y: b.y, ring: b.ring, order: b.order ?? 0, kind: b.kind, depth: b.depth });
+        const va = nodeToVec3({ x: a.x, y: a.y, ring: a.ring, order: a.order ?? 0, kind: a.kind, depth: a.depth }, 1, tierBoost);
+        const vb = nodeToVec3({ x: b.x, y: b.y, ring: b.ring, order: b.order ?? 0, kind: b.kind, depth: b.depth }, 1, tierBoost);
         const pa = projectPoint(va, cam, vp);
         const pb = projectPoint(vb, cam, vp);
         if (!pa || !pb) continue;
@@ -196,7 +200,7 @@ function projectedCost(pairs: Array<[GroupNode, GroupNode]>): number {
  * 为什么不随机退火：固定步长序列 + 固定遍历顺序 ⇒ 结果可复现，
  * 同一份数据每次构建得到同一张图（否则截图对照与回归会抖）。
  */
-export function relaxDepartmentAngles<T extends LegionNode>(nodes: T[]): T[] {
+export function relaxDepartmentAngles<T extends LegionNode>(nodes: T[], tierBoost = 1): T[] {
   const groups = nodes.filter((n): n is T & GroupNode => n.kind === 'group');
   if (groups.length < 2) return nodes;
 
@@ -208,7 +212,7 @@ export function relaxDepartmentAngles<T extends LegionNode>(nodes: T[]): T[] {
   }
 
   const pairs = buildPairs(groups);
-  const overlapBefore = projectedCost(pairs);
+  const overlapBefore = projectedCost(pairs, tierBoost);
 
   const steps = [0.08, 0.04, 0.02, 0.01, 0.005];
   for (let s = 0; s < steps.length; s += 1) {
@@ -219,7 +223,7 @@ export function relaxDepartmentAngles<T extends LegionNode>(nodes: T[]): T[] {
         const base = angleBefore.get(g.id) ?? g.angle;
         const current = g.angle;
         let best = current;
-        let bestCost = projectedCost(pairs);
+        let bestCost = projectedCost(pairs, tierBoost);
         for (const dir of [1, -1]) {
           const candidate = current + dir * step;
           // 约束：不许跑出自己的扇区太远
@@ -230,7 +234,7 @@ export function relaxDepartmentAngles<T extends LegionNode>(nodes: T[]): T[] {
           // 只改 angle 会让所有候选的代价完全相同 ⇒ 优化器原地不动
           // （2026-11-11 第二次栽在同一处，见 §92）。
           syncXY(g);
-          const cost = projectedCost(pairs);
+          const cost = projectedCost(pairs, tierBoost);
           if (cost < bestCost - 1e-12) {
             bestCost = cost;
             best = g.angle;
@@ -247,7 +251,7 @@ export function relaxDepartmentAngles<T extends LegionNode>(nodes: T[]): T[] {
   // 收尾同步（坐标下降过程中每次落定都会 syncXY，这里兜底）
   for (const g of groups) syncXY(g);
 
-  const overlapAfter = projectedCost(pairs);
+  const overlapAfter = projectedCost(pairs, tierBoost);
   let radiusShift = 0;
   let maxAngleDelta = 0;
   for (const g of groups) {
