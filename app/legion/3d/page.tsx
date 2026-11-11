@@ -1112,6 +1112,18 @@ export default function Legion3DPage() {
   // 之前只靠「尺寸漂移」这一条件推断"该重新取景了"，而数据晚到与尺寸已定常常错开：
   // 实测同一参数连续加载，桌面有时 zoom=120（取景生效）、有时 112（退回默认，边距 133px）。
   // 用编制签名做键，避免 SWR 每次刷新（数组新引用但内容相同）都把用户视角重置。
+  // `.498` 定稿：挂载后 1.5s 做一次**收束取景**。
+  // 之前的触发都是"事件驱动"，但事件到达时刻取决于网络/字体/入场动画，
+  // 于是最后一次取景可能发生在某个中间状态上 ⇒ 实测 121 / 113 / 121 / 121。
+  // 收束取景发生在"数据、字体、尺寸、入场动画全部结束"之后，输入唯一 ⇒ 结果唯一。
+  // 用户一旦手动调过视角（userAdjusted），就不覆盖。
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!userAdjusted.current) fitPending.current = true;
+    }, 1500);
+    return () => clearTimeout(t);
+  }, []);
+
   const layoutKeyRef = useRef<string>('');
   useEffect(() => {
     const key = `${layout.stats.groups}:${layout.stats.people}:${layout.stats.agents}:${layout.nodes.length}`;
@@ -1170,6 +1182,11 @@ export default function Legion3DPage() {
       wrap.dataset.safeBounds = `${Math.round(bounds.x1)},${Math.round(bounds.y1)},${Math.round(bounds.x2)},${Math.round(bounds.y2)}`;
       // Restoring controls can shrink the safe area without resizing the canvas.
       // Expanding it alone must not move a manually positioned camera.
+      if (!previous && !userAdjusted.current) {
+        // `.498`：第一次量到真实安全区 —— 之前若已经用"默认 24px 四边"取过景，
+        // 那次结果是错的（可用高度按 1000 算而不是 135..864）。必须重取一次。
+        fitPending.current = true;
+      }
       if (previous && !userAdjusted.current && (
         bounds.x1 > previous.x1 + 1 || bounds.y1 > previous.y1 + 1
         || bounds.x2 < previous.x2 - 1 || bounds.y2 < previous.y2 - 1
@@ -1602,9 +1619,29 @@ export default function Legion3DPage() {
       if (sizeDrift && abortQuietUntilRef.current !== 0) abortQuietUntilRef.current = 0;
       const fitBounds = fitBoundsRef.current ?? { x1: 24, y1: 24, x2: size.width - 24, y2: size.height - 24 };
       const initialZoom = view.zoom;
-      const framingBodies = (zoom = initialZoom) => {
-        const fittingCam = { ...cam, focal: cam.focal * zoom / initialZoom };
-        const projected = zoom === initialZoom ? nodes : projectScene(layout.nodes, toPoint, fittingCam, size);
+      // `.498` 决定性（第五处，真正的最后一个变量）：取景必须用**规范相机**。
+      // 绘制用的 cam 里含两个随时间变化的量：
+      //   · breathe：pitch 上叠加 ±0.012rad 的呼吸摆动
+      //   · dolly：按实时帧率做的画质降级系数（无头/慢机与快机不同）
+      // 二者都会改投影包围盒 ⇒ 同一份数据得到 113 与 121 两个 zoom（实测）。
+      // 取景只用 view 里的稳定量（pitch/dist），不含 breathe/dolly/camArc。
+      const fitCam = buildLegionCamera({ ...view, zoom: 1, pitch: view.pitch, dist: view.dist }, size, LOOK_DEPTH);
+      const framingBodies = (zoom: number) => {
+        // `.498` 决定性：一律用固定的参考焦距重新投影，**不复用当前帧的 nodes**。
+        // 复用会带来两个不动点：起点 zoom 不同 ⇒ 节点半径存在像素下限（+6px / 实体最小半径）
+        // ⇒ 包围盒与 zoom 不是严格线性 ⇒ 二分收敛到不同的解。
+        // 实测同样数据连续加载得到 116 与 126 两个值交替出现（边距 118 / 72）。
+        const fittingCam = { ...fitCam, focal: fitCam.focal * zoom };
+        // `.498` 决定性（真正的根因）：画面默认在**自转**，取景发生在任意 yaw 上，
+        // 而环上节点分布在不同层高 ⇒ 投影包围盒随 yaw 变化 ⇒ 同一份数据算出不同 zoom
+        // （实测 116 / 126 交替，边距 118 / 72）。
+        // 修法：取景按 8 个 yaw 采样的**并集**计算 —— 既让结果确定，也保证自转一整圈都不会出界。
+        const YAW_SAMPLES = 8;
+        const projected = YAW_SAMPLES <= 1
+          ? projectScene(layout.nodes, toPoint, fittingCam, size)
+          : Array.from({ length: YAW_SAMPLES }, (_, k) =>
+              projectScene(layout.nodes, toPoint, { ...fittingCam, yaw: fittingCam.yaw + (k * Math.PI * 2) / YAW_SAMPLES }, size),
+            ).flat();
         const bodies = projected.map(sn => {
           const { rx, ry } = nodeBody(sn, layout.stats.people, layout.stats.agents);
           // Includes the widest hover/selection stroke, also at the pixel floor.
@@ -1617,36 +1654,24 @@ export default function Legion3DPage() {
             bodies.push({ x: p.x, y: p.y, rx: 4, ry: 4 });
           }
         }
-        // 部门标签是最外侧的可见元素（`.497`）：不并入包围盒的话，一旦把画面收拢，
-        // 先出界的不是节点而是标签名。用上一帧实测的标签矩形（1 帧滞后，取景后自我收敛）。
-        for (const r of labelRectsRef.current) {
-          bodies.push({ x: r.x + r.w / 2, y: r.y + r.h / 2, rx: r.w / 2, ry: r.h / 2 });
-        }
+        // 不把标签矩形并入取景（`.498` 撤销 `.497` 的这一条）：
+        // 标签位置本身依赖 zoom（放置算法按当前投影算），并入后会形成反馈环 —
+        // 实测同样参数连续加载得到 zoom 122 / 116 / 126（边距 92 / 118 / 72），不可复现。
+        // 标签不会跑出画布：placeLegionLabel 的 bounds 已把标签限制在 [12, 尺寸-12] 内。
         return bodies;
       };
       // 入场动画期间不要重新取景：动画会让 view.zoom 每一帧都变，
       // 再按当前 zoom 算包围盒会滚雪球（实测直接顶到 MAX_ZOOM）。
       // 画布还没量到真实尺寸时不要取景：首帧 stage 只有几十像素，
       // 按那个尺寸算出来会被 MAX_ZOOM 夹到 240%，随后再跳回正常值（实测）。
-      // 自愈：出现过「取景算早了 → 内容缩成一小坨、之后再也不重算」的情况
-      // （admin 截图里 240% 却只有中间一小团）。用户没手动缩放过时，每 ~1 秒
-      // 检查一次内容包围盒，占画面不到 35% 就重新取景。
-      if (!userAdjusted.current && !introRef.current && !fitPending.current && frame % 60 === 0 && nodes.length > 3) {
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        for (const body of framingBodies()) {
-          minX = Math.min(minX, body.x - body.rx);
-          maxX = Math.max(maxX, body.x + body.rx);
-          minY = Math.min(minY, body.y - body.ry);
-          maxY = Math.max(maxY, body.y + body.ry);
-        }
-        const spanNow = Math.max(maxX - minX, maxY - minY, 1);
-        if (spanNow < Math.min(fitBounds.x2 - fitBounds.x1, fitBounds.y2 - fitBounds.y1) * 0.35) fitPending.current = true;
-      }
-
+      // `.498` 删除「每 60 帧自愈检查」：它是唯一一个**按帧号周期触发**的取景来源，
+      // 触发时刻取决于加载耗时 ⇒ 同一份数据得到 121 / 113 / 115 三种 zoom（实测）。
+      // 它原本是为了救 `.293` 那次"内容缩成一小坨"；现在有了「编制签名事件触发 + 容纳兜底」，
+      // 内容不会再缩成一小坨，这条周期性检查只剩下"制造不确定性"的作用。
       const sizeReady = size.width > 240 && size.height > 300;
       // 只有 core 时不取景；仅有部门的编制也有真实实体和轨道，需要避让展开控件。
       const dataReady = layout.stats.groups + layout.stats.people + layout.stats.agents > 0;
-      if (sizeReady && dataReady && !sharedLock.current && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
+      if (sizeReady && dataReady && fitBoundsRef.current !== null && !sharedLock.current && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
         const fit = fitProjectedBodies(framingBodies, view, size, fitBounds, { min: MIN_ZOOM, max: MAX_ZOOM });
         // If controls exhaust the usable area, keep drawing the current scene.
         // A later valid bounds measurement will request another fit.
