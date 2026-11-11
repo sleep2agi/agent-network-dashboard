@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { useNodeLifecycle } from '../lib/hooks';
+import { statusColor as statusColorClass } from './utils';
 
 /** Issue #119 — server-side panel listing the hub's hosts + CPU/RAM bars.
  *
@@ -372,13 +373,10 @@ export function ServersPanel({ enabled = true, className = '' }: { enabled?: boo
                         <ul className="space-y-0.5" data-server-nodes={s.hostname}>
                           {hostNodes.slice(0, 40).map(n => (
                             <li key={n.alias} className="flex items-center gap-1.5 text-[11px]">
+                              {/* 颜色走既有 statusColor()（颜色棘轮要求：不在组件里新增硬编码色值） */}
                               <span
                                 aria-hidden
-                                className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
-                                  n.status === 'working' ? 'bg-green-500'
-                                    : n.status === 'idle' ? 'bg-emerald-400'
-                                      : n.status ? 'bg-blue-400' : 'bg-gray-500'
-                                }`}
+                                className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${statusColorClass(n.status ?? 'offline', !!n.status && n.status !== 'offline')}`}
                               />
                               <Link
                                 href={`/node?alias=${encodeURIComponent(n.alias)}`}
