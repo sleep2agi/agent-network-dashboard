@@ -21,6 +21,12 @@ const ITEM_MAX_HEIGHT = 32;
 
 function mark(): void {
   for (const el of Array.from(document.querySelectorAll<HTMLElement>(SELECTOR))) {
+    // SVG 图形不是控件（`.493`）：3D 军团里每个节点组是 `<g role="button">`，
+    // 会被 `[role="button"]` 命中。但 `border-radius` 对 `<g>` 没有视觉效果，
+    // 而 `.492` 现场实测：349 个 `<g>` 被误打标，其中 345 个变量与当前高度不符
+    // （它们的"高度"是坐标缩放的结果，不是排版高度）。
+    // ⇒ 既是无用功，又给"圆角分档"制造了 350 条假异常，必须排除。
+    if (!(el instanceof HTMLElement)) continue;
     const h = el.getBoundingClientRect().height;
     // 隐藏元素（h=0）不参与：它们没有可判断的渲染高度，保持现状即可。
     if (h > 0 && h <= ITEM_MAX_HEIGHT) {
@@ -48,14 +54,27 @@ export function useRadiusTier(): void {
         mark();
       });
     };
+    let disposed = false;
+    const scheduleIfLive = () => {
+      if (!disposed) schedule();
+    };
     schedule();
     const observer = new MutationObserver(schedule);
     observer.observe(document.body, { childList: true, subtree: true });
     window.addEventListener('resize', schedule, { passive: true });
+    // 值应随尺寸派生（`.493`）：字体会改变控件高度，而挂载时的量测早于字体就绪。
+    // 不引入逐元素 ResizeObserver —— `.492` 现场实测 HTML 控件陈旧数为 0，
+    // 先堵住两个已知触发点；若将来出现真实漂移再升级为观察器。
+    if (typeof document !== 'undefined' && document.fonts) {
+      document.fonts.ready.then(scheduleIfLive).catch(() => {});
+    }
+    window.addEventListener('load', scheduleIfLive, { once: true });
     return () => {
+      disposed = true;
       if (frame) cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener('resize', schedule);
+      window.removeEventListener('load', scheduleIfLive);
     };
   }, []);
 }
