@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.509` |
-| commit | `9dd5ea3de9ee20a424248091b794a3a106e6193b` |
+| 版本 | `0.6.4-preview.510` |
+| commit | `7762b06ea08f7c4065a77882bf78754f90c431a3` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.509-9dd5ea3` |
-| 回滚锚点 | `preview.508-9f6ca90`（切 cwd + `pm2 restart anet-dashboard`） |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.510-7762b06` |
+| 回滚锚点 | `preview.509-9dd5ea3`（切 cwd + `pm2 restart anet-dashboard`） |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -141,6 +141,19 @@
 
 `.508` 的内容：任务页 `From`/`To` 输入框补 `aria-label`（可访问名称 2 → 0）。
 一旦 CI 放行：`collect-508-main-ci.py` → `publish-508.py` → `post-release-check.sh`。
+
+
+## 可访问名称基线（`.510` 起，16 个页面）
+
+```
+判据：可交互元素（button/a/input/select/textarea/[role=button]）中，
+      「无 aria-label / title / 文本 / alt 图、且未被 <label> 包裹」的数量
+当前：16 页全部 0
+口径与误报规则（必须带上，否则会误判）：
+  · <label>文字<input/></label> 属隐式关联 ⇒ 算有名称
+  · skip link（1×1，聚焦展开）不算违规
+  · ::before 扩展过命中区的控件（健康横幅 CTA/关闭）不算"过小"
+```
 
 
 ## 两条原理（今日沉淀，来自实际返工）
