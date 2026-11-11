@@ -88,7 +88,7 @@ CI：gates（含字号/颜色两条审美棘轮）· unit tests · scrub-guard �
 
 ```
 setsid nohup env PORT=3301 npx next start -p 3301 > log 2>&1 < /dev/null &
-export PLAYWRIGHT_BROWSERS_PATH=/home/vansin/.cache/ms-playwright   # 独立调用探针时必须带上
+export PLAYWRIGHT_BROWSERS_PATH=<workdir>   # 独立调用探针时必须带上
 ```
 
 ## 提交粒度的两条已知瑕疵（如实记录，不改历史）
