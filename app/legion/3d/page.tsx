@@ -505,6 +505,14 @@ export default function Legion3DPage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // `?perf=1` 的读数节点：按 500ms 直接写 textContent（不 setState），避免诊断本身制造重渲染。
   const perfElRef = useRef<HTMLDivElement | null>(null);
+  // `?perf=1` 的 HUD 不能参与服务端渲染（2026-11-11）：服务端读不到 window.location，
+  // PERF_HUD 在服务端恒为 false、客户端为 true ⇒ 结构不一致 ⇒ React #418（实测 5/5 复现）。
+  // 改成「挂载后再决定是否渲染」：首帧与 SSR 一致，HUD 在 effect 之后出现。
+  // 其余 URL 开关（?weights/?intro2/?depth）只影响 canvas 绘制、不影响 DOM 结构，故无需处理。
+  const [perfHudOn, setPerfHudOn] = useState(false);
+  useEffect(() => {
+    if (PERF_HUD) setPerfHudOn(true);
+  }, []);
   const viewRef = useRef({ ...DEFAULT_VIEW });
   const spinRef = useRef(true);
   const selectedRef = useRef<string | null>(null);
@@ -3486,7 +3494,7 @@ export default function Legion3DPage() {
         />
       )}
       <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击 Agent 在页内对话，双击成员或部门进入组织列表；按 / 搜索，R 重置视角。</p>
-      {PERF_HUD && (
+      {perfHudOn && (
         <div
           ref={perfElRef}
           data-testid="legion-3d-perf-hud"
