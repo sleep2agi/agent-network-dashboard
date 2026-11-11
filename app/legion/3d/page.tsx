@@ -1062,11 +1062,22 @@ export default function Legion3DPage() {
     // 放到下一帧再量，并补一次 300ms 后的校正（字体/横幅落位）。
     const raf = requestAnimationFrame(fit);
     const t = setTimeout(fit, 300);
+    // `.495`：顶部 HealthBanner 是异步数据，可能**晚于**这一次量测才插进 DOM，
+    // 于是舞台按「没有横幅」的高度算完就再也不会重算 —— 实测桌面溢出 31px（docScrollH 1031 > 1000），
+    // 窄屏溢出 57px。这里在挂载后的前 5 秒监听 body 结构变化，一有变化就重量一次：
+    // 高度必须是「剩余空间」的派生值，而不是某个时刻的快照（与 tier/字体同族）。
+    let mo: MutationObserver | null = null;
+    if (typeof MutationObserver !== 'undefined') {
+      mo = new MutationObserver(() => fit());
+      mo.observe(document.body, { childList: true, subtree: false });
+      setTimeout(() => { mo?.disconnect(); mo = null; }, 5000);
+    }
     window.addEventListener('resize', fit);
     window.addEventListener('orientationchange', fit);
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(t);
+      mo?.disconnect();
       window.removeEventListener('resize', fit);
       window.removeEventListener('orientationchange', fit);
     };
@@ -1256,9 +1267,14 @@ export default function Legion3DPage() {
           const s2 = [...hudGaps].sort((a, b) => a - b);
           const p50 = s2[Math.floor(s2.length / 2)] ?? 0;
           const avg = s2.reduce((a, b) => a + b, 0) / Math.max(1, s2.length);
+          const vb = visBoundsAcc.current;
+          const margin = vb.count > 0
+            ? Math.round(Math.min(vb.minX, vb.minY, canvas.width - vb.maxX, canvas.height - vb.maxY))
+            : null;
           perfElRef.current.textContent =
             `fps ${(1000 / Math.max(1, avg)).toFixed(1)} · p50 ${p50.toFixed(1)}ms`
-            + ` · 背板 ${canvas.width}×${canvas.height} · dpr ${dpr.toFixed(2)} · scale ${resScale.toFixed(2)}`;
+            + ` · 背板 ${canvas.width}×${canvas.height} · dpr ${dpr.toFixed(2)} · scale ${resScale.toFixed(2)}`
+            + (margin !== null ? ` · 边距 ${margin}px` : '');
         }
       }
       const dt = Math.min(0.05, frameMsRaw / 1000);
