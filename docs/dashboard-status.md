@@ -90,3 +90,13 @@ CI：gates（含字号/颜色两条审美棘轮）· unit tests · scrub-guard �
 setsid nohup env PORT=3301 npx next start -p 3301 > log 2>&1 < /dev/null &
 export PLAYWRIGHT_BROWSERS_PATH=/home/vansin/.cache/ms-playwright   # 独立调用探针时必须带上
 ```
+
+## 提交粒度的两条已知瑕疵（如实记录，不改历史）
+
+```
+① R1 提交（3f429be9，message 为「R1 圆角迁移」）里同时带上了 Runtime 支持速查的三份文件
+   （app/lib/runtime-support-matrix.ts · app/components/RuntimeSupportMatrix.tsx · app/providers/page.tsx）
+   原因：提交时用了 `git add -A app`，把同在工作区的改动一起带走
+② 因此「矩阵预览」没有独立提交；功能已进 main，仅提交信息未单列
+⇒ 规则改成：提交前先 `git status --porcelain` 看清单，再按清单逐项 add（不用 -A）
+```
