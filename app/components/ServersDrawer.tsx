@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import useSWR from 'swr';
+import Link from 'next/link';
+import { useNodeLifecycle } from '../lib/hooks';
 
 /** Issue #119 — server-side panel listing the hub's hosts + CPU/RAM bars.
  *
@@ -210,6 +212,9 @@ function useServers(enabled = true) {
 
 export function ServersPanel({ enabled = true, className = '' }: { enabled?: boolean; className?: string }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // 与 /nodes 同一个 SWR key（nodes?lite=1），不额外发请求；
+  // 按 server/hostname 分组，得到「这台机器上有哪些节点」——客户端 DaemonManagement 的等价只读能力。
+  const { nodesByServer } = useNodeLifecycle();
   useEffect(() => {
     try {
       const raw = localStorage.getItem('anet-servers-drawer-expanded');
@@ -349,8 +354,50 @@ export function ServersPanel({ enabled = true, className = '' }: { enabled?: boo
                   </div>
                 )}
                 <div className="pt-1">
-                  <div className="text-[11px] text-[var(--fg-muted)] font-mono mb-0.5">agents</div>
-                  <AgentList agents={s.agents} />
+                  {(() => {
+                    const hostNodes = nodesByServer[s.hostname] ?? [];
+                    if (hostNodes.length === 0) {
+                      return (
+                        <>
+                          <div className="text-[11px] text-[var(--fg-muted)] font-mono mb-0.5">agents</div>
+                          <AgentList agents={s.agents} />
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        <div className="text-[11px] text-[var(--fg-muted)] font-mono mb-0.5">
+                          节点（{hostNodes.length}）· 点名字进节点详情
+                        </div>
+                        <ul className="space-y-0.5" data-server-nodes={s.hostname}>
+                          {hostNodes.slice(0, 40).map(n => (
+                            <li key={n.alias} className="flex items-center gap-1.5 text-[11px]">
+                              <span
+                                aria-hidden
+                                className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
+                                  n.status === 'working' ? 'bg-green-500'
+                                    : n.status === 'idle' ? 'bg-emerald-400'
+                                      : n.status ? 'bg-blue-400' : 'bg-gray-500'
+                                }`}
+                              />
+                              <Link
+                                href={`/node?alias=${encodeURIComponent(n.alias)}`}
+                                className="truncate text-[var(--hl)] hover:underline"
+                              >
+                                {n.alias}
+                              </Link>
+                              {n.lifecycle_state && n.lifecycle_state !== 'active' && (
+                                <span className="shrink-0 text-[10px] text-[var(--fg-dim)]">{n.lifecycle_state}</span>
+                              )}
+                            </li>
+                          ))}
+                          {hostNodes.length > 40 && (
+                            <li className="text-[11px] text-[var(--fg-dim)]">…另有 {hostNodes.length - 40} 个</li>
+                          )}
+                        </ul>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             )}
