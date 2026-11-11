@@ -1621,7 +1621,10 @@ joining the R145
 /* 小控件圆角（item = 8）：由 app/lib/useRadiusTier.ts 在挂载后按**渲染高度**打标
    （≤32 高 → data-radius-tier="item"）。CSS 看不到自身高度，故这里只认标签。 */
 [data-radius-tier="item"] {
-  border-radius: 8px !important;
+  /* tier 只表示「角色 = item，上限 8px」；实际圆角由 useRadiusTier 按 r/h 规则算出：
+       h ≥ 24 → 8px · 18 ≤ h < 24 → 6px · h < 18 → 4px
+     （设计师 2026-11-11 裁定：上限与判据分离，两者不再互相覆盖） */
+  border-radius: var(--item-radius, 8px) !important;
 }
 
 /* 控件圆角对齐客户端 radius.control = 12（第二批）。
