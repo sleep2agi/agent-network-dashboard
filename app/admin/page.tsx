@@ -219,6 +219,7 @@ export default function AdminPage() {
             value={broadcastMsg}
             onChange={e => setBroadcastMsg(e.target.value)}
             placeholder="Message to all online nodes..."
+            aria-label="广播消息内容"
             rows={3}
             className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none resize-none"
           />
@@ -240,6 +241,7 @@ export default function AdminPage() {
           <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">Send Task</h2>
           <select
             value={taskTarget}
+            aria-label="目标任务节点"
             onChange={e => setTaskTarget(e.target.value)}
             className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-[var(--accent)]/50 focus:outline-none mb-3"
           >
@@ -257,6 +259,7 @@ export default function AdminPage() {
             value={taskContent}
             onChange={e => setTaskContent(e.target.value)}
             placeholder="Task content..."
+            aria-label="任务内容"
             rows={3}
             className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none resize-none"
           />
@@ -293,6 +296,7 @@ export default function AdminPage() {
               value={regUser}
               onChange={e => setRegUser(e.target.value)}
               placeholder="Username"
+              aria-label="用户名"
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none"
             />
             <input
@@ -300,6 +304,7 @@ export default function AdminPage() {
               value={regPass}
               onChange={e => setRegPass(e.target.value)}
               placeholder="Password"
+              aria-label="密码"
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none"
             />
             <button
