@@ -1321,6 +1321,34 @@ export default function Legion3DPage() {
         g2.fill();
         g2.restore();
       }
+      // 背景星云（`.505`）：两张极淡的椭圆光斑，**烘焙进这层缓存背景**（逐帧零成本）。
+      // 目的：给深空一点体积感，避免整片纯色底让环看起来"贴在纸上"。
+      // 约束（沿用既有裁决）：只用 accent 单色系、只调不透明度；位置由固定种子决定（可复现）。
+      if (dark) {
+        const blobs = [
+          { x: 0.26, y: 0.32, r: 0.55, a: 0.055, sx: 1.25 },
+          { x: 0.74, y: 0.68, r: 0.62, a: 0.045, sx: 0.9 },
+          { x: 0.52, y: 0.18, r: 0.4, a: 0.035, sx: 1.1 },
+        ];
+        for (const bl of blobs) {
+          const cx = size.width * bl.x;
+          const cy = size.height * bl.y;
+          const r = Math.max(size.width, size.height) * bl.r;
+          g2.save();
+          g2.translate(cx, cy);
+          g2.scale(bl.sx, 1);
+          const ng = g2.createRadialGradient(0, 0, 0, 0, 0, r);
+          ng.addColorStop(0, hexToRgba(bgAccent, bl.a));
+          ng.addColorStop(0.55, hexToRgba(bgAccent, bl.a * 0.4));
+          ng.addColorStop(1, hexToRgba(bgAccent, 0));
+          g2.globalCompositeOperation = 'lighter';
+          g2.fillStyle = ng;
+          g2.beginPath();
+          g2.arc(0, 0, r, 0, Math.PI * 2);
+          g2.fill();
+          g2.restore();
+        }
+      }
       g2.fillStyle = tk.fg;
       for (const st of starsRef.current) {
         g2.globalAlpha = Math.min(1, st.a * (fxOn() ? FX.starBoost : 1));
