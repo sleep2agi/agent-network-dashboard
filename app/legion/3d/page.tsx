@@ -89,6 +89,12 @@ const DEPTH_RAW = typeof window !== 'undefined'
 // 窄屏保持 1.0（同样 2.0 在 390 只有 ×1.06，视觉上等于没变）。
 // 想回到旧观感：`?depth=1`；想更强：最大 2.2（再大会明显形变）。
 const DEPTH_DEFAULT = typeof window !== 'undefined' && window.innerWidth >= 768 ? 2 : 1;
+// A 案（神明 2026-11-11 决定）：层级用**线宽档位**表达——一级部门盘描边 2.5px，二级 1.5px。
+// 默认关闭，`?weights=1` 打开；量到数字后再由 admin 决定是否设默认（与既有 ?depth= 同一套路）。
+const HIER_WEIGHTS = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('weights') === '1';
+const DEPT_STROKE = { primary: 2.5, secondary: 1.5, base: 1.6 };
+
 const LOOK_DEPTH = Number.isFinite(DEPTH_RAW) && DEPTH_RAW >= 0.4 && DEPTH_RAW <= 2.2 ? DEPTH_RAW : DEPTH_DEFAULT;
 // `?links=`（.444）：连线密度。按**确定性哈希**抽样 leaf 边，主干（父子部门）永远保留，
 // 保证层级骨架可读。默认 1（全画）；判定见 deploy/legion-metrics/links.mjs。
@@ -2013,6 +2019,7 @@ export default function Legion3DPage() {
             // 不变量导出（§89 教训）：angle/radius 与 x/y 的派生偏差。
             // 分辨「机制没生效」与「机制生效但效果不足」——前者这一项会很大。
             canvasEl.dataset.polarDev = String(polarMaxDeviation(layout.nodes));
+            canvasEl.dataset.hierWeights = HIER_WEIGHTS ? '1' : '0';
             // 三条不变量的数值证据（§90）：半径偏移必须为 0，角度位移必须在上限内。
             const st = getLastRelaxStats();
             canvasEl.dataset.relaxStats = JSON.stringify({
@@ -2120,7 +2127,10 @@ export default function Legion3DPage() {
           ctx.fillStyle = hexToRgba(color, dark ? 0.30 : 0.15);
           ctx.fill();
           ctx.strokeStyle = color;
-          ctx.lineWidth = 1.6;
+          // 线宽档位（?weights=1）：一级更粗、二级更细，层级不靠新增颜色
+          ctx.lineWidth = HIER_WEIGHTS
+            ? ((node.depth ?? 1) <= 1 ? DEPT_STROKE.primary : DEPT_STROKE.secondary)
+            : DEPT_STROKE.base;
           ctx.stroke();
         } else if (face) {
           if (dark) {
