@@ -105,6 +105,17 @@ const INTRO2_MS = 1500;
 // 每一层的点亮窗口（占总时长的比例）：枢纽 → 一级部门 → 成员 → Agent
 const INTRO2_WINDOWS: Array<[number, number]> = [[0, 0.12], [0.05, 0.45], [0.35, 0.80], [0.60, 1.0]];
 
+
+/**
+ * 此刻是否要求「减少动效」。
+ * 直接读 matchMedia（不用 state）：state 首帧默认 false，会把动画闪一下才开始尊重。
+ * 所有 ?intro* 变体都必须走这个判定（.482 起，见页面内注释与测试断言）。
+ */
+function reduceMotionNow(): boolean {
+  return typeof window !== 'undefined'
+    && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
 function intro2Reveal(ring: number, p: number): number {
   const w = INTRO2_WINDOWS[Math.min(3, Math.max(0, ring))] ?? [0, 1];
   if (p <= w[0]) return 0;
@@ -1803,7 +1814,7 @@ export default function Legion3DPage() {
           ? (activeSet ? 0.65 : e.trunk ? (dark ? 0.72 : 0.62) : (dark ? 0.2 * depthFade : 0.2 * depthFade))
           : 0.045;
         // B 案：连线跟随目标所在层点亮（「连线随之长出」）
-        const edgeReveal = INTRO2
+        const edgeReveal = INTRO2 && !reduceMotionNow()
           ? intro2Reveal((e.b.item.ring ?? 3), Math.min(1, Math.max(0, (performance.now() - (intro2T0Ref.current ?? performance.now())) / INTRO2_MS)))
           : 1;
         ctx.globalAlpha = Math.min(1, baseAlpha * LINK_BOOST * edgeReveal);
@@ -2043,9 +2054,14 @@ export default function Legion3DPage() {
             canvasEl.dataset.polarDev = String(polarMaxDeviation(layout.nodes));
             canvasEl.dataset.hierWeights = HIER_WEIGHTS ? '1' : '0';
             canvasEl.dataset.intro2 = INTRO2 ? '1' : '0';
+            canvasEl.dataset.intro2Reduced = reduceMotionNow() ? '1' : '0';
             if (INTRO2) {
+              // 减动效时没有动画：进度恒为 1（「一下到位」），导出值必须反映这一点，
+              // 否则探针会读到 0.000 而误判「动画没跑起来」。
               const t0 = intro2T0Ref.current ?? performance.now();
-              canvasEl.dataset.intro2P = Math.min(1, Math.max(0, (performance.now() - t0) / INTRO2_MS)).toFixed(3);
+              canvasEl.dataset.intro2P = (reduceMotionNow()
+                ? 1
+                : Math.min(1, Math.max(0, (performance.now() - t0) / INTRO2_MS))).toFixed(3);
             }
             // 三条不变量的数值证据（§90）：半径偏移必须为 0，角度位移必须在上限内。
             const st = getLastRelaxStats();
@@ -2134,7 +2150,9 @@ export default function Legion3DPage() {
         labelBodies.push(anchor);
 
         // B 案：入场「由内向外点亮」——只乘不透明度，不改几何。
-        const intro2P = INTRO2
+        // 减动效（prefers-reduced-motion）必须被尊重：直接到终态，不产生动画。
+        // 与既有入场（.456 的 if (!reduce && !seen)）保持同一条规范。
+        const intro2P = INTRO2 && !reduceMotionNow()
           ? Math.min(1, Math.max(0, ((intro2T0Ref.current ?? (intro2T0Ref.current = performance.now())) , (performance.now() - (intro2T0Ref.current ?? 0)) / INTRO2_MS)))
           : 1;
         // 与既有「部门依次点亮」相乘：两者都只影响不透明度，互不覆盖
