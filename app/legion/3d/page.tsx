@@ -1400,11 +1400,20 @@ export default function Legion3DPage() {
           // 样本为空时给占位；注意这里**不能 return** —— 绘制循环必须照常往下走。
           if (s2.length === 0) {
             perfElRef.current.textContent = 'fps —（采样中）';
-          } else perfElRef.current.textContent =
-            `fps ${Math.min(240, 1000 / Math.max(1, avg)).toFixed(1)} · p50 ${p50.toFixed(1)}ms`
-            + ` · 背板 ${canvas.width}×${canvas.height} · dpr ${dpr.toFixed(2)} · scale ${resScale.toFixed(2)}`
-            + (margin !== null ? ` · 边距 ${margin}px` : '')
-            + ` · run${runId}/f${frame}/s${size.width}×${size.height}`;
+          } else {
+            const fpsTxt = `fps ${Math.min(240, 1000 / Math.max(1, avg)).toFixed(1)}`;
+            if (size.width < 640) {
+              // 窄屏单行（`.506`）：只留 fps / p50 / 边距。
+              // 背板 · dpr · scale · run/f/s 在 390px 上既挤又没用，换行后还会压住页面文字。
+              perfElRef.current.textContent = `${fpsTxt} · ${p50.toFixed(0)}ms`
+                + (margin !== null ? ` · 边距 ${margin}` : '');
+            } else {
+              perfElRef.current.textContent = `${fpsTxt} · p50 ${p50.toFixed(1)}ms`
+                + ` · 背板 ${canvas.width}×${canvas.height} · dpr ${dpr.toFixed(2)} · scale ${resScale.toFixed(2)}`
+                + (margin !== null ? ` · 边距 ${margin}px` : '')
+                + ` · run${runId}/f${frame}/s${size.width}×${size.height}`;
+            }
+          }
         }
       }
       const dt = Math.min(0.05, frameMsRaw / 1000);
@@ -3690,7 +3699,10 @@ export default function Legion3DPage() {
         <div
           ref={perfElRef}
           data-testid="legion-3d-perf-hud"
-          className="pointer-events-none absolute left-3 top-3 z-30 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2 py-1 font-mono text-[11px] text-[var(--fg-muted)] backdrop-blur"
+          // 窄屏放右下角（`.506`）：左上角与「14 个部门 · 9 名成员 · 351 个 Agent」统计行重叠，
+          // 实测两组文字叠在一起（`?perf=1` 时），读数反而不可读。
+          // 桌面保持左上（那里是空的）；窄屏挪到右下，与底部图例错开。
+          className="pointer-events-none absolute left-3 top-3 z-30 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2 py-1 font-mono text-[11px] text-[var(--fg-muted)] backdrop-blur max-sm:left-auto max-sm:right-3 max-sm:top-[10.75rem] max-sm:max-w-[58vw] max-sm:whitespace-nowrap"
         >
           采样中…
         </div>
