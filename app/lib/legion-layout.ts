@@ -269,14 +269,35 @@ function buildTree(input: LegionInput): { roots: DeptNode[]; depth: number } {
       synthetic.set(key, created);
       return created;
     };
+    // 未知部门（agent 的 department_id 在部门树里查不到）：**聚合为一个分组**。
+    //
+    // 2026-11-11（#3070）：旧实现按 id 各建一组，脏数据下 50 个不同未知 id 会让
+    // 2D/3D 根环从 14 组涨到 63 组（每扇区 ≈3.4°，标签重新糊成一团）。
+    // 原始 id 不丢：agent.department_id 仍在，详情/搜索/URL 都可查。
+    const unknownAgg: { node: DeptNode | null; ids: Set<string> } = { node: null, ids: new Set() };
+    const unknownGroup = (): DeptNode => {
+      if (!unknownAgg.node) {
+        unknownAgg.node = orphanRoot('unknown:agg', 'dept:unknown', `${UNKNOWN_DEPT} · 未登记`);
+      }
+      return unknownAgg.node;
+    };
     for (const agent of [...(input.orphans ?? [])].sort((a, b) => a.alias.localeCompare(b.alias, 'zh-Hans-CN') || a.node_id.localeCompare(b.node_id))) {
       const deptId = agent.department_id;
       const dept = deptId ? byId.get(deptId) : undefined;
-      const target = dept
-        ?? (deptId
-          ? orphanRoot(`unknown:${deptId}`, `dept:unknown:${deptId}`, `${UNKNOWN_DEPT} · ${deptId}`)
-          : orphanRoot('none', 'dept:orphans', ORPHAN_GROUP));
+      let target: DeptNode;
+      if (dept) {
+        target = dept;
+      } else if (deptId) {
+        target = unknownGroup();
+        unknownAgg.ids.add(deptId);
+      } else {
+        target = orphanRoot('none', 'dept:orphans', ORPHAN_GROUP);
+      }
       target.orphans.push(agent);
+    }
+    if (unknownAgg.node) {
+      // 标签带上「几个未登记部门」，但同一条目里不堆 50 个 id
+      unknownAgg.node.label = `${UNKNOWN_DEPT} · ${unknownAgg.ids.size} 个未登记`;
     }
     // 部门存在但一个人都没有：仍然画出来（编制的空位也是信息）。
     const roots = [...orphans];
