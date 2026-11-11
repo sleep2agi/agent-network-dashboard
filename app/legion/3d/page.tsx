@@ -1669,22 +1669,18 @@ export default function Legion3DPage() {
         // 而环上节点分布在不同层高 ⇒ 投影包围盒随 yaw 变化 ⇒ 同一份数据算出不同 zoom
         // （实测 116 / 126 交替，边距 118 / 72）。
         // 修法：取景按 8 个 yaw 采样的**并集**计算 —— 既让结果确定，也保证自转一整圈都不会出界。
-        const YAW_SAMPLES = 8;
-        const projected = YAW_SAMPLES <= 1
-          ? projectScene(layout.nodes, toPoint, fittingCam, size)
-          : Array.from({ length: YAW_SAMPLES }, (_, k) =>
-              projectScene(layout.nodes, toPoint, { ...fittingCam, yaw: fittingCam.yaw + (k * Math.PI * 2) / YAW_SAMPLES }, size),
-            ).flat();
-        const bodies = projected.map(sn => {
-          const { rx, ry } = nodeBody(sn, layout.stats.people, layout.stats.agents);
-          // Includes the widest hover/selection stroke, also at the pixel floor.
-          return { x: sn.projected.x, y: sn.projected.y, rx: rx + 6, ry: ry + 6 };
-        });
-        // Sparse nodes cover only one side of an orbit; include the visible
-        // tracks and packets both in initial fitting and in recovery checks.
+        // `.504` 解析式取景：只用「环几何」算包围盒，不再采样每个节点的屏幕位置。
+        // 理由（前 6 个假设都被数据否掉后的结论）：
+        //   · 环是**旋转对称**的圆 ⇒ 它的投影包围盒与 yaw 无关，天然确定；
+        //   · 节点散布在环上（带抖动）+ 自转 ⇒ 逐节点采样得到的并集每次都略有不同
+        //     ⇒ 同一份数据算出 113/115/121（实测 4 次）。
+        // 做法：环轨迹采样 + 一个固定的"节点外扩"量（覆盖头像/Agent 点/部门盘描边），
+        //       于是取景输入只由「编制半径 + 层高 + 俯角 + 画布尺寸」决定。
+        const NODE_BULGE = 18; // 像素：部门盘半径 + 描边；覆盖所有节点类型
+        const bodies: Array<{ x: number; y: number; rx: number; ry: number }> = [];
         for (const ring of ringRadii) {
-          for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, fittingCam, size, 64)) {
-            bodies.push({ x: p.x, y: p.y, rx: 4, ry: 4 });
+          for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, { ...fittingCam, yaw: 0 }, size, 64)) {
+            bodies.push({ x: p.x, y: p.y, rx: NODE_BULGE, ry: NODE_BULGE });
           }
         }
         // 不把标签矩形并入取景（`.498` 撤销 `.497` 的这一条）：
