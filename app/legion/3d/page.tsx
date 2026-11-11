@@ -1718,7 +1718,10 @@ export default function Legion3DPage() {
         //     ⇒ 同一份数据算出 113/115/121（实测 4 次）。
         // 做法：环轨迹采样 + 一个固定的"节点外扩"量（覆盖头像/Agent 点/部门盘描边），
         //       于是取景输入只由「编制半径 + 层高 + 俯角 + 画布尺寸」决定。
-        const NODE_BULGE = 18; // 像素：部门盘半径 + 描边；覆盖所有节点类型
+        // 外扩量按视口分档（`.507`）：桌面 18px 足够；窄屏内容整体更小，
+        // 18px 相对占比更大 ⇒ 画面被压得偏空（实测窄屏边距 41px，而 .503 前是 26–27px）。
+        // 窄屏取 12px：既覆盖部门盘半径与描边，又把边距收回到 30px 以内。
+        const NODE_BULGE = size.width < 640 ? 12 : 18;
         const bodies: Array<{ x: number; y: number; rx: number; ry: number }> = [];
         for (const ring of ringRadii) {
           for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, { ...fittingCam, yaw: 0 }, size, 64)) {
