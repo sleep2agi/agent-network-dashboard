@@ -375,7 +375,9 @@ export function CommandPalette() {
           // 「跳到某个 Agent」应当限于当前网络（与页面其它取数同一个 scope）。
           fetch(`/api/hub/status?lite=1${networkId ? `&network_id=${encodeURIComponent(networkId)}` : ''}`)
             .then(r => r.ok ? r.json() : { sessions: [] }),
-          fetch('/api/hub/tasks?limit=20').then(r => r.ok ? r.json() : { tasks: [] }),
+          // 与上面的 sessions 同理：不带 network_id 会把其它网络的任务列进命令面板。
+          fetch(`/api/hub/tasks?limit=20${networkId ? `&network_id=${encodeURIComponent(networkId)}` : ''}`)
+            .then(r => r.ok ? r.json() : { tasks: [] }),
         ]);
         if (cancelled) return;
         const agentCmds: Command[] = (sRes.sessions as SessionRow[] || [])
