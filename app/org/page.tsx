@@ -359,6 +359,7 @@ function OrgContent() {
               onKeyDown={e => { if (e.key === 'Enter') setQuery(qInput); }}
               onBlur={() => { if (qInput !== q) setQuery(qInput); }}
               placeholder="人 / 部门 / Agent 别名"
+              aria-label="搜索成员 / 部门 / Agent"
               className="w-44 bg-transparent text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none sm:w-64"
             />
           </div>

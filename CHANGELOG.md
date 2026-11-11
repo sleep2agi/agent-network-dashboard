@@ -6,6 +6,42 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.510 — 2026-11-12
+
+### 可访问性：组织页搜索框 + 管理页 5 个表单控件补上可访问名称
+
+把 `.508` 的审计扩展到剩余 8 个页面（`/org` `/scheduled-tasks` `/skillhub` `/changelog`
+`/versions` `/admin` `/settings` `/logs`），发现 2 处共 4 个控件无可访问名称：
+
+| 页面 | 控件 | 修复 |
+|---|---|---|
+| `/org` | 搜索框（占位符「人 / 部门 / Agent 别名」） | `aria-label="搜索成员 / 部门 / Agent"` |
+| `/admin` | 广播内容 textarea | `aria-label="广播消息内容"` |
+| `/admin` | 目标任务节点 select | `aria-label="目标任务节点"` |
+| `/admin` | 任务内容 textarea | `aria-label="任务内容"` |
+| `/admin` | 注册用户 用户名 / 密码 | `aria-label="用户名"` / `"密码"` |
+
+合计 6 个控件（上表最后一行含两个）。
+
+### 全站口径（16 个页面）
+
+```
+可交互元素中「无可访问名称」的数量：
+  修复前：/tasks 2 · /org 1 · /admin 5（其中 2 个是 input，3 个是 textarea/select）
+  修复后：**全部 0**
+判据口径（避免误报）：<label> 包裹算有名称；只看 aria-label/title/文本/alt 图。
+```
+
+### 已验证
+
+| 项 | 结果 |
+|---|---|
+| 8 个页面无名称元素 | 全部 **0**（含 `/admin` 5 → 0） |
+| 前 8 个页面（`.508` 已修） | 保持 0 |
+| 单测 / tsc | 58/58 · 0 错误 |
+
+---
+
 ## 0.6.4-preview.509 — 2026-11-12
 
 ### 军团 3D：录屏产物补一行规模说明（PNG 已自带，只补视频）
