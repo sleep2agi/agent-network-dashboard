@@ -1825,6 +1825,20 @@ export default function Legion3DPage() {
 
       // Broad bloom is reserved for the hierarchy spine or an explicit selection.
       // No per-edge blur; bounded strokes keep large networks responsive.
+      // B 案（神明 2026-11-11 复看）：连线必须与**它所连的那一层同时出现**。
+      // 之前只有主描边乘了 reveal，光晕/流光两遍没乘 ⇒ p=0.10 时中枢到部门的线已经全亮，
+      // 部门盘却还没出来，看上去像"线连到空处"。这里统一成一个取值，三遍绘制共用。
+      const intro2FrameP = !INTRO2
+        ? 1
+        : (INTRO2_FREEZE ?? (reduceMotionNow()
+          ? 1
+          : Math.min(1, Math.max(0, (performance.now() - (intro2T0Ref.current ?? performance.now())) / INTRO2_MS))));
+      const edgeRevealOf = (e: { b: { item: { ring?: number; angle?: number } } }) => {
+        if (!INTRO2) return 1;
+        const af = typeof e.b.item.angle === 'number' ? (e.b.item.angle / (Math.PI * 2)) % 1 : 0;
+        return intro2Reveal(e.b.item.ring ?? 3, intro2FrameP, af);
+      };
+
       const glowBudget = huge ? 24 : heavy ? 40 : 64;
       let glowDrawn = 0;
       if (dark && !interacting) {
@@ -1836,11 +1850,13 @@ export default function Legion3DPage() {
           ctx.beginPath();
           ctx.moveTo(e.a.projected.x, e.a.projected.y);
           ctx.quadraticCurveTo(e.cx, e.cy, e.b.projected.x, e.b.projected.y);
+          const glowReveal = edgeRevealOf(e);
+          if (glowReveal <= 0) continue;
           ctx.lineWidth = 9;
-          ctx.globalAlpha = e.trunk ? 0.055 : 0.035;
+          ctx.globalAlpha = (e.trunk ? 0.055 : 0.035) * glowReveal;
           ctx.stroke();
           ctx.lineWidth = 4;
-          ctx.globalAlpha = e.trunk ? 0.15 : 0.09;
+          ctx.globalAlpha = (e.trunk ? 0.15 : 0.09) * glowReveal;
           ctx.stroke();
         }
         ctx.restore();
@@ -1859,10 +1875,9 @@ export default function Legion3DPage() {
         const baseAlpha = e.lit
           ? (activeSet ? 0.65 : e.trunk ? (dark ? 0.72 : 0.62) : (dark ? 0.2 * depthFade : 0.2 * depthFade))
           : 0.045;
-        // B 案：连线跟随目标所在层点亮（「连线随之长出」）
-        const edgeReveal = INTRO2 && (INTRO2_FREEZE !== null || !reduceMotionNow())
-          ? intro2Reveal((e.b.item.ring ?? 3), (INTRO2_FREEZE ?? Math.min(1, Math.max(0, (performance.now() - (intro2T0Ref.current ?? performance.now())) / INTRO2_MS))), typeof e.b.item.angle === 'number' ? (e.b.item.angle / (Math.PI * 2)) % 1 : 0)
-          : 1;
+        // B 案：连线跟随目标所在层点亮（与光晕/流光共用同一取值）
+        const edgeReveal = edgeRevealOf(e);
+        if (edgeReveal <= 0) continue;
         ctx.globalAlpha = Math.min(1, baseAlpha * LINK_BOOST * edgeReveal);
         ctx.lineWidth = e.trunk ? 1.8 : huge ? 0.7 : e.lit && activeSet ? 1.4 : dark ? 0.75 : 0.8;
         ctx.stroke();
@@ -1893,7 +1908,7 @@ export default function Legion3DPage() {
           const [x1, y1] = quadAt(ax, ay, e.cx, e.cy, bx, by, tail);
           const [x2, y2] = quadAt(ax, ay, e.cx, e.cy, bx, by, tip);
           ctx.strokeStyle = dark && k === 1 ? tk.fg : tk.accent;
-          ctx.globalAlpha = envelope * (1 - k / 7) * (e.trunk ? 0.9 : 0.64);
+          ctx.globalAlpha = envelope * (1 - k / 7) * (e.trunk ? 0.9 : 0.64) * edgeRevealOf(e);
           ctx.lineWidth = e.trunk ? 2.6 : 1.7;
           ctx.beginPath();
           ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
