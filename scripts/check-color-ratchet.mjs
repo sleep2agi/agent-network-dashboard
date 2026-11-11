@@ -43,7 +43,11 @@ function countArbitrary(src) {
   // 本族都是单行 class 串，按行扫不会漏掉跨行拼接的场景。
   for (const rawLine of src.split('\n')) {
     if (rawLine.includes('exception:')) continue; // 先看原始行（注释还没被去掉）
-    const line = rawLine.replace(/\/\*[\s\S]*?\*\//g, '');
+    // 行尾 `//` 也要剥（2026-11-11：塞一行含 text-[10px] 的行内注释曾让 arbitrary 66 → 67）。
+    // 协议保护：`https://` 里 `//` 前是 ':'，正则要求前一个字符不是 ':'。
+    const line = rawLine
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/(?!\/).*$/, '$1');
     for (const m of line.matchAll(ARB_RE)) {
       const [tok] = m;
       const num = Number(m[1] ?? m[2] ?? m[3] ?? m[4]);
@@ -72,8 +76,14 @@ function* walk(dir) {
 // 只去块注释与整行 // 注释——行内 // 可能是 URL（https://…），不能一概截断。
 function stripComments(text) {
   const withoutBlocks = text.replace(/\/\*[\s\S]*?\*\//g, '');
-  return withoutBlocks
+  // 行尾 `//` 注释也要剥掉：否则"写一句解释性注释"会让债务 +1
+  // （2026-11-11 设计师指出的计数漏洞：.488 的 rounded-md 基线里混进了 1 条历史说明）。
+  // 不误删协议：`https://x` 中 `//` 前是 ':'，本正则要求前一个字符不是 ':'。
+  // 已知边界：字符串里的协议相对地址 `'//cdn/...'` 会被当成注释剥掉（罕见，且方向上只会低估）。
+  const withoutTrailing = withoutBlocks
     .split('\n')
+    .map((line) => line.replace(/(^|[^:])\/\/(?!\/).*$/, '$1'));
+  return withoutTrailing
     .filter((line) => {
       const s = line.trim();
       return !(s.startsWith('//') || s.startsWith('*'));
@@ -96,6 +106,8 @@ for (const f of walk(join(ROOT, 'app'))) {
   if (pn > 0) { paletteCounts[relative(ROOT, f)] = pn; paletteTotal += pn; }
   const sn = (src.match(SCALE_RE) || []).length;
   if (sn > 0) { scaleCounts[relative(ROOT, f)] = sn; scaleTotal += sn; }
+  // 注意：countArbitrary 吃 raw —— 它内部要先读 `exception:` 标记（那是块注释，若先删就失效）。
+  // 行内 `//` 注释在函数内部逐行剥掉（见下），所以注释不会计债。
   const an = countArbitrary(raw);
   if (an > 0) { arbCounts[relative(ROOT, f)] = an; arbTotal += an; }
 }
