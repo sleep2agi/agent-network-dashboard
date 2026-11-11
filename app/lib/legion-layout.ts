@@ -422,7 +422,12 @@ export function buildLegionLayout(input: LegionInput, options: LegionLayoutOptio
     const isCollapsed = collapsed.has(node.id) && (node.children.length > 0 || node.people.length > 0 || node.orphans.length > 0);
     nodes.push({
       id: node.id, kind: 'group', label: node.label,
-      sublabel: node.memberCount > 0 ? `${node.memberCount} 人 · ${node.agentCount} Agent` : `${node.agentCount} Agent`,
+      // 聚合的未知部门：标签只有「N 个」（窄屏截断安全），语义放这里——
+      // 详情面板会渲染 group.sublabel，所以「未登记部门」在可见面上仍存在。
+      // 注意：**只给 group 追加**。agent 的 sublabel 是头像地址（getAvatarUrl），
+      // 追加文字会把头像变成裂图（单测有 @ 前缀断言兜底）。
+      sublabel: (node.memberCount > 0 ? `${node.memberCount} 人 · ${node.agentCount} Agent` : `${node.agentCount} Agent`)
+        + (node.id.startsWith('dept:unknown') ? ' · 未登记部门' : ''),
       ring: 1, depth: node.depth, angle: normalize(center), radius,
       ...polar(radius, center),
       parentId, agentCount: node.agentCount, memberCount: node.memberCount, leader: node.leader,
