@@ -96,5 +96,9 @@ assert.match(page, /relaxDepartmentAngles\(built\.nodes, LOOK_TIER\)/, 'page 必
 // 都不得产生动画。已有入场（.456）有 reduce 门；intro2 曾漏掉，这条锁死。
 const pageSrc2 = stripComments(read('app/legion/3d/page.tsx'));
 assert.match(pageSrc2, /function reduceMotionNow\(\)/, '必须提供 reduceMotionNow 统一判定');
-assert.match(pageSrc2, /INTRO2 && !reduceMotionNow\(\)/, 'intro2 的进度计算必须先过 reduce 判定');
+// .483 起进度表达式变成：INTRO2_FREEZE ?? (reduceMotionNow() ? 1 : 按时间推进)
+// ⇒ 断言语义应为「reduce 判定仍在 intro2 的进度路径里」，而不是某个具体写法。
+assert.match(pageSrc2, /INTRO2_FREEZE \?\? \(reduceMotionNow\(\)/, 'intro2 的进度必须仍经过 reduce 判定（freeze 只是测量钩子）');
+// 冻结钩子只允许在显式参数下生效，不能变成默认
+assert.match(pageSrc2, /get\('intro2freeze'\)/, 'freeze 必须来自显式 URL 参数');
 assert.match(pageSrc2, /intro2Reduced/, '必须导出减动效状态以便断言');
