@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.506` |
-| commit | `7a11f1012ded06036dc46558ecda2068a8cb04c9` |
+| 版本 | `0.6.4-preview.507` |
+| commit | `846f84aafb7d64e8719b29ef94d2badb41bf6277` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.506-7a11f10` |
-| 回滚锚点 | `preview.505-2a48598`（切 cwd + `pm2 restart anet-dashboard`） |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.507-846f84a` |
+| 回滚锚点 | `preview.506-7a11f10`（切 cwd + `pm2 restart anet-dashboard`） |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -100,7 +100,7 @@
 | 读数 | 取值 | 判据 | 读法 |
 |---|---|---|---|
 | `data-zoom` | **123**（稳定态 6/6） | 稳定后必须一致；引导期读到的 112/126 属采样过早 | 页面根节点 `data-zoom` |
-| 环边距 | **81px** | 不为 0、也不回到 133 | `?perf=1` HUD「边距 Npx」 |
+| 环边距 | 桌面 **81px** · 窄屏 **35px** | 不为 0、也不回到 133 / 41 | `?perf=1` HUD「边距 Npx」 |
 | `labelMargin` | **131–134** | **≥ `LABEL_PAD`(12)**，低于即判"绕过 clamp" | `?debug=1` |
 | `groupPointDelta` | **0.000** | **< 0.5px**（盘中心 vs 盘底光斑） | `?debug=1` |
 | `edgeEnergy` | **7.7** | 相对基线 11.3 应显著更低 | `?perf=1` |
