@@ -90,3 +90,11 @@ const relaxSrc = read('app/legion/3d/relax-dept-angles.ts');
 assert.match(relaxSrc, /relaxDepartmentAngles<T extends LegionNode>\(nodes: T\[\], tierBoost = 1\)/, 'relax 必须接受 tierBoost 参数');
 assert.match(relaxSrc, /nodeToVec3\([^)]*tierBoost\)/, 'relax 的投影必须使用传入的 tierBoost');
 assert.match(page, /relaxDepartmentAngles\(built\.nodes, LOOK_TIER\)/, 'page 必须把 LOOK_TIER 传给 relax（tierBoost 同源）');
+
+
+// 减动效一致性（2026-11-11，设计师指出）：所有 ?intro* 变体在 prefers-reduced-motion 下
+// 都不得产生动画。已有入场（.456）有 reduce 门；intro2 曾漏掉，这条锁死。
+const pageSrc2 = stripComments(read('app/legion/3d/page.tsx'));
+assert.match(pageSrc2, /function reduceMotionNow\(\)/, '必须提供 reduceMotionNow 统一判定');
+assert.match(pageSrc2, /INTRO2 && !reduceMotionNow\(\)/, 'intro2 的进度计算必须先过 reduce 判定');
+assert.match(pageSrc2, /intro2Reduced/, '必须导出减动效状态以便断言');
