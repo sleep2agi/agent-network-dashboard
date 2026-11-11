@@ -40,6 +40,18 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 ⇒ 边距 81px，仍优于 .496 的 133px；节点与标签都在画布内（截图核对）
 ```
 
+### 取景口径换了，标签边距必须同时可读（设计师评审）
+
+```
+风险：`.497` 的目标是「标签入框」，本版换成「环 + 固定外扩」入框 —— 两者不是同一件事。
+实测（?debug=1 导出的标签矩形）：outside = 0，标签四边最小边距 **134px**（环边距 81px）。
+⇒ 这一次两者恰好一致（环的余量本身包住了标签），但必须让它以后也能被看见。
+```
+本版新增常驻读数 `canvas.dataset.labelMargin`（仅 `?debug=1`）：
+标签到画布四边的最小边距。**判据：< `LABEL_PAD`(12px) 即视为缺陷**——
+因为 placeLegionLabel 把标签限制在 `[12, 画布−12]`，12px 是构造性下限；
+低于它说明有路径绕过了 clamp，而不是"有点挤"。读数与常量同源（同一次改 bounds 会同时改判据）。与环边距、边能量、几何同源差并列。
+
 ### 已验证
 
 | 项 | 结果 |
@@ -48,6 +60,7 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 | tsc | 0 错误 |
 | 确定性 | 4/4 同 zoom、同环包围盒 |
 | 视觉 | 无裁切、无重叠恶化（截图对照） |
+| 标签边距 | outside = 0 · 最小 134px（`labelMargin` 可复读） |
 
 ---
 
