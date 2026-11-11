@@ -1787,6 +1787,26 @@ export default function Legion3DPage() {
         }
       }
 
+      // 中心光井（`.499`）：圆心那块空地原本只有 N 与「军团」，看着像"没画完"。
+      // 之前试过在中心加规模文字，实测与标签/部门盘叠压（证据 evidence/legion-3d-499-core/），已否。
+      // 改为**只加光**：以核心为圆心铺一层极淡的径向辉光，把视线收向中心，不占任何版面。
+      if (core) {
+        const wellR = Math.min(size.width, size.height) * 0.42;
+        const well = ctx.createRadialGradient(core.projected.x, core.projected.y, wellR * 0.12,
+          core.projected.x, core.projected.y, wellR);
+        const a0 = dark ? 0.17 : 0.09;
+        well.addColorStop(0, hexToRgba(tk.accent, a0));
+        well.addColorStop(0.55, hexToRgba(tk.accent, a0 * 0.35));
+        well.addColorStop(1, hexToRgba(tk.accent, 0));
+        ctx.save();
+        ctx.globalCompositeOperation = dark ? 'lighter' : 'source-over';
+        ctx.fillStyle = well;
+        ctx.beginPath();
+        ctx.arc(core.projected.x, core.projected.y, wellR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
       // 部门扇区：把每个部门在环上占的弧度画成一段半透明弧带。
       // 只有一层环没有层级感；有了扇区，一眼能看出「这块是哪个部门」。
       for (const node of layout.nodes) {
