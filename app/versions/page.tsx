@@ -16,7 +16,8 @@ function isAgentNode(s: Session) {
 }
 
 export default function VersionsPage() {
-  const { sessions, isLoading, error, mutate } = useSessions();
+  const { sessions, isLoading, error, mutate } = useSessions({ lite: true }) // 只读 alias/status/network_id/version：lite 投影已包含（app/lib/lite-status.ts KEEP）
+  // 全量 /api/hub/status 实测 735 KB（413 会话），lite 266 KB ⇒ 本页每访省约 470 KB;
   const live = sessions.filter(online);
   const nodes = live.filter(isAgentNode);
   const current = nodes.filter(s => s.version === PUBLISHED_AGENT_NODE);

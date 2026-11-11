@@ -8,7 +8,8 @@ import { AliasAvatar } from '../components/AliasAvatar';
 import { SESSION_STATUS_CHIP_CLASS } from '../lib/status';
 
 export default function AdminPage() {
-  const { sessions } = useSessions();
+  const { sessions } = useSessions({ lite: true }) // 只读 alias/status/network_id/version：lite 投影已包含（app/lib/lite-status.ts KEEP）
+  // 全量 /api/hub/status 实测 735 KB（413 会话），lite 266 KB ⇒ 本页每访省约 470 KB;
   const { health } = useHealth();
   const { stats } = useStats();
   const sseMap = health?.sse_sessions || {};
