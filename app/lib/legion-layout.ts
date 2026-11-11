@@ -296,8 +296,12 @@ function buildTree(input: LegionInput): { roots: DeptNode[]; depth: number } {
       target.orphans.push(agent);
     }
     if (unknownAgg.node) {
-      // 标签带上「几个未登记部门」，但同一条目里不堆 50 个 id
-      unknownAgg.node.label = `${UNKNOWN_DEPT} · ${unknownAgg.ids.size} 个未登记`;
+      // 标签必须是**数量在前**：2D 在窄屏按盘半径截断标签
+      // （page.tsx: label.slice(0, r>=24?4 : r>=12?3 : 2)），
+      // 写成「未知部门 · N 个未登记」时 390 上只剩「未知部」——数量被截掉，
+      // 等于修了聚合、又丢了「有多少」这个核心信息。
+      // 数量在前：390 截到 2~4 字符时仍保留数字（如「50」「50 个」）。
+      unknownAgg.node.label = `${unknownAgg.ids.size} 个未登记`;
     }
     // 部门存在但一个人都没有：仍然画出来（编制的空位也是信息）。
     const roots = [...orphans];
