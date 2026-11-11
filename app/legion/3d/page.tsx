@@ -75,7 +75,16 @@ const LOOK_SPEED = LOOK_PARAM === 'slow' ? 0.55 : 1;
 const TIER_PARAM = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).get('tier')
   : null;
-const LOOK_TIER = TIER_PARAM === '0' ? 1 : 1.3;
+// `?tier=1.6`：层高/层距诊断参数（.502）。只影响 canvas 绘制与几何，不参与 SSR。
+// 用来量"层距拉开后叠压是变好还是变坏"，而不必每次重建。
+const TIER_NUM = (() => {
+  if (typeof window === 'undefined') return null;
+  const raw = new URLSearchParams(window.location.search).get('tier');
+  if (raw === null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0.6 && n <= 2.2 ? n : null;
+})();
+const LOOK_TIER = TIER_NUM ?? (TIER_PARAM === '0' ? 1 : 1.6);
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
 // 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
