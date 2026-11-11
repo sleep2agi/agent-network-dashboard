@@ -95,6 +95,12 @@ const HIER_WEIGHTS = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('weights') === '1';
 const DEPT_STROKE = { primary: 3.5, secondary: 1, base: 1.6 };
 
+// 实机帧率读数（`?perf=1`，2026-11-11）：headless 只能给出软件光栅的**下限**，
+// 真机 GPU 的数字只能由有屏幕的人读。这个开关把「fps / p50 帧时 / 背板尺寸 / dpr / 降档系数」
+// 显示出来，纯诊断：默认不显示，不参与任何判定，也不进测试基线。
+const PERF_HUD = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('perf') === '1';
+
 
 
 // B 案（神明 2026-11-11 决定）：「从中心展开」入场——中枢先亮，再按层由内向外点亮，连线随之长出。
@@ -497,6 +503,8 @@ export default function Legion3DPage() {
   const flowTimeRef = useRef(0);
   const flowRef = useRef(true);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // `?perf=1` 的读数节点：按 500ms 直接写 textContent（不 setState），避免诊断本身制造重渲染。
+  const perfElRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef({ ...DEFAULT_VIEW });
   const spinRef = useRef(true);
   const selectedRef = useRef<string | null>(null);
@@ -1131,6 +1139,9 @@ export default function Legion3DPage() {
     // 交互期间的背板缩放：低 DPI 屏降太多会明显糊，按 dpr 分档
     const RES_LOW = dpr >= 2 ? 0.6 : 0.75;
     let resScale = 0; // 0 = 还没设过背板尺寸，保证首次 applyResolution(1) 真的执行
+    // `?perf=1` 的采样缓冲（不启用时只是一个空数组，零成本）
+    const hudGaps: number[] = [];
+    let hudWrittenAt = 0;
     const applyResolution = (scale: number) => {
       if (scale === resScale) return;
       resScale = scale;
@@ -1228,6 +1239,20 @@ export default function Legion3DPage() {
       // 原始帧间隔必须先存下来：lastFrame 下一行就被覆盖了，
       // 之后再用 (now - lastFrame) 永远是 0 —— 入场自适应降级第一版就是这么「永不触发」的（实测 aborted=false）。
       const frameMsRaw = now - lastFrame;
+      // `?perf=1`：只读采样，不改变任何绘制路径
+      if (PERF_HUD && perfElRef.current) {
+        hudGaps.push(frameMsRaw);
+        if (hudGaps.length > 60) hudGaps.shift();
+        if (now - hudWrittenAt > 500) {
+          hudWrittenAt = now;
+          const s2 = [...hudGaps].sort((a, b) => a - b);
+          const p50 = s2[Math.floor(s2.length / 2)] ?? 0;
+          const avg = s2.reduce((a, b) => a + b, 0) / Math.max(1, s2.length);
+          perfElRef.current.textContent =
+            `fps ${(1000 / Math.max(1, avg)).toFixed(1)} · p50 ${p50.toFixed(1)}ms`
+            + ` · 背板 ${canvas.width}×${canvas.height} · dpr ${dpr.toFixed(2)} · scale ${resScale.toFixed(2)}`;
+        }
+      }
       const dt = Math.min(0.05, frameMsRaw / 1000);
       lastFrame = now;
       tk = presentingRef.current ? presentingInk : tkLive;
@@ -3461,6 +3486,15 @@ export default function Legion3DPage() {
         />
       )}
       <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击 Agent 在页内对话，双击成员或部门进入组织列表；按 / 搜索，R 重置视角。</p>
+      {PERF_HUD && (
+        <div
+          ref={perfElRef}
+          data-testid="legion-3d-perf-hud"
+          className="pointer-events-none absolute left-3 top-3 z-30 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2 py-1 font-mono text-[11px] text-[var(--fg-muted)] backdrop-blur"
+        >
+          采样中…
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         className={`block h-full w-full touch-none ${presenting ? 'cursor-none' : 'cursor-grab active:cursor-grabbing'}`}
