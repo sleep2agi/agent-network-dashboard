@@ -111,6 +111,9 @@ const publicRootScripts = new Set([
   'scripts/smoke-routes.mjs',
   'scripts/smoke-schedule-history.mjs',
   'scripts/verify-prod.mjs',
+  // 2026-11-11（#3083）：圆角/字号刻度棘轮。只读统计 app/ 下的类名，不发请求、不读凭证。
+  'scripts/check-scale-ratchet.mjs',
+  'scripts/scale-ratchet-baseline.json',
 ]);
 const unexpectedRootScripts = trackedPaths.filter((path) => path.startsWith('scripts/') && !publicRootScripts.has(path));
 check(unexpectedRootScripts.length === 0, `unreviewed root scripts: ${unexpectedRootScripts.join(', ')}`);
