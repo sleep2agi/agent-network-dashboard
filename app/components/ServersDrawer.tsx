@@ -387,7 +387,7 @@ export function ServersPanel({ enabled = true, className = '' }: { enabled?: boo
                                 {n.alias}
                               </Link>
                               {n.lifecycle_state && n.lifecycle_state !== 'active' && (
-                                <span className="shrink-0 text-[10px] text-[var(--fg-dim)]">{n.lifecycle_state}</span>
+                                <span className="shrink-0 text-[11px] text-[var(--fg-dim)]">{n.lifecycle_state}</span>
                               )}
                             </li>
                           ))}
