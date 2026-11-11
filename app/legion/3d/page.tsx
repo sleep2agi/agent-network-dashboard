@@ -85,6 +85,11 @@ const TIER_NUM = (() => {
   return Number.isFinite(n) && n >= 0.6 && n <= 2.2 ? n : null;
 })();
 const LOOK_TIER = TIER_NUM ?? (TIER_PARAM === '0' ? 1 : 1.3);
+// 标签安全边距（像素）：placeLegionLabel 把标签限制在 [LABEL_PAD, 画布 − LABEL_PAD] 内。
+// ⇒ 这是构造性下限：只要 clamp 生效，标签边距必然 ≥ LABEL_PAD。
+// ⇒ 因此 `?debug=1` 暴露的 labelMargin **< LABEL_PAD 就说明有路径绕过了 clamp**（是缺陷，不是"有点挤"）。
+// 判据与实现共用这个常量，改 bounds 时判据自动跟着变（设计师 2026-11-12 评审）。
+const LABEL_PAD = 12;
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
 // 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
@@ -2238,6 +2243,19 @@ export default function Legion3DPage() {
                   }
                   canvasEl.dataset.groupPointDelta = maxDelta.toFixed(3);
                 }
+                // `.504` 判据（设计师）：标签必须完整落在画布内。
+                // 取景口径从"内容包围盒"换成"环包围盒"后，标签可能成为最先贴边的元素 ——
+                // 把"标签到画布四边的最小边距"做成常驻读数，任何改动把它压到 8px 以下都会被看见。
+                {
+                  let m = Infinity;
+                  for (const r of labelRectsRef.current) {
+                    if (!Number.isFinite(r.x)) continue;
+                    m = Math.min(m, r.x, r.y, size.width - (r.x + r.w), size.height - (r.y + r.h));
+                  }
+                  // 判据：labelMargin < LABEL_PAD ⇒ 有路径绕过 clamp（缺陷）。读数与常量同源。
+                  canvasEl.dataset.labelMargin = Number.isFinite(m) ? Math.round(m).toString() : 'none';
+                  canvasEl.dataset.labelPad = String(LABEL_PAD);
+                }
               }
               // 选中节点的屏幕坐标：手机上的详情卡会不会挡住焦点，用坐标判断。
               const focusedSn = nodes.find(sn => sn.item.id === selectedRef.current);
@@ -2643,7 +2661,7 @@ export default function Legion3DPage() {
             labelMetrics.set(metricKey, metric);
           }
           const spot = placeLegionLabel({ anchor: item.anchor, width: metric.width, height: metric.height,
-            bounds: { x1: 12, y1: 12, x2: size.width - 12, y2: size.height - 12 }, occupied: placed, bodies: labelBodies });
+            bounds: { x1: LABEL_PAD, y1: LABEL_PAD, x2: size.width - LABEL_PAD, y2: size.height - LABEL_PAD }, occupied: placed, bodies: labelBodies });
           if (!spot) continue;
           placed.push(spot);
           if (debugProjRef.current) {
