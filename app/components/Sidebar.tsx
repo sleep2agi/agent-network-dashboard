@@ -386,7 +386,7 @@ export function Sidebar() {
                 aria-haspopup="listbox"
                 aria-expanded={netOpen}
                 title={activeNetwork?.network_id}
-                className="w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 rounded-md text-xs text-left transition-colors bg-[var(--bg-elevated)] text-[var(--fg)] hover:text-gray-100"
+                className="w-full flex items-center gap-2 px-3 py-2.5 lg:py-1.5 rounded-lg text-xs text-left transition-colors bg-[var(--bg-elevated)] text-[var(--fg)] hover:text-gray-100"
               >
                 <span>{ROLE_ICON[activeNetwork?.role || 'member'] || '👤'}</span>
                 <span className="truncate flex-1">
@@ -405,7 +405,7 @@ export function Sidebar() {
                 <div
                   role="listbox"
                   data-testid="network-switcher-panel"
-                  className="absolute z-30 mt-1 w-full max-h-72 overflow-y-auto rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] shadow-lg py-1"
+                  className="absolute z-30 mt-1 w-full max-h-72 overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] shadow-lg py-1"
                 >
                   {networks.map((n: SidebarNetwork) => (
                     <button

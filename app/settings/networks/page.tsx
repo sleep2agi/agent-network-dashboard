@@ -153,7 +153,7 @@ export default function NetworksPage() {
               <button
                 type="button"
                 onClick={() => mutate()}
-                className="mt-2 rounded-md bg-[var(--bg-elevated)] px-2 py-1 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                className="mt-2 rounded-lg bg-[var(--bg-elevated)] px-2 py-1 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
               >
                 重试
               </button>

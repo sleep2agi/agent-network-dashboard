@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { EmptyState } from '../components/EmptyState';
 import { ProviderFormModal, type ProviderDraft } from '../components/ProviderFormModal';
 import { ReachabilityMatrix } from '../components/ReachabilityMatrix';
+import { RuntimeSupportMatrix } from '../components/RuntimeSupportMatrix';
 
 /**
  * Model providers (RFC-028 P1 — CRUD). Lists providers from
@@ -44,6 +45,9 @@ const typeLabel = (t: string) => TYPE_LABELS[t] || t;
 
 export default function ProvidersPage() {
   const [providers, setProviders] = useState<Provider[]>([]);
+  // `?matrix=1`：预览「Runtime 支持速查」静态表（未进导航、不改默认界面）
+  const [showMatrix, setShowMatrix] = useState(false);
+  useEffect(() => { setShowMatrix(new URLSearchParams(window.location.search).get('matrix') === '1'); }, []);
   const [loading, setLoading] = useState(true);
   const [unconfirmed, setUnconfirmed] = useState<string | null>(null);
   const [mock, setMock] = useState(false);
@@ -97,7 +101,7 @@ export default function ProvidersPage() {
         {mock && <span className="text-[11px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/5 text-amber-300">preview fixture</span>}
         <button
           onClick={openCreate}
-          className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-[var(--hl)] px-3 py-1.5 text-sm font-medium text-[var(--bg)] hover:opacity-90"
+          className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[var(--hl)] px-3 py-1.5 text-sm font-medium text-[var(--bg)] hover:opacity-90"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
           新增供应商
@@ -106,13 +110,14 @@ export default function ProvidersPage() {
       {toggleError && (
         <div
           data-testid="providers-toggle-error"
-          className="mb-4 rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--fg-muted)]"
+          className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--fg-muted)]"
         >
           <span className="text-[var(--fg)]">启用状态未能保存({toggleError})</span>
           <span className="ml-2 text-xs">开关已回到服务端的实际状态,请确认 hub 可达后重试。</span>
         </div>
       )}
 
+      {showMatrix && <div className="mb-4 max-w-5xl"><RuntimeSupportMatrix /></div>}
       <div className="max-w-3xl space-y-4">
         <p className="text-sm text-[var(--fg-muted)]">
           Configure model providers and per-server reachability. API keys are stored write-only in the secret vault and never displayed.

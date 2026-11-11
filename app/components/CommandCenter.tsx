@@ -90,7 +90,7 @@ export function CommandCenter({ tabs, activeTab, onOpenTab, onCloseTab, onSetAct
                 <button
                   onClick={e => { e.stopPropagation(); onCloseTab(alias); }}
                   aria-label={`Close ${alias} chat tab`}
-                  className="ml-1 inline-flex h-7 w-7 items-center justify-center text-gray-600 hover:text-gray-300 rounded-md hover:bg-[var(--hover-tint)]"
+                  className="ml-1 inline-flex h-7 w-7 items-center justify-center text-gray-600 hover:text-gray-300 rounded-lg hover:bg-[var(--hover-tint)]"
                 >
                   ×
                 </button>

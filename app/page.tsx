@@ -285,7 +285,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setAgentFilter(c.key)}
                   disabled={counts[c.key] === 0 && c.key !== 'all'}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                     agentFilter === c.key
                       ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]'
                       : 'text-gray-500 hover:text-gray-200 hover:bg-[var(--hover-tint)]'

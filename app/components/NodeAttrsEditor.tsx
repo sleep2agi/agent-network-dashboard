@@ -311,7 +311,7 @@ export function NodeAttrsEditor({ alias, nodeId, snapshot, onClose, onSaved }: N
             type="button"
             onClick={onClose}
             aria-label="关闭"
-            className="shrink-0 rounded-md p-1 text-[var(--fg-muted)] hover:bg-white/5 hover:text-white"
+            className="shrink-0 rounded-lg p-1 text-[var(--fg-muted)] hover:bg-white/5 hover:text-white"
           >
             ×
           </button>
@@ -326,7 +326,7 @@ export function NodeAttrsEditor({ alias, nodeId, snapshot, onClose, onSaved }: N
               onChange={e => { setDisplayName(e.target.value); markDirty(); setError(null); }}
               maxLength={MAX_ATTR_LEN}
               placeholder="留空以清除"
-              className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
+              className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
             />
             <span className="mt-1 block text-[11px] text-[var(--fg-muted)]">
               仅用于显示，不影响别人 @ 你的路由名（alias 保持 <code className="text-[var(--fg-muted)]">{alias}</code>）
@@ -341,7 +341,7 @@ export function NodeAttrsEditor({ alias, nodeId, snapshot, onClose, onSaved }: N
               onChange={e => { setTeam(e.target.value); markDirty(); setError(null); }}
               maxLength={MAX_ATTR_LEN}
               placeholder="如：Comm / 商务组 / Bots"
-              className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
+              className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
             />
           </label>
 
@@ -375,14 +375,14 @@ export function NodeAttrsEditor({ alias, nodeId, snapshot, onClose, onSaved }: N
                 }}
                 maxLength={MAX_TAG_LEN}
                 placeholder="新标签（回车添加）"
-                className="flex-1 rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
+                className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-cyan-500/40 focus:outline-none"
                 disabled={tags.length >= MAX_TAGS}
               />
               <button
                 type="button"
                 onClick={addTag}
                 disabled={!newTag.trim() || tags.length >= MAX_TAGS}
-                className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 添加
               </button>
@@ -399,7 +399,7 @@ export function NodeAttrsEditor({ alias, nodeId, snapshot, onClose, onSaved }: N
         </div>
 
         {notice && notice.length > 0 && (
-          <div className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+          <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
             <div className="mb-1 font-semibold">已保存 — 服务端做了这些整理：</div>
             <ul className="list-disc space-y-0.5 pl-4">
               {notice.map((n, i) => <li key={i}>{n}</li>)}
@@ -411,7 +411,7 @@ export function NodeAttrsEditor({ alias, nodeId, snapshot, onClose, onSaved }: N
         )}
 
         {error && (
-          <div className="mt-3 rounded-md border border-red-700/40 bg-red-900/20 px-3 py-2 text-xs text-red-200">
+          <div className="mt-3 rounded-lg border border-red-700/40 bg-red-900/20 px-3 py-2 text-xs text-red-200">
             {error}
             {conflictAt !== null && (
               <div className="mt-2 flex items-center gap-2">
@@ -433,7 +433,7 @@ export function NodeAttrsEditor({ alias, nodeId, snapshot, onClose, onSaved }: N
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] hover:bg-white/5 disabled:opacity-50"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] hover:bg-white/5 disabled:opacity-50"
           >
             取消
           </button>
@@ -441,7 +441,7 @@ export function NodeAttrsEditor({ alias, nodeId, snapshot, onClose, onSaved }: N
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-cyan-600 px-3 py-2 text-sm text-white hover:bg-cyan-500 disabled:cursor-wait disabled:opacity-50"
+            className="rounded-lg bg-cyan-600 px-3 py-2 text-sm text-white hover:bg-cyan-500 disabled:cursor-wait disabled:opacity-50"
           >
             {saving ? '保存中…' : '保存'}
           </button>

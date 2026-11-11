@@ -53,7 +53,7 @@ export default function UpdateBanner() {
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="inline-flex min-h-11 items-center rounded-md bg-[var(--accent)] px-2.5 text-[11px] font-medium text-[var(--accent-fg)] hover:opacity-90 sm:min-h-0 sm:py-1"
+        className="inline-flex min-h-11 items-center rounded-lg bg-[var(--accent)] px-2.5 text-[11px] font-medium text-[var(--accent-fg)] hover:opacity-90 sm:min-h-0 sm:py-1"
       >
         刷新
       </button>
@@ -61,7 +61,7 @@ export default function UpdateBanner() {
         type="button"
         aria-label="关闭更新提示"
         onClick={() => { dismissed.current = true; setStale(null); }}
-        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0 sm:min-w-0 sm:p-1"
+        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0 sm:min-w-0 sm:p-1"
       >
         ✕
       </button>

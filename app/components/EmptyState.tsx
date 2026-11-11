@@ -295,7 +295,7 @@ function QuickstartCommand({ cmd }: { cmd: string }) {
         type="button"
         onClick={onCopy}
         aria-label={copied ? 'Copied' : 'Copy command'}
-        className="shrink-0 rounded-md px-2 py-1.5 text-[11px] text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] transition-colors"
+        className="shrink-0 rounded-lg px-2 py-1.5 text-[11px] text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] transition-colors"
       >
         {copied ? (
           <span className="flex items-center gap-1 text-green-400">

@@ -111,13 +111,13 @@ export default function TokensPage() {
           ) : loadError ? (
             <div
               data-testid="tokens-load-error"
-              className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-3 text-sm text-[var(--fg-muted)]"
+              className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-3 text-sm text-[var(--fg-muted)]"
             >
               <div className="text-[var(--fg)]">无法加载 token 列表({loadError})</div>
               <div className="mt-1 text-xs">这不代表你没有 token —— 请先确认 hub 可达,不要重复创建。</div>
               <button
                 onClick={() => { setLoading(true); fetchTokens(); }}
-                className="mt-2 rounded-md border border-[var(--border)] px-2 py-1 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                className="mt-2 rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
               >重试</button>
             </div>
           ) : tokens.length === 0 ? (

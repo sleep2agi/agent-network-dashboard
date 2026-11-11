@@ -174,7 +174,7 @@ export function TaskDetail({
           {task && (
             <span
               data-testid="task-detail-status"
-              className={`text-xs px-2 py-0.5 rounded-md border ${
+              className={`text-xs px-2 py-0.5 rounded-lg border ${
                 STATUS_CHIP[task.status] ||
                 'bg-gray-500/10 text-[var(--fg-muted)] border-gray-500/20'
               }`}
@@ -189,7 +189,7 @@ export function TaskDetail({
             onClick={onClose}
             aria-label="Close detail (返回 tasks 列表)"
             data-testid="task-detail-close"
-            className="shrink-0 rounded-md border border-[var(--border)] px-2 py-1 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:border-[#3a3a41]"
+            className="shrink-0 rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:border-[#3a3a41]"
           >
             ←
           </button>
@@ -424,7 +424,7 @@ export function TaskDetail({
                   onClick={doRetry}
                   disabled={retrying}
                   data-testid="task-detail-retry"
-                  className="text-xs text-orange-400 hover:text-orange-300 px-3 py-1.5 rounded-md border border-orange-500/30 hover:bg-orange-500/10 disabled:opacity-50 disabled:cursor-wait"
+                  className="text-xs text-orange-400 hover:text-orange-300 px-3 py-1.5 rounded-lg border border-orange-500/30 hover:bg-orange-500/10 disabled:opacity-50 disabled:cursor-wait"
                 >
                   {retrying ? 'Retrying…' : 'Retry task'}
                 </button>

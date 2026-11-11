@@ -242,7 +242,7 @@ export function ServersPanel({ enabled = true, className = '' }: { enabled?: boo
         </div>
       )}
       {error && !data && (
-        <div className="rounded-md border px-2.5 py-2 text-[11px] font-mono"
+        <div className="rounded-lg border px-2.5 py-2 text-[11px] font-mono"
           style={{ background: 'rgb(239 68 68 / 0.06)', borderColor: 'rgb(239 68 68 / 0.25)', color: '#ef4444' }}>
           hub unreachable · retrying every 5s
         </div>

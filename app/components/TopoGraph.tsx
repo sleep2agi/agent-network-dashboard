@@ -250,7 +250,7 @@ function FreshnessChip({ sessions }: { sessions: unknown }) {
   // 99 → 100. R187 transition-colors duration-300 + R275 stale-only
   // render gate + R315 font-medium R313 family alignment all
   // preserved.
-  const baseClass = "hidden sm:inline px-2.5 py-1 rounded-md font-mono font-medium tabular-nums border transition-colors duration-300";
+  const baseClass = "hidden sm:inline px-2.5 py-1 rounded-lg font-mono font-medium tabular-nums border transition-colors duration-300";
   const colorClass = stale
     ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
     : "bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border-[var(--border)]";
@@ -3185,7 +3185,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      border-green-500/30 state at rest. Same visual as
                      hover; member-alias-matching pins the lift without
                      requiring cursor on the chip. */
-                  className={`group tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
+                  className={`group tabular-nums font-medium px-2.5 py-1 rounded-lg border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     workingCount > 0
                       ? `${isWorkingChipLit ? 'bg-green-500/15 border-green-500/30' : 'bg-green-500/10 border-green-500/20'} text-green-300 hover:bg-green-500/15 hover:border-green-500/30 hover:-translate-y-px active:scale-95`
                       : 'bg-green-500/10 text-green-300 border-green-500/20'
@@ -3336,7 +3336,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                      working chip — online chip routes hover to 'idle'
                      tier (see onMouseEnter below), so its member-alias
                      gate is `hoveredAliasTierKey === 'idle'`. */
-                  className={`group tabular-nums font-medium px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
+                  className={`group tabular-nums font-medium px-2.5 py-1 rounded-lg border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     onlineNodes.length > 0
                       ? `${isOnlineChipLit ? 'bg-cyan-500/15 border-cyan-500/30' : 'bg-cyan-500/10 border-cyan-500/20'} text-cyan-300 hover:bg-cyan-500/15 hover:border-[var(--accent)]/30 hover:-translate-y-px active:scale-95`
                       : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
@@ -3608,7 +3608,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // counts (kept visible) anyway.
             return (
               <span
-                className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border border-[var(--border)] font-mono"
+                className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border border-[var(--border)] font-mono"
                 title={`${w} working · ${i} idle · ${o} offline`}
                 data-fleet-pressure
               >
@@ -3716,7 +3716,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // transform, so just appending active:scale-95 to the
               // className wires the press tactile in one token. Compound
               // with R400-era hover:-translate-y-px gives lift-and-compress.
-              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedStatus(null)}
               /* Round 543 / Loop — status filter pill gains always-on
@@ -3847,7 +3847,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // transform, so just appending active:scale-95 to the
               // className wires the press tactile in one token. Compound
               // with R400-era hover:-translate-y-px gives lift-and-compress.
-              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear filter'}
               onClick={() => setPinnedGroup(null)}
               /* Round 544 / Loop — extends R543 pin-active filter-pill
@@ -3963,7 +3963,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // transform, so just appending active:scale-95 to the
               // className wires the press tactile in one token. Compound
               // with R400-era hover:-translate-y-px gives lift-and-compress.
-              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={matchCount > 0 ? `${matchPreview}${matchSuffix} — click to clear` : 'Click to clear vendor filter'}
               onClick={() => setPinnedVendor(null)}
               /* Round 545 / Loop — extends pin-active filter-pill drop-
@@ -4066,7 +4066,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // R495 sibling — 4th filter pill (no `group` prefix variant)
               // joins active:scale-95 press family alongside the 3 group
               // variants above. Same recipe.
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono font-medium text-xs border anet-fade-in anet-topo-chip-focus transition-transform duration-200 ease-out hover:-translate-y-px active:scale-95 transform-gpu" data-topo-filter-pill-hover-lift="true"
               title={`${link.from} → ${link.to} (${link.count} msg${link.count === 1 ? '' : 's'}${isHot ? ', hot lane · ≥ 10' : ''}) — click to clear`}
               onClick={() => setPinnedEdgeKey(null)}
               /* Round 546 / Loop — CLOSES pin-active filter-pill drop-
@@ -4267,7 +4267,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    third and last HTML chip surface, completing
                    coverage across chip-row + vendor-row + pin-
                    intersection. */
-                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono tabular-nums text-xs border anet-fade-in anet-topo-chip-focus"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono tabular-nums text-xs border anet-fade-in anet-topo-chip-focus"
                 title={tooltip}
                 /* Round 236 / Loop: smooth the empty/non-empty colour
                    crossing. Pre-R236 the chip snap-flipped between
@@ -4382,7 +4382,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               Continues the R275-R280 simplification arc. */}
           {vendorDist.length > 2 && (
             <span
-              className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border border-[var(--border)] font-mono"
+              className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border border-[var(--border)] font-mono"
               title="Hover to highlight; click to pin"
               /* Round 698 — vendor-distribution chip-row outer wrapper
                  joins the R697 wrapper-level :has() halo family. Pre-R698
@@ -4827,7 +4827,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 // family. Sibling to working+online chips (R494). Gated
                 // on `isInteractive` (flowLinks.length > 0) — same R399
                 // conditional pattern used for hover-lift.
-                className={`group tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-md border anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu ${
+                className={`group tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-lg border anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu ${
                   isInteractive
                     ? 'bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border-[var(--border)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover:border-[var(--accent)]/30 hover:-translate-y-px active:scale-95'
                     : 'bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border-[var(--border)]'
@@ -16316,7 +16316,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // active state during press = hover-lift (-1px) + scale-95
             // composes as translateY(-1px) scale(0.95) — lift-and-compress
             // for tactile click feel.
-            className="anet-topo-chrome-reset-breath p-1.5 rounded-md border hover:bg-[var(--hover-tint)] active:bg-[var(--hover-tint-strong)] hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
+            className="anet-topo-chrome-reset-breath p-1.5 rounded-lg border hover:bg-[var(--hover-tint)] active:bg-[var(--hover-tint-strong)] hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60"
             data-topo-chrome-reset-hover-lift="true"
             /* Round 718 / Loop — reset button joins the respiratory
                family at 21 s as the 5th anchor on the chrome-strip
@@ -16501,7 +16501,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // R400: hover translateY(-1px) lift — see reset button above for family doc.
             // R493 — fullscreen joins active:scale-95 press family (same as
             // reset above: lift-and-compress compound transform on press).
-            className={`anet-topo-chrome-fullscreen-breath group p-1.5 rounded-md border hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
+            className={`anet-topo-chrome-fullscreen-breath group p-1.5 rounded-lg border hover:-translate-y-px active:scale-95 transform-gpu focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/60 ${
               isFullscreen
                 ? 'bg-cyan-500/15 text-cyan-300 font-medium hover:bg-cyan-500/20 hover:text-[var(--accent)] active:bg-cyan-500/25'
                 : 'hover:bg-cyan-500/5 active:bg-cyan-500/15'

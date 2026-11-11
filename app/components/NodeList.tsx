@@ -371,7 +371,7 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
           placeholder={t('搜索节点（拼音可）', 'Search nodes (pinyin ok)')}
           aria-label={t('搜索节点', 'Search nodes')}
           data-testid="rail-search"
-          className="w-full rounded-md bg-[var(--col-inset)] border border-[rgba(255,255,255,0.08)] px-2.5 py-1.5 text-[12px] text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-cyan-500/40"
+          className="w-full rounded-lg bg-[var(--col-inset)] border border-[rgba(255,255,255,0.08)] px-2.5 py-1.5 text-[12px] text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-cyan-500/40"
         />
       </div>
       <div className="px-3 py-2 text-[11px] text-gray-500 tracking-wide uppercase border-b border-[var(--col-hairline)] shrink-0">

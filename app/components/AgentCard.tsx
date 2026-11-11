@@ -122,7 +122,7 @@ function AgentCardInner({ session: s, hasSse, sseCount, onChat, unreadCount = 0 
               e.stopPropagation();
               setSettingsOpen(true);
             }}
-            className="inline-flex h-7 w-7 items-center justify-center -mr-1 rounded-md text-gray-500 hover:text-[var(--fg)] hover:bg-[var(--hover-tint)] transition-colors"
+            className="inline-flex h-7 w-7 items-center justify-center -mr-1 rounded-lg text-gray-500 hover:text-[var(--fg)] hover:bg-[var(--hover-tint)] transition-colors"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
               <circle cx="12" cy="5" r="1.6" />

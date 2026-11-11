@@ -250,7 +250,7 @@ function AvatarSection({ alias }: { alias: string }) {
             disabled={!hasNodeRow}
             placeholder="图片 URL（留空恢复默认）"
             data-testid="avatar-url-input"
-            className="w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] focus:border-[var(--accent)] focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] focus:border-[var(--accent)] focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
           />
           <div className="flex items-center gap-2">
             <button
@@ -258,7 +258,7 @@ function AvatarSection({ alias }: { alias: string }) {
               disabled={!hasNodeRow || !dirty || saveState === 'saving'}
               onClick={() => save(draft)}
               data-testid="avatar-save"
-              className="rounded-md border border-[var(--accent)]/40 bg-[var(--accent)]/15 px-2.5 py-1 text-[11px] text-[var(--accent-text)] hover:bg-[var(--accent)]/25 disabled:opacity-40"
+              className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/15 px-2.5 py-1 text-[11px] text-[var(--accent-text)] hover:bg-[var(--accent)]/25 disabled:opacity-40"
             >
               {saveState === 'saving' ? '保存中…' : '保存'}
             </button>
@@ -267,7 +267,7 @@ function AvatarSection({ alias }: { alias: string }) {
                 type="button"
                 onClick={() => { setDraft(''); void save(''); }}
                 data-testid="avatar-clear"
-                className="rounded-md border border-[var(--border)] px-2.5 py-1 text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                className="rounded-lg border border-[var(--border)] px-2.5 py-1 text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]"
               >
                 恢复默认
               </button>
@@ -314,7 +314,7 @@ function StubField({ label, value }: { label: string; value?: string }) {
       <span className="text-[11px] text-[var(--fg-muted)]">{label}</span>
       <input
         type="text" disabled readOnly value={value ?? ''} placeholder="未配置"
-        className="mt-0.5 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] cursor-not-allowed disabled:opacity-100"
+        className="mt-0.5 w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] cursor-not-allowed disabled:opacity-100"
       />
     </label>
   );
@@ -347,7 +347,7 @@ function Select({ label, value, options, onChange }: { label: string; value: str
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="mt-0.5 w-full appearance-none rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] hover:border-[var(--border-hover)] focus:border-[var(--accent)] focus:outline-none"
+        className="mt-0.5 w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] hover:border-[var(--border-hover)] focus:border-[var(--accent)] focus:outline-none"
       >
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -366,7 +366,7 @@ function NumberField({ label, value, onChange, placeholder }: { label: string; v
         value={value}
         placeholder={placeholder ?? '默认'}
         onChange={e => onChange(e.target.value)}
-        className="mt-0.5 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] focus:border-[var(--accent)] focus:outline-none"
+        className="mt-0.5 w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] focus:border-[var(--accent)] focus:outline-none"
       />
     </label>
   );
@@ -874,7 +874,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
             <div className="text-sm font-semibold text-[var(--fg)] truncate" title={s.alias}>{s.alias}</div>
             <div className="text-[11px] text-[var(--fg-muted)]">节点设置</div>
           </div>
-          <button onClick={onClose} aria-label="关闭设置" className="inline-flex h-9 w-9 items-center justify-center text-[var(--fg-muted)] hover:text-[var(--fg)] rounded-md hover:bg-[var(--hover-tint)]">
+          <button onClick={onClose} aria-label="关闭设置" className="inline-flex h-9 w-9 items-center justify-center text-[var(--fg-muted)] hover:text-[var(--fg)] rounded-lg hover:bg-[var(--hover-tint)]">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -940,7 +940,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
             <div className="space-y-2.5">
               <div>
                 <span className="text-[11px] text-[var(--fg-muted)]">Runtime（只读）</span>
-                <div className="mt-0.5 rounded-md border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg-muted)] font-mono">{runtime}</div>
+                <div className="mt-0.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg-muted)] font-mono">{runtime}</div>
               </div>
               {modelOptions.length > 1 ? (
                 <Select label="模型 / Preset" value={model} options={modelOptions} onChange={v => { setModel(v); setDirty(true); }} />
@@ -950,7 +950,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
                   <input
                     type="text" value={model} onChange={e => { setModel(e.target.value); setDirty(true); }}
                     placeholder="未配置"
-                    className="mt-0.5 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] focus:border-[var(--accent)] focus:outline-none"
+                    className="mt-0.5 w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </label>
               )}
@@ -1143,7 +1143,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
                     onChange={e => setRenameVal(e.target.value)}
                     placeholder={s.alias}
                     disabled={lcBusy}
-                    className="min-w-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-cyan-500/50 focus:outline-none"
+                    className="min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-[12px] text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-cyan-500/50 focus:outline-none"
                   />
                   <button
                     type="button"
@@ -1177,7 +1177,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
                         setLcBusy(false);
                       }
                     }}
-                    className="shrink-0 rounded-md border border-cyan-700/50 bg-cyan-900/20 px-3 py-1.5 text-[12px] text-[var(--accent-text)] transition-colors hover:bg-cyan-900/35 disabled:cursor-not-allowed disabled:border-[var(--border)] disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)]"
+                    className="shrink-0 rounded-lg border border-cyan-700/50 bg-cyan-900/20 px-3 py-1.5 text-[12px] text-[var(--accent-text)] transition-colors hover:bg-cyan-900/35 disabled:cursor-not-allowed disabled:border-[var(--border)] disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)]"
                   >
                     重命名
                   </button>

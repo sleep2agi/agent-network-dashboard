@@ -354,7 +354,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                         key={s || 'all'}
                         onClick={() => setFilterStatus(s)}
                         disabled={cnt === 0 && s !== '' && !isActive}
-                        className={`px-2.5 py-1 rounded-md text-xs transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
+                        className={`px-2.5 py-1 rounded-lg text-xs transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
                           isActive
                             ? 'bg-[var(--bg-elevated)] text-[var(--fg)]'
                             : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
@@ -484,7 +484,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               <button
                 type="button"
                 onClick={() => { setLoading(true); setError(''); void fetchTasks(); }}
-                className="mt-3 rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                className="mt-3 rounded-lg bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
               >
                 重试
               </button>
