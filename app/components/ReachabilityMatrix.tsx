@@ -128,7 +128,7 @@ export function ReachabilityMatrix({ providerId, models }: { providerId?: string
 
   if (loading) return <div className="px-3 py-3 text-[11px] text-gray-500">解析服务器集合…</div>;
   if (unconfirmed) {
-    return <div className="mx-3 my-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-300">
+    return <div className="mx-3 my-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-300">
       连通性 probe 后端尚未就绪：{unconfirmed}。矩阵 UI 已就位，待 hub 升级到含 RFC-028 接真 probe。
     </div>;
   }

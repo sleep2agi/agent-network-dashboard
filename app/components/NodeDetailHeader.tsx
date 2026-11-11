@@ -66,7 +66,7 @@ export function NodeDetailHeader({ alias, session, sse }: {
             aria-label="Copy alias" title={ready ? 'Copy alias' : 'Waiting for node information'}
             aria-busy={copyState === 'pending'} aria-disabled={!ready || copyState === 'pending'}
             aria-describedby={message ? feedbackId : undefined}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-text)] disabled:cursor-not-allowed disabled:opacity-40 aria-disabled:opacity-40 sm:h-9 sm:w-9">
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-text)] disabled:cursor-not-allowed disabled:opacity-40 aria-disabled:opacity-40 sm:h-9 sm:w-9">
             <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               {copyState === 'copied' ? <path d="m5 12 4 4L19 6" /> : <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" /></>}
             </svg>

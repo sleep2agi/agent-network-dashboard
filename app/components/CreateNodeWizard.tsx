@@ -167,7 +167,7 @@ export function CreateNodeWizard({
   }
 
   const inputCls =
-    'w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-cyan-600 focus:outline-none';
+    'w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-cyan-600 focus:outline-none';
 
   return (
     <>
@@ -182,7 +182,7 @@ export function CreateNodeWizard({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <div className="text-sm font-semibold text-[var(--fg)]">新建节点</div>
-          <button onClick={onClose} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
+          <button onClick={onClose} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
@@ -285,7 +285,7 @@ export function CreateNodeWizard({
                         disabled={disabled}
                         onClick={() => { if (!disabled) { setRuntimeId(r.id); setModel(''); } }}
                         title={disabled ? `${daemon?.alias || '该 daemon'} 未声明支持此 runtime` : undefined}
-                        className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
+                        className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm transition-colors ${
                           disabled
                             ? 'border-[var(--border)] bg-[#0a0a0c] text-[var(--fg-dim)] cursor-not-allowed'
                             : selected
@@ -357,26 +357,26 @@ export function CreateNodeWizard({
         {/* Footer nav */}
         {phase === 'form' ? (
           <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
-            <button type="button" onClick={() => (step === 0 ? onClose() : setStep(step - 1))} className="rounded-md px-3 py-1.5 text-sm text-[var(--fg-muted)] hover:text-[var(--fg)]">
+            <button type="button" onClick={() => (step === 0 ? onClose() : setStep(step - 1))} className="rounded-lg px-3 py-1.5 text-sm text-[var(--fg-muted)] hover:text-[var(--fg)]">
               {step === 0 ? '取消' : '上一步'}
             </button>
             {step < STEPS.length - 1 ? (
-              <button type="button" disabled={!canNext} onClick={() => setStep(step + 1)} className={`rounded-md px-4 py-1.5 text-sm font-medium ${canNext ? 'bg-[var(--accent)] text-[var(--accent-fg)] hover:opacity-90' : 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed'}`}>
+              <button type="button" disabled={!canNext} onClick={() => setStep(step + 1)} className={`rounded-lg px-4 py-1.5 text-sm font-medium ${canNext ? 'bg-[var(--accent)] text-[var(--accent-fg)] hover:opacity-90' : 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed'}`}>
                 下一步
               </button>
             ) : (
-              <button type="button" onClick={handleCreate} className="rounded-md bg-[var(--success)] px-4 py-1.5 text-sm font-medium text-[var(--accent-fg)] hover:opacity-90">
+              <button type="button" onClick={handleCreate} className="rounded-lg bg-[var(--success)] px-4 py-1.5 text-sm font-medium text-[var(--accent-fg)] hover:opacity-90">
                 创建节点
               </button>
             )}
           </div>
         ) : (
           <div className="flex items-center justify-end border-t border-[var(--border)] px-4 py-3">
-            <button type="button" onClick={onClose} className="rounded-md bg-[var(--bg-elevated)] px-4 py-1.5 text-sm text-[var(--fg)] hover:bg-[var(--bg-elevated)]">
+            <button type="button" onClick={onClose} className="rounded-lg bg-[var(--bg-elevated)] px-4 py-1.5 text-sm text-[var(--fg)] hover:bg-[var(--bg-elevated)]">
               {phase === 'done' ? '完成' : '关闭'}
             </button>
             {(phase === 'error' || phase === 'unconfirmed') && (
-              <button type="button" onClick={() => setPhase('form')} className="ml-2 rounded-md bg-[var(--accent)] px-4 py-1.5 text-sm text-[var(--accent-fg)] hover:opacity-90">返回修改</button>
+              <button type="button" onClick={() => setPhase('form')} className="ml-2 rounded-lg bg-[var(--accent)] px-4 py-1.5 text-sm text-[var(--accent-fg)] hover:opacity-90">返回修改</button>
             )}
           </div>
         )}

@@ -48,7 +48,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <a
         href="#anet-main-content"
         data-testid="skip-to-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] focus:rounded-md focus:bg-[var(--bg-elevated)] focus:px-3 focus:py-2 focus:text-sm focus:text-[var(--fg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] focus:rounded-lg focus:bg-[var(--bg-elevated)] focus:px-3 focus:py-2 focus:text-sm focus:text-[var(--fg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
       >
         跳到主内容
       </a>

@@ -1055,7 +1055,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 aria-pressed={urgencySort}
                 title="只调整已加载条目的显示顺序（超期 → 今天 → 3 天内 → 其余），不改服务器排序，也不写任何数据"
                 onClick={toggleUrgencySort}
-                className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${urgencySort ? 'bg-[var(--bg-elevated)] text-[var(--danger)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+                className={`rounded-lg px-2.5 py-1 text-[11px] transition-colors ${urgencySort ? 'bg-[var(--bg-elevated)] text-[var(--danger)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
               >
                 按紧迫度
               </button>
@@ -1091,7 +1091,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               data-testid="requirements-summary-toggle"
               title="统计已加载结果的分布（不是全网总量）"
               onClick={() => setParam({ summary: summaryOpen ? '' : '1' })}
-              className={`whitespace-nowrap rounded-md border px-2 py-1 text-xs transition-colors ${summaryOpen ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
+              className={`whitespace-nowrap rounded-lg border px-2 py-1 text-xs transition-colors ${summaryOpen ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
             >
               汇总
             </button>
@@ -1101,14 +1101,14 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               data-testid="requirements-view-tree"
               title="按 parent_id 在已加载结果里分层显示"
               onClick={() => setParam({ tree: treeMode ? '' : '1', q: qInput, tag: tagInput })}
-              className={`whitespace-nowrap rounded-md border px-2 py-1 text-xs transition-colors ${treeMode ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
+              className={`whitespace-nowrap rounded-lg border px-2 py-1 text-xs transition-colors ${treeMode ? 'border-[var(--accent)] text-[var(--accent-text)]' : 'border-[var(--border)] text-[var(--fg-muted)] hover:text-gray-200'}`}
             >
               树状
             </button>
           <button
             type="button"
             onClick={() => { setProjectRefresh(n => n + 1); void load(); }}
-            className="hidden rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200 sm:block"
+            className="hidden rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200 sm:block"
           >
             Refresh
           </button>
@@ -1126,7 +1126,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 type="button"
                 onClick={() => setParam({ status: col.key })}
                 aria-pressed={active}
-                className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
+                className={`rounded-lg px-3 py-1.5 text-xs transition-colors ${
                   active
                     ? 'bg-[var(--bg-elevated)] text-gray-100'
                     : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'
@@ -1145,7 +1145,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             aria-pressed={overdue}
             data-testid="requirements-overdue-toggle"
             onClick={() => setParam({ overdue: overdue ? '' : '1', q: qInput, tag: tagInput })}
-            className={`rounded-md px-3 py-1.5 text-xs transition-colors ${overdue ? 'bg-[var(--bg-elevated)] text-[var(--danger)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+            className={`rounded-lg px-3 py-1.5 text-xs transition-colors ${overdue ? 'bg-[var(--bg-elevated)] text-[var(--danger)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
           >
             已逾期
           </button>
@@ -1182,7 +1182,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               data-testid="requirements-mine-toggle"
               title="只筛负责人是我的需求（不含我参与的）"
               onClick={() => setParam(mine ? { owner: '', agent_owner: '' } : { owner: mineOwner, agent_owner: '' })}
-              className={`ml-2 rounded-md px-3 py-1.5 text-xs transition-colors ${mine ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+              className={`ml-2 rounded-lg px-3 py-1.5 text-xs transition-colors ${mine ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
             >
               我负责
             </button>
@@ -1194,7 +1194,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               data-testid="requirements-participating-toggle"
               title="在已加载的结果里筛参与人是我；Hub 列表没有参与人查询参数"
               onClick={() => setParam({ participant: participating ? '' : mineOwner, q: qInput, tag: tagInput })}
-              className={`rounded-md px-3 py-1.5 text-xs transition-colors ${participating ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+              className={`rounded-lg px-3 py-1.5 text-xs transition-colors ${participating ? 'bg-[var(--bg-elevated)] text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
             >
               我参与
             </button>
@@ -1243,7 +1243,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               data-testid="requirements-clear-filters"
               onClick={clearFilters}
               title={`清空这些筛选：${activeFilterLabels.join('、')}`}
-              className="ml-auto rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] underline decoration-dotted underline-offset-2 hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              className="ml-auto rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] underline decoration-dotted underline-offset-2 hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
               清空筛选
               <span className="ml-1 tabular-nums text-[var(--fg-dim)]" data-testid="requirements-active-filter-count">{activeFilterLabels.length}</span>
@@ -1267,7 +1267,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             data-testid="requirements-mobile-filters"
             aria-expanded={mobileFiltersOpen}
             onClick={() => setMobileFiltersOpen(v => !v)}
-            className="rounded-md border border-[var(--border)] px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]"
+            className="rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]"
           >
             {mobileFiltersOpen ? '收起筛选' : `筛选${activeFilterLabels.length ? `（${activeFilterLabels.length}）` : ''}`}
           </button>
@@ -1277,7 +1277,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             data-testid="requirements-mobile-refresh"
             aria-label="刷新需求列表"
             onClick={() => { setProjectRefresh(n => n + 1); void load(); }}
-            className="min-h-9 rounded-md border border-[var(--border)] px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]"
+            className="min-h-9 rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]"
           >
             刷新
           </button>
@@ -1360,13 +1360,13 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               type="button"
               data-testid="requirements-manage-tags"
               onClick={() => setTagManagerOpen(true)}
-              className="rounded-md px-2 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              className="rounded-lg px-2 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
               管理标签
             </button>
           )}
           {archiveSupported === true && (
-            <label className={`flex min-h-11 items-center gap-2 rounded-md px-2.5 text-xs sm:min-h-9 ${searching ? 'cursor-pointer text-[var(--fg)]' : 'text-[var(--fg-muted)]'}`}>
+            <label className={`flex min-h-11 items-center gap-2 rounded-lg px-2.5 text-xs sm:min-h-9 ${searching ? 'cursor-pointer text-[var(--fg)]' : 'text-[var(--fg-muted)]'}`}>
               <input
                 type="checkbox"
                 checked={includeArchived}
@@ -1382,7 +1382,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             <button
               type="button"
               onClick={clearFilters}
-              className="rounded-md px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200"
+              className="rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200"
             >
               Clear filters
             </button>
@@ -1479,7 +1479,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               data-testid="requirements-bulk-toggle"
               aria-pressed={bulkMode}
               onClick={toggleBulkMode}
-              className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${bulkMode ? 'bg-[var(--bg-elevated)] text-[var(--fg)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
+              className={`rounded-lg px-2.5 py-1 text-[11px] transition-colors ${bulkMode ? 'bg-[var(--bg-elevated)] text-[var(--fg)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200'}`}
             >
               {bulkMode ? '退出批量' : '批量'}
             </button>
@@ -1490,7 +1490,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 aria-label={showAbandoned ? '收起已放弃列' : '展开已放弃列'}
                 aria-pressed={showAbandoned}
                 onClick={() => setShowAbandoned(value => !value)}
-                className="rounded-md px-2.5 py-1 text-[11px] text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200"
+                className="rounded-lg px-2.5 py-1 text-[11px] text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200"
               >
                 {showAbandoned ? '收起已放弃' : `已放弃 ${counts.abandoned || 0}`}
               </button>
@@ -1946,7 +1946,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             ref={loadMoreRef}
             disabled={loadingMore}
             onClick={() => load({ cursor, append: true })}
-            className="mx-auto mt-4 block rounded-md px-4 py-2 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200 disabled:opacity-50"
+            className="mx-auto mt-4 block rounded-lg px-4 py-2 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200 disabled:opacity-50"
           >
             {loadingMore ? '加载中…' : '加载更多'}
           </button>

@@ -110,7 +110,7 @@ export default function LogsPage() {
                 type="button"
                 onClick={() => setFilterAction(c.key)}
                 disabled={count === 0 && c.key !== ''}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 whitespace-nowrap ${
                   isActive
                     ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
                     : 'text-gray-500 hover:text-gray-200 hover:bg-[#1c1c1f] border border-transparent'
@@ -181,7 +181,7 @@ export default function LogsPage() {
                 style={{ backgroundColor: ACTION_STRIPE[log.action] || 'transparent' }}
               />
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className={`text-xs px-2 py-0.5 rounded-md border ${ACTION_COLORS[log.action] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-lg border ${ACTION_COLORS[log.action] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
                   {log.action}
                 </span>
                 {userName && <AliasAvatar alias={userName} size={16} />}

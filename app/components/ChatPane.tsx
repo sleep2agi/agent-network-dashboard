@@ -180,7 +180,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
             title={t('更多', 'More')}
             data-testid="chat-pane-more"
             data-menu-open={overflowOpen ? 'true' : 'false'}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:text-gray-200 hover:bg-[var(--bg-elevated)] transition-colors"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:text-gray-200 hover:bg-[var(--bg-elevated)] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <circle cx="12" cy="5" r="1.5" fill="currentColor" />
@@ -193,7 +193,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
             aria-label={t(`查看 ${alias} 的任务`, `View ${alias} tasks`)}
             title={t('查看任务', 'View tasks')}
             data-testid="chat-pane-view-tasks"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:text-gray-200 hover:bg-[var(--bg-elevated)] transition-colors"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:text-gray-200 hover:bg-[var(--bg-elevated)] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3M16 7V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -206,7 +206,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
             title={t('搜索（⌘/Ctrl+F）', 'Search (⌘/Ctrl+F)')}
             data-testid="chat-pane-search"
             data-search-enabled="true"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:text-gray-200 hover:bg-[var(--bg-elevated)] transition-colors"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:text-gray-200 hover:bg-[var(--bg-elevated)] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -217,7 +217,7 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
             onClick={onClose}
             aria-label={t('关闭会话', 'Close chat')}
             data-testid="chat-pane-close"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:text-gray-200 hover:bg-[var(--bg-elevated)] transition-colors"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:text-gray-200 hover:bg-[var(--bg-elevated)] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

@@ -337,14 +337,14 @@ function OrgContent() {
           <div className="flex items-center gap-2">
             <Link
               href="/legion"
-              className="inline-flex min-h-11 items-center rounded-md px-2.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0 sm:py-1.5"
+              className="inline-flex min-h-11 items-center rounded-lg px-2.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0 sm:py-1.5"
             >
               军团图
             </Link>
             <button
               type="button"
               onClick={() => load(offset, true)}
-              className="inline-flex min-h-11 items-center rounded-md px-2.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0 sm:py-1.5"
+              className="inline-flex min-h-11 items-center rounded-lg px-2.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0 sm:py-1.5"
             >
               Refresh
             </button>
@@ -366,7 +366,7 @@ function OrgContent() {
             <button
               type="button"
               onClick={() => { setQInput(''); setQuery(''); }}
-              className="rounded-md px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              className="rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
               Clear
             </button>
@@ -413,7 +413,7 @@ function OrgContent() {
                 type="button"
                 disabled={loading}
                 onClick={() => load(offset + PAGE, true)}
-                className="mx-auto mt-4 block rounded-md px-4 py-2 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-50"
+                className="mx-auto mt-4 block rounded-lg px-4 py-2 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-50"
               >
                 {loading ? '加载中…' : '加载更多'}
               </button>

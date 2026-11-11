@@ -786,7 +786,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               type="button"
               disabled={busy || req.column === opt.key}
               onClick={() => sendPatch({ column: opt.key })}
-              className={`rounded-md border px-2.5 py-1 text-xs transition-colors disabled:opacity-60 ${
+              className={`rounded-lg border px-2.5 py-1 text-xs transition-colors disabled:opacity-60 ${
                 req.column === opt.key
                   ? (COLUMN_CHIP[opt.key] || COLUMN_CHIP.abandoned)
                   : 'border-transparent text-gray-500 hover:bg-[var(--bg-elevated)] hover:text-gray-200'

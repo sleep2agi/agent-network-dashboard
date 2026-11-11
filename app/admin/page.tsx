@@ -99,7 +99,7 @@ export default function AdminPage() {
           { href: '#users',   label: 'Users' },
         ].map(a => (
           <a key={a.href} href={a.href}
-            className="inline-flex min-h-[44px] items-center rounded-md border border-[var(--border)] bg-[var(--bg)]/60 px-3 py-2 text-[var(--fg-muted)] hover:border-[var(--accent)]/50 hover:text-[var(--accent-text)] hover:bg-[var(--accent)]/10 transition-colors">
+            className="inline-flex min-h-[44px] items-center rounded-lg border border-[var(--border)] bg-[var(--bg)]/60 px-3 py-2 text-[var(--fg-muted)] hover:border-[var(--accent)]/50 hover:text-[var(--accent-text)] hover:bg-[var(--accent)]/10 transition-colors">
             {a.label}
           </a>
         ))}

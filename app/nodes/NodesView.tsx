@@ -608,7 +608,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
               key={mode}
               type="button"
               onClick={() => setViewMode(mode)}
-              className={`rounded-md px-3 py-1.5 transition-colors ${
+              className={`rounded-lg px-3 py-1.5 transition-colors ${
                 viewMode === mode
                   ? 'bg-cyan-500/10 text-cyan-300'
                   : 'text-gray-500 hover:text-gray-200'
@@ -678,7 +678,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
           <button
             type="button"
             onClick={() => mutateSessions()}
-            className="shrink-0 rounded-md px-2 py-1 text-[var(--hl)] hover:bg-[var(--hover-tint)]"
+            className="shrink-0 rounded-lg px-2 py-1 text-[var(--hl)] hover:bg-[var(--hover-tint)]"
           >
             {t('重试', 'Retry')}
           </button>
@@ -696,7 +696,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
           <button
             type="button"
             onClick={() => mutateSessions()}
-            className="mt-3 rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+            className="mt-3 rounded-lg bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
           >
             {t('重试', 'Retry')}
           </button>

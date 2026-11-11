@@ -214,7 +214,7 @@ export default function MessagesPage() {
         <div className="flex rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-0.5">
           {(['timeline', 'grouped'] as const).map(mode => (
             <button key={mode} type="button" onClick={() => setViewMode(mode)}
-              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${viewMode === mode ? 'bg-[var(--accent)]/10 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:text-[var(--fg)]'}`}>
+              className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors ${viewMode === mode ? 'bg-[var(--accent)]/10 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:text-[var(--fg)]'}`}>
               {mode === 'timeline' ? 'Timeline' : 'Grouped'}
             </button>
           ))}
@@ -286,7 +286,7 @@ export default function MessagesPage() {
           <button
             type="button"
             onClick={() => mutate()}
-            className="shrink-0 rounded-md px-2 py-1 text-[var(--hl)] hover:bg-[var(--hover-tint)]"
+            className="shrink-0 rounded-lg px-2 py-1 text-[var(--hl)] hover:bg-[var(--hover-tint)]"
           >
             重试
           </button>
@@ -306,7 +306,7 @@ export default function MessagesPage() {
           <button
             type="button"
             onClick={() => mutate()}
-            className="mt-3 rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+            className="mt-3 rounded-lg bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
           >
             重试
           </button>
@@ -379,7 +379,7 @@ export default function MessagesPage() {
                   <div className={samePrev ? 'mt-0.5 sm:mt-1' : 'mt-2 sm:mt-3'}>
                     <div className="rounded-2xl border border-white/[0.06] border-l-2 border-l-[var(--hl)] bg-[var(--bubble-in)] px-3 py-2 sm:px-4 sm:py-3 shadow-sm w-full">
                       <div className="mb-1 sm:mb-2 flex flex-wrap items-center gap-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-[var(--fg-muted)] border-gray-500/20'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-lg border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-[var(--fg-muted)] border-gray-500/20'}`}>
                           {message.type || 'unknown'}
                         </span>
                         <span className="text-sm font-medium text-[var(--fg)]">{fromAlias}</span>
@@ -413,7 +413,7 @@ export default function MessagesPage() {
                     }`}>
                       {!samePrev && (
                         <div className="mb-1 sm:mb-2 flex flex-wrap items-center gap-2">
-                          <span className={`text-xs px-2 py-0.5 rounded-md border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-[var(--fg-muted)] border-gray-500/20'}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-lg border ${TYPE_COLORS[message.type || ''] || 'bg-gray-500/10 text-[var(--fg-muted)] border-gray-500/20'}`}>
                             {message.type || 'unknown'}
                           </span>
                           <span className={`text-sm font-medium ${variant === 'outgoing' ? 'text-[var(--fg)]' : 'text-[var(--fg)]'}`}>

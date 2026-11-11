@@ -67,7 +67,7 @@ function detectPreset(baseUrl?: string): string {
 type Phase = 'form' | 'saving' | 'done' | 'unconfirmed' | 'error';
 
 const inputCls =
-  'w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-cyan-600 focus:outline-none';
+  'w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-cyan-600 focus:outline-none';
 
 function parseModels(text: string): string[] {
   return text.split(',').map(m => m.trim()).filter(Boolean);
@@ -188,7 +188,7 @@ export function ProviderFormModal({
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-3">
           <div className="text-sm font-semibold text-[var(--fg)]">{editing ? '编辑供应商' : '新增供应商'}</div>
-          <button onClick={onClose} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
+          <button onClick={onClose} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
@@ -197,7 +197,7 @@ export function ProviderFormModal({
 
         <div className="space-y-3 px-4 py-4">
           {phase === 'unconfirmed' || phase === 'error' ? (
-            <div className={`rounded-md border px-3 py-2 text-xs ${phase === 'unconfirmed' ? 'border-amber-500/30 bg-amber-500/5 text-[var(--warning)]' : 'border-red-500/30 bg-[var(--danger)]/5 text-red-300'}`}>
+            <div className={`rounded-lg border px-3 py-2 text-xs ${phase === 'unconfirmed' ? 'border-amber-500/30 bg-amber-500/5 text-[var(--warning)]' : 'border-red-500/30 bg-[var(--danger)]/5 text-red-300'}`}>
               {msg}
             </div>
           ) : null}
@@ -252,7 +252,7 @@ export function ProviderFormModal({
                       type="button"
                       key={m}
                       onClick={() => toggleModel(m)}
-                      className={`rounded-md border px-2.5 py-1 text-xs font-mono transition-colors ${on ? 'border-cyan-600 bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:border-gray-600'}`}
+                      className={`rounded-lg border px-2.5 py-1 text-xs font-mono transition-colors ${on ? 'border-cyan-600 bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:border-gray-600'}`}
                     >
                       {on ? '✓ ' : ''}{m}
                     </button>
@@ -289,12 +289,12 @@ export function ProviderFormModal({
         </div>
 
         <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-3">
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-[var(--fg-muted)] hover:text-[var(--fg)]">取消</button>
+          <button type="button" onClick={onClose} className="rounded-lg px-3 py-1.5 text-sm text-[var(--fg-muted)] hover:text-[var(--fg)]">取消</button>
           <button
             type="button"
             disabled={!canSave}
             onClick={handleSave}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium ${canSave ? 'bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent)]' : 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed'}`}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium ${canSave ? 'bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent)]' : 'bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed'}`}
           >
             {phase === 'saving' ? '保存中…' : phase === 'done' ? '✓ 已保存' : editing ? '保存' : '新增'}
           </button>

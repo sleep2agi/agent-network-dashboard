@@ -87,7 +87,7 @@ export default function LoginPage() {
         <div className="flex rounded-lg border border-[#26262b] bg-[#161618] p-1 mb-4">
           {(['login', 'register'] as const).map(m => (
             <button key={m} type="button" onClick={() => { setMode(m); setError(''); }}
-              className={`flex-1 rounded-md px-3 py-2 text-sm transition-colors ${mode === m ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-500 hover:text-gray-200'}`}>
+              className={`flex-1 rounded-lg px-3 py-2 text-sm transition-colors ${mode === m ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-500 hover:text-gray-200'}`}>
               {m === 'login' ? 'Sign in' : 'Register'}
             </button>
           ))}

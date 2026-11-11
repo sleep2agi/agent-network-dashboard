@@ -116,7 +116,7 @@ export default function SettingsPage() {
             <a
               key={s.id}
               href={`#${s.id}`}
-              className="inline-flex min-h-[44px] shrink-0 items-center rounded-md px-3 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
               {s.label}
             </a>

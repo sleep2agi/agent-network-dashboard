@@ -110,7 +110,7 @@ export function CreateRequirement({ networkId, onCreated }: {
         type="button"
         data-testid="requirements-create-open"
         onClick={() => { setOpen(true); setError(''); }}
-        className="rounded-md bg-[var(--hl)] px-2.5 py-1.5 text-xs font-medium text-[var(--bg)] transition-opacity hover:opacity-90"
+        className="rounded-lg bg-[var(--hl)] px-2.5 py-1.5 text-xs font-medium text-[var(--bg)] transition-opacity hover:opacity-90"
       >
         新建需求
       </button>
@@ -187,9 +187,9 @@ export function CreateRequirement({ networkId, onCreated }: {
               </label>
               {error && <p role="alert" className="text-xs text-[var(--danger)]">{error}</p>}
               <div className="flex items-center justify-end gap-2 pt-1">
-                <button type="button" onClick={() => { if (!busy) setOpen(false); }} className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]">取消</button>
+                <button type="button" onClick={() => { if (!busy) setOpen(false); }} className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]">取消</button>
                 <button type="button" onClick={() => void submit()} disabled={busy} data-testid="requirements-create-submit"
-                  className="rounded-md bg-[var(--hl)] px-3 py-1.5 text-xs font-medium text-[var(--bg)] disabled:opacity-60">
+                  className="rounded-lg bg-[var(--hl)] px-3 py-1.5 text-xs font-medium text-[var(--bg)] disabled:opacity-60">
                   {busy ? '创建中…' : '创建'}
                 </button>
               </div>

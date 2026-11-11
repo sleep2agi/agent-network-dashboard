@@ -883,7 +883,7 @@ export default function LegionPage() {
               <button
                 type="button"
                 onClick={() => setCollapsed(new Set())}
-                className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+                className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
               >
                 全部展开（{collapsed.size}）
               </button>
@@ -894,7 +894,7 @@ export default function LegionPage() {
               aria-expanded={mobileToolsOpen}
               aria-controls="legion-more-tools-panel"
               onClick={() => setMobileToolsOpen(v => !v)}
-              className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:hidden"
+              className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:hidden"
             >
               {mobileToolsOpen ? '收起操作' : '更多操作'}
             </button>
@@ -909,7 +909,7 @@ export default function LegionPage() {
               aria-pressed={isFullscreen}
               aria-label={isFullscreen ? '退出全屏' : '全屏查看'}
               data-testid="legion-fullscreen"
-              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${isFullscreen ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+              className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors ${isFullscreen ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
             >
               {isFullscreen ? '退出全屏' : '全屏'}
             </button>
@@ -919,7 +919,7 @@ export default function LegionPage() {
               aria-pressed={cleanView}
               aria-label={cleanView ? '恢复界面' : '净屏（隐藏界面）'}
               data-testid="legion-clean"
-              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+              className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
             >
               {cleanView ? '恢复界面' : '净屏'}
             </button>
@@ -928,7 +928,7 @@ export default function LegionPage() {
               onClick={exportPng}
               disabled={exporting}
               data-testid="legion-export"
-              className="rounded-md bg-[var(--bg-elevated)] px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] disabled:opacity-50"
+              className="rounded-lg bg-[var(--bg-elevated)] px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] disabled:opacity-50"
             >
               {exporting ? '导出中…' : '导出 PNG'}
             </button>
@@ -943,7 +943,7 @@ export default function LegionPage() {
               aria-expanded={listOpen}
               aria-controls="legion-node-list"
               data-testid="legion-list-toggle"
-              className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
               {listOpen ? '收起列表' : '节点列表'}
             </button>
@@ -956,7 +956,7 @@ export default function LegionPage() {
                 return node && node.kind === 'group' ? `/legion/3d?focus=${encodeURIComponent(node.label)}` : '/legion/3d';
               })()}
               data-testid="legion-3d-link"
-              className="rounded-md bg-[var(--accent)]/15 px-2.5 py-1.5 text-xs text-[var(--accent-text)] hover:bg-[var(--accent)]/25"
+              className="rounded-lg bg-[var(--accent)]/15 px-2.5 py-1.5 text-xs text-[var(--accent-text)] hover:bg-[var(--accent)]/25"
             >
               3D 视图
             </Link>
@@ -980,7 +980,7 @@ export default function LegionPage() {
                 }
                 window.setTimeout(() => setShareInfo(''), 2500);
               }}
-              className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
               复制链接
             </button>
@@ -990,11 +990,11 @@ export default function LegionPage() {
             <Link
               href="/legion/plaza"
               data-testid="legion-plaza-link"
-              className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
               平台视角
             </Link>
-            <Link href="/org" className="rounded-md px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
+            <Link href="/org" className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
               列表视图
             </Link>
             </span>
@@ -1147,7 +1147,7 @@ export default function LegionPage() {
                             setHovered(null);
                           }
                         }}
-                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hl)] focus-visible:outline-offset-1 ${
+                        className={`flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hl)] focus-visible:outline-offset-1 ${
                           selected === n.id
                             ? 'bg-[var(--accent)]/15 text-[var(--fg)]'
                             : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'
@@ -1544,7 +1544,7 @@ export default function LegionPage() {
                   {selectedNode.kind === 'agent' && (
                     <Link
                       href={`/nodes/${encodeURIComponent(selectedNode.label)}`}
-                      className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                      className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
                     >
                       打开会话
                     </Link>
@@ -1554,7 +1554,7 @@ export default function LegionPage() {
                       <button
                         type="button"
                         onClick={() => setFocusGroup(f => (f === selectedNode.id ? null : selectedNode.id))}
-                        className="inline-flex w-full items-center justify-center rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                        className="inline-flex w-full items-center justify-center rounded-lg bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
                       >
                         {focusGroup === selectedNode.id ? '取消聚焦' : '只看这个部门'}
                       </button>
@@ -1563,7 +1563,7 @@ export default function LegionPage() {
                           type="button"
                           data-testid="legion-toggle-collapse"
                           onClick={() => toggleCollapse(selectedNode.id)}
-                          className="inline-flex w-full items-center justify-center rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                          className="inline-flex w-full items-center justify-center rounded-lg bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
                         >
                           {collapsed.has(selectedNode.id)
                             ? `展开下级（${selectedNode.hiddenMembers ?? selectedNode.memberCount} 人 / ${selectedNode.hiddenAgents ?? selectedNode.agentCount} Agent）`
@@ -1579,7 +1579,7 @@ export default function LegionPage() {
                           <button
                             type="button"
                             onClick={() => setSelected(child.id)}
-                            className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
+                            className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]"
                           >
                             <span className="truncate">{child.label}</span>
                             <span className="ml-2 shrink-0 text-[11px] text-[var(--fg-muted)]">
