@@ -334,7 +334,7 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
     const orphanGroup = groups.find(g => g.label === ORPHAN_GROUP);
     // .475（#3070）：未知部门聚合为**一个**分组，标签「N 个未登记」（数量在前，
     // 因为窄屏按盘半径截断标签，数量在前才不会被截掉）。
-    const unknownGroups = groups.filter(g => g.label.includes('个未登记'));
+    const unknownGroups = groups.filter(g => /^\d+ 个$/.test(g.label));
     expect(unknownGroups.length).toBe(1);
     const unknownGroup = unknownGroups[0];
     const byId = new Map(layout.nodes.map(n => [n.id, n]));
@@ -342,7 +342,7 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
     expect(byId.get('agent:n_known')?.parentId).toBe(design.id);
     expect(byId.get('agent:n_none')?.parentId).toBe(orphanGroup.id);
     expect(byId.get('agent:n_unknown')?.parentId).toBe(unknownGroup.id);
-    expect(unknownGroup.label).toBe('1 个未登记');
+    expect(unknownGroup.label).toBe('1 个');
     // 原始 id 不再写进标签（避免长标签被截断后只剩半截词），但 Agent 数据里仍保留
     expect(unknownGroup.label).not.toContain('d_gone');
     // 计数与折叠角标按真实可见内容算，不能只算 people。
@@ -366,10 +366,10 @@ describe('#1636 军团折叠 — 折叠只影响可见节点，不改变统计�
       ],
     });
     const groups = layout.nodes.filter(n => n.kind === 'group');
-    const unknownGroups = groups.filter(g => g.label.includes('个未登记'));
+    const unknownGroups = groups.filter(g => /^\d+ 个$/.test(g.label));
     // 关键不变量：分组数不随未知 id 数量线性增长
     expect(unknownGroups.length).toBe(1);
-    expect(unknownGroups[0].label).toBe('3 个未登记');
+    expect(unknownGroups[0].label).toBe('3 个');
     // 三个 Agent 仍全部可见，且都挂在这个聚合组下
     const ids = ['agent:n_u1', 'agent:n_u2', 'agent:n_u3'].map(id => layout.nodes.find(n => n.id === id));
     expect(ids.every(n => n && n.parentId === unknownGroups[0].id)).toBe(true);
