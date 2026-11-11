@@ -84,7 +84,7 @@ const TIER_NUM = (() => {
   const n = Number(raw);
   return Number.isFinite(n) && n >= 0.6 && n <= 2.2 ? n : null;
 })();
-const LOOK_TIER = TIER_NUM ?? (TIER_PARAM === '0' ? 1 : 1.6);
+const LOOK_TIER = TIER_NUM ?? (TIER_PARAM === '0' ? 1 : 1.3);
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
 // 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
