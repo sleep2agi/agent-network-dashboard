@@ -8,6 +8,9 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ## 0.6.4-preview.492 — 2026-11-11
 
+> 版本谱系：`.491` 构建完成后**未发布**（首帧圆角跳变被拦下），内容并入本版；
+> `releases/preview.491-f864d3b` 目录是那次构建的残留，**不是线上版本**。
+
 ### 更正与修复：小控件圆角改为「上限 + 判据」两条规则协作
 
 **先说更正**：`.490` 把失败横幅关闭按钮的 class 从 `rounded-lg` 改回 `rounded-md`，
