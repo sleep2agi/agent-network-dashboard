@@ -1287,6 +1287,26 @@ export default function Legion3DPage() {
       grad.addColorStop(1, 'rgba(0,0,0,0)');
       g2.fillStyle = grad;
       g2.fillRect(0, 0, size.width, size.height);
+      // 中心光井（`.499` / `.500` 修正）：圆心那块空地需要一点"核"的光，把视线收过去。
+      // `.499` 第一版是**逐帧**画这层径向渐变，结果 legion 的 perf:denseMedianFrame 断言掉档
+      // （271/272）——整屏渐变在软件光栅上并不便宜。
+      // 改为烘焙进这层缓存背景（重建只发生在主题/尺寸/演示态变化时）⇒ 逐帧零成本。
+      {
+        const wellR = Math.min(size.width, size.height) * 0.42;
+        const well = g2.createRadialGradient(size.width / 2, size.height * 0.5, wellR * 0.12,
+          size.width / 2, size.height * 0.5, wellR);
+        const a0 = present ? 0.20 : dark ? 0.17 : 0.09;
+        well.addColorStop(0, hexToRgba(bgAccent, a0));
+        well.addColorStop(0.55, hexToRgba(bgAccent, a0 * 0.35));
+        well.addColorStop(1, hexToRgba(bgAccent, 0));
+        g2.save();
+        if (dark) g2.globalCompositeOperation = 'lighter';
+        g2.fillStyle = well;
+        g2.beginPath();
+        g2.arc(size.width / 2, size.height * 0.5, wellR, 0, Math.PI * 2);
+        g2.fill();
+        g2.restore();
+      }
       g2.fillStyle = tk.fg;
       for (const st of starsRef.current) {
         g2.globalAlpha = Math.min(1, st.a * (fxOn() ? FX.starBoost : 1));
@@ -1785,26 +1805,6 @@ export default function Legion3DPage() {
           ctx.fill();
           ctx.restore();
         }
-      }
-
-      // 中心光井（`.499`）：圆心那块空地原本只有 N 与「军团」，看着像"没画完"。
-      // 之前试过在中心加规模文字，实测与标签/部门盘叠压（证据 evidence/legion-3d-499-core/），已否。
-      // 改为**只加光**：以核心为圆心铺一层极淡的径向辉光，把视线收向中心，不占任何版面。
-      if (core) {
-        const wellR = Math.min(size.width, size.height) * 0.42;
-        const well = ctx.createRadialGradient(core.projected.x, core.projected.y, wellR * 0.12,
-          core.projected.x, core.projected.y, wellR);
-        const a0 = dark ? 0.17 : 0.09;
-        well.addColorStop(0, hexToRgba(tk.accent, a0));
-        well.addColorStop(0.55, hexToRgba(tk.accent, a0 * 0.35));
-        well.addColorStop(1, hexToRgba(tk.accent, 0));
-        ctx.save();
-        ctx.globalCompositeOperation = dark ? 'lighter' : 'source-over';
-        ctx.fillStyle = well;
-        ctx.beginPath();
-        ctx.arc(core.projected.x, core.projected.y, wellR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
       }
 
       // 部门扇区：把每个部门在环上占的弧度画成一段半透明弧带。
