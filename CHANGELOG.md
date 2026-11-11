@@ -6,6 +6,42 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.491 — 2026-11-11
+
+### 更正与修复：小控件圆角改为「上限 + 判据」两条规则协作
+
+**先说更正**：`.490` 把失败横幅关闭按钮的 class 从 `rounded-lg` 改回 `rounded-md`，
+但那条 class 被 `[data-radius-tier="item"] { border-radius: 8px !important }` 覆盖，
+**视觉上并未生效**（16px 高、8px 半径 = 0.5，仍是"药丸"）。
+**发布成功 ≠ 问题修好** —— 这句话留在 CHANGELOG 里比修好那个按钮更重要。
+
+**根因是两套标准在 16–32px 区间冲突**：
+- tier 规则（既有，与客户端对齐）：渲染高度 ≤32px 的控件打 `item` 标 → 强制 8px
+- r/h 规则（上一版新立）：圆角/高度 ≤ 1/3，> 0.4 视为药丸
+
+**本版改成「上限 + 判据」分离**（设计师裁定）：
+```
+tier 决定「上限 8px」；r/h 决定「能否到这个上限」：
+  h ≥ 24px      → 8px
+  18 ≤ h < 24px → 6px
+  h < 18px      → 4px
+```
+实现：`[data-radius-tier="item"]` 改为 `border-radius: var(--item-radius, 8px) !important`，
+由 `useRadiusTier.ts` 按渲染高度算出具体值写入变量。**两条规则从此不可能互相覆盖。**
+
+### 已验证
+
+- 7 页实测：**不存在 r/h > 0.4 的元素**（真实违规 0；唯一例外是 `sr-only` skip-link 的 1px 假象，
+  Tab 聚焦后 36px、8/36 = 0.22）
+- `/nodes` 的 18 个 item 控件实测分桶：h<18 共 9 个 → **4px**；18–23 共 1 个 → **6px**；h≥24 共 8 个 → **8px**
+- `tsc` 通过 · 单测 58/58 · 构建通过 · 主 CI 四条绿
+
+### 未验证 / 已知残余
+
+- 圆角后续批次（R2–R6）尚未开始；本版只解决"上限与判据"的规则冲突。
+- `rounded-md` 类仍留在少数小控件上（被 tier 覆盖，不影响渲染），后续可清理。
+- A/B 两个军团预览开关仍默认关闭（默认值待 admin 决定）。
+
 ## 0.6.4-preview.490 — 2026-11-11
 
 ### 修复：失败横幅的关闭按钮圆角回到 6px
