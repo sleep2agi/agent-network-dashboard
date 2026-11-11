@@ -390,6 +390,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     value={filterFrom}
                     onChange={(e) => setFilterFrom(e.target.value)}
                     placeholder="any"
+                    aria-label="起始日期"
                     data-testid="tasks-filter-from"
                     className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
@@ -401,6 +402,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     value={filterTo}
                     onChange={(e) => setFilterTo(e.target.value)}
                     placeholder="any"
+                    aria-label="结束日期"
                     data-testid="tasks-filter-to"
                     className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
