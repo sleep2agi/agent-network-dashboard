@@ -14,7 +14,9 @@ const mobile = readFileSync('app/components/MobileNav.tsx', 'utf8');
 
 check('page lists schedules through dashboard proxy', page.includes("fetch(`/api/hub/scheduled-tasks${query}`"));
 check('page loads stable node inventory', page.includes("fetch(`/api/hub/nodes${query}`") && page.includes('target_node_id: targetNodeId'));
-check('creation requires one selected network and node load cannot fail silently', page.includes("setError('请先在左侧选择一个网络')") && page.includes('if (!nodeRes.ok)'));
+// 2026-11-11：读取失败改为独立状态 loadError（与「操作失败」的 error 分开），
+// 因为读取失败必须替换列表（否则会把"没权限"显示成"还没有计划"）。断言随之指向 loadError。
+check('creation requires one selected network and node load cannot fail silently', page.includes("setLoadError('请先在左侧选择一个网络')") && page.includes('if (!nodeRes.ok)'));
 check('all four schedule forms are presented', ['once', 'interval', 'daily', 'weekly'].every(x => page.includes(`value=\"${x}\"`)));
 check('management actions exist', ['run-now', "method: 'PATCH'", '/runs'].every(x => page.includes(x)));
 // Cancel goes through POST /cancel, not DELETE. Some reverse proxies swallow

@@ -237,11 +237,32 @@ export default function ScheduledTasksPage() {
   return <ScheduledTasks key={networkId} networkId={networkId} />;
 }
 
+/**
+ * Hub 的权限类错误码是给程序看的（user_token_required / forbidden / 403）。
+ * 直接铺到界面上时，用户只看到一串英文，既不知道"为什么看不到数据"，也不知道下一步能做什么——
+ * 而列表同时渲染成「还没有 Hub 定时任务」，会把"没权限"误读成"本来就没有计划"。
+ * 这里把已知码翻成人话 + 出口；未知错误原样透出（不丢信息）。
+ */
+function describeLoadError(raw: string): { reason: string; hint: string } | null {
+  const text = raw.toLowerCase();
+  if (text.includes('user_token_required') || text.includes('forbidden') || text.includes('403')) {
+    return {
+      reason: '当前会话没有读取 Hub 定时任务的权限（需要用户登录 / admin 账号）。',
+      hint: '用 admin 账号登录后刷新；节点令牌只能接收任务，不能管理 Hub 计划表。',
+    };
+  }
+  if (text.includes('network')) {
+    return { reason: '还没有确定当前网络。', hint: '先在左侧选择网络，再查看定时任务。' };
+  }
+  return null;
+}
 function ScheduledTasks({ networkId }: { networkId: string }) {
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
   const [nodes, setNodes] = useState<NodeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // 读取失败与「操作失败」分开：前者要替换列表（避免空态误导），后者只做顶部提示
+  const [loadError, setLoadError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ScheduleRow | null>(null);
   const [busy, setBusy] = useState(false);
@@ -264,7 +285,8 @@ function ScheduledTasks({ networkId }: { networkId: string }) {
   const query = networkId ? `?network_id=${encodeURIComponent(networkId)}` : '';
   const load = useCallback(async () => {
     if (!networkId) {
-      setSchedules([]); setNodes([]); setLoading(false); setError('请先在左侧选择一个网络');
+      setSchedules([]); setNodes([]); setLoading(false); setError('');
+      setLoadError('请先在左侧选择一个网络');
       return;
     }
     try {
@@ -279,8 +301,9 @@ function ScheduledTasks({ networkId }: { networkId: string }) {
       setSchedules(scheduleData.schedules || []);
       setNodes((nodeData.nodes || []).filter((n: NodeRow) => n.node_id && n.alias));
       setError('');
+      setLoadError('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setLoadError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
@@ -441,9 +464,11 @@ function ScheduledTasks({ networkId }: { networkId: string }) {
           <h1 className="text-2xl font-bold text-[var(--fg)] lg:ml-0 ml-10">定时任务</h1>
           <p className="mt-1 text-sm text-[var(--fg-dim)]">由 Hub 统一调度；节点只接收普通任务，离线时自动排队。</p>
         </div>
-        <button type="button" onClick={openCreate} className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-semibold text-[var(--bg)] hover:opacity-90">
-          {showForm && !editing ? '收起' : '新建计划'}
-        </button>
+        {!loadError && (
+          <button type="button" onClick={openCreate} className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-semibold text-[var(--bg)] hover:opacity-90">
+            {showForm && !editing ? '收起' : '新建计划'}
+          </button>
+        )}
       </div>
 
       {error && <div className="mb-5 rounded-lg border border-[var(--danger)] bg-[var(--hover-tint)] px-4 py-3 text-sm text-[var(--danger)]">{error}</div>}
@@ -468,7 +493,31 @@ function ScheduledTasks({ networkId }: { networkId: string }) {
         </section>
       )}
 
-      {loading ? <div className="py-20 text-center text-[var(--fg-dim)]">加载中…</div> : (() => {
+      {loading ? <div className="py-20 text-center text-[var(--fg-dim)]">加载中…</div> : loadError ? (
+        (() => {
+          const friendly = describeLoadError(loadError);
+          return (
+            <div
+              data-testid="schedules-load-error"
+              role="alert"
+              className="rounded-2xl border border-[var(--danger)] bg-[var(--bg-secondary)] p-6 text-sm"
+            >
+              <p className="font-semibold text-[var(--danger)]">
+                {friendly ? friendly.reason : `读取定时任务失败：${loadError}`}
+              </p>
+              {friendly && <p className="mt-2 text-[var(--fg-muted)]">{friendly.hint}</p>}
+              <p className="mt-3 font-mono text-xs text-[var(--fg-dim)]">原始错误：{loadError}</p>
+              <button
+                type="button"
+                onClick={() => void load()}
+                className="mt-4 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)]"
+              >
+                重试
+              </button>
+            </div>
+          );
+        })()
+      ) : (() => {
         // Cancelled schedules are terminal — hide them from the default view.
         // Server still stores history for the audit trail, but the list is
         // meant for "what's on the calendar going forward", not "what ever
