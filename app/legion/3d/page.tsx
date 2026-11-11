@@ -95,6 +95,8 @@ const HIER_WEIGHTS = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('weights') === '1';
 const DEPT_STROKE = { primary: 3.5, secondary: 1, base: 1.6 };
 
+
+
 // B 案（神明 2026-11-11 决定）：「从中心展开」入场——中枢先亮，再按层由内向外点亮，连线随之长出。
 // · 只改**不透明度**，不改几何 ⇒ 展开过程中不可能引入新的重叠；
 // · 总时长 1500ms（神明上限），慢设备沿用既有降级（本改动不参与降级判定）；
@@ -1435,7 +1437,11 @@ export default function Legion3DPage() {
         ctx.fillStyle = tk.bg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // 背板可能被降档（交互期 RES_LOW / `?dynres=1` 的自适应档位），
+      // 变换必须跟着 resScale 一起缩：否则绘制仍按满 dpr 展开，
+      // 超出缩小后的背板会被裁掉、再被 CSS 放大——表现为「画面只剩左上角且变大」。
+      // 2026-11-11 实测：dpr=2 + 0.58 档时背板 1429×1044 而绘制覆盖 2464×1800 的区域。
+      ctx.setTransform(dpr * resScale, 0, 0, dpr * resScale, 0, 0);
 
       // 极少量视差微尘：给纯色底一点空间深度，不参与命中或语义。
       if (!interacting && DUST.length) {
