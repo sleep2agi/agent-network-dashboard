@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.493` |
-| commit | `0d5859551750ede44255a9c52d81275ad481e5bd` |
+| 版本 | `0.6.4-preview.498` |
+| commit | `f470dabac2af96d53faf4154d7e3173f5eb574d2` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.493-0d58595` |
-| 回滚锚点 | `preview.492-f1956e3`（切 cwd + `pm2 restart anet-dashboard`）—— **锚点随发布前移**，`.490` 目录已清理 |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.498-f470dab` |
+| 回滚锚点 | `preview.497-b1cc207`（切 cwd + `pm2 restart anet-dashboard`） |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -49,6 +49,30 @@
 | `deploy/publish-NNN.py` | 同上判据内联在发布脚本里（docs-ahead 是断言，不是声明） |
 | `deploy/diff-guard.py` | 视图差异分类：结构/文本/类名/数据必须 0 差异；chunk 引用/buildId/哈希允许并记录 |
 | `evidence/probes/geom-compare.mjs` | 几何对照先锁节点集，集合不同 ⇒ INVALID，不得输出位移数字 |
+
+## 军团 3D 现场口径（`.498`，可复现）
+
+```
+探针：evidence/legion-3d-fit-495/  ·  evidence/legion-3d-pitch-497/  ·  evidence/legion-3d-497-live/
+读数：?perf=1 的 HUD 显示 fps · p50 · 背板 · dpr · scale · **边距 Npx** · run/f/size
+
+结论一（已修）：取景此前有两条"静默放弃/推断触发"路径
+  · 目标比例放不下 ⇒ return null ⇒ 退回默认 zoom（边距 133px）
+  · 只靠"尺寸漂移"推断该不该取景 ⇒ 数据晚到后不再触发
+结论二（已修）：取景曾与三类时变量纠缠 —— 标签矩形（反馈环）、自转 yaw、呼吸/dolly
+  现按 8 个 yaw 取并集 + 规范相机 + 挂载 1.5s 收束取景
+结论三（已知项，未修）：首屏 zoom 仍在 113–121 摆动（约 ±7%）
+  已排除 8 个候选（数据/安全区/投影复用/yaw/周期自愈/呼吸+dolly/事件时刻/标签）
+  彻底消除需改为**解析式取景**（由环半径与层高直接算），单独立项
+```
+
+## 被否掉的方案（保留证据，避免重复提案）
+
+| 提案 | 结论 | 证据 |
+|---|---|---|
+| 圆心加规模文字（`349 Agent` / `14 部门 · 9 成员`） | **否**：与「军团」标签、部门盘叠压，观感更差 | `evidence/legion-3d-499-core/desktop.png` |
+| 部门标签矩形并入取景包围盒 | **否**：标签位置依赖 zoom ⇒ 反馈环 ⇒ 三个不动点 | 4 次加载 zoom 122/116/126 |
+
 
 ## 基线（绑定 `.487`/`.488`）
 
