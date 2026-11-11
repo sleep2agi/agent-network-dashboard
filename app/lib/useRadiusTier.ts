@@ -24,9 +24,16 @@ function mark(): void {
     const h = el.getBoundingClientRect().height;
     // 隐藏元素（h=0）不参与：它们没有可判断的渲染高度，保持现状即可。
     if (h > 0 && h <= ITEM_MAX_HEIGHT) {
+      // r/h 规则（设计师 2026-11-11）：tier 给上限 8px，r/h 给约束 r ≤ h/3
+      //   h ≥ 24 → 8 · 18 ≤ h < 24 → 6 · h < 18 → 4
+      const px = h >= 24 ? 8 : h >= 18 ? 6 : 4;
       if (el.dataset.radiusTier !== 'item') el.dataset.radiusTier = 'item';
+      if (el.style.getPropertyValue('--item-radius') !== `${px}px`) {
+        el.style.setProperty('--item-radius', `${px}px`);
+      }
     } else if (el.dataset.radiusTier === 'item') {
       delete el.dataset.radiusTier;
+      el.style.removeProperty('--item-radius');
     }
   }
 }
