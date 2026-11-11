@@ -2017,6 +2017,7 @@ export default function Legion3DPage() {
         }
         ctx.restore();
       }
+      let edgeEnergy = 0;
       for (const e of edgeDraws) {
         ctx.beginPath();
         ctx.moveTo(e.a.projected.x, e.a.projected.y);
@@ -2028,15 +2029,23 @@ export default function Legion3DPage() {
         // 让视线先落在军团核心、再顺骨架往外读；不再是一整片等亮的发丝。
         // depthFade：部门(radius≈0.5)≈0.84，Agent 环(0.86–1.04)≈0.68。
         const depthFade = 1 - 0.5 * Math.min(1, e.b.item.radius ?? 1);
+        // 长度衰减（.501）：穿过画面中心的超长叶子连线是"扇形噪光"的主要来源。
+        // 短边（同部门内部）保持清晰，越长的边越淡；主干（部门父子关系）不受影响。
+        const chordLen = Math.hypot(e.b.projected.x - e.a.projected.x, e.b.projected.y - e.a.projected.y);
+        const lenFade = e.trunk ? 1 : Math.max(0.3, Math.min(1, 180 / Math.max(90, chordLen)));
         const baseAlpha = e.lit
           ? (activeSet ? 0.65 : e.trunk ? (dark ? 0.72 : 0.62) : (dark ? 0.2 * depthFade : 0.2 * depthFade))
           : 0.045;
         // B 案：连线跟随目标所在层点亮（与光晕/流光共用同一取值）
         const edgeReveal = edgeRevealOf(e);
         if (edgeReveal <= 0) continue;
-        ctx.globalAlpha = Math.min(1, baseAlpha * LINK_BOOST * edgeReveal);
+        ctx.globalAlpha = Math.min(1, baseAlpha * LINK_BOOST * edgeReveal * lenFade);
         ctx.lineWidth = e.trunk ? 1.8 : huge ? 0.7 : e.lit && activeSet ? 1.4 : dark ? 0.75 : 0.8;
         ctx.stroke();
+        edgeEnergy += ctx.globalAlpha * chordLen;
+      }
+      if (PERF_HUD && canvasRef.current && frame % 30 === 0) {
+        canvasRef.current.dataset.edgeEnergy = (edgeEnergy / 1000).toFixed(1);
       }
       // Continuous tapered trails read as light flow rather than scattered dots.
       // Prefer department links; sample leaf links and cap total decorations.
