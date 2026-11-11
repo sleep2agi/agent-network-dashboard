@@ -97,6 +97,12 @@ interface NodesResp { nodes?: Array<{
   // 节点权限（RFC-041）：normal / readonly / restricted；viewer_can 表示当前登录能否改。
   permission_mode?: string | null;
   viewer_can?: { permission_mode?: boolean } | null;
+  /** 节点归属主机（/servers 按主机分组用；lite 投影已保留） */
+  server?: string | null;
+  hostname?: string | null;
+  /** 会话状态（lite 投影保留 status/agent） */
+  status?: string | null;
+  agent?: string | null;
 }>; }
 export function useNodeLifecycle() {
   const { networkId, ready } = useNetworkId();
@@ -110,6 +116,14 @@ export function useNodeLifecycle() {
   // store fresh. Effect (not render): hydrate dispatches an event that
   // re-renders avatar consumers — doing that mid-render would warn.
   useEffect(() => { hydrateHubAvatars(data?.nodes); }, [data]);
+  // 按主机分组：/servers 用它列出「这台机器上有哪些节点」（客户端 DaemonManagement 的等价能力）
+  const nodesByServer: Record<string, Array<{ alias: string; status?: string | null; lifecycle_state?: string | null }>> = {};
+  for (const n of data?.nodes ?? []) {
+    if (!n.alias) continue;
+    const host = (typeof n.server === 'string' && n.server) || (typeof n.hostname === 'string' && n.hostname) || '';
+    if (!host) continue;
+    (nodesByServer[host] ||= []).push({ alias: n.alias, status: n.status ?? null, lifecycle_state: n.lifecycle_state ?? null });
+  }
   const lifecycleByAlias: Record<string, string> = {};
   const nodeIdByAlias: Record<string, string> = {};
   const attrsByAlias: Record<string, NodeAttrsSnapshot> = {};
@@ -127,7 +141,7 @@ export function useNodeLifecycle() {
       };
     }
   }
-  return { lifecycleByAlias, nodeIdByAlias, attrsByAlias, error, refreshNodes: mutate };
+  return { lifecycleByAlias, nodeIdByAlias, attrsByAlias, nodesByServer, error, refreshNodes: mutate };
 }
 export type { NodeAttrsSnapshot };
 
