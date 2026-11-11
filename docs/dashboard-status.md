@@ -76,9 +76,12 @@ CI：gates（含字号/颜色两条审美棘轮）· unit tests · scrub-guard �
 ```
 几何对照（.487 vs .488，同一探针 evidence/probes/geom2d.mjs）：
   80 节点 · 共同 id 80 · 坐标不同 0 · 两侧独有 id 0
-⇒ 2D 视图节点位置未变；字节差异属产物层（共享 hooks / lite 字段清单进入客户端 chunk）
-⇒ 能证明的只有"几何 0 差异"，"chunk 引用变化"是与之一致的推测，不作结论
-证据：evidence/legion-2d-488/{geom-487.json, geom-488.json}
+⇒ 几何：2D 视图节点位置未变（80 节点 · 坐标 0 差异）
+⇒ 归一化 HTML diff（去掉 chunk 名 / 内联脚本 / 长 ID / 时间戳后）：
+   class 集合一致（195）· 可见文本一致（343 字符）· data-* 一致
+   标签只多 1 个 <script>（.488 多引一个 chunk）· src/href 7 处不同且全部是 chunk 名
+⇒ 结构 / 文本 / class / data 均未变，差异只在产物层（chunk 引用）
+证据：evidence/legion-2d-488/{geom-487.json, geom-488.json, html-diff.txt, diff-legion-html.py}
 ```
 
 ### 历史版本对照跑法（跨轮次进程需脱离会话）
