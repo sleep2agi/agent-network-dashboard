@@ -830,7 +830,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
                 <div className="mt-3 rounded-lg bg-[var(--bg)] px-3 py-2 text-xs">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-[11px] uppercase tracking-wide text-gray-600">Current task</span>
-                    <span className="text-[11px] text-gray-600">{timeAgo(s.last_seen_at || s.updated_at)}</span>
+                    <span className="text-[11px] text-gray-600" suppressHydrationWarning>{timeAgo(s.last_seen_at || s.updated_at)}</span>
                   </div>
                   <div className={`mt-1 line-clamp-2 ${s.task ? 'text-gray-300' : 'text-gray-600 italic'}`}>
                     {s.task || 'No current task'}
@@ -903,7 +903,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
                   </div>
                   <div className="col-span-4 truncate text-xs text-gray-500" title={s.task || ''}>{s.task || '--'}</div>
                   <div className="col-span-1 flex items-center justify-between gap-2 text-xs text-gray-500">
-                    <span className="truncate">{timeAgo(s.last_seen_at || s.updated_at)}</span>
+                    <span className="truncate" suppressHydrationWarning>{timeAgo(s.last_seen_at || s.updated_at)}</span>
                     {/* RFC-027 PR2 ⋮ lifecycle menu — desktop list. Defaults
                         to 'active' when lifecycleByAlias absent. */}
                     <NodeLifecycleMenu
@@ -943,7 +943,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
                         <div className="truncate text-sm font-medium text-white">{s.alias}</div>
                         {unread && isMuted(s.alias) && <span className="shrink-0 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-300">New</span>}
                       </div>
-                      <div className="truncate text-[11px] text-gray-500">{s.agent || '—'} · {timeAgo(s.last_seen_at || s.updated_at)}</div>
+                      <div className="truncate text-[11px] text-gray-500">{s.agent || '—'} · <span suppressHydrationWarning>{timeAgo(s.last_seen_at || s.updated_at)}</span></div>
                     </div>
                     <StatusLabel statusKey={statusKey} />
                     {/* RFC-027 PR2 ⋮ lifecycle menu — mobile list. */}
