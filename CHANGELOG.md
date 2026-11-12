@@ -6,6 +6,43 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.536 — 2026-11-13
+
+### 军团 3D：把"假指标" `labelStats` 接上真实计数
+
+```
+发现：新增「标签落地率」体检时，12 组全部读到 labelStats 但 attempted 恒为 0。
+查代码：`labelStatsRef` 只有声明（page.tsx:663），没有任何写入点
+        ⇒ `canvas.dataset.labelStats` 永远输出 {0,0,0,0}，是一个"看起来在测、其实没测"的假指标。
+修法：标签循环本来就有 drawnLabels / attemptedLabels 两个局部计数，
+      每帧写入 ref：{ attempted, placed, dropped, wantedDepth1 }。
+      纯记录，不改任何绘制路径。
+```
+
+### 有了真指标之后的读数（4 变体 × 3 视口）
+
+| 视口 | attempted | placed | dropped | 落地率 |
+|---|---|---|---|---|
+| 1440 | 4 | 4 | 0 | 100% |
+| 390 | 5 | 5 | 0 | 100% |
+| 320 | 7 | 6 | 1 | 86% |
+
+```
+口径：labelStats 每帧重写，attempted 随自转/深度淡出在 4–9 波动 ⇒ 单帧不可信，
+      探针改为连采 15 帧取 attempted 最大帧。
+320 的 dropped=1 属预期避让（宁可少画也不压字），记基线、不作缺陷。
+只做回归对照，不设"必须 ≥X%"的审美阈值。
+```
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| tsc / build | 0 错误 / 通过 |
+| 探针 `evidence/probes/legion-label-drop.mjs`（12 组 × 4 结构性判据） | 全部 PASS（含 attempted>0、placed≤attempted、同视口四变体一致） |
+
+---
+
 ## 0.6.4-preview.535 — 2026-11-13
 
 ### 军团 3D 新增第 4 个中心区变体：`?core=both`（大核心 + 部门刻度环）
