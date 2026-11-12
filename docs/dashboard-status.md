@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.528` |
-| commit | `461bafe87797c6d0e7c65f21cd8b5a0eeff3b285` |
+| 版本 | `0.6.4-preview.529` |
+| commit | `b02caac5f16712c4e5bfd3cdeff14ab7b6c0115f` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.528-461bafe` |
-| 回滚锚点 | `preview.527-6bccaae` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.529-b02caac` |
+| 回滚锚点 | `preview.528-461bafe` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -323,6 +323,17 @@ PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=
 第 3 版 elementHandle 锁定同一 DOM 节点，并输出 clamped/toggle/aria 三个自证字段
       ⇒ 14/14；读数 before 420 → after 501/886 → back 420
 教训：判据（展开必须变大）没有放宽，改的是"量哪一条"的取样方式。
+```
+
+
+### `.529` 线上 light 的 1 处（同一家族第 2 个成员）
+
+```
+/ 的 `0 working` 芯片 2.02:1 —— 有效 alpha 0.48（自身 0.95 × 空态 0.5）
+`.527` 只修了 `0 active links`（当时 flowLinks=0 才暴露）；
+`.529` 时 fleet 恰好 workingCount=0，同一分支被体检工具当场揪出。
+⇒ 这说明"把 opacity 折算进有效色"的体检会随数据状态逐个暴露同族缺陷。
+`.530` 起 working / online / active links 三枚芯片统一：空态 = 无底色 + 虚线边框，文字不降透明。
 ```
 
 
