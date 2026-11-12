@@ -292,7 +292,7 @@ function NodeDetailContent() {
 
   if (!alias) {
     return (
-      <div className="min-h-full bg-[var(--bg)] text-[var(--fg)] p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-6 flex items-center justify-center">
         <p className="text-[var(--fg-muted)]">No alias specified. <Link href="/" className="text-[var(--accent-text)] hover:underline">Back to dashboard</Link></p>
       </div>
     );
@@ -301,7 +301,7 @@ function NodeDetailContent() {
   const headerSession = session?.alias === alias ? session : null;
 
   return (
-    <div className="min-h-full bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
       <NodeDetailHeader key={alias} alias={alias} session={headerSession} sse={headerSession ? sse : 0} />
 
       {error && (
@@ -569,7 +569,7 @@ export default function NodePage() {
       // Match the loaded layout: p-4 sm:p-6 + lg:ml-0 ml-10 mobile
       // indent on the text. Loading state now visually maps to the
       // populated /node detail page.
-      <div className="min-h-full bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
         <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading…</div>
       </div>
     }>

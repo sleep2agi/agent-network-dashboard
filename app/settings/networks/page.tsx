@@ -108,7 +108,7 @@ export default function NetworksPage() {
   };
 
   return (
-    <div className="min-h-full bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       {/* #217 D9: back link stacks above the title instead of sitting
           beside it — the old single row read as an off-balance
           "← Settings   Networks" pair on phones. */}

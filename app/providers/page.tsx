@@ -95,7 +95,7 @@ export default function ProvidersPage() {
   };
 
   return (
-    <div className="min-h-full bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
+    <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <h1 className="ml-10 text-xl font-semibold text-[var(--fg)] lg:ml-0">Model Providers</h1>
         {mock && <span className="text-[11px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/5 text-amber-300">preview fixture</span>}

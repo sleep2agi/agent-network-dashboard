@@ -79,7 +79,7 @@ export default function AdminPage() {
   const offlineNodes = sessions.filter(s => !sseFor(s));
 
   return (
-    <div className="min-h-full bg-[#0b0b0d] text-[var(--fg)] p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-[var(--fg)] p-4 sm:p-6">
       <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Admin</h1>
 
       {/* Section anchor nav — same pattern as Settings r28; R2 of #190 mobile

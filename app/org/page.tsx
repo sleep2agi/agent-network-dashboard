@@ -315,7 +315,7 @@ function OrgContent() {
   }, [tree]);
 
   return (
-    <div className="min-h-full bg-[var(--bg)] text-[var(--fg)]">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -445,7 +445,7 @@ function OrgContent() {
 
 export default function OrgPage() {
   return (
-    <Suspense fallback={<div className="min-h-full bg-[var(--bg)]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
       <OrgContent />
     </Suspense>
   );

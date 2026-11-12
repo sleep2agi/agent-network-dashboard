@@ -75,7 +75,7 @@ export default function TokensPage() {
   };
 
   return (
-    <div className="min-h-full bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/settings" className="text-[var(--fg-muted)] hover:text-[var(--fg)] text-sm lg:ml-0 ml-10">&larr; Settings</Link>
         <h1 className="text-2xl font-bold text-[var(--fg)]">API Tokens</h1>

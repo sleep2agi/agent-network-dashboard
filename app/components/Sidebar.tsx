@@ -359,12 +359,6 @@ export function Sidebar() {
         ${mode === 'expanded' ? 'w-52 bg-[var(--bg)] border-r border-[var(--border)]' : mode === 'icon-rail' ? 'w-14 bg-[#0A0C14]' : 'w-16 bg-[var(--bg)] border-r border-[var(--border)]'}
         ${mobileOpen ? 'translate-x-0 shadow-2xl shadow-black/40 lg:shadow-none' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:shrink-0 lg:shadow-none
-        /* 桌面端把侧栏钉在视口高度上。
-           原来只靠 h-full，而父级高度是 auto ⇒ 侧栏被"内容高度"撑到 1018，
-           短页面因此永远多出 18px 滚动（19 个页面共同现象）。
-           试过 sticky：祖先有 overflow-x-hidden（外壳），sticky 会被降级成 static
-           （实测滚动 2000px 后侧栏 top = -2000），所以只取高度、不上 sticky。 */
-        lg:h-[100dvh]
         /* 手机底部有固定的 Tab 栏（约 56px + 安全区），抽屉若占满 100dvh，
            最底部的「Sign out」会被它压住、点不到。这里留出同样的高度。 */
         pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0
