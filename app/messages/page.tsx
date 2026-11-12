@@ -91,8 +91,8 @@ function MessageBody({ content, search }: { content?: string; search: string }) 
           maxHeight: BODY_CLAMP_PX,
           overflow: 'hidden',
           // 用遮罩淡出而不是渐变层：气泡底色有收/发两种，遮罩与底色无关
-          WebkitMaskImage: 'linear-gradient(to bottom, #000 82%, transparent 100%)',
-          maskImage: 'linear-gradient(to bottom, #000 82%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, #000 72%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, #000 72%, transparent 100%)',
         } : undefined}
         data-msg-body-clamped={clamped ? 'true' : 'false'}
       >
@@ -103,7 +103,7 @@ function MessageBody({ content, search }: { content?: string; search: string }) 
           type="button"
           onClick={() => setExpanded(v => !v)}
           aria-expanded={expanded}
-          className="mt-1 -ml-1.5 inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-xs font-medium text-[var(--accent)] hover:bg-[var(--accent)]/10"
+          className="mt-1 -ml-2 inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--accent)] hover:bg-[var(--accent)]/10"
           data-msg-body-toggle={expanded ? 'collapse' : 'expand'}
         >
           {expanded ? t('收起', 'Collapse') : t('展开全文', 'Show all')}
