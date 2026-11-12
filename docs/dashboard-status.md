@@ -143,6 +143,39 @@
 一旦 CI 放行：`collect-508-main-ci.py` → `publish-508.py` → `post-release-check.sh`。
 
 
+## 军团中心区三变体：一条命令对比（`.512`）
+
+```bash
+PLAYWRIGHT_BROWSERS_PATH=/home/vansin/.cache/ms-playwright \
+  node evidence/probes/core-variants.mjs https://dm.vansin.top evidence/legion-3d-core-variants-live
+```
+
+跑 3 形态 × 2 视口，输出 `readings.md`（读数表 + 判据）、全图、以及核心区 4 倍裁切图。
+
+| 形态 | 地址 | 桌面 coreRx / labelMargin | 窄屏 |
+|---|---|---|---|
+| 默认 | `/legion/3d` | 35.8 / 134 | 15.5 / 41–47 |
+| A 案 | `?core=big` | 57.3（1.60×）/ 134 | 24.7（不画数字，阈值 26） |
+| C 案 | `?core=ticks` | 35.8–36.6 / 131–133 | 15.5 / 41–54 |
+
+```
+判据：默认与 ticks 的 coreRx 差 ≤ 1.5px；big ≈ 1.6×；labelMargin ≥ LABEL_PAD(12)；
+     big 的两行数字必须在 4 倍裁切图里完整；ticks 段数 = 部门数（当前 14）。
+```
+
+### 探针本身的三个坑（都踩过，写下来免得重踩）
+
+```
+1. 裁切按「视口中心」⇒ 窄屏裁到页头，核心跑到图外。
+   → 改为按 __legionProjected 里 core 的投影坐标 + canvas rect 定位。
+2. 想用 deviceScaleFactor=4 直接得到放大图 ⇒ 页面自身度量被改，读数全错
+   （coreRx 57.3→52.1、labelMargin 134→402）。
+   → DPR 必须保持 1，放大在截图之后离线做（PIL LANCZOS）。
+3. 判据写成「默认与 ticks 的 coreRx 必须相等」⇒ 同一轮不同加载之间也有数据漂移
+   （实测 35.8 vs 36.6），会误报。→ 放宽到 ≤ 1.5px。
+```
+
+
 ## 可访问名称基线（`.510` 起，16 个页面）
 
 ```
