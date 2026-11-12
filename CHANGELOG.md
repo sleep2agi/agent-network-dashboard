@@ -6,6 +6,42 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.515 — 2026-11-12
+
+### 全站布局（收窄版）：7 个纯文档页不再多出滚动条；`.514` 全局版已回退
+
+`.514` 把 19 个页面的 `min-h-screen` 全部换掉，结果打回原形：legion 2D/3D 的
+`flex-1` 舞台依赖"页面壳有确定高度"，手机端 3D 画布从 390px 掉到 182px
+（legion 套件 245/248，两次重测失败项完全一致）。当日回退。
+
+这一版只改**不需要页面高度的纯文档页**，其余页面一动不动：
+
+| 改动面 | 文件 | 窄视口 doc 变化（390×844，线上 .513 → 本地） |
+|---|---|---|
+| 纯文档页 | `/logs` `/settings` `/settings/networks` `/settings/tokens` `/admin` `/servers` `/providers` `/org` `/skillhub` + `LoadingSkeleton` | `/providers` 981→844 · `/skillhub` 981→844 · `/org` 924→844 · `/admin` 1826→1781 · `/servers` 3277→3239 |
+| 侧栏 | `Sidebar`：桌面端 `lg:h-[100dvh]` | 桌面短页去掉最后 18px（`h-full` 在 auto 父级下会退化成内容高度） |
+| **明确不动** | `/legion` `/legion/3d` `/legion/plaza` `/tasks` `/node` `/messages` `/requirements` `/` `/login` | `/legion` 984→984 · `/legion/3d` 844→844（画布 390→390）· `/tasks` 1328→1328 · `/node` 981→981 |
+
+### 一个与本次无关、但必须说清的发现
+
+```
+本地 dev 构建上，首页（/）在 6 秒内 div 从 6 涨到 2973 且停在 skeleton 态（渲染循环）。
+对照实验：把我的改动 git stash 掉重新构建，现象完全相同
+⇒ 与 .515 无关；线上 .513 同一页面 6 秒稳定在 6 个 div。
+成因指向"本地启动环境与 preview 不同（缺少 fixture/env）导致的重试循环"，另行处理。
+```
+
+### 已验证
+
+| 项 | 结果 |
+|---|---|
+| 目标 10 个页面 | 窄视口 doc 全部按预期下降或不变 |
+| 未改页面 | `/legion` `/tasks` `/node` 几何 Δ = 0 |
+| 单测 / tsc / build | 58/58 · 0 错误 · 通过 |
+| `.514` 已回退 | `main = 5e5211b7`，OSS 34/34 · post-release 4/4 PASS |
+
+---
+
 ## 0.6.4-preview.513 — 2026-11-12
 
 ### 军团 3D：C 案刻度环与选择/悬停联动（`?core=ticks`，默认不变）

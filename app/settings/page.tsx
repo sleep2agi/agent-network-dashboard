@@ -105,7 +105,7 @@ export default function SettingsPage() {
   const cardClass = 'rounded-2xl bg-[var(--bg-secondary)] p-5';
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
+    <div className="min-h-full bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
       <div className="mx-auto max-w-2xl">
         <h1 className="mb-4 ml-10 text-xl font-semibold text-[var(--fg)] lg:ml-0">Settings</h1>
 
