@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.533` |
-| commit | `87dd699b1073a0aaa7518497bed0fca20b4ddb74` |
+| 版本 | `0.6.4-preview.534` |
+| commit | `fc98cab49c019c2e88e5af4dc2de688a69e756c3` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.533-87dd699` |
-| 回滚锚点 | `preview.532-5961aef` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.534-fc98cab` |
+| 回滚锚点 | `preview.533-87dd699` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -28,6 +28,8 @@
 | `.532` 基线补充 | 320 宽横向溢出体检（20 路由） | **0 溢出** · 工具 `deploy/narrow-overflow.mjs` · 已并入 `deploy/health-all.sh`（现 7 条） |
 
 | `.533` | 服务器抽屉离线卡去掉整块 opacity，改虚线描边 | 线上抽屉 light **19 处 → 0 处**、cyber 0 处 · 3D 工具面板 light/cyber 0 处 · 20 套满额 · CI 4/4 |
+
+| `.534` | 2D 军团页补「3D 视图」显式入口 | 线上 1440 直接可见 / 390 更多操作内可见 · 点击 URL→/legion/3d、introState=done、「核心：环」在 · legion 272/272 · 20 套满额 · CI 4/4 |
 
 ## 圆角现场口径（`.492` 实测，可复现）
 
