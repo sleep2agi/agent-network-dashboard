@@ -6,6 +6,45 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.527 — 2026-11-13
+
+### 空态"退让"不再靠降低文字不透明度
+
+线上 `.526` 亮色复测残留 1 处：首页 `0 active links` 芯片 **2.1:1**
+（芯片自身 `opacity-95` × 祖先 `opacity: 0.5` ≈ 有效 0.48）。
+
+```
+根因：空态用"整块 opacity 0.5"表达退让 —— 与 .526 修 /servers 时同一条原则冲突：
+      状态应由形状/填充表达，不该把文字调到看不清。
+改法：空态改为 bg-transparent + border-dashed + 文字保持 --fg-muted 全不透明。
+      退让信号仍在（无底色 + 虚线边框 vs 有底色 + 实线边框），文字回到 ≥4.5。
+```
+
+### 同一家族的其余成员（已测量，判定为豁免）
+
+| 芯片 | 空态做法 | 亮色实测 | 判定 |
+|---|---|---|---|
+| `0 active links` | `.527` 已改为无底色 + 虚线 | 2.1 → **≥4.5** | 修复 |
+| `0 working` | `opacity: 0.5` | ≈2.1（仅计数为 0 时） | **WCAG 1.4.3 例外**：不可用控件 |
+| `0 online` | `opacity: 0.5` | ≈2.1（仅计数为 0 时） | 同上 |
+
+```
+这两枚是"点了会筛选"的控件，计数为 0 时 cursor/点击/keydown 全部禁用 ⇒
+属"inactive user interface component"，WCAG 不设对比度下限。
+对比度体检工具已按同一口径跳过 disabled / aria-disabled 元素。
+```
+
+### 已验证
+
+| 项 | 结果 |
+|---|---|
+| tsc | 0 错误 |
+| color-ratchet | 无文件超基线（66 基线不变） |
+| 本地 light 17 路由 | 0 处 <4.5 |
+| build | 通过 |
+
+---
+
 ## 0.6.4-preview.526 — 2026-11-13
 
 ### 亮色主题对比度：修掉三处低于 AA 的文本

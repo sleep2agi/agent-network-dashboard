@@ -4830,7 +4830,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 className={`group tabular-nums font-medium hidden sm:inline px-2.5 py-1 rounded-lg border anet-topo-chip-focus transition-transform duration-200 ease-out transform-gpu ${
                   isInteractive
                     ? 'bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border-[var(--border)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover:border-[var(--accent)]/30 hover:-translate-y-px active:scale-95'
-                    : 'bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border-[var(--border)]'
+                    // `.527`：空态改由"无底色 + 虚线边框"表达退让，不再整块降 opacity。
+                    // 旧做法 opacity 0.5 把 "0 active links" 压到 2.1:1（亮色主题 AA 要求 4.5）。
+                    : 'bg-transparent text-[var(--fg-muted)] border-[var(--border)] border-dashed'
                 }`}
                 data-chip-hover-lift={isInteractive ? 'true' : 'false'}
                 data-chip-group-hover-brighten="true"
@@ -4859,11 +4861,12 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 tabIndex={isInteractive ? 0 : undefined}
                 style={{
                   cursor: isInteractive ? 'pointer' : undefined,
-                  opacity: isInteractive ? 1 : 0.5,
+                  // `.527`：去掉空态整块 opacity 0.5（会把文字压到 2.1:1）。
+                  // 退让信号交给 bg-transparent + border-dashed，文字保持可读。
                   filter: hoveredActiveLinks && isInteractive
                     ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40)`
                     : undefined,
-                  transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, opacity 200ms ease-out, filter 200ms ease-out',
+                  transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, filter 200ms ease-out',
                 }}
                 onMouseEnter={() => { if (isInteractive) setHoveredActiveLinks(true); }}
                 onMouseLeave={() => setHoveredActiveLinks(false)}
