@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.524` |
-| commit | `deb4ff604ae5d0e765b086d5a50a3507ba5694b8` |
+| 版本 | `0.6.4-preview.525` |
+| commit | `5a143dd4271fbbf462f5e0b2f9ecdc554997f929` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.524-deb4ff6` |
-| 回滚锚点 | `preview.523-4d98140` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.525-5a143dd` |
+| 回滚锚点 | `preview.524-deb4ff6` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -143,7 +143,17 @@
 一旦 CI 放行：`collect-508-main-ci.py` → `publish-508.py` → `post-release-check.sh`。
 
 
-## 已知缺陷：军团 3D 在 320×568 的构图（待设计判断）
+## 320×568 构图：已修（`.525`），三次尝试的过程留档
+
+```
+`.525` 结论（A 案已实现）：极小高度下压缩页脚 chrome —— 图例单行横向滚动、
+两段长说明不渲染（sr-only 文案保留）。320 实测：
+  footer 183 → 65px · safeBounds 24,182,296,372（190px 高）
+  内容 164×179 · 溢出 −114px · 与页脚重叠节点 0
+代价：320 下图形变小（164px 宽，受 190px 可用高度限制），两句说明在小屏收起。
+390 / 1440 完全未受影响（页脚 135 / 62px，读数与 `.524` 一致）。
+```
+
 
 ```
 现象：底部溢出 10px（内容 maxY 490 vs canvas 480），画面上方留白 177px、下方仅 10px
