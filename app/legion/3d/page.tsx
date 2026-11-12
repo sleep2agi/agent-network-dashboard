@@ -103,8 +103,12 @@ const CORE_PARAM = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).get('core')
   : 'off';
 // `?core=big`（`.511`）：中心区 A 案 —— 核心环放大 1.6×，规模数字进环内。默认关闭。
-const CORE_BIG = CORE_PARAM === 'big';
-const CORE_TICKS = CORE_PARAM === null || CORE_PARAM === 'ticks';
+// `.535`：`?core=both` —— 混合变体：大核心（规模数字在环内）+ 部门刻度环。
+// 几何上互不冲突：数字画在核心内部，刻度环在 1.36r（核心 1.6× 之后更外）。
+// 新增为**第 4 个可选变体**，默认仍是 C 案；按钮循环 环 → 大 → 混合 → 无。
+const CORE_BOTH = CORE_PARAM === 'both';
+const CORE_BIG = CORE_PARAM === 'big' || CORE_BOTH;
+const CORE_TICKS = CORE_PARAM === null || CORE_PARAM === 'ticks' || CORE_BOTH;
 const CORE_SCALE = CORE_BIG ? 1.6 : 1;
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
@@ -504,14 +508,14 @@ export default function Legion3DPage() {
   // 让"看军团的人"自己在页面上翻三遍再拍板，而不是看我给的静态截图。
   // 实现注意：几何在模块加载时按常量构建（CORE_TICKS / CORE_BIG），
   // 所以切换必须整页导航 —— 这里不做客户端热切换的假动作。
-  const [coreMode, setCoreMode] = useState<'ticks' | 'big' | 'off' | null>(null);
+  const [coreMode, setCoreMode] = useState<'ticks' | 'big' | 'both' | 'off' | null>(null);
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get('core');
-    setCoreMode(p === 'big' ? 'big' : p === 'off' ? 'off' : 'ticks');
+    setCoreMode(p === 'big' ? 'big' : p === 'both' ? 'both' : p === 'off' ? 'off' : 'ticks');
   }, []);
   const cycleCoreMode = useCallback(() => {
     if (!coreMode) return;
-    const next = coreMode === 'ticks' ? 'big' : coreMode === 'big' ? 'off' : 'ticks';
+    const next = coreMode === 'ticks' ? 'big' : coreMode === 'big' ? 'both' : coreMode === 'both' ? 'off' : 'ticks';
     const url = new URL(window.location.href);
     if (next === 'ticks') url.searchParams.delete('core');
     else url.searchParams.set('core', next);
@@ -2535,7 +2539,9 @@ export default function Legion3DPage() {
           // 实测（390 截图）糊成一圈噪点，读不出"分段"——宁可画不出来，也不要画出噪声。
           // 窄屏（`.523`）：核心 15.5px 时 14 段会糊成噪点，改为「按规模取前 6 个部门 + 等分」。
           // 判据：6 段在 1.36r（≈21px）上每段约 22px、线宽 2.5px，390 截图可辨。
-          const narrowTicks = radiusPx < 24;
+          // `.535`：阈值要按**未放大的核心半径**判断。混合变体的核心被 CORE_SCALE 放大 1.6×，
+          // 直接用 radiusPx 会让 390 从"6 段"跳回"14 段"←`.523` 已判定那是噪点。
+          const narrowTicks = radiusPx / (CORE_BIG ? 1.6 : 1) < 24;
           if (CORE_TICKS && radiusPx >= 12) {
             let depts = layout.nodes.filter(n => n.kind === 'group');
             const wOf = (d: { memberCount?: number | null; agentCount?: number | null }) =>
@@ -4242,10 +4248,10 @@ export default function Legion3DPage() {
             type="button"
             data-testid="legion-3d-core-mode"
             onClick={cycleCoreMode}
-            title="中心区三方案：环（部门刻度环，默认）/ 大（A 案，核心放大 1.6×，规模数字进环内）/ 无（干净核心）。切换会重载场景，视角参数保留在 URL 上"
+            title="中心区四方案：环（部门刻度环，默认）/ 大（核心放大 1.6× + 规模数字）/ 混合（大核心 + 刻度环）/ 无（干净核心）。切换会重载场景，视角参数保留在 URL 上"
             className="max-sm:order-last rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
           >
-            核心：{coreMode === 'ticks' ? '环' : coreMode === 'big' ? '大' : '无'}
+            核心：{coreMode === 'ticks' ? '环' : coreMode === 'big' ? '大' : coreMode === 'both' ? '混合' : '无'}
           </button>
         )}
         <button
