@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.521` |
-| commit | `09fb0e6a3fd93b50f647b69a34fb70f30f770b08` |
+| 版本 | `0.6.4-preview.522` |
+| commit | `dca664c58835257f7ba3d54ad5bfe951ac46c9fc` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.521-09fb0e6` |
-| 回滚锚点 | `preview.519-9efe3cb` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.522-dca664c` |
+| 回滚锚点 | `preview.521-09fb0e6` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -141,6 +141,20 @@
 
 `.508` 的内容：任务页 `From`/`To` 输入框补 `aria-label`（可访问名称 2 → 0）。
 一旦 CI 放行：`collect-508-main-ci.py` → `publish-508.py` → `post-release-check.sh`。
+
+
+## 军团中心区默认：C 案（`.522` 起）
+
+```
+默认 /legion/3d ：桌面核心外缘 14 段部门刻度环（弧长 ∝ 成员+Agent，青(190°)→紫(275°)）
+                ：手机核心 15.5px < 24px 阈值 ⇒ 不画（保持干净）
+回退：?core=off  → `.512` 之前的干净核心
+      ?core=big  → A 案（核心 1.6×、徽记 0.64×、环内两行数字）
+```
+
+这是一次**工程判断**（不是设计定稿），依据：不改核心尺寸（36.6 vs 35.8）、
+无帧成本代价（`evidence/legion-frame-521`）、三条联动入口已验证、手机自动不画。
+若不合意，一条参数即可撤销；永久撤销只需把 `CORE_TICKS` 的默认改回 false。
 
 
 ## 军团中心区三变体：一条命令对比（`.512`）
