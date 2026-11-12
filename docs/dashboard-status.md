@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.525` |
-| commit | `5a143dd4271fbbf462f5e0b2f9ecdc554997f929` |
+| 版本 | `0.6.4-preview.526` |
+| commit | `de1269853617a24ff90e048f618cff417af9a733` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.525-5a143dd` |
-| 回滚锚点 | `preview.524-deb4ff6` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.526-de12698` |
+| 回滚锚点 | `preview.525-5a143dd` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -264,6 +264,30 @@ SSR 与首帧都用 60，窄屏在 useEffect 下调 ⇒ hydration 7/7
 
 一条被纠正的误判：docH 8 万曾被当成"渲染循环"，实际是 421 张卡片 × 7 个 div；
 线上 3 个时点 div 恒为 2,962 ⇒ 不是循环，就是"没有分批"。
+
+
+## 文本对比度体检（`.526` 起，双主题）
+
+```bash
+PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=light|cyber
+```
+
+判据：纯文本元素 **把 opacity（含祖先链）折算进有效色** 后 ≥ 4.5:1；
+`disabled` 控件按 WCAG 1.4.3 例外跳过（`/tasks` 数量为 0 的筛选 chip 属此类）。
+
+| 环境 | 结果 |
+|---|---|
+| 本地 light | 17 路由 0 处 |
+| 本地 cyber | 17 路由 0 处 |
+| 线上 cyber（`.526`） | 17 路由 0 处 |
+| 线上 light（`.526`） | **1 处残留**：`/` 的 `active links` 2.1:1（有效 alpha 0.48） |
+
+```
+残留成因：该 chip 的祖先在"空闲"时整体淡出（opacity ≈0.5），
+0.95（chip 自身）× 0.5（祖先）≈ 0.48 ⇒ 文字 2.1:1。
+它不是颜色问题，而是"空闲态整块淡出"这一设计行为。
+待决策：① 把空闲淡出下限提到 ≥0.8 ② 该 chip 不参与淡出 ③ 接受为设计取舍并记录。
+```
 
 
 ## 键盘/触控可达性抽查基线（`.518`—`.519`）
