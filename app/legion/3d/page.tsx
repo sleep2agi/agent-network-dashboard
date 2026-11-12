@@ -90,6 +90,12 @@ const LOOK_TIER = TIER_NUM ?? (TIER_PARAM === '0' ? 1 : 1.3);
 // ⇒ 因此 `?debug=1` 暴露的 labelMargin **< LABEL_PAD 就说明有路径绕过了 clamp**（是缺陷，不是"有点挤"）。
 // 判据与实现共用这个常量，改 bounds 时判据自动跟着变（设计师 2026-11-12 评审）。
 const LABEL_PAD = 12;
+// `?core=big`（`.511`）：中心区 A 案变体 —— 核心环放大 1.6×，规模数字进环内。
+// 默认关闭（默认观感不变），供设计师并排比较。
+// 只影响 canvas 绘制与命中半径，不参与 SSR。
+const CORE_BIG = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('core') === 'big';
+const CORE_SCALE = CORE_BIG ? 1.6 : 1;
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
 // 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
@@ -290,7 +296,8 @@ function nodeBody({ item, projected: p }: SceneNode<LegionNode>, people: number,
     ? Math.max(0.62, Math.sqrt(200 / agents))
     : 1;
   const worldR = item.kind === 'group' ? deptWorldRadius(item.depth ?? 1) : WORLD_R[item.kind];
-  const radius = Math.max(1.4, worldR * p.scale * crowd * agentShrink);
+  const coreScale = item.kind === 'core' ? CORE_SCALE : 1;
+  const radius = Math.max(1.4, worldR * p.scale * crowd * agentShrink * coreScale);
   return { radius, ...(item.kind === 'group' ? departmentDisc(radius) : { rx: radius, ry: radius }) };
 }
 
@@ -2477,7 +2484,31 @@ export default function Legion3DPage() {
             : '';
         const face = avatarUrl && radiusPx >= 4.5 ? avatarImage(avatarUrl) : null;
         if (node.kind === 'core') {
-          drawLegionCore(ctx, p.x, p.y, radiusPx, { ...tk, isDark: dark }, corePhaseRef.current, !interacting);
+          drawLegionCore(ctx, p.x, p.y, radiusPx, { ...tk, isDark: dark }, corePhaseRef.current, !interacting,
+            CORE_BIG ? 0.64 : 1, CORE_BIG ? -radiusPx * 0.26 : 0);
+          // A 案变体（?core=big）：核心已放大到 1.6×，环内放得下两行规模数字。
+          // 默认不画 —— 这是给设计师并排比较用的变体，不是新默认。
+          if (CORE_BIG && radiusPx >= 26) {
+            // 字号/基线按半径算，并且刻意留出「AN 徽记下方 ~1/3 半径」的净空：
+            // 上一稿用 radius*0.30 且上限 14px，实测第二行被 AN 徽记压住、字形残缺。
+            const fs1 = Math.max(9, Math.min(10.5, radiusPx * 0.19));
+            // 0.34r 起、行距 1.20fs：上一稿 0.44r 时第二行被核心底部描边切掉半个字高
+            // （放大 4 倍看图才看得出来，1440 截图上看不出）。
+            const yBase = p.y + radiusPx * 0.34;
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `600 ${fs1}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+            ctx.fillStyle = tk.fg;
+            ctx.globalAlpha = dark ? 0.96 : 0.9;
+            ctx.fillText(`${layout.stats.agents} Agent`, p.x, yBase);
+            ctx.font = `400 ${Math.max(9, fs1 * 0.8)}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+            ctx.fillStyle = tk.dim;
+            ctx.globalAlpha = dark ? 0.8 : 0.72;
+            ctx.fillText(`${layout.stats.groups} 部门 · ${layout.stats.people} 成员`, p.x, yBase + fs1 * 1.20);
+            ctx.restore();
+            if (canvasRef.current) canvasRef.current.dataset.coreBig = '1';
+          }
         } else if (node.kind === 'group') {
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);

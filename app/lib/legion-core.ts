@@ -8,7 +8,10 @@ type CorePalette = { bg: string; accent: string; accentFg: string; isDark: boole
 const marks = new Map<string, HTMLImageElement>();
 
 export function drawLegionCore(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number,
-  palette: CorePalette, phase: number, detailed: boolean) {
+  palette: CorePalette, phase: number, detailed: boolean,
+  // A 案变体（`?core=big`）专用：把 AN 徽记按比例缩小并上移，给环内规模数字腾版面。
+  // 默认 1 / 0 ⇒ 与历史绘制完全一致。
+  markScale = 1, markOffsetY = 0) {
   // Lazy: this module is also evaluated by Next's server renderer. All images
   // are bundled same-origin, keeping PNG export's canvas untainted.
   const src = `/brand/mark-${radius * 1.25 <= 32 ? 'small-' : ''}${palette.isDark ? 'dark' : 'light'}.png`;
@@ -48,9 +51,10 @@ export function drawLegionCore(ctx: CanvasRenderingContext2D, x: number, y: numb
 
   ctx.globalAlpha = alpha;
   if (mark.complete && mark.naturalWidth > 0) {
-    const scale = radius * 1.25 / Math.max(mark.naturalWidth, mark.naturalHeight);
+    const scale = radius * 1.25 * markScale / Math.max(mark.naturalWidth, mark.naturalHeight);
     const width = mark.naturalWidth * scale, height = mark.naturalHeight * scale;
-    ctx.drawImage(mark, x - width / 2, y - height / 2, width, height);
+    const cy = y + markOffsetY;
+    ctx.drawImage(mark, x - width / 2, cy - height / 2, width, height);
   } else {
     // Keep a recognizable label while decoding, or if an asset cannot load.
     ctx.fillStyle = palette.accent;
