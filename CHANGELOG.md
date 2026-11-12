@@ -6,6 +6,39 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.531 — 2026-11-13
+
+### 军团 3D：中心区三方案做成页内可点的入口
+
+```
+背景：`?core=ticks`（C 案，部门刻度环，默认）/ `?core=big`（A 案，核心放大 1.6×）
+      / `?core=off`（干净核心）三个变体早就存在，但只能手改 URL 比较 ——
+      "选哪一个"因此一直悬着，而它是军团视觉上唯一未定的主张。
+改法：3D 控制条新增一枚「核心：环 / 大 / 无」，点一下依次切换（循环）。
+```
+
+| 实现要点 | 说明 |
+|---|---|
+| 切换方式 | `location.assign(?core=…)` 整页导航 —— 几何按模块常量构建，不做假热切换 |
+| 参数保留 | 其它参数（`focus` / `perf` / 视角）原样带过去，方便反复对比 |
+| 水合安全 | 当前值在 `useEffect` 里从 URL 读，按钮挂载后才渲染（不在 SSR 期读 `window`） |
+| 可测性 | `data-testid="legion-3d-core-mode"` |
+
+### 验证（`evidence/probes/legion-core-switch.mjs`）
+
+| 视口 | 默认 | 点 1 次 | 点 2 次 | 点 3 次 |
+|---|---|---|---|---|
+| 1440 | 环 · coreTicks **14** | `?core=big` · coreBig **1** · 「大」 | `?core=off` · 无刻度 · 「无」 | 无参数 · **14** |
+| 390 | 环 · coreTicks **6** | `?core=big` · coreBig **1** | `?core=off` · 无刻度 | 无参数 · **6** |
+
+```
+探针 10/10（2 视口 × 5 判据）。读数只在 canvas.dataset.introState === 'done' 之后取。
+一次口径修正：`?core=off` 时 dataset 属性缺失（null），探针原先按字符串 '0' 断言 ——
+产品行为正确（无刻度即无属性），改的是探针口径，判据未放宽。
+```
+
+---
+
 ## 0.6.4-preview.530 — 2026-11-13
 
 ### 三枚状态芯片的空态统一：退让靠形状，不靠降低文字不透明度

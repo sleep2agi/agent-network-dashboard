@@ -498,6 +498,25 @@ export default function Legion3DPage() {
   const [spin, setSpin] = useState(true);
   const [flow, setFlow] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+  // `.531`：中心区三方案的站内切换入口。
+  // 背景：`?core=` 三个变体（环 / 大 / 无）此前只能手改 URL 才能比较，
+  // 而"选哪一个"正是军团视觉上唯一悬着的主张。给一个能点的入口，
+  // 让"看军团的人"自己在页面上翻三遍再拍板，而不是看我给的静态截图。
+  // 实现注意：几何在模块加载时按常量构建（CORE_TICKS / CORE_BIG），
+  // 所以切换必须整页导航 —— 这里不做客户端热切换的假动作。
+  const [coreMode, setCoreMode] = useState<'ticks' | 'big' | 'off' | null>(null);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('core');
+    setCoreMode(p === 'big' ? 'big' : p === 'off' ? 'off' : 'ticks');
+  }, []);
+  const cycleCoreMode = useCallback(() => {
+    if (!coreMode) return;
+    const next = coreMode === 'ticks' ? 'big' : coreMode === 'big' ? 'off' : 'ticks';
+    const url = new URL(window.location.href);
+    if (next === 'ticks') url.searchParams.delete('core');
+    else url.searchParams.set('core', next);
+    window.location.assign(url.toString());
+  }, [coreMode]);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
   // 演示/录屏模式：隐藏鼠标与悬浮提示、匀速环绕，并可直接导出 16 秒循环。
@@ -4218,6 +4237,17 @@ export default function Legion3DPage() {
         >
           重置视角
         </button>
+        {coreMode && (
+          <button
+            type="button"
+            data-testid="legion-3d-core-mode"
+            onClick={cycleCoreMode}
+            title="中心区三方案：环（部门刻度环，默认）/ 大（A 案，核心放大 1.6×，规模数字进环内）/ 无（干净核心）。切换会重载场景，视角参数保留在 URL 上"
+            className="max-sm:order-last rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+          >
+            核心：{coreMode === 'ticks' ? '环' : coreMode === 'big' ? '大' : '无'}
+          </button>
+        )}
         <button
           type="button"
           data-testid="legion-3d-copy-view"
