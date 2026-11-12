@@ -6,6 +6,45 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.517 — 2026-11-12
+
+### 首页列表分批（同 `.516` 内容）+ 修掉 CI 抓到的硬编码颜色
+
+`.516` 的 20 套验收全绿，但 **CI 的 `gates` 失败**在 `hardcoded-colour ratchet`：
+
+```
+color-ratchet: 🔴 named palette classes INCREASED
+  app/page.tsx: 23 → 25 (+2)      ← 「显示更多」按钮与计数用了 text-gray-300 / text-gray-600
+```
+
+这两个类不走设计 token，也不在深色兜底层 ⇒ 换主题不会变色。改成 token 后：
+
+```
+color-ratchet: 1037 named-palette classes（baseline 1037）· ✓ no file exceeds its baseline
+```
+
+内容与 `.516` 完全一致（`.516` 因 CI 失败**未发布**，线上仍是 `.515`）：
+
+| 视口 | 改前 docH / div | 改后 docH / div |
+|---|---|---|
+| 390×844 | 83,148 / 2,962 | **7,501 / 312**（已显示 40 / 421） |
+| 1440×1000 | 30,928 / 360 卡 | **5,575 / 458**（已显示 60 / 421） |
+
+```
+首屏 60 张（窄屏挂载后 40）· 底部「显示更多（还有 N 个）」+「已显示 X / Y」
+切筛选回到第一批 · SSR 与首帧同为 60（窄屏在 useEffect 下调）⇒ hydration 7/7
+```
+
+### 已验证
+
+| 项 | 结果 |
+|---|---|
+| color-ratchet | 1037 = baseline · 无文件超标 |
+| 验收（`.516` 同一内容） | 20/20 套满额（legion 272/272 · hydration 7/7） |
+| 单测 / tsc / build | 58/58 · 0 错误 · 通过 |
+
+---
+
 ## 0.6.4-preview.516 — 2026-11-12
 
 ### 首页：421 个节点不再一次全渲染（首屏分批 + 显示更多）

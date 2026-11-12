@@ -328,11 +328,11 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setVisibleCount(v => v + pageStep())}
-                  className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-gray-300 transition-colors hover:bg-[var(--hover-tint)]"
+                  className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)]"
                 >
                   显示更多（还有 {filtered.length - visibleCount} 个）
                 </button>
-                <span className="text-[11px] text-gray-600">
+                <span className="text-[11px] text-[var(--fg-dim)]">
                   已显示 {Math.min(visibleCount, filtered.length)} / {filtered.length}
                 </span>
               </div>
