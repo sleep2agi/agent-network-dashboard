@@ -1787,7 +1787,10 @@ export default function Legion3DPage() {
             setZoomPct(Math.round(want * 100));
           }
           // 首次进入：先落在 62% 处，再缓动到目标（镜头推近的感觉）。
-          if (!introDone.current) {
+          // `.524`：节点数太少时不开演。生产实测出现过「入场结束时只有 1 个节点（核心）」，
+          // 观感是镜头围着一颗核心飞完，随后数据到达画面才长出来。
+          // stats>0 不足以代表实体就位，这里按实体节点数设下限 8。
+          if (!introDone.current && nodes.length >= 8) {
             introDone.current = true;
             const reduce = typeof window !== 'undefined'
               && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
