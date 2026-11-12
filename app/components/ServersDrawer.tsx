@@ -270,10 +270,11 @@ export function ServersPanel({ enabled = true, className = '' }: { enabled?: boo
             className="rounded-lg px-2.5 py-2 space-y-1.5"
             style={{
               background: 'var(--bg)',
-              // `.526`：原来 0.55。亮色主题下把文字压到 2.42:1（WCAG AA 要求 4.5）——
-              // 离线状态应由徽标表达，不该靠"把文字调到看不清"。0.85 仍明显更淡，
-              // 但文字对比度回到可读区间（判据见 deploy/contrast-check.mjs）。
-              opacity: offline ? 0.88 : 1,
+              // `.526`：0.55 → 0.88（亮色下 2.42:1 太低）。
+              // `.533`：干脆不再降 opacity —— 0.88 仍把 `--fg-dim` 的小字压到 4.03:1（<4.5）。
+              // 离线状态改由「文字里的 offline」+ 虚线描边表达，文字保持 token 原值。
+              outline: offline ? '1px dashed var(--border)' : undefined,
+              outlineOffset: offline ? '-1px' : undefined,
             }}
             data-server-card={s.hostname}
             data-server-expanded={isExpanded ? 'true' : 'false'}
