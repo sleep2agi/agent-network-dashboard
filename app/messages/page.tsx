@@ -66,20 +66,40 @@ function renderHighlighted(content: string | undefined, search: string) {
 // `.528`：超长消息默认折叠。
 // 会话里一条 3000 字的消息会把整屏占满，滚动时前后文完全丢失；
 // 折叠阈值用"实测高度"而不是字数（中英混排、换行、窄屏差异太大）。
-// 判据：正文高度 > 420px（≈ 24 行 / 桌面 30 行）才折叠，并提供展开/收起。
-const BODY_CLAMP_PX = 420;
+// 判据：正文高度 > 阈值才折叠，并提供展开/收起。
+//
+// `.532`：阈值改成**跟视口高度走**。固定 420px 在横屏手机（844×390）上几乎占满整屏，
+// 折叠了等于没折叠；现在取 min(420, 视口高 × 0.5)，下限 200：
+//   390 高（横屏）→ 200px（约 51%）
+//   844 高（竖屏）→ 420px
+//   1000 高（桌面）→ 420px
+const BODY_CLAMP_MAX = 420;
+const BODY_CLAMP_MIN = 200;
+
+function clampLimitForViewportHeight(h: number) {
+  return Math.max(BODY_CLAMP_MIN, Math.min(BODY_CLAMP_MAX, Math.round(h * 0.5)));
+}
 
 function MessageBody({ content, search }: { content?: string; search: string }) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
   const [overflowing, setOverflowing] = useState(false);
+  // 服务端渲染时拿不到 innerHeight，先用上限；挂载后按真实视口收紧。
+  const [clampPx, setClampPx] = useState(BODY_CLAMP_MAX);
+
+  useEffect(() => {
+    const sync = () => setClampPx(clampLimitForViewportHeight(window.innerHeight));
+    sync();
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
+  }, []);
 
   useEffect(() => {
     const el = bodyRef.current;
     if (!el) return;
     // 折叠态下 maxHeight 也不影响 scrollHeight，所以量到的始终是全文高度
-    setOverflowing(el.scrollHeight > BODY_CLAMP_PX + 32);
-  }, [content, search]);
+    setOverflowing(el.scrollHeight > clampPx + 32);
+  }, [content, search, clampPx]);
 
   const clamped = overflowing && !expanded;
   return (
@@ -88,7 +108,7 @@ function MessageBody({ content, search }: { content?: string; search: string }) 
         ref={bodyRef}
         className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-snug sm:leading-relaxed text-[var(--fg)]"
         style={clamped ? {
-          maxHeight: BODY_CLAMP_PX,
+          maxHeight: clampPx,
           overflow: 'hidden',
           // 用遮罩淡出而不是渐变层：气泡底色有收/发两种，遮罩与底色无关
           WebkitMaskImage: 'linear-gradient(to bottom, #000 72%, transparent 100%)',
