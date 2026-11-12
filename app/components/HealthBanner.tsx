@@ -149,7 +149,7 @@ export function HealthBanner() {
         {cta && (
           <Link
             href={cta.href}
-            className="text-[11px] font-medium underline-offset-2 hover:underline opacity-90 hover:opacity-100 hidden sm:inline"
+            className="text-[11px] font-medium underline-offset-2 hover:underline opacity-90 hover:opacity-100 hidden sm:inline relative before:absolute before:inset-y-[-10px] before:inset-x-[-8px] before:content-['']"
           >
             {cta.label} →
           </Link>
