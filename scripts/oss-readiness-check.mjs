@@ -2,18 +2,6 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-// 这个脚本所有检查都按仓库根解析相对路径。以前从仓库外调用（例如在工作区根
-// 执行 `node agent-network-dashboard/scripts/oss-readiness-check.mjs`）会直接抛
-// ENOENT 堆栈——看起来像脚本坏了，其实只是 cwd 不对。现在统一 chdir 到仓库根，
-// 并在切目录时打一行提示，避免"在错误目录跑"被误判成"门禁失败"。
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-if (resolve(process.cwd()) !== repoRoot) {
-  process.chdir(repoRoot);
-  console.log(`[oss-readiness] cwd → ${repoRoot}（按仓库根解析，可在任意目录调用）`);
-}
 
 const failures = [];
 let checks = 0;
