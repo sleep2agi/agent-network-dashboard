@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.530` |
-| commit | `e95259c94eef372df668444137b6342f5f6ad852` |
+| 版本 | `0.6.4-preview.531` |
+| commit | `171dcf7c27ede31ef911afbf740c22e29998569d` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.530-e95259c` |
-| 回滚锚点 | `preview.529-b02caac` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.531-171dcf7` |
+| 回滚锚点 | `preview.530-e95259c` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -349,6 +349,22 @@ PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=
   .530  `0 working` 2.02:1     → 无底色 + 虚线（同时改 online，口径一次对齐）
 本地计算样式取证：0 working = opacity 1 / borderStyle dashed / background rgba(0,0,0,0)
                  1 working / 116 online = opacity 1 / solid / 10% 填充
+```
+
+
+## 军团 3D 中心区三方案（`.531` 起可在页内切换）
+
+| 变体 | URL | 表现 | 读数（桌面 / 390） |
+|---|---|---|---|
+| C 案（默认） | 无参数 或 `?core=ticks` | 部门刻度环包住核心 | coreTicks 14 / 6 |
+| A 案 | `?core=big` | 核心放大 1.6×，规模数字进环内 | coreBig 1 |
+| 干净核心 | `?core=off` | 无刻度环 | coreTicks 缺失（=0） |
+
+```
+入口：3D 页控制条「核心：环 / 大 / 无」，点一下循环切换；
+切换是整页导航 —— 几何按模块常量构建，不做假热切换；
+其它参数（focus / perf / 视角）原样保留，便于对照。
+探针：evidence/probes/legion-core-switch.mjs（2 视口 × 5 判据，线上 10/10）
 ```
 
 
