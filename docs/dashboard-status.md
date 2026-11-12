@@ -190,6 +190,19 @@ SSR 与首帧都用 60，窄屏在 useEffect 下调 ⇒ hydration 7/7
 线上 3 个时点 div 恒为 2,962 ⇒ 不是循环，就是"没有分批"。
 
 
+## 窄屏横向溢出基线（`.517` 线上）
+
+```
+20 个路由 × 320/390 两个视口 = 40 组，横向溢出 0 组
+判据：documentElement.scrollWidth > innerWidth + 1
+证据：evidence/narrow-overflow-518/readings.md
+```
+
+另修正一条早先的"残留"记录：首页加载中显示的 `? online · 0 working · 0 registered`
+不是缺陷 —— `StatsBar` 在 presence 未知时会把 online 显示为 `?`（`app/page.tsx` 里的既有设计），
+`0 working / 0 registered` 是当时确实为 0。之前把它记成"像全员离线"是我误读。
+
+
 ## 页面高度依赖清单（`.514` 用一次失败换来的事实）
 
 壳里每个页面过去都写了 `min-h-screen`（=100vh），而外壳本身已是 `min-h-[100dvh]`
