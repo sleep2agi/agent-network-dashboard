@@ -270,7 +270,10 @@ export function ServersPanel({ enabled = true, className = '' }: { enabled?: boo
             className="rounded-lg px-2.5 py-2 space-y-1.5"
             style={{
               background: 'var(--bg)',
-              opacity: offline ? 0.55 : 1,
+              // `.526`：原来 0.55。亮色主题下把文字压到 2.42:1（WCAG AA 要求 4.5）——
+              // 离线状态应由徽标表达，不该靠"把文字调到看不清"。0.85 仍明显更淡，
+              // 但文字对比度回到可读区间（判据见 deploy/contrast-check.mjs）。
+              opacity: offline ? 0.88 : 1,
             }}
             data-server-card={s.hostname}
             data-server-expanded={isExpanded ? 'true' : 'false'}

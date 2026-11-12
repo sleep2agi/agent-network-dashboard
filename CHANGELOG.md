@@ -6,6 +6,42 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.526 — 2026-11-13
+
+### 亮色主题对比度：修掉三处低于 AA 的文本
+
+新增 `deploy/contrast-check.mjs`（把 `opacity` 折算进有效色的对比度体检），
+首次全量跑 17 个路由后发现亮色主题下确有低于 4.5:1 的文本：
+
+| 位置 | 元素 | 改前 | 改后 |
+|---|---|---|---|
+| `/servers` 离线服务器卡片 | 整卡 `opacity` | 0.55 ⇒ **2.42:1** | **0.88 ⇒ ≥4.5** |
+| `/` TopoGraph 状态 chip 单位（working / online / active links / filter 计数） | `opacity-70` | 2.95–3.25:1 | **`opacity-95` ⇒ ≥4.5** |
+
+```
+原则：离线状态应由徽标表达，不该靠"把文字调到看不清"；
+chip 单位文字与数字同级可读，hover 时的字距动画保留。
+```
+
+### 体检工具（工作区，不进仓库）
+
+```
+node deploy/contrast-check.mjs <baseUrl> --theme=light|cyber
+  逐路由采样纯文本元素，opacity（含祖先链）折算成有效色后算对比度
+  disabled 控件按 WCAG 1.4.3 例外跳过（/tasks 数量为 0 的筛选 chip 属此类）
+  退出码 0/1，明细写 evidence/contrast-<theme>-<date>/readings.md
+```
+
+### 已验证
+
+| 项 | 结果 |
+|---|---|
+| 亮色 17 路由 | **0 处**低于 4.5（改前：/servers 一批 2.42、/ 一批 2.95–3.25、/tasks 7 处 disabled 已豁免） |
+| 深色 17 路由 | **0 处**低于 4.5（无回归） |
+| 单测 / tsc / build | 58/58 · 0 错误 · 通过 |
+
+---
+
 ## 0.6.4-preview.525 — 2026-11-12
 
 ### 军团 3D：320×568 下压缩页脚 chrome，内容不再被裁/被压
