@@ -1871,7 +1871,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                   aria-pressed={recording}
                   data-testid="chat-voice-toggle"
                   title={recording ? t('停止录音', 'Stop recording') : t('录一段语音', 'Record voice message')}
-                  className={`inline-flex min-h-[44px] min-w-[44px] -my-3 items-center justify-center rounded sm:min-h-0 sm:min-w-0 sm:m-0 sm:p-1 cursor-pointer hover:bg-[var(--accent)]/10 ${recording ? 'text-[var(--danger)]' : 'text-[var(--fg-dim)] hover:text-[var(--accent-text)]'}`}
+                  className={`inline-flex min-h-[44px] min-w-[44px] -my-3 items-center justify-center rounded sm:min-h-0 sm:min-w-0 sm:m-0 sm:p-1 relative before:absolute before:-inset-1 before:content-[''] cursor-pointer hover:bg-[var(--accent)]/10 ${recording ? 'text-[var(--danger)]' : 'text-[var(--fg-dim)] hover:text-[var(--accent-text)]'}`}
                 >
                   {recording ? (
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1888,7 +1888,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                 <select value={priority} onChange={e => setPriority(e.target.value)}
                   aria-label="Priority"
                   title="Priority"
-                  className="hidden bg-transparent text-[11px] text-[var(--fg-dim)] focus:outline-none cursor-pointer sm:block">
+                  className="hidden bg-transparent text-[11px] text-[var(--fg-dim)] focus:outline-none cursor-pointer sm:block sm:min-h-[24px]">
                   <option value="normal">N</option>
                   <option value="high">H</option>
                   <option value="low">L</option>
