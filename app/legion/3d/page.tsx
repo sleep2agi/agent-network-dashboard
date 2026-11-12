@@ -2518,11 +2518,17 @@ export default function Legion3DPage() {
               }
               const flexScale = flexSum > 0 ? (usable - fixedSum) / flexSum : 1;
               const spans = raw.map(r => (r <= floorSpan ? floorSpan : r * flexScale));
+              // 与选择/悬停联动：指向某个部门时，它的刻度段加粗提亮、其余压暗。
+              // 没有这个联动，刻度环只是装饰；有了它，刻度环才是"部门索引"。
+              const hlId = hoverRef.current ?? selectedRef.current;
+              const hlIdx = hlId ? depts.findIndex(d => d.id === hlId) : -1;
               ctx.save();
               ctx.lineCap = 'butt';
               let a0 = -Math.PI / 2;
               for (let i = 0; i < depts.length; i += 1) {
                 const span = spans[i];
+                const isHl = i === hlIdx;
+                const dimmed = hlIdx >= 0 && !isHl;
                 const hue = 190 + (depts.length > 1 ? (i / (depts.length - 1)) * 85 : 0);
                 ctx.globalAlpha = 0.55;
                 ctx.strokeStyle = tk.bg;
@@ -2532,16 +2538,20 @@ export default function Legion3DPage() {
                 ctx.stroke();
                 // 下限 0.5：v2 初版用 0.55 但低权重段在中深色底上几乎是黑块，
                 // 看起来像"缺口"而不是"小部门"；提高下限后最小的段也能读出来。
-                ctx.globalAlpha = 0.62 + 0.33 * (weights[i] / maxW);
-                ctx.strokeStyle = `hsl(${hue.toFixed(0)} 88% 64%)`;
-                ctx.lineWidth = tickW;
+                const baseAlpha = 0.62 + 0.33 * (weights[i] / maxW);
+                ctx.globalAlpha = isHl ? 1 : baseAlpha * (dimmed ? 0.42 : 1);
+                ctx.strokeStyle = `hsl(${hue.toFixed(0)} 88% ${isHl ? 72 : 64}%)`;
+                ctx.lineWidth = isHl ? tickW * 1.4 : tickW;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, rOuter, a0, a0 + span);
+                ctx.arc(p.x, p.y, isHl ? rOuter + 1.6 : rOuter, a0, a0 + span);
                 ctx.stroke();
                 a0 += span + gap;
               }
               ctx.restore();
-              if (canvasRef.current) canvasRef.current.dataset.coreTicks = String(depts.length);
+              if (canvasRef.current) {
+                canvasRef.current.dataset.coreTicks = String(depts.length);
+                canvasRef.current.dataset.coreTickHl = String(hlIdx);
+              }
             }
           }
           // A 案变体（?core=big）：核心已放大到 1.6×，环内放得下两行规模数字。
