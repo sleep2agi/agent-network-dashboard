@@ -6,6 +6,41 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.528 — 2026-11-13
+
+### `/messages` 超长消息默认折叠
+
+```
+问题：会话里一条 3000 字汇报会把整屏占满，前后文完全丢失；窄屏更严重。
+改法：正文实测高度 > 420px（≈24 行）才折叠，底部遮罩淡出 + 「展开全文 ↓ / 收起 ↑」。
+不按字数判断 —— 中英混排、换行、窄屏换行差异太大（同一条 520px 的正文在 390 宽会变 886px）。
+```
+
+| 实测（本地 3101，30 条消息） | desktop 1440 | narrow 390 |
+|---|---|---|
+| 被折叠条数 | 8 / 30 | 12 / 30 |
+| 折叠高度 | 全部 420 | 全部 420 |
+| 展开后（最大一条） | 420 → 933 | 420 → 520 |
+| 横向溢出 | 0 | 0 |
+
+```
+实现：MessageBody 组件（量 scrollHeight，折叠态 max-height + mask 淡出，
+      遮罩与「收/发」两种气泡底色解耦）；发送侧与接收侧共用同一组件。
+可访问性：button + aria-expanded，data-msg-body-clamped / data-msg-body-toggle 供探针断言。
+可逆性：单文件 hunk，回退不影响路由结构、数据与军团页面。
+```
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| 探针 `evidence/probes/messages-collapse.mjs`（2 视口 × 7 判据） | **14/14** |
+| tsc | 0 错误 |
+| color-ratchet | 无文件超基线 |
+| build | 通过 |
+
+---
+
 ## 0.6.4-preview.527 — 2026-11-13
 
 ### 空态"退让"不再靠降低文字不透明度

@@ -63,6 +63,57 @@ function renderHighlighted(content: string | undefined, search: string) {
   return <>{text.slice(0, idx)}<mark className="bg-yellow-500/30 text-yellow-200 rounded px-0.5">{text.slice(idx, idx + q.length)}</mark>{text.slice(idx + q.length)}</>;
 }
 
+// `.528`：超长消息默认折叠。
+// 会话里一条 3000 字的消息会把整屏占满，滚动时前后文完全丢失；
+// 折叠阈值用"实测高度"而不是字数（中英混排、换行、窄屏差异太大）。
+// 判据：正文高度 > 420px（≈ 24 行 / 桌面 30 行）才折叠，并提供展开/收起。
+const BODY_CLAMP_PX = 420;
+
+function MessageBody({ content, search }: { content?: string; search: string }) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    // 折叠态下 maxHeight 也不影响 scrollHeight，所以量到的始终是全文高度
+    setOverflowing(el.scrollHeight > BODY_CLAMP_PX + 32);
+  }, [content, search]);
+
+  const clamped = overflowing && !expanded;
+  return (
+    <div>
+      <div
+        ref={bodyRef}
+        className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-snug sm:leading-relaxed text-[var(--fg)]"
+        style={clamped ? {
+          maxHeight: BODY_CLAMP_PX,
+          overflow: 'hidden',
+          // 用遮罩淡出而不是渐变层：气泡底色有收/发两种，遮罩与底色无关
+          WebkitMaskImage: 'linear-gradient(to bottom, #000 82%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, #000 82%, transparent 100%)',
+        } : undefined}
+        data-msg-body-clamped={clamped ? 'true' : 'false'}
+      >
+        {renderHighlighted(content, search)}
+      </div>
+      {overflowing && (
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          aria-expanded={expanded}
+          className="mt-1 -ml-1.5 inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-xs font-medium text-[var(--accent)] hover:bg-[var(--accent)]/10"
+          data-msg-body-toggle={expanded ? 'collapse' : 'expand'}
+        >
+          {expanded ? t('收起', 'Collapse') : t('展开全文', 'Show all')}
+          <span aria-hidden="true">{expanded ? '↑' : '↓'}</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 // #217 M5 (Vincent tg 655/656, same directive as chat M4): don't pull the
 // full history on every 5s poll. Open with the newest page only and grow
 // the window when the user explicitly asks for older messages.
@@ -391,9 +442,7 @@ export default function MessagesPage() {
                           long unbroken runs (URLs, ASCII rules like
                           `═══════════════`) wrap instead of pushing the
                           chat bubble past the mobile viewport. */}
-                      <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-snug sm:leading-relaxed text-[var(--fg)]">
-                        {renderHighlighted(message.content, search)}
-                      </div>
+                      <MessageBody content={message.content} search={search} />
                       {/* #492: broadcast may carry attachments too. */}
                       {extractAttachments(message).map((att, i) => (
                         <AttachmentBlock key={`att-b-${message.id}-${att.file_id ?? i}`} attachment={att} />
@@ -430,9 +479,7 @@ export default function MessagesPage() {
                           long unbroken runs (URLs, ASCII rules like
                           `═══════════════`) wrap instead of pushing the
                           chat bubble past the mobile viewport. */}
-                      <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-snug sm:leading-relaxed text-[var(--fg)]">
-                        {renderHighlighted(message.content, search)}
-                      </div>
+                      <MessageBody content={message.content} search={search} />
 
                       {/* #492: attachment blocks from meta.attachments —
                           historical messages render automatic (data is
