@@ -234,6 +234,7 @@ SSR 与首帧都用 60，窄屏在 useEffect 下调 ⇒ hydration 7/7
 ## 键盘/触控可达性抽查基线（`.518`—`.519`）
 
 判据：① 任一 Tab 停靠点同时无 `outline` 与 `box-shadow` ⇒ 隐形焦点，失败；
+     （`.524` 起脚本支持 `--narrow`，桌面 + 手机共 40 组；两次运行均 0 / 0）
 ② 宽或高 < 24px 且 `::before` 无扩展 ⇒ 低于 WCAG 2.5.8 最小目标，失败。
 
 | 页面 | 停靠点 | 隐形焦点 | 过小且无扩展 |
@@ -242,6 +243,7 @@ SSR 与首帧都用 60，窄屏在 useEffect 下调 ⇒ hydration 7/7
 | `/tasks` | 22 | 0 | 0（横幅 CTA 当时被误记为"有扩展"） |
 | `/versions` `/changelog` `/settings` `/settings/tokens` `/providers` `/servers` | 各 16 | 0 | 0 |
 | `/legion` `/legion/plaza` `/requirements` | 各 18 | 0 | 0 |
+| **手机 390**：全部 20 个路由 | 各 17–18 | 0 | 0 |
 | `/messages` | 17 | 0 | 0 |
 | 首页新控件（显示更多/计数） | — | 0 | 0（焦点环 2px、对比度 7.67/5.83） |
 
