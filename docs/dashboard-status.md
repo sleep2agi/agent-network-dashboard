@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.518` |
-| commit | `3edabdc510979e5e91bc8e8745485eac79eff8ed` |
+| 版本 | `0.6.4-preview.519` |
+| commit | `9efe3cb98f9f63f3fe032aca1ae9e933b1dc2131` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.518-3edabdc` |
-| 回滚锚点 | `preview.517-9473cc0` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.519-9efe3cb` |
+| 回滚锚点 | `preview.518-3edabdc` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -188,6 +188,25 @@ SSR 与首帧都用 60，窄屏在 useEffect 下调 ⇒ hydration 7/7
 
 一条被纠正的误判：docH 8 万曾被当成"渲染循环"，实际是 421 张卡片 × 7 个 div；
 线上 3 个时点 div 恒为 2,962 ⇒ 不是循环，就是"没有分批"。
+
+
+## 键盘/触控可达性抽查基线（`.518`—`.519`）
+
+判据：① 任一 Tab 停靠点同时无 `outline` 与 `box-shadow` ⇒ 隐形焦点，失败；
+② 宽或高 < 24px 且 `::before` 无扩展 ⇒ 低于 WCAG 2.5.8 最小目标，失败。
+
+| 页面 | 停靠点 | 隐形焦点 | 过小且无扩展 |
+|---|---|---|---|
+| `/nodes` | 13 | 0 | 0 |
+| `/tasks` | 22 | 0 | 0（横幅 CTA 当时被误记为"有扩展"） |
+| `/versions` `/changelog` `/settings` `/settings/tokens` `/providers` `/servers` | 各 16 | 0 | 0 |
+| 首页新控件（显示更多/计数） | — | 0 | 0（焦点环 2px、对比度 7.67/5.83） |
+
+```
+唯一逮到的缺陷：健康横幅桌面端「Review failures →」是 97×17 纯文本链接、
+无 ::before 扩展 ⇒ 点文字下方 4px 无反应。手机端同一位置早有扩展（~44×40）。
+`.519` 给桌面端补上同样的扩展，命中高度 17→37px，视觉尺寸不变。
+```
 
 
 ## 首页新增控件的可访问性（`.518` 线上复核）
