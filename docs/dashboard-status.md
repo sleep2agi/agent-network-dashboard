@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.534` |
-| commit | `fc98cab49c019c2e88e5af4dc2de688a69e756c3` |
+| 版本 | `0.6.4-preview.535` |
+| commit | `d5bab7a5f2c1a6b82b0bed16672abf4a0e1dcbe6` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.534-fc98cab` |
-| 回滚锚点 | `preview.533-87dd699` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.535-d5bab7a` |
+| 回滚锚点 | `preview.534-fc98cab` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -30,6 +30,8 @@
 | `.533` | 服务器抽屉离线卡去掉整块 opacity，改虚线描边 | 线上抽屉 light **19 处 → 0 处**、cyber 0 处 · 3D 工具面板 light/cyber 0 处 · 20 套满额 · CI 4/4 |
 
 | `.534` | 2D 军团页补「3D 视图」显式入口 | 线上 1440 直接可见 / 390 更多操作内可见 · 点击 URL→/legion/3d、introState=done、「核心：环」在 · legion 272/272 · 20 套满额 · CI 4/4 |
+
+| `.535` | 军团 3D 新增第 4 变体 `?core=both`（大核心 + 刻度环）；390 刻度按未放大半径判断（6 段） | 线上四步切换 12/12 · 1440 ticks 14 / 390 ticks 6 且 coreBig 1 · legion 272/272 · CI 4/4 |
 
 ## 圆角现场口径（`.492` 实测，可复现）
 
@@ -364,10 +366,11 @@ PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=
 |---|---|---|---|
 | C 案（默认） | 无参数 或 `?core=ticks` | 部门刻度环包住核心 | coreTicks = **当时部门组数量**（实测 14 / 6） |
 | A 案 | `?core=big` | 核心放大 1.6×，规模数字进环内 | coreBig 1 |
+| 混合 | `?core=both` | 大核心（数字在环内）+ 部门刻度环 | coreBig 1 且 coreTicks 14 / 6 |
 | 干净核心 | `?core=off` | 无刻度环 | coreTicks 缺失（=0） |
 
 ```
-入口：3D 页控制条「核心：环 / 大 / 无」，点一下循环切换；
+入口：3D 页控制条「核心：环 / 大 / 混合 / 无」，点一下循环切换；
 切换是整页导航 —— 几何按模块常量构建，不做假热切换；
 其它参数（focus / perf / 视角）原样保留，便于对照。
 探针：evidence/probes/legion-core-switch.mjs（2 视口 × 5 判据，线上 10/10）
