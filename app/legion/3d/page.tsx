@@ -2501,10 +2501,18 @@ export default function Legion3DPage() {
           // v2：外移到 1.36r、每段加暗底描边把刻度"拔"出来、青(190°)→紫(275°)按部门序取色。
           // 阈值 24px：窄屏核心只有 15.5px，刻度环外径 ~21px、14 段每段 ~9px，
           // 实测（390 截图）糊成一圈噪点，读不出"分段"——宁可画不出来，也不要画出噪声。
-          if (CORE_TICKS && radiusPx >= 24) {
-            const depts = layout.nodes.filter(n => n.kind === 'group');
+          // 窄屏（`.523`）：核心 15.5px 时 14 段会糊成噪点，改为「按规模取前 6 个部门 + 等分」。
+          // 判据：6 段在 1.36r（≈21px）上每段约 22px、线宽 2.5px，390 截图可辨。
+          const narrowTicks = radiusPx < 24;
+          if (CORE_TICKS && radiusPx >= 12) {
+            let depts = layout.nodes.filter(n => n.kind === 'group');
+            const wOf = (d: { memberCount?: number | null; agentCount?: number | null }) =>
+              Math.max(1, (d.memberCount ?? 0) + (d.agentCount ?? 0));
+            if (narrowTicks) {
+              depts = [...depts].sort((a, b) => wOf(b) - wOf(a)).slice(0, 6);
+            }
             if (depts.length > 0) {
-              const weights = depts.map(d => Math.max(1, (d.memberCount ?? 0) + (d.agentCount ?? 0)));
+              const weights = narrowTicks ? depts.map(() => 1) : depts.map(wOf);
               const total = weights.reduce((a, b) => a + b, 0) || 1;
               const maxW = Math.max(...weights);
               const rOuter = radiusPx * 1.36;
@@ -2512,7 +2520,9 @@ export default function Legion3DPage() {
                 ? Math.min(0.10, (Math.PI * 2) / depts.length * 0.26)
                 : 0;
               const usable = Math.PI * 2 - gap * depts.length;
-              const tickW = Math.max(3.2, Math.min(6, radiusPx * 0.11));
+              const tickW = narrowTicks
+                ? Math.max(2.5, Math.min(3.2, radiusPx * 0.16))
+                : Math.max(3.2, Math.min(6, radiusPx * 0.11));
               // v4：14 个部门里 11 个是小部门，纯按比例分弧长 ⇒ 每段只有 2–3°，
               // 在 4 倍放大下仍然读不出来（v3 实测）。给每段一个最小弧长（≈3.5°），
               // 剩余弧长再按权重分给大部门 —— 既能看出"有几个部门"，也能看出"谁大"。
