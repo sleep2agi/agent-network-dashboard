@@ -356,7 +356,7 @@ PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=
 
 | 变体 | URL | 表现 | 读数（桌面 / 390） |
 |---|---|---|---|
-| C 案（默认） | 无参数 或 `?core=ticks` | 部门刻度环包住核心 | coreTicks 14 / 6 |
+| C 案（默认） | 无参数 或 `?core=ticks` | 部门刻度环包住核心 | coreTicks = **当时部门组数量**（实测 14 / 6） |
 | A 案 | `?core=big` | 核心放大 1.6×，规模数字进环内 | coreBig 1 |
 | 干净核心 | `?core=off` | 无刻度环 | coreTicks 缺失（=0） |
 
@@ -376,6 +376,17 @@ PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=
   844 高（竖屏）→ 420px
  1000 高（桌面）→ 420px
 线上实测：桌面 10/30 折叠 · 竖屏 16/30 · 横屏 18/30；三视口横向溢出均 0
+```
+
+
+### `coreTicks` 的口径（别写死 14 / 6）
+
+```
+canvas.dataset.coreTicks = 当时布局里的部门 group 数量（depts.length），窄屏取前 6。
+数据是流式到达的 ⇒ introState=done 之后仍可能从 3 涨到 6；
+所以任何断言都要先"等连续两次采样一致"，并比较"同一份数据内的一致性"，
+而不是把 14 / 6 当成尺寸常量写死 —— 部门数会随组织变化。
+（`.532` 6 条基线体检里就因此误报过一次 3≠6，已定性为口径问题并修正探针。）
 ```
 
 
