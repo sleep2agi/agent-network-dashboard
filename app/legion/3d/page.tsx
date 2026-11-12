@@ -2493,7 +2493,9 @@ export default function Legion3DPage() {
           // C 案变体（?core=ticks）v2。v1 实测失败：画在 1.26r、2px 单色，与外环光晕糊在一起，
           // 4 倍放大仍看不出"一段弧 = 一个部门"；且只取了顶层 6 个部门（实际 14 个）。
           // v2：外移到 1.36r、每段加暗底描边把刻度"拔"出来、青(190°)→紫(275°)按部门序取色。
-          if (CORE_TICKS && radiusPx >= 14) {
+          // 阈值 24px：窄屏核心只有 15.5px，刻度环外径 ~21px、14 段每段 ~9px，
+          // 实测（390 截图）糊成一圈噪点，读不出"分段"——宁可画不出来，也不要画出噪声。
+          if (CORE_TICKS && radiusPx >= 24) {
             const depts = layout.nodes.filter(n => n.kind === 'group');
             if (depts.length > 0) {
               const weights = depts.map(d => Math.max(1, (d.memberCount ?? 0) + (d.agentCount ?? 0)));
