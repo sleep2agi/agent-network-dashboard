@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.513` |
-| commit | `26b2efb04f936959a587a1b0b17f37cc93348f1c` |
+| 版本 | `0.6.4-preview.515` |
+| commit | `bedaceb2922771391def10920d773bf11ec6f03c` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.513-26b2efb` |
-| 回滚锚点 | `preview.512-d12fa25`（切 cwd + `pm2 restart anet-dashboard`） |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.515-bedaceb` |
+| 回滚锚点 | `preview.513-26b2efb`（`preview.514-*` 已回退，勿用） |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -174,6 +174,28 @@ PLAYWRIGHT_BROWSERS_PATH=<playwright 浏览器缓存目录> \
 3. 判据写成「默认与 ticks 的 coreRx 必须相等」⇒ 同一轮不同加载之间也有数据漂移
    （实测 35.8 vs 36.6），会误报。→ 放宽到 ≤ 1.5px。
 ```
+
+
+## 页面高度依赖清单（`.514` 用一次失败换来的事实）
+
+壳里每个页面过去都写了 `min-h-screen`（=100vh），而外壳本身已是 `min-h-[100dvh]`
+并且含 31px 横幅 ⇒ 短页面永远多出 31px 滚动；侧栏 `h-full` 在 auto 父级下退化成
+内容高度，再叠加 18px。
+
+**但不能全局删**。以下页面的 `min-h-screen` 是"舞台地基"，删掉会让 `flex-1` 失去高度基准：
+
+| 页面 | 依赖方式 | 删掉的后果（实测） |
+|---|---|---|
+| `/legion` | 2D 舞台 `flex-1` | 舞台顶部下移，`390:2dStageStartsEarly` 红 |
+| `/legion/3d` | canvas 撑满 stage | 手机画布 **390 → 182px**，`390:3dCanvasFillsWidth` 红 |
+| `/tasks` `/node` `/messages` `/requirements` | 分栏/滚动容器按高度分配 | 未测到红，但结构同类，保守不动 |
+| `/`（首页）`/login` | 全屏布局 | 保守不动 |
+
+**已改（纯文档页，无需高度基准）**：`/logs` `/settings` `/settings/networks`
+`/settings/tokens` `/admin` `/servers` `/providers` `/org` `/skillhub` + `LoadingSkeleton`。
+
+判据写法：改前/改后在 1440×1000 与 390×844 各取 `documentElement.scrollHeight`，
+受益页应下降、未改页应 Δ=0；`legion` 套件（272 项）必须满额才算通过。
 
 
 ## 可访问名称基线（`.510` 起，16 个页面）
