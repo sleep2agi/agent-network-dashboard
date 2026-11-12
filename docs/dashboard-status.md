@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.523` |
-| commit | `4d98140c0b90e627ff8895c5d72c8da888929a31` |
+| 版本 | `0.6.4-preview.524` |
+| commit | `deb4ff604ae5d0e765b086d5a50a3507ba5694b8` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.523-4d98140` |
-| 回滚锚点 | `preview.522-dca664c` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.524-deb4ff6` |
+| 回滚锚点 | `preview.523-4d98140` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -141,6 +141,21 @@
 
 `.508` 的内容：任务页 `From`/`To` 输入框补 `aria-label`（可访问名称 2 → 0）。
 一旦 CI 放行：`collect-508-main-ci.py` → `publish-508.py` → `post-release-check.sh`。
+
+
+## 入场门槛（`.524` 起）
+
+```
+条件：!introDone && nodes.length >= 8
+理由：生产实测出现过"入场结束时只有 1 个节点（核心）"，镜头围着一颗核心飞完
+取舍：阈值取 8（不是等全量），保证小规模编制也能开场
+复现：Playwright 拦截 people|hierarchy|status 延迟 4s，每 300ms 采样
+判据：不允许 introState === 'done' 且 nodes.length < 8  →  实测违规 0
+```
+
+另记一条被证伪的假设：军团"每次打开构图不同"不是采样太早、也不是横幅高度
+（canvasH 恒 969 / bannerH 恒 31），而是**数据驱动**（布局指纹 ΣX/ΣY 每轮不同）。
+详见 `evidence/legion-determinism-523/readings.md`。
 
 
 ## 部门刻度按尺寸分档（`.523` 起）
