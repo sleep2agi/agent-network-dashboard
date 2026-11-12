@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.529` |
-| commit | `b02caac5f16712c4e5bfd3cdeff14ab7b6c0115f` |
+| 版本 | `0.6.4-preview.530` |
+| commit | `e95259c94eef372df668444137b6342f5f6ad852` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.529-b02caac` |
-| 回滚锚点 | `preview.528-461bafe` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.530-e95259c` |
+| 回滚锚点 | `preview.529-b02caac` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -334,6 +334,21 @@ PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=
 `.529` 时 fleet 恰好 workingCount=0，同一分支被体检工具当场揪出。
 ⇒ 这说明"把 opacity 折算进有效色"的体检会随数据状态逐个暴露同族缺陷。
 `.530` 起 working / online / active links 三枚芯片统一：空态 = 无底色 + 虚线边框，文字不降透明。
+```
+
+
+### 状态芯片空态的统一规则（`.527` → `.530` 收口）
+
+```
+空态不用"降低文字不透明度"表达，改用形状：
+  实线 + 填充      = 该层有内容，可点
+  虚线 + 无填充    = 该层为空
+
+落地顺序（同一家族逐个被体检工具揪出）：
+  .527  `0 active links` 2.1:1  → 无底色 + 虚线
+  .530  `0 working` 2.02:1     → 无底色 + 虚线（同时改 online，口径一次对齐）
+本地计算样式取证：0 working = opacity 1 / borderStyle dashed / background rgba(0,0,0,0)
+                 1 working / 116 online = opacity 1 / solid / 10% 填充
 ```
 
 
