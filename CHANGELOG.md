@@ -6,6 +6,39 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.524 — 2026-11-12
+
+### 军团 3D：数据没到齐时不再开演（入场门槛 `nodes.length >= 8`）
+
+`.523` 之后复核"每次打开构图是否一致"，5 次加载里出现过一轮：
+**入场结束时画布上只有 1 个节点（核心）** —— 观众看到的是"镜头围着一颗核心飞完，
+随后画面才长出来"。构图差异本身是数据驱动（指纹 ΣX/ΣY 每轮不同），属正常；
+但"空场开演"是可修的边界。
+
+| 项 | 改前 | 改后 |
+|---|---|---|
+| 入场条件 | `!introDone` | `!introDone && nodes.length >= 8` |
+| 可控复现（接口延迟 4s） | 会出现 done 且 n=1 | **违规采样 0**；首次 done 时 n=13 |
+
+```
+复现方法：Playwright 拦截 people|hierarchy|status 延迟 4s，每 300ms 采样 introState 与节点数
+判据：不允许出现 introState === 'done' 且 nodes.length < 8
+证据：evidence/legion-intro-gate-524/readings.md
+```
+
+### 同时记录一条被证伪的假设
+
+```
+"构图不确定"不是采样太早、也不是横幅高度（canvasH 恒 969 / bannerH 恒 31），
+而是数据驱动（布局指纹每轮不同）。详见 evidence/legion-determinism-523/readings.md
+```
+
+### 已验证
+
+单测 / tsc / build：58/58 · 0 错误 · 通过；接口延迟测试：违规采样 0。
+
+---
+
 ## 0.6.4-preview.523 — 2026-11-12
 
 ### 军团 3D：C 案在手机上也可读（窄屏改为「取前 6 个部门 + 等分」）
