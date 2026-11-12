@@ -6,6 +6,42 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.522 — 2026-11-12
+
+### 军团 3D：把 C 案（部门刻度环）设为默认，保留一条命令回退
+
+三个对象（默认 / A `?core=big` / C `?core=ticks`）并排在线两周后，这里把 **C 案设为默认**。
+这是我的工程判断，不是设计定稿；如果不合意，**`?core=off` 一条参数即可恢复原样**。
+
+```
+选 C 的理由（都可验证）：
+  · 不改核心尺寸（coreRx 35.8 ↔ 36.6，fit 正常）
+  · 无帧成本代价（三形态 p50/p95 同量级，见 evidence/legion-frame-521）
+  · 手机不画（核心 15.5px < 24px 阈值），桌面才画 14 段
+  · 三条联动入口已验证：画布悬停 / `?focus=<部门>` / 节点列表点部门行
+```
+
+| 入口 | 行为 |
+|---|---|
+| `/legion/3d`（默认） | 桌面：核心外缘 14 段部门刻度；手机：干净核心 |
+| `?core=off` | 恢复 `.512` 之前的干净核心（回退开关） |
+| `?core=ticks` | 与默认等价（旧链接继续有效） |
+| `?core=big` | A 案仍在：核心 1.6×、徽记 0.64×、环内两行数字 |
+
+### 已验证
+
+| 项 | 默认 | `?core=off` | `?core=big` |
+|---|---|---|---|
+| 桌面 `coreTicks` | **14** | null | null |
+| 桌面 `coreRx` | 36.6 | 35.8 | 57.3 |
+| 手机 `coreTicks` | null（<24px 不画） | null | null |
+| 手机 `coreRx` | 15.5 | 15.5 | 24.7 |
+
+单测 / tsc / build：58/58 · 0 错误 · 通过。桌面 4 倍放大图见
+`evidence/legion-default-ticks-522/default-zoom.png`。
+
+---
+
 ## 0.6.4-preview.521 — 2026-11-12
 
 ### 聊天输入区命中尺寸修复（内容同 `.520`）+ 修掉棘轮抓到的任意值
