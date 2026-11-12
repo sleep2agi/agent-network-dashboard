@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.515` |
-| commit | `bedaceb2922771391def10920d773bf11ec6f03c` |
+| 版本 | `0.6.4-preview.517` |
+| commit | `9473cc0c2ba97c811c87b5b573ec86b800ab6418` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.515-bedaceb` |
-| 回滚锚点 | `preview.513-26b2efb`（`preview.514-*` 已回退，勿用） |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.517-9473cc0` |
+| 回滚锚点 | `preview.515-bedaceb`（`preview.516-*` 未发布，勿用） |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -174,6 +174,20 @@ PLAYWRIGHT_BROWSERS_PATH=<playwright 浏览器缓存目录> \
 3. 判据写成「默认与 ticks 的 coreRx 必须相等」⇒ 同一轮不同加载之间也有数据漂移
    （实测 35.8 vs 36.6），会误报。→ 放宽到 ≤ 1.5px。
 ```
+
+
+## 首页列表分批的判据（`.517`）
+
+```
+首屏 60 张（窄屏挂载后 40）· 底部「显示更多（还有 N 个）」+「已显示 X / Y」
+切 All / Working / Idle / Offline 回到第一批
+SSR 与首帧都用 60，窄屏在 useEffect 下调 ⇒ hydration 7/7
+读数（线上）：390 7,501px / 121 div·卡 40 ·点一次 13,471 / 80
+              1440 5,575px / 60 张 ·点一次 9,415 / 120
+```
+
+一条被纠正的误判：docH 8 万曾被当成"渲染循环"，实际是 421 张卡片 × 7 个 div；
+线上 3 个时点 div 恒为 2,962 ⇒ 不是循环，就是"没有分批"。
 
 
 ## 页面高度依赖清单（`.514` 用一次失败换来的事实）
