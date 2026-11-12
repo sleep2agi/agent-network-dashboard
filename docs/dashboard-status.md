@@ -200,6 +200,8 @@ SSR 与首帧都用 60，窄屏在 useEffect 下调 ⇒ hydration 7/7
 | `/nodes` | 13 | 0 | 0 |
 | `/tasks` | 22 | 0 | 0（横幅 CTA 当时被误记为"有扩展"） |
 | `/versions` `/changelog` `/settings` `/settings/tokens` `/providers` `/servers` | 各 16 | 0 | 0 |
+| `/legion` `/legion/plaza` `/requirements` | 各 18 | 0 | 0 |
+| `/messages` | 17 | 0 | 0 |
 | 首页新控件（显示更多/计数） | — | 0 | 0（焦点环 2px、对比度 7.67/5.83） |
 
 ```
