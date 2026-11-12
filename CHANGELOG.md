@@ -6,6 +6,46 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.513 — 2026-11-12
+
+### 军团 3D：C 案刻度环与选择/悬停联动（`?core=ticks`，默认不变）
+
+上一版刻度环只能说明"有几个部门、谁大"，属于装饰。这一版让它有指向：
+
+```
+悬停或选中某个部门时
+  · 该部门对应的刻度段：线宽 ×1.4、亮度 64%→72%、半径外移 1.6px、不透明度 1
+  · 其余段：不透明度 ×0.42
+  · canvas.dataset.coreTickHl = 该段索引（-1 = 当前无联动目标，自动化验收用这个）
+```
+
+| 项 | 默认 | `?core=ticks` |
+|---|---|---|
+| 刻度环 | 无 | 14 段，弧长 ∝ 部门规模 |
+| 联动 | 无 | 悬停/选中部门 → 对应段高亮，其余压暗 |
+| 核心半径 / `labelMargin` | 35.8 / 134 | 35.8–36.6 / 131–133 |
+
+### 工具：`oss-readiness-check` 不再依赖调用目录
+
+```
+以前在仓库外执行 node agent-network-dashboard/scripts/oss-readiness-check.mjs
+  ⇒ 直接抛 ENOENT 堆栈（看起来像门禁坏了，其实只是 cwd 不对）
+现在：脚本按自身位置 chdir 到仓库根，并打印一行提示
+已验：仓库根 / 工作区根 / /tmp 三处调用均 PASS 34/34
+（该修复曾单独推 main 但未发版，被 docs-ahead 门禁回退，这次随版本一起发）
+```
+
+### 已验证
+
+| 项 | 结果 |
+|---|---|
+| `coreTickHl` | 悬停 3 个部门分别得到 2 / 8 / 3，与 `depts` 顺序一致 |
+| 默认路径 | `coreTicks` 不存在 · 核心 35.8 · `labelMargin` 134 |
+| 脚本 | 三目录调用均 PASS 34/34 |
+| 单测 / tsc / build | 58/58 · 0 错误 · 通过 |
+
+---
+
 ## 0.6.4-preview.512 — 2026-11-12
 
 ### 军团 3D：中心区 C 案做成变体 `?core=ticks`（默认观感不变）

@@ -2,6 +2,16 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// 所有检查都按仓库根解析相对路径；从仓库外调用时统一 chdir，避免 ENOENT 堆栈
+// 被误读成"门禁坏了"。
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+if (resolve(process.cwd()) !== repoRoot) {
+  process.chdir(repoRoot);
+  console.log(`[oss-readiness] cwd → ${repoRoot}（按仓库根解析，可在任意目录调用）`);
+}
 
 const failures = [];
 let checks = 0;
