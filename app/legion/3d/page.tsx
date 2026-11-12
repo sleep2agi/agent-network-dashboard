@@ -93,12 +93,18 @@ const LABEL_PAD = 12;
 // `?core=big`（`.511`）：中心区 A 案变体 —— 核心环放大 1.6×，规模数字进环内。
 // 默认关闭（默认观感不变），供设计师并排比较。
 // 只影响 canvas 绘制与命中半径，不参与 SSR。
-const CORE_BIG = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).get('core') === 'big';
-// `?core=ticks`（`.512`）：中心区 C 案变体 —— 全部部门压成核心外缘一圈刻度弧，
-// 弧长 ∝ 该部门(成员 + Agent)。默认关闭，只影响 canvas。
-const CORE_TICKS = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).get('core') === 'ticks';
+
+// 中心区 C 案（`.522`）：全部部门压成核心外缘一圈刻度弧，弧长 ∝ 成员 + Agent。
+// `.512` 起先是 `?core=ticks` 变体；三个对象（默认 / A / C）并排在线两周后，
+// 这里改为**默认开启**（.522），理由：不改核心尺寸、无帧成本代价、桌面才画（<24px 不画）、
+// 且有三条联动入口（悬停 / 深链 focus / 列表选择）已验证。
+// 回退：`?core=off` 恢复 `.512` 之前的干净核心；`?core=ticks` 仍等价于默认。
+const CORE_PARAM = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('core')
+  : 'off';
+// `?core=big`（`.511`）：中心区 A 案 —— 核心环放大 1.6×，规模数字进环内。默认关闭。
+const CORE_BIG = CORE_PARAM === 'big';
+const CORE_TICKS = CORE_PARAM === null || CORE_PARAM === 'ticks';
 const CORE_SCALE = CORE_BIG ? 1.6 : 1;
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
