@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, memo } from 'react';
+import { useState, useRef, memo, useEffect } from 'react';
 import Link from 'next/link';
 import { StatsBar } from './components/StatsBar';
 import { TopoGraph } from './components/TopoGraph';
@@ -72,6 +72,15 @@ export default function Dashboard() {
   // R8: one page-level unread computation; counts flow to memo'd cards as props.
   const { unreadCount, lastActivityAt } = useChatUnread();
   const [agentFilter, setAgentFilter] = useState<'all' | 'working' | 'idle' | 'offline'>('all');
+  // 首页节点列表首屏限流（.516）：421 个节点原本一次全渲染 ⇒ 手机 docH 83,000px、
+  // main 内 2962 个 div。这里按 60（桌面）/ 40（手机）一批渲染，其余点「显示更多」逐批展开。
+  // 初始值固定 60 而不是按宽度取，避免 SSR 与首帧不一致引发 hydration 警告；
+  // 窄屏在挂载后一次性下调到 40。
+  const [visibleCount, setVisibleCount] = useState(60);
+  const pageStep = () => (typeof window !== 'undefined' && window.innerWidth < 1024 ? 40 : 60);
+  useEffect(() => {
+    if (window.innerWidth < 1024) setVisibleCount(40);
+  }, []);
   // #84: last node.renamed event — passed to TopoGraph so an open chat
   // popover follows the rename instead of pointing at a dead alias. `ts`
   // makes the effect re-fire even when the same from/to repeats.
@@ -283,7 +292,7 @@ export default function Dashboard() {
                 <button
                   key={c.key}
                   type="button"
-                  onClick={() => setAgentFilter(c.key)}
+                  onClick={() => { setAgentFilter(c.key); setVisibleCount(pageStep()); }}
                   disabled={counts[c.key] === 0 && c.key !== 'all'}
                   className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                     agentFilter === c.key
@@ -305,13 +314,27 @@ export default function Dashboard() {
                 main area at lg is ~816px so 3 cols at ~272px each fits.
                 xl breakpoint auto-inherits lg=3 cols; 2xl bumps to 4. */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
-              {filtered.map(s => (
+              {filtered.slice(0, visibleCount).map(s => (
                 <AgentCard key={s.alias} session={s} hasSse={isOnline(s)} sseCount={presenceSseCountFor(s, sseSessions) ?? 0} onChat={cmd.openTab} unreadCount={unreadCount(s.alias)} />
               ))}
             </div>
             {filtered.length === 0 && (
               <div className="mt-4 text-center text-xs text-gray-600">
                 No agents match &quot;{agentFilter}&quot; — <button onClick={() => setAgentFilter('all')} className="underline hover:text-gray-400">Show all</button>
+              </div>
+            )}
+            {filtered.length > visibleCount && (
+              <div className="mt-3 flex flex-col items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount(v => v + pageStep())}
+                  className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-gray-300 transition-colors hover:bg-[var(--hover-tint)]"
+                >
+                  显示更多（还有 {filtered.length - visibleCount} 个）
+                </button>
+                <span className="text-[11px] text-gray-600">
+                  已显示 {Math.min(visibleCount, filtered.length)} / {filtered.length}
+                </span>
               </div>
             )}
           </>
