@@ -146,7 +146,7 @@
 ## 军团中心区三变体：一条命令对比（`.512`）
 
 ```bash
-PLAYWRIGHT_BROWSERS_PATH=/home/vansin/.cache/ms-playwright \
+PLAYWRIGHT_BROWSERS_PATH=<playwright 浏览器缓存目录> \
   node evidence/probes/core-variants.mjs https://dm.vansin.top evidence/legion-3d-core-variants-live
 ```
 
