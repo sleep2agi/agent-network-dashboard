@@ -6,6 +6,46 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.514 — 2026-11-12
+
+### 全站布局：短页面不再多出一条滚动条（19 个页面受益）
+
+这个"内容不多却总能滚一点"的问题之前查过四次没定位，因为一直在看页面内容，
+没有看页面容器。实际是两处容器高度叠加：
+
+```
+① 页面壳：<div class="min-h-screen …">（= 100vh）套在含有 31px 横幅的外壳里
+   横幅 31 + 页面 100vh ⇒ doc = 1031，短页面永远多 31px
+   修：19 个文件 32 处 min-h-screen → min-h-full
+
+② 侧栏：<aside class="h-full"> 的父级高度是 auto（min-h-[100dvh] 的 flex 行）
+   h-full 无法解析 ⇒ 侧栏被内容撑到 1018，短页面再多吃 18px
+   修：桌面端 lg:h-[100dvh]，侧栏内部 nav 自己滚
+```
+
+| 页面 | 修复前 doc | 修复后 doc |
+|---|---|---|
+| `/logs`（1440×1000） | 1031 | **1000** |
+| `/node` | 1031 | **1000** |
+| `/legion` | 1031 | **1000** |
+| `/tasks`（内容本就长） | 1290 | 1265（正常长页） |
+
+```
+试过但放弃：桌面端给侧栏加 sticky（长页面也常驻）。
+实测滚动 2000px 后侧栏 top = -2000 —— 祖先的 overflow-x-hidden 会把 sticky
+降级成 static。所以只取高度，不上 sticky，行为与上一版一致。
+```
+
+### 已验证
+
+| 项 | 结果 |
+|---|---|
+| 短页面 doc 高度 | `/logs` `/node` `/legion` 全部 = 视口高度（无滚动条） |
+| 长页面 | `/settings` 2825 · `/changelog` 16181 —— 内容决定高度，未被误伤 |
+| 单测 / tsc / build | 58/58 · 0 错误 · 通过 |
+
+---
+
 ## 0.6.4-preview.513 — 2026-11-12
 
 ### 军团 3D：C 案刻度环与选择/悬停联动（`?core=ticks`，默认不变）

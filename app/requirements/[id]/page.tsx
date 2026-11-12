@@ -572,7 +572,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] p-6 text-gray-500">
+      <div className="min-h-full bg-[var(--bg)] p-6 text-gray-500">
         <div className="mx-auto max-w-4xl space-y-3">
           <div className="h-6 w-2/3 animate-pulse rounded bg-[var(--bg-elevated)]" />
           <div className="h-40 animate-pulse rounded bg-[var(--bg-secondary)]" />
@@ -583,7 +583,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
 
   if (needsLogin) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] p-6">
+      <div className="min-h-full bg-[var(--bg)] p-6">
         <div className="mx-auto max-w-4xl rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
           会话已过期，<Link href="/login" className="underline">重新登录</Link>。
         </div>
@@ -593,7 +593,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
 
   if (error || !req) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] p-6">
+      <div className="min-h-full bg-[var(--bg)] p-6">
         <div className="mx-auto max-w-4xl">
           <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
             {error ? `读取失败：${error}` : '这条需求不存在或不可见。'}
@@ -612,7 +612,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   const directoryReady = personChoices !== null;
 
   return (
-    <div data-detail-root className="min-h-screen bg-[var(--bg)] text-gray-200">
+    <div data-detail-root className="min-h-full bg-[var(--bg)] text-gray-200">
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
         <div className="mb-4">
           <Link href={backHref} className="text-xs text-gray-500 hover:text-gray-300" data-testid="requirement-back">← 需求列表</Link>
@@ -1299,9 +1299,9 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
 
 export default function RequirementDetailPage() {
   const { networkId, ready } = useNetworkId();
-  if (!ready) return <div role="status" className="min-h-screen bg-[var(--bg)] p-6 text-sm text-gray-500">正在确认当前网络…</div>;
+  if (!ready) return <div role="status" className="min-h-full bg-[var(--bg)] p-6 text-sm text-gray-500">正在确认当前网络…</div>;
   if (!networkId) return (
-    <div className="min-h-screen bg-[var(--bg)] p-6">
+    <div className="min-h-full bg-[var(--bg)] p-6">
       <div className="mx-auto max-w-4xl"><NetworkRequiredNotice /></div>
     </div>
   );

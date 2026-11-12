@@ -1014,7 +1014,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
   );
 
   return (
-    <div data-requirements-root className="min-h-screen bg-[var(--bg)] text-gray-200">
+    <div data-requirements-root className="min-h-full bg-[var(--bg)] text-gray-200">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -1974,7 +1974,7 @@ export default function RequirementsPage() {
     </div>
   );
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
+    <Suspense fallback={<div className="min-h-full bg-[var(--bg)]" />}>
       {/* A new network owns new rows, cursors, capabilities and catalog reads. */}
       <RequirementsContent key={networkId} networkId={networkId} />
     </Suspense>
