@@ -95,6 +95,10 @@ const LABEL_PAD = 12;
 // 只影响 canvas 绘制与命中半径，不参与 SSR。
 const CORE_BIG = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('core') === 'big';
+// `?core=ticks`（`.512`）：中心区 C 案变体 —— 全部部门压成核心外缘一圈刻度弧，
+// 弧长 ∝ 该部门(成员 + Agent)。默认关闭，只影响 canvas。
+const CORE_TICKS = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('core') === 'ticks';
 const CORE_SCALE = CORE_BIG ? 1.6 : 1;
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
@@ -2486,6 +2490,60 @@ export default function Legion3DPage() {
         if (node.kind === 'core') {
           drawLegionCore(ctx, p.x, p.y, radiusPx, { ...tk, isDark: dark }, corePhaseRef.current, !interacting,
             CORE_BIG ? 0.64 : 1, CORE_BIG ? -radiusPx * 0.26 : 0);
+          // C 案变体（?core=ticks）v2。v1 实测失败：画在 1.26r、2px 单色，与外环光晕糊在一起，
+          // 4 倍放大仍看不出"一段弧 = 一个部门"；且只取了顶层 6 个部门（实际 14 个）。
+          // v2：外移到 1.36r、每段加暗底描边把刻度"拔"出来、青(190°)→紫(275°)按部门序取色。
+          if (CORE_TICKS && radiusPx >= 14) {
+            const depts = layout.nodes.filter(n => n.kind === 'group');
+            if (depts.length > 0) {
+              const weights = depts.map(d => Math.max(1, (d.memberCount ?? 0) + (d.agentCount ?? 0)));
+              const total = weights.reduce((a, b) => a + b, 0) || 1;
+              const maxW = Math.max(...weights);
+              const rOuter = radiusPx * 1.36;
+              const gap = depts.length > 1
+                ? Math.min(0.10, (Math.PI * 2) / depts.length * 0.26)
+                : 0;
+              const usable = Math.PI * 2 - gap * depts.length;
+              const tickW = Math.max(3.2, Math.min(6, radiusPx * 0.11));
+              // v4：14 个部门里 11 个是小部门，纯按比例分弧长 ⇒ 每段只有 2–3°，
+              // 在 4 倍放大下仍然读不出来（v3 实测）。给每段一个最小弧长（≈3.5°），
+              // 剩余弧长再按权重分给大部门 —— 既能看出"有几个部门"，也能看出"谁大"。
+              const raw = weights.map(w => usable * (w / total));
+              const floorSpan = depts.length > 4 ? Math.min(0.07, (usable / depts.length) * 0.65) : 0;
+              let fixedSum = 0;
+              let flexSum = 0;
+              for (const r of raw) {
+                if (r <= floorSpan) fixedSum += floorSpan;
+                else flexSum += r;
+              }
+              const flexScale = flexSum > 0 ? (usable - fixedSum) / flexSum : 1;
+              const spans = raw.map(r => (r <= floorSpan ? floorSpan : r * flexScale));
+              ctx.save();
+              ctx.lineCap = 'butt';
+              let a0 = -Math.PI / 2;
+              for (let i = 0; i < depts.length; i += 1) {
+                const span = spans[i];
+                const hue = 190 + (depts.length > 1 ? (i / (depts.length - 1)) * 85 : 0);
+                ctx.globalAlpha = 0.55;
+                ctx.strokeStyle = tk.bg;
+                ctx.lineWidth = tickW + 2.4;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, rOuter, a0, a0 + span);
+                ctx.stroke();
+                // 下限 0.5：v2 初版用 0.55 但低权重段在中深色底上几乎是黑块，
+                // 看起来像"缺口"而不是"小部门"；提高下限后最小的段也能读出来。
+                ctx.globalAlpha = 0.62 + 0.33 * (weights[i] / maxW);
+                ctx.strokeStyle = `hsl(${hue.toFixed(0)} 88% 64%)`;
+                ctx.lineWidth = tickW;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, rOuter, a0, a0 + span);
+                ctx.stroke();
+                a0 += span + gap;
+              }
+              ctx.restore();
+              if (canvasRef.current) canvasRef.current.dataset.coreTicks = String(depts.length);
+            }
+          }
           // A 案变体（?core=big）：核心已放大到 1.6×，环内放得下两行规模数字。
           // 默认不画 —— 这是给设计师并排比较用的变体，不是新默认。
           if (CORE_BIG && radiusPx >= 26) {
