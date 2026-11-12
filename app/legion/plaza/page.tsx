@@ -138,7 +138,7 @@ export default function LegionPlazaPage() {
     } catch { setFullscreenError('浏览器未允许全屏，请检查权限后重试'); }
   };
   return <div ref={rootRef} tabIndex={-1} data-legion-stage="plaza" data-testid="legion-plaza-stage"
-    className={`relative min-w-0 bg-[var(--bg)] p-3 text-[var(--fg)] outline-none sm:p-5 ${fullscreen ? 'h-dvh overflow-auto' : 'min-h-screen'}`}>
+    className={`relative min-w-0 bg-[var(--bg)] p-3 text-[var(--fg)] outline-none sm:p-5 ${fullscreen ? 'h-dvh overflow-auto' : 'min-h-full'}`}>
     <div className="mx-auto max-w-[1720px]">
       <header className={`mb-4 flex flex-wrap items-center justify-between gap-3 ${fullscreen ? '' : 'lg:pr-10'}`}>
         <div><h1 className="text-xl font-semibold">军团 · 平台视角</h1>
