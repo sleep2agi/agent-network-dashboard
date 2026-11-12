@@ -1888,7 +1888,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                 <select value={priority} onChange={e => setPriority(e.target.value)}
                   aria-label="Priority"
                   title="Priority"
-                  className="hidden bg-transparent text-[11px] text-[var(--fg-dim)] focus:outline-none cursor-pointer sm:block sm:min-h-[24px]">
+                  className="hidden bg-transparent text-[11px] text-[var(--fg-dim)] focus:outline-none cursor-pointer sm:block sm:min-h-6">
                   <option value="normal">N</option>
                   <option value="high">H</option>
                   <option value="low">L</option>

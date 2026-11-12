@@ -6,6 +6,42 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.521 — 2026-11-12
+
+### 聊天输入区命中尺寸修复（内容同 `.520`）+ 修掉棘轮抓到的任意值
+
+`.520` 的 20 套验收尚未开跑就先被本机棘轮拦下（和 `.516` 同一个机制）：
+
+```
+color-ratchet: 🔴 arbitrary sizes INCREASED
+  app/components/TaskChatPanel.tsx: 14 → 15 (+1)     ← 我写了 sm:min-h-[24px]
+白名单只认 宽 760/480 · 高 85vh/50vh · 字号 11/12/14 · h-[var(--control-h)]
+```
+
+改法：`sm:min-h-[24px]` → **`sm:min-h-6`**（Tailwind 标准刻度 1.5rem = 24px），
+既达到最小命中尺寸，也不引入任意值。棘轮回绿：
+
+```
+color-ratchet: 66 off-whitelist arbitrary sizes（baseline 66）· ✓ no file exceeds its baseline
+```
+
+内容与 `.520` 一致（`.520` 未发布，线上仍是 `.519`）：
+
+| 控件 | 修法 | 视觉 | 命中 |
+|---|---|---|---|
+| 语音按钮（`/nodes` 聊天输入区） | `before:-inset-1` | 22×22（不变） | **30×30** |
+| 优先级下拉 | `sm:min-h-6` | 28×16 → **28×24** | 28×24 |
+
+### 已验证
+
+| 项 | 结果 |
+|---|---|
+| 本地全站可达性复测 | 20 路由全部 0 / 0（修复前 `/nodes` 0 / 2） |
+| color-ratchet | 66 = baseline · 无文件超标 |
+| 单测 / tsc / build | 58/58 · 0 错误 · 通过 |
+
+---
+
 ## 0.6.4-preview.520 — 2026-11-12
 
 ### 聊天输入区的语音按钮与优先级下拉补最小命中尺寸
