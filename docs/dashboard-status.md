@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.527` |
-| commit | `6bccaaec13f24cf3ddab1afb3db9048d40b7517e` |
+| 版本 | `0.6.4-preview.528` |
+| commit | `461bafe87797c6d0e7c65f21cd8b5a0eeff3b285` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.527-6bccaae` |
-| 回滚锚点 | `preview.526-de12698` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.528-461bafe` |
+| 回滚锚点 | `preview.527-6bccaae` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -295,6 +295,36 @@ PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=
 计数为 0 时 cursor / 点击 / keydown 全部禁用 ⇒ WCAG 1.4.3
 "inactive user interface component" 例外，对比度体检工具按同一口径跳过。
 ```
+
+## `/messages` 超长消息折叠（`.528`）
+
+```
+判据：正文实测高度 > 420px（≈24 行）才折叠 —— 不按字数判断
+      （同一条正文在 1440 宽是 520px，在 390 宽变 886px）
+实现：MessageBody 量 scrollHeight；折叠态 max-height + mask 淡出（与气泡底色解耦）
+交互：button + aria-expanded；data-msg-body-clamped / data-msg-body-toggle 供探针断言
+```
+
+| 线上实测（`.528`，30 条消息） | 1440 | 390 |
+|---|---|---|
+| 折叠条数 | 7 | 12 |
+| 折叠高度 | 420 | 420 |
+| 展开后（首条） | 501 | 886 |
+| 横向溢出 | 0 | 0 |
+
+### 探针两次误报（记录在案，避免复读）
+
+```
+第 1 版 document.querySelector('[data-msg-body-clamped="false"]')
+      ⇒ 量到全页第一条短消息（23px），误报"展开后反而变小"
+第 2 版 btn.parentElement.querySelector(...) + locator.evaluate
+      ⇒ 点击后 data-msg-body-toggle 由 expand→collapse，
+        locator 重新解析到另一条消息的按钮，再次量错
+第 3 版 elementHandle 锁定同一 DOM 节点，并输出 clamped/toggle/aria 三个自证字段
+      ⇒ 14/14；读数 before 420 → after 501/886 → back 420
+教训：判据（展开必须变大）没有放宽，改的是"量哪一条"的取样方式。
+```
+
 
 ## 键盘/触控可达性抽查基线（`.518`—`.519`）
 
