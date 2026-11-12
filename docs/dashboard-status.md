@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.531` |
-| commit | `171dcf7c27ede31ef911afbf740c22e29998569d` |
+| 版本 | `0.6.4-preview.532` |
+| commit | `5961aef7c6f2b4eb2ce4d7e81d15dcc59de4858c` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.531-171dcf7` |
-| 回滚锚点 | `preview.530-e95259c` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.532-5961aef` |
+| 回滚锚点 | `preview.531-171dcf7` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -365,6 +365,17 @@ PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=
 切换是整页导航 —— 几何按模块常量构建，不做假热切换；
 其它参数（focus / perf / 视角）原样保留，便于对照。
 探针：evidence/probes/legion-core-switch.mjs（2 视口 × 5 判据，线上 10/10）
+```
+
+
+### 折叠阈值随视口高度（`.532`）
+
+```
+阈值 = min(420, 视口高 × 0.5)，下限 200
+  390 高（横屏）→ 200px（改前固定 420 ≈ 整屏 108%，折叠等于没折叠）
+  844 高（竖屏）→ 420px
+ 1000 高（桌面）→ 420px
+线上实测：桌面 10/30 折叠 · 竖屏 16/30 · 横屏 18/30；三视口横向溢出均 0
 ```
 
 
