@@ -540,6 +540,16 @@ export default function Legion3DPage() {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const footerRef = useRef<HTMLDivElement | null>(null);
+  // `.525`：320×568 下页脚 chrome 高 183px（超过画布一半），把取景安全区挤到 72px，
+  // fit 无解后内容溢出 10px。这里在极小高度下压缩 chrome：图例单行横向滚动、
+  // 隐藏两句长说明（读屏文案 #legion-3d-hint 仍在）。判据见 evidence/legion-perf-524。
+  const [tightHeight, setTightHeight] = useState(false);
+  useEffect(() => {
+    const read = () => setTightHeight(window.innerHeight < 620);
+    read();
+    window.addEventListener('resize', read);
+    return () => window.removeEventListener('resize', read);
+  }, []);
   const fitBoundsRef = useRef<LabelRect | null>(null);
   const visBoundsAcc = useRef({ minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity, count: 0 });
   const labelUiRectsRef = useRef<LabelRect[]>([]);
@@ -4385,7 +4395,7 @@ export default function Legion3DPage() {
 
       {/* 底部左：图例与操作提示 */}
       <div ref={footerRef} className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <div className={tightHeight ? "flex flex-nowrap items-center gap-x-2 overflow-x-auto" : "flex flex-wrap items-center gap-x-3 gap-y-1"}>
           {/* 图例即筛选：点一下只看这个状态，再点取消（Esc 也能清）。 */}
           {([
             ['working', '运行中', 'var(--success)'],
@@ -4411,11 +4421,17 @@ export default function Legion3DPage() {
             );
           })}
         </div>
-        <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · / 搜索 · 回车打开选中 · R 重置</p>
-        <p className="text-[var(--fg-muted)]">
-          光流示意组织连接，节点状态以图例为准。
-          部门名在静息时可能留白（避免挤在一起），<strong>悬停该部门或选中它会立即显示名字</strong> —— 看不到名字不代表没有这个部门。
-        </p>
+        {tightHeight ? (
+          <p className="truncate">缩放 {zoomPct}% · 双击 Agent 对话</p>
+        ) : (
+          <>
+            <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · / 搜索 · 回车打开选中 · R 重置</p>
+            <p className="text-[var(--fg-muted)]">
+              光流示意组织连接，节点状态以图例为准。
+              部门名在静息时可能留白（避免挤在一起），<strong>悬停该部门或选中它会立即显示名字</strong> —— 看不到名字不代表没有这个部门。
+            </p>
+          </>
+        )}
       </div>
 
       {/* 键盘/读屏的节点列表：canvas 不可 Tab，靠这张列表选节点 */}
