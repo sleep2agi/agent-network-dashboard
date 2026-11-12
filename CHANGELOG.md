@@ -6,6 +6,36 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.530 — 2026-11-13
+
+### 三枚状态芯片的空态统一：退让靠形状，不靠降低文字不透明度
+
+`.529` 线上亮色体检揪出同一家族第 2 个成员：`0 working` 芯片 **2.02:1**（有效 alpha 0.48 = 自身 0.95 × 空态 0.5）。
+`.527` 只修了 `0 active links`（当时 `flowLinks=0` 才暴露），这次 `workingCount=0` 让同一分支再次现形。
+
+| 芯片 | 改前（空态） | 改后 |
+|---|---|---|
+| `0 working` | `opacity: 0.5` + 绿色填充 | `opacity: 1` + `bg-transparent` + `border-dashed` |
+| `0 online` | `opacity: 0.5` + 青色填充 | 同上 |
+| `0 active links` | （`.527` 已改） | 同上 |
+
+```
+实测（本地 3101）：0 working 计算样式 = opacity 1 / borderStyle dashed / background rgba(0,0,0,0)
+非空芯片（116 online）保持 opacity 1 / solid / 10% 填充 —— 两种状态一眼可分：
+  实线 + 填充 = 有内容可点；虚线 + 无填充 = 该层为空
+```
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| 本地 light 17 路由 | **0 处** <4.5（改前 1 处 2.02:1） |
+| 本地 cyber 17 路由 | **0 处** |
+| 芯片计算样式取证 | 0 working：opacity 1 / dashed / 透明；116 online：opacity 1 / solid / 10% |
+| tsc / color-ratchet / build | 0 错误 / 无超基线 / 通过 |
+
+---
+
 ## 0.6.4-preview.529 — 2026-11-13
 
 ### `/messages` 折叠：淡出更自然 + 按钮更容易点

@@ -3188,7 +3188,9 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   className={`group tabular-nums font-medium px-2.5 py-1 rounded-lg border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     workingCount > 0
                       ? `${isWorkingChipLit ? 'bg-green-500/15 border-green-500/30' : 'bg-green-500/10 border-green-500/20'} text-green-300 hover:bg-green-500/15 hover:border-green-500/30 hover:-translate-y-px active:scale-95`
-                      : 'bg-green-500/10 text-green-300 border-green-500/20'
+                      // `.530`：空态改「无底色 + 虚线边框」，不再靠降低文字不透明度退让
+                      // （`.529` 线上实测：0 working 芯片 alpha 0.48 ⇒ 亮色 2.02:1）
+                      : 'bg-transparent text-green-300 border-green-500/20 border-dashed'
                   }`}
                   data-chip-hover-lift={workingCount > 0 ? 'true' : 'false'}
                   data-chip-group-hover-brighten="true"
@@ -3247,7 +3249,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-working-chip-halo-layers={(hoveredStatus === 'working' || pinnedStatus === 'working') && workingCount > 0 ? '2' : '0'}
                   style={{
                     cursor: workingCount > 0 ? 'pointer' : undefined,
-                    opacity: workingCount === 0 ? 0.5 : 1,
+                    // `.530`：不再整块降 opacity（会把 "0 working" 压到 2.02:1）
+                    opacity: 1,
                     boxShadow: pinnedStatus === 'working' ? 'inset 0 0 0 1px #4ade80, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
                     filter: (hoveredStatus === 'working' || pinnedStatus === 'working') && workingCount > 0
                       ? 'drop-shadow(0 0 2px #4ade8080) drop-shadow(0 0 4px #4ade8040)'
@@ -3339,7 +3342,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   className={`group tabular-nums font-medium px-2.5 py-1 rounded-lg border anet-topo-chip-focus transition-colors transition-transform duration-200 ease-out transform-gpu ${
                     onlineNodes.length > 0
                       ? `${isOnlineChipLit ? 'bg-cyan-500/15 border-cyan-500/30' : 'bg-cyan-500/10 border-cyan-500/20'} text-cyan-300 hover:bg-cyan-500/15 hover:border-[var(--accent)]/30 hover:-translate-y-px active:scale-95`
-                      : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
+                      // `.530`：同 working 芯片 —— 空态用无底色 + 虚线表达退让
+                      : 'bg-transparent text-cyan-300 border-cyan-500/20 border-dashed'
                   }`}
                   data-chip-hover-lift={onlineNodes.length > 0 ? 'true' : 'false'}
                   data-chip-group-hover-brighten="true"
@@ -3372,7 +3376,8 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                   data-online-chip-halo-layers={((hoveredStatus === 'working' || hoveredStatus === 'idle') || pinnedStatus === 'idle') && onlineNodes.length > 0 ? '2' : '0'}
                   style={{
                     cursor: onlineNodes.length > 0 ? 'pointer' : undefined,
-                    opacity: onlineNodes.length === 0 ? 0.5 : 1,
+                    // `.530`：同 working 芯片
+                    opacity: 1,
                     boxShadow: pinnedStatus === 'idle' ? 'inset 0 0 0 1px #67e8f9, inset 0 0 0 2px rgba(255,255,255,0.45)' : undefined,
                     filter: ((hoveredStatus === 'working' || hoveredStatus === 'idle') || pinnedStatus === 'idle') && onlineNodes.length > 0
                       ? 'drop-shadow(0 0 2px #67e8f980) drop-shadow(0 0 4px #67e8f940)'
