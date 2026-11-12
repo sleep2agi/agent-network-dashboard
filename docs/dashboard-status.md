@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.526` |
-| commit | `de1269853617a24ff90e048f618cff417af9a733` |
+| 版本 | `0.6.4-preview.527` |
+| commit | `6bccaaec13f24cf3ddab1afb3db9048d40b7517e` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.526-de12698` |
-| 回滚锚点 | `preview.525-5a143dd` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.527-6bccaae` |
+| 回滚锚点 | `preview.526-de12698` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -279,16 +279,22 @@ PLAYWRIGHT_BROWSERS_PATH=<dir> node deploy/contrast-check.mjs <baseUrl> --theme=
 |---|---|
 | 本地 light | 17 路由 0 处 |
 | 本地 cyber | 17 路由 0 处 |
-| 线上 cyber（`.526`） | 17 路由 0 处 |
-| 线上 light（`.526`） | **1 处残留**：`/` 的 `active links` 2.1:1（有效 alpha 0.48） |
+| 线上 cyber（`.527`） | 17 路由 0 处 |
+| 线上 light（`.527`） | 17 路由 0 处 |
 
 ```
-残留成因：该 chip 的祖先在"空闲"时整体淡出（opacity ≈0.5），
-0.95（chip 自身）× 0.5（祖先）≈ 0.48 ⇒ 文字 2.1:1。
-它不是颜色问题，而是"空闲态整块淡出"这一设计行为。
-待决策：① 把空闲淡出下限提到 ≥0.8 ② 该 chip 不参与淡出 ③ 接受为设计取舍并记录。
+`.526` 时线上 light 曾有 1 处残留：首页 "0 active links" 芯片 2.1:1。
+实测（idle / hover / 4s 后 三态一致 = 0.48）确认**不是空闲淡出**，而是空态常驻
+`style.opacity = 0.5` × 自身 0.95 ⇒ 有效 0.48。
+`.527` 改为空态"无底色 + 虚线边框"，文字保持 `--fg-muted` 全不透明：
+退让信号仍在，比值回到 ≥4.5 —— 线上 light/cyber 双双 0 处。
 ```
 
+``` 
+同一家族的 `0 working` / `0 online` 芯片保留 `opacity: 0.5`：
+计数为 0 时 cursor / 点击 / keydown 全部禁用 ⇒ WCAG 1.4.3
+"inactive user interface component" 例外，对比度体检工具按同一口径跳过。
+```
 
 ## 键盘/触控可达性抽查基线（`.518`—`.519`）
 
