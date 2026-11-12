@@ -3000,6 +3000,16 @@ export default function Legion3DPage() {
             ctx.fillText(line, (spot.x1 + spot.x2) / 2, spot.y1 + 3 + metric.lineHeight * (index + 0.5));
           }
         }
+        // `.536`：把本帧的标签计数落到 ref —— 此前 `labelStatsRef` 只有声明没有写入，
+        // `dataset.labelStats` 永远输出 {0,0,0,0}（一个"看起来在测、其实没测"的假指标）。
+        // 现在记录本帧真实值：attempted/placed/dropped + 队列里的一级部门数。
+        labelStatsRef.current = {
+          attempted: attemptedLabels,
+          placed: drawnLabels,
+          dropped: Math.max(0, attemptedLabels - drawnLabels),
+          wantedDepth1: labelQueue.filter(i => (i.node.depth ?? 1) <= 1).length,
+        };
+
         // Check the route only after every label has its final position.
         for (const item of leaders) {
           const leader = legionLabelLeader(item.anchor, item.rect, placed, labelBodies);
