@@ -5,6 +5,7 @@ import { applyTheme } from './ThemeSwitcher';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
+import { useChromeDeferMs, useDeferredKey } from '../lib/chrome-defer';
 import { useNetworkId } from '../lib/network-context';
 import { isOnline as presenceIsOnline, presenceStatus } from '../lib/presence';
 import { useHealth } from '../lib/hooks';
@@ -553,9 +554,12 @@ const statusFetcher = async (url: string) => {
 function SidebarBrand({ collapsed }: { collapsed: boolean }) {
   const { networkId, ready } = useNetworkId();
   // 网络未解析完不发请求（否则先打一枪无作用域的，见 .383 的修复）。
-  const overviewKey = ready && networkId
-    ? `/api/hub/overview?network_id=${encodeURIComponent(networkId)}`
-    : null;
+  // `.542`：hook 必须无条件调用（放三元里会触发 React #311「hook 数量变化」，整页白屏）
+  const deferMs = useChromeDeferMs();
+  const overviewKey = useDeferredKey(
+    ready && networkId ? `/api/hub/overview?network_id=${encodeURIComponent(networkId)}` : null,
+    deferMs,
+  );
   // 首屏只取「计数」：/api/hub/status 会回全部 session 对象（生产实测 709 KB），
   // 公网约 240 KB/s，光这一份就要 3 秒。聚合端点让浏览器只收几百字节。
   const { data, error, isLoading } = useSWR<{ ok: boolean; total: number; online: number; presence: 'ready' | 'blind' | 'loading' }>(

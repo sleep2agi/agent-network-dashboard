@@ -6,6 +6,49 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.542 — 2026-11-13
+
+### 首屏请求精简：做成**默认关闭的实验开关**（`?deferChrome=1`）
+
+```
+诊断：线上 /legion 首屏一次触发 8–10 个 /api/hub/*，上游 Hub 串行处理
+      （单接口 0.22s → 8 路并发 1.6–1.8s），首屏必须等 people + departments ⇒ 3.8–7.2s。
+做法：新增 app/lib/chrome-defer.ts
+      · useChromeDeferMs()：仅当 URL 带 ?deferChrome=1 时返回 1500，否则 0
+      · useDeferredKey(key, ms)：ms=0 立即返回 key（默认路径与现状完全一致）
+      接入两处非首屏必需请求：Sidebar 的 overview、HealthBanner 的 task-stats
+```
+
+| 本地双模式对照（1440，首次发起时刻） | 默认 | `?deferChrome=1` |
+|---|---|---|
+| networks | 335ms | 238ms |
+| people / departments | 916 / 916ms | 697 / 697ms |
+| overview | 911ms | **1805ms** |
+| task-stats | 923ms | **1805ms** |
+
+```
+默认路径与改动前一致（overview/messages 仍在 ~911ms 发起），开关路径延后 ~0.89s ⇒ 机制成立。
+线上 A/B（/legion vs /legion?deferChrome=1）将在发布后测，不作为本版已验收项。
+```
+
+### 一处必须记录的实现错误（本地验证拦下）
+
+```
+第一版把 hook 写进三元：ready && networkId ? useDeferredKey(...) : null
+⇒ React #311（hook 数量随渲染变化）⇒ 本地整页 "This page couldn't load"
+⇒ 已改为无条件调用（deferMs + key 分开计算）。若直接发布会让所有带侧栏的页面白屏。
+```
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| tsc / color-ratchet / build | 0 错误 / 无超基线 / 通过 |
+| 本地双模式请求时刻 | 见上表（默认不变、开关延后） |
+| 页面可加载 | /legion 正常渲染（无 #311） |
+
+---
+
 ## 0.6.4-preview.541 — 2026-11-13
 
 ### 修 `.534` 引入的重复入口：页头出现两个「3D 视图」
