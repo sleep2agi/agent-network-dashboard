@@ -926,18 +926,9 @@ export default function LegionPage() {
               // contents 让这些按钮仍按原来的 flex 排列；移动端收起时整块隐藏。
               className={mobileToolsOpen ? 'contents' : 'hidden sm:contents'}
             >
-            {/* `.534`：2D 页此前没有任何可见入口通向 3D（只能点节点或走命令面板），
-                而 3D 才是"军团"给人的第一眼。这里补一枚显式入口，语气与
-                全屏/净屏一致，但用 accent 底色把它抬成"主视图"。 */}
-            <button
-              type="button"
-              onClick={() => router.push('/legion/3d')}
-              aria-label="打开军团 3D 视图"
-              data-testid="legion-goto-3d"
-              className="rounded-lg bg-[var(--accent)]/10 px-2.5 py-1.5 text-xs text-[var(--accent-text)] hover:bg-[var(--accent)]/20"
-            >
-              3D 视图
-            </button>
+            {/* `.541`：删掉 `.534` 加的这枚按钮 —— 页面里本来就有「3D 视图」链接
+                （`data-testid="legion-3d-link"`，还带 focus 上下文），我当时 grep 时
+                把它误读成节点点击逻辑，结果页头出现两个「3D 视图」。保留原有那个。 */}
             <button
               type="button"
               onClick={toggleFullscreen}
