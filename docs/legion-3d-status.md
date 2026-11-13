@@ -94,6 +94,16 @@ Hub API 四段串行：networks 2.18s → stats/events 4.19s → overview 4.98s 
 证据：evidence/legion-2d-api-latency-540/readings.md
 ```
 
+
+### 跨页面首屏指标：两套判据都不可靠（`.541` 撤回）
+
+```
+尝试 DOM 条目计数与 FCP/LCP 测 /nodes /org /tasks /requirements /legion，
+结果自相矛盾（/nodes API 1.27s 已返回 nodes、DCL 1.04s，但 LCP 报 9.4s ⇒ 是头像晚加载）。
+⇒ 撤回"4 个主页面都 5–6.6s"的说法；目前只有 /legion 的 SVG 信号可与截图对齐、可作读数。
+证据：evidence/page-ready-metrics-541/readings.md
+```
+
 ## 五、待决策 / 待输入
 
 | 项 | 需要什么 | 工时 |
