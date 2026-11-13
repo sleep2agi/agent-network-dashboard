@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.539` |
-| commit | `98bc57cd5825538aecc6a8f8a8d89ff5c6dc4601` |
+| 版本 | `0.6.4-preview.540` |
+| commit | `2f79a90c5876bb2bb781c9c63c09b07834d9cc8b` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.539-98bc57c` |
-| 回滚锚点 | `preview.538-dc9b1ab` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.540-2f79a90` |
+| 回滚锚点 | `preview.539-98bc57c` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -40,6 +40,8 @@
 | `.538` | 军团 3D 默认中心区：环 → **混合**（数据驱动，可回退） | 线上默认态 1440 ticks 14 + big 1 · 390 ticks 6 + big 1 · 探针 16/16 · legion 272/272 · 20 套满额 · CI 4/4 |
 
 | `.539` | `/org` 搜索外框可点后聚焦输入（与 requirements/legion 对齐） | 线上 390：外框 36px / 输入框 20px / 点白边焦点进入输入框 · 20 套满额 · CI 4/4 |
+
+| `.540` | 2D 军团成员点分帧渲染（部门先画、成员分批补） | 本地首屏 **4.3–10.7s → 1.6–2.4s**、全量 2.1–2.6s；线上 5.0–7.4s（瓶颈已转为 Hub 四段串行 API ≈5.5s）· 20 套满额 · CI 4/4 · 12/12 门 |
 
 ## 圆角现场口径（`.492` 实测，可复现）
 
