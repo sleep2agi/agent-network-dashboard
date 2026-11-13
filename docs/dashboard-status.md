@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.538` |
-| commit | `dc9b1ab223a94ff014335049dd683f0827823231` |
+| 版本 | `0.6.4-preview.539` |
+| commit | `98bc57cd5825538aecc6a8f8a8d89ff5c6dc4601` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.538-dc9b1ab` |
-| 回滚锚点 | `preview.537-0b72b39` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.539-98bc57c` |
+| 回滚锚点 | `preview.538-dc9b1ab` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
@@ -38,6 +38,8 @@
 | `.537` | 军团 3D 记住用户选的中心区（localStorage；切换恒写 ?core= 含 ticks） | 线上四场景：默认环 → 混合 → 无参数再进仍混合 → 清空回环 · 探针 14/14 · 20 套满额 · CI 4/4 |
 
 | `.538` | 军团 3D 默认中心区：环 → **混合**（数据驱动，可回退） | 线上默认态 1440 ticks 14 + big 1 · 390 ticks 6 + big 1 · 探针 16/16 · legion 272/272 · 20 套满额 · CI 4/4 |
+
+| `.539` | `/org` 搜索外框可点后聚焦输入（与 requirements/legion 对齐） | 线上 390：外框 36px / 输入框 20px / 点白边焦点进入输入框 · 20 套满额 · CI 4/4 |
 
 ## 圆角现场口径（`.492` 实测，可复现）
 
