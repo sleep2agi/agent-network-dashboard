@@ -3777,6 +3777,37 @@ export default function Legion3DPage() {
     setExporting(true);
     setExportError('');
     try {
+      // `.550`：导出前等头像解码完成。头像缓存是"加载完才画"，加载中导出会把成员
+      // 全画成通用人形图标 —— 而导出的图正是拿去传播的那张（实测 2.5s 导出全是人形，
+      // 9s 导出才显示真实头像）。上限 2.5s，超时就用现有缓存继续，不阻塞导出。
+      {
+        const urls = new Set<string>();
+        for (const n of layout.nodes) {
+          if (n.kind === 'person') {
+            const u = getAvatarUrl(n.sublabel?.replace(/^@/, '') || n.label);
+            if (u) urls.add(u);
+          }
+        }
+        const pending = [...urls].map(u => new Promise<void>(resolve => {
+          let img = AVATAR_IMAGES.get(u);
+          if (!img) {
+            img = new Image();
+            img.decoding = 'async';
+            img.src = u;
+            AVATAR_IMAGES.set(u, img);
+          }
+          if (img.complete) return resolve();
+          img.addEventListener('load', () => resolve(), { once: true });
+          img.addEventListener('error', () => resolve(), { once: true });
+        }));
+        if (pending.length) {
+          await Promise.race([
+            Promise.all(pending),
+            new Promise<void>(resolve => setTimeout(resolve, 2500)),
+          ]);
+        }
+      }
+
       // 交互期背板可能还是 0.6×：导出前先让绘制循环回到全分辨率，
       // 否则会把降采样的糊图导出去（画质没法事后补救）。
       interactingUntil.current = 0;
