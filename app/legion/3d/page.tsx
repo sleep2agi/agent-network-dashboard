@@ -510,15 +510,40 @@ export default function Legion3DPage() {
   // 所以切换必须整页导航 —— 这里不做客户端热切换的假动作。
   const [coreMode, setCoreMode] = useState<'ticks' | 'big' | 'both' | 'off' | null>(null);
   useEffect(() => {
+    const VALID = ['ticks', 'big', 'both', 'off'] as const;
+    type Mode = typeof VALID[number];
     const p = new URLSearchParams(window.location.search).get('core');
-    setCoreMode(p === 'big' ? 'big' : p === 'both' ? 'both' : p === 'off' ? 'off' : 'ticks');
+    const stored = (() => { try { return localStorage.getItem('legion-core-mode'); } catch { return null; } })();
+    // `.537`：显式 URL 参数优先，并记住用户的选择；没参数但有记忆值时，
+    // 本次会话内定向一次（几何按模块常量构建，必须靠 URL 才能生效）。
+    if (p && (VALID as readonly string[]).includes(p)) {
+      try { localStorage.setItem('legion-core-mode', p); } catch {}
+      setCoreMode(p as Mode);
+      return;
+    }
+    if (stored && (VALID as readonly string[]).includes(stored)) {
+      let redirected = false;
+      try { redirected = sessionStorage.getItem('legion-core-redirect') === '1'; } catch {}
+      if (!redirected) {
+        try { sessionStorage.setItem('legion-core-redirect', '1'); } catch {}
+        const url = new URL(window.location.href);
+        if (stored === 'ticks') url.searchParams.delete('core');
+        else url.searchParams.set('core', stored);
+        window.location.replace(url.toString());
+        return;
+      }
+      setCoreMode(stored as Mode);
+      return;
+    }
+    setCoreMode('ticks');
   }, []);
   const cycleCoreMode = useCallback(() => {
     if (!coreMode) return;
     const next = coreMode === 'ticks' ? 'big' : coreMode === 'big' ? 'both' : coreMode === 'both' ? 'off' : 'ticks';
     const url = new URL(window.location.href);
-    if (next === 'ticks') url.searchParams.delete('core');
-    else url.searchParams.set('core', next);
+    // `.537`：即使是「环」也显式写 ?core=ticks —— 否则"删掉参数"与"从未选择"无法区分，
+    // 记忆值会与几何不一致（探针实测：按钮显示混合、画布还是环）。
+    url.searchParams.set('core', next);
     window.location.assign(url.toString());
   }, [coreMode]);
   const [exporting, setExporting] = useState(false);
