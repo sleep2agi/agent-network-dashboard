@@ -7,30 +7,41 @@
  *       单接口 0.22s 被放大到 1.6–1.8s；首屏必须等 people + departments ⇒ 3.8–7.2s。
  *
  * 设计：默认行为完全不变（未带 `?deferChrome=1` 时延迟为 0）；
- *       只有显式带参数时才把"非首屏必需"的 chrome 请求（消息角标 / 概览 / 任务统计）
- *       延后 1.5s，用来在线测量"减少并发是否真的让首屏变快"。
- *       验证有效后再决定是否把默认打开（一行改动）。
+ *       只有显式带参数时才把"非首屏必需"的 chrome 请求（概览 / 任务统计）延后 1.5s，
+ *       用来在线测量"减少并发是否真的让首屏变快"。验证有效后再决定是否把默认打开。
+ *
+ * 实现注意（`.542` 教训）：
+ *   · 不用 useMemo/useState + 同步 setState 读 URL —— 会触发 react-hooks/set-state-in-effect
+ *   · 改成模块级惰性读取（首个调用时算一次），避免 effect 内 setState
  */
 import { useEffect, useState } from 'react';
 
-export function useChromeDeferMs(): number {
-  const [ms, setMs] = useState(0);
-  useEffect(() => {
-    try {
-      const q = new URLSearchParams(window.location.search).get('deferChrome');
-      if (q === '1') setMs(1500);
-    } catch { /* 忽略 */ }
-  }, []);
-  return ms;
+let cachedDeferMs: number | null = null;
+
+/** 读取 ?deferChrome=1（只算一次；服务端返回 0） */
+export function chromeDeferMs(): number {
+  if (cachedDeferMs !== null) return cachedDeferMs;
+  if (typeof window === 'undefined') return 0;
+  try {
+    const on = new URLSearchParams(window.location.search).get('deferChrome') === '1';
+    cachedDeferMs = on ? 1500 : 0;
+  } catch {
+    cachedDeferMs = 0;
+  }
+  return cachedDeferMs;
 }
 
+/**
+ * ms=0 时立即返回 key（默认路径，无任何额外渲染）；
+ * ms>0 时在 setTimeout 里放行（异步 setState，符合 hooks 规则）。
+ */
 export function useDeferredKey<T>(key: T, ms: number): T | null {
-  const [ok, setOk] = useState(ms === 0);
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (ms === 0) { setOk(true); return; }
-    setOk(false);
-    const t = setTimeout(() => setOk(true), ms);
+    if (ms === 0) return;
+    const t = setTimeout(() => setReady(true), ms);
     return () => clearTimeout(t);
   }, [ms]);
-  return ok ? key : null;
+  if (ms === 0) return key;
+  return ready ? key : null;
 }

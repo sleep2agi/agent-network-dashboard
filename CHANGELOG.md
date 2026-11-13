@@ -49,6 +49,51 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.543 — 2026-11-13
+
+### 首屏请求精简开关（重发版：修掉 CI Lint 的两条 error）
+
+```
+`.542` 因 CI 的 Lint 步骤失败被弃用（编号不复用）。
+两条 error 都来自新文件的 react-hooks/set-state-in-effect：
+  · useChromeDeferMs 在 effect 内同步 setState 读 URL
+  · useDeferredKey 在 effect 内同步 setState
+```
+
+| 项 | `.542`（弃用） | `.543`（本版） |
+|---|---|---|
+| 读 `?deferChrome=1` | 在 effect 里 setState | 模块级惰性函数 `chromeDeferMs()`（非 hook） |
+| 延后放行 | effect 内同步 setState | `setTimeout` 内异步 setState |
+| 默认路径 | — | `ms=0` 直接返回 key（零额外渲染） |
+
+### 本地双模式对照（1440，首次发起时刻）
+
+| 请求 | 默认 | `?deferChrome=1` |
+|---|---|---|
+| networks | 334ms | 250ms |
+| people / departments | 930 / 930ms | 804 / 804ms |
+| **overview** | 930ms | **1751ms** |
+| **task-stats** | 909ms | **1753ms** |
+
+```
+默认路径与改动前一致；开关路径把两条非首屏必需请求延后 ~0.82s。
+```
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| tsc | 0 错误 |
+| **npm run lint** | **0 errors**（121 既有 warnings） |
+| build | 通过 |
+| 双模式请求时刻 | 见上表 |
+
+```
+教训：`.542` 只跑了 tsc/build 没跑 lint，被 CI 拦下。今后含 hook 的改动本地必跑 lint。
+```
+
+---
+
 ## 0.6.4-preview.541 — 2026-11-13
 
 ### 修 `.534` 引入的重复入口：页头出现两个「3D 视图」
