@@ -87,10 +87,10 @@
 ### 2D 入口线上仍 5–7s 的归因（`.540`）
 
 ```
-Hub API 四段串行：networks 2.18s → stats/events 4.19s → overview 4.98s → departments/people 5.50s
-前端渲染（分帧后）≈0.5s ⇒ 瓶颈已转移到数据链路，不是渲染。
+**更正（`.541`）**：那串 2.18/4.19/4.98/5.50s 是**请求发起时刻**，不是服务端耗时。
+curl 直连同一会话实测单接口 0.13–0.6s（session-status 1.79s）⇒ 串行在**客户端**（请求编排/水合时序），不是 Hub。
 本地同代码 1.6–2.4s（本机 API 快）对比线上 5.0–7.4s，差距即数据等待。
-已把时序证据发给 通信欧（message_id 5c5c116a），待其确认 networks 冷启动与并行化空间。
+已向 通信欧 发送更正（message_id e155c492）：服务端不慢，问题在客户端编排。
 证据：evidence/legion-2d-api-latency-540/readings.md
 ```
 
