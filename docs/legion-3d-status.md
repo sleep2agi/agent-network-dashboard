@@ -15,9 +15,9 @@
 
 | 变体 | URL | 桌面 | 390 | 一句话 |
 |---|---|---|---|---|
-| **环（当前默认）** | 无参数 / `?core=ticks` | ticks 14 | ticks 6 | 部门刻度环，结构一眼可读 |
+| 环 | `?core=ticks` | ticks 14 | ticks 6 | 部门刻度环，结构一眼可读 |
 | 大 | `?core=big` | big 1 | big 1 | 核心放大 1.6×，`352 Agent / 14 部门 · 9 成员` 进核心 |
-| 混合 | `?core=both` | ticks 14 + big 1 | ticks 6 + big 1 | 规模在核心、结构在外圈，两者同时可见 |
+| **混合（`.538` 起默认）** | 无参数 / `?core=both` | ticks 14 + big 1 | ticks 6 + big 1 | 规模在核心、结构在外圈，两者同时可见 |
 | 干净 | `?core=off` | 无刻度 | 无刻度 | 只剩标识，留白最多 |
 
 对照材料（线上实拍 4 方案 × 2 视口）：`evidence/legion-center-compare-535/compare.html`
