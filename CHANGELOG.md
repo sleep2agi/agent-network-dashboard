@@ -49,6 +49,58 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.545 — 2026-11-13
+
+### 军团 3D：安全区变大时也重取景（横幅消失后军团重新长满画布）
+
+```
+取证：线上 1440，删掉页头描述第二行 + 页脚第二行（真实内容变化）
+  safeBounds  135..864 → 116..880（+35px）
+  zoom        1.231 → 1.231（应到 1.295）
+⇒ 原来只在安全区「变小」时置 fitPending，「变大」不重取景：
+  任务失败横幅消失、页脚提示少一行之后，画面停在按旧边界算的尺寸上。
+```
+
+### 修法
+
+```ts
+// 安全区变大 且 用户没手动调过机位 ⇒ 也置 fitPending（阈值 8px，避开字体落位抖动）
+if (previous && !userAdjusted.current && (
+  previous.x1 - bounds.x1 > 8 || previous.y1 - bounds.y1 > 8
+  || bounds.x2 - previous.x2 > 8 || bounds.y2 - previous.y2 > 8
+)) fitPending.current = true;
+```
+
+### 本机实测（同一实验，修前 / 修后）
+
+| 项 | 修前 | 修后 |
+|---|---|---|
+| zoom | 1.231 | **1.293** |
+| 环高 | 726px | **764px**（+5.2%） |
+| 纵向占画布 | 75% | 79% |
+| 390 窄屏 | 0.952 / 324px | 0.952 / 324px（不受影响） |
+
+### 取证过程（三次假阴性，已记录）
+
+```
+1) 改 margin      → 页头是 absolute 定位，margin 不动它 ⇒ 读数没变（无效实验）
+2) 改 top         → 位置变了但尺寸没变，ResizeObserver 不回调 ⇒ 读数没变（无效实验）
+3) 改 padding     → 元素高度 99→159，但 ResizeObserver 观察的是**内容盒**，
+                    padding 不计入 ⇒ 连我自己装的观察器都不回调（无效实验）
+4) 删掉两行文案   → 真实内容变化 ⇒ safeBounds 变了 ⇒ 这次读数有效
+```
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| tsc | 0 错误 |
+| build | 通过 |
+| 修后实验 | zoom 1.231 → 1.293，环高 +38px |
+| 窄屏 | 无变化（该规则仅桌面文案） |
+
+---
+
 ## 0.6.4-preview.544 — 2026-11-13
 
 ### 军团 3D 工具栏：14 个控件在 1440 下重新排成单行

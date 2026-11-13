@@ -1287,6 +1287,15 @@ export default function Legion3DPage() {
         || bounds.x2 < previous.x2 - 1 || bounds.y2 < previous.y2 - 1
         || previous.x2 <= previous.x1 || previous.y2 <= previous.y1
       )) fitPending.current = true;
+      // `.545`：安全区**变大**时也要重取景（仅当用户没手动调过机位）。
+      // 之前只处理"变小"：任务失败横幅消失、页脚提示少一行之后，边界变大了，
+      // 但画面仍停在按旧边界算出来的尺寸上 —— 实测隐藏页头描述第二行 + 页脚第二行，
+      // safeBounds 从 135..864 变成 116..880（+35px），zoom 仍是 1.231（应到 1.295）。
+      // 阈值 8px：横幅/字体落位会有 1–2px 抖动，按 1px 触发会让画面反复呼吸。
+      if (previous && !userAdjusted.current && (
+        previous.x1 - bounds.x1 > 8 || previous.y1 - bounds.y1 > 8
+        || bounds.x2 - previous.x2 > 8 || bounds.y2 - previous.y2 > 8
+      )) fitPending.current = true;
     };
     // Responsive controls are measured on resize, never during Canvas frames.
     const observer = new ResizeObserver(measure);
