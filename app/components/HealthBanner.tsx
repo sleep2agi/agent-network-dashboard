@@ -1,6 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
+import { useChromeDeferMs, useDeferredKey } from '../lib/chrome-defer';
 import { useState } from 'react';
 import Link from 'next/link';
 import { parseHubTime } from '../lib/time';
@@ -62,7 +63,7 @@ export function HealthBanner() {
   // 旧实现拉 tasks?status=failed&limit=100（含 result 全文，生产实测约 400 KB），
   // 再在前端按时间过滤计数；现在服务端数好只回一个数字。
   const { data: failedStat } = useSWR<{ ok: boolean; recent?: number }>(
-    idle && allTimeFailed > 0 ? '/api/hub/task-stats?status=failed&sinceHours=24' : null,
+    useDeferredKey(idle && allTimeFailed > 0 ? '/api/hub/task-stats?status=failed&sinceHours=24' : null, useChromeDeferMs()),
     fetcher,
     { refreshInterval: 60000, dedupingInterval: 30000, shouldRetryOnError: false },
   );

@@ -3,6 +3,7 @@ import { hydrateHubAvatars } from './avatars';
 import useSWR from 'swr';
 import { Session, Health, AnetConfig } from '../components/types';
 import { useNetworkId } from './network-context';
+import { useChromeDeferMs, useDeferredKey } from './chrome-defer';
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -202,7 +203,8 @@ export function useMessages(limit = 100) {
   // history (#217 M5) — without it the key change would blank the list and
   // flash the skeleton while the bigger page is in flight.
   const { data, error, isLoading, mutate } = useSWR(
-    scopedOrNull(`/api/hub/messages?limit=${limit}`, networkId, ready),
+    // `.542`：仅在 ?deferChrome=1 时延后（默认 0，行为不变）
+    useDeferredKey(scopedOrNull(`/api/hub/messages?limit=${limit}`, networkId, ready), useChromeDeferMs()),
     fetcher,
     { ...SWR_OPTIONS, keepPreviousData: true },
   );
