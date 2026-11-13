@@ -5,7 +5,7 @@ import { applyTheme } from './ThemeSwitcher';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
-import { useChromeDeferMs, useDeferredKey } from '../lib/chrome-defer';
+import { chromeDeferMs, useDeferredKey } from '../lib/chrome-defer';
 import { useNetworkId } from '../lib/network-context';
 import { isOnline as presenceIsOnline, presenceStatus } from '../lib/presence';
 import { useHealth } from '../lib/hooks';
@@ -555,7 +555,7 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
   const { networkId, ready } = useNetworkId();
   // 网络未解析完不发请求（否则先打一枪无作用域的，见 .383 的修复）。
   // `.542`：hook 必须无条件调用（放三元里会触发 React #311「hook 数量变化」，整页白屏）
-  const deferMs = useChromeDeferMs();
+  const deferMs = chromeDeferMs();
   const overviewKey = useDeferredKey(
     ready && networkId ? `/api/hub/overview?network_id=${encodeURIComponent(networkId)}` : null,
     deferMs,
