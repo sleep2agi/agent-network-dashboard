@@ -467,11 +467,11 @@ export default function LegionPage() {
   // detach/attach，measure → setSize → 重渲染 → 死循环（实测 Maximum update depth）。
   // `.547`：舞台高度按剩余空间派生（`.546` 试过一次但因取景不回算而裁切，这里配合高度约束一起用）。
   // 舞台是数据到齐后才挂载的 ⇒ 必须用回调 ref 在挂载时刻算，不能只靠只跑一次的 effect。
-  const applyStageHeight = useCallback((el: HTMLDivElement | null) => {
-    if (!el) return;
+  const applyStageHeight = useCallback((el: HTMLDivElement | null): boolean => {
+    if (!el) return false;
     if (el.className.includes('fixed inset-0') || window.innerWidth < 640) {
-      el.style.removeProperty('height');
-      return;
+      if (el.style.height) { el.style.removeProperty('height'); return true; }
+      return false;
     }
     const top = el.getBoundingClientRect().top;
     let pad = 0;
@@ -481,8 +481,10 @@ export default function LegionPage() {
       n = n.parentElement;
     }
     const next = Math.max(420, Math.round(window.innerHeight - top - pad - 4));
+    const changed = el.dataset.stageHeight !== `${next}`;
     el.style.height = `${next}px`;
     el.dataset.stageHeight = `${next}`;
+    return changed;
   }, []);
 
   const stageCallbackRef = useCallback((el: HTMLDivElement | null) => {
@@ -540,6 +542,9 @@ export default function LegionPage() {
   // 变焦是绕原点缩放的，所以 tx/ty 必须同时补上「保持舞台中心不动」的位移。
   const userZoomed = useRef(false);
   const fitKey = useRef('');
+  // `.548`：自动取景的结果留一份快照，「重置」直接恢复它，而不是重新算一遍。
+  // 重新算会因标签字号有下限（不随 k 等比缩放）导致包围盒折算有偏差：实测 k0=1.320 → 重算得 1.398。
+  const fitViewRef = useRef<{ k: number; tx: number; ty: number } | null>(null);
   const fitNarrow = useCallback(() => {
     const svg = svgRef.current;
     if (!svg || !size.width || !size.height) return;
@@ -574,12 +579,18 @@ export default function LegionPage() {
       const topInset = 64;
       const kWide = (size.width * 0.88) / baseWidth;
       const kTall = ((size.height - topInset) * 0.92) / baseHeight;
-      const k = Math.max(1, Math.min(1.8, kWide, kTall));
-      return {
+      // 只在"容器不高于自身宽度"（宽而矮，桌面 1024/1280 那种）时启用高度约束。
+      // 手机上舞台本来就又窄又高，按宽度优先取景是原设计（k≈1.32）；
+      // 一旦也套高度约束，390 会被压到 100%，比原来更小，且"重置回取景"的断言必然失败（实测 k 从 1.32 掉到 1）。
+      const shortWide = size.height <= size.width;
+      const k = Math.max(1, Math.min(1.8, shortWide ? Math.min(kWide, kTall) : kWide));
+      const next = {
         k,
         tx: size.width / 2 - k * px,
         ty: topInset + (size.height - topInset) / 2 - k * py,
       };
+      if (!userZoomed.current) fitViewRef.current = next;
+      return next;
     });
   }, [size.width, size.height, layout.nodes.length]);
   useEffect(() => { fitNarrow(); }, [fitNarrow]);
@@ -587,8 +598,11 @@ export default function LegionPage() {
   // `.547`：resize / 横幅插入 / 首屏落位后重算舞台高度，并让取景跟着新尺寸重算
   useEffect(() => {
     const apply = () => {
-      applyStageHeight(stageRef.current);
-      fitKey.current = '';        // 尺寸变了 ⇒ 允许重新取景
+      const changed = applyStageHeight(stageRef.current);
+      // 只有**舞台高度真的变了**才重取景。之前无条件重取，导致任何 DOM 变化（包括用户拖动后
+      // 的 re-render）都会把视图重置回自动取景 —— 验收实测 390 下拖动与「重置回取景」两项变红。
+      if (!changed) return;
+      fitKey.current = '';
       fitNarrow();
     };
     apply();
@@ -616,8 +630,12 @@ export default function LegionPage() {
   const reset = useCallback(() => {
     userZoomed.current = false;
     fitKey.current = '';
-    setView({ k: 1, tx: 0, ty: 0 });
-    requestAnimationFrame(() => fitNarrow());
+    // `.548`：优先恢复「自动取景快照」——它就是用户打开页面时看到的视角。
+    // 之前两条路都不行：先设 k=1 再取景会停在 100%（中间态包围盒偏大）；
+    // 直接从当前 k 重算会偏到 1.398（标签字号有下限，不随 k 等比缩放）。
+    const snap = fitViewRef.current;
+    if (snap) setView(snap);
+    else fitNarrow();
   }, [fitNarrow]);
   const zoomBy = useCallback((factor: number, anchor?: { x: number; y: number }) => {
     userZoomed.current = true;
