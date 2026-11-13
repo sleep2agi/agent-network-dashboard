@@ -177,7 +177,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+    <div className="min-h-[calc(100dvh-var(--health-banner-h,0px))] bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <StatsBar online={online} working={working} total={total} presenceUnknown={presenceUnknown} />
 
       {/* #217 S5 (Vincent: "极简极简，这些都可以放到设置里面去"): the

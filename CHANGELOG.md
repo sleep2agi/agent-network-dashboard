@@ -94,6 +94,52 @@ legion-cold-start 之前单次采样：同一版本连跑两次 390 得 5286ms /
 
 ---
 
+## 0.6.4-preview.552 — 2026-11-14
+
+### 三个主页面的"短内容态"不再多出一条 31px 滚动条
+
+```
+背景：健康横幅是异步插入的 31px 高条。页面根节点若写死 min-h-screen(100dvh)，
+"刚好一屏"的状态（加载骨架 / 空态 / 错误态）就会多出 31px，出现一条不必要的整页滚动条。
+/legion 在 `.546` 已用同一手法修好（1031 → 1000）。
+```
+
+| 页面 | 根节点改动 |
+|---|---|
+| `app/page.tsx`（总览） | `min-h-screen` → `min-h-[calc(100dvh-var(--health-banner-h,0px))]` |
+| `app/messages/page.tsx`（消息） | 同上 |
+| `app/requirements/page.tsx`（需求） | 同上 |
+
+### 前后对照（同一探针、同一加载期：骨架出现时每 250ms 采样）
+
+| 版本 | 骨架期溢出样本 | 最小 |
+|---|---|---|
+| 线上 `.550`（未修） | 31, 31, 31, 31 | **31** |
+| 本机（已修） | 0, 0, 0, 0, 0, 0, 0, 0 | **0** |
+
+六路由复核：`/` `/messages` `/requirements` 无 pageerror、无横向溢出；
+对照组 `/nodes` `/legion` `/providers` 溢出仍为 0（未受影响）。
+
+### 未纳入本版（已记为待办，含原因）
+
+```
+app/tasks/TasksView.tsx（内部 5 处，列容器依赖满高，只该改根节点）
+app/node/page.tsx（3 处，含居中态）· app/requirements/[id]/page.tsx（6 处）
+app/legion/plaza/page.tsx（待与取景一起看）· app/login/page.tsx（无外壳，变量恒为 0）
+```
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| tsc | 0 错误 |
+| lint | 0 error |
+| build | 通过 |
+| 骨架期对照 | 31 → 0 |
+| 六路由 | 无 pageerror、无横向溢出、对照组不变 |
+
+---
+
 ## 0.6.4-preview.550 — 2026-11-14
 
 ### 导出 PNG：不再把"还没解码完的头像"导成通用人形图标
