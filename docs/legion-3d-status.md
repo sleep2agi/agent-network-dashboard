@@ -83,6 +83,17 @@
 证据：evidence/legion-2d-readiness-539/readings.md
 ```
 
+
+### 2D 入口线上仍 5–7s 的归因（`.540`）
+
+```
+Hub API 四段串行：networks 2.18s → stats/events 4.19s → overview 4.98s → departments/people 5.50s
+前端渲染（分帧后）≈0.5s ⇒ 瓶颈已转移到数据链路，不是渲染。
+本地同代码 1.6–2.4s（本机 API 快）对比线上 5.0–7.4s，差距即数据等待。
+已把时序证据发给 通信欧（message_id 5c5c116a），待其确认 networks 冷启动与并行化空间。
+证据：evidence/legion-2d-api-latency-540/readings.md
+```
+
 ## 五、待决策 / 待输入
 
 | 项 | 需要什么 | 工时 |
