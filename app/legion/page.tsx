@@ -465,10 +465,31 @@ export default function LegionPage() {
 
   // 合并 callback ref 必须是稳定引用：每次渲染新建函数会让 React 反复
   // detach/attach，measure → setSize → 重渲染 → 死循环（实测 Maximum update depth）。
+  // `.547`：舞台高度按剩余空间派生（`.546` 试过一次但因取景不回算而裁切，这里配合高度约束一起用）。
+  // 舞台是数据到齐后才挂载的 ⇒ 必须用回调 ref 在挂载时刻算，不能只靠只跑一次的 effect。
+  const applyStageHeight = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    if (el.className.includes('fixed inset-0') || window.innerWidth < 640) {
+      el.style.removeProperty('height');
+      return;
+    }
+    const top = el.getBoundingClientRect().top;
+    let pad = 0;
+    let n: HTMLElement | null = el.parentElement;
+    for (let i = 0; i < 3 && n && n !== document.body; i += 1) {
+      pad += parseFloat(getComputedStyle(n).paddingBottom) || 0;
+      n = n.parentElement;
+    }
+    const next = Math.max(420, Math.round(window.innerHeight - top - pad - 4));
+    el.style.height = `${next}px`;
+    el.dataset.stageHeight = `${next}`;
+  }, []);
+
   const stageCallbackRef = useCallback((el: HTMLDivElement | null) => {
     ref(el);
     stageRef.current = el;
-  }, [ref]);
+    applyStageHeight(el);
+  }, [ref, applyStageHeight]);
 
   const toggleFullscreen = useCallback(async () => {
     const el = pageRef.current;
@@ -545,9 +566,15 @@ export default function LegionPage() {
       if (!baseWidth) return v;
       const px = ((x1 + x2) / 2 - v.tx) / v.k; // 图形中心在布局坐标里的位置
       const py = ((y1 + y2) / 2 - v.ty) / v.k;
-      const k = Math.max(1, Math.min(1.8, (size.width * 0.88) / baseWidth));
-      // 竖直留出顶部统计条的高度，避免放大后与浮层重叠。
+      // `.547`：取景必须同时受宽度与高度约束。
+      // 之前只用宽度：1024 下 SVG 只有约 570px（侧栏 208 + 右面板 280 挤出来），
+      // 于是走了"窄屏"分支、把图放到 178%，而高度完全没参与 ⇒ 舞台一变矮，外环就被上下裁掉
+      // （`.546` 试着把舞台改成派生高度时实测到的裁切）。
+      const baseHeight = Math.max(1, (y2 - y1) / v.k);
       const topInset = 64;
+      const kWide = (size.width * 0.88) / baseWidth;
+      const kTall = ((size.height - topInset) * 0.92) / baseHeight;
+      const k = Math.max(1, Math.min(1.8, kWide, kTall));
       return {
         k,
         tx: size.width / 2 - k * px,
@@ -556,6 +583,32 @@ export default function LegionPage() {
     });
   }, [size.width, size.height, layout.nodes.length]);
   useEffect(() => { fitNarrow(); }, [fitNarrow]);
+
+  // `.547`：resize / 横幅插入 / 首屏落位后重算舞台高度，并让取景跟着新尺寸重算
+  useEffect(() => {
+    const apply = () => {
+      applyStageHeight(stageRef.current);
+      fitKey.current = '';        // 尺寸变了 ⇒ 允许重新取景
+      fitNarrow();
+    };
+    apply();
+    window.addEventListener('resize', apply);
+    let mo: MutationObserver | null = null;
+    let raf = 0;
+    if (typeof MutationObserver !== 'undefined') {
+      mo = new MutationObserver(() => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; apply(); }); });
+      mo.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => { mo?.disconnect(); mo = null; }, 5000);
+    }
+    const timers = [300, 900, 2000].map(ms => setTimeout(apply, ms));
+    return () => {
+      window.removeEventListener('resize', apply);
+      mo?.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+      for (const t of timers) clearTimeout(t);
+    };
+  }, [applyStageHeight, fitNarrow]);
+
 
   // 重置要回到「自动取景后的默认视角」，而不是硬编码的 100%：
   // 窄屏取景把 k 提到约 1.36，硬设 k=1 会让重置后的图比刚打开时更小。
