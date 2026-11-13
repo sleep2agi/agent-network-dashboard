@@ -94,6 +94,43 @@ legion-cold-start 之前单次采样：同一版本连跑两次 390 得 5286ms /
 
 ---
 
+## 0.6.4-preview.553 — 2026-11-14
+
+### 节点详情页（/node）三处根节点扣掉横幅高度
+
+```
+线上实测 /node?alias=... 整页溢出 31px（横幅高度），根节点写死 min-h-screen(100dvh)。
+该文件里有三个根：无 alias 兜底页、有 alias 详情页、Suspense fallback（Loading…）。
+第一版只改了详情页，用 /node（不带 alias）验证时读到的仍是旧值 —— 同一文件里测的和改的不是同一处。
+```
+
+| 位置 | 处置 | 证据 |
+|---|---|---|
+| 无 alias 兜底页 | `min-h-screen` → `min-h-[calc(100dvh-var(--health-banner-h,0px))]` | 溢出 **31 → 0**，根 min-height **969** |
+| 有 alias 详情页 | 同上 | 根 1000 → **969**；整页 31 → 24（剩余 24 为内容本身高度） |
+| Suspense fallback | 同上 | **未直接测量**（一闪而过，抓不到稳定窗口）；与同页同一变换 |
+
+该文件 `grep -c min-h-screen` 现为 **0**。
+
+### 六路由回归（本机构建）
+
+```
+/  /messages  /requirements  /nodes  /legion  /providers
+→ 无 pageerror、无横向溢出；对照组 /nodes /legion /providers 溢出仍 0
+```
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| tsc | 0 错误 |
+| lint | 0 error |
+| build | 通过 |
+| /node 两分支 | 31→0、31→24（根 969） |
+| 六路由 | 干净 |
+
+---
+
 ## 0.6.4-preview.552 — 2026-11-14
 
 ### 三个主页面的"短内容态"不再多出一条 31px 滚动条
