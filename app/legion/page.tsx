@@ -251,6 +251,9 @@ export default function LegionPage() {
     return counts;
   }, [layout.nodes, statusByAlias]);
 
+  // `.549`：同 3D —— Agent 还没到时不把"未知"画成 0。
+  const agentsKnown = useMemo(() => layout.nodes.some(n => n.kind === 'agent'), [layout.nodes]);
+
   const points = useMemo(() => {
     if (size.width === 0 || size.height === 0) return new Map<string, { x: number; y: number }>();
     const map = new Map<string, { x: number; y: number }>();
@@ -1587,7 +1590,7 @@ export default function LegionPage() {
                     >
                       <i aria-hidden className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                       {label}
-                      <span className="tabular-nums text-[var(--fg-dim)]">{statusCounts[key]}</span>
+                      <span className="tabular-nums text-[var(--fg-dim)]">{agentsKnown ? statusCounts[key] : '—'}</span>
                     </button>
                   );
                 })}

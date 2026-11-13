@@ -969,6 +969,10 @@ export default function Legion3DPage() {
     return counts;
   }, [layout.nodes, statusByAlias]);
 
+  // `.549`：数据未到 ≠ 全零。加载那 3–5 秒里图例显示「运行中 0 · 空闲 0 · 错误 0」，
+  // 会被读成"全部归零/全挂"。没有 Agent 节点时显示占位符，等数据到了再出数字。
+  const agentsKnown = useMemo(() => layout.nodes.some(n => n.kind === 'agent'), [layout.nodes]);
+
   const selectedNode = useMemo(
     () => (selected ? layout.nodes.find(n => n.id === selected) ?? null : null),
     [layout.nodes, selected],
@@ -4508,7 +4512,7 @@ export default function Legion3DPage() {
               >
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                 {label}
-                <span className="tabular-nums text-[var(--fg-dim)]">{statusCounts[key]}</span>
+                <span className="tabular-nums text-[var(--fg-dim)]">{agentsKnown ? statusCounts[key] : '—'}</span>
               </button>
             );
           })}
