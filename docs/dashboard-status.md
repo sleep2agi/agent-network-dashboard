@@ -465,6 +465,21 @@ canvas.dataset.coreTicks = 当时布局里的部门 group 数量（depts.length�
 ```
 
 
+### 军团 3D 冷启动就绪（`.537` 起，判据 ≤6s）
+
+| 视口 | DOM 就绪 | 场景就绪（introState=done） |
+|---|---|---|
+| 1440 | 161–202ms | 3.20–3.33s |
+| 390 | 215–321ms | 2.61–4.56s |
+
+```
+方法：全新 browser context（冷缓存）→ 记 domcontentloaded 与 introState=done
+**不要用 networkidle 做判据**：本项目用共享 EventSource（app/lib/useSSE.ts）维持常开连接，
+networkidle 永远等不到静默，只能等 30s 默认超时 —— 那是量具问题，不是页面慢（`.537` 踩过）。
+判据 6000ms：实测 2.6–4.6s，留余量。
+```
+
+
 ## 键盘/触控可达性抽查基线（`.518`—`.519`）
 
 判据：① 任一 Tab 停靠点同时无 `outline` 与 `box-shadow` ⇒ 隐形焦点，失败；
