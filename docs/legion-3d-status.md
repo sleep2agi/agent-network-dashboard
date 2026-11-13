@@ -127,3 +127,19 @@ curl 直连同一会话实测单接口 0.13–0.6s（session-status 1.79s）⇒ 
 - `.545`：安全区变大也重取景（横幅/提示行消失后画面重新长满，线上实测 zoom 1.231 → 1.263）。
 
 - 画布文字对比度：深色 7.50–8.86 · 浅色 6.67–8.81（16 组全 PASS，门禁已含浅色）。
+
+## 跨引擎验证：现状与成本（2026-11-14 实测）
+
+Chromium 已覆盖（12 门与验收套全部跑在 Chromium）。WebKit / Firefox 的浏览器二进制已下载，
+但系统缺运行时库，启动即失败。实测缺失清单：
+
+| 引擎 | 缺失 | 最小安装命令 | 规模 |
+|---|---|---|---|
+| Firefox | `libgtk-3-0t64` `libpangocairo-1.0-0` `libcairo-gobject2` `libgdk-pixbuf-2.0-0` | `sudo apt-get install libgtk-3-0t64 libpangocairo-1.0-0 libcairo-gobject2 libgdk-pixbuf-2.0-0` | **4 个包** |
+| WebKit | GTK4 + GStreamer + flite 共 20+ 个（`libgtk-4.so.1`、`libgst*.so.0`、`libflite*.so.1` …） | `sudo npx playwright install-deps webkit` | **几十个包** |
+
+```
+⇒ 想覆盖 Safari 内核：一次 sudo + 几十个包
+⇒ 想只覆盖 Firefox：一次 sudo + 4 个包（成本低得多，建议先做这个）
+⇒ 装完能验证：军团两页的取景/文字对比度/滚动条/拖动缩放重置，各跑一遍三档视口
+```
