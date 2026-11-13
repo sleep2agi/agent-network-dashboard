@@ -53,3 +53,24 @@ Playwright 提示需要 `sudo npx playwright install-deps`（约 1–2 分钟）
 | 回退锚点 | `preview.537-0b72b39` |
 | 终检 | `./deploy/health-all.sh https://dm.vansin.top` → PASS (12/12) |
 | 今晚发布 | 13 个版本（`.526`–`.538`），每个 20 套 + CI 4/4 + POST-RELEASE 4/4 |
+
+## 5. 首屏请求精简（方案 A）—— 已备方案，待批准后执行
+
+```
+已定位：线上 8–10 个 /api/hub/* 同时发出，上游 Hub 串行处理（8 路各涨到 ~1.8s）
+        Next 自身未阻塞（并发时 /api/health 仍 0.076s）
+        /legion 首屏必须等 people + departments ⇒ 线上首屏 3.8–7.2s
+```
+
+| 步骤 | 内容 |
+|---|---|
+| 1 | 新增 `useDeferredKey(key, ms)`：挂载后 ms 毫秒才返回 key（SWR 由此延后发请求） |
+| 2 | 把"首屏不需要"的三处延后 ~1200ms：`app/lib/hooks.ts` 的 messages 轮询、`app/components/Sidebar.tsx` 的 overview（角标）、`app/components/HealthBanner.tsx` 的 task-stats |
+| 3 | 首屏保留：networks · people · departments · session-status（页面必需） |
+| 4 | 验收：`evidence` 里记录"people 响应时刻 → 首次可读"；线上跑 2 视口 × 2 轮；12 条门 + 20 套 |
+| 5 | 判据：首屏可读 ≤ 3s（当前 3.8–7.2s），且消息角标、健康横幅仍在 1.2s 内出现；不达标即回退 |
+
+```
+风险：改的是全局首屏取数（影响所有页面），因此必须有"延后项仍在 1.2s 内出现"的验收；
+      回退方式：3 处 key 去掉 defer 包装（3 行）。
+```
