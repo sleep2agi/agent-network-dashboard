@@ -106,7 +106,13 @@ const CORE_PARAM = typeof window !== 'undefined'
 // `.535`：`?core=both` —— 混合变体：大核心（规模数字在环内）+ 部门刻度环。
 // 几何上互不冲突：数字画在核心内部，刻度环在 1.36r（核心 1.6× 之后更外）。
 // 新增为**第 4 个可选变体**，默认仍是 C 案；按钮循环 环 → 大 → 混合 → 无。
-const CORE_BOTH = CORE_PARAM === 'both';
+// `.538`：默认（无参数）从「环」改为「混合」。依据是两项**可区分**指标：
+//   canvas 文字对比度：混合 8.75 vs 环 5.95（1440）
+//   320 标签落地：两者同为 6/7
+// ⇒ 混合在唯一能区分变体的两项上不弱于环，且同时保留"规模数字 + 部门刻度"两层信息。
+// 冷启动与帧率经复测证明不可用于区分（同一变体 2.7–8.4s / ±6% 噪声）。
+// `?core=ticks` 仍可回到 C 案，`?core=big` / `?core=off` 不变。
+const CORE_BOTH = CORE_PARAM === 'both' || CORE_PARAM === null;
 const CORE_BIG = CORE_PARAM === 'big' || CORE_BOTH;
 const CORE_TICKS = CORE_PARAM === null || CORE_PARAM === 'ticks' || CORE_BOTH;
 const CORE_SCALE = CORE_BIG ? 1.6 : 1;
@@ -535,11 +541,11 @@ export default function Legion3DPage() {
       setCoreMode(stored as Mode);
       return;
     }
-    setCoreMode('ticks');
+    setCoreMode('both');
   }, []);
   const cycleCoreMode = useCallback(() => {
     if (!coreMode) return;
-    const next = coreMode === 'ticks' ? 'big' : coreMode === 'big' ? 'both' : coreMode === 'both' ? 'off' : 'ticks';
+    const next = coreMode === 'both' ? 'off' : coreMode === 'off' ? 'ticks' : coreMode === 'ticks' ? 'big' : 'both';
     const url = new URL(window.location.href);
     // `.537`：即使是「环」也显式写 ?core=ticks —— 否则"删掉参数"与"从未选择"无法区分，
     // 记忆值会与几何不一致（探针实测：按钮显示混合、画布还是环）。
