@@ -244,6 +244,7 @@ function OrgContent() {
   // 任务数徽标：只取一页任务（limit 100），和 /tasks 的部门筛选同口径 ——
   // 是「当前这批任务里的命中数」，不是部门全量，标题里写明。
   // 切网时用于丢弃旧网络的在途响应（每次换网 +1）。
+  const orgSearchRef = useRef<HTMLInputElement | null>(null);
   const tasksCountGen = useRef(0);
   // people 列表的代际号：切网 / 换搜索词会让旧响应作废（见 load 注释）。
   const peopleGen = useRef(0);
@@ -352,8 +353,14 @@ function OrgContent() {
         </div>
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <div className="rounded-lg bg-[var(--bg-secondary)] px-2.5 py-1.5">
+          {/* `.539`：外框可点后聚焦输入。此前只有输入框本体可点（高 20px），
+              窄屏要瞄准一条细线；与 /requirements、/legion 的做法对齐。 */}
+          <div
+            className="cursor-text rounded-lg bg-[var(--bg-secondary)] px-2.5 py-1.5"
+            onClick={() => orgSearchRef.current?.focus()}
+          >
             <input
+              ref={orgSearchRef}
               value={qInput}
               onChange={e => setQInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') setQuery(qInput); }}
