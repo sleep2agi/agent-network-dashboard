@@ -45,6 +45,7 @@
 | 3 | 短页面竖向滚动：`/nodes` +20px、`/board` +31px | **已解决 / 路由不存在**。全站 20 条真实路由普查：`/nodes` 溢出 **0**；`/board` 无此路由（当时按导航文案猜的路径） | 关闭 |
 | 4 | `?weights` / `?intro2` 默认值未定 | 未变 | 等 admin 决策 |
 | 5 | 运行时矩阵公开展示 | 未变（`?matrix=1` 预览可用，默认隐藏） | 等 admin 决策 |
+| 6 | **短内容态多出一条 31px 滚动条**（横幅高度未扣除） | 8 个文件仍用 `min-h-screen` 作页面根节点：`app/page.tsx`、`app/messages/page.tsx`、`app/requirements/page.tsx`、`app/tasks/TasksView.tsx`、`app/node/page.tsx`、`app/requirements/[id]/page.tsx`、`app/legion/plaza/page.tsx`、`app/login/page.tsx`。`/legion` 已改并验证（1031 → 1000） | **待办**：逐页换成 `min-h-[calc(100dvh-var(--health-banner-h,0px))]`；注意 tasks 内部有 5 处（列容器依赖满高），只改根节点 |
 
 ### 关于"±2.2% 残留"的更正
 
@@ -94,3 +95,13 @@
 - 真正能压高度的只有「A 长消息折叠」，但那是**隐藏内容**的产品决定，需产品/设计拍板；
 - 现状记为：已分批、内容驱动、不改。
 
+### 关于第 6 条的验证配方（试过两次都没成功）
+
+```
+要证明"改完不多 31px"，必须先造出**短内容态**（空态 / 加载态 / 错误态），否则内容长的时候看不出差别。
+本次两次尝试都失败：① 在搜索框 fill 无匹配词 → 筛选未触发（overflow 仍 10120）；
+② 点「完成 0」状态芯片 → 元素未找到（clicked=false）。
+⇒ 按纪律没有发布那三页的改动（h），整段已回退。
+后续验证建议：直接构造 `?status=completed`（若支持）或用 Playwright 触发筛选后再断言，
+不要用"长内容态不变"当作修复成立的证据 —— 那是空验证。
+```
