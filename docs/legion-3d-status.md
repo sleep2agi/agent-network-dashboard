@@ -33,6 +33,7 @@
 | 帧率（软件渲染下限） | `?perf=1` | 1440 **24.5fps** / p50 33.4ms · 390 60fps |
 | 帧时间归因 | `evidence/legion-fps-matrix-536/` | 光流/自转**非瓶颈**（全关仅 +9%）⇒ 不做"低配关特效" |
 | 320 溢出 | `deploy/narrow-overflow.mjs` | 20 路由 × 320 **0 溢出** |
+| 离线（Hub 不可达） | `deploy/offline-hint.mjs` | 4 路由全部给出提示（红幅「CommHub unreachable」+ 网络选择提示），非空白 |
 | 长时运行（160s） | 手写采样（见 evidence/legion-soak-536） | JS 堆稳定 20.7MB · DOM 273 恒定 ⇒ 无泄漏信号 |
 
 ```
