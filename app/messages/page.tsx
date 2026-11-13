@@ -217,7 +217,7 @@ export default function MessagesPage() {
   }, [filtered]);
 
   return (
-    <div data-testid="messages-shell" className="min-h-screen bg-[var(--col-chat)] text-[var(--fg)] p-4 sm:p-6">
+    <div data-testid="messages-shell" className="min-h-[calc(100dvh-var(--health-banner-h,0px))] bg-[var(--col-chat)] text-[var(--fg)] p-4 sm:p-6">
       {/* #209 R31 (mobile vertical rhythm — same pattern as R28/R30):
           header row + quick-from chips row both mb-6 → mb-4 sm:mb-6.
           #209 R33: header restructured to mirror /nodes R32 — title
