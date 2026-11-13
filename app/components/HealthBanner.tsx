@@ -2,7 +2,7 @@
 
 import useSWR from 'swr';
 import { chromeDeferMs, useDeferredKey } from '../lib/chrome-defer';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { parseHubTime } from '../lib/time';
 import { presenceStatus, type SseSessionsMap } from '../lib/presence';
@@ -73,6 +73,23 @@ export function HealthBanner() {
     return sessionStorage.getItem('anet-hb-dismissed') === '1';
   });
 
+  // `.546`：横幅高度镜像成 --health-banner-h，页面用 100dvh - var(...) 派生最小高度。
+  // 用**回调 ref** 而不是 useEffect：本组件有早期 return（横幅不显示时直接 return null），
+  // 在 return 之后写 hook 会让 hooks 数量随分支变化 —— 上一版就踩了这个，React #310 整页白屏。
+  const bannerRo = useRef<ResizeObserver | null>(null);
+  const attachBanner = useCallback((el: HTMLDivElement | null) => {
+    bannerRo.current?.disconnect();
+    bannerRo.current = null;
+    if (!el) {
+      document.documentElement.style.setProperty('--health-banner-h', '0px');
+      return;
+    }
+    const apply = () => document.documentElement.style.setProperty('--health-banner-h', `${el.offsetHeight || 0}px`);
+    apply();
+    bannerRo.current = new ResizeObserver(apply);
+    bannerRo.current.observe(el);
+  }, []);
+
   if (dismissed) return null;
 
   // Determine current state — priority: red > presence-blind > amber > empty > green
@@ -139,6 +156,7 @@ export function HealthBanner() {
 
   return (
     <div
+      ref={attachBanner}
       role="status"
       className={`anet-health-banner sticky top-0 z-30 border-b ${styles} pl-14 pr-3 sm:pl-14 sm:pr-6 lg:px-6 py-1.5 text-[12px] flex items-center justify-between gap-3 backdrop-blur-sm`}
     >
