@@ -4250,7 +4250,7 @@ export default function Legion3DPage() {
         // 视口的 35%），收成一行可以多给画布 ~50px，且不隐藏任何功能。
         // flex 子项默认会收缩：只写 nowrap 会把按钮压到 48px、标签折成两行（实拍）。
         // 用 [&>*]:shrink-0 保持自然宽度，整行横向滚动。
-        className="pointer-events-auto flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 [&>*]:shrink-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:pb-0"
+        className="pointer-events-auto flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 [&>*]:shrink-0 sm:flex-wrap sm:justify-end sm:gap-1 sm:overflow-visible sm:pb-0"
         onKeyDown={e => {
           // Enter activates the focused control, even when a node is selected.
           if (e.key === 'Enter') e.stopPropagation();
@@ -4349,7 +4349,7 @@ export default function Legion3DPage() {
           aria-pressed={isFullscreen}
           aria-label={isFullscreen ? '退出全屏' : '全屏查看'}
           data-testid="legion-3d-fullscreen"
-          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors ${isFullscreen ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:px-2 ${isFullscreen ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
         >
           {isFullscreen ? '退出全屏' : '全屏'}
         </button>
@@ -4359,7 +4359,7 @@ export default function Legion3DPage() {
           aria-pressed={cleanView}
           aria-label={cleanView ? '恢复界面' : '净屏（隐藏界面）'}
           data-testid="legion-3d-clean"
-          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:px-2 ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
         >
           {cleanView ? '恢复界面' : '净屏'}
         </button>
@@ -4369,7 +4369,7 @@ export default function Legion3DPage() {
           aria-pressed={presenting}
           title="隐藏界面、鼠标与悬浮提示，匀速环绕；按 Esc 退出"
           data-testid="legion-3d-present"
-          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors ${presenting ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:px-2 ${presenting ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
         >
           演示模式
         </button>
@@ -4379,7 +4379,7 @@ export default function Legion3DPage() {
           disabled={capturing}
           title={`录制一圈 16 秒，导出 ${exportHigh ? '1920×1080' : '1280×720'} 无缝循环视频`}
           data-testid="legion-3d-record"
-          className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-60"
+          className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] disabled:opacity-60 sm:px-2"
         >
           {capturing ? `录屏 ${Math.round(captureProgress * 100)}%` : '导出循环'}
         </button>
@@ -4393,16 +4393,17 @@ export default function Legion3DPage() {
             disabled={capturing}
             onChange={event => setExportHigh(event.target.checked)}
             data-testid="legion-3d-export-1080"
+            aria-label="导出 1080p（默认 720p）"
             className="h-3.5 w-3.5 accent-[var(--hl)]"
           />
-          1080p
+          <span className="sm:hidden">1080p</span>
         </label>
         <button
           type="button"
           onClick={exportPng}
           disabled={exporting}
           data-testid="legion-3d-export"
-          className="rounded-lg bg-[var(--bg-elevated)] px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] disabled:opacity-50"
+          className="rounded-lg bg-[var(--bg-elevated)] px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] disabled:opacity-50 sm:px-2"
         >
           {exporting ? '导出中…' : '导出 PNG'}
         </button>
@@ -4417,7 +4418,12 @@ export default function Legion3DPage() {
         <Link
           href={focus ? `/legion?focus=${encodeURIComponent(layout.nodes.find(n => n.id === focus)?.label || '')}` : '/legion'}
           data-testid="legion-3d-2d"
-          className="absolute right-0 top-0 flex min-h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:static sm:min-h-0 sm:border-0 sm:bg-transparent"
+          // `.544`：桌面端 1440/1280/1024 下工具栏放不下 13 个控件会换行，
+          // 2D 视图作为最后一个子项会单独掉到第二行、贴在最右边 —— 实拍看起来像一个孤立的浮动胶囊
+          // （`.543` 截图误读为"被裁切"，实际几何 right=1424 < 1440，没裁，是真换行）。
+          // 用 xl:order-first（≥1280）让它排到同一换行流最左端，不再单独成行；
+          // 1024 保持行尾 —— 那里本来就要两行，硬前置会把一个控件挤到第三行（实测 [8,5,1]）。
+          className="absolute right-0 top-0 flex min-h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:static sm:min-h-0 xl:order-first sm:border-0 sm:bg-transparent"
         >
           2D 视图
         </Link>
@@ -4613,7 +4619,7 @@ export default function Legion3DPage() {
 
       {/* 大网络提示：节点多时给一条可关掉的建议，不挡图 */}
       {!hintDismissed && layout.nodes.length > 120 && (
-        <div className={`pointer-events-auto absolute bottom-16 left-1/2 max-w-[94vw] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-[var(--bg-secondary)]/92 px-3 py-0 text-[11px] sm:py-1 text-[var(--fg-muted)] backdrop-blur sm:bottom-6 ${selectedNode || cleanView ? 'hidden' : 'hidden sm:flex'}`} data-testid="legion-3d-scale-hint">
+        <div className={`pointer-events-auto absolute bottom-16 left-1/2 max-w-[94vw] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-[var(--bg-secondary)]/92 px-3 py-0 text-[11px] sm:py-1 text-[var(--fg-muted)] backdrop-blur sm:bottom-24 ${selectedNode || cleanView ? 'hidden' : 'hidden sm:flex'}`} data-testid="legion-3d-scale-hint">
           <span>规模较大 · {layout.nodes.length} 节点 · 试试搜索或部门聚焦</span>
           <button
             type="button"
