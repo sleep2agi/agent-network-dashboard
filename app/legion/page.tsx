@@ -127,6 +127,10 @@ export default function LegionPage() {
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   // 大网络里节点列表很长：只列部门/圆心，键盘找部门时不用滚过几十个成员。
   const [listDeptsOnly, setListDeptsOnly] = useState(false);
+  // `.540`：2D 军团首帧渲染 2350 个 SVG 元素要 4–11s（交互并不慢，悬停 16.5ms/帧）。
+  // 做法：部门盘与核心先画，成员/Agent 点按预算分批补，避免"进入后先白等好几秒"。
+  // 预算为 null 表示"全量"（人少时直接全画，与小网络体验一致）。
+  const [memberBudget, setMemberBudget] = useState<number | null>(null);
   // 与 3D 共用同一个本地偏好：切视图后不用重新勾一次。
   useEffect(() => {
     setListDeptsOnly(window.localStorage.getItem('legion-list-depts-only') === '1');
@@ -188,6 +192,25 @@ export default function LegionPage() {
     }),
     [peopleList, orphans, hierarchy.data, collapsed],
   );
+
+  useEffect(() => {
+    const memberCount = layout.nodes.filter(n => n.kind === 'person' || n.kind === 'agent').length;
+    if (memberCount <= 120) { setMemberBudget(null); return; }
+    setMemberBudget(60);
+    let cur = 60;
+    let cancelled = false;
+    const step = () => {
+      if (cancelled) return;
+      cur = Math.min(memberCount, cur + 80);
+      setMemberBudget(cur >= memberCount ? null : cur);
+      if (cur < memberCount) {
+        if ('requestIdleCallback' in window) (window as unknown as { requestIdleCallback: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback(step, { timeout: 300 });
+        else setTimeout(step, 60);
+      }
+    };
+    const t = setTimeout(step, 80);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [layout.nodes]);
   // 人员标签稀疏化（2026-11-08）：2D 上相邻人员的外围名字会互相压住
   // （实测 chengshi/chuqi 横向重叠 21px）。按角度间距做贪心筛选：
   // 与上一个「已显示」的人员角度间隔不足 0.14 rad 的，先不显示名字，
@@ -1264,10 +1287,16 @@ export default function LegionPage() {
                       窄屏（390）下成员的命中区会压住部门盘中心，点击部门时选中的是成员
                       （实测：点「平台」选中「有主成员」；1440 正常）。部门是容器与主入口，
                       重叠时应优先命中，所以把它排到后面（后画 = 在上层）。 */}
-                  {[...layout.nodes].sort((a, b) => {
-                    const rank = (n: typeof a) => (n.kind === 'group' ? 1 : 0);
-                    return rank(a) - rank(b);
-                  }).map(node => {
+                  {(() => {
+                    // 部门/核心始终先画；成员与 Agent 受预算限制
+                    const anchors = layout.nodes.filter(n => n.kind !== 'person' && n.kind !== 'agent');
+                    const members = layout.nodes.filter(n => n.kind === 'person' || n.kind === 'agent');
+                    const shown = memberBudget === null ? members : members.slice(0, memberBudget);
+                    return [...anchors, ...shown].sort((a, b) => {
+                      const rank = (n: typeof a) => (n.kind === 'group' ? 1 : 0);
+                      return rank(a) - rank(b);
+                    });
+                  })().map(node => {
                     const p = points.get(node.id);
                     if (!p) return null;
                     const dim = activeSet ? !activeSet.has(node.id) : false;
