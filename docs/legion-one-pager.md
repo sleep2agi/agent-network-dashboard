@@ -68,6 +68,7 @@ site-scroll-audit.mjs            全站整页滚动条普查（路由从 app/**/
 legion-export-check.mjs          导出产物（2.5s 条件必须含真实头像）
 legion-plaza-smoke.mjs           平台视角冒烟（标题+计数可读 / 卡片>1 / 无 pageerror）
 legion-drift-clip.mjs            取景越界/裁切（实体 vs 页面安全区；VP_ONLY=1440 可单档重复）
+legion-projector.mjs             投屏/显示器 5 档（1024×768 · 1280×720 · 1280×1024 · 1366×768 · 1920×1080）
 legion-fit-timeline.mjs          取景时间线（每 500ms 采 safeBounds/zoom/writer，覆盖率 <60% 判不可用）
 
 量法纪律（踩坑换来的，务必遵守）：
