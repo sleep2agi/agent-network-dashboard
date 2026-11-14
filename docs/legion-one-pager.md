@@ -45,7 +45,19 @@
 
 `/tasks` 在内容较短时多滚 31px（与健康横幅等高），由第 14 门 `site-scroll` 首次运行抓到；`TasksView` 5 处 `min-h-screen` → `calc(100dvh - var(--health-banner-h,0px))`。线上验证：短内容 31 → 0，长内容 265 属正常。
 
-## 4. 怎么复验（工作区 `evidence/probes/`）
+## 4. 怎么复验
+
+**一条命令跑完（推荐）**
+
+```bash
+./deploy/legion-verify-all.sh                    # 默认打线上
+./deploy/legion-verify-all.sh http://localhost:3106
+```
+
+覆盖 6 支探针并输出一行结论：`LEGION-VERIFY: PASS (6/6)`
+（drift-clip · label-drop · pitch-param · visual-spotcheck · projector · site-scroll；退出码可直接进 CI）
+
+**逐支跑（工作区 `evidence/probes/`）**
 
 ```
 legion-label-drop.mjs            标签留存（320/390/1440 × 四变体）
