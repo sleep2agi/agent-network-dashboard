@@ -146,7 +146,7 @@
 | 对齐项 | 本仓库现状 | 证据 |
 |---|---|---|
 | 定时任务编辑入口 | **已有**（列表 / 新建 / 编辑 / 立即运行 / 运行历史） | `app/scheduled-tasks/page.tsx`（`/api/hub/scheduled-tasks` 的 create/update/run-now/runs）；代理 `app/api/hub/scheduled-tasks/[[...path]]/route.ts` 支持非 GET 并代理到 Hub CRUD |
-| 节点生命周期写操作（启动/重启/删除/接管） | **没有** | `app/api/hub/nodes/` 下只有 `attrs` / `permission-mode` / `secrets` / `avatar` / `external-schedule-edits`；`nodes/route.ts` 无 start/stop/restart/delete/takeover 分支 |
+| 节点生命周期写操作 | **已实现（启动 / 重启 / 停用 / 删除 / 重命名）**：`app/components/NodeLifecycleMenu.tsx` + `NodeSettingsPanel.tsx` 调 `/api/anet/node-lifecycle`；该路由 `GET` 会探 Hub 的 MCP `tools/list`，**只渲染后端真实存在的动作**（`restart_node` / `rename_node` / `stop_node` / `delete_node`），状态机含 stopping / stopped / stop_failed 三态并回读结果 ⇒ 不会出现"点了没动静"的假按钮。**接管（takeover / attach 既有节点）未实现** |
 | 会话 / 模型切换 | **没有** | `app/api/hub/` 下无 `model` / `session switch` 相关路由 |
 
 ```
