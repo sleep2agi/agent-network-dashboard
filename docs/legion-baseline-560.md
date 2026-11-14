@@ -14,7 +14,7 @@
 | 画布文字对比度 | 深/浅两主题 16 组全绿（≥4.0） | 健康门 `legion-canvas-text` |
 | 窄屏溢出 | 320/390 横向溢出 0 | 健康门 `narrow-overflow` + `visual-spotcheck` |
 | 导出 PNG | 1232×1059 · ≈1.9MB · 2.5s 内为真实头像 | 健康门/`export-check` |
-| 目视抽检 | 三页 × 两视口 6/6 通过（无 pageerror、正文非空） | `visual-spotcheck` |
+| 目视抽检 | 三页 × 两视口 6/6 通过（无 pageerror、正文非空、3D 有画布与 zoom）**已固化为第 13 门** | `visual-spotcheck` |
 
 ## 性能
 
@@ -49,7 +49,7 @@
 ```
 验收 20/20 套件（legion 272/272、detail 115/115、board 171/171 …）
 CI 4/4（gates / scrub-guard / unit tests / OSS readiness）
-发布自检 4/4 · 健康门 12/12（发布后 + 清理后各一次）
+发布自检 4/4 · 健康门 13/13（发布后 / 清理后 / 加入目视抽检门后各一次）
 回退锚点 preview.559-4ea9122 在磁盘上可回退
 ```
 
@@ -71,5 +71,5 @@ node evidence/probes/legion-label-drop.mjs        https://dm.vansin.top
 node evidence/probes/legion-phase-timing.mjs      https://dm.vansin.top 1440
 node evidence/probes/legion-pitch-param.mjs       https://dm.vansin.top
 node evidence/probes/legion-visual-spotcheck.mjs  https://dm.vansin.top 560
-./deploy/health-all.sh                            # 12 门
+./deploy/health-all.sh                            # 13 门（含 legion-visual 目视抽检）
 ```
