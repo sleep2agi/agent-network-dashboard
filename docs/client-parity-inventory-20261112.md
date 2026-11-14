@@ -152,6 +152,23 @@
 ⇒ 其余"缺"的判断，都是我第一次审计范围不足造成的误判。
 ```
 
+### 能力矩阵 · 线上实测（2026-11-15，只读 GET，未触发任何写操作）
+
+| 端点 | 状态码 | 返回要点 |
+|---|---|---|
+| `/api/anet/providers` | 200 | `ok:true`，`providers` 列表为空（当前未配置自定义 Provider） |
+| `/api/anet/node-lifecycle` | 200 | `tools: { restart: true, rename: **false**, stop: true, delete: true }` |
+| `/api/anet/config` | 200 | 返回 path/exists/source/hub/tokenConfigured（不含 token 明文） |
+| `/api/anet/host-supervisors` | 200 | `ok:true`，含 daemons / hosts / selected |
+
+```
+⇒ 路由与 UI 的"能力探测"机制在生产上是**真在工作**的：
+   线上 Hub 的 MCP 工具面目前不支持 rename ⇒ 界面就不会放"重命名"
+⇒ 这也解释了为什么盘点里写"5 个动作"，实际当下可用是 4 个（restart/stop/delete + 节点配置里的模型）
+⇒ providers 返回空列表：说明当前没有自定义 Provider 配置；Provider 目录（模型选择）走的是别处
+   （节点配置里的预设下拉 + runtime 侧的自带目录），不是这条接口
+```
+
 ## 客户端容器适配：安全区（已从代码核实，不需等客户端回复）
 
 | 检查项 | 结论 | 证据 |
