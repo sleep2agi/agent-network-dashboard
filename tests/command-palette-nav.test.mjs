@@ -35,7 +35,11 @@ describe('命令面板导航覆盖', () => {
     const rows = [...palette.matchAll(/id: '(go-[a-z0-9-]+)'[\s\S]{0,320}?perform:/g)];
     // 至少覆盖侧栏入口数 + 3D
     expect(rows.length).toBeGreaterThanOrEqual(sidebarHrefs().length + 1);
-    const ungrouped = rows.filter((r) => !/group: 'Navigate'/.test(r[0]));
-    expect(ungrouped.map((r) => r[1])).toEqual([]);
+    // 契约是「所有导航项属于同一个分组且都有 group」，不是「分组名必须是英文 Navigate」——
+    // `.565` 把分组名中文化后，写死英文的断言就把一次纯文案改动误判成回归。
+    const groups = rows.map((r) => (r[0].match(/group: '([^']+)'/) || [])[1]);
+    const ungrouped = rows.filter((_, i) => !groups[i]).map((r) => r[1]);
+    expect(ungrouped).toEqual([]);
+    expect([...new Set(groups)]).toHaveLength(1);
   });
 });
