@@ -155,3 +155,31 @@ crontab 14 条完好（并响应通信飞书欧的"测试会清空 crontab"通�
    已改为「等就绪 → 失败重载一次 → 仍失败记 INVALID(2)，不参与判据」，并写成量法纪律第 7 条。
 2. 需求池核查确认：模型切换（6 张）与节点向导/fork 节点均由客户端节点负责，
    本仓库对齐这两项的前提仍是"先有 Hub 契约"。
+
+## 十三、2026-11-15 新发现：`/providers` 页面中英混排（未修，待一句确认）
+
+顺查"providers 返回空列表"时发现：页面空态本身是**齐备的**（`EmptyState variant=generic`），
+但整套文案是英文，而同一个页面里又有中文按钮，形成中英混排：
+
+| 位置 | 现文案 |
+|---|---|
+| 页面标题 | `Model Providers` |
+| 空态标题 / 副文案 | `No model providers` / `Add a provider to register its models and test per-server reachability.` |
+| 状态词 | `key set` / `no key` |
+| 行内动作 | `Test` / `Edit` |
+| 预览标记 | `preview fixture` |
+| 同页中文（对照） | `新增供应商` · `连通性测试` · `停用（软删，可重新启用）` |
+
+建议改法（保持与全局中文一致，约 8 条文案）：
+
+```
+Model Providers        → 模型供应商
+No model providers     → 还没有配置模型供应商
+Add a provider to …    → 添加供应商后可登记其模型，并按服务器测试连通性。
+key set / no key       → 已配置密钥 / 未配置密钥
+Test / Edit            → 测试 / 编辑
+preview fixture        → 预览数据
+```
+
+未直接改的原因：这是**用户可见文案**，属产品口吻范畴；改一次要发一版（约 40 分钟）。
+给一句“改”即可执行；给“保持”我就把它记为已知风格差异，不再重复报告。
