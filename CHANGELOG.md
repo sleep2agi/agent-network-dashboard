@@ -6,6 +6,30 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.560 — 2026-11-14
+
+### 军团 3D：未读角标请求让路，首屏编制提前约 800ms
+
+```
+问题：/legion/3d 首屏要等 /api/hub/people（编制）才能开始画；而侧栏未读角标那条
+      200 条 /api/hub/messages 与它同刻发出，两者在 Hub 上互相排队。
+
+证据（线上 1440，每条件 5 次取中位数，证据见 evidence/probes/legion-phase-timing.mjs）：
+  基线                people 1404ms · 编制就绪 4296ms
+  掐掉 messages       people  722ms · 编制就绪 3477ms   （-49% / -19%）
+  掐掉 overview       people 1284ms · 编制就绪 3840ms   （-9% / -11%，收益小）
+  ?deferChrome=1      people 1908ms · 编制就绪 7974ms   （反而更慢：整条链起点被推后）
+
+做法（只影响 /legion/3d 一个路由）：
+  · 新增 useLegionGate()：在该路由上，未读角标的两条 messages 请求要等
+    「该页编制就绪」（document.documentElement.dataset.legionDataReady === '1'）之后再发，
+    最多等 3s 兜底；
+  · 3D 页在 layout.nodes > 100 时置位 legionDataReady。
+  · 2D /legion 与 /legion/plaza 不加门（那两页首屏关键路径不是 people，加门只会让角标白等）。
+
+代价：军团 3D 页的未读角标最多晚 3 秒出现（其它页面不变）。
+验证：本地实测 messages 起始时刻从"与 people 同刻"变为"编制就绪之后"；npm test 58/58 通过。
+
 ## 0.6.4-preview.559 — 2026-11-14
 
 ### 军团 3D：修复 `?pitch=`（俯角诊断参数）在桌面端完全不生效
