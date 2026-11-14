@@ -45,7 +45,7 @@
 | 3 | 短页面竖向滚动：`/nodes` +20px、`/board` +31px | **已解决 / 路由不存在**。全站 20 条真实路由普查：`/nodes` 溢出 **0**；`/board` 无此路由（当时按导航文案猜的路径） | 关闭 |
 | 4 | `?weights` / `?intro2` 默认值未定 | 未变 | 等 admin 决策 |
 | 5 | 运行时矩阵公开展示 | 未变（`?matrix=1` 预览可用，默认隐藏） | 等 admin 决策 |
-| 6 | **短内容态多出一条 31px 滚动条**（横幅高度未扣除） | 已修并验证 5 处：`/legion`（`.546`）、`/`、`/messages`、`/requirements`（`.552`）、`/node` 三处根（`.553`）。剩余：`app/tasks/TasksView.tsx`（**需同时改 3 处：根 + aside + section，实测三者 min-height 均为 1000**）、`app/requirements/[id]/page.tsx`（6 处）、`app/legion/plaza/page.tsx`（实测当前溢出 0，实际不需要）、`app/login/page.tsx`（无外壳，变量恒 0，不需要） | **待办**：只需处理 `TasksView` 与 `requirements/[id]`；每处都改成 `min-h-[calc(100dvh-var(--health-banner-h,0px))]`，验证用 computed min-height=969 或骨架期溢出=0 |
+| 6 | **短内容态多出一条 31px 滚动条**（横幅高度未扣除） | 已修并验证 5 处：`/legion`（`.546`）、`/`、`/messages`、`/requirements`（`.552`）、`/node` 三处根（`.553`）。剩余：`app/tasks/TasksView.tsx`（**需同时改 3 处：根 + aside + section，实测三者 min-height 均为 1000**）、`app/requirements/[id]/page.tsx`（6 处）、`app/legion/plaza/page.tsx`（**已修，`.555`**：1440×2400 下溢出 31 → 0；1000 高时看不到）、`app/login/page.tsx`（无外壳，变量恒 0，不需要） | **待办**：只需处理 `TasksView` 与 `requirements/[id]`；每处都改成 `min-h-[calc(100dvh-var(--health-banner-h,0px))]`，验证用 computed min-height=969 或骨架期溢出=0 |
 
 ### 关于"±2.2% 残留"的更正
 
