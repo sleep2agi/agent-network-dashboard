@@ -44,6 +44,7 @@
 
 ```
 legion-label-drop.mjs            标签留存（320/390/1440 × 四变体）
+legion-visual-spotcheck.mjs        三页 × 两视口截图 + 结构量（画布/zoom/溢出/正文长度/pageerror）
 legion-canvas-text-contrast.mjs  画布文字对比度（深色 + 浅色，16 组，判据 ≥4.0）
 legion-cold-start.mjs            冷启动（每视口 3 次取中位数）
 site-scroll-audit.mjs            全站整页滚动条普查（路由从 app/**/page.tsx 生成）
