@@ -199,3 +199,40 @@ preview fixture        → 预览数据
 
 量法提醒（今日新增）：截图必须等数据落位——6s 时只捕到加载骨架（三条灰条），
 会误判成"页面空白"；延长到 12s 才看到真实的空态文案。
+
+## 十五、2026-11-15 系统性问题发现：界面文案整体中英混排（不止 `/providers`）
+
+`.562` 把 `/providers` 改中文后，顺手扫了全仓界面串：
+
+```
+粗算英文界面文案：98 条，分布在 33 个 .tsx（不含测试）
+最集中的几页：
+  app/settings/page.tsx        13  （Settings / Change password / Sign out / CommHub connection / Hub URL / Config source）
+  app/node/page.tsx            10  （Click Capture to view terminal output / External schedules / No alias specified / Back to dashboard / Node Info）
+  app/admin/page.tsx            8  （Server Overview / Offline / Total Tasks / No online sessions / Actions / Broadcast）
+  app/nodes/NodesView.tsx       7
+  app/settings/networks/page.tsx 5
+  app/components/TaskDetail.tsx 4 · TaskDrawer 3 · skillhub 2 · settings/tokens 2 · server-logs 2
+```
+
+现状判断（不是缺陷，是产品口吻问题）：
+
+- 已中文化的页面：消息、需求、军团、任务列表、变更日志、概览等
+- 仍大量英文的页面：设置、节点详情、管理台、技能库、Tokens、服务端日志
+- 另有一类**技术名词**（API / Provider / Model / Hub URL / Session / Token）本就适合保留英文
+
+因此不能"一键全翻译"：需要先定两件事——
+1. **面向谁**：设置/管理台是否只给管理员用（若只给运维，英文可接受）
+2. **保留白名单**：哪些术语保留英文（API、Provider、Model、Hub、Session、Token、RFC 编号等）
+
+建议的落地顺序（每次 40 分钟含发布，可分批）：
+
+```
+第 1 批（用户最常见）：/node 详情页 10 条 + /nodes 列表 7 条
+第 2 批（用户会进）：/settings 13 条 + /settings/networks 5 条 + /settings/tokens 2 条
+第 3 批（管理员）：/admin 8 条 + /skillhub 2 条 + /server-logs 2 条
+第 4 批（组件内文案）：TaskDetail 4 · TaskDrawer 3
+```
+
+未直接开工的原因：这是**跨全站的文案口径变更**（98 条、33 个文件），必须先定"面向谁 + 保留白名单"，
+否则会把技术名词也翻成中文，反而降低可读性。给一句口径即可按批次推进。
