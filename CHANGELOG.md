@@ -6,6 +6,51 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.565 — 2026-11-15
+
+### 命令面板（⌘K / Ctrl+K）中文化，并把隐藏界面纳入文案门
+
+```
+背景：`.564` 把首屏界面中文化后，新加的界面文案门（health-all 第 15 门）
+      在线上抓到 14 条残留 —— 全部来自命令面板：
+        Go to Overview / Go to Tasks / … / Toggle theme / Copy current URL
+        Show keyboard shortcuts / Pin topology filter / Clear topology filters
+      面板默认不渲染，所以之前的"7 页 0 残留"只覆盖了首屏。
+```
+
+### 改动
+```
+命令面板 41 条
+  分组名：Recents / Agents / Tasks / Actions / Navigate → 最近 / Agent / 任务 / 操作 / 导航
+  导航 20 条：Go to X → 打开概览 / 打开任务 / 打开失败任务 / 打开节点 /
+              打开军团（2D）/ 打开军团（3D）/ 打开需求 / 打开组织架构 / 打开版本 /
+              打开变更记录 / 打开定时任务 / 打开 SkillHub / 打开服务器 / 打开 Providers /
+              打开消息 / 打开网络 / 打开审计日志 / 打开服务器日志 / 打开管理台 / 打开设置
+  动作 10 条：切换主题 / 复制当前链接 / 查看键盘快捷键 /
+              锁定拓扑筛选（工作中 / 空闲 / 离线 / Anthropic / OpenAI / 书生）/ 清除拓扑筛选
+  提示语 15 条：全队一览 / 全部任务状态 / Agent 舰队 / Agent 之间的消息 / 管理网络 /
+               注册 / 登录 / 操作记录 / CommHub 标准输出 / 错误输出 / 服务概览与广播 / 连接 / 账号 / 资源 …
+  分组取值同步改（TS 联合类型改了就必须改 38 处取值，否则 tsc 报 TS2322）
+
+文案门扩展（evidence/probes/i18n-ui-sweep.mjs）
+  新增：Ctrl+K 打开面板 → 等 900ms → 确认 [role="dialog"] 出现 → 扫面板内文案 → Esc
+  输出格式：残留=N  面板=M
+  未打开面板时打印「面板=未打开」，不静默放行（把"没扫"与"没问题"区分开）
+
+套件断言同步（不是放宽门，是断言跟着文案走）
+  verify-board.mjs：helpText.includes('Go to Legion/Requirements/Audit Log')
+                 → includes('打开军团 / 打开需求 / 打开审计日志')
+```
+
+### 验证
+```
+tsc 0 · lint 0 errors · npm test 58/58 · next build 成功
+i18n-ui-sweep（本地生产构建）：7 页全部 残留=0 面板=0
+  对比：线上 .564 为 首屏 0 / 面板 14（14 条文案 × 7 页命中）
+```
+
+用户可见变化：命令面板界面语言统一为中文。无交互、接口、权限变化。
+
 ## 0.6.4-preview.564 — 2026-11-15
 
 ### 界面语言统一：侧栏、设置、管理台、任务、需求、概览（i18n 第 2–4 批，72 处）
