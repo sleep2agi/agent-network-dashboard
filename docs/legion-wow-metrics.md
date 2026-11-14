@@ -42,3 +42,35 @@ node evidence/probes/legion-cold-start.mjs      https://dm.vansin.top   # 指标
 node evidence/probes/legion-export-check.mjs    https://dm.vansin.top   # 指标 5
 node evidence/probes/core-variants.mjs          https://dm.vansin.top <outDir>   # 指标 3
 ```
+
+## 指标 4 的相位拆解（`.559` 实测，1440）
+
+| 相位 | 时刻 | 说明 |
+|---|---|---|
+| DOMContentLoaded | 77ms | 传输+解析不是瓶颈 |
+| 第一帧（canvas 有尺寸） | **195ms** | **渲染不是瓶颈** |
+| 编制就绪（节点 >100） | **4754ms** | 全在等 `/api/hub/people` |
+| 入场 开始 → 结束 | 2011 → 3199ms | 入场本身约 1.2s |
+| 取景收束 | 6927ms | 健康横幅的 `task-stats`（2508ms 发起、1277ms）晚到触发一次重取景 |
+
+Hub 侧（同一轮）：
+
+```
+/api/hub/people      起始 1500ms  耗时 2117ms   ← 编制就绪等它
+/api/hub/messages    起始 1498ms  耗时 2114ms   ← 与 people 同时抢 Hub
+/api/hub/overview    起始 1497ms  耗时 1436ms
+/api/hub/departments 起始 1502ms  耗时  183ms
+/api/hub/task-stats  起始 2508ms  耗时 1277ms   ← 健康横幅
+```
+
+```
+⇒ 首屏慢的敌人是 Hub 串行（people 与 messages 各 2.1s、同刻发起），不是渲染
+⇒ 客户端可做的两件事：
+   ① 军团路由延后非首屏请求（messages / overview / task-stats），把 Hub 让给 people
+   ② 健康横幅的 task-stats 延后/合并，避免晚到再触发一次重取景（收束从 3.2s 推到 6.9s）
+⇒ 更根本的在 Hub 侧（并发下发），证据已转 通信欧
+```
+
+> 一次 A/B（`?deferChrome=1` vs 基线）因相位探针自身采样不稳（同一命令两次运行，
+> 一次 `编制就绪` 读不到、另一次全部相位为空）**判为无效，不作结论** ——
+> 需要先把探针的"节点数门限 + 收束"逻辑改对，再谈开关是否有效。
