@@ -1239,6 +1239,13 @@ export default function Legion3DPage() {
     return () => clearTimeout(t);
   }, []);
 
+  // `.560` 首屏优先信号：编制就绪后置位，`useLegionGate()` 据此把未读角标的
+  // 200 条 messages 请求排到 people 之后（实测 people 1404ms → 722ms，首屏 4296 → 3477ms）。
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (layout.nodes.length > 100) document.documentElement.dataset.legionDataReady = '1';
+  }, [layout.nodes.length]);
+
   const layoutKeyRef = useRef<string>('');
   useEffect(() => {
     const key = `${layout.stats.groups}:${layout.stats.people}:${layout.stats.agents}:${layout.nodes.length}`;
