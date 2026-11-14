@@ -177,7 +177,7 @@
 | 检查点 | 结果 | 判定 |
 |---|---|---|
 | `/node?alias=…` 详情页是否出现「重命名」 | **未出现**；同页「重启」存在 | ✔ 与 `rename=false` 一致 |
-| `/nodes` 列表 ⋮ 菜单的项 | **未能核对**：自动化选择器没命中触发按钮（`opened:false`） | 待人工或改 selector 再验 |
+| `/nodes` 列表 ⋮ 菜单的项 | **本会话无法核对**（三次尝试后定位到原因）：默认视图里`hasAlias=false`（我的节点不在列表）、`lifecycleButtons=0`（无任何生命周期按钮渲染），可读 aria-label 全是会话类（`会话溢出菜单` 等） | 需先切到含目标节点的网络/范围，或人工点开一次 |
 
 代码依据（可复核）：`app/components/NodeLifecycleMenu.tsx` 的菜单项由 `caps` 门控——
 `stop` 依 `caps.stop`、`delete` 依 `caps.delete`；`caps === null`（尚未探测完成）时会先显示，
