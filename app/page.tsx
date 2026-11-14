@@ -280,10 +280,10 @@ export default function Dashboard() {
         // Filter chip color keyed to status (round 34): working=green, idle=cyan,
         // offline=gray, all=neutral. Inline hex dots avoid Tailwind v4 purge.
         const chips: { key: typeof agentFilter; label: string; dot?: string }[] = [
-          { key: 'all',     label: 'All' },
-          { key: 'working', label: 'Working', dot: '#4ade80' },
-          { key: 'idle',    label: 'Idle',    dot: '#22d3ee' },
-          { key: 'offline', label: 'Offline', dot: '#6b7280' },
+          { key: 'all',     label: '全部' },
+          { key: 'working', label: '工作中', dot: '#4ade80' },
+          { key: 'idle',    label: '空闲', dot: '#22d3ee' },
+          { key: 'offline', label: '离线', dot: '#6b7280' },
         ];
         return (
           <>

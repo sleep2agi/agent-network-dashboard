@@ -330,7 +330,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       >
         <div className="px-4 py-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-3 mb-3">
-            <h1 className="text-xl font-semibold text-[var(--fg)] lg:ml-0 ml-10">Tasks</h1>
+            <h1 className="text-xl font-semibold text-[var(--fg)] lg:ml-0 ml-10">任务</h1>
             {tasksScoped.length < count && (
               <span
                 className="text-xs bg-[var(--bg-elevated)] text-[var(--fg-muted)] px-2 py-0.5 rounded-full tabular-nums"

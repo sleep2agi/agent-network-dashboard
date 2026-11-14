@@ -107,7 +107,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-full bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
       <div className="mx-auto max-w-2xl">
-        <h1 className="mb-4 ml-10 text-xl font-semibold text-[var(--fg)] lg:ml-0">Settings</h1>
+        <h1 className="mb-4 ml-10 text-xl font-semibold text-[var(--fg)] lg:ml-0">设置</h1>
 
         {/* 分段锚点：与下面六组标题一一对应。字重/描边按 minimal 规范收掉，
             但保留 44px 触控高度（移动端可点性不靠边框表达）。 */}
@@ -126,10 +126,10 @@ export default function SettingsPage() {
         <div className="space-y-8">
           {/* ── Account（客户端第一组：账号）──────────────────────── */}
           <section id="account" data-settings-group="account" aria-labelledby="account-heading" className="space-y-3 scroll-mt-6">
-            <GroupHeading id="account" label="Account" />
+            <GroupHeading id="account" label="账号" />
 
             <div className={cardClass}>
-              <h3 className="mb-4 text-sm font-semibold">Change password</h3>
+              <h3 className="mb-4 text-sm font-semibold">修改密码</h3>
               <div className="space-y-3">
                 <input type="password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} placeholder="Current password" aria-label="Current password"
                   className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-[var(--hl)] focus:outline-none sm:text-sm" />
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                   setTimeout(() => setPwdResult(''), 5000);
                 }} disabled={!oldPwd || !newPwd}
                   className="rounded-lg bg-[var(--hl)] px-4 py-2 text-sm font-medium text-[var(--bg)] transition-opacity hover:opacity-90 disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)]">
-                  Change password
+                  修改密码
                 </button>
               </div>
               {pwdResult && <div className={`mt-2 text-xs ${pwdResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{pwdResult}</div>}
@@ -222,8 +222,8 @@ export default function SettingsPage() {
             </div>
 
             <div className={cardClass}>
-              <h3 className="mb-1 text-sm font-semibold">Sign out</h3>
-              <p className="mb-3 text-xs text-[var(--fg-muted)]">Signing out clears your dashboard session cookie. You&apos;ll return to the login page.</p>
+              <h3 className="mb-1 text-sm font-semibold">退出登录</h3>
+              <p className="mb-3 text-xs text-[var(--fg-muted)]">退出登录会清除本机 Dashboard 会话 Cookie，随后回到登录页。</p>
               <button
                 onClick={async () => {
                   await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
@@ -233,36 +233,36 @@ export default function SettingsPage() {
                 }}
                 className="rounded-lg bg-[var(--bg-elevated)] px-4 py-2 text-sm text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)]"
               >
-                Sign out
+                退出登录
               </button>
             </div>
           </section>
 
           {/* ── Connection（客户端「本地 Hub」组的状态视图）──────── */}
           <section id="connection" data-settings-group="connection" aria-labelledby="connection-heading" className="space-y-3 scroll-mt-6">
-            <GroupHeading id="connection" label="Connection" />
+            <GroupHeading id="connection" label="连接" />
 
             <div className={cardClass}>
-              <h3 className="mb-4 text-sm font-semibold">CommHub connection</h3>
+              <h3 className="mb-4 text-sm font-semibold">CommHub 连接</h3>
               <div className="space-y-3 text-sm">
                 <div className={rowClass}>
-                  <span className="shrink-0 text-[var(--fg-muted)]">Hub URL</span>
+                  <span className="shrink-0 text-[var(--fg-muted)]">Hub 地址</span>
                   <span className={`text-[var(--hl)] ${valueClass}`}>{config?.hub || 'not configured'}</span>
                 </div>
                 <div className={rowClass}>
-                  <span className="text-[var(--fg-muted)]">Config source</span>
+                  <span className="text-[var(--fg-muted)]">配置来源</span>
                   <span className={`text-[var(--fg)] ${valueClass}`}>
-                    {config?.source === 'file' ? 'Local file (~/.anet/config.json)' : config?.source === 'runtime-env' ? 'Vercel env vars' : 'Missing'}
+                    {config?.source === 'file' ? '本地文件（~/.anet/config.json）' : config?.source === 'runtime-env' ? 'Vercel 环境变量' : '未设置'}
                   </span>
                 </div>
                 <div className={rowClass}>
-                  <span className="text-[var(--fg-muted)]">Auth token</span>
+                  <span className="text-[var(--fg-muted)]">鉴权 Token</span>
                   <span className={`${config?.tokenConfigured ? 'text-[var(--success)]' : 'text-[var(--danger)]'} ${valueClass}`}>
-                    {config?.tokenConfigured ? `Configured (${config.tokenPreview})` : 'Not configured'}
+                    {config?.tokenConfigured ? `已配置（${config.tokenPreview}）` : '未配置'}
                   </span>
                 </div>
                 <div className={rowClass}>
-                  <span className="text-[var(--fg-muted)]">Server auth</span>
+                  <span className="text-[var(--fg-muted)]">服务端鉴权</span>
                   <span className={`${health?.auth === 'enabled' ? 'text-[var(--success)]' : 'text-[var(--warning)]'} sm:text-right`}>
                     {health?.auth || '--'}
                   </span>
@@ -287,22 +287,22 @@ export default function SettingsPage() {
             </div>
 
             <div className={cardClass}>
-              <h3 className="mb-4 text-sm font-semibold">Server</h3>
+              <h3 className="mb-4 text-sm font-semibold">服务器</h3>
               <div className="space-y-3 text-sm">
                 <div className={rowClass}>
-                  <span className="text-[var(--fg-muted)]">Hub version</span>
+                  <span className="text-[var(--fg-muted)]">Hub 版本</span>
                   <span className={`font-mono text-[var(--fg)] ${valueClass}`}>{health?.version || '--'}</span>
                 </div>
                 <div className={rowClass}>
-                  <span className="text-[var(--fg-muted)]">Sessions</span>
+                  <span className="text-[var(--fg-muted)]">会话</span>
                   <span className={`text-[var(--fg)] ${valueClass}`}>{health?.sessions ?? '--'}</span>
                 </div>
                 <div className={rowClass}>
-                  <span className="text-[var(--fg-muted)]">SSE streams</span>
+                  <span className="text-[var(--fg-muted)]">SSE 连接</span>
                   <span className={`text-[var(--fg)] ${valueClass}`}>{health?.sse_connections ?? '--'}</span>
                 </div>
                 <div className={rowClass}>
-                  <span className="text-[var(--fg-muted)]">Uptime</span>
+                  <span className="text-[var(--fg-muted)]">运行时长</span>
                   <span className={`text-[var(--fg)] ${valueClass}`}>{health?.uptime ? `${Math.floor(health.uptime / 3600)}h ${Math.floor((health.uptime % 3600) / 60)}m` : '--'}</span>
                 </div>
               </div>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
 
           {/* ── Team（客户端：用户管理 + Agent 组织架构）────────── */}
           <section id="team" data-settings-group="team" aria-labelledby="team-heading" className="space-y-3 scroll-mt-6">
-            <GroupHeading id="team" label="Team" />
+            <GroupHeading id="team" label="团队" />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {SETTINGS_LINKS.filter(l => l.group === 'team').map(l => (
                 <Link key={l.href} href={l.href} className="rounded-2xl bg-[var(--bg-secondary)] p-5 transition-colors hover:bg-[var(--bg-elevated)]">
@@ -325,9 +325,9 @@ export default function SettingsPage() {
 
           {/* ── Appearance（客户端外观组：主题）────────────────── */}
           <section id="appearance" data-settings-group="appearance" aria-labelledby="appearance-heading" className="space-y-3 scroll-mt-6">
-            <GroupHeading id="appearance" label="Appearance" />
+            <GroupHeading id="appearance" label="外观" />
             <div className={cardClass}>
-              <h3 className="mb-4 text-sm font-semibold">Theme</h3>
+              <h3 className="mb-4 text-sm font-semibold">主题</h3>
               <div className="grid grid-cols-2 gap-3">
                 {SETTINGS_THEMES.map(t => (
                   <button
@@ -449,7 +449,7 @@ export default function SettingsPage() {
 
           {/* ── 通知（对齐客户端 NotifySettings 的最小实现：默认关闭）── */}
           <section id="notify" data-settings-group="notify" aria-labelledby="notify-heading" className="space-y-3 scroll-mt-6">
-            <GroupHeading id="notify" label="Notifications" />
+            <GroupHeading id="notify" label="通知" />
             <div className={cardClass}>
               <h3 className="mb-2 text-sm font-semibold">桌面通知</h3>
               <p className="mb-3 text-[11px] text-[var(--fg-dim)]">
@@ -499,9 +499,9 @@ export default function SettingsPage() {
 
           {/* ── Resources（Dashboard 特有：低频页面入口）───────── */}
           <section id="resources" data-settings-group="resources" aria-labelledby="resources-heading" className="space-y-3 scroll-mt-6">
-            <GroupHeading id="resources" label="Resources" />
+            <GroupHeading id="resources" label="资源" />
             {/* #209 (per Vincent 521/522): the low-frequency pages 通信龙
-                moved out of the sidebar (Messages, Audit Log, Server Logs)
+                moved out of the sidebar (Messages, Audit Log, 服务器日志)
                 need a discovery surface that isn't the primary nav. */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {SETTINGS_LINKS.filter(l => l.group === 'resource').map(l => (
@@ -516,17 +516,17 @@ export default function SettingsPage() {
 
           {/* ── About（客户端最后一组）────────────────────────── */}
           <section id="about" data-settings-group="about" aria-labelledby="about-heading" className="space-y-3 scroll-mt-6">
-            <GroupHeading id="about" label="About" />
+            <GroupHeading id="about" label="关于" />
             <div className={cardClass}>
               <div className="space-y-3 text-sm">
                 <div className={rowClass}>
-                  <span className="text-[var(--fg-muted)]">Dashboard version</span>
+                  <span className="text-[var(--fg-muted)]">Dashboard 版本</span>
                   <span className={`font-mono text-[var(--fg)] ${valueClass}`} title="From package.json @sleep2agi/agent-network-dashboard">
                     {DASHBOARD_VERSION}
                   </span>
                 </div>
                 <div className={rowClass}>
-                  <span className="text-[var(--fg-muted)]">Data layer</span>
+                  <span className="text-[var(--fg-muted)]">数据层</span>
                   <span className={`text-[var(--fg)] ${valueClass}`}>SWR (5s refresh, 3s dedup)</span>
                 </div>
               </div>

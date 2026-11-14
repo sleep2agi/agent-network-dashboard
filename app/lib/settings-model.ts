@@ -23,31 +23,31 @@ export interface SettingsLink {
 }
 
 export const SETTINGS_SECTIONS: SettingsSection[] = [
-  { id: 'account', label: 'Account' },
-  { id: 'connection', label: 'Connection' },
-  { id: 'team', label: 'Team' },
-  { id: 'appearance', label: 'Appearance' },
-  { id: 'resources', label: 'Resources' },
-  { id: 'about', label: 'About' },
+  { id: 'account', label: '账号' },
+  { id: 'connection', label: '连接' },
+  { id: 'team', label: '团队' },
+  { id: 'appearance', label: '外观' },
+  { id: 'resources', label: '资源' },
+  { id: 'about', label: '关于' },
 ];
 
 export const SETTINGS_LINKS: SettingsLink[] = [
-  { href: '/admin', title: 'Members & access', desc: '成员、可访问的 Agent 与授权。', action: 'Manage', group: 'team' },
-  { href: '/org', title: 'Organization', desc: '部门层级、负责人与编制；也可以看军团图。', action: 'Open', group: 'team' },
-  { href: '/settings/tokens', title: 'API Tokens', desc: 'Create and manage tokens for CLI access.', action: 'Manage', group: 'resource' },
-  { href: '/settings/networks', title: 'Networks', desc: 'Create, manage, and delete agent networks.', action: 'Manage', group: 'resource' },
-  { href: '/providers', title: 'Model Providers', desc: 'Configure model providers and per-server reachability.', action: 'Manage', group: 'resource' },
-  { href: '/messages', title: 'Messages', desc: 'Global timeline of CommHub messages across all agents.', action: 'Open', group: 'resource' },
-  { href: '/logs', title: 'Audit Log', desc: 'Authentication, token rotations, and admin actions.', action: 'Open', group: 'resource' },
-  { href: '/server-logs', title: 'Server Logs', desc: 'Live stdout / stderr from the CommHub server.', action: 'Open', group: 'resource' },
+  { href: '/admin', title: '成员与访问权限', desc: '成员、可访问的 Agent 与授权。', action: '管理', group: 'team' },
+  { href: '/org', title: '组织架构', desc: '部门层级、负责人与编制；也可以看军团图。', action: '打开', group: 'team' },
+  { href: '/settings/tokens', title: 'API Token', desc: '创建与管理 CLI 访问用的 Token。', action: '管理', group: 'resource' },
+  { href: '/settings/networks', title: '网络', desc: '创建、管理与删除 Agent 网络。', action: '管理', group: 'resource' },
+  { href: '/providers', title: '模型 Provider', desc: '配置模型 Provider 与各服务器的可达性。', action: '管理', group: 'resource' },
+  { href: '/messages', title: '消息', desc: '所有 Agent 的 CommHub 消息全局时间线。', action: '打开', group: 'resource' },
+  { href: '/logs', title: '审计日志', desc: '登录鉴权、Token 轮换与管理操作记录。', action: '打开', group: 'resource' },
+  { href: '/server-logs', title: '服务器日志', desc: 'CommHub 服务的实时 stdout / stderr。', action: '打开', group: 'resource' },
 ];
 
 export const SETTINGS_THEMES = [
-  { id: 'cyber', label: 'Dark', swatch: '#0b0b0d' },
-  { id: 'light', label: 'Light', swatch: '#f6f7f9' },
-  { id: 'slack', label: 'Slack', swatch: '#3f0e40' },
+  { id: 'cyber', label: '深色', swatch: '#0b0b0d' },
+  { id: 'light', label: '浅色', swatch: '#f6f7f9' },
+  { id: 'slack', label: 'Slack 紫', swatch: '#3f0e40' },
   // 与客户端对齐：跟随操作系统的明暗偏好（web 走 prefers-color-scheme）。
-  { id: 'system', label: 'System', swatch: 'linear-gradient(135deg,#0b0b0d 0 50%,#f6f7f9 50% 100%)' },
+  { id: 'system', label: '跟随系统', swatch: 'linear-gradient(135deg,#0b0b0d 0 50%,#f6f7f9 50% 100%)' },
 ] as const;
 
 /** Client-aligned group order. Kept as a literal so a reorder is a test failure. */

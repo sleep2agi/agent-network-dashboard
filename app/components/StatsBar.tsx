@@ -102,27 +102,27 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
         <div className={`hidden sm:grid gap-3 ${working > 0 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
           <StatCard
             value={onlineDisplay}
-            label="Online"
-            sub={presenceUnknown ? 'presence unavailable' : `${onlinePercent}% of fleet`}
+            label="在线"
+            sub={presenceUnknown ? '在线状态不可用' : `占全队 ${onlinePercent}%`}
             color={presenceUnknown ? 'text-gray-400' : 'text-green-400'}
           />
           {working > 0 && (
             <StatCard
               value={working}
-              label="Working"
-              sub={!presenceUnknown && online > 0 ? `${Math.round((working / online) * 100)}% utilization` : '--'}
+              label="工作中"
+              sub={!presenceUnknown && online > 0 ? `利用率 ${Math.round((working / online) * 100)}%` : '--'}
               color="text-cyan-400"
             />
           )}
           <StatCard
             value={offlineDisplay}
-            label="Offline"
-            sub={presenceUnknown ? 'presence unavailable' : (total - online === 0 ? 'All systems go' : `${total - online} disconnected`)}
+            label="离线"
+            sub={presenceUnknown ? '在线状态不可用' : (total - online === 0 ? 'All systems go' : `${total - online} disconnected`)}
             color="text-gray-400"
           />
           <StatCard
             value={total}
-            label="Total"
+            label="总数"
             sub="Registered nodes"
             color="text-white"
           />
