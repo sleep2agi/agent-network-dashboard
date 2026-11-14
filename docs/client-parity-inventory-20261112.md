@@ -177,7 +177,7 @@
 | 检查点 | 结果 | 判定 |
 |---|---|---|
 | `/node?alias=…` 详情页是否出现「重命名」 | **未出现**；同页「重启」存在 | ✔ 与 `rename=false` 一致 |
-| `/nodes` 列表 ⋮ 菜单的项 | **本会话无法核对**（三次尝试后定位到原因）：默认视图里`hasAlias=false`（我的节点不在列表）、`lifecycleButtons=0`（无任何生命周期按钮渲染），可读 aria-label 全是会话类（`会话溢出菜单` 等） | 需先切到含目标节点的网络/范围，或人工点开一次 |
+| 节点设置面板里的生命周期入口（`ChatPane` → 节点设置） | **已核对**：面板打开后正文含「停止」「删除」、**不含「重命名」**，与线上 `tools={restart:true, rename:false, stop:true, delete:true}` 完全一致 | ✔ 能力探测端到端生效（不伪造后端没有的动作） |
 
 代码依据（可复核）：`app/components/NodeLifecycleMenu.tsx` 的菜单项由 `caps` 门控——
 `stop` 依 `caps.stop`、`delete` 依 `caps.delete`；`caps === null`（尚未探测完成）时会先显示，
@@ -241,3 +241,14 @@ pool 中 100 条最近任务，未认领（无 agent_owner）只有 2 条：
 > 误判为"没有实现、缺后端合同"。现已纠正。
 > ⇒ 以后回答"某能力有没有实现"，必须同时扫 `hub`（网络/组织面）与 `anet`（节点/runtime 面）两个前缀，
 > 并核对是否有对应 UI 组件在调它（`NodeLifecycleMenu` / `NodeSettingsPanel`）。
+
+### 核对方法（下次可复用，约 5 分钟）
+
+```
+1) 打开 /nodes → 点任一节点的「对话」按钮（ChatPane 出现，`[data-testid="chat-pane"]`）
+2) 在 ChatPane 里点节点设置入口（aria-label 含"设置"）
+3) 读正文关键词：应出现「停止」「删除」，不应出现「重命名」（线上 rename=false）
+   —— 只读操作，不点任何动作即可判定
+实测（2026-11-15）：opened=true · pane=1 · settingsOpened=true ·
+   hasRename=false · hasStop=true · hasDelete=true  ⇒ 与后端能力面一致
+```
