@@ -125,3 +125,18 @@
 本次尝试过给 AppShell 增加 --shell-bottom-pad 并由页面根扣减，因涉及外壳与三页、
 且要重验自激与遮挡，未在夜间直接上线，改动已回退。
 ```
+
+## 客户端容器适配：安全区（已从代码核实，不需等客户端回复）
+
+| 检查项 | 结论 | 证据 |
+|---|---|---|
+| viewport 是否声明 `viewport-fit=cover` | **是** | `app/layout.tsx` viewport 导出里 `viewportFit: "cover"`（注释说明：不声明则 `env(safe-area-inset*)` 恒为 0） |
+| 顶部安全区（刘海/状态栏） | **已处理** | `AppShell`：`pt-[env(safe-area-inset-top)]` |
+| 底部安全区（Home 指示条） | **已处理** | `AppShell` 内容区 `pb-[calc(5rem+env(safe-area-inset-bottom))]`；`Sidebar`/`NodeList`/`ChatPane`/`TaskChatPanel`/`NodesView` 同样用 `calc(... + env(safe-area-inset-bottom))` |
+| 桌面端是否受影响 | **否** | 各处都带 `lg:pb-0`（桌面 pb=0） |
+
+```
+⇒ 客户端 App（Capacitor/Electron 容器）里的刘海与底部横条不会遮挡内容，这一项不必再问客户端
+⇒ 仍待客户端确认的只剩"它们自己额外加了什么 chrome"（自定义导航/手势/返回键行为），
+   那属于容器自己的事情，不影响本仓库的适配
+```
