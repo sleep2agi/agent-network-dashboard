@@ -6,6 +6,40 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.563 — 2026-11-15
+
+### 节点列表与节点详情页文案中文化（第 1 批，20 处）
+
+```
+背景：`.562` 把 /providers 改中文后，全站审计发现英文界面文案 98 条分布在 33 个文件，
+      于是按"用户最常见"优先分批处理。本批为第 1 批：/nodes 与 /node 两个每天都会看的页面。
+
+改动（仅文案，逻辑与交互零变更）：
+  /node（11 处）
+    Click Capture to view terminal output → 点击「采集」查看终端输出
+    External schedules → 外部日程
+    No external schedules reported by this node. → 本节点未上报外部日程。
+    No alias specified. → 未指定别名。
+    Back to dashboard → 返回概览
+    Node Info → 节点信息
+    Current Task → 当前任务
+    Last Output → 最近输出
+    Send Task → 发送任务
+    No task events yet → 暂无任务事件
+    Cancel → 取消
+  /nodes（9 处）
+    Online / Offline / Working / Blocked → 在线 / 离线 / 工作中 / 阻塞
+    Tap to chat → 点击对话
+    Current task / Current Task → 当前任务
+    Status → 状态
+    Updated → 更新时间
+
+验证：tsc 0 · lint 0 errors · npm test 58/58
+注意：本地 dev 曾给出陈旧渲染（Turbopack 缓存），本地核对以源码 grep 与生产构建为准。
+```
+
+用户可见变化：节点列表与节点详情页不再中英混排。无交互/接口变化。
+
 ## 0.6.4-preview.562 — 2026-11-15
 
 ### 模型供应商页文案统一为中文（原来中英混排）
