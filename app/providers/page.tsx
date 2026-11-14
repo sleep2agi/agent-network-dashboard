@@ -97,8 +97,8 @@ export default function ProvidersPage() {
   return (
     <div className="min-h-full bg-[var(--bg)] p-4 text-[var(--fg)] sm:p-6">
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="ml-10 text-xl font-semibold text-[var(--fg)] lg:ml-0">Model Providers</h1>
-        {mock && <span className="text-[11px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/5 text-amber-300">preview fixture</span>}
+        <h1 className="ml-10 text-xl font-semibold text-[var(--fg)] lg:ml-0">模型供应商</h1>
+        {mock && <span className="text-[11px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/5 text-amber-300">预览数据</span>}
         <button
           onClick={openCreate}
           className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[var(--hl)] px-3 py-1.5 text-sm font-medium text-[var(--bg)] hover:opacity-90"
@@ -120,7 +120,7 @@ export default function ProvidersPage() {
       {showMatrix && <div className="mb-4 max-w-5xl"><RuntimeSupportMatrix /></div>}
       <div className="max-w-3xl space-y-4">
         <p className="text-sm text-[var(--fg-muted)]">
-          Configure model providers and per-server reachability. API keys are stored write-only in the secret vault and never displayed.
+          配置模型供应商，并按服务器测试连通性。API 密钥以只写方式存入密钥库，永不显示。
         </p>
 
         {unconfirmed && (
@@ -136,8 +136,8 @@ export default function ProvidersPage() {
           ) : providers.length === 0 ? (
             <EmptyState
               variant="generic"
-              title="No model providers"
-              sub="Add a provider to register its models and test per-server reachability."
+              title="还没有配置模型供应商"
+              sub="添加供应商后可登记其模型，并按服务器测试连通性。"
               cta={{ label: '新增供应商', onClick: openCreate }}
             />
           ) : (
@@ -155,8 +155,8 @@ export default function ProvidersPage() {
                           <span className="truncate text-sm font-semibold text-[var(--fg)]">{p.name}</span>
                           <span className="shrink-0 text-[11px] text-[var(--fg-muted)]" title={p.type}>{typeLabel(p.type)}</span>
                           {p.hasKey
-                            ? <span className="shrink-0 text-[11px] text-[var(--success)]">key set</span>
-                            : <span className="shrink-0 text-[11px] text-[var(--fg-muted)]">no key</span>}
+                            ? <span className="shrink-0 text-[11px] text-[var(--success)]">已配置密钥</span>
+                            : <span className="shrink-0 text-[11px] text-[var(--fg-muted)]">未配置密钥</span>}
                         </div>
                         <div className="truncate text-[11px] text-[var(--fg-muted)]">
                           {hostOf(p.base_url)} · {(p.models?.length || 0)} model{(p.models?.length || 0) === 1 ? '' : 's'}
@@ -170,8 +170,8 @@ export default function ProvidersPage() {
                         disabled={!p.enabled}
                         title={p.enabled ? '连通性测试（模型 × 服务器 可达矩阵）' : '供应商已停用，启用后可测连通性'}
                         className={`rounded px-2 py-1 text-[11px] transition-colors ${!p.enabled ? 'cursor-not-allowed text-[var(--fg-dim)]' : isOpen ? 'bg-[var(--bg-elevated)] text-[var(--fg)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
-                      >Test{isOpen ? ' ▾' : ''}</button>
-                      <button type="button" onClick={() => openEdit(p)} title="编辑（名称 / base_url / 模型）" className="rounded px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">Edit</button>
+                      >测试{isOpen ? ' ▾' : ''}</button>
+                      <button type="button" onClick={() => openEdit(p)} title="编辑（名称 / base_url / 模型）" className="rounded px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">编辑</button>
                       <button type="button" onClick={() => toggleEnabled(p)} title={p.enabled ? '停用（软删，可重新启用）' : '启用'} className="rounded px-2 py-1 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]">
                         {p.enabled ? 'Disable' : 'Enable'}
                       </button>
@@ -190,7 +190,7 @@ export default function ProvidersPage() {
         </section>
 
         <p className="text-[11px] text-[var(--fg-muted)]">
-          按 <span className="text-[var(--fg)]">Test</span> 展开「模型 × 服务器」连通性矩阵（对每个模型实时探测可达性）。创建节点向导的模型下拉将从此处的 registry 拉取（即将支持）。
+          按 <span className="text-[var(--fg)]">测试</span> 展开「模型 × 服务器」连通性矩阵（对每个模型实时探测可达性）。创建节点向导的模型下拉将从此处的 registry 拉取（即将支持）。
         </p>
       </div>
 
