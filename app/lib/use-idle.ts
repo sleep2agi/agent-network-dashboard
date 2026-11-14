@@ -28,3 +28,35 @@ export function useIdle(timeoutMs = 1500): boolean {
   }, [timeoutMs]);
   return idle;
 }
+
+/** 军团页面数据门：`/legion*` 路由上，未读角标那条 200 条 messages 请求
+ *  必须等该页编制就绪（或 3s 兜底）之后再发。
+ *
+ * 依据（2026-11-14，线上 1440×5 次中位数，`evidence/probes/legion-phase-timing.mjs`）：
+ *   · 基线：`/api/hub/people` 1404ms、编制就绪 4296ms
+ *   · 掐掉 messages：people **722ms**、编制就绪 **3477ms**（-49% / -19%）
+ *   · 掐掉 overview：people 1284ms、编制就绪 3840ms（几乎无收益）
+ * ⇒ 与首屏关键路径抢 Hub 的是 messages，不是 overview；而 useIdle() 只看主线程空闲，
+ *   数据还在飞的时候主线程就已经空闲了，所以这条请求很早就发出去了。
+ * ⇒ 这里加一道"该页数据就绪"的门，把 messages 排到 people 之后；角标最多晚 3s。
+ */
+export function useLegionGate(fallbackMs = 3000): boolean {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    // 只对 3D 页生效：2D /legion 与 /legion/plaza 的首屏关键路径不是 people，
+    // 那边加门只会让角标白等 3 秒。
+    const isLegion = window.location.pathname.startsWith('/legion/3d');
+    if (!isLegion) { setOpen(true); return; }
+    if (document.documentElement.dataset.legionDataReady === '1') { setOpen(true); return; }
+    const timer = window.setTimeout(() => setOpen(true), fallbackMs);
+    const poll = window.setInterval(() => {
+      if (document.documentElement.dataset.legionDataReady === '1') {
+        window.clearInterval(poll);
+        window.clearTimeout(timer);
+        setOpen(true);
+      }
+    }, 100);
+    return () => { window.clearInterval(poll); window.clearTimeout(timer); };
+  }, [fallbackMs]);
+  return open;
+}
