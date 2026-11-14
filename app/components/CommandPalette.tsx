@@ -22,7 +22,7 @@ interface Command {
   id: string;
   title: string;
   hint?: string;
-  group: 'Recents' | 'Agents' | 'Tasks' | 'Actions' | 'Navigate';
+  group: '最近' | 'Agent' | '任务' | '操作' | '导航';
   icon: React.ReactNode;
   perform: (router: ReturnType<typeof useRouter>) => void;
   /** Matched char indices (set by fuzzy filter for highlight render). */
@@ -104,72 +104,72 @@ function NavIcon({ d }: { d: string }) {
 }
 
 const COMMANDS: Command[] = [
-  { id: 'go-overview', title: 'Go to Overview', hint: 'Fleet at a glance', group: 'Navigate',
+  { id: 'go-overview', title: '打开概览', hint: '全队一览', group: '导航',
     icon: <NavIcon d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3" />,
     perform: r => r.push('/') },
-  { id: 'go-tasks', title: 'Go to Tasks', hint: 'All task statuses', group: 'Navigate',
+  { id: 'go-tasks', title: '打开任务', hint: '全部任务状态', group: '导航',
     icon: <NavIcon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />,
     perform: r => r.push('/tasks') },
-  { id: 'go-tasks-failed', title: 'Go to Failed tasks', hint: 'Filter status=failed', group: 'Navigate',
+  { id: 'go-tasks-failed', title: '打开失败任务', hint: '筛选 status=failed', group: '导航',
     icon: <NavIcon d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />,
     perform: r => r.push('/tasks?status=failed') },
-  { id: 'go-nodes', title: 'Go to Nodes', hint: 'Agent fleet', group: 'Navigate',
+  { id: 'go-nodes', title: '打开节点', hint: 'Agent 舰队', group: '导航',
     icon: <NavIcon d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />,
     perform: r => r.push('/nodes') },
   // 侧栏之外/之后加的页（军团、需求、组织、版本、定时、SkillHub、服务器、
   // Provider）一直只有直链，命令面板里搜不到 —— 而侧栏自己写着「低频页仍可
   // 通过 ⌘K 到达」，等于承诺了没兑现。这里补齐导航项，别让新页藏起来。
-  { id: 'go-legion', title: 'Go to Legion', hint: '2D 军团组织架构图', group: 'Navigate',
+  { id: 'go-legion', title: '打开军团（2D）', hint: '2D 军团组织架构图', group: '导航',
     icon: <NavIcon d="M12 3l7 4v6c0 4-3 6.5-7 8-4-1.5-7-4-7-8V7l7-4zM12 8v5m0 0l3 2m-3-2l-3 2" />,
     perform: r => r.push('/legion') },
-  { id: 'go-legion-3d', title: 'Go to Legion (3D)', hint: '3D 军团拓扑', group: 'Navigate',
+  { id: 'go-legion-3d', title: '打开军团（3D）', hint: '3D 军团拓扑', group: '导航',
     icon: <NavIcon d="M12 3l7 4v6c0 4-3 6.5-7 8-4-1.5-7-4-7-8V7l7-4zM12 8v5m0 0l3 2m-3-2l-3 2" />,
     perform: r => r.push('/legion/3d') },
-  { id: 'go-requirements', title: 'Go to Requirements', hint: '需求池 / 进行中 / 完成', group: 'Navigate',
+  { id: 'go-requirements', title: '打开需求', hint: '需求池 / 进行中 / 完成', group: '导航',
     icon: <NavIcon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 9h6M9 13h6M9 17h3" />,
     perform: r => r.push('/requirements') },
-  { id: 'go-org', title: 'Go to Organization', hint: '人 · 部门 · 名下 Agent', group: 'Navigate',
+  { id: 'go-org', title: '打开组织架构', hint: '人 · 部门 · 名下 Agent', group: '导航',
     icon: <NavIcon d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.6-4.5M9 7a3 3 0 10-2.6 4.5" />,
     perform: r => r.push('/org') },
-  { id: 'go-versions', title: 'Go to Versions', hint: '组件版本对照', group: 'Navigate',
+  { id: 'go-versions', title: '打开版本', hint: '组件版本对照', group: '导航',
     icon: <NavIcon d="M7 7h10M7 12h10M7 17h6" />,
     perform: r => r.push('/versions') },
-  { id: 'go-changelog', title: 'Go to Changelog', hint: '更新日志', group: 'Navigate',
+  { id: 'go-changelog', title: '打开变更记录', hint: '更新日志', group: '导航',
     icon: <NavIcon d="M6 4h9l4 4v12H6zM15 4v4h4" />,
     perform: r => r.push('/changelog') },
-  { id: 'go-schedules', title: 'Go to Schedules', hint: '定时任务', group: 'Navigate',
+  { id: 'go-schedules', title: '打开定时任务', hint: '定时任务', group: '导航',
     icon: <NavIcon d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />,
     perform: r => r.push('/scheduled-tasks') },
-  { id: 'go-skillhub', title: 'Go to SkillHub', hint: '技能库', group: 'Navigate',
+  { id: 'go-skillhub', title: '打开 SkillHub', hint: '技能库', group: '导航',
     icon: <NavIcon d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253" />,
     perform: r => r.push('/skillhub') },
-  { id: 'go-servers', title: 'Go to Servers', hint: 'daemon 主机', group: 'Navigate',
+  { id: 'go-servers', title: '打开服务器', hint: 'daemon 主机', group: '导航',
     icon: <NavIcon d="M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v1A2.5 2.5 0 0117.5 10h-11A2.5 2.5 0 014 7.5v-1zM4 16.5A2.5 2.5 0 016.5 14h11a2.5 2.5 0 012.5 2.5v1a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-1zM7 7h.01M7 17h.01" />,
     perform: r => r.push('/servers') },
-  { id: 'go-providers', title: 'Go to Providers', hint: '模型 Provider 注册表', group: 'Navigate',
+  { id: 'go-providers', title: '打开 Providers', hint: '模型 Provider 注册表', group: '导航',
     icon: <NavIcon d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />,
     perform: r => r.push('/providers') },
-  { id: 'go-messages', title: 'Go to Messages', hint: 'Inter-agent chat', group: 'Navigate',
+  { id: 'go-messages', title: '打开消息', hint: 'Agent 之间的消息', group: '导航',
     icon: <NavIcon d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />,
     perform: r => r.push('/messages') },
-  { id: 'go-networks', title: 'Go to Networks', hint: 'Manage networks', group: 'Navigate',
+  { id: 'go-networks', title: '打开网络', hint: '管理网络', group: '导航',
     icon: <NavIcon d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />,
     perform: r => r.push('/settings/networks') },
-  { id: 'go-logs', title: 'Go to Audit Log', hint: 'Register / login / actions', group: 'Navigate',
+  { id: 'go-logs', title: '打开审计日志', hint: '注册 / 登录 / 操作记录', group: '导航',
     icon: <NavIcon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
     perform: r => r.push('/logs') },
-  { id: 'go-server-logs', title: 'Go to Server Logs', hint: 'CommHub stdout/stderr', group: 'Navigate',
+  { id: 'go-server-logs', title: '打开服务器日志', hint: 'CommHub 标准输出 / 错误输出', group: '导航',
     icon: <NavIcon d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
     perform: r => r.push('/server-logs') },
-  { id: 'go-admin', title: 'Go to Admin', hint: 'Server overview + broadcast', group: 'Navigate',
+  { id: 'go-admin', title: '打开管理台', hint: '服务概览与广播', group: '导航',
     icon: <NavIcon d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />,
     perform: r => r.push('/admin') },
-  { id: 'go-settings', title: 'Go to Settings', hint: 'Connection / Account / Resources', group: 'Navigate',
+  { id: 'go-settings', title: '打开设置', hint: '连接 / 账号 / 资源', group: '导航',
     icon: <NavIcon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />,
     perform: r => r.push('/settings') },
 
   // ── Actions group (round 15) ─────────────────────────────────
-  { id: 'act-toggle-theme', title: 'Toggle theme', hint: 'dark ↔ light', group: 'Actions',
+  { id: 'act-toggle-theme', title: '切换主题', hint: '深色 ↔ 浅色', group: '操作',
     icon: <NavIcon d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />,
     perform: () => {
       // classic dark ↔ light. applyTheme owns the data-skin contract (it
@@ -179,12 +179,12 @@ const COMMANDS: Command[] = [
       applyTheme(next);
       try { localStorage.setItem('anet-theme', next); } catch {}
     } },
-  { id: 'act-copy-url', title: 'Copy current URL', hint: 'page link to clipboard', group: 'Actions',
+  { id: 'act-copy-url', title: '复制当前链接', hint: '把页面链接复制到剪贴板', group: '操作',
     icon: <NavIcon d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />,
     perform: () => {
       try { navigator.clipboard.writeText(window.location.href); } catch {}
     } },
-  { id: 'act-sign-out', title: '退出登录', hint: '清除会话', group: 'Actions',
+  { id: 'act-sign-out', title: '退出登录', hint: '清除会话', group: '操作',
     icon: <NavIcon d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />,
     perform: () => {
       fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
@@ -192,7 +192,7 @@ const COMMANDS: Command[] = [
       try { sessionStorage.removeItem('anet_v3_auth'); } catch {}
       window.location.assign('/login');
     } },
-  { id: 'act-help', title: 'Show keyboard shortcuts', hint: 'press ? — works on mobile too', group: 'Actions',
+  { id: 'act-help', title: '查看键盘快捷键', hint: '按 ? 打开 —— 移动端也可用', group: '操作',
     icon: <NavIcon d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
     perform: () => {
       // Dispatch synthetic `?` keydown so HelpOverlay's global listener opens
@@ -204,19 +204,19 @@ const COMMANDS: Command[] = [
   // hydrates from) and broadcast a `storage`-like custom event
   // so TopoGraph picks it up without a reload. Keyboard-accessible
   // filter trigger from anywhere on the dashboard.
-  { id: 'act-pin-working', title: 'Pin topology filter: working', hint: 'highlight working nodes only', group: 'Actions',
+  { id: 'act-pin-working', title: '锁定拓扑筛选：工作中', hint: '只高亮工作中的节点', group: '操作',
     icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
     perform: () => {
       try { sessionStorage.setItem('anet-topo-pinned-status', 'working'); } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'status', value: 'working' } }));
     } },
-  { id: 'act-pin-idle', title: 'Pin topology filter: idle', hint: 'highlight idle (online) nodes only', group: 'Actions',
+  { id: 'act-pin-idle', title: '锁定拓扑筛选：空闲', hint: '只高亮空闲（在线）节点', group: '操作',
     icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
     perform: () => {
       try { sessionStorage.setItem('anet-topo-pinned-status', 'idle'); } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'status', value: 'idle' } }));
     } },
-  { id: 'act-pin-offline', title: 'Pin topology filter: offline', hint: 'highlight offline / no-SSE nodes', group: 'Actions',
+  { id: 'act-pin-offline', title: '锁定拓扑筛选：离线', hint: '只高亮离线 / 无 SSE 的节点', group: '操作',
     icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
     perform: () => {
       try { sessionStorage.setItem('anet-topo-pinned-status', 'offline'); } catch {}
@@ -231,25 +231,25 @@ const COMMANDS: Command[] = [
   // listener handles kind='vendor' to set the pin. The R88 stale-
   // purge useEffect cleans up if the targeted vendor isn't actually
   // in the fleet, so these commands are safe to invoke any time.
-  { id: 'act-pin-vendor-A', title: 'Pin topology filter: Anthropic', hint: 'highlight A vendor only', group: 'Actions',
+  { id: 'act-pin-vendor-A', title: '锁定拓扑筛选：Anthropic', hint: '只高亮 A 厂商', group: '操作',
     icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
     perform: () => {
       try { sessionStorage.setItem('anet-topo-pinned-vendor', 'A'); } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'vendor', value: 'A' } }));
     } },
-  { id: 'act-pin-vendor-O', title: 'Pin topology filter: OpenAI', hint: 'highlight O vendor only', group: 'Actions',
+  { id: 'act-pin-vendor-O', title: '锁定拓扑筛选：OpenAI', hint: '只高亮 O 厂商', group: '操作',
     icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
     perform: () => {
       try { sessionStorage.setItem('anet-topo-pinned-vendor', 'O'); } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'vendor', value: 'O' } }));
     } },
-  { id: 'act-pin-vendor-S', title: 'Pin topology filter: 书生', hint: 'highlight 书 vendor only', group: 'Actions',
+  { id: 'act-pin-vendor-S', title: '锁定拓扑筛选：书生', hint: '只高亮「书」厂商', group: '操作',
     icon: <NavIcon d="M4 6h16M4 12h8m-8 6h16" />,
     perform: () => {
       try { sessionStorage.setItem('anet-topo-pinned-vendor', '书'); } catch {}
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'vendor', value: '书' } }));
     } },
-  { id: 'act-clear-topo-pins', title: 'Clear topology filters', hint: 'release pinned status + group + vendor + edge', group: 'Actions',
+  { id: 'act-clear-topo-pins', title: '清除拓扑筛选', hint: '释放锁定的状态 / 分组 / 厂商 / 边', group: '操作',
     icon: <NavIcon d="M6 18L18 6M6 6l12 12" />,
     perform: () => {
       try {
@@ -271,7 +271,7 @@ const COMMANDS: Command[] = [
   // clear-vendor. Releases the pinnedEdgeKey without disturbing
   // status/group/vendor pins. pinnedEdgeKey lives only in React
   // state (no sessionStorage), so the perform is just a dispatch.
-  { id: 'act-clear-topo-edge', title: 'Clear topology edge pin', hint: 'release pinned recent-signal row only', group: 'Actions',
+  { id: 'act-clear-topo-edge', title: 'Clear topology edge pin', hint: 'release pinned recent-signal row only', group: '操作',
     icon: <NavIcon d="M6 18L18 6M6 6l12 12" />,
     perform: () => {
       window.dispatchEvent(new CustomEvent('anet:topo-pin', { detail: { kind: 'clear-edge' } }));
@@ -281,7 +281,7 @@ const COMMANDS: Command[] = [
   // ground (release the vendor pin without disturbing status/group).
   // Listed only when the user types "vendor" — fuzzy match still
   // surfaces it under broader queries like "clear".
-  { id: 'act-clear-topo-vendor', title: 'Clear topology vendor filter', hint: 'release pinned vendor only', group: 'Actions',
+  { id: 'act-clear-topo-vendor', title: 'Clear topology vendor filter', hint: 'release pinned vendor only', group: '操作',
     icon: <NavIcon d="M6 18L18 6M6 6l12 12" />,
     perform: () => {
       try { sessionStorage.removeItem('anet-topo-pinned-vendor'); } catch {}
@@ -295,12 +295,12 @@ const COMMANDS: Command[] = [
   // Layout: write localStorage in lockstep then broadcast — the storage
   // write matters for SSR (init reader uses it) and the event keeps the
   // mounted canvas in sync without a reload.
-  { id: 'act-topo-toggle-layout', title: 'Toggle topology layout', hint: 'ring ↔ grid (or press `l`)', group: 'Actions',
+  { id: 'act-topo-toggle-layout', title: 'Toggle topology layout', hint: 'ring ↔ grid (or press `l`)', group: '操作',
     icon: <NavIcon d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />,
     perform: () => {
       window.dispatchEvent(new CustomEvent('anet:topo-layout', { detail: { kind: 'toggle' } }));
     } },
-  { id: 'act-topo-fit', title: 'Fit topology to canvas', hint: 'auto-zoom to content (or press `f`)', group: 'Actions',
+  { id: 'act-topo-fit', title: 'Fit topology to canvas', hint: 'auto-zoom to content (or press `f`)', group: '操作',
     icon: <NavIcon d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4" />,
     perform: () => {
       window.dispatchEvent(new CustomEvent('anet:topo-view', { detail: { kind: 'fit' } }));
@@ -387,7 +387,7 @@ export function CommandPalette() {
             id: `agent-${s.alias}`,
             title: `Go to agent ${s.alias}`,
             hint: `${s.agent || 'agent'} · ${s.status || 'unknown'}`,
-            group: 'Agents',
+            group: 'Agent',
             icon: <NavIcon d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />,
             perform: (r) => r.push(`/node?alias=${encodeURIComponent(s.alias!)}`),
           }));
@@ -398,7 +398,7 @@ export function CommandPalette() {
             id: `task-${t.task_id}`,
             title: `Open task: ${(t.content || t.task_id || '').slice(0, 50)}`,
             hint: `${t.from_name || '?'} → ${t.to_name || '?'} · ${t.status || ''}`,
-            group: 'Tasks',
+            group: '任务',
             icon: <NavIcon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />,
             perform: (r) => r.push(`/tasks/${encodeURIComponent(t.task_id!)}`),
           }));
@@ -415,7 +415,7 @@ export function CommandPalette() {
       const recentCmds: Command[] = recentIds
         .map(id => pool.find(c => c.id === id))
         .filter((c): c is Command => Boolean(c))
-        .map(c => ({ ...c, group: 'Recents' }));
+        .map(c => ({ ...c, group: '最近' }));
       const restIds = new Set(recentIds);
       // Default view: Recents → Navigate → Actions (no dynamic agents/tasks
       // until user actually types — keeps the empty-search list short).
