@@ -126,6 +126,32 @@
 且要重验自激与遮挡，未在夜间直接上线，改动已回退。
 ```
 
+## 能力矩阵（2026-11-15 重做：同时扫 `app/api/hub/*` 与 `app/api/anet/*`，并核对 UI 调用）
+
+> 前两版结论有误（把已实现的能力写成"缺失"），原因是只扫了 `hub` 前缀。
+> 下表按"路由 + 是否有 UI 在调用"给出，作为对齐的唯一口径。
+
+| 能力 | 路由（方法） | UI 调用 | 结论 |
+|---|---|---|---|
+| 节点启动/停用/重启/重命名/删除 | `anet/node-lifecycle`（GET 探能力 + POST 四动作） | `NodeLifecycleMenu` / `NodeSettingsPanel` | **已有**（带能力探测与三态状态机） |
+| 接管既有节点（takeover/attach） | — | — | **缺**（需 Hub 合同） |
+| 新建节点 | `anet/node-create`（GET/POST） | 1 处（节点向导） | **已有** |
+| 节点配置（含**模型**、flags、channels） | `anet/node-config`（GET/POST） | `NodeSettingsPanel` | **已有（节点级）** |
+| 会话级实时模型切换 | — | — | **缺**（客户端 #4820 在做） |
+| Provider 管理（列表/新增/删除/探活） | `anet/providers`（GET/POST/DELETE）+ `providers/probe` | `providers/page.tsx` · `ProviderFormModal` | **已有** |
+| 技能管理 | `anet/skills`（GET/POST/PATCH） | 1 处 | **已有** |
+| 需求/任务（增改、标签、检查项、评论） | `hub/requirements*`（POST/PATCH）+ `tags/*` + `checklist` + `comments` | 多页 | **已有** |
+| 消息发送 / 广播 / 文件上传 | `hub/send` · `hub/broadcast` · `hub/upload` | 聊天/消息页 | **已有** |
+| 节点属性 / 头像 / 密钥 / 权限模式 / 外部日程编辑 | `hub/nodes/[ref]/*`（PUT/POST） | 节点设置面板 | **已有** |
+| 安全区适配 · 定时任务编辑 · 附件预览 | （前端能力，见前文） | — | **已有** |
+| 客户端自身 chrome（导航/手势/返回键） | — | — | 未知（需客户端回复） |
+
+```
+⇒ 结论修正：本仓库在对齐轴上"能做的"远比此前记录的少缺：
+   真正缺失的只有「接管既有节点」与「会话级实时模型切换」两项。
+⇒ 其余"缺"的判断，都是我第一次审计范围不足造成的误判。
+```
+
 ## 客户端容器适配：安全区（已从代码核实，不需等客户端回复）
 
 | 检查项 | 结论 | 证据 |
