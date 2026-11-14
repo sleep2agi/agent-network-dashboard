@@ -6,6 +6,27 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.562 — 2026-11-15
+
+### 模型供应商页文案统一为中文（原来中英混排）
+
+```
+症状（用户可见）：/providers 同一页面里中英混排——
+  标题 `Model Providers`、空态 `No model providers`、状态 `key set` / `no key`、
+  行内动作 `Test` / `Edit`、说明段 `Configure model providers and per-server reachability…`，
+  而同一页的按钮又是中文（新增供应商 / 连通性测试 / 停用）。
+
+修法：10 处文案统一为中文，不改任何逻辑与交互：
+  模型供应商 · 还没有配置模型供应商 · 添加供应商后可登记其模型，并按服务器测试连通性。
+  已配置密钥 / 未配置密钥 · 测试 / 编辑 · 预览数据
+  配置模型供应商，并按服务器测试连通性。API 密钥以只写方式存入密钥库，永不显示。
+
+验证：
+  tsc 0 · lint 0 errors · npm test 58/58 · 本地截图逐段确认（整页无英文残留、中文排版不溢出）
+```
+
+用户可见变化：模型供应商页不再中英混排。无交互/接口变化。
+
 ## 0.6.4-preview.561 — 2026-11-14
 
 ### `/tasks` 修掉“短内容多滚 31px”（同类缺陷第 8 处）
