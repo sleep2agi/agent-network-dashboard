@@ -169,6 +169,25 @@
    （节点配置里的预设下拉 + runtime 侧的自带目录），不是这条接口
 ```
 
+### 能力探测的端到端核对（2026-11-15，只读）
+
+线上 Hub 的 MCP 工具面为 `restart:true / rename:false / stop:true / delete:true`，
+据此核对界面是否只显示后端真实支持的动作：
+
+| 检查点 | 结果 | 判定 |
+|---|---|---|
+| `/node?alias=…` 详情页是否出现「重命名」 | **未出现**；同页「重启」存在 | ✔ 与 `rename=false` 一致 |
+| `/nodes` 列表 ⋮ 菜单的项 | **未能核对**：自动化选择器没命中触发按钮（`opened:false`） | 待人工或改 selector 再验 |
+
+代码依据（可复核）：`app/components/NodeLifecycleMenu.tsx` 的菜单项由 `caps` 门控——
+`stop` 依 `caps.stop`、`delete` 依 `caps.delete`；`caps === null`（尚未探测完成）时会先显示，
+探测返回后按真实工具面收敛。`rename` 走 `NodeSettingsPanel` 的独立入口，当前线上缺该工具。
+
+```
+⇒ 已确认：线上缺 rename 时，节点详情页不显示重命名入口（不伪造能力）
+⇒ 未确认：列表页菜单项的收敛时序（是否会出现"先显示后消失"的闪烁）——需要更精确的选择器
+```
+
 ## 客户端容器适配：安全区（已从代码核实，不需等客户端回复）
 
 | 检查项 | 结论 | 证据 |
