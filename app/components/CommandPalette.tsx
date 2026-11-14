@@ -516,6 +516,7 @@ export function CommandPalette() {
                   return (
                     <button
                       key={c.id}
+                      data-command-id={c.id}
                       onMouseEnter={() => setSelected(idx)}
                       onClick={() => { pushRecent(c.id); c.perform(router); setOpen(false); }}
                       className={`anet-cmdk-row w-full flex items-center gap-3 px-3 py-2 text-left text-sm ${
