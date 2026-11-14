@@ -778,13 +778,20 @@ export default function Legion3DPage() {
     yawTarget.current = null;
     yawAnimRef.current = null;
     introRef.current = null;
-    viewRef.current = { ...DEFAULT_VIEW };
+    // `.559`：俯角必须由 pitchDefault 决定 —— 之前这里直接写 `{ ...DEFAULT_VIEW }`，
+    // 桌面端（无保存视角、无分享链接）就永远停在 DEFAULT_VIEW.pitch，
+    // `?pitch=` 只在"窄屏"和"有保存视角"两条支路里被读过。
+    // 实测（evidence/probes/legion-pitch-param.mjs）：?pitch=0.20 / 0.85 / 1.40 的
+    // Agent 环投影高宽比都是 0.927–0.929（sin 俯角），完全一样；而 ?view= 通道 0.711 / 0.968 正常。
+    const narrowInit = typeof window !== 'undefined' && window.innerWidth < 640;
+    viewRef.current = { ...DEFAULT_VIEW, pitch: pitchDefault(narrowInit) };
     fitPending.current = true;
     userAdjusted.current = false;
     lastFitSize.current = null;
     const shared = sharedView.current;
     if (shared) {
       viewRef.current = { ...DEFAULT_VIEW, ...shared };
+      if (PITCH_PARAM !== null) viewRef.current.pitch = PITCH_PARAM; // `.559` 诊断参数优先
       setZoomPct(Math.round(shared.zoom * 100));
       userAdjusted.current = true;
       introDone.current = true;
@@ -808,9 +815,10 @@ export default function Legion3DPage() {
       sharedLock.current = true;
       return;
     }
-    // 没有保存过视角 + 窄屏：用更陡的俯角，竖向空间别浪费。
-    if (typeof window !== 'undefined' && window.innerWidth < 640) {
-      viewRef.current = { ...DEFAULT_VIEW, pitch: pitchDefault(true) };
+    // 没有保存过视角：俯角统一收口（窄屏更陡，桌面定稿，`?pitch=` 覆盖）。
+    // 只改 pitch，不重置 yaw/zoom —— 否则会把上面已经算好的视角打回默认值。
+    if (typeof window !== 'undefined') {
+      viewRef.current = { ...viewRef.current, pitch: pitchDefault(window.innerWidth < 640) };
     }
   }, [networkId]);
 
