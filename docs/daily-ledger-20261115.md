@@ -182,3 +182,48 @@ Error: element(s) not found
 | 命令面板（⌘K）条目 `Go to X`、组名 `Navigate` / `Actions` | 仍是英文；面板默认隐藏，v3 门扫不到，需"打开面板后扫描" |
 | 军团 3D 四项视觉定型（pitch / 核心 / 提示条 / 2D 入口） | 等用户拍板；现状 49° · 混合 · 常显 · 现入口 |
 | 残留 #12（头部 16.5px） | 已定案为非缺陷（图例文本换行），若要省需缩短图例 |
+
+
+---
+
+## 11. 发布：`0.6.4-preview.565` + 界面文案彻底收口计划
+
+| 项 | 值 |
+|---|---|
+| 版本 | `0.6.4-preview.565` |
+| commit | `02a6b660f932b3d0f8f9f97f73968fb077d5e9a3` |
+| buildId | `GgUWohDshmi4oHhRSQHC4` |
+| 内容 | 命令面板 41 条中文化 + 分组取值 38 处 + 面板行 `data-command-id` |
+| 回退锚点 | `preview.564-4f39767`（`4f39767` / `9Q2Ysasn49mmopQOFpIf1`） |
+
+证据链：
+```
+① 20 套件   PASS 20/20（legion 272 · board 171 · pageSmoke 47）
+② CI        3 success + 1 skipped:paths-filter（原因：该提交改动不在 gates 的 paths 内）
+③ 自检      4/4 PASS
+④ 健康门    15/15 PASS —— 第 15 门 i18n-ui-sweep 首次全绿：
+            7 页全部「残留=0 面板=0」
+```
+
+### 教训 F：同一句文案可能同时存在于多个组件
+```
+现象：把 'Go to X' 当成命令面板独有文案去改，结果 board 套件 168/171 红。
+反证：同一批里 help:listsLegionGroup 断言仍在查 /Legion (2D / 3D)/i 且通过
+      ⇒ 快捷键帮助浮层（HelpOverlay，305 行）有自己的文案表
+规矩：改文案前先按「这个字符串属于哪个组件」逐一定权，
+      不能看到一处 grep 命中就认为找到了唯一来源。
+```
+
+### 教训 G：带管道的测试命令不能用 && 串后续步骤
+```
+错误写法：npm test | tail -2 && git commit ...
+后果：退出码是 tail 的 0，测试 57/58 也会继续提交
+正确写法：npm test > log 2>&1; code=$?; [ "$code" -eq 0 ] || exit 1
+```
+
+### 教训 H：验收拒绝「陈旧套件产物」
+```
+现象：stale suite output: evidence/.../responsibility-565/result.json
+原因：565 上一轮尝试留下的 result.json 属于另一个 SHA/buildId
+规矩：重出产物时先清掉同名 label 的历史目录，护栏不会替你判断"这是哪次的"
+```
