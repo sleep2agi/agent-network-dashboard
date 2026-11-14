@@ -80,7 +80,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-full bg-[#0b0b0d] text-[var(--fg)] p-4 sm:p-6">
-      <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">Admin</h1>
+      <h1 className="text-2xl font-bold text-white mb-3 lg:ml-0 ml-10">管理台</h1>
 
       {/* Section anchor nav — same pattern as Settings r28; R2 of #190 mobile
           polish: idle chips were flat text-only with a ~24px tap height (below
@@ -94,9 +94,9 @@ export default function AdminPage() {
           up keeps the original breathing room. */}
       <nav className="mb-4 sm:mb-8 flex flex-wrap gap-2 text-xs">
         {[
-          { href: '#status',  label: 'Status' },
-          { href: '#actions', label: 'Actions' },
-          { href: '#users',   label: 'Users' },
+          { href: '#status',  label: '状态' },
+          { href: '#actions', label: '操作' },
+          { href: '#users',   label: '用户' },
         ].map(a => (
           <a key={a.href} href={a.href}
             className="inline-flex min-h-[44px] items-center rounded-lg border border-[var(--border)] bg-[var(--bg)]/60 px-3 py-2 text-[var(--fg-muted)] hover:border-[var(--accent)]/50 hover:text-[var(--accent-text)] hover:bg-[var(--accent)]/10 transition-colors">
@@ -110,7 +110,7 @@ export default function AdminPage() {
         {/* ── Group: Status ─────────────────────────────────────── */}
         <div id="status" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-muted)] font-semibold">Status</div>
+            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-muted)] font-semibold">状态</div>
             <div className="flex-1 h-px bg-[var(--bg-elevated)]" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -123,15 +123,15 @@ export default function AdminPage() {
             reclaimed) while reading identically on desktop. mb-4 on
             the section heading also drops to mb-3 sm:mb-4. */}
         <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-4 sm:p-5">
-          <h2 className="text-sm font-semibold text-[var(--fg)] mb-3 sm:mb-4">Server Overview</h2>
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-3 sm:mb-4">服务概览</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <div className="text-2xl sm:text-3xl font-bold text-[var(--success)] tabular-nums">{onlineNodes.length}</div>
-              <div className="text-xs text-[var(--fg-muted)]">Online</div>
+              <div className="text-xs text-[var(--fg-muted)]">在线</div>
             </div>
             <div>
               <div className="text-2xl sm:text-3xl font-bold text-[var(--fg-muted)] tabular-nums">{offlineNodes.length}</div>
-              <div className="text-xs text-[var(--fg-muted)]">Offline</div>
+              <div className="text-xs text-[var(--fg-muted)]">离线</div>
             </div>
             <div>
               <div className="text-2xl sm:text-3xl font-bold text-[var(--accent-text)] tabular-nums">{health?.sse_connections ?? '--'}</div>
@@ -141,7 +141,7 @@ export default function AdminPage() {
             </div>
             <div>
               <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">{stats?.tasks?.total ?? '--'}</div>
-              <div className="text-xs text-[var(--fg-muted)]">Total Tasks</div>
+              <div className="text-xs text-[var(--fg-muted)]">任务总数</div>
             </div>
           </div>
           {stats?.tasks?.by_status && stats.tasks.by_status.length > 0 && (() => {
@@ -166,11 +166,11 @@ export default function AdminPage() {
         {/* Online Sessions — pulled into Status group (was below Send Task) */}
         <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">
-            Online Sessions <span className="text-[var(--fg-dim)]">({onlineNodes.length})</span>
+            在线会话 <span className="text-[var(--fg-dim)]">({onlineNodes.length})</span>
           </h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {onlineNodes.length === 0 ? (
-              <div className="text-xs text-[var(--fg-dim)] text-center py-4">No online sessions</div>
+              <div className="text-xs text-[var(--fg-dim)] text-center py-4">暂无在线会话</div>
             ) : onlineNodes.map(s => (
               <div key={s.alias} className="flex items-center gap-3 bg-[var(--bg)] rounded-lg px-3 py-2 border border-[var(--border)]">
                 <AliasAvatar alias={s.alias} size={20} />
@@ -198,7 +198,7 @@ export default function AdminPage() {
         {/* ── Group: Actions ────────────────────────────────────── */}
         <div id="actions" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-muted)] font-semibold">Actions</div>
+            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-muted)] font-semibold">操作</div>
             <div className="flex-1 h-px bg-[var(--bg-elevated)]" />
           </div>
           {sessions.length === 0 ? (
@@ -214,7 +214,7 @@ export default function AdminPage() {
 
         {/* Broadcast */}
         <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">Broadcast</h2>
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">广播</h2>
           <textarea
             value={broadcastMsg}
             onChange={e => setBroadcastMsg(e.target.value)}
@@ -230,7 +230,7 @@ export default function AdminPage() {
               disabled={!broadcastMsg.trim()}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] text-white text-sm rounded-lg transition-colors"
             >
-              Broadcast
+              广播
             </button>
           </div>
           {broadcastResult && <div className={`mt-2 text-xs ${broadcastResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{broadcastResult}</div>}
@@ -238,14 +238,14 @@ export default function AdminPage() {
 
         {/* Send Task */}
         <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">Send Task</h2>
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">发送任务</h2>
           <select
             value={taskTarget}
             aria-label="目标任务节点"
             onChange={e => setTaskTarget(e.target.value)}
             className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-[var(--accent)]/50 focus:outline-none mb-3"
           >
-            <option value="">Select target node...</option>
+            <option value="">选择目标节点…</option>
             {onlineNodes.map(s => (
               <option key={s.alias} value={s.alias}>{s.alias} ({s.status})</option>
             ))}
@@ -269,7 +269,7 @@ export default function AdminPage() {
               disabled={!taskTarget || !taskContent.trim()}
               className="px-4 py-2 bg-cyan-600 enabled:hover:bg-[var(--accent)] enabled:hover:text-[var(--accent-fg)] disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] text-white text-sm rounded-lg transition-colors"
             >
-              Send Task
+              发送任务
             </button>
           </div>
           {taskResult && <div className={`mt-2 text-xs ${taskResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{taskResult}</div>}
@@ -282,14 +282,14 @@ export default function AdminPage() {
         {/* ── Group: Users ──────────────────────────────────────── */}
         <div id="users" className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-2 px-1">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-muted)] font-semibold">Users</div>
+            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-muted)] font-semibold">用户</div>
             <div className="flex-1 h-px bg-[var(--bg-elevated)]" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* User Management (V3 Auth) */}
         <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">Register User (V3)</h2>
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">注册用户（V3）</h2>
           <div className="space-y-3">
             <input
               type="text"
@@ -312,7 +312,7 @@ export default function AdminPage() {
               disabled={!regUser.trim() || !regPass.trim()}
               className="w-full px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-[var(--bg-elevated)] disabled:text-[var(--fg-dim)] text-white text-sm rounded-lg transition-colors"
             >
-              Register
+              注册
             </button>
           </div>
           {regResult && <div className={`mt-2 text-xs ${regResult.startsWith('Failed') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{regResult}</div>}

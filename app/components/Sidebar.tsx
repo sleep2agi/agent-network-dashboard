@@ -58,23 +58,23 @@ const networkFetcher = async (url: string) => {
 // and stay reachable via direct URL and the command palette (⌘K); they
 // were just cluttering the main rail. Restore here if usage warrants.
 const NAV_ITEMS = [
-  { href: '/nodes', label: 'Nodes', icon: 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01' },
+  { href: '/nodes', label: '节点', icon: 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01' },
   // 军团拓扑（2D `/legion` + 3D `/legion/3d`）。作者 通信Dash欧；此处只补导航入口。
-  { href: '/legion', label: 'Legion', icon: 'M12 3l7 4v6c0 4-3 6.5-7 8-4-1.5-7-4-7-8V7l7-4zM12 8v5m0 0l3 2m-3-2l-3 2' },
-  { href: '/versions', label: 'Versions', icon: 'M7 7h10M7 12h10M7 17h6' },
-  { href: '/changelog', label: 'Changelog', icon: 'M6 4h9l4 4v12H6zM15 4v4h4' },
-  { href: '/', label: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { href: '/scheduled-tasks', label: 'Schedules', icon: 'M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { href: '/legion', label: '军团', icon: 'M12 3l7 4v6c0 4-3 6.5-7 8-4-1.5-7-4-7-8V7l7-4zM12 8v5m0 0l3 2m-3-2l-3 2' },
+  { href: '/versions', label: '版本', icon: 'M7 7h10M7 12h10M7 17h6' },
+  { href: '/changelog', label: '变更记录', icon: 'M6 4h9l4 4v12H6zM15 4v4h4' },
+  { href: '/', label: '概览', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+  { href: '/scheduled-tasks', label: '定时任务', icon: 'M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z' },
   { href: '/skillhub', label: 'SkillHub', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253' },
-  { href: '/tasks', label: 'Tasks', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
+  { href: '/tasks', label: '任务', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
   // #1633 — 需求池/进行中/完成。Tasks 是「谁派给谁」，这里是「大家在做的需求」。
-  { href: '/requirements', label: 'Requirements', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 9h6M9 13h6M9 17h3' },
+  { href: '/requirements', label: '需求', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 9h6M9 13h6M9 17h3' },
   // #1635 — 人 + 部门 + 名下 Agent（数据源与 MCP requirements_people 同源）。
-  { href: '/org', label: 'Organization', icon: 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.6-4.5M9 7a3 3 0 10-2.6 4.5' },
-  { href: '/servers', label: 'Servers', icon: 'M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v1A2.5 2.5 0 0117.5 10h-11A2.5 2.5 0 014 7.5v-1zM4 16.5A2.5 2.5 0 016.5 14h11a2.5 2.5 0 012.5 2.5v1a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-1zM7 7h.01M7 17h.01' },
+  { href: '/org', label: '组织', icon: 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.6-4.5M9 7a3 3 0 10-2.6 4.5' },
+  { href: '/servers', label: '服务器', icon: 'M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v1A2.5 2.5 0 0117.5 10h-11A2.5 2.5 0 014 7.5v-1zM4 16.5A2.5 2.5 0 016.5 14h11a2.5 2.5 0 012.5 2.5v1a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-1zM7 7h.01M7 17h.01' },
   { href: '/providers', label: 'Providers', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z' },
-  { href: '/admin', label: 'Admin', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-  { href: '/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+  { href: '/admin', label: '管理台', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+  { href: '/settings', label: '设置', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
 ];
 
 interface SidebarNetwork {
@@ -493,7 +493,7 @@ export function Sidebar() {
               sessionStorage.removeItem('anet_v3_auth');
               window.location.assign('/login');
             }}
-            title={collapsed ? 'Sign out' : undefined}
+            title={collapsed ? '退出登录' : undefined}
             className={`w-full flex items-center text-xs text-[var(--fg-muted)] hover:text-red-400 hover:bg-red-500/5 transition-colors ${
               collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-5 py-3'
             }`}
@@ -501,7 +501,7 @@ export function Sidebar() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
             </svg>
-            {!collapsed && 'Sign out'}
+            {!collapsed && '退出登录'}
           </button>
           <div className={`flex items-center ${collapsed ? 'flex-col px-0 py-2' : 'px-3 py-2 justify-end'}`}>
             <button
