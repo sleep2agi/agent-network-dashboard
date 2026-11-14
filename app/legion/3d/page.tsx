@@ -1818,9 +1818,29 @@ export default function Legion3DPage() {
         // 窄屏取 12px：既覆盖部门盘半径与描边，又把边距收回到 30px 以内。
         const NODE_BULGE = size.width < 640 ? 12 : 18;
         const bodies: Array<{ x: number; y: number; rx: number; ry: number }> = [];
+        // `.557` 单一来源（实测缺陷，2026-11-14 drift-clip 探针）：
+        // 取景原本直接用 RING_HEIGHT（未乘 LOOK_TIER、也没算部门下沉），
+        // 而**绘制**走的是 nodeToVec3(..., LOOK_TIER) —— 层高被放大 1.3 倍、再叠部门下沉。
+        // 于是解析模型比真实场景"矮"：1440 视口实测 19 个 Agent 实体越出安全区底部 27–35px，
+        // 也就是画在最下层的 Agent 点压到了图例行上；而 390/320 因为俯角与留白不同恰好没越界。
+        // 修法：层高仍取**每圈的极值**（min/max），但值来自绘制同一个函数 nodeToVec3。
+        //   取极值而不是逐节点投影：逐节点依赖 yaw（`.504` 已经证明会得到 113/115/121 三种 zoom），
+        //   而 y 只与 ring/depth 有关、与角度无关 —— 所以"每圈最低/最高的那个高度"是确定的。
+        //   两条轨迹取并集：只取最低会把画面顶部算矮，只取最高会把底部算矮。
+        const ringYExtent = new Map<number, { min: number; max: number }>();
+        for (const n of layout.nodes) {
+          const y = nodeToVec3({ ...n }, 1, LOOK_TIER).y;
+          const cur = ringYExtent.get(n.ring);
+          if (!cur) ringYExtent.set(n.ring, { min: y, max: y });
+          else { if (y < cur.min) cur.min = y; if (y > cur.max) cur.max = y; }
+        }
         for (const ring of ringRadii) {
-          for (const p of ringPath(ring.radius, RING_HEIGHT[ring.ring] ?? 0, { ...fittingCam, yaw: 0 }, size, 64)) {
-            bodies.push({ x: p.x, y: p.y, rx: NODE_BULGE, ry: NODE_BULGE });
+          const ext = ringYExtent.get(ring.ring);
+          const heights = ext ? (ext.max - ext.min > 1e-6 ? [ext.min, ext.max] : [ext.min]) : [RING_HEIGHT[ring.ring] ?? 0];
+          for (const h of heights) {
+            for (const p of ringPath(ring.radius, h, { ...fittingCam, yaw: 0 }, size, 64)) {
+              bodies.push({ x: p.x, y: p.y, rx: NODE_BULGE, ry: NODE_BULGE });
+            }
           }
         }
         // 不把标签矩形并入取景（`.498` 撤销 `.497` 的这一条）：
