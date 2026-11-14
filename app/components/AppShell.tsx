@@ -18,7 +18,7 @@ import { ServersDrawer } from './ServersDrawer';
 import { MobileNav } from './MobileNav';
 import { useRadiusTier } from '../lib/useRadiusTier';
 import { useIdle } from '../lib/use-idle';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const NO_SHELL_PATHS = ['/login'];
 
@@ -35,6 +35,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // `.556`：把内容区「底部让位」镜像成 --shell-bottom-pad（移动 80 / 桌面 0）。
+  // 只写变量，不改变任何布局；页面根用它把 100dvh 扣干净，移动端一屏页就不会多滚 80px。
+  // 注意：/nodes 有专门的防自激高度逻辑（见 NodesView 注释），本变量不参与那段计算。
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const apply = () => {
+      const pad = parseFloat(getComputedStyle(el).paddingBottom) || 0;
+      document.documentElement.style.setProperty('--shell-bottom-pad', `${Math.round(pad)}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   if (NO_SHELL_PATHS.includes(pathname)) {
@@ -66,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <HealthBanner />
         <UpdateBanner />
-        <div className="flex-1 min-w-0 max-w-full overflow-x-hidden pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
+        <div ref={contentRef} className="flex-1 min-w-0 max-w-full overflow-x-hidden pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
       </main>
       <MobileNav />
       {(idle || paletteForced) && <CommandPalette />}

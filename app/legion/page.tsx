@@ -873,7 +873,7 @@ export default function LegionPage() {
   const error = legionReadError(people.error, hierarchy.error);
 
   return (
-    <div ref={pageRef} data-legion-root className={`min-h-[calc(100dvh-var(--health-banner-h,0px))] bg-[var(--bg)] text-[var(--fg)] ${isFullscreen ? 'h-[100dvh] overflow-auto' : ''}`}>
+    <div ref={pageRef} data-legion-root className={`min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] bg-[var(--bg)] text-[var(--fg)] ${isFullscreen ? 'h-[100dvh] overflow-auto' : ''}`}>
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
         <div className={`mb-4 flex flex-wrap items-end justify-between gap-3 ${cleanView ? 'invisible' : 'visible'}`}>
           <div>
