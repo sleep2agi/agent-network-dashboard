@@ -140,3 +140,18 @@
 ⇒ 仍待客户端确认的只剩"它们自己额外加了什么 chrome"（自定义导航/手势/返回键行为），
    那属于容器自己的事情，不影响本仓库的适配
 ```
+
+## 三项对齐问题已从代码自答（不必等客户端回复）
+
+| 对齐项 | 本仓库现状 | 证据 |
+|---|---|---|
+| 定时任务编辑入口 | **已有**（列表 / 新建 / 编辑 / 立即运行 / 运行历史） | `app/scheduled-tasks/page.tsx`（`/api/hub/scheduled-tasks` 的 create/update/run-now/runs）；代理 `app/api/hub/scheduled-tasks/[[...path]]/route.ts` 支持非 GET 并代理到 Hub CRUD |
+| 节点生命周期写操作（启动/重启/删除/接管） | **没有** | `app/api/hub/nodes/` 下只有 `attrs` / `permission-mode` / `secrets` / `avatar` / `external-schedule-edits`；`nodes/route.ts` 无 start/stop/restart/delete/takeover 分支 |
+| 会话 / 模型切换 | **没有** | `app/api/hub/` 下无 `model` / `session switch` 相关路由 |
+
+```
+⇒ "节点生命周期"与"会话/模型切换"这两项不是 UI 没做，而是**后端合同还没有**：
+   要做必须先由 Hub/客户端给出权限模型（谁能对哪个节点做哪一步、失败如何回传），
+   再由本仓库加代理路由与交互；在那之前我不会用"看起来能点"的按钮去伪造能力
+⇒ 定时任务编辑这项可视为"我方已具备"，可直接与客户端对比
+```
