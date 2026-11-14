@@ -49,7 +49,7 @@ Playwright 提示需要 `sudo npx playwright install-deps`（约 1–2 分钟）
 
 | 项 | 值 |
 |---|---|
-| 线上版本 | `0.6.4-preview.538` / `dc9b1ab2` |
+| 线上版本 | 以 `docs/dashboard-status.md` 为准（当前 `0.6.4-preview.556`） |
 | 回退锚点 | `preview.537-0b72b39` |
 | 终检 | `./deploy/health-all.sh https://dm.vansin.top` → PASS (12/12) |
 | 今晚发布 | 13 个版本（`.526`–`.538`），每个 20 套 + CI 4/4 + POST-RELEASE 4/4 |
