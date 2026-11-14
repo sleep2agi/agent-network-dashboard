@@ -6,7 +6,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | 见 `docs/dashboard-status.md`（当前 `0.6.4-preview.556`） |
+| 版本 | 见 `docs/dashboard-status.md`（当前 `0.6.4-preview.560`） |
 | 页面 | https://dm.vansin.top/legion/3d （2D 页 `/legion` 页头有「3D 视图」入口） |
 | 回退锚点 | `preview.535-d5bab7a` |
 | 终检 | `./deploy/health-all.sh https://dm.vansin.top` → **PASS (11/11)** |
