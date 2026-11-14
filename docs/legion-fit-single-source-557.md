@@ -102,11 +102,17 @@ fitPending.current = true;
 
 ## 5. 判据与复跑
 
+> 本仓库的 OSS 公开面检查会拦住任何写死个人家目录的路径（`/home/<user>/…`），
+> 文档里的命令一律用环境变量或相对路径。
+
 ```
-PLAYWRIGHT_BROWSERS_PATH=/home/vansin/.cache/ms-playwright \
-  node evidence/probes/legion-drift-clip.mjs https://dm.vansin.top     # 越界/裁切（收束后取样）
-PLAYWRIGHT_BROWSERS_PATH=/home/vansin/.cache/ms-playwright \
-  node evidence/probes/legion-fit-timeline.mjs https://dm.vansin.top 1440   # 取景时间线
+# 浏览器路径按本机 Playwright 安装位置给（不要写死某个人的家目录）
+export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:?先指向本机 ms-playwright 目录}"
+
+node evidence/probes/legion-drift-clip.mjs https://dm.vansin.top            # 越界/裁切（收束后取样）
+node evidence/probes/legion-fit-timeline.mjs https://dm.vansin.top 1440     # 取景时间线
+node evidence/probes/legion-late-data-fit.mjs https://dm.vansin.top 2500 \
+     DELAY_ONLY=/api/hub/session-status                                     # 复现配方：图例晚到
 ```
 
 两条量法纪律（踩坑换来的）：
