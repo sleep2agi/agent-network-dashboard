@@ -147,7 +147,7 @@
 |---|---|---|
 | 定时任务编辑入口 | **已有**（列表 / 新建 / 编辑 / 立即运行 / 运行历史） | `app/scheduled-tasks/page.tsx`（`/api/hub/scheduled-tasks` 的 create/update/run-now/runs）；代理 `app/api/hub/scheduled-tasks/[[...path]]/route.ts` 支持非 GET 并代理到 Hub CRUD |
 | 节点生命周期写操作 | **已实现（启动 / 重启 / 停用 / 删除 / 重命名）**：`app/components/NodeLifecycleMenu.tsx` + `NodeSettingsPanel.tsx` 调 `/api/anet/node-lifecycle`；该路由 `GET` 会探 Hub 的 MCP `tools/list`，**只渲染后端真实存在的动作**（`restart_node` / `rename_node` / `stop_node` / `delete_node`），状态机含 stopping / stopped / stop_failed 三态并回读结果 ⇒ 不会出现"点了没动静"的假按钮。**接管（takeover / attach 既有节点）未实现** |
-| 会话 / 模型切换 | **没有** | `app/api/hub/` 下无 `model` / `session switch` 相关路由 |
+| 会话 / 模型切换 | **部分已有：节点级模型配置**——`app/api/anet/node-config` 接受 `patch.model`，`NodeSettingsPanel` 提供"模型预设"下拉（注释：Runtime 本轮只读，模型可编辑）；**会话级实时切换仍未实现**（客户端 #4820 系列正在做的是会话级） |
 
 ```
 ⇒ "节点生命周期"与"会话/模型切换"这两项不是 UI 没做，而是**后端合同还没有**：
@@ -173,3 +173,9 @@ pool 中 100 条最近任务，未认领（无 agent_owner）只有 2 条：
     对齐前提不变：**先有 Hub 契约，Dashboard 才谈接入**。
 - **节点向导 / fork 节点**：同为客户端节点负责（新建与 fork OpenCode V2 节点、可选项目/Session）。
   ⇒ 与「节点生命周期写操作」同源，仍需权限合同才能落到 Dashboard。
+
+> **方法论教训（2026-11-15）**：此前「三项对齐问题从代码自答」只扫了 `app/api/hub/*`，
+> 漏掉 `app/api/anet/*` 这个「节点侧」路由面，导致把**已经实现的节点生命周期与节点级模型配置**
+> 误判为"没有实现、缺后端合同"。现已纠正。
+> ⇒ 以后回答"某能力有没有实现"，必须同时扫 `hub`（网络/组织面）与 `anet`（节点/runtime 面）两个前缀，
+> 并核对是否有对应 UI 组件在调它（`NodeLifecycleMenu` / `NodeSettingsPanel`）。
