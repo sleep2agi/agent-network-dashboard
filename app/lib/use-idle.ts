@@ -43,11 +43,15 @@ export function useIdle(timeoutMs = 1500): boolean {
 export function useLegionGate(fallbackMs = 3000): boolean {
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    // 只对 3D 页生效：2D /legion 与 /legion/plaza 的首屏关键路径不是 people，
-    // 那边加门只会让角标白等 3 秒。
-    const isLegion = window.location.pathname.startsWith('/legion/3d');
-    if (!isLegion) { setOpen(true); return; }
-    if (document.documentElement.dataset.legionDataReady === '1') { setOpen(true); return; }
+    // 注意：这里不能同步 setState（React 编译器 lint 规则会报
+    // "Calling setState synchronously within an effect can trigger cascading renders"）。
+    // 不用门的情况也用 0ms 定时器放行，保持"永远异步"这一条不变的形状。
+    const isLegion3d = window.location.pathname.startsWith('/legion/3d');
+    const readyNow = document.documentElement.dataset.legionDataReady === '1';
+    if (!isLegion3d || readyNow) {
+      const t = window.setTimeout(() => setOpen(true), 0);
+      return () => window.clearTimeout(t);
+    }
     const timer = window.setTimeout(() => setOpen(true), fallbackMs);
     const poll = window.setInterval(() => {
       if (document.documentElement.dataset.legionDataReady === '1') {
