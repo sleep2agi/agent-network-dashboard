@@ -665,6 +665,13 @@ export default function Legion3DPage() {
   const interactingUntil = useRef(0);
   // 首屏 / 重置视角后自动取景（见渲染循环里的 fitPending 分支）。
   const fitPending = useRef(true);
+  // `.558` 安全区纪元：每次 `measure()` 判定"边界变了"就 +1；取景成功时把当时的纪元记下来。
+  // 为什么要多这一个数：`fitPending` 只是**一次性事件**，一旦被判据的某一帧消费掉就没了；
+  // 而实测（2026-11-14，延迟 `/api/hub/session-status` 可 100% 复现）图例晚出现 ⇒ 安全区 760→729，
+  // 若这次变化落在取景被挡的窗口里，画面就永久停在按 760 算出来的 zoom 1.240（内容 764px，越出 35px）。
+  // 纪元的意思是"取景必须用当前这份边界算过一次"，被挡也不会丢：不匹配就下一帧再来。
+  const boundsEpochRef = useRef(0);
+  const fittedEpochRef = useRef(-1);
   const lastFitSize = useRef<{ w: number; h: number } | null>(null);
   // 用户自己缩放过就尊重他的视角；只有「还没动过」时，尺寸变化（首帧
   // 布局落定、窗口缩放）才重新取景。
@@ -1291,7 +1298,7 @@ export default function Legion3DPage() {
         bounds.x1 > previous.x1 + 1 || bounds.y1 > previous.y1 + 1
         || bounds.x2 < previous.x2 - 1 || bounds.y2 < previous.y2 - 1
         || previous.x2 <= previous.x1 || previous.y2 <= previous.y1
-      )) fitPending.current = true;
+      )) { fitPending.current = true; boundsEpochRef.current += 1; }
       // `.545`：安全区**变大**时也要重取景（仅当用户没手动调过机位）。
       // 之前只处理"变小"：任务失败横幅消失、页脚提示少一行之后，边界变大了，
       // 但画面仍停在按旧边界算出来的尺寸上 —— 实测隐藏页头描述第二行 + 页脚第二行，
@@ -1300,7 +1307,7 @@ export default function Legion3DPage() {
       if (previous && !userAdjusted.current && (
         previous.x1 - bounds.x1 > 8 || previous.y1 - bounds.y1 > 8
         || bounds.x2 - previous.x2 > 8 || bounds.y2 - previous.y2 > 8
-      )) fitPending.current = true;
+      )) { fitPending.current = true; boundsEpochRef.current += 1; }
     };
     // Responsive controls are measured on resize, never during Canvas frames.
     const observer = new ResizeObserver(measure);
@@ -1836,7 +1843,7 @@ export default function Legion3DPage() {
         }
         for (const ring of ringRadii) {
           const ext = ringYExtent.get(ring.ring);
-          const heights = ext ? (ext.max - ext.min > 1e-6 ? [ext.min, ext.max] : [ext.min]) : [RING_HEIGHT[ring.ring] ?? 0];
+          const heights = ext ? (ext.max - ext.min > 1e-6 ? [ext.min, ext.max] : [ext.min]) : [(RING_HEIGHT[ring.ring] ?? 0) * LOOK_TIER];
           for (const h of heights) {
             for (const p of ringPath(ring.radius, h, { ...fittingCam, yaw: 0 }, size, 64)) {
               bodies.push({ x: p.x, y: p.y, rx: NODE_BULGE, ry: NODE_BULGE });
@@ -1860,7 +1867,9 @@ export default function Legion3DPage() {
       const sizeReady = size.width > 240 && size.height > 300;
       // 只有 core 时不取景；仅有部门的编制也有真实实体和轨道，需要避让展开控件。
       const dataReady = layout.stats.groups + layout.stats.people + layout.stats.agents > 0;
-      if (sizeReady && dataReady && fitBoundsRef.current !== null && !sharedLock.current && (fitPending.current || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
+      // `.558`：边界纪元不匹配也要取景 —— 这样"安全区变了但当时取景被挡"不会永久丢失。
+      const boundsStale = fittedEpochRef.current !== boundsEpochRef.current;
+      if (sizeReady && dataReady && fitBoundsRef.current !== null && !sharedLock.current && (fitPending.current || boundsStale || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
         const fit = fitProjectedBodies(framingBodies, view, size, fitBounds, { min: MIN_ZOOM, max: MAX_ZOOM });
         // If controls exhaust the usable area, keep drawing the current scene.
         // A later valid bounds measurement will request another fit.
@@ -1917,6 +1926,8 @@ export default function Legion3DPage() {
           userAdjusted.current = false;
         }
         fitPending.current = false;
+        // 只有"真的算出了取景"才算这一版边界已被消费；否则下一帧还会再来（不会静默丢）。
+        if (fit) fittedEpochRef.current = boundsEpochRef.current;
         lastFitSize.current = { w: size.width, h: size.height };
         // Render and hit-test the final zoom in this frame, not the pre-fit scene.
         cam.focal *= view.zoom / initialZoom;
