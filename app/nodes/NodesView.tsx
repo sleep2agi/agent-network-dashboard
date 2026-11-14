@@ -573,11 +573,11 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
           className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:border-blue-500/50 focus:outline-none"
         >
           <option value="">All</option>
-          <option value="online">Online</option>
-          <option value="offline">Offline</option>
-          <option value="working">Working</option>
+          <option value="online">在线</option>
+          <option value="offline">离线</option>
+          <option value="working">工作中</option>
           <option value="idle">Idle</option>
-          <option value="blocked">Blocked</option>
+          <option value="blocked">阻塞</option>
           <option value="error">Error</option>
         </select>
         {/* #492 team select — only shown once at least one node has a
@@ -813,7 +813,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
                       )}
                     </div>
                   </div>
-                  <span className="hidden shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[11px] text-cyan-300/70 sm:inline">Tap to chat</span>
+                  <span className="hidden shrink-0 rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[11px] text-cyan-300/70 sm:inline">点击对话</span>
                   {/* RFC-027 PR2 — per-node ⋮ lifecycle menu. The button stopsPropagation
                       internally so it doesn't open chat. lifecycleByAlias absent → 'active'
                       default, menu renders normal stop/delete options. */}
@@ -829,7 +829,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
 
                 <div className="mt-3 rounded-lg bg-[var(--bg)] px-3 py-2 text-xs">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-[11px] uppercase tracking-wide text-gray-600">Current task</span>
+                    <span className="text-[11px] uppercase tracking-wide text-gray-600">当前任务</span>
                     <span className="text-[11px] text-gray-600" suppressHydrationWarning>{timeAgo(s.last_seen_at || s.updated_at)}</span>
                   </div>
                   <div className={`mt-1 line-clamp-2 ${s.task ? 'text-gray-300' : 'text-gray-600 italic'}`}>
@@ -853,11 +853,11 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
               cell. Round mobile-command: node row itself opens chat, so
               the old Chat / Send Task action column is gone. */}
           <div className="hidden sm:grid sm:grid-cols-10 gap-2 px-4 py-2 text-xs text-gray-600 uppercase">
-            <div className="col-span-1">Status</div>
+            <div className="col-span-1">状态</div>
             <div className="col-span-2">Alias</div>
             <div className="col-span-2">Agent · Server</div>
-            <div className="col-span-4">Current Task</div>
-            <div className="col-span-1">Updated</div>
+            <div className="col-span-4">当前任务</div>
+            <div className="col-span-1">更新时间</div>
           </div>
           {filtered.map(s => {
             const statusKey = s.online ? s.status : 'offline';

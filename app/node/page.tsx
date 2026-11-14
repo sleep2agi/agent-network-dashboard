@@ -102,7 +102,7 @@ function TmuxViewer({ tmuxName }: { tmuxName: string }) {
           {output}
         </pre>
       )}
-      {!output && <p className="text-xs text-gray-600">Click Capture to view terminal output</p>}
+      {!output && <p className="text-xs text-gray-600">点击「采集」查看终端输出</p>}
     </div>
   );
 }
@@ -159,7 +159,7 @@ function ExternalSchedulesCard({ snapshot, nodeId, onQueued }: {
   return (
     <div className="bg-[var(--bg-secondary)] rounded-2xl p-4" data-testid="external-schedules-card">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="text-sm font-semibold text-gray-300">External schedules</h2>
+        <h2 className="text-sm font-semibold text-gray-300">外部日程</h2>
         <span className={`text-[11px] ${stale ? 'text-amber-400' : 'text-gray-600'}`} title={snapshot.observed_at}>
           {stale ? 'stale report' : 'reported'} {reportedAgo}
         </span>
@@ -170,7 +170,7 @@ function ExternalSchedulesCard({ snapshot, nodeId, onQueued }: {
         </div>
       )}
       {snapshot.schedules.length === 0 && !snapshot.error ? (
-        <p className="text-xs text-gray-600">No external schedules reported by this node.</p>
+        <p className="text-xs text-gray-600">本节点未上报外部日程。</p>
       ) : (
         <div className="space-y-2">
           {snapshot.schedules.map((schedule) => (
@@ -216,7 +216,7 @@ function ExternalSchedulesCard({ snapshot, nodeId, onQueued }: {
             <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} /> Enabled
           </label>
           <div className="mt-3 flex justify-end gap-2">
-            <button type="button" onClick={() => setEditing(null)} className="rounded px-3 py-1 text-xs text-gray-400">Cancel</button>
+            <button type="button" onClick={() => setEditing(null)} className="rounded px-3 py-1 text-xs text-gray-400">取消</button>
             <button type="button" disabled={saving || cron.trim().length < 5} onClick={submitEdit}
               className="rounded bg-cyan-700 px-3 py-1 text-xs text-white disabled:opacity-40">{saving ? 'Queueing…' : 'Queue edit'}</button>
           </div>
@@ -293,7 +293,7 @@ function NodeDetailContent() {
   if (!alias) {
     return (
       <div className="min-h-[calc(100dvh-var(--health-banner-h,0px))] bg-[var(--bg)] text-[var(--fg)] p-6 flex items-center justify-center">
-        <p className="text-[var(--fg-muted)]">No alias specified. <Link href="/" className="text-[var(--accent-text)] hover:underline">Back to dashboard</Link></p>
+        <p className="text-[var(--fg-muted)]">未指定别名。<Link href="/" className="text-[var(--accent-text)] hover:underline">返回概览</Link></p>
       </div>
     );
   }
@@ -404,7 +404,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
         {tab === 'info' && (
           <div className="p-4 overflow-y-auto h-full space-y-4 max-w-2xl">
             <div className="bg-[var(--bg-secondary)] rounded-2xl p-4">
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">Node Info</h2>
+              <h2 className="text-sm font-semibold text-gray-300 mb-3">节点信息</h2>
             <div className="space-y-2 text-xs">
               {[
                 { label: 'Node ID', value: session?.node_id, alwaysShow: true },
@@ -441,7 +441,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
           {/* Current Task */}
           {session?.task && (
             <div className="bg-[var(--bg-secondary)] rounded-2xl p-4">
-              <h2 className="text-sm font-semibold text-gray-300 mb-2">Current Task</h2>
+              <h2 className="text-sm font-semibold text-gray-300 mb-2">当前任务</h2>
               <p className="text-xs text-gray-400 whitespace-pre-wrap">{session.task}</p>
             </div>
           )}
@@ -449,7 +449,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
           {/* Output */}
           {session?.output && (
             <div className="bg-[var(--bg-secondary)] rounded-2xl p-4">
-              <h2 className="text-sm font-semibold text-gray-300 mb-2">Last Output</h2>
+              <h2 className="text-sm font-semibold text-gray-300 mb-2">最近输出</h2>
               <p className="text-xs text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto">{session.output}</p>
             </div>
           )}
@@ -458,7 +458,7 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
 
           {/* Send Task */}
           <div className="bg-[var(--bg-secondary)] rounded-2xl p-4">
-            <h2 className="text-sm font-semibold text-gray-300 mb-2">Send Task</h2>
+            <h2 className="text-sm font-semibold text-gray-300 mb-2">发送任务</h2>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -504,7 +504,7 @@ const EVENT_COLORS: Record<string, { dot: string; line: string; path: string }> 
 
 function EventsTimeline({ events, loading }: { events: Array<{ id: number; event_type: string; from_status: string; to_status: string; detail: string; created_at: string; task_id?: string }>; loading: boolean }) {
   if (loading) return <div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" /></div>;
-  if (events.length === 0) return <div className="text-center py-12 text-gray-600 text-xs">No task events yet</div>;
+  if (events.length === 0) return <div className="text-center py-12 text-gray-600 text-xs">暂无任务事件</div>;
 
   // Group by task_id
   const groups = new Map<string, typeof events>();
