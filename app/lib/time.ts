@@ -51,11 +51,13 @@ export function relativeAgo(dateStr: string | null | undefined): string | null {
   const t = parseHubTime(dateStr);
   if (t === null) return null;
   const s = Math.floor((Date.now() - t) / 1000);
-  if (s < 0) return 'just now';
-  if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
+  // `.577`：文案门此前抓不到相对时间——它只在"慢"或滚动到某处时才出现，
+  // 而截图里 /messages 的消息头就是 "2s ago / 1m ago"。中文界面里这属于漏网英文。
+  if (s < 0) return '刚刚';
+  if (s < 60) return `${s} 秒前`;
+  if (s < 3600) return `${Math.floor(s / 60)} 分钟前`;
+  if (s < 86400) return `${Math.floor(s / 3600)} 小时前`;
+  return `${Math.floor(s / 86400)} 天前`;
 }
 
 /** Loop R7 (跨面一致性): WeChat-style contextual timestamp shared by the

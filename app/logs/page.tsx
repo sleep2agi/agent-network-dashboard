@@ -161,6 +161,10 @@ export default function LogsPage() {
         <div className="animate-pulse space-y-2">
           {[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-gray-800/20 rounded-lg" />)}
         </div>
+      ) : error ? (
+        // `.577`：加载失败时不要再叠一句"暂无审计日志"——一边说失败一边说没有，
+        // 用户无法判断到底哪句是真的。失败态只留上面的错误提示 + 重试入口。
+        null
       ) : logs.length === 0 ? (
         <EmptyState variant="logs" />
       ) : (

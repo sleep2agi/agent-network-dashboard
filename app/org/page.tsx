@@ -63,7 +63,18 @@ function GroupSection({ group, depth, counts, focusName, expandAll, overrides, o
         data-org-group={group.name}
         ref={el => { if (focused && el) el.scrollIntoView({ block: 'center' }); }}
       >
-        <span className="text-[12px] font-medium text-[var(--fg)]">{group.name}</span>
+        {/* `.577`：Hub 里有部门名就是自动生成的 UUID 尾巴（截图实拍
+            TMWork-3b7dd9b4-8db9-4723-82ee-ad2a34969d62），整串铺在行首极像乱码。
+            显示层截掉 UUID 尾巴并加 title 保留全名，不改数据。 */}
+        <span
+          className="max-w-[22rem] truncate text-[12px] font-medium text-[var(--fg)]"
+          title={group.name}
+        >
+          {group.name.replace(
+            /-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+            ' …',
+          )}
+        </span>
         {group.leader && (
           <span className="rounded-full bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[11px] text-[var(--fg-muted)]">
             负责人 {group.leader}

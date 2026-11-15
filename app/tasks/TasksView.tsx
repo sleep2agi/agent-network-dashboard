@@ -549,9 +549,13 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       {!selectedId && isDesktop && (
         <section
           data-testid="task-detail-empty"
-          className="flex-1 min-w-0 min-h-[calc(100dvh-var(--health-banner-h,0px))] flex items-center justify-center text-sm text-gray-600"
+          className="flex-1 min-w-0 min-h-[calc(100dvh-var(--health-banner-h,0px))] flex flex-col items-center justify-center gap-2 px-6 text-center"
         >
-          请从左侧列表选择一条任务查看详情
+          {/* `.577`：整块右侧区域此前只有一句灰字，1366 上看起来像"没加载出来"。
+              改为"标题 + 可执行提示 + 当前条数"，让这块空白说明自己在等什么。 */}
+          <p className="text-sm text-[var(--fg-muted)]">未选择任务</p>
+          <p className="text-xs text-[var(--fg-dim)]">从左侧点任意一条查看详情，或用 ↑ ↓ 键切换。</p>
+          <p className="text-xs text-[var(--fg-dim)]">当前列表共 {tasksScoped.length} 条</p>
         </section>
       )}
     </div>
@@ -566,7 +570,7 @@ export function TasksView({ initialSelectedId = null }: { initialSelectedId?: st
     <Suspense
       fallback={
         <div className="min-h-[calc(100dvh-var(--health-banner-h,0px))] bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
-          <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading tasks…</div>
+          <div className="lg:ml-0 ml-10 text-gray-500 text-sm">正在加载任务…</div>
         </div>
       }
     >
