@@ -4228,7 +4228,7 @@ export default function Legion3DPage() {
         </p>
         {/* 第一次看 3D 的人不知道三环各是什么；2D 页有这行说明，这里补上（演示时更不用口头解释）。 */}
         <p className="mt-0.5 hidden text-[11px] text-[var(--fg-dim)] sm:block" data-testid="legion-3d-legend">
-          圆心是网络，外三环依次是部门、成员与名下 Agent。
+          圆心是网络；外三环：部门 / 成员 / Agent。
         </p>
         <div className="pointer-events-auto mt-2 flex items-center gap-2">
           <input
@@ -4423,7 +4423,7 @@ export default function Legion3DPage() {
           aria-expanded={toolsOpen}
           aria-controls="legion-3d-more-tools"
           data-testid="legion-3d-tools-toggle"
-          className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] sm:hidden"
+          className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-[1440px]:hidden"
         >
           {toolsOpen ? '收起操作' : '更多操作'}
         </button>
@@ -4432,7 +4432,7 @@ export default function Legion3DPage() {
           role="group"
           aria-label="更多军团操作"
           data-testid="legion-3d-more-tools"
-          className={`${toolsOpen ? 'grid' : 'hidden'} basis-full grid-cols-3 gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]/95 p-1.5 sm:contents`}
+          className={`${toolsOpen ? 'grid' : 'hidden'} basis-full grid-cols-3 gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]/95 p-1.5 min-[1440px]:contents`}
         >
         <button
           type="button"
@@ -4487,7 +4487,7 @@ export default function Legion3DPage() {
             aria-label="导出 1080p（默认 720p）"
             className="h-3.5 w-3.5 accent-[var(--hl)]"
           />
-          <span className="sm:hidden">1080p</span>
+          <span className="min-[1440px]:hidden">1080p</span>
         </label>
         <button
           type="button"
@@ -4504,7 +4504,7 @@ export default function Legion3DPage() {
         >
           平台视角
         </Link>
-        <p className="col-span-3 px-2 py-1 text-[11px] text-[var(--fg-muted)] sm:hidden">净屏后轻点画布恢复，也可按 Esc。</p>
+        <p className="col-span-3 px-2 py-1 text-[11px] text-[var(--fg-muted)] min-[1440px]:hidden">净屏后轻点画布恢复，也可按 Esc。</p>
         </div>
         <Link
           href={focus ? `/legion?focus=${encodeURIComponent(layout.nodes.find(n => n.id === focus)?.label || '')}` : '/legion'}
