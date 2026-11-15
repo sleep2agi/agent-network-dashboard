@@ -6,6 +6,56 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.569 — 2026-11-15
+
+### 界面文案收口（第四轮）：把门的样本从 7 页扩到 18 页，修掉 20 处真英文
+
+```
+`.568` 之后我声称"界面中文化完成"，但依据只是 7 条路由。
+把白名单门扩到 18 条入口后立刻浮出 75 处命中，其中约 20 处是真英文：
+  /messages  导出 MD · Timeline · Grouped · Debug
+  /logs      All 芯片 + 5 个动作名（login / login_failed / register / create_network / send_task）
+  /servers   "N agent(s)"
+  空态       消息 / 审计日志 / API Token / 网络 / 通用 五条整段英文
+其余命中是数据（主机名、部门名、Agent 别名、模型名、from: 芯片）。
+```
+
+### 改动
+```
+messages/page.tsx      导出 MD · 时间线/分组 · 调试
+logs/page.tsx          5 个动作芯片 + 行内动作名共用同一张映射（避免"芯片中文、列表英文"）
+components/ServersDrawer.tsx   N agent(s) → N 个 Agent
+components/EmptyState.tsx      5 条空态文案中文化
+```
+
+### 门（evidence/probes/i18n-ui-sweep.mjs）
+```
+默认清单 7 → 18 条入口：
+  / /nodes /tasks /requirements /settings /admin /legion/3d
+  /messages /logs /servers /scheduled-tasks /skillhub /providers
+  /versions /changelog /org /legion /legion/plaza
+新增数据跳过规则：
+  [data-server-card-toggle]（服务器行：主机名）
+  [data-department-id] / plaza-perspective-select（广场名片：部门/Agent/模型名）
+  /^from:/（消息筛选芯片）
+白名单补 MD（Markdown 格式名）
+```
+
+### 验证
+```
+tsc 0 · lint 0 errors · npm test 58/58 · next build 成功
+i18n-ui-sweep（18 页 × 3 类界面）：PASS，18 页全部「残留=0 面板=0 浮层=0」
+```
+
+### 结论口径
+```
+可以说：18 条入口 + 命令面板 + 帮助浮层，界面文案 0 英文残留（白名单制门验证）。
+不能说：全站绝对无英文 —— 动态路由（/nodes/<alias>、/requirements/<id>）与抽屉类
+       不在门的路由清单内，需要单独口径才能声称覆盖。
+```
+
+用户可见变化：消息页/审计日志页/服务器抽屉/各页空态文案中文化。无交互、接口、权限变化。
+
 ## 0.6.4-preview.568 — 2026-11-15
 
 ### 界面文案收口（第三轮）：由「白名单式文案门」驱动的全量清点
