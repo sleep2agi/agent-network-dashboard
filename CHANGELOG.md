@@ -6,6 +6,48 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.574 — 2026-11-15
+
+### 需求状态芯片不再是英文，404 页改成中文：逐页双档体检的第一批产出
+
+```
+`.573` 的文案门写着 "21/21 页 0 残留"，但打开 /requirements 一看：
+  列表每行芯片写着 done / doing / pool，同一页上方筛选器却写「需求池 / 进行中 / 完成」
+  详情页更明显：芯片英文，日期标签写成 start 2026-11-16 / due 2026-11-18
+原因：门把整行（[data-requirement-id] / article）当正文跳过，芯片也被一起跳过。
+```
+
+### 改动
+```
+app/lib/status.ts
+  + REQUIREMENT_COLUMN_LABEL（pool→需求池 · doing→进行中 · done→完成 · abandoned→已放弃）
+app/requirements/page.tsx
+  · 行内芯片走映射（不再渲染 column 原值）；筛选器 COLUMNS 复用同一份映射
+  · 芯片加 data-status-chip —— 文案门"内容行里也要扫它"的挂钩
+app/requirements/[id]/page.tsx
+  · 头部芯片 / 子需求列表 / 父级选择器三处中文化
+  · start → 开始、due → 截止
+app/not-found.tsx（新）
+  · 中文 404：页面不存在 + 三个出口（返回概览 / 打开军团 3D / 节点列表）
+  · 说明文案压到一行（21 字上限），避免 1366 下断出孤字行
+tests/requirement-column-label.test.mjs（新）
+  · 14 条断言：单一来源 · 不许渲染枚举原文 · 芯片必须可被门取样 · 日期中文化
+evidence/probes/i18n-ui-sweep.mjs
+  · 内容行里的 [data-status-chip] 不再被跳过
+  · 结论行带覆盖分母；取不到动态目标 → DEGRADED（退出码 3），不许"少测了还说全绿"
+  · 节点详情取样改为"DOM 属性或 URL 二者其一"（桌面版 /nodes 会自动选中首节点）
+deploy/laptop-pass.mjs（新）
+  · 逐页双档体检取证：同一路由各截 1366 / 1920，并打印 header 高度与横向溢出
+```
+
+### 验证
+```
+tsc 0 · lint 0 errors · npm test 60/60 · oss-readiness 34/34 · next build 成功
+1366/1920 截图：需求页芯片为「需求池 / 进行中 / 完成」；404 页全中文且说明一行
+```
+
+用户可见变化：需求列表与详情不再出现 done/doing/pool 与 start/due；误入不存在的地址时看到的是中文 404 与可用出口。
+
 ## 0.6.4-preview.573 — 2026-11-15
 
 ### 军团 3D：部门圆心不再"断词"，14 个部门名在 1366/1920 上都读得出来
