@@ -2406,7 +2406,10 @@ html[data-legion-present='1'] [data-app-shell-nav] {
 
 /* 演示态是整屏画面：应用级的固定浮层（右侧 Servers 抽屉把手等）要一起让位，
    否则投屏/录屏时会在舞台之外留一个可点的黑框（`.310` 实拍在右上角）。 */
-html[data-legion-present='1'] [aria-label='Servers panel'] {
+/* `.567`：原来按英文 aria-label 选择，界面中文化后选择器失效、演示模式里
+   服务器抽屉重新露出来（legion 套件 present:noStrayOverlays 抓到的就是它）。
+   改用 data-servers-drawer 稳定钩子。 */
+html[data-legion-present='1'] [data-servers-drawer] {
   display: none;
 }
 
