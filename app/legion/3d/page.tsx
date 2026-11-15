@@ -792,6 +792,10 @@ export default function Legion3DPage() {
     if (shared) {
       viewRef.current = { ...DEFAULT_VIEW, ...shared };
       if (PITCH_PARAM !== null) viewRef.current.pitch = PITCH_PARAM; // `.559` 诊断参数优先
+      else {
+        // `.582` 用户记住的俯角预设（直接读存储，避免把 pitchMode 拉进首屏 effect 的依赖）
+        try { if (localStorage.getItem('anet-legion-pitch') === 'readable') viewRef.current.pitch = 0.75; } catch { /* ignore */ }
+      }
       setZoomPct(Math.round(shared.zoom * 100));
       userAdjusted.current = true;
       introDone.current = true;
@@ -3409,6 +3413,24 @@ export default function Legion3DPage() {
     return () => document.removeEventListener('wheel', onWheelNative);
   }, [persistView]);
 
+  // `.582`：俯角预设可切换（默认仍是 49° 纵深版）。
+  // 背景：49° 更立体但环被压扁、越界余量只有 2.3px；43° 更清楚、余量 8.7px。
+  // 这属于观感偏好，所以不做"替用户决定默认值"，而是给一个可记住的开关。
+  const applyPitchPreset = useCallback((mode: 'deep' | 'readable') => {
+    try { localStorage.setItem('anet-legion-pitch', mode); } catch { /* ignore */ }
+    setPitchMode(mode);
+    const target = mode === 'readable' ? 0.75 : DEFAULT_VIEW.pitch;
+    viewRef.current = { ...viewRef.current, pitch: target };
+    fitPending.current = true;          // 换俯角后重新取景，避免沿用旧 zoom
+    userAdjusted.current = false;
+    lastInteract.current = performance.now();
+  }, []);
+
+  const [pitchMode, setPitchMode] = useState<'deep' | 'readable'>(() => {
+    if (typeof window === 'undefined') return 'deep';
+    try { return localStorage.getItem('anet-legion-pitch') === 'readable' ? 'readable' : 'deep'; } catch { return 'deep'; }
+  });
+
   const resetView = useCallback(() => {
     sharedLock.current = false;
     try { localStorage.removeItem(`legion3d-view:${networkId}`); } catch { /* ignore */ }
@@ -4380,6 +4402,15 @@ export default function Legion3DPage() {
         >
           重置视角
         </button>
+        <button
+          type="button"
+          data-testid="legion-3d-pitch-preset"
+          onClick={() => applyPitchPreset(pitchMode === 'deep' ? 'readable' : 'deep')}
+          title="俯角预设：49°（更立体、环略压扁）/ 43°（更清楚、标签更宽松）。选择会记住在本机"
+          className="max-sm:order-last rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+        >
+          俯角：{pitchMode === 'deep' ? '49°' : '43°'}
+        </button>
         {coreMode && (
           <button
             type="button"
@@ -4428,7 +4459,7 @@ export default function Legion3DPage() {
           aria-expanded={toolsOpen}
           aria-controls="legion-3d-more-tools"
           data-testid="legion-3d-tools-toggle"
-          className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-[1440px]:hidden"
+          className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/85 px-2.5 py-1.5 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-[1600px]:hidden"
         >
           {toolsOpen ? '收起操作' : '更多操作'}
         </button>
@@ -4437,7 +4468,7 @@ export default function Legion3DPage() {
           role="group"
           aria-label="更多军团操作"
           data-testid="legion-3d-more-tools"
-          className={`${toolsOpen ? 'grid' : 'hidden'} basis-full grid-cols-3 gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]/95 p-1.5 min-[1440px]:contents`}
+          className={`${toolsOpen ? 'grid' : 'hidden'} basis-full grid-cols-3 gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]/95 p-1.5 min-[1600px]:contents`}
         >
         <button
           type="button"
@@ -4492,7 +4523,7 @@ export default function Legion3DPage() {
             aria-label="导出 1080p（默认 720p）"
             className="h-3.5 w-3.5 accent-[var(--hl)]"
           />
-          <span className="min-[1440px]:hidden">1080p</span>
+          <span className="min-[1600px]:hidden">1080p</span>
         </label>
         <button
           type="button"
@@ -4509,7 +4540,7 @@ export default function Legion3DPage() {
         >
           平台视角
         </Link>
-        <p className="col-span-3 px-2 py-1 text-[11px] text-[var(--fg-muted)] min-[1440px]:hidden">净屏后轻点画布恢复，也可按 Esc。</p>
+        <p className="col-span-3 px-2 py-1 text-[11px] text-[var(--fg-muted)] min-[1600px]:hidden">净屏后轻点画布恢复，也可按 Esc。</p>
         </div>
         <Link
           href={focus ? `/legion?focus=${encodeURIComponent(layout.nodes.find(n => n.id === focus)?.label || '')}` : '/legion'}
