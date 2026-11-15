@@ -6,6 +6,50 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.571 — 2026-11-15
+
+### 界面文案线封版：门覆盖 21 个目标（含节点详情两条路由）
+
+```
+`.570` 把门扩到动态路由后，`/nodes/<alias>` 里暴露出节点页的 tab 文案：
+  Chat / Info（Events 上一版已改）。
+同时用「选择器清点」把套件里按可见文案定位的英文全数列出，发现三处条件渲染的按钮：
+  /requirements  Clear filters（仅在有筛选条件时渲染）
+  /org           Clear（同上）
+⇒ 这类文案平时不渲染，门扫不到，只能靠清点 + 源码 grep 发现。
+```
+
+### 改动（5 处）
+```
+app/requirements/page.tsx   Clear filters → 清除筛选
+app/org/page.tsx            Clear → 清除
+app/node/page.tsx           tab: Chat → 对话 · Info → 信息（Events → 事件 已在 .570）
+```
+
+### 门（evidence/probes/i18n-ui-sweep.mjs）
+```
+默认清单 18 → 21 个目标：
+  18 条静态入口 + /requirements/<id> + /nodes/<alias> + /node?alias=<首个节点>
+（后两者运行时取真实 ID/别名；取不到会显式打印"结论范围缩小"，不静默降级）
+```
+
+### 验证
+```
+tsc 0 · lint 0 errors · npm test 58/58 · next build 成功
+i18n-ui-sweep：PASS，21 个目标全部「残留=0 面板=0 浮层=0」
+```
+
+### 封版口径
+```
+覆盖：18 条入口 + 需求详情 + 节点详情（/nodes/<alias>、/node?alias=）
+      + 命令面板 + 帮助浮层 = 21 目标 × 3 类界面
+判据：白名单制（非白名单拉丁词即报）+ 9 条数据/内容跳过规则
+不覆盖：抽屉类（文件/日志/技能/密钥）、/tasks/<id> 等其它动态详情
+复跑：node evidence/probes/i18n-ui-sweep.mjs <base>
+```
+
+用户可见变化：需求/组织/节点页的筛选按钮与 tab 中文化。无交互、接口、权限变化。
+
 ## 0.6.4-preview.570 — 2026-11-15
 
 ### 文案门覆盖到动态详情页，并修掉详情页最后 1 处英文
