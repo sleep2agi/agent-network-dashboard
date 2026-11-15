@@ -101,7 +101,7 @@ export default function VersionsPage() {
               </li>
             ))}
           </ul>
-          <h2 className="mt-6 text-sm font-semibold">agent-node 不是 {PUBLISHED_AGENT_NODE}</h2>
+          <h2 className="mt-6 text-sm font-semibold">未升级到 {PUBLISHED_AGENT_NODE} 的节点</h2>
           {behind.length + missing.length === 0 ? (
             <p className="mt-2 text-sm text-[var(--fg-muted)]">全部已对齐。</p>
           ) : (

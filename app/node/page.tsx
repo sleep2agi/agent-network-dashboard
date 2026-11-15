@@ -570,7 +570,7 @@ export default function NodePage() {
       // indent on the text. Loading state now visually maps to the
       // populated /node detail page.
       <div className="min-h-[calc(100dvh-var(--health-banner-h,0px))] bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
-        <div className="lg:ml-0 ml-10 text-gray-500 text-sm">Loading…</div>
+        <div className="lg:ml-0 ml-10 text-gray-500 text-sm">正在加载…</div>
       </div>
     }>
       <NodeDetailContent />

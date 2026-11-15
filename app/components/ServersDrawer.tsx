@@ -439,7 +439,12 @@ export function ServersDrawer() {
 
   return (
     <aside
-      className="fixed right-0 top-20 z-40 hidden lg:flex flex-col rounded-l-xl border border-r-0 shadow-xl shadow-black/30 anet-fade-in"
+      className={`fixed right-0 z-40 hidden lg:flex flex-col rounded-l-xl border border-r-0 shadow-xl shadow-black/30 anet-fade-in ${
+        // `.577`：折叠态原本钉在 top-20，正好压在多数页面的右上角主操作按钮上
+        // （截图实拍：/providers 的「新增供应商」、/requirements 的「刷新」都被它贴住）。
+        // 折叠时改到视口垂直中点，避开所有页面的头部操作区；展开时仍从顶部展开。
+        open ? 'top-20' : 'top-1/2 -translate-y-1/2'
+      }`}
       style={{
         background: 'var(--bg-secondary)',
         borderColor: 'var(--border)',
