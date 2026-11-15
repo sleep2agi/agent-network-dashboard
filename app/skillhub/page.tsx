@@ -123,7 +123,7 @@ export default function SkillHubPage() {
       </div>
 
       <div className="mb-4 max-w-3xl">
-        <input aria-label="搜索 Skills" value={query} onChange={e => setQuery(e.target.value)} placeholder="搜索名称、slug 或说明…" className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-sm outline-none focus:border-[var(--hl)]" />
+        <input aria-label="搜索 Skills" value={query} onChange={e => setQuery(e.target.value)} placeholder="搜索名称、标识或说明…" className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-sm outline-none focus:border-[var(--hl)]" />
       </div>
       {error && <div className="mb-4 max-w-3xl rounded-lg border border-[var(--danger)] bg-[var(--hover-tint)] p-3 text-sm text-[var(--danger)]">{error}</div>}
 

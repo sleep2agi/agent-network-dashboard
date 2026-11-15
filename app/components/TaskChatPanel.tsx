@@ -1847,8 +1847,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                 onChange={e => { handleInputChange(e.target.value); autoResize(e.target); }}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
-                placeholder={`Message ${alias}...`}
-                aria-label={`Message ${alias}`}
+                placeholder={`发消息给 ${alias}…`}
+                aria-label={`发消息给 ${alias}`}
                 rows={1}
                 className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl px-3 py-2.5 pr-[6.75rem] text-base sm:px-4 sm:pr-24 sm:text-sm text-[var(--fg)] placeholder-[var(--fg-dim)] focus:border-[var(--accent)]/40 focus:outline-none resize-none transition-colors"
               />
