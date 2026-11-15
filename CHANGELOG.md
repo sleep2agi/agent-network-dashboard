@@ -6,6 +6,69 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.568 — 2026-11-15
+
+### 界面文案收口（第三轮）：由「白名单式文案门」驱动的全量清点
+
+```
+前两轮靠人工词表 + 逐页翻检，连续漏掉四类区域：
+  · 移动端底部导航（6 项）
+  · 概览页拓扑控件（Show/Hide Topology、Ring/Grid/Tree、N working）
+  · 任务状态芯片与行内状态（created/delivered/acked/... 、HIGH）
+  · 顶部失败横幅句子（"104 tasks failed in the last 24h"）与附件卡片
+
+本轮改为「白名单制检测」：浏览器门不再依赖人工词表，
+凡 nav/aside/header/button/h1-h4/th/label/legend/role=tab 中出现 ≥2 个拉丁字母的单词即报，
+只放行技术白名单与九类明确的数据/内容形态。它一次就把上面四类全揪出来了。
+```
+
+### 改动（17 个文件）
+
+```
+状态与芯片
+  lib/status.ts            新增 STATUS_LABEL（created/delivered/acked/running/replied/
+                           closed/failed/cancelled/expired/queued → 中文），单一来源
+  tasks/TasksView.tsx      状态芯片改用 STATUS_LABEL · 「全部」· 接收方 · 日期占位
+  components/TaskList.tsx  行内状态标签 · HIGH → 高优
+  components/TopoGraph.tsx 「N 工作中」芯片 · 悬浮提示（工作中/空闲/离线）· 布局按钮 环形/网格/树形
+
+导航与全局
+  components/MobileNav.tsx 底部导航 6 项：节点/概览/任务/定时任务/SkillHub/设置
+  components/Sidebar.tsx   Quick search → 快速搜索（按钮 + 折叠态 title）
+  components/HealthBanner.tsx  横幅句子「近 24 小时 N 个任务失败」· CTA「查看失败」
+  page.tsx                 Show/Hide Topology → 显示/隐藏拓扑
+  nodes/NodesView.tsx      List/Grid → 列表/网格
+
+需求与消息
+  requirements/page.tsx    All → 全部 · Refresh → 刷新
+  components/TaskChatPanel.tsx · messages/page.tsx
+                           「↑ 加载更早的消息」· Loading… → 加载中…
+  org/page.tsx             Refresh → 刷新
+```
+
+### 门的口径（evidence/probes/i18n-ui-sweep.mjs）
+```
+检测：控件与标题中的任意拉丁词（≥2 字母）
+放行：技术白名单（Hub/Token/Session/SSE/URL/API/Provider/Model/Node/Agent/CommHub/Dashboard/SWR…）
+      + 产品名 Agent Network + 数据值 default、P0–P3 + 品牌名 Slack
+跳过（九类数据/内容）：
+  ① <option> 与含 <select> 的容器（目录）  ② [data-node-alias] 与页内别名文本（Agent 名）
+  ③ [data-node-list-rail]（节点列表栏）    ④ [data-task-id]/[data-requirement-id]/[data-msg-id]/article（正文）
+  ⑤ 含中文的 h1–h4（内容标题）             ⑥ .leading-relaxed/.prose/[data-markdown]（聊天 markdown）
+  ⑦ 含 <img> 的按钮（附件预览）            ⑧ 含文件扩展名的文本（附件卡片）
+```
+
+### 验证
+```
+tsc 0 · lint 0 errors · npm test 58/58 · next build 成功
+i18n-ui-sweep（本地生产构建）：7 页全部「残留=0 面板=0 浮层=0」→ PASS
+人工截图复核：/tasks /requirements /settings /admin /login × 1440 与 390
+  移动端任务页确认：横幅、芯片 10 项、筛选、行内状态（运行中/已回复/高优）、底部导航 6 项 全部中文
+```
+
+用户可见变化：移动端底栏、概览拓扑控件、任务状态（芯片 + 行内）、失败横幅、快速搜索、加载更早消息全部中文化。
+无交互、接口、权限变化。
+
 ## 0.6.4-preview.567 — 2026-11-15
 
 ### 界面文案收口（第二轮）：任务面板、拓扑、设置、无障碍标签共 113 处
