@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { REQUIREMENT_COLUMN_LABEL } from '../../lib/status';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -621,10 +622,10 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         <header className="mb-5">
           <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
             <span className="tabular-nums">#{req.seq}</span>
-            <span className={`rounded border px-1.5 py-0.5 ${COLUMN_CHIP[req.column] || COLUMN_CHIP.abandoned}`}>{req.column}</span>
+            <span data-status-chip className={`rounded border px-1.5 py-0.5 ${COLUMN_CHIP[req.column] || COLUMN_CHIP.abandoned}`}>{REQUIREMENT_COLUMN_LABEL[req.column] || req.column}</span>
             <span title={priorityTitle(req.priority)}>{priorityLabel(req.priority)}</span>
-            {req.start && <span>start {String(req.start).slice(0, 10)}</span>}
-            {req.due && <span>due {String(req.due).slice(0, 10)}</span>}
+            {req.start && <span>开始 {String(req.start).slice(0, 10)}</span>}
+            {req.due && <span>截止 {String(req.due).slice(0, 10)}</span>}
             {/* 详情页也说同一句话：列表/看板有「还剩几天」，点进来不该反而没了。 */}
             {(() => {
               const plan = planHealth(req.start, req.due, new Date(), req.column === 'done' || req.column === 'abandoned');
@@ -1179,7 +1180,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
                         className="flex w-full items-center gap-2 px-2 py-1 text-left text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
                       >
                         <span className="tabular-nums text-[11px] text-gray-500">#{row.seq}</span>
-                        <span className="rounded bg-[var(--bg-elevated)] px-1 text-[11px]">{row.column}</span>
+                        <span data-status-chip className="rounded bg-[var(--bg-elevated)] px-1 text-[11px]">{REQUIREMENT_COLUMN_LABEL[row.column] || row.column}</span>
                         <span className="min-w-0 flex-1 truncate">{row.name}</span>
                       </button>
                     </li>
@@ -1198,7 +1199,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
                 <li key={row.id}>
                   <Link href={`/requirements/${row.id}`} className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border)] px-2 py-1.5 text-sm hover:bg-[var(--hover-tint)]">
                     <span className="tabular-nums text-[11px] text-gray-500">#{row.seq}</span>
-                    <span className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[11px] text-gray-400">{row.column}</span>
+                    <span data-status-chip className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[11px] text-gray-400">{REQUIREMENT_COLUMN_LABEL[row.column] || row.column}</span>
                     <span className="text-[11px] text-gray-400" title={priorityTitle(row.priority)}>{priorityLabel(row.priority)}</span>
                     <span className="min-w-0 flex-1 truncate text-gray-200">{row.name}</span>
                   </Link>
