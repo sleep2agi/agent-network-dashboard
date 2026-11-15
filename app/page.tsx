@@ -193,9 +193,9 @@ export default function Dashboard() {
       {Object.keys(taskStats).length > 0 && (
         <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg bg-[var(--bg-secondary)] px-4 py-2.5 text-xs">
           <div className="text-gray-400 tabular-nums">
-            <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} running</span>
+            <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} 运行中</span>
             <span className="text-gray-600"> &middot; </span>
-            <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} failed</span>
+            <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} 失败</span>
           </div>
           <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:opacity-80">查看全部 →</Link>
         </section>
@@ -281,7 +281,7 @@ export default function Dashboard() {
         // offline=gray, all=neutral. Inline hex dots avoid Tailwind v4 purge.
         const chips: { key: typeof agentFilter; label: string; dot?: string }[] = [
           { key: 'all',     label: '全部' },
-          { key: 'working', label: '工作中', dot: '#4ade80' },
+          { key: 'working', label: '运行中', dot: '#4ade80' },
           { key: 'idle',    label: '空闲', dot: '#22d3ee' },
           { key: 'offline', label: '离线', dot: '#6b7280' },
         ];
