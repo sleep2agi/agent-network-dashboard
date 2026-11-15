@@ -1384,7 +1384,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
               onClick={clearFilters}
               className="rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-gray-200"
             >
-              Clear filters
+              清除筛选
             </button>
           )}
         </div>

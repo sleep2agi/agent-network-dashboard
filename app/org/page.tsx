@@ -374,7 +374,7 @@ function OrgContent() {
               onClick={() => { setQInput(''); setQuery(''); }}
               className="rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
             >
-              Clear
+              清除
             </button>
           )}
           {data && <span className="text-[11px] text-[var(--fg-muted)]">{data.total} 人 · {deptCount} 个部门</span>}
