@@ -1949,7 +1949,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
               正文区里的提示语不在集合内。现加 data-composer-hint 让门能精确取样。 */}
           <div className="hidden sm:flex justify-between text-[11px] text-[var(--fg-dim)] mt-1.5">
             <span data-composer-hint>{input.includes('@') ? `发送给：${alias}` : '输入 @ 可提及另一个节点'}</span>
-            <span data-composer-hint>Enter 发送 · 可直接粘贴图片</span>
+            <span data-composer-hint>回车发送 · 可直接粘贴图片</span>
           </div>
         </div>
         {lightbox && <ImageLightbox urls={lightbox.urls} initialIndex={lightbox.idx} opener={lightboxOpenerRef.current} onClose={() => setLightbox(null)} />}

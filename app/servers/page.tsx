@@ -23,22 +23,22 @@ export default function ServersPage() {
           <div className="flex items-center justify-between gap-3 lg:ml-0 ml-10">
             <div className="flex items-baseline gap-2 min-w-0">
               <span className="hidden shrink-0 text-[11px] uppercase tracking-[0.18em] text-[var(--fg-muted)] sm:inline">
-                Infrastructure
+                基础设施
               </span>
               <span className="hidden text-[var(--border-hover)] sm:inline">·</span>
               <h1 className="truncate text-xl font-semibold text-[var(--fg)]">服务器</h1>
             </div>
             <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--bg-elevated)] px-2.5 py-1 font-mono text-[11px] text-[var(--fg-muted)]">
               <span aria-hidden className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--success)]" />
-              <span className="hidden sm:inline">live · refreshes every 5s</span>
-              <span className="sm:hidden">live</span>
+              <span className="hidden sm:inline">实时 · 每 5 秒刷新</span>
+              <span className="sm:hidden">实时</span>
             </div>
           </div>
           <p
             className="mt-2 ml-10 max-w-2xl truncate text-xs leading-snug text-[var(--fg-muted)] sm:whitespace-normal sm:leading-6 lg:ml-0"
-            title="Host-level health, disk, memory, CPU history, and agent rollups from CommHub telemetry."
+            title="主机健康、磁盘、内存、CPU 历史，以及来自 CommHub 遥测的 Agent 汇总。"
           >
-            Host-level health, disk, memory, CPU history, and agent rollups from CommHub telemetry.
+            主机健康、磁盘、内存、CPU 历史，以及来自 CommHub 遥测的 Agent 汇总。
           </p>
         </header>
 

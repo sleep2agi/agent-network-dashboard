@@ -6,6 +6,39 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.576 — 2026-11-15
+
+### 服务器页头部中文化；输入提示不再夹英文键名
+
+```
+`.575` 上线后体检的文案门（这次带 21/21 分母）红在 4 处残留：
+  /servers                     and  ← "and agent rollups from CommHub telemetry"
+  /nodes · /nodes/<alias> · /node?alias=   Enter ← "Enter 发送 · 可直接粘贴图片"
+两处都是"界面文案里的英文"，不是数据。
+```
+
+### 改动
+```
+app/servers/page.tsx
+  Infrastructure              → 基础设施
+  live · refreshes every 5s   → 实时 · 每 5 秒刷新（窄屏「实时」）
+  Host-level health, disk, …  → 主机健康、磁盘、内存、CPU 历史，
+                                以及来自 CommHub 遥测的 Agent 汇总。（title 同步）
+app/components/TaskChatPanel.tsx
+  Enter 发送 · 可直接粘贴图片  → 回车发送 · 可直接粘贴图片
+  理由：不往文案白名单里加 "Enter" —— 界面能用中文表达就不用英文，
+        白名单只留给确实无法翻译的词（Hub / Token / API 这类）。
+```
+
+### 验证
+```
+线上 `.575` 的同一道门：I18N-UI FAIL (4 处残留，覆盖 21/21 页)
+  其中 404 专属断言已转绿（中文标题=有 · 英文默认页=无）
+本版发布后预期：I18N-UI PASS (21/21 页 0 残留) → 体检回到 15/15
+```
+
+用户可见变化：服务器页标题区不再出现英文眉标/英文说明/`live · refreshes every 5s`；聊天输入区提示改中文键名。
+
 ## 0.6.4-preview.575 — 2026-11-15
 
 ### 输入区提示中文化；`.574` 因一道 ratchet 门未发版（如实记录）
