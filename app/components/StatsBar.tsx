@@ -53,12 +53,12 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
         <div className="anet-stat-strip flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 border-t border-b border-[#26262b] py-2">
           <span className="inline-flex items-center gap-1.5">
             <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
-            <span className="text-gray-300 tabular-nums">{onlineDisplay}</span> online
+            <span className="text-gray-300 tabular-nums">{onlineDisplay}</span> 在线
           </span>
           <span className="text-gray-700">·</span>
           <span className="inline-flex items-center gap-1.5">
             <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
-            <span className="text-gray-300 tabular-nums">0</span> working
+            <span className="text-gray-300 tabular-nums">0</span> 运行中
           </span>
           <span className="text-gray-700">·</span>
           <span className="inline-flex items-center gap-1.5">
@@ -75,25 +75,25 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
         <div className="sm:hidden anet-stat-strip flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 border-t border-b border-[#26262b] py-2">
           <span className="inline-flex items-center gap-1.5">
             <span aria-hidden className={`inline-block w-1.5 h-1.5 rounded-full ${presenceUnknown ? 'bg-gray-500' : 'bg-green-400'}`} />
-            <span className="text-gray-200 tabular-nums">{onlineDisplay}</span> online
+            <span className="text-gray-200 tabular-nums">{onlineDisplay}</span> 在线
           </span>
           {working > 0 && (
             <>
               <span className="text-gray-700">·</span>
               <span className="inline-flex items-center gap-1.5">
                 <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 anet-brand-pulse" />
-                <span className="text-gray-200 tabular-nums">{working}</span> working
+                <span className="text-gray-200 tabular-nums">{working}</span> 运行中
               </span>
             </>
           )}
           <span className="text-gray-700">·</span>
           <span className="inline-flex items-center gap-1.5">
             <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
-            <span className="text-gray-200 tabular-nums">{offlineDisplay}</span> offline
+            <span className="text-gray-200 tabular-nums">{offlineDisplay}</span> 离线
           </span>
           <span className="text-gray-700">·</span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="text-gray-200 tabular-nums">{total}</span> total
+            <span className="text-gray-200 tabular-nums">{total}</span> 总计
           </span>
         </div>
         {/* Populated state, sm: up. #217 S2 (less is more): the Working

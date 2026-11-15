@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, memo } from 'react';
+import { SESSION_STATUS_LABEL } from '../lib/status';
 import Link from 'next/link';
 import { Session } from './types';
 import { timeAgo } from './utils';
@@ -111,7 +112,7 @@ function AgentCardInner({ session: s, hasSse, sseCount, onChat, unreadCount = 0 
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <span className={`text-[11px] px-2 py-0.5 rounded-md border ${cfg.bg} ${cfg.text}`}>
-            {hasSse ? s.status : 'offline'}
+            {hasSse ? (SESSION_STATUS_LABEL[s.status] || s.status) : SESSION_STATUS_LABEL.offline}
           </span>
           {/* #260: per-node ⋮ menu → settings panel. The card is a <Link>,
               so stop the click from navigating / opening chat. Opens a
