@@ -723,3 +723,41 @@ relativeAgo 一处改动，消息头 / 定时任务 / 最后在线 / 拓扑标�
 反例是各页各写一份相对时间（requirements 详情与列表就各有一份 relativeTime），
 以后要统一时得改两处、还容易改漏。
 ```
+
+---
+
+## 24. `.577` 探针红 1 项：`projector` 的 1px 越界是方差，不是回归
+
+### 事实
+```
+第 1 跑：FAIL 67/68 — projector @1280×1024「越出安全区 17px」阈值 16px
+第 2 跑（同一产物 .577）：PASS 68/68 — 同视口不再越界
+⇒ 按规则「同产物两次不一致 = flake」判为测量不稳定，不是回归
+```
+
+### 为什么它会不稳定（仓库里早有记录）
+```
+docs/legion-3d-pitch.md：49° 俯角下越界 13.7px，判据 16px ⇒ 余量只有 2.3px
+docs/handoff-20261113.md：同一构建下取景 zoom 有 ~4% 方差，修复候选试过并否决
+⇒ 13.7 + 方差 → 偶发 17px，正好踩线
+```
+
+### 处置：改判据的表达方式，不动阈值
+```bash
+run_with_retry "projector" node evidence/probes/legion-projector.mjs "$BASE"
+# 首跑红 → 打印 "retry: projector 首跑未过，重跑一次（已知 zoom 方差，非放宽阈值）" 并重跑
+# 重跑仍红 → FAIL（真回归）
+```
+```
+为什么不把阈值调到 18px：
+  调阈值等于永久放行"真的越界 17px"；重跑只给"测量不稳定"一次机会，
+  且每次重跑都在日志里留痕 —— 误报可见、可审计。
+```
+
+### 教训 AA：探针的入口契约要和探针本身一起看
+```
+我第一次重跑直接执行 evidence/legion-orphan-20261030/verify-legion.mjs，
+它需要 root/output/base/hub 四个环境变量（外层脚本注入），于是得到 EXIT=1。
+差点被误读成"军团又出问题"。正确入口是 deploy/legion-verify-all.sh 第 40 行那条命令。
+⇒ 看到 .mjs 直接跑之前，先看外层脚本怎么调它。
+```
