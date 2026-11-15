@@ -384,7 +384,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               {/* From/To filters */}
               <div className="flex flex-wrap items-center gap-1.5 mb-2">
                 <div className="flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 focus-within:border-[var(--border-hover)]">
-                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-muted)]">From</span>
+                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-muted)]">发起人</span>
                   <input
                     type="text"
                     value={filterFrom}
@@ -409,7 +409,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                 </div>
                 {deptChoices.length > 0 && (
                   <div className="flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1">
-                    <span className="text-[11px] uppercase tracking-wide text-[var(--fg-muted)]">Dept</span>
+                    <span className="text-[11px] uppercase tracking-wide text-[var(--fg-muted)]">部门</span>
                     <select
                       value={filterDept}
                       onChange={(e) => setDeptAndUrl(e.target.value)}

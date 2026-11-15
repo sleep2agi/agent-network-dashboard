@@ -320,7 +320,7 @@ function OrgContent() {
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-[var(--fg)]">Organization</h1>
+            <h1 className="text-xl font-semibold text-[var(--fg)]">组织架构</h1>
             <p className="mt-1 text-xs text-[var(--fg-muted)]">
               人、部门与他们名下的 Agent（只读）。
             </p>

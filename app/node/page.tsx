@@ -191,7 +191,7 @@ function ExternalSchedulesCard({ snapshot, nodeId, onQueued }: {
                     onClick={() => openEdit(schedule)}
                     className="rounded border border-[var(--accent)]/40 px-2 py-0.5 text-[11px] text-[var(--accent-text)] disabled:cursor-not-allowed disabled:opacity-40"
                     title={stale ? 'Wait for a fresh node report before editing' : 'Edit timing and enabled state'}
-                  >Edit</button>
+                  >编辑</button>
                 )}
               </div>
               <div className="mt-1 text-[11px] text-gray-500">

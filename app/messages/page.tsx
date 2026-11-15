@@ -226,7 +226,7 @@ export default function MessagesPage() {
           collapsible row below. */}
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <h1 className="text-2xl font-bold text-[var(--fg)] lg:ml-0 ml-10">Messages</h1>
+          <h1 className="text-2xl font-bold text-[var(--fg)] lg:ml-0 ml-10">消息</h1>
           {/* Round 89: filter-aware chip. When search/type filter is active
               the visible rows are filtered.length; the total loaded is
               messages.length (the M5 lazy window, newest histLimit). Show
@@ -276,7 +276,7 @@ export default function MessagesPage() {
           onChange={e => setFilterType(e.target.value)}
           className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-[var(--fg)] focus:border-blue-500/50 focus:outline-none"
         >
-          <option value="">All types</option>
+          <option value="">全部类型</option>
           <option value="task">task</option>
           <option value="message">message</option>
           <option value="broadcast">broadcast</option>

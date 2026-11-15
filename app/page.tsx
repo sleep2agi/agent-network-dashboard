@@ -197,7 +197,7 @@ export default function Dashboard() {
             <span className="text-gray-600"> &middot; </span>
             <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} failed</span>
           </div>
-          <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:opacity-80">View all &rarr;</Link>
+          <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:opacity-80">查看全部 →</Link>
         </section>
       )}
 
@@ -320,7 +320,7 @@ export default function Dashboard() {
             </div>
             {filtered.length === 0 && (
               <div className="mt-4 text-center text-xs text-gray-600">
-                No agents match &quot;{agentFilter}&quot; — <button onClick={() => setAgentFilter('all')} className="underline hover:text-gray-400">Show all</button>
+                没有符合「{agentFilter}」的 Agent —— <button onClick={() => setAgentFilter('all')} className="underline hover:text-gray-400">全部显示</button>
               </div>
             )}
             {filtered.length > visibleCount && (

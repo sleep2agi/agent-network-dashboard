@@ -200,7 +200,7 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
           // Without this the header's drag handler captures the pointer and
           // Chromium retargets the click to the header — the button never fires.
           onPointerDown={(e) => e.stopPropagation()}
-          aria-label="Close chat"
+          aria-label="关闭对话"
           className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-[var(--fg-muted)] hover:text-[var(--fg)] rounded-lg hover:bg-[var(--bg-elevated)] shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -220,7 +220,7 @@ export function ChatPopover({ alias, onClose }: ChatPopoverProps) {
         onPointerMove={onResizeMove}
         onPointerUp={onResizeUp}
         onPointerCancel={onResizeUp}
-        aria-label="Resize chat"
+        aria-label="调整对话窗口大小"
         className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize touch-none z-10"
         style={{ touchAction: 'none' }}
       >

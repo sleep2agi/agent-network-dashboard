@@ -98,7 +98,7 @@ export default function LoginPage() {
             Username
           </label>
           <input id="username" type="text" value={username} onChange={e => setUsername(e.target.value)} autoFocus
-            placeholder="Enter username"
+            placeholder="请输入用户名"
             className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-4 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all mb-4" />
 
           <label htmlFor="password" className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
@@ -106,7 +106,7 @@ export default function LoginPage() {
           </label>
           <div className="relative">
             <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder="请输入密码"
               className="w-full bg-[#0e0e10] border border-[#26262b] rounded-lg px-4 pr-11 py-3 text-base sm:text-sm text-white placeholder-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none transition-all" />
             <button
               type="button"

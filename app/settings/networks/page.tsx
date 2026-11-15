@@ -114,17 +114,17 @@ export default function NetworksPage() {
           "← Settings   Networks" pair on phones. */}
       <div className="mb-6">
         <Link href="/settings" className="inline-block text-[var(--fg-muted)] hover:text-[var(--fg)] text-sm lg:ml-0 ml-10 mb-1">&larr; Settings</Link>
-        <h1 className="text-2xl font-bold text-[var(--fg)]">Networks</h1>
+        <h1 className="text-2xl font-bold text-[var(--fg)]">网络</h1>
       </div>
 
       <div className="max-w-2xl space-y-6">
         {/* Create */}
         <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">Create Network</h2>
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">创建网络</h2>
           <div className="space-y-3">
-            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Network name"
+            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="网络名称"
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-[var(--fg)] placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
-            <input type="text" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description (optional)"
+            <input type="text" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="描述（可选）"
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-[var(--fg)] placeholder-gray-600 focus:border-cyan-500/50 focus:outline-none" />
             <button onClick={createNetwork} disabled={!newName.trim()}
               className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-800 text-[var(--fg)] text-sm rounded-lg transition-colors">
@@ -137,7 +137,7 @@ export default function NetworksPage() {
         {/* List */}
         <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-[var(--fg)]">My Networks</h2>
+            <h2 className="text-sm font-semibold text-[var(--fg)]">我的网络</h2>
             {/* #217 D9: "N TOTAL" counter dropped below 4 rows — counting
                 a visibly one-item list is noise (D6 conditional rule). */}
             {networks.length > 3 && (
@@ -193,8 +193,8 @@ export default function NetworksPage() {
                       </button>
                       {confirmDelete === n.network_id ? (
                         <>
-                          <button onClick={() => deleteNetwork(n.network_id)} className="text-xs text-[var(--danger)] px-2 py-1 rounded border border-red-800/30 bg-red-500/10">Confirm</button>
-                          <button onClick={() => setConfirmDelete(null)} className="text-xs text-[var(--fg-muted)]">Cancel</button>
+                          <button onClick={() => deleteNetwork(n.network_id)} className="text-xs text-[var(--danger)] px-2 py-1 rounded border border-red-800/30 bg-red-500/10">确认</button>
+                          <button onClick={() => setConfirmDelete(null)} className="text-xs text-[var(--fg-muted)]">取消</button>
                         </>
                       ) : (
                         <button onClick={() => setConfirmDelete(n.network_id)} className="text-xs text-[var(--danger)] hover:text-red-300 px-2 py-1 rounded border border-red-800/30 hover:bg-red-500/10">
@@ -208,7 +208,7 @@ export default function NetworksPage() {
                     <div className="mt-3 pt-3 border-t border-[var(--border)]">
                       <div className="text-xs text-[var(--fg-muted)] mb-2">Members ({(members[n.network_id] || []).length})</div>
                       {(members[n.network_id] || []).length === 0 ? (
-                        <div className="text-[11px] text-[var(--fg-dim)]">No members or V3 auth required</div>
+                        <div className="text-[11px] text-[var(--fg-dim)]">无需成员或 V3 鉴权</div>
                       ) : (
                         (members[n.network_id] || []).map(m => {
                           const name = m.username || m.display_name || '?';
@@ -228,7 +228,7 @@ export default function NetworksPage() {
 
                       {/* Invite */}
                       <div className="mt-3 pt-3 border-t border-[var(--border)]">
-                        <div className="text-xs text-[var(--fg-muted)] mb-2">Invite</div>
+                        <div className="text-xs text-[var(--fg-muted)] mb-2">邀请</div>
                         <div className="flex gap-2">
                           <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
                             className="bg-[var(--bg)] border border-[var(--border)] rounded px-2 py-1 text-base sm:text-xs text-[var(--fg)] focus:outline-none">
@@ -244,7 +244,7 @@ export default function NetworksPage() {
                         {inviteCode && (
                           <div className="mt-2 bg-green-500/5 border border-green-500/20 rounded px-3 py-2">
                             <div className="flex items-center justify-between mb-1">
-                              <div className="text-[11px] text-[var(--success)] uppercase tracking-wide">Invite code</div>
+                              <div className="text-[11px] text-[var(--success)] uppercase tracking-wide">邀请码</div>
                               <button
                                 type="button"
                                 onClick={() => { navigator.clipboard?.writeText(inviteCode).catch(() => {}); }}

@@ -576,9 +576,9 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
           <option value="online">在线</option>
           <option value="offline">离线</option>
           <option value="working">工作中</option>
-          <option value="idle">Idle</option>
+          <option value="idle">空闲</option>
           <option value="blocked">阻塞</option>
-          <option value="error">Error</option>
+          <option value="error">异常</option>
         </select>
         {/* #492 team select — only shown once at least one node has a
             team attribute. "__NO_TEAM__" surfaces nodes without team,
@@ -741,7 +741,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
         ) : (
           <EmptyState
             variant="nodes"
-            title="No nodes match your filters"
+            title="没有符合筛选的节点"
             sub="Try clearing search or status filters, or wait for an agent to register."
           />
         )
@@ -854,7 +854,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
               the old Chat / Send Task action column is gone. */}
           <div className="hidden sm:grid sm:grid-cols-10 gap-2 px-4 py-2 text-xs text-gray-600 uppercase">
             <div className="col-span-1">状态</div>
-            <div className="col-span-2">Alias</div>
+            <div className="col-span-2">别名</div>
             <div className="col-span-2">Agent · Server</div>
             <div className="col-span-4">当前任务</div>
             <div className="col-span-1">更新时间</div>

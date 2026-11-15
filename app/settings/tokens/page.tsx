@@ -78,16 +78,16 @@ export default function TokensPage() {
     <div className="min-h-full bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/settings" className="text-[var(--fg-muted)] hover:text-[var(--fg)] text-sm lg:ml-0 ml-10">&larr; Settings</Link>
-        <h1 className="text-2xl font-bold text-[var(--fg)]">API Tokens</h1>
+        <h1 className="text-2xl font-bold text-[var(--fg)]">API Token</h1>
       </div>
 
       <div className="max-w-2xl space-y-6">
         {/* Create token */}
         <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">Create Token</h2>
+          <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">创建 Token</h2>
           <div className="flex gap-2">
             <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
-              placeholder="Token name (e.g. my-cli)"
+              placeholder="Token 名称（例如 my-cli）"
               className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-base sm:text-sm text-[var(--fg)] placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none" />
             <button onClick={createToken} disabled={!newName.trim()}
               className="px-4 py-2 bg-[var(--accent)] hover:opacity-90 disabled:bg-[var(--bg-elevated)] text-[var(--accent-fg)] disabled:text-[var(--fg-dim)] text-sm rounded-lg transition-colors">
@@ -96,7 +96,7 @@ export default function TokensPage() {
           </div>
           {createResult.token && (
             <div className="mt-3 bg-green-500/5 border border-green-500/20 rounded-lg px-3 py-2">
-              <div className="text-xs text-[var(--success)] mb-1">Token created (copy now, shown only once):</div>
+              <div className="text-xs text-[var(--success)] mb-1">Token 已创建（请立即复制，只显示一次）：</div>
               <code className="text-sm text-green-300 break-all select-all">{createResult.token}</code>
             </div>
           )}

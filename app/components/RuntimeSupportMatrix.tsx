@@ -38,7 +38,7 @@ export function RuntimeSupportMatrix() {
         <table className="w-full min-w-max text-left text-[11px]">
           <thead>
             <tr className="text-[var(--fg-dim)]">
-              <th className="sticky left-0 bg-[var(--bg-secondary)] py-1 pr-3 font-normal">Runtime</th>
+              <th className="sticky left-0 bg-[var(--bg-secondary)] py-1 pr-3 font-normal">运行时</th>
               {FEATURES.map((f) => (
                 <th key={f.id} className="py-1 pr-3 font-normal whitespace-nowrap">{f.label}</th>
               ))}

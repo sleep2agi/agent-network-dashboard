@@ -147,8 +147,8 @@ export function UserBar() {
         )}
         <button onClick={() => { setEditName(auth.user?.display_name || ''); setEditEmail(''); setEditing(!editing); }}
           className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] whitespace-nowrap"
-          aria-label="Edit profile">
-          <span className="hidden sm:inline">Edit</span>
+          aria-label="编辑资料">
+          <span className="hidden sm:inline">编辑</span>
           <svg className="sm:hidden w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487z" />
           </svg>
@@ -164,11 +164,11 @@ export function UserBar() {
       </div>
       {editing && (
         <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-[var(--border)]">
-          <input type="text" value={editName} onChange={e => setEditName(e.target.value)} placeholder="Display name"
+          <input type="text" value={editName} onChange={e => setEditName(e.target.value)} placeholder="显示名称"
             className="bg-[var(--bg)] border border-[var(--border)] rounded px-2 py-1 text-base sm:text-xs text-[var(--fg)] placeholder-gray-600 focus:outline-none w-32" />
-          <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Email"
+          <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="邮箱"
             className="bg-[var(--bg)] border border-[var(--border)] rounded px-2 py-1 text-base sm:text-xs text-[var(--fg)] placeholder-gray-600 focus:outline-none w-40" />
-          <button onClick={updateProfile} className="px-2 py-1 bg-[var(--accent)] hover:opacity-90 text-[var(--accent-fg)] text-xs rounded">Save</button>
+          <button onClick={updateProfile} className="px-2 py-1 bg-[var(--accent)] hover:opacity-90 text-[var(--accent-fg)] text-xs rounded">保存</button>
         </div>
       )}
     </div>

@@ -157,7 +157,7 @@ export default function AdminPage() {
                   <span className="text-[var(--fg-dim)]"> &middot; </span>
                   <span className={byStatus['failed'] ? 'text-[var(--danger)]' : 'text-[var(--fg-muted)]'}>{byStatus['failed'] || 0} failed</span>
                 </div>
-                <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:text-[var(--accent-text)]">View all &rarr;</Link>
+                <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:text-[var(--accent-text)]">查看全部 →</Link>
               </div>
             );
           })()}
@@ -218,7 +218,7 @@ export default function AdminPage() {
           <textarea
             value={broadcastMsg}
             onChange={e => setBroadcastMsg(e.target.value)}
-            placeholder="Message to all online nodes..."
+            placeholder="发给所有在线节点的消息…"
             aria-label="广播消息内容"
             rows={3}
             className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none resize-none"
@@ -258,7 +258,7 @@ export default function AdminPage() {
           <textarea
             value={taskContent}
             onChange={e => setTaskContent(e.target.value)}
-            placeholder="Task content..."
+            placeholder="任务内容…"
             aria-label="任务内容"
             rows={3}
             className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none resize-none"
@@ -295,7 +295,7 @@ export default function AdminPage() {
               type="text"
               value={regUser}
               onChange={e => setRegUser(e.target.value)}
-              placeholder="Username"
+              placeholder="用户名"
               aria-label="用户名"
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none"
             />
@@ -303,7 +303,7 @@ export default function AdminPage() {
               type="password"
               value={regPass}
               onChange={e => setRegPass(e.target.value)}
-              placeholder="Password"
+              placeholder="密码"
               aria-label="密码"
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[var(--accent)]/50 focus:outline-none"
             />

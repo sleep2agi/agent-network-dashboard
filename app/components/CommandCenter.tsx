@@ -100,7 +100,7 @@ export function CommandCenter({ tabs, activeTab, onOpenTab, onCloseTab, onSetAct
           {/* R21 mobile a11y: outer command-center close was SVG-only
               and screen-reader silent; also bumped to 44 x 44 hit zone
               from 32 x ~36. */}
-          <button onClick={onClose} aria-label="Close command center" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white shrink-0 border-l border-[#26262b]">
+          <button onClick={onClose} aria-label="关闭命令中心" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-white shrink-0 border-l border-[#26262b]">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>

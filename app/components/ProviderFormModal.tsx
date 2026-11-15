@@ -229,7 +229,7 @@ export function ProviderFormModal({
           )}
 
           <label className="block space-y-1">
-            <span className="text-xs text-[var(--fg-muted)]">Base URL <span className="text-[var(--danger)]/70">*</span>{!isCustom && !editing && <span className="text-[var(--fg-dim)]">（已自动填充）</span>}</span>
+            <span className="text-xs text-[var(--fg-muted)]">基础 URL <span className="text-[var(--danger)]/70">*</span>{!isCustom && !editing && <span className="text-[var(--fg-dim)]">（已自动填充）</span>}</span>
             <input
               value={baseUrl}
               onChange={e => setBaseUrl(e.target.value)}

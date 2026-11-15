@@ -447,7 +447,7 @@ export function ServersDrawer() {
         maxHeight: 'calc(100vh - 6rem)',
         transition: 'width 200ms ease-out',
       }}
-      aria-label="Servers panel"
+      aria-label="服务器面板"
     >
       <button
         onClick={toggle}
@@ -464,7 +464,7 @@ export function ServersDrawer() {
         </svg>
         {open && (
           <>
-            <span className="flex-1 text-left">Servers</span>
+            <span className="flex-1 text-left">服务器</span>
             <span className="text-[11px] text-[var(--fg-muted)] font-mono">{onlineCount}/{servers.length}</span>
           </>
         )}

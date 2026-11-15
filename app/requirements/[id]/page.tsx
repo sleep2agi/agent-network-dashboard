@@ -779,7 +779,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         {/* #1634 — write surface. Hub keeps the rules (owner must be human,
             node tokens may not delete); this bar only sends whitelisted fields. */}
         <section className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5">
-          <span className="text-[11px] uppercase tracking-wide text-gray-600">Status</span>
+          <span className="text-[11px] uppercase tracking-wide text-gray-600">状态</span>
           {COLUMN_OPTIONS.map(opt => (
             <button
               key={opt.key}
@@ -991,7 +991,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
 
         <section className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="text-xs uppercase tracking-wide text-gray-500">Description</h2>
+            <h2 className="text-xs uppercase tracking-wide text-gray-500">描述</h2>
             {!editingDescription ? (
               <button type="button" data-testid="requirement-edit-description" onClick={() => { setDescriptionDraft(req.description || ''); setEditError(''); setEditingDescription(true); }} className="text-[11px] text-gray-400 underline hover:text-gray-200">编辑描述</button>
             ) : (
@@ -1231,7 +1231,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
         </section>
 
         <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
-          <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-500">Activity</h2>
+          <h2 className="mb-2 text-xs uppercase tracking-wide text-gray-500">动态</h2>
           {events.length === 0 ? (
             <EmptyState variant="generic" compact title="还没有动态" sub="状态变更和评论会出现在这里。" />
           ) : (
