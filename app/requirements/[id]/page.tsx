@@ -1286,7 +1286,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
                 onClick={submitComment}
                 className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs text-blue-300 disabled:opacity-50"
               >
-                Add comment
+                添加评论
               </button>
               {actionError && <span className="text-[11px] text-red-400">{actionError}</span>}
             </div>
