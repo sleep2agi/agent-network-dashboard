@@ -94,12 +94,12 @@ export default function LogsPage() {
           const counts: Record<string, number> = {};
           logs.forEach(l => { counts[l.action] = (counts[l.action] || 0) + 1; });
           const chips: { key: string; label: string; dot?: string }[] = [
-            { key: '',                label: 'All' },
-            { key: 'login',           label: 'login',           dot: ACTION_STRIPE.login },
-            { key: 'login_failed',    label: 'login_failed',    dot: ACTION_STRIPE.login_failed },
-            { key: 'register',        label: 'register',        dot: ACTION_STRIPE.register },
-            { key: 'create_network',  label: 'create_network',  dot: ACTION_STRIPE.create_network },
-            { key: 'send_task',       label: 'send_task',       dot: ACTION_STRIPE.send_task },
+            { key: '',                label: '全部' },
+            { key: 'login',           label: '登录',           dot: ACTION_STRIPE.login },
+            { key: 'login_failed',    label: '登录失败',    dot: ACTION_STRIPE.login_failed },
+            { key: 'register',        label: '注册',        dot: ACTION_STRIPE.register },
+            { key: 'create_network',  label: '创建网络',  dot: ACTION_STRIPE.create_network },
+            { key: 'send_task',       label: '发送任务',       dot: ACTION_STRIPE.send_task },
           ];
           return chips.map(c => {
             const count = c.key === '' ? logs.length : counts[c.key] || 0;
@@ -182,7 +182,7 @@ export default function LogsPage() {
               />
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className={`text-xs px-2 py-0.5 rounded-lg border ${ACTION_COLORS[log.action] || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
-                  {log.action}
+                  {({ login: '登录', login_failed: '登录失败', register: '注册', create_network: '创建网络', send_task: '发送任务' } as Record<string, string>)[log.action] ?? log.action}
                 </span>
                 {userName && <AliasAvatar alias={userName} size={16} />}
                 <span className="text-sm text-gray-200 font-medium">{userName}</span>

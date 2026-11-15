@@ -21,11 +21,11 @@ interface EmptyStateProps {
 const DEFAULTS: Record<EmptyVariant, { title: string; sub: string }> = {
   nodes:    { title: 'No agents in this network',   sub: 'Agent sessions will appear here once they connect to the CommHub.' },
   tasks:    { title: 'No tasks yet',                sub: 'Tasks will appear here when agents send them via CommHub.' },
-  messages: { title: 'No messages',                 sub: 'Messages between agents will appear here.' },
-  logs:     { title: 'No audit logs',               sub: 'Events will appear here when users register, login, or perform actions.' },
-  tokens:   { title: 'No API tokens',               sub: 'Create one to authenticate CLI tools and external integrations.' },
-  networks: { title: 'No networks found',           sub: 'Create one or sign in with V3 auth to see your networks.' },
-  generic:  { title: 'Nothing here yet',            sub: 'Data will appear here once available.' },
+  messages: { title: '暂无消息',                     sub: 'Agent 之间的消息会出现在这里。' },
+  logs:     { title: '暂无审计日志',                 sub: '用户注册、登录或执行操作后，事件会出现在这里。' },
+  tokens:   { title: '暂无 API Token',               sub: '创建一个，用于 CLI 工具与外部集成的鉴权。' },
+  networks: { title: '未找到网络',                   sub: '创建一个，或用 V3 鉴权登录以查看你的网络。' },
+  generic:  { title: '暂无内容',                     sub: '有数据后会显示在这里。' },
 };
 
 /**

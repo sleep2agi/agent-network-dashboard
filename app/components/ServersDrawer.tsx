@@ -297,7 +297,7 @@ export function ServersPanel({ enabled = true, className = '' }: { enabled?: boo
               </div>
               <span className="flex items-center gap-1 shrink-0">
                 <span className="text-[11px] text-[var(--fg-muted)] font-mono tabular-nums">
-                  {s.agent_count}&nbsp;agent{s.agent_count === 1 ? '' : 's'}
+                  {s.agent_count}&nbsp;个 Agent
                 </span>
                 {/* Chevron — rotates 90° on expanded */}
                 <svg
