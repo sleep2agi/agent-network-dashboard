@@ -6,6 +6,44 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.578 — 2026-11-15
+
+### 逐页体检第四批：管理台中文化 + 中文错误边界
+
+```
+/admin 截图里三处英文：
+  会话状态芯片 idle            → 空闲
+  任务摘要 2 running · 6879 failed → 2 运行中 · 6879 失败
+  任务目标下拉 别名 (idle)      → 别名（空闲）
+根因：会话状态中文名分散在 legion/3d、legion/plaza、NodeList 三处各写一份，
+     /admin 干脆直接渲染 s.status —— 所以它一直是英文。
+```
+
+### 改动
+```
+app/lib/status.ts          + SESSION_STATUS_LABEL（working 运行中 · idle 空闲 · blocked 阻塞 ·
+                             error 错误 · offline 未上报 · queued 排队中 · closed 已关闭）
+app/admin/page.tsx         摘要/状态芯片/下拉选项走同一份映射；芯片加 data-status-chip 供文案门取样
+app/error.tsx        （新） 中文页面级错误边界：这个页面没能加载 · 重试 · 返回概览 · 错误编号
+app/global-error.tsx （新） 中文根级错误边界（自带内联样式，不依赖 CSS 变量）
+```
+
+### 起因补充：错误页是本地复看时才发现的
+```
+本地 :3111 复看 /admin 撞到 Next 默认英文错误页：
+  "This page couldn't load / Reload to try again, or go back."
+（当次真因是旧进程占端口导致 chunk 404，但英文错误页本身是真缺陷）
+与 404 同理：非正常路径的文案同样属于"界面语言"。
+```
+
+### 验证
+```
+tsc 0 · lint 0 errors · npm test 60/60 · gates 四项回基线（color-ratchet 拦下过
+error.tsx 的 min-h-[60vh]，已改 50vh 白名单值）· 本地 /admin 0 pageerror / 0 console error
+```
+
+用户可见变化：管理台不再出现 idle / running / failed；页面出错时看到中文提示与「重试 / 返回概览 / 错误编号」。
+
 ## 0.6.4-preview.577 — 2026-11-15
 
 ### 逐页双档体检第三批：7 页看完，修 7 处
