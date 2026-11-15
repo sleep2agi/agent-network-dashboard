@@ -252,7 +252,7 @@ export default function MessagesPage() {
               }}
               className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] border border-[var(--border)]/50 px-2.5 py-1 rounded-lg transition-colors shrink-0"
             >
-              Export MD
+              导出 MD
             </button>
           )}
         </div>
@@ -286,7 +286,7 @@ export default function MessagesPage() {
           {(['timeline', 'grouped'] as const).map(mode => (
             <button key={mode} type="button" onClick={() => setViewMode(mode)}
               className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors ${viewMode === mode ? 'bg-[var(--accent)]/10 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:text-[var(--fg)]'}`}>
-              {mode === 'timeline' ? 'Timeline' : 'Grouped'}
+              {mode === 'timeline' ? '时间线' : '分组'}
             </button>
           ))}
         </div>
@@ -296,7 +296,7 @@ export default function MessagesPage() {
             debug ? 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20' : 'text-[var(--fg-muted)] border-[var(--border)]/50 hover:text-[var(--fg)]'
           }`}
         >
-          {debug ? 'Debug ON' : 'Debug'}
+          {debug ? '调试（开）' : '调试'}
         </button>
       </div>
       )}
