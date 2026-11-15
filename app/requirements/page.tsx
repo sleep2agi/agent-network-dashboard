@@ -12,6 +12,7 @@ import { ownerRefFor, useCurrentUserId } from '../lib/current-user';
 import { TagManager } from './TagManager';
 import { tagColor } from '../lib/tag-catalog';
 import { parseSort, sortRequirements, SORT_KEYS } from '../lib/requirement-sort';
+import { REQUIREMENT_COLUMN_LABEL } from '../lib/status';
 import { PRIORITY_KEYS, isPriorityKey, priorityLabel, priorityTitle } from '../lib/requirement-priority';
 import { planHealth, planHealthRank, planHealthTone } from '../lib/requirement-plan-health';
 import { buildTreeRows } from '../lib/requirement-tree';
@@ -57,10 +58,10 @@ const PRIORITIES = PRIORITY_KEYS;
 
 const COLUMNS: { key: Requirement['column'] | ''; label: string }[] = [
   { key: '', label: '全部' },
-  { key: 'pool', label: '需求池' },
-  { key: 'doing', label: '进行中' },
-  { key: 'done', label: '完成' },
-  { key: 'abandoned', label: '已放弃' },
+  { key: 'pool', label: REQUIREMENT_COLUMN_LABEL.pool },
+  { key: 'doing', label: REQUIREMENT_COLUMN_LABEL.doing },
+  { key: 'done', label: REQUIREMENT_COLUMN_LABEL.done },
+  { key: 'abandoned', label: REQUIREMENT_COLUMN_LABEL.abandoned },
 ];
 
 const COLUMN_CHIP: Record<string, string> = {
@@ -1879,8 +1880,8 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                   )}
                   <Link href={rowHref(row.id)} data-req-row onClick={() => rememberRowAnchor(row.id)} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4" style={treeMode ? { paddingLeft: 8 + depth * 16 } : undefined}>
                     <span className="w-12 shrink-0 text-[11px] tabular-nums text-[var(--fg-muted)]">#{row.seq}</span>
-                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${COLUMN_CHIP[row.column] || COLUMN_CHIP.abandoned}`}>
-                      {row.column}
+                    <span data-status-chip className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${COLUMN_CHIP[row.column] || COLUMN_CHIP.abandoned}`}>
+                      {REQUIREMENT_COLUMN_LABEL[row.column] || row.column}
                     </span>
                     <span className="min-w-0 flex-1 basis-32 text-sm text-gray-100 sm:basis-0">
                       <span className="block truncate" title={row.name}>{row.name}</span>

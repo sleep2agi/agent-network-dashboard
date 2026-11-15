@@ -34,6 +34,16 @@ export const STATUS_LABEL: Record<string, string> = {
   queued: '排队中',
 };
 
+/** 需求看板列的中文名，唯一来源。
+ *  此前列表行、详情页芯片、子需求列表都直接渲染 `column` 原值，
+ *  于是界面上出现 done / doing / pool 这类英文枚举（截图证据见 .573 台账）。 */
+export const REQUIREMENT_COLUMN_LABEL: Record<string, string> = {
+  pool: '需求池',
+  doing: '进行中',
+  done: '完成',
+  abandoned: '已放弃',
+};
+
 /** Pill / chip background+text+border. Tailwind classes, not inlined hex,
  *  because chips are static class names safe from purge. */
 /** #217 D3 (OpenWebUI-style color restraint): the 9-hue rainbow is
