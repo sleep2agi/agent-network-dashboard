@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.569` |
-| commit | `7fe70f284f90ff97421db814dbe11ace53475c60` |
+| 版本 | `0.6.4-preview.570` |
+| commit | `e7ce5bea799c08efcce4135ff283617098eb3a20` |
 | 公网 | https://dm.vansin.top |
-| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.569-7fe70f2` |
-| 回滚锚点 | `preview.568-9919e8b` |
+| 进程 | pm2 `anet-dashboard` · cwd `releases/preview.570-e7ce5be` |
+| 回滚锚点 | `preview.569-7fe70f2` |
 
 ## 今日已上线（各自只做一件事、各自可独立回滚）
 
