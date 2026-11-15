@@ -6,6 +6,34 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.581 — 2026-11-16
+
+### 首页统计/摘要/卡片状态中文化；同一状态只留一种说法
+
+```
+移动端 390 首轮看图（此前 23 路由巡检恰好没把首页排进去）立刻发现 4 类英文：
+  统计行：17 online · 1 working · 407 offline · 424 total
+  任务条：9 running · 6860 failed
+  卡片芯片：idle / offline
+  筛选项：全部 / 工作中 / 空闲 / 离线  ← 这里叫「工作中」，卡片却叫「运行中」
+```
+
+### 改动
+```
+app/components/StatsBar.tsx   online/working/offline/total → 在线/运行中/离线/总计
+app/page.tsx                  任务摘要 running/failed → 运行中/失败；
+                              筛选项「工作中」→「运行中」（与卡片芯片统一）
+app/components/AgentCard.tsx  卡片状态芯片走 SESSION_STATUS_LABEL（idle→空闲 · offline→未上报）
+```
+
+### 验证
+```
+本地 390×844 复看：统计行 / 任务条 / 卡片芯片 / 相对时间 全部中文
+tsc 0 · lint 0 errors · npm test 60/60 · gates 四项回基线 · 横向溢出 0px · pageerror 0
+```
+
+用户可见变化：手机与桌面打开首页，统计数字与每张 Agent 卡的状态都是中文，且同一状态只有一种说法。
+
 ## 0.6.4-preview.580 — 2026-11-15
 
 ### 离线 Agent 卡不再整体降透明：名字/状态/时间从 1.85:1 回到可读
