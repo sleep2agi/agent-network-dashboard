@@ -74,7 +74,10 @@ function AgentCardInner({ session: s, hasSse, sseCount, onChat, unreadCount = 0 
       className={`anet-agent-card group relative block rounded-xl border p-3 sm:p-4 transition-all duration-300 cursor-pointer hover:-translate-y-0.5 ${
         hasSse
           ? `bg-[#161618] border-[#26262b] hover:border-cyan-500/30 hover:shadow-lg ${cfg.glow}`
-          : 'bg-[#111113] border-[#1c1c1f] opacity-40'
+          // `.580`：离线卡不再整块 opacity-40。实测离线卡里的名字/状态/时间
+          // 对比度只有 1.85–2.56:1（判据 4.5），在浅色与暗色主题下都读不清。
+          // 与 `.533` 服务器抽屉同法：去掉整块透明度，用虚线描边 + 更暗底色表达"离线"。
+          : 'bg-[#0e0e10] border-[#1c1c1f] border-dashed'
       }`}
     >
       {/* Header: avatar + name + status. Avatar carries the alias→hue map
