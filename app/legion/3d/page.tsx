@@ -4435,6 +4435,16 @@ export default function Legion3DPage() {
         )}
         <button
           type="button"
+          onClick={togglePresenting}
+          aria-pressed={presenting}
+          title="隐藏界面、鼠标与悬浮提示，匀速环绕；按 Esc 退出"
+          data-testid="legion-3d-present"
+          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:px-2 ${presenting ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+        >
+          演示模式
+        </button>
+        <button
+          type="button"
           onClick={() => {
             setToolsOpen(false);
             setListOpen(v => {
@@ -4489,16 +4499,6 @@ export default function Legion3DPage() {
           className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:px-2 ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
         >
           {cleanView ? '恢复界面' : '净屏'}
-        </button>
-        <button
-          type="button"
-          onClick={togglePresenting}
-          aria-pressed={presenting}
-          title="隐藏界面、鼠标与悬浮提示，匀速环绕；按 Esc 退出"
-          data-testid="legion-3d-present"
-          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:px-2 ${presenting ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
-        >
-          演示模式
         </button>
         <button
           type="button"
