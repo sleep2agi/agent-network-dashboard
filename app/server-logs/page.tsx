@@ -125,6 +125,8 @@ export default function ServerLogsPage() {
     return true;
   });
 
+  // `.579`：筛选项标签中文化（key 保持英文，与 Hub 字段一致）
+  const LEVEL_LABEL: Record<string, string> = { all: '全部', log: '日志', info: '信息', warn: '警告', error: '错误' };
   const counts = { log: 0, info: 0, warn: 0, error: 0 };
   for (const l of logs) counts[l.level]++;
 
@@ -153,7 +155,7 @@ export default function ServerLogsPage() {
             {paused ? (
               <>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M8 5v14l11-7z" /></svg>
-                Resume
+                继续
               </>
             ) : (
               <>
@@ -161,13 +163,13 @@ export default function ServerLogsPage() {
                   <rect x="6" y="5" width="4" height="14" rx="0.5" />
                   <rect x="14" y="5" width="4" height="14" rx="0.5" />
                 </svg>
-                Pause
+                暂停
               </>
             )}
           </button>
           <label className="flex items-center gap-1 text-gray-400 select-none">
             <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="accent-cyan-500" />
-            <span className="hidden sm:inline">auto-refresh</span>
+            <span className="hidden sm:inline">自动刷新</span>
           </label>
           <button onClick={() => fetchLogs(true)} className="flex items-center gap-1.5 px-3 py-1 rounded border bg-gray-500/10 text-gray-300 border-gray-500/20 hover:bg-gray-500/20">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -214,7 +216,7 @@ export default function ServerLogsPage() {
                     : 'bg-[#161618] text-gray-400 border-[#26262b] hover:bg-[#1c1c1f]'
                 }`}
               >
-                <span>{lv}</span>
+                <span>{LEVEL_LABEL[lv]}</span>
                 <span className={`text-[11px] tabular-nums ${isActive ? 'opacity-80' : 'text-gray-600'}`}>{count}</span>
               </button>
             );
