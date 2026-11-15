@@ -351,3 +351,45 @@ present:deepLinkFillsHeight），单套件重跑 272/272，全量重跑 272/272�
       ② 重跑仍失败 = 回归（排查/回退）
       ③ 手工回归用 <suite>-<ver>-manual 标签，不占用发布标签名
 ```
+
+
+---
+
+## 15. 发布：`0.6.4-preview.571` —— 界面文案线封版（21 目标）
+
+| 项 | 值 |
+|---|---|
+| 版本 | `0.6.4-preview.571` |
+| commit | `38e0c0c055c11a9c904bf3e06c60652ed3d7dd32` |
+| buildId | `k-dQ5-sAnRFsY0dgNk8rK` |
+| 内容 | 需求页 `Clear filters`→清除筛选 · 组织页 `Clear`→清除 · 节点页 tab：对话/事件/信息 |
+| 门 | **21 目标**：18 条静态入口 + `/requirements/<id>` + `/nodes/<alias>` + `/node?alias=` |
+| 回退锚点 | `preview.570-e7ce5be`（`e7ce5be` / `V7RG3nvgG9htsXb7JJYuu`） |
+
+### 结案证据
+```
+20 套件 20/20（legion 272 · board 171 · detail 115 · pageSmoke 47）
+CI 4/4 · 发布后自检 4/4 · 健康门 15/15
+线上文案门：I18N-UI PASS，21 个目标全部「残留=0 面板=0 浮层=0」
+  动态路由纳入：/requirements/req_…  /nodes/TM中转运维2号  /node?alias=TM中转运维2号
+```
+
+### 教训 M：清点必须一次扫全三种写法
+```
+`Clear filters` 红过一次（16 处），我按 getByRole 的 name 字面量做了全仓清点；
+但 `Events` 仍红了——因为它写在 hasText / getByText 两种写法里。
+规矩：改可见文案前，清点必须同时扫 name: / hasText: / getByText( 三种写法。
+本次扫完后的结论：20 个验收套件里，"只认英文文案"的选择器已清零。
+  已修：Refresh 22 · Clear filters 16 · All N 4 · Events/Chat/Info 2
+  无需改：'Clear' 仅存在于归档历史探针（不在 20 套件内）
+  有意保留：verify-header 的 'Alias copied'（刻意验证英文分支）
+```
+
+### 封版口径（写入 CHANGELOG，同时作为下次的边界）
+```
+覆盖：18 条入口 + 需求详情 + 节点详情（两条路由）+ 命令面板 + 帮助浮层
+      = 21 目标 × 3 类界面
+判据：白名单制（非白名单拉丁词即报）+ 9 条数据/内容跳过规则 + 取不到样本必须显式报告
+不覆盖：抽屉类（文件/日志/技能/密钥）、/tasks/<id> 等其它动态详情
+复跑：node evidence/probes/i18n-ui-sweep.mjs <base>
+```
