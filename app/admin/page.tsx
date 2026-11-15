@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSessions, useHealth, useStats } from '../lib/hooks';
 import { timeAgo } from '../components/utils';
 import { AliasAvatar } from '../components/AliasAvatar';
-import { SESSION_STATUS_CHIP_CLASS } from '../lib/status';
+import { SESSION_STATUS_LABEL, SESSION_STATUS_CHIP_CLASS } from '../lib/status';
 
 export default function AdminPage() {
   const { sessions } = useSessions({ lite: true }) // 只读 alias/status/network_id/version：lite 投影已包含（app/lib/lite-status.ts KEEP）
@@ -153,9 +153,9 @@ export default function AdminPage() {
             return (
               <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-3 text-xs">
                 <div className="text-[var(--fg-muted)] tabular-nums">
-                  <span className={byStatus['running'] ? 'text-[var(--success)]' : 'text-[var(--fg-muted)]'}>{byStatus['running'] || 0} running</span>
+                  <span className={byStatus['running'] ? 'text-[var(--success)]' : 'text-[var(--fg-muted)]'}>{byStatus['running'] || 0} 运行中</span>
                   <span className="text-[var(--fg-dim)]"> &middot; </span>
-                  <span className={byStatus['failed'] ? 'text-[var(--danger)]' : 'text-[var(--fg-muted)]'}>{byStatus['failed'] || 0} failed</span>
+                  <span className={byStatus['failed'] ? 'text-[var(--danger)]' : 'text-[var(--fg-muted)]'}>{byStatus['failed'] || 0} 失败</span>
                 </div>
                 <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:text-[var(--accent-text)]">查看全部 →</Link>
               </div>
@@ -184,7 +184,7 @@ export default function AdminPage() {
                   {/* Round 91: 5-state palette via shared
                       SESSION_STATUS_CHIP_CLASS (was working-vs-other, which
                       rendered blocked/error identical to idle). */}
-                  <span className={`text-xs px-2 py-0.5 rounded border ${SESSION_STATUS_CHIP_CLASS[s.status] || SESSION_STATUS_CHIP_CLASS.idle}`}>{s.status}</span>
+                  <span data-status-chip className={`text-xs px-2 py-0.5 rounded border ${SESSION_STATUS_CHIP_CLASS[s.status] || SESSION_STATUS_CHIP_CLASS.idle}`}>{SESSION_STATUS_LABEL[s.status] || s.status}</span>
                   <span className="text-[11px] text-[var(--fg-dim)]">{timeAgo(s.updated_at)}</span>
                 </div>
               </div>
@@ -247,7 +247,7 @@ export default function AdminPage() {
           >
             <option value="">选择目标节点…</option>
             {onlineNodes.map(s => (
-              <option key={s.alias} value={s.alias}>{s.alias} ({s.status})</option>
+              <option key={s.alias} value={s.alias}>{s.alias}（{SESSION_STATUS_LABEL[s.status] || s.status}）</option>
             ))}
             <optgroup label="Offline">
               {offlineNodes.map(s => (

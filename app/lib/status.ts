@@ -34,6 +34,20 @@ export const STATUS_LABEL: Record<string, string> = {
   queued: '排队中',
 };
 
+/** 会话/节点状态的中文名，唯一来源。
+ *  此前 legion/3d、legion/plaza、NodeList 各写一份（值还不完全一致），
+ *  /admin 干脆直接渲染 s.status，于是中文界面里出现 idle / working。
+ *  key 保持英文（与 Hub 接口一致），只翻译展示层。 */
+export const SESSION_STATUS_LABEL: Record<string, string> = {
+  working: '运行中',
+  idle: '空闲',
+  blocked: '阻塞',
+  error: '错误',
+  offline: '未上报',
+  queued: '排队中',
+  closed: '已关闭',
+};
+
 /** 需求看板列的中文名，唯一来源。
  *  此前列表行、详情页芯片、子需求列表都直接渲染 `column` 原值，
  *  于是界面上出现 done / doing / pool 这类英文枚举（截图证据见 .573 台账）。 */
