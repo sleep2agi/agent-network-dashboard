@@ -7,8 +7,8 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.575` |
-| commit | `28bbdc5ac71da182bfc1a5146ef3ea0bb5b3616a` |
+| 版本 | `0.6.4-preview.576` |
+| commit | `36faa235a186efe99fcd651ec91e9dc2087f2b6a` |
 | 公网 | https://dm.vansin.top |
 | 进程 | cwd `releases/preview.575-28bbdc5`（pid 由 `ss -ltnp` 核验） |
 | 回滚锚点 | `preview.573-8315fcc`（`8315fcc` / `ZXwg79tebstBo4x4mkTnk`） |
