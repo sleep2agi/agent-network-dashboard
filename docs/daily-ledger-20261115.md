@@ -988,3 +988,36 @@ run_with_retry "projector" node evidence/probes/legion-projector.mjs "$BASE"
 5–6 行说明 → 1 行 + 可展开：信息一字不少，但首屏干净了。
 适用于所有"解释性长文"：短句常驻、全文折叠。
 ```
+
+---
+
+## 32. 工具资产：演示态判断自动化 + 两条"结论不撒谎"的纪律
+
+| 项 | 值 |
+|---|---|
+| 新增探针 | `evidence/probes/legion-present-clean.mjs`（军团复验第 7 条） |
+| 注册 | `deploy/legion-verify-all.sh` → `LEGION-VERIFY: PASS (7/7)` |
+| 结论分母 | 由写死的 `6/6` 改为 `${#RESULTS[@]}` |
+
+### 教训 AR：「看不见」有四种实现，外加一种隐患
+```
+display:none / visibility:hidden / opacity:0 / 尺寸为 0 —— 判可见性必须四种全覆盖。
+`.584` 实测：演示态隐藏侧栏用的是 opacity:0（带过渡），
+只判 visibility/display/尺寸会得出"侧栏还在"的错误结论（我确实误判过一次）。
+第五种隐患：「看不见但仍能点」—— 只有 document.elementFromPoint 能测出来。
+演示态左边缘 (100,540) 现在会被断言"命中元素不在侧栏内"，当前命中 canvas ⇒ 不吞点击。
+```
+
+### 教训 AS：任何「X/X 全绿」里的分母都必须是动态的
+```
+加了第 7 条探针后，脚本仍打印 "PASS (6/6)" —— 分母是写死的字符串。
+这类失真最危险：覆盖变多了，结论却还显示旧数字，读的人会以为范围没变。
+⇒ 现在用 ${#RESULTS[@]}，加/删探针结论自动如实。
+```
+
+### 今天的演示态基线（截图证据）
+```
+evidence/present-pass/present-1920.png · present-1366.png
+1920/1366：侧栏/头部/工具栏全部退出；只剩环形 + 右下控制条
+  控制条：← 上一部门 · 下一部门 → · 部门巡礼 · 演示检查: 就绪 · 退出演示（Esc）
+```
