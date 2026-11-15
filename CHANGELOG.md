@@ -6,6 +6,42 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.573 — 2026-11-15
+
+### 军团 3D：部门圆心不再"断词"，14 个部门名在 1366/1920 上都读得出来
+
+```
+截图复看时发现，圆心短名是"按字符数硬切"的：
+  ANet       → ANe      （像拼错的品牌名）
+  TMAI       → TMA
+  无主 Agent → 无主A    （中英混切）
+  未分组     → 未分     （1366 下；50px 的圆其实放得下三个字）
+这是页面上最显眼的元素：14 个部门圆心，任何人一眼就看到。
+```
+
+### 改动
+```
+新增 app/lib/legion-labels.ts:
+  legionCircleName(label, budget)  —— 按「中文/西文」分段，整段收或整段不收；
+                                      中文 1.0 / 西文 0.6 计入预算；圆心永不为空
+  legionCircleBudget(rx, fontSize) —— 预算由圆的像素宽度派生：clamp((2*rx-6)/fs, 1, 4)
+                                      （旧写法硬编码"rx≥28 给 3 字，否则 2 字"）
+app/legion/3d/page.tsx：
+  圆心短名一处计算、两处使用（绘制 + 外层标签去重），导入补 legionCircleBudget
+tests/legion-circle-name.test.mjs（新）：22 条断言
+  含 2 条反向防回归：page.tsx 必须先算预算再取名；不许再出现 `rx >= 28 ? 3 : 2`
+```
+
+### 验证（双档截图逐字看）
+```
+1920：ANet / TMAI / 无主 / 未分组 / B站 / A站 全部完整
+1366：同上（「未分组」由「未分」修正为完整三字）
+toolbar/header 未回退：1920 = 28/98.5 · 1366 = 30/98.5 · 1280 = 30/98.5
+tsc 0 · lint 0 errors · npm test 59/59 · oss-readiness 34/34 · next build 成功
+```
+
+用户可见变化：军团页每个部门圆心里写的是能读的部门名，不再出现 `ANe`、`TMA`、`无主A`、`未分` 这类断词。
+
 ## 0.6.4-preview.572 — 2026-11-15
 
 ### 军团 3D：1366/1280 笔记本上工具条不再换行，头部由 115px 降到 98.5px
