@@ -448,6 +448,7 @@ export function ServersDrawer() {
         transition: 'width 200ms ease-out',
       }}
       aria-label="服务器面板"
+      data-servers-drawer
     >
       <button
         onClick={toggle}
