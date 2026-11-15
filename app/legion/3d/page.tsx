@@ -29,7 +29,7 @@ import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResp
 import { useNetworkId } from '../../lib/network-context';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import { buildLegionCamera, departmentDisc, dropSag, fitProjectedBodies, hitTest, nodeToVec3, projectPoint, projectScene, ringPath, RING_HEIGHT, type SceneNode } from '../../lib/legion-3d';
-import { legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
+import { legionCircleBudget, legionCircleName, legionLabelLeader, placeLegionLabel, wrapLegionLabel, type LabelEllipse, type LabelRect } from '../../lib/legion-labels';
 import { drawLegionCore } from '../../lib/legion-core';
 import { EXPORT_FPS, LOOP_DURATION_MS, containRect, exportDimensions, loopProgress, loopYaw, pickRecordingMime, recordingFileName } from '../../lib/legion-recording';
 import { EmptyState } from '../../components/EmptyState';
@@ -2794,6 +2794,12 @@ export default function Legion3DPage() {
           ctx.stroke();
         }
 
+        // 圆心短名：绘制与「外层标签去重」两处共用一份，预算按圆的像素宽度算
+        // （旧写法硬编码 3/2 字，1366 下把「未分组」切成「未分」）。
+        const circleShort = node.kind === 'group' && radiusPx >= 9
+          ? legionCircleName(node.label, legionCircleBudget(rx, Math.min(13, Math.max(11, ry * 1.25))))
+          : '';
+
         // 圆心内容：部门写短名、没有头像的成员写首字母 —— 否则大圆点就是一片空白，
         // 远看全是「白饼」（admin 截图里最扎眼的就是这个）。
         if (!dim) {
@@ -2801,7 +2807,7 @@ export default function Legion3DPage() {
           // alpha < 0.5 的实体是「故意淡出」的（深一层部门/空部门）：这时画字
           // 只会留下读不清的残影。要么清楚，要么不画。
           if (alpha >= 0.5 && node.kind === 'group' && radiusPx >= 9) {
-            const short = Array.from(node.label.replace(/[*+\s]/g, '')).slice(0, rx >= 28 ? 3 : 2).join('');
+            const short = circleShort;
             if (short) {
               nodeTextAlphaMin = Math.min(nodeTextAlphaMin, alpha);
               const fs = Math.min(13, Math.max(11, ry * 1.25));
@@ -2871,8 +2877,7 @@ export default function Legion3DPage() {
         // 标签：Agent 太多，只有近处或高亮时才画，避免糊成一片。
         // 部门的短名已经写在圆点里；名字短到圆心能写全时，外面再画一个一样的
         // 名字只是重复（密集网络里尤其明显），只有悬停/选中才补。
-        const shortInside = node.kind === 'group' && radiusPx >= 9
-          && Array.from(node.label.replace(/[*+\s]/g, '')).length <= (rx >= 28 ? 3 : 2);
+        const shortInside = circleShort === Array.from(node.label.replace(/[*+\s]/g, '')).join('');
         // 一级部门是「结构骨架」：即使占位面积小也要尝试画名字（放在最低优先级之后排，
         // 由 placeLegionLabel 决定能不能放下），否则 14 个部门里只有 6 个看得到名字。
         const groupWanted = node.kind === 'group'

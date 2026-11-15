@@ -70,6 +70,72 @@ export function wrapLegionLabel(text: string, maxWidth: number, measure: (text: 
   return lines;
 }
 
+const latinChar = (ch: string) => /[A-Za-z0-9]/.test(ch);
+
+/**
+ * Circle name for a department node: a boundary-aware abbreviation, not a blind slice.
+ *
+ * Blind slicing cut words in the middle — `ANet`→`ANe`, `TMAI`→`TMA`,
+ * `无主 Agent`→`无主A` — which reads like a typo on the page's most looked-at element.
+ * Rule: walk CJK/Latin runs in order and take a run **whole or not at all**, charging
+ * 1.0 per CJK char and 0.6 per Latin char against a radius-dependent budget. A short
+ * Latin-only run (≤4 chars, e.g. `ANet`) is always kept whole because its glyphs are
+ * narrow. When even the first run cannot fit, the head is taken so the circle is
+ * never blank.
+ */
+export function legionCircleName(label: string, budget = 3): string {
+  const cleaned = Array.from((label || '').replace(/[*+\s]/g, ''));
+  if (!cleaned.length || budget <= 0) return '';
+  const runs: string[] = [];
+  let run = '';
+  let runLatin = latinChar(cleaned[0]);
+  for (const ch of cleaned) {
+    const latin = latinChar(ch);
+    if (latin !== runLatin) {
+      if (run) runs.push(run);
+      run = '';
+      runLatin = latin;
+    }
+    run += ch;
+  }
+  if (run) runs.push(run);
+
+  if (runs.length === 1 && runLatin && Array.from(runs[0]).length <= 4) return runs[0];
+
+  let out = '';
+  let used = 0;
+  for (const r of runs) {
+    const latin = latinChar(r[0]);
+    const cost = Array.from(r).length * (latin ? 0.6 : 1);
+    if (used + cost <= budget) {
+      out += r;
+      used += cost;
+      continue;
+    }
+    if (!out) {
+      for (const ch of r) {
+        const c = latinChar(ch) ? 0.6 : 1;
+        if (used + c > budget) break;
+        out += ch;
+        used += c;
+      }
+    }
+    break;
+  }
+  return out;
+}
+
+/**
+ * Budget for {@link legionCircleName}. The old code hard-coded "3 chars when rx≥28,
+ * else 2", which cut `未分组` down to `未分` at 1366 even though three 12px glyphs fit
+ * a 50px circle. Price the budget in glyph units instead (1 CJK ≈ 1 font-size,
+ * Latin ≈ 0.6), from the circle's own pixel width — the same number the renderer uses.
+ */
+export function legionCircleBudget(rx: number, fontSize: number): number {
+  if (!(rx > 0) || !(fontSize > 0)) return 0;
+  return Math.max(1, Math.min(4, (2 * rx - 6) / fontSize));
+}
+
 function segmentHitsRect(from: { x: number; y: number }, to: { x: number; y: number }, rect: LabelRect) {
   let start = 0;
   let end = 1;
