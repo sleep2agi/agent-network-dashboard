@@ -6,6 +6,44 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.577 — 2026-11-15
+
+### 逐页双档体检第三批：7 页看完，修 7 处
+
+```
+对 /settings /tasks /messages /logs /org /providers /versions 各截 1366 与 1920，
+按四条目视判据（顶部换行 / 孤字行 / 中英断词 / 溢出与状态提示）逐页看：
+  /settings   干净
+  /tasks      兜底文案 "Loading tasks…"（慢网络可见）+ 右侧空态过于干瘪
+  /messages   相对时间 "2s ago / 1m ago"（每条消息旁边）
+  /org        部门名整串 UUID（TMWork-3b7dd9b4-…-ad2a34969d62）形似乱码
+  /providers  折叠的服务器抽屉压在「新增供应商」按钮上
+  /logs       加载失败与「暂无审计日志」同时出现
+  /versions   标题「agent-node 不是 X」口语化歧义
+```
+
+### 改动
+```
+app/lib/time.ts            relativeAgo → 刚刚 / N 秒前 / N 分钟前 / N 小时前 / N 天前
+                           （一处修改，消息头/定时任务/最后在线/拓扑标题四处同时中文化）
+app/tasks/TasksView.tsx    兜底 "Loading tasks…" → 正在加载任务…
+                           桌面右侧空态 → 未选择任务 / 操作提示 / 当前列表共 N 条
+app/node/page.tsx          兜底 "Loading…" → 正在加载…
+app/org/page.tsx           组名截掉 UUID 尾巴（显示层），全名进 title，限宽 22rem
+app/components/ServersDrawer.tsx  折叠态由 top-20 改为视口垂直中点，避开右上角主操作
+app/logs/page.tsx          加载失败时不再叠加空态（两个状态互斥）
+app/versions/page.tsx      「agent-node 不是 X」→「未升级到 X 的节点」
+```
+
+### 验证
+```
+tsc 0 · lint 0 errors · npm test 60/60 · gates 四项回基线 · next build 成功
+本地复看：/providers @1366 抽屉手柄移到垂直中点、右上角按钮完全露出；横向溢出 0px
+```
+
+用户可见变化：消息列表时间变中文；任务页不再出现英文兜底、空态给出条数与操作提示；
+组织页不再显示自动生成的 UUID；服务器抽屉不再遮挡页面主按钮；日志页失败态不再自相矛盾。
+
 ## 0.6.4-preview.576 — 2026-11-15
 
 ### 服务器页头部中文化；输入提示不再夹英文键名
