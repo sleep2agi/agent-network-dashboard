@@ -346,9 +346,7 @@ function OrgContent() {
               type="button"
               onClick={() => load(offset, true)}
               className="inline-flex min-h-11 items-center rounded-lg px-2.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] sm:min-h-0 sm:py-1.5"
-            >
-              Refresh
-            </button>
+            >刷新</button>
           </div>
         </div>
 

@@ -17,6 +17,7 @@ import { TaskList, type TaskListItem } from '../components/TaskList';
 import { TaskDetail } from '../components/TaskDetail';
 import {
   TASK_STATUSES,
+  STATUS_LABEL,
   STATUS_DOT_HEX,
   STATUS_BAR_CLASS,
 } from '../lib/status';
@@ -367,7 +368,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                             style={{ backgroundColor: STATUS_DOT_HEX[s] || '#6b7280' }}
                           />
                         )}
-                        <span>{s || 'All'}</span>
+                        <span>{s ? (STATUS_LABEL[s] ?? s) : '全部'}</span>
                         <span
                           className={`text-[11px] tabular-nums ${
                             isActive ? 'text-[var(--fg-muted)]' : 'text-[var(--fg-dim)]'
@@ -389,19 +390,19 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
                     type="text"
                     value={filterFrom}
                     onChange={(e) => setFilterFrom(e.target.value)}
-                    placeholder="any"
+                    placeholder="全部"
                     aria-label="起始日期"
                     data-testid="tasks-filter-from"
                     className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"
                   />
                 </div>
                 <div className="flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 focus-within:border-[var(--border-hover)]">
-                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-muted)]">To</span>
+                  <span className="text-[11px] uppercase tracking-wide text-[var(--fg-muted)]">接收方</span>
                   <input
                     type="text"
                     value={filterTo}
                     onChange={(e) => setFilterTo(e.target.value)}
-                    placeholder="any"
+                    placeholder="全部"
                     aria-label="结束日期"
                     data-testid="tasks-filter-to"
                     className="w-16 bg-transparent text-xs text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none"

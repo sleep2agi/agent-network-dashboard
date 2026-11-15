@@ -56,7 +56,7 @@ interface Requirement {
 const PRIORITIES = PRIORITY_KEYS;
 
 const COLUMNS: { key: Requirement['column'] | ''; label: string }[] = [
-  { key: '', label: 'All' },
+  { key: '', label: '全部' },
   { key: 'pool', label: '需求池' },
   { key: 'doing', label: '进行中' },
   { key: 'done', label: '完成' },
@@ -1110,7 +1110,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
             onClick={() => { setProjectRefresh(n => n + 1); void load(); }}
             className="hidden rounded-lg px-2.5 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200 sm:block"
           >
-            Refresh
+            刷新
           </button>
           </div>
         </div>

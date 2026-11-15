@@ -19,6 +19,21 @@ export const TASK_STATUSES = [
   'expired',
 ] as const;
 
+/** 状态中文名。界面只展示这一份，避免各处再写一遍英文枚举值。
+ *  key 保持英文（与 Hub 接口一致），只有展示层翻译。 */
+export const STATUS_LABEL: Record<string, string> = {
+  created: '已创建',
+  delivered: '已投递',
+  acked: '已确认',
+  running: '运行中',
+  replied: '已回复',
+  closed: '已关闭',
+  failed: '失败',
+  cancelled: '已取消',
+  expired: '已过期',
+  queued: '排队中',
+};
+
 /** Pill / chip background+text+border. Tailwind classes, not inlined hex,
  *  because chips are static class names safe from purge. */
 /** #217 D3 (OpenWebUI-style color restraint): the 9-hue rainbow is

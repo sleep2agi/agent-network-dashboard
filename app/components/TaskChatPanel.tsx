@@ -1623,7 +1623,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
               {loadingOlder ? (
                 <span className="w-4 h-4 border-2 border-[var(--accent)]/30 border-t-cyan-500 rounded-full animate-spin" />
               ) : (
-                <span>↑ Load earlier messages</span>
+                <span>↑ 加载更早的消息</span>
               )}
             </button>
           )}

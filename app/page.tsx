@@ -232,7 +232,7 @@ export default function Dashboard() {
             onClick={() => setShowTopo(!showTopo)}
             className="text-xs text-gray-500 hover:text-gray-300 border border-gray-700/50 px-4 py-1.5 rounded-lg transition-colors hover:border-gray-600 cursor-pointer"
           >
-            {showTopo ? 'Hide Topology' : 'Show Topology'}
+            {showTopo ? '隐藏拓扑' : '显示拓扑'}
           </button>
         </div>
       )}
