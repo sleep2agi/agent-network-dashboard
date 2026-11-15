@@ -7,7 +7,7 @@ import Link from 'next/link';
 // 403/404 是用户最容易撞到的"非正常路径"，它比任何正常页面都更影响"这系统是否专业"的判断。
 export default function NotFound() {
   return (
-    <main className="flex min-h-[70vh] items-center justify-center px-6 py-16">
+    <main className="flex min-h-[50vh] items-center justify-center px-6 py-20">
       <div className="w-full max-w-md text-center">
         <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--fg-dim)]">404</p>
         <h1 className="mt-3 text-xl font-semibold text-[var(--fg)]">页面不存在</h1>

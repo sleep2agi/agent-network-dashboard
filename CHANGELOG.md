@@ -6,6 +6,37 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.575 — 2026-11-15
+
+### 输入区提示中文化；`.574` 因一道 ratchet 门未发版（如实记录）
+
+```
+`/nodes` 输入框下方两行提示一直是英文：
+  Type @ to mention another node  →  输入 @ 可提及另一个节点
+  Enter to send · paste image     →  Enter 发送 · 可直接粘贴图片
+  Sending to:                     →  发送给：
+位置就在用户每天打字的地方，但文案门扫不到 —— 它的扫描集合只有
+nav/aside/header/button/h1-h4/label 等标签类元素，正文区提示不在集合内。
+现给这两处加 data-composer-hint，并把该属性纳入门的扫描集合。
+```
+
+### 同时修掉 `.574` 被 CI 拦下的原因
+```
+`.574` 的 20 套件与 CI 前三条 workflow 全绿，但 gates 里 color-ratchet 报：
+  app/not-found.tsx: 0 → 1 (+1) off-whitelist arbitrary size
+原因是 404 页用了 min-h-[70vh]（任意尺寸必须命中白名单 85vh/50vh）。
+publish 脚本据此拒绝发布（断言所有 workflow 必须 success），线上仍是 .573 —— 没有被坏版本覆盖。
+修法：min-h-[70vh] → min-h-[50vh] + py-20，ratchet 回到基线 66/66。
+```
+
+### 验证
+```
+npm run gates：131/1035/6/66 四项全部回到基线，无新增
+tsc 0 · lint 0 errors · npm test 60/60 · next build 成功
+```
+
+用户可见变化：节点页聊天输入框下方的操作提示改为中文；误入不存在的地址时是中文 404。
+
 ## 0.6.4-preview.574 — 2026-11-15
 
 ### 需求状态芯片不再是英文，404 页改成中文：逐页双档体检的第一批产出

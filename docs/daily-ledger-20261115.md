@@ -614,3 +614,39 @@ evidence/probes/i18n-ui-sweep.mjs 增加：
 deploy/laptop-pass.mjs 初版默认清单里写了 /overview 与 /board —— 两页实际不存在。
 脚本自己先撞 404，才暴露了"全站英文 404"。现已改为 12 条真实路由。
 ```
+
+---
+
+## 21. `.574` 未发版：一道 ratchet 门拦住了它（流程有效的一次实证）
+
+### 发生了什么
+```
+`.574`：20 套件 20/20 · detail 115/115 · CI 里 scrub-guard / unit tests / OSS readiness 全绿
+但 gates 这一条 workflow 失败 → publish-574.py 断言「4 条 workflow 必须同 SHA success」→ 拒绝发布
+线上仍是 .573（pid cwd = releases/preview.573-8315fcc），没有被坏版本覆盖
+```
+
+### 原因
+```
+color-ratchet：app/not-found.tsx: 0 → 1 (+1) off-whitelist arbitrary size
+新写的 404 页用了 min-h-[70vh]；白名单只允许 85vh / 50vh 这类既定值。
+⇒ 门的设计意图是「不许随手发明任意尺寸」，它这次正好拦住了一个新文件。
+修法：min-h-[70vh] → min-h-[50vh] + py-20；四项 ratchet 回到基线。
+```
+
+### 教训 U：发布链的"断言在 publish 里、发现却在 CI 里"，这次配合是对的
+```
+publish 不做"跳过失败重试"，也不看 CI 之外的绿灯；
+它只认「同一 SHA、四条 workflow 全 success」。
+⇒ 结果是：坏版本 0 影响，代价是一个 label 作废（574 保留为失败证据，改发 575）。
+⇒ 反面做法是"手动 patch 掉失败那条"，今天没有这么做。
+```
+
+### 教训 V：门的扫描集合等于覆盖率的真实上限（第五次同类）
+```
+文案门只扫 nav/aside/header/button/h1-h4/th/label/legend/summary/role=tab|button。
+据此漏掉了：需求行状态芯片（.574 修）· 输入区提示语（.575 修）。
+现在的做法：不再扩词表，而是给界面文案加"可寻址钩子"
+  data-status-chip（行内芯片）· data-composer-hint（输入区提示）
+门按钩子取样，新区域只要挂钩子即可被覆盖。
+```
