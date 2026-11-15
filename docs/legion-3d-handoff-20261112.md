@@ -74,7 +74,8 @@
 # 线上五读数（含三次一致性）
 node evidence/legion-3d-497-live/verify.mjs          # 需要改 base 为 https://dm.vansin.top
 # 标签边距 / 几何同源 / 叠压
-node evidence/legion-3d-tier-502/overlap-depth.mjs   # 离线深度口径
+# 离线深度口径脚本 evidence/legion-3d-tier-502/overlap-depth.mjs 已在 2026-11-16 清理旧腔本时删除；
+# 当前等价探针：evidence/probes/legion-projector.mjs（投屏视口结构量）与 legion-drift-clip.mjs
 # 边能量对照
 node evidence/legion-3d-500-links/edge-share.py      # 截图差集（注意：取景口径不同则不可比）
 ```

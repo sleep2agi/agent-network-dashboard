@@ -219,7 +219,7 @@
 A. 压缩图例（单行 / 省略计数），把安全区做到 ≥180px
 B. 极小高度下不把页脚计入取景安全区（图例浮在图面下缘）
 C. 320 以下不保证 3D 构图（明确最小支持宽度）
-证据：evidence/legion-perf-524/readings.md · evidence/legion-determinism-523/readings.md
+证据：legion-perf-524 / legion-determinism-523 的 readings.md（该 evidence 目录已在 2026-11-16 清理旧腔本时删除，结论保留在本行；如需复跑见对应 probes 脚本）
 ```
 
 
@@ -235,7 +235,7 @@ C. 320 以下不保证 3D 构图（明确最小支持宽度）
 
 另记一条被证伪的假设：军团"每次打开构图不同"不是采样太早、也不是横幅高度
 （canvasH 恒 969 / bannerH 恒 31），而是**数据驱动**（布局指纹 ΣX/ΣY 每轮不同）。
-详见 `evidence/legion-determinism-523/readings.md`。
+详见该轮 readings.md（该 evidence 目录已在 2026-11-16 清理旧腔本时删除，结论保留在本行；如需复跑见对应 probes 脚本）。
 
 
 ## 部门刻度按尺寸分档（`.523` 起）
@@ -575,7 +575,7 @@ networkidle 永远等不到静默，只能等 30s 默认超时 —— 那是量�
 | 「显示更多」文字对比度 | 7.67 : 1（12px） | 通过 AA（接近 AAA 7） |
 | 「已显示 X / Y」对比度 | 5.83 : 1（11px） | 通过 AA |
 
-证据：evidence/home-a11y-518/readings.md
+证据：home-a11y-518 的 readings.md（该 evidence 目录已在 2026-11-16 清理旧腔本时删除，结论保留在本行；如需复跑见对应 probes 脚本）
 
 
 ## 窄屏横向溢出基线（`.517` 线上）
@@ -583,7 +583,7 @@ networkidle 永远等不到静默，只能等 30s 默认超时 —— 那是量�
 ```
 20 个路由 × 320/390 两个视口 = 40 组，横向溢出 0 组
 判据：documentElement.scrollWidth > innerWidth + 1
-证据：evidence/narrow-overflow-518/readings.md
+证据：narrow-overflow-518 的 readings.md（该 evidence 目录已在 2026-11-16 清理旧腔本时删除，结论保留在本行；如需复跑见对应 probes 脚本）
 ```
 
 另修正一条早先的"残留"记录：首页加载中显示的 `? online · 0 working · 0 registered`
