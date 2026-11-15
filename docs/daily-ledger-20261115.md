@@ -311,3 +311,43 @@ Error: element(s) not found
 看图覆盖密排内容区（任务行内状态、附件卡片）—— 这些 <span> 不在门的 selector 里。
 `.568` 的行内状态 running/acked/replied 与 HIGH 就是靠看移动端截图发现的。
 ```
+
+
+---
+
+## 14. 发布：`0.6.4-preview.569` —— 界面中文化正式结案（18 页口径）
+
+| 项 | 值 |
+|---|---|
+| 版本 | `0.6.4-preview.569` |
+| commit | `7fe70f284f90ff97421db814dbe11ace53475c60` |
+| buildId | `Wv32vobrxwgeZB1VRrTgh` |
+| 内容 | `/messages`（导出 MD/时间线/分组/调试）· `/logs`（5 动作芯片+行内）· `/servers`（N 个 Agent）· 空态 7 条 |
+| 门 | 7 → 18 页，4 条数据跳过规则，白名单补 `MD` |
+| 回退锚点 | `preview.568-9919e8b`（`9919e8b` / `ytDHr4xSMBy3nQlI5uyoV`） |
+
+### 结案证据
+```
+20 套件 20/20（legion 272 · pageSmoke 47 · board 171 · detail 115）
+CI 4/4 · 发布后自检 4/4 · 健康门 15/15
+线上文案门：I18N-UI PASS，18 条入口每一行都是「残留=0 面板=0 浮层=0」
+复跑命令：node evidence/probes/i18n-ui-sweep.mjs https://dm.vansin.top
+```
+
+### 教训 K：空态文案是"有数据就永远扫不到"的盲区
+```
+`/tasks`、`/messages` 的空态在真实数据下永不渲染，白名单门扫不到；
+它是被 pageSmoke 的断言（查 'No tasks yet' / 'No messages'）反向暴露的。
+处置：① 补中文化 ② 把断言期望文本改成中文 —— 等于给这类文案留了一道岗。
+规矩：新增空态文案时，必须同时更新"查空态"的断言，否则它永远不被验证。
+```
+
+### 教训 L：同一产物两次结果不一致 → 先判抖动，再判回归
+```
+legion 首次 269/272（viewMemory:changedZoom / viewMemory:resetForgets /
+present:deepLinkFillsHeight），单套件重跑 272/272，全量重跑 272/272。
+判定：时序抖动（视角记忆依赖 localStorage 写入与深链取景时序）。
+规矩：① 同产物重跑通过 = 抖动（记录不修）
+      ② 重跑仍失败 = 回归（排查/回退）
+      ③ 手工回归用 <suite>-<ver>-manual 标签，不占用发布标签名
+```
