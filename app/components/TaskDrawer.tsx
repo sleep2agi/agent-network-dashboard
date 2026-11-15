@@ -85,12 +85,12 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] bg-[#111113] sticky top-0">
           <div>
-            <div className="text-sm font-semibold text-[var(--fg)]">Task Detail</div>
+            <div className="text-sm font-semibold text-[var(--fg)]">任务详情</div>
             <div className="text-[11px] text-[var(--fg-muted)] mt-0.5">{taskId.slice(0, 16)}...</div>
           </div>
           {/* R16 of #190: same chat-panel close pattern — was ~32 px
               tap target; lift to a uniform 44 x 44 hit zone. */}
-          <button onClick={onClose} aria-label="Close task drawer" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-[var(--fg-muted)] hover:text-[var(--fg)] rounded-lg hover:bg-[var(--bg-elevated)]">
+          <button onClick={onClose} aria-label="关闭任务抽屉" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-[var(--fg-muted)] hover:text-[var(--fg)] rounded-lg hover:bg-[var(--bg-elevated)]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -102,7 +102,7 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
             <div className="w-6 h-6 border-2 border-[var(--accent)]/30 border-t-cyan-500 rounded-full animate-spin" />
           </div>
         ) : !task ? (
-          <div className="text-center py-16 text-[var(--fg-muted)]">Task not found</div>
+          <div className="text-center py-16 text-[var(--fg-muted)]">任务不存在</div>
         ) : (
           <div className="px-5 py-5 space-y-5">
             {/* Status + Priority */}
@@ -131,7 +131,7 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                 pulse if task is still in flight, full ISO in title=. */}
             <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <div className="text-xs text-[var(--fg-muted)] uppercase tracking-wide">Timeline</div>
+                <div className="text-xs text-[var(--fg-muted)] uppercase tracking-wide">时间线</div>
                 {duration !== null && (
                   <div className="text-[11px] text-[var(--fg-dim)]">
                     {duration < 60 ? `${duration}s` : `${Math.floor(duration/60)}m ${duration%60}s`} runtime
@@ -183,14 +183,14 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
 
             {/* Content */}
             <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-4">
-              <div className="text-xs text-[var(--fg-muted)] uppercase mb-2">Input</div>
+              <div className="text-xs text-[var(--fg-muted)] uppercase mb-2">输入</div>
               <div className="text-sm text-[var(--fg)] whitespace-pre-wrap">{task.content || '--'}</div>
             </div>
 
             {/* Result */}
             {task.result && (
               <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-4">
-                <div className="text-xs text-[var(--fg-muted)] uppercase mb-2">Output</div>
+                <div className="text-xs text-[var(--fg-muted)] uppercase mb-2">输出</div>
                 <div className="text-sm text-[var(--fg)] whitespace-pre-wrap max-h-64 overflow-y-auto">{task.result}</div>
               </div>
             )}

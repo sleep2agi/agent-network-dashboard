@@ -26,7 +26,7 @@ export default function ServersPage() {
                 Infrastructure
               </span>
               <span className="hidden text-[var(--border-hover)] sm:inline">·</span>
-              <h1 className="truncate text-xl font-semibold text-[var(--fg)]">Servers</h1>
+              <h1 className="truncate text-xl font-semibold text-[var(--fg)]">服务器</h1>
             </div>
             <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--bg-elevated)] px-2.5 py-1 font-mono text-[11px] text-[var(--fg-muted)]">
               <span aria-hidden className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--success)]" />

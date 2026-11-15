@@ -111,7 +111,7 @@ export default function SettingsPage() {
 
         {/* 分段锚点：与下面六组标题一一对应。字重/描边按 minimal 规范收掉，
             但保留 44px 触控高度（移动端可点性不靠边框表达）。 */}
-        <nav aria-label="Settings sections" className="mb-6 -mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+        <nav aria-label="设置分组" className="mb-6 -mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
           {SETTINGS_SECTIONS.map(s => (
             <a
               key={s.id}
@@ -131,9 +131,9 @@ export default function SettingsPage() {
             <div className={cardClass}>
               <h3 className="mb-4 text-sm font-semibold">修改密码</h3>
               <div className="space-y-3">
-                <input type="password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} placeholder="Current password" aria-label="Current password"
+                <input type="password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} placeholder="当前密码" aria-label="当前密码"
                   className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-[var(--hl)] focus:outline-none sm:text-sm" />
-                <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="New password" aria-label="New password"
+                <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="新密码" aria-label="新密码"
                   className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-base text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:border-[var(--hl)] focus:outline-none sm:text-sm" />
                 <button onClick={async () => {
                   if (!oldPwd || !newPwd) return;
@@ -277,7 +277,7 @@ export default function SettingsPage() {
                     unreachable, give the user actual recovery commands. */}
                 {(healthError || health?.ok === false) && (
                   <div className="space-y-1.5 border-t border-[var(--danger)]/30 pt-3 text-xs" role="alert">
-                    <div className="font-medium text-[var(--danger)]">CommHub unreachable — how to recover:</div>
+                    <div className="font-medium text-[var(--danger)]">CommHub 不可达 —— 恢复步骤：</div>
                     <div className="text-[var(--fg-muted)]">1. Check the hub process on the server: <code className="rounded bg-[var(--code-bg)] px-1.5 py-0.5 font-mono">anet hub status</code></div>
                     <div className="text-[var(--fg-muted)]">2. Start it if stopped: <code className="rounded bg-[var(--code-bg)] px-1.5 py-0.5 font-mono">anet hub start</code></div>
                     <div className="text-[var(--fg-muted)]">3. Confirm the Hub URL above matches where the hub actually listens.</div>
@@ -527,7 +527,7 @@ export default function SettingsPage() {
                 </div>
                 <div className={rowClass}>
                   <span className="text-[var(--fg-muted)]">数据层</span>
-                  <span className={`text-[var(--fg)] ${valueClass}`}>SWR (5s refresh, 3s dedup)</span>
+                  <span className={`text-[var(--fg)] ${valueClass}`}>SWR（5 秒刷新，3 秒去重）</span>
                 </div>
               </div>
             </div>

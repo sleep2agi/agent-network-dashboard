@@ -168,7 +168,7 @@ export function TaskDetail({
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
         <div className="min-w-0 flex-1 flex items-center gap-2">
           <div className="text-xs text-[var(--fg-muted)] truncate" title={taskId}>
-            <span className="text-[var(--fg-dim)]">Task ID:</span>{' '}
+            <span className="text-[var(--fg-dim)]">任务 ID：</span>{' '}
             <span className="font-mono">{taskId.slice(0, 12)}…</span>
           </div>
           {task && (
@@ -210,7 +210,7 @@ export function TaskDetail({
           </div>
         )}
         {!isLoading && !error && !task && (
-          <div className="text-[var(--fg-muted)] text-sm">Task not found</div>
+          <div className="text-[var(--fg-muted)] text-sm">任务不存在</div>
         )}
 
         {task && (
@@ -221,7 +221,7 @@ export function TaskDetail({
               data-block="timeline"
               className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-4"
             >
-              <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">Timeline</h2>
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-4">时间线</h2>
               <div className="relative">
                 {timelineSteps.map((step, i) => {
                   const done = !!step.time;
@@ -273,7 +273,7 @@ export function TaskDetail({
               data-block="info"
               className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-4"
             >
-              <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">Info</h2>
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-3">信息</h2>
               <div className="space-y-2 text-xs">
                 {[
                   ['Task ID', task.task_id],
@@ -321,7 +321,7 @@ export function TaskDetail({
               data-block="content"
               className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-4"
             >
-              <h2 className="text-sm font-semibold text-[var(--fg)] mb-2">Content</h2>
+              <h2 className="text-sm font-semibold text-[var(--fg)] mb-2">内容</h2>
               <pre
                 data-testid="task-detail-content-body"
                 className="text-xs text-[var(--fg)] whitespace-pre-wrap break-words bg-[var(--bg)] rounded-lg px-3 py-2 border border-[var(--border)] max-h-64 overflow-y-auto font-sans"
@@ -337,7 +337,7 @@ export function TaskDetail({
                 data-block="result"
                 className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-4"
               >
-                <h2 className="text-sm font-semibold text-[var(--fg)] mb-2">Result</h2>
+                <h2 className="text-sm font-semibold text-[var(--fg)] mb-2">结果</h2>
                 <pre
                   data-testid="task-detail-result-body"
                   className="text-xs text-[var(--fg)] whitespace-pre-wrap break-words bg-[var(--bg)] rounded-lg px-3 py-2 border border-[var(--border)] max-h-64 overflow-y-auto font-sans"
@@ -361,7 +361,7 @@ export function TaskDetail({
                 Events {events.length > 0 && <span className="text-[var(--fg-muted)]">({events.length})</span>}
               </h2>
               {events.length === 0 ? (
-                <div className="text-xs text-[var(--fg-dim)] italic">No events yet.</div>
+                <div className="text-xs text-[var(--fg-dim)] italic">暂无事件。</div>
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {events.map((e, i) => (

@@ -139,11 +139,11 @@ export default function ServerLogsPage() {
               "Se" of "Server Logs". Caught by playwright mobile shot. */}
           {/* #217 D8: text-xl + nowrap on phones — at text-2xl the title
               wrapped to two lines under the 4-control toolbar. */}
-          <h1 className="text-xl sm:text-2xl font-bold text-white lg:ml-0 ml-10 whitespace-nowrap">Server Logs</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white lg:ml-0 ml-10 whitespace-nowrap">服务器日志</h1>
           {/* Round 86: dropped the {logs.length} header chip — r84 added
               `all <count>` to the filter strip just below, so this duplicated
               the value within 40px of itself. */}
-          <span className="text-xs text-gray-500 hidden sm:inline">CommHub stdout/stderr</span>
+          <span className="text-xs text-gray-500 hidden sm:inline">CommHub 标准输出 / 错误输出</span>
         </div>
         <div className="flex items-center gap-2 text-xs shrink-0">
           <button
@@ -176,7 +176,7 @@ export default function ServerLogsPage() {
               <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16" />
               <path d="M3 21v-5h5" />
             </svg>
-            <span className="hidden sm:inline">Reload</span>
+            <span className="hidden sm:inline">重新加载</span>
           </button>
           {/* #209 R35: magnifier-toggle search (WeChat-style, via the
               shared CollapsibleSearch hook). Lives at the tail of the

@@ -132,7 +132,7 @@ export function useCollapsibleSearch(props: UseCollapsibleSearchProps): Collapsi
           type="button"
           onClick={reset}
           className="shrink-0 text-xs text-gray-500 hover:text-gray-300 px-2 py-2"
-          aria-label="Clear and close search"
+          aria-label="清空并关闭搜索"
         >
           Cancel
         </button>

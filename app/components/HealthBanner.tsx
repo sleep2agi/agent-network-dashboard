@@ -195,7 +195,7 @@ export function HealthBanner() {
             setDismissed(true);
             try { sessionStorage.setItem('anet-hb-dismissed', '1'); } catch {}
           }}
-          aria-label="Dismiss banner"
+          aria-label="关闭提示条"
           className="opacity-60 hover:opacity-100 leading-none px-1.5 text-base relative rounded-md hover:bg-[var(--hover-tint)] before:absolute before:inset-y-[-10px] before:inset-x-[-8px] before:content-['']"
         >
           ×

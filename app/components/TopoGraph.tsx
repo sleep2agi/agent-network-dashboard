@@ -2545,7 +2545,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
 
               data-topo-section-kicker-breath="6s" attr surfaces the
               cadence for tests. */}
-          <div className="anet-topo-kicker-breath text-xs uppercase text-[var(--fg-dim)] group-hover:text-[var(--fg-muted)] tracking-widest group-hover:tracking-[0.13em] transition-[letter-spacing,color] duration-200 ease-out leading-tight font-medium" data-topo-section-kicker data-topo-section-kicker-hover-tracking="0.13em" data-topo-section-kicker-hover-color="text-[var(--fg-muted)]" data-topo-section-kicker-halo-layers="2" data-topo-section-kicker-breath="6s">Network Topology</div>
+          <div className="anet-topo-kicker-breath text-xs uppercase text-[var(--fg-dim)] group-hover:text-[var(--fg-muted)] tracking-widest group-hover:tracking-[0.13em] transition-[letter-spacing,color] duration-200 ease-out leading-tight font-medium" data-topo-section-kicker data-topo-section-kicker-hover-tracking="0.13em" data-topo-section-kicker-hover-color="text-[var(--fg-muted)]" data-topo-section-kicker-halo-layers="2" data-topo-section-kicker-breath="6s">网络拓扑</div>
           {/* Round 286 / Loop: title 'Command mesh' adopts tracking-tight
               (-0.025em) to complement R285 kicker tracking-widest. Wide
               eyebrow + tight headline is the conventional editorial
@@ -2646,7 +2646,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               sibling to R699 .anet-topo-kicker-breath guard).
               data-topo-section-title-breath="10s" attr surfaces the
               cadence for tests. */}
-          <h2 className="anet-topo-section-title-breath text-lg text-white font-semibold group-hover:font-bold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing,font-weight] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter" data-topo-section-title-hover-fw="700" data-topo-section-title-halo-layers="2" data-topo-section-title-breath="10s">Command mesh</h2>
+          <h2 className="anet-topo-section-title-breath text-lg text-white font-semibold group-hover:font-bold leading-tight tracking-tight group-hover:tracking-tighter transition-[letter-spacing,font-weight] duration-200 ease-out" data-topo-section-title data-topo-section-title-hover-tracking="tracking-tighter" data-topo-section-title-hover-fw="700" data-topo-section-title-halo-layers="2" data-topo-section-title-breath="10s">消息网络</h2>
           </div>
         </div>
         {/* Round 328 / Loop: chip-row strip wrapper gap 2 → 2.5
@@ -2800,7 +2800,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             className="anet-topo-chrome-layout-trailer-breath mr-0.5 inline-flex rounded-lg border overflow-hidden"
             style={{ borderColor: pal.containerBorder, transition: 'border-color 200ms ease-out' }}
             role="group"
-            aria-label="Topology layout"
+            aria-label="拓扑布局"
             data-topo-chrome-layout-trailer
             data-topo-chrome-layout-radius="rounded-lg"
             data-topo-chrome-layout-trailer-breath="17s"
@@ -2813,7 +2813,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               onMouseEnter={() => setHoveredLayout('ring')}
               onMouseLeave={() => setHoveredLayout((prev) => prev === 'ring' ? null : prev)}
               aria-pressed={layout === 'ring'}
-              title="Ring layout (l to cycle)"
+              title="环形布局（按 l 切换）"
               data-topo-chrome-layout="ring"
               data-topo-chrome-layout-active={layout === 'ring' ? 'true' : 'false'}
               data-topo-chrome-layout-ring-popping={chromePopping === 'layout-ring' ? 'true' : 'false'}
@@ -2952,7 +2952,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               onMouseEnter={() => setHoveredLayout('grid')}
               onMouseLeave={() => setHoveredLayout((prev) => prev === 'grid' ? null : prev)}
               aria-pressed={layout === 'grid'}
-              title="Grid layout (l to cycle)"
+              title="网格布局（按 l 切换）"
               data-topo-chrome-layout="grid"
               data-topo-chrome-layout-active={layout === 'grid' ? 'true' : 'false'}
               data-topo-chrome-layout-grid-popping={chromePopping === 'layout-grid' ? 'true' : 'false'}
@@ -3011,7 +3011,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               onMouseEnter={() => setHoveredLayout('tree')}
               onMouseLeave={() => setHoveredLayout((prev) => prev === 'tree' ? null : prev)}
               aria-pressed={layout === 'tree'}
-              title="Tree layout — org chart (l to cycle)"
+              title="树形布局 —— 组织架构（按 l 切换）"
               data-topo-chrome-layout="tree"
               data-topo-chrome-layout-active={layout === 'tree' ? 'true' : 'false'}
               data-topo-chrome-layout-tree-popping={chromePopping === 'layout-tree' ? 'true' : 'false'}
@@ -4388,7 +4388,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
           {vendorDist.length > 2 && (
             <span
               className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border border-[var(--border)] font-mono"
-              title="Hover to highlight; click to pin"
+              title="悬停高亮；点击锁定"
               /* Round 698 — vendor-distribution chip-row outer wrapper
                  joins the R697 wrapper-level :has() halo family. Pre-R698
                  only the chrome-strip wrappers (Layout/nodeSize/zoom)
@@ -15271,7 +15271,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               // currentColor inherits cleanly on the rounded card.
               role="button"
               tabIndex={0}
-              aria-label="Topology minimap — click to recenter, Enter to reset view"
+              aria-label="拓扑小地图 —— 点击重新居中，Enter 重置视图"
               title="Minimap · click to recenter · Enter to reset view"
               onClick={(e) => {
                 const r = e.currentTarget.getBoundingClientRect();
@@ -15774,7 +15774,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               transition: 'background-color 200ms ease-out, border-color 200ms ease-out',
             }}
             role="group"
-            aria-label="Node size"
+            aria-label="节点大小"
             data-topo-chrome-fleet-group-trailer
             data-topo-chrome-fleet-group-trailer-breath="19s"
             /* R697 sibling — wrapper-level has-hover halo (see globals.css). */
@@ -16013,7 +16013,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 color: pal.legendText,
                 filter: hoveredZoomOut ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
               }}
-              aria-label="Zoom out"
+              aria-label="缩小"
               title="Zoom out (−)"
             >
               {/* R186: icon pop on click. CSS animation runs once;
@@ -16239,7 +16239,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                    round. */
                 transition: 'color 200ms ease-out, border-color 200ms ease-out, letter-spacing 200ms ease-out, font-weight 200ms ease-out, filter 200ms ease-out',
               }}
-              title="Current zoom level"
+              title="当前缩放"
             >
               {Math.round(view.zoom * 100)}%
             </span>
@@ -16267,7 +16267,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 color: pal.legendText,
                 filter: hoveredZoomIn ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
               }}
-              aria-label="Zoom in"
+              aria-label="放大"
               title="Zoom in (+)"
             >
               {/* R186: icon pop on click. Same one-shot CSS animation
@@ -16384,7 +16384,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               filter: hoveredReset ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
               transition: 'color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out, filter 200ms ease-out',
             }}
-            aria-label="Reset view"
+            aria-label="重置视图"
             title="Reset zoom + pan (0, or double-click the canvas)"
           >
             {/* R184: the refresh-arrow icon does one counter-clockwise

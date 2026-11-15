@@ -63,7 +63,7 @@ export function NodeDetailHeader({ alias, session, sse }: {
         <div className="flex min-w-0 items-center gap-2">
           <h1 title={alias} className="min-w-0 truncate text-xl font-semibold text-[var(--fg)] sm:text-2xl">{alias}</h1>
           <button type="button" onClick={copyAlias} disabled={!ready}
-            aria-label="Copy alias" title={ready ? 'Copy alias' : 'Waiting for node information'}
+            aria-label="复制别名" title={ready ? 'Copy alias' : 'Waiting for node information'}
             aria-busy={copyState === 'pending'} aria-disabled={!ready || copyState === 'pending'}
             aria-describedby={message ? feedbackId : undefined}
             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-text)] disabled:cursor-not-allowed disabled:opacity-40 aria-disabled:opacity-40 sm:h-9 sm:w-9">

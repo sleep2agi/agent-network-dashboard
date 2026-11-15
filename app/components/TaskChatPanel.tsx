@@ -273,7 +273,7 @@ function AttachmentPreviews({ text, onOpen }: { text: string; onOpen: (url: stri
   return (
     <div className="mt-2 grid grid-cols-2 gap-2">
       {urls.map((url) => (
-        <ChatImage key={url} src={url} alt="Dashboard attachment" thumbClass="h-28 w-full rounded-lg border border-[var(--accent)]/20" onOpen={onOpen} />
+        <ChatImage key={url} src={url} alt="Dashboard 附件" thumbClass="h-28 w-full rounded-lg border border-[var(--accent)]/20" onOpen={onOpen} />
       ))}
     </div>
   );
@@ -560,7 +560,7 @@ function buildMdComponents(onImageClick?: (url: string) => void) {
 
 const MarkdownContent = memo(function MarkdownContent({ text, onImageClick }: { text: string; onImageClick?: (url: string) => void }) {
   const components = useMemo(() => buildMdComponents(onImageClick), [onImageClick]);
-  if (!text) return <span className="text-[var(--fg-dim)] italic">No content</span>;
+  if (!text) return <span className="text-[var(--fg-dim)] italic">无内容</span>;
   return (
     <div className="break-words leading-relaxed">
       <ReactMarkdown
@@ -1637,7 +1637,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
               <svg aria-hidden className="mx-auto mb-3 h-8 w-8 text-[var(--fg-dim)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
               </svg>
-              <div className="text-[var(--fg-muted)] text-sm">Start a conversation</div>
+              <div className="text-[var(--fg-muted)] text-sm">开始对话</div>
               <div className="text-[var(--fg-dim)] text-xs mt-1">Send a task to {alias}</div>
             </div>
           )}
@@ -1886,8 +1886,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                 {/* 窄屏隐藏：44px 的附件与语音按钮之后，这个下拉会把输入区再压掉一截
                     （实测 320 下按钮块占 125px，输入框 212px，留给文本的只剩几十像素）。 */}
                 <select value={priority} onChange={e => setPriority(e.target.value)}
-                  aria-label="Priority"
-                  title="Priority"
+                  aria-label="优先级"
+                  title="优先级"
                   className="hidden bg-transparent text-[11px] text-[var(--fg-dim)] focus:outline-none cursor-pointer sm:block sm:min-h-6">
                   <option value="normal">N</option>
                   <option value="high">H</option>
@@ -1898,7 +1898,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
             {/* R17 of #190: send button was p-2.5 + w-5 icon = ~40 x 40
                 hit zone, 4 px short of the iOS 44 px guideline on
                 the short axis. Bump to inline-flex + min-h/w 44. */}
-            <button onClick={send} aria-label="Send message" disabled={sending || (!input.trim() && attachedFiles.length === 0)}
+            <button onClick={send} aria-label="发送消息" disabled={sending || (!input.trim() && attachedFiles.length === 0)}
               className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center bg-[var(--accent)] hover:opacity-90 disabled:bg-[var(--border)] disabled:text-[var(--fg-dim)] text-[var(--accent-fg)] rounded-xl transition-all shrink-0 active:scale-95">
               {sending ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1990,7 +1990,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
               The chat panel close is high-frequency on mobile (user
               dismisses to scroll the underlying page); bump to a
               uniform 44 x 44 hit zone via inline-flex + min-h/w. */}
-          <button onClick={onClose} aria-label="Close chat" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-[var(--fg-muted)] hover:text-[var(--fg)] rounded-lg hover:bg-[var(--bg-elevated)]">
+          <button onClick={onClose} aria-label="关闭对话" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-[var(--fg-muted)] hover:text-[var(--fg)] rounded-lg hover:bg-[var(--bg-elevated)]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>

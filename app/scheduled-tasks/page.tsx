@@ -223,7 +223,7 @@ function ScheduleHistory({ networkId, scheduleId }: { networkId: string; schedul
       {state.status === 'loading' && <p role="status" className="text-sm text-[var(--fg-dim)]">正在读取执行记录…</p>}
       {state.status === 'error' && <p role="alert" className="text-sm text-[var(--danger)] [overflow-wrap:anywhere]">{state.message}</p>}
       {state.status === 'ready' && (state.runs.length === 0 ? <p className="text-sm text-[var(--fg-dim)]">暂无执行记录</p> : (
-        <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="text-[var(--fg-dim)]"><tr><th className="pb-2">计划时间</th><th>状态</th><th>Task ID</th><th>错误</th></tr></thead><tbody>{state.runs.map(run => <tr key={run.run_id} className="border-t border-[var(--col-hairline)] text-[var(--fg-muted)]"><td className="py-2">{formatTime(run.scheduled_for)}</td><td>{run.status}</td><td className="font-mono">{run.task_id?.slice(0, 12) || '—'}</td><td className="text-[var(--danger)]">{run.error_code || '—'}</td></tr>)}</tbody></table></div>
+        <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="text-[var(--fg-dim)]"><tr><th className="pb-2">计划时间</th><th>状态</th><th>任务 ID</th><th>错误</th></tr></thead><tbody>{state.runs.map(run => <tr key={run.run_id} className="border-t border-[var(--col-hairline)] text-[var(--fg-muted)]"><td className="py-2">{formatTime(run.scheduled_for)}</td><td>{run.status}</td><td className="font-mono">{run.task_id?.slice(0, 12) || '—'}</td><td className="text-[var(--danger)]">{run.error_code || '—'}</td></tr>)}</tbody></table></div>
       ))}
     </div>
   );

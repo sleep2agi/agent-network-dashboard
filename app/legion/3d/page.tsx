@@ -4218,7 +4218,7 @@ export default function Legion3DPage() {
       <div className="pointer-events-none min-w-0 max-w-full sm:max-w-sm">
         <div className="flex min-h-11 items-center gap-2 pr-20 sm:min-h-0 sm:items-baseline sm:pr-0">
           <h1 className="text-xl font-semibold text-[var(--fg)]">军团 · 3D</h1>
-          <span className="hidden text-[11px] text-[var(--fg-dim)] sm:inline">Legion Topology</span>
+          <span className="hidden text-[11px] text-[var(--fg-dim)] sm:inline">军团拓扑</span>
         </div>
         <p className="mt-1 text-xs text-[var(--fg-muted)]">
           {loading

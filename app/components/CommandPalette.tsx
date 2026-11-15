@@ -477,7 +477,7 @@ export function CommandPalette() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Command palette"
+      aria-label="命令面板"
       className="anet-cmdk fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] sm:pt-[15vh] px-4"
       onClick={() => setOpen(false)}
       onKeyDown={onModalKey}

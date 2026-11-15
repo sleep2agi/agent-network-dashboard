@@ -198,7 +198,7 @@ export function NodesEmptyState({
       <EmptyCard>
         <EmptyState
           variant="nodes"
-          title="No agents in this network"
+          title="该网络暂无 Agent"
           sub={`Server has ${hint.global_count} nodes globally, but none are registered to the current network. Switch network or contact admin.`}
         />
       </EmptyCard>
@@ -213,7 +213,7 @@ export function NodesEmptyState({
       <EmptyCard>
         <EmptyState
           variant="nodes"
-          title="No agents online"
+          title="暂无在线 Agent"
           sub={`Every agent in this network is currently offline. ${taskHistoryCount.toLocaleString()} task${taskHistoryCount === 1 ? '' : 's'} in history — they may have finished their work or disconnected.`}
           cta={{ label: 'View task history', href: '/tasks' }}
         />
@@ -239,7 +239,7 @@ export function NodesEmptyState({
             </g>
           </svg>
         </div>
-        <h3 className="font-medium text-gray-300 text-base">Spin up your first agent</h3>
+        <h3 className="font-medium text-gray-300 text-base">创建你的第一个 Agent</h3>
         <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto leading-relaxed">
           Run this in a fresh terminal to register an agent with this CommHub:
         </p>
