@@ -4635,11 +4635,23 @@ export default function Legion3DPage() {
           <p className="truncate">缩放 {zoomPct}% · 双击 Agent 对话</p>
         ) : (
           <>
-            <p>拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · / 搜索 · 回车打开选中 · R 重置</p>
-            <p className="text-[var(--fg-muted)]">
+            {/* 桌面：完整两段提示 */}
+            <p className="max-sm:hidden">拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · / 搜索 · 回车打开选中 · R 重置</p>
+            <p className="max-sm:hidden text-[var(--fg-muted)]">
               光流示意组织连接，节点状态以图例为准。
               部门名在静息时可能留白（避免挤在一起），<strong>悬停该部门或选中它会立即显示名字</strong> —— 看不到名字不代表没有这个部门。
             </p>
+            {/* `.584` 手机：默认只留一行提示，说明收进「更多说明」，把画布高度还给 3D 图
+                （390×844 实测提示区占 ~150px；折叠后画布约多 90px） */}
+            <details className="sm:hidden">
+              <summary className="cursor-pointer truncate text-[var(--fg-muted)]">
+                拖动环绕 · 双指缩放（当前 {zoomPct}%）· 双击对话 —— 更多说明
+              </summary>
+              <p className="mt-1">滚轮或双指缩放 · / 搜索 · 回车打开选中 · R 重置</p>
+              <p className="mt-1 text-[var(--fg-muted)]">
+                光流示意组织连接，节点状态以图例为准；部门名在静息时可能留白，点按该部门会立即显示名字。
+              </p>
+            </details>
           </>
         )}
       </div>
