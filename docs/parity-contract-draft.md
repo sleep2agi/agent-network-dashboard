@@ -56,3 +56,33 @@ Dashboard 侧**已经实现**（不需要再要合同）：
 [ ] 权限模型：谁能对谁操作；拒绝码
 [ ] 异步任务查询接口是否存在
 ```
+
+
+---
+
+## 五、现状实测（2026-11-15，线上 `preview.568`）
+
+### 5.1 已有路由（本仓库实测存在的目录）
+```
+app/api/anet/  → config · host-supervisors · node-config · node-create · node-lifecycle · providers · skills
+app/api/hub/   → audit-log · auth · auth-sessions · broadcast · departments · events · files · flow-lite
+                 health · inbox · messages · networks …（无 model 相关路由）
+```
+
+### 5.2 生命周期能力探测（线上 `GET /api/anet/node-lifecycle` 实测）
+| 能力 | live 值 | 说明 |
+|---|---|---|
+| restart | `true` | 可重启 |
+| stop | `true` | 可停止 |
+| delete | `true` | 可删除 |
+| **rename** | **`false`** | Hub 侧该工具当前不可用 → UI 已正确隐藏「重命名」（当日已核验设置面板只有「停止 / 删除」）|
+| **takeover / attach** | **无此能力** | 路由与 UI 均未实现，也不显示假入口 |
+
+### 5.3 因此当前「功能向客户端对齐」的真实差距只有两项
+| # | 差距 | 阻塞方 | 我方已就绪的部分 |
+|---|---|---|---|
+| 1 | 节点接管（已有节点 attach 到 Dashboard 会话） | Hub（是否支持 / 前置条件 / 失败码） | 能力探测框架、权限门控、失败语义上抛 |
+| 2 | 会话级模型切换（区别于现有的节点级 `patch.model`） | Hub（`GET/PATCH /nodes/{ref}/model` + 当前生效值回读） | 选择器 UI 结构与"只显示服务端目录"的约束 |
+
+> 注：节点级模型配置**已存在**（`/api/anet/node-config` 的 `patch.model`），
+> 缺的是"运行中会话切换模型并立即生效且可回读"。两者不可混为一谈。
