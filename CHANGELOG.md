@@ -6,6 +6,42 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.570 — 2026-11-15
+
+### 文案门覆盖到动态详情页，并修掉详情页最后 1 处英文
+
+```
+`.569` 的结论口径是「18 条入口」，我同时注明"动态详情页不在门内"。
+本轮把门扩到动态路由：
+  /requirements/<id>  运行时取页面上第一个详情链接
+  /nodes/<alias>      运行时取第一个 [data-node-alias]
+立刻在需求详情页发现：Add comment（真英文）、START / DUE（Hub 字段键，属数据）。
+```
+
+### 改动
+```
+requirements/[id]/page.tsx   Add comment → 添加评论
+门（evidence/probes/i18n-ui-sweep.mjs）
+  ① 动态目标改为轮询等待（15s），数据慢也不会漏
+  ② 取不到动态目标时显式打印「动态路由纳入：0 条（结论范围缩小）」，不静默降级
+  ③ 全大写短键名（START/DUE 这类 ≤14 字符）视为字段键/枚举，属数据
+```
+
+### 验证
+```
+tsc 0 · lint 0 errors · npm test 58/58 · next build 成功
+i18n-ui-sweep：20 个目标（18 静态 + 需求详情 + 节点详情）全部「残留=0 面板=0 浮层=0」
+输出示例：动态路由纳入：/requirements/req_19160bc5-…  /nodes/TMA云盘欧
+```
+
+### 结论口径（再次收紧）
+```
+可以说：18 条入口 + 需求详情 + 节点详情 + 命令面板 + 帮助浮层 = 0 英文残留。
+仍不能说：抽屉类（文件/日志/技能/密钥）与其它动态详情（/tasks/<id> 等）在门内。
+```
+
+用户可见变化：需求详情页「添加评论」按钮中文化。无交互、接口、权限变化。
+
 ## 0.6.4-preview.569 — 2026-11-15
 
 ### 界面文案收口（第四轮）：把门的样本从 7 页扩到 18 页，修掉 20 处真英文
