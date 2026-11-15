@@ -6,6 +6,91 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.567 — 2026-11-15
+
+### 界面文案收口（第二轮）：任务面板、拓扑、设置、无障碍标签共 113 处
+
+```
+背景：`.566` 之后，用新写的静态审计（deploy/i18n-static-audit.mjs）扫全部 86 个组件，
+      发现 123 处未被 t() 包裹的英文界面文案 —— 它们分布在浏览器文案门扫不到的地方：
+      任务抽屉/详情、Agent 卡片、拓扑图控件、管理台占位符、以及大量 aria-label。
+```
+
+### 改动（113 处 / 27 个文件）
+
+```
+任务相关
+  TaskDrawer      任务详情 · 关闭任务抽屉 · 任务不存在 · 时间线 · 输入 · 输出
+  TaskDetail      任务 ID： · 任务不存在 · 时间线 · 信息 · 内容 · 结果 · 暂无事件。
+  TaskChatPanel   Dashboard 附件(alt) · 无内容 · 开始对话 · 优先级(aria/title) ·
+                  发送消息 · 关闭对话
+  TasksView       发起人 · 部门
+
+拓扑与军团
+  TopoGraph       网络拓扑 · 消息网络 · 拓扑布局(aria) · 环形/网格/树形布局(title) ·
+                  悬停高亮；点击锁定 · 拓扑小地图(aria) · 节点大小 · 放大/缩小 ·
+                  当前缩放 · 重置视图
+  legion/3d       军团拓扑（副标题）
+  legion          军团（标题）
+
+设置与管理台
+  settings        设置分组(aria) · 当前密码 · 新密码（placeholder+aria）·
+                  CommHub 不可达 —— 恢复步骤 · SWR（5 秒刷新，3 秒去重）
+  tokens          API Token · 创建 Token · Token 名称（例如 my-cli）·
+                  Token 已创建（请立即复制，只显示一次）
+  networks        网络 · 创建网络 · 网络名称 · 描述（可选）· 我的网络 ·
+                  确认 · 取消 · 无需成员或 V3 鉴权 · 邀请 · 邀请码
+  admin           查看全部 → · 发给所有在线节点的消息… · 任务内容… · 用户名 · 密码
+  server-logs     服务器日志 · CommHub 标准输出 / 错误输出 · 重新加载
+  servers         服务器
+
+节点 / 消息 / 组织 / 登录
+  NodesView       空闲 · 异常 · 别名 · 没有符合筛选的节点
+  messages        消息 · 全部类型
+  logs            审计日志
+  org             组织架构
+  node            编辑
+  page（概览）    查看全部 → · 全部显示 · 没有符合「筛选」的 Agent ——
+  login           请输入用户名 · 请输入密码
+
+无障碍与通用控件
+  AgentCard       进度 · 对话 · 详情
+  UserBar         编辑资料 · 编辑 · 显示名称 · 邮箱 · 保存
+  ChatPopover     关闭对话 · 调整对话窗口大小
+  ServersDrawer   服务器面板 · 服务器
+  Sidebar         切换菜单 · 打开命令面板 · Agent Network — 首页 · 网络
+  EmptyState      该网络暂无 Agent · 暂无在线 Agent · 创建你的第一个 Agent
+  HealthBanner    关闭提示条      NodeDetailHeader 复制别名
+  CollapsibleSearch 清空并关闭搜索      CommandCenter 关闭命令中心
+  CommandPalette  命令面板(aria)        RuntimeSupportMatrix 运行时
+  ProviderFormModal 基础 URL
+```
+
+### 保留英文（有意为之，写进审计脚本白名单并附理由）
+```
+Agent Network（产品名）· API Token（与 Hub 接口同名）· Asia/Shanghai（IANA 时区示例）
+CHANGELOG.md / SKILL.md（文件名）· Apache-2.0（协议）· Slug / Promise（字段/类型名）
+Hub / Token / Session / SSE / URL / Node / Agent / Provider 等技术词
+```
+
+### 新增工具：`deploy/i18n-static-audit.mjs`（工作区工具，不进仓库）
+```
+判据：JSX 文本节点 >English< 与 title / aria-label / placeholder / alt 属性值
+不报：已包 t('中文','English') 的双语实现、注释、代码 token、白名单技术词
+价值：覆盖"永远打不开"的弹窗与条件分支 —— 浏览器门只能覆盖真实渲染到的页面
+现状：扫描 86 个文件 → PASS（0 处）
+```
+
+### 验证
+```
+tsc 0 · lint 0 errors · npm test 58/58 · next build 成功
+i18n-ui-sweep（本地生产构建）：7 页全部 残留=0 面板=0 浮层=0
+i18n-static-audit：PASS（86 文件 0 处）
+```
+
+用户可见变化：任务面板/抽屉/详情、拓扑图控件、设置与管理台、无障碍标签全部中文化。
+无交互、接口、权限变化。
+
 ## 0.6.4-preview.566 — 2026-11-15
 
 ### 快捷键帮助浮层（按 ? 打开）中文化，界面文案收口
