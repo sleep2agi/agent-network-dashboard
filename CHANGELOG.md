@@ -6,6 +6,43 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.579 — 2026-11-15
+
+### 逐页体检收尾：服务器日志页、SkillHub 占位符、聊天输入占位符
+
+```
+用补强后的文案门（22 个目标 + placeholder 取样）在 .578 上反向验证，
+一次报出 11 处残留，全部是"用户每天能看到"的英文界面文案：
+  /server-logs  Pause · auto-refresh · all · log · info · warn · error   （7 处）
+  /skillhub     搜索框占位符「搜索名称、slug 或说明…」                    （1 处）
+  /nodes 等    聊天输入占位符「Message <别名>...」（3 个页面各一处）      （3 处）
+```
+
+### 改动
+```
+app/server-logs/page.tsx   暂停/继续 · 自动刷新 · 筛选项改 LEVEL_LABEL（全部/日志/信息/警告/错误），
+                           key 仍保持英文（与 Hub 字段一致）
+app/skillhub/page.tsx      占位符 slug → 标识
+app/components/TaskChatPanel.tsx  「Message ${alias}...」→「发消息给 ${alias}…」（占位符 + aria-label）
+```
+
+### 门的补强（这版一并固化）
+```
+① 目标清单 21 → 22：加入 /server-logs（此前只有 /logs，服务器日志页从未被扫过）
+② 扫描集合加 [placeholder]：占位符是界面文案，但 input 不在原 SEL 里
+③ 物理键名白名单：Ctrl/Cmd/Alt/Shift/Enter/Esc/Tab（键帽文字不翻译）
+④ 格式示例跳过：占位符含 :// 或 owner/repo 视为数据
+⑤ 词尾连接符归一：`Ctrl/⌘+Enter` 里的 `Ctrl/` 归一为 `Ctrl` 再判白名单（避免误报）
+```
+
+### 验证（红 → 绿对照）
+```
+`.578` 上：I18N-UI FAIL (11 处残留，覆盖 22/22 页)   ← 新门抓得到
+`.579` 后：期望 PASS (22/22 页 0 残留)
+```
+
+用户可见变化：服务器日志页按钮与筛选项为中文；SkillHub 搜索提示与聊天输入提示不再夹英文。
+
 ## 0.6.4-preview.578 — 2026-11-15
 
 ### 逐页体检第四批：管理台中文化 + 中文错误边界
