@@ -472,7 +472,7 @@ export function Sidebar() {
             onClick={() => {
               window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
             }}
-            title={collapsed ? 'Quick search (⌘K)' : undefined}
+            title={collapsed ? '快速搜索（⌘K）' : undefined}
             className={`w-full flex items-center text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg-muted)] hover:bg-[var(--bg-elevated)] transition-colors ${
               collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2 px-5 py-3 lg:py-2'
             }`}
@@ -482,7 +482,7 @@ export function Sidebar() {
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              {!collapsed && 'Quick search'}
+              {!collapsed && '快速搜索'}
             </span>
             {!collapsed && <kbd className="text-[11px] border border-current rounded px-1 py-0.5 font-mono">⌘K</kbd>}
           </button>

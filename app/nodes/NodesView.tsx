@@ -614,7 +614,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
                   : 'text-gray-500 hover:text-gray-200'
               }`}
             >
-              {mode === 'list' ? 'List' : 'Grid'}
+              {mode === 'list' ? '列表' : '网格'}
             </button>
           ))}
         </div>

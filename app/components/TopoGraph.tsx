@@ -2945,7 +2945,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 filter: hoveredLayout === 'ring' ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
               }}
             >
-              Ring
+              环形
             </button>
             <button
               onClick={() => { popChrome('layout-grid'); selectLayout('grid'); }}
@@ -2998,7 +2998,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 filter: hoveredLayout === 'grid' ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
               }}
             >
-              Grid
+              网格
             </button>
             {/* #170 tree-view MVP — third segment in the layout control.
                Org-chart view: 总指挥/副指挥 root → teams → members.
@@ -3022,7 +3022,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                 filter: hoveredLayout === 'tree' ? `drop-shadow(0 0 2px ${pal.legendAccent}80) drop-shadow(0 0 4px ${pal.legendAccent}40) brightness(1.15)` : undefined,
               }}
             >
-              Tree
+              树形
             </button>
           </div>
           {/* R79: working + online count chips become hover affordances —
@@ -3316,7 +3316,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                       Hover-letter-spacing family extension (12 anchors
                       now): R344/R345/R347/R420/R427/R431/R432/R433/
                       R434/R517/R518 + R539 (this round). */}
-                  <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-working-chip-digit>{workingCount}</span><span className="opacity-95 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide" data-working-chip-unit> working</span>
+                  <span className="font-semibold transition-[font-weight,letter-spacing] duration-200 group-hover:font-bold group-hover:tracking-wide" data-working-chip-digit>{workingCount}</span><span className="opacity-95 transition-[opacity,letter-spacing] duration-200 group-hover:opacity-100 group-hover:tracking-wide" data-working-chip-unit> 工作中</span>
                 </span>
                 <span
                   // Round 201 / Loop: online chip — mirror of the working
@@ -3614,7 +3614,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             return (
               <span
                 className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[var(--fg-muted)]/10 text-[var(--fg-muted)] border border-[var(--border)] font-mono"
-                title={`${w} working · ${i} idle · ${o} offline`}
+                title={`${w} 工作中 · ${i} 空闲 · ${o} 离线`}
                 data-fleet-pressure
               >
                 {/* Round 373 / Loop: pressure-bar kicker label gains
@@ -5087,7 +5087,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             const flows = flowLinks.length;
             const parts: string[] = [];
             parts.push(`${online} agent${online === 1 ? '' : 's'} online`);
-            if (working > 0) parts.push(`${working} working`);
+            if (working > 0) parts.push(`${working} 工作中`);
             if (offline > 0) parts.push(`${offline} offline`);
             parts.push(`${flows} active link${flows === 1 ? '' : 's'}`);
             return `Agent network topology — ${parts.join(' · ')}. Tab to navigate nodes, double-click canvas to reset view.`;
@@ -7396,7 +7396,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
                     const memberPreview = members.slice(0, 8).join(', ');
                     const suffix = members.length > 8 ? ` + ${members.length - 8} more` : '';
                     const statusSummary = [
-                      box.statuses.working > 0 ? `${box.statuses.working} working` : null,
+                      box.statuses.working > 0 ? `${box.statuses.working} 工作中` : null,
                       box.statuses.idle    > 0 ? `${box.statuses.idle} idle`       : null,
                       box.statuses.offline > 0 ? `${box.statuses.offline} offline` : null,
                     ].filter(Boolean).join(' · ');
@@ -9445,7 +9445,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             aria-label={(() => {
               const parts = ['Network hub'];
               if (onlineNodes.length > 0) parts.push(`${onlineNodes.length} online`);
-              if (workingCount > 0) parts.push(`${workingCount} working`);
+              if (workingCount > 0) parts.push(`${workingCount} 工作中`);
               if (flowLinks.length > 0) parts.push(`${flowLinks.length} active link${flowLinks.length === 1 ? '' : 's'}`);
               return parts.join(' · ') + ' — Enter to fit view';
             })()}
@@ -9500,7 +9500,7 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
               const total = sessions.length;
               const parts = [`Network hub`, `${total} session${total === 1 ? '' : 's'}`];
               if (onlineNodes.length > 0) parts.push(`${onlineNodes.length} online`);
-              if (workingCount > 0) parts.push(`${workingCount} working`);
+              if (workingCount > 0) parts.push(`${workingCount} 工作中`);
               if (flowLinks.length > 0) parts.push(`${flowLinks.length} active link${flowLinks.length === 1 ? '' : 's'}`);
               return parts.join(' · ') + '\nclick to fit view';
             })()}</title>

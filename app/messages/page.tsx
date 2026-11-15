@@ -344,7 +344,7 @@ export default function MessagesPage() {
             disabled={loadingOlder}
             className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-1.5 text-xs text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)] disabled:opacity-50"
           >
-            {loadingOlder ? 'Loading…' : '↑ Load earlier messages'}
+            {loadingOlder ? '加载中…' : '↑ 加载更早的消息'}
           </button>
         </div>
       )}

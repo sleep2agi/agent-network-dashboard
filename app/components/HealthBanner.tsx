@@ -122,8 +122,8 @@ export function HealthBanner() {
     cta = { label: 'Open Settings', href: '/settings' };
   } else if (failed > 0) {
     kind = 'amber';
-    message = `${failed} task${failed > 1 ? 's' : ''} failed in the last 24h`;
-    cta = { label: 'Review failures', href: '/tasks?status=failed' };
+    message = `近 24 小时 ${failed} 个任务失败`;
+    cta = { label: '查看失败', href: '/tasks?status=failed' };
   } else if (fleetEmpty) {
     // Round 70 — was "All systems go" before, which is misleading when
     // the fleet is empty. Reuses the green palette (it's not a failure
