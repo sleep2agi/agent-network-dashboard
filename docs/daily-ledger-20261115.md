@@ -256,3 +256,58 @@ Error: element(s) not found
   ② 减少首帧前必须等待的 Hub 调用数量（需要与 Hub 侧确认哪些可延后）。
 - 取景收束 2782ms 属于"画面已可见后的镜头稳定"，不影响第一眼，改动需负责人确认观感取舍。
 
+
+
+---
+
+## 13. 发布：`0.6.4-preview.568`（白名单门驱动的最后一轮中文化）
+
+| 项 | 值 |
+|---|---|
+| 版本 | `0.6.4-preview.568` |
+| commit | `9919e8bf557c4892fbaaa222f5e66e0a93362941` |
+| buildId | `ytDHr4xSMBy3nQlI5uyoV` |
+| 内容 | 17 文件：移动底栏 6 项 · 概览拓扑控件 · 任务状态体系（芯片 + 行内）· 失败横幅 · 快速搜索 · 加载更早消息 |
+| 回退锚点 | `preview.567-d537571`（`d537571` / `Wj60pk2v6IKFbDdKqpt18`） |
+
+### 为什么这一版才真正收口
+```
+前五版靠"人工词表 + 逐页翻检"，连续漏掉四类区域：
+  ① 移动端底部导航（6 项，整块英文）
+  ② 概览页拓扑控件（Show/Hide Topology、Ring/Grid/Tree、N working）
+  ③ 任务状态芯片与行内状态（created/delivered/acked… 、HIGH）
+  ④ 失败横幅句子（"104 tasks failed in the last 24h"）与附件卡片
+
+`.568` 把门改成白名单制：控件/标题里任何 ≥2 字母的拉丁词都报，只放行技术白名单
+与九类明确的数据/内容形态。它一次就把上面四类全揪出来。
+```
+
+### 门的九条跳过规则（每条对应一类明确的数据形态）
+```
+① <option> 与含 <select> 容器（目录）
+② [data-node-alias] 与页内别名文本（Agent 名）
+③ [data-node-list-rail]（节点列表栏）
+④ [data-task-id]/[data-requirement-id]/[data-msg-id]/article（正文）
+⑤ 含中文的 h1–h4（内容标题）
+⑥ .leading-relaxed/.prose/[data-markdown]（聊天 markdown 表格）
+⑦ 含 <img> 的按钮（附件预览）
+⑧ 含文件扩展名的文本（附件卡片）
+⑨ 白名单：技术词 + 产品名 Agent Network + default/P0–P3 + Slack
+```
+
+### 教训 I：改一个可见标签，要扫三种引用形态
+```
+`.568` 验收红了 4 次，全部同源：套件按可见文案定位。三种形态都要处理：
+  ① { name: 'X', exact: true }
+  ② /^X\s*\d+$/                 ← 「All 200」芯片
+  ③ 三元/条件表达式里的 'X'        ← 如 code === '401' ? 'Refresh' : '重试'
+做法：改完标签后全仓 grep 该标签的所有形态，确认残留 0 再跑验收。
+      本次 Refresh 22 处 + All 4 处，均为中英双兼容正则。
+```
+
+### 教训 J：门与"看图"是两条互补的证据
+```
+门覆盖结构控件（nav/button/h1-h4/th/label + 面板 + 浮层）；
+看图覆盖密排内容区（任务行内状态、附件卡片）—— 这些 <span> 不在门的 selector 里。
+`.568` 的行内状态 running/acked/replied 与 HIGH 就是靠看移动端截图发现的。
+```
