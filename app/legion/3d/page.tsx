@@ -188,6 +188,15 @@ const INTRO2_FREEZE = (() => {
 /**
  * 同色相提亮：只抬高亮度，不改色相/饱和度（神明：层级只靠明度）。
  */
+// 实验：把浅色主题的底色压暗一点（A 案）。仅本地验证，不提交。
+function tintHex(hex: string, amount: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex).trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const k = Math.max(0, Math.min(1, 1 - amount));
+  return `rgb(${Math.round(r * k)}, ${Math.round(g * k)}, ${Math.round(b * k)})`;
+}
 function lightenHex(hex: string, amount: number): string {
   const m = /^#?([0-9a-f]{6})$/i.exec(String(hex).trim());
   if (!m) return hex;
@@ -1407,7 +1416,7 @@ export default function Legion3DPage() {
       if (!g2) return null;
       g2.setTransform(dpr, 0, 0, dpr, 0, 0);
       const fxBg = fxOn() ? FX?.bg : null;
-      g2.fillStyle = fxBg ?? tk.bg;
+      g2.fillStyle = fxBg ?? (dark ? tk.bg : tintHex(tk.bg, 0.09));
       g2.fillRect(0, 0, size.width, size.height);
       const grad = g2.createRadialGradient(
         size.width / 2, size.height * 0.5, 0,
