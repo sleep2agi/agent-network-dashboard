@@ -6,6 +6,40 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.597 — 2026-11-17
+
+### 侧栏：Hub 不可达时不再显示「waiting for agents」（把"读不到"说成"空舰队"）
+
+```
+复现（拦截 /api/hub/** → 502）：
+  修复前 侧栏：waiting for agents      ← 与"团队还没建"同形
+  修复后 侧栏：status unavailable（红）  ← 4 条路由全部生效
+
+根因：侧栏计数用 /api/hub/overview?network_id=…，而 network_id 来自 /api/hub/networks；
+      Hub 挂掉时 networks 也 502 ⇒ overview 的 SWR key 变 null ⇒ 不请求、不报错
+      ⇒ 渲染成「total=0 且无 error」⇒ 走「队伍还没建」分支。
+修法：复用同 key 的 networks 缓存判断错误（不会发第二个请求），三处判据改为 statusError。
+```
+
+### `?assemble=1` 衔接态：修 React #418（水合不一致）
+
+```
+根因：开关在模块顶层读 location.search ⇒ SSR 时不渲染、客户端首帧渲染 ⇒ 两棵树不一致
+      平时数据来得快不易暴露；Hub 不可达时 loading 一直为真，502 场景实测 4/4 复现
+修法：改为 mount 后读（useState + useEffect）；SSR 与客户端首帧都不渲染，随后出现
+默认路径（无参数）行为与 .596 逐像素一致
+```
+
+### 验证
+
+```
+新探针 deploy/resilience-hubdown.mjs（4 路由 × 6 判据）：修复前 FAIL 5 条 → 修复后 PASS
+deploy/legion-assemble-chip.mjs（16 条）：PASS（对比度 cyber 7.36 / light 6.38；320 无溢出）
+tsc 0 error · eslint 0 error · build 通过
+```
+
+---
+
 ## 0.6.4-preview.596 — 2026-11-17
 
 ### 军团 3D：新增首屏衔接态预览开关 `?assemble=1`（默认关闭）
