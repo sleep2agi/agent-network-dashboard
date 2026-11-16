@@ -4006,7 +4006,16 @@ export default function Legion3DPage() {
       tabIndex={0}
       onKeyDown={onKeyDown}
       data-legion-stage="3d"
-      style={{ height: presenting || isFullscreen ? '100dvh' : (stageHeight ?? 'calc(100dvh - 7.5rem)') }}
+      // `.587`：高度是"剩余空间"的派生值，但 JS 只能按"量测那一刻"算 ——
+      // HealthBanner 的数据走 useIdle，实测可能晚于观察窗口（5s）才插进 DOM，
+      // 于是舞台按"无横幅"算好后不再重算，文档永久高出 31px（site-scroll 门在 .586 抓到，
+      // 门等的是"稳定"，所以这次不是瞬间抖动，是真的稳定溢出）。
+      // 这里用 maxHeight 把"上界"交给 CSS：横幅高度已由 HealthBanner 镜像成 --health-banner-h，
+      // 无论 JS 量到的是什么、横幅什么时候到，渲染高度都不可能超过视口减横幅。
+      style={{
+        height: presenting || isFullscreen ? '100dvh' : (stageHeight ?? 'calc(100dvh - 7.5rem)'),
+        maxHeight: 'calc(100dvh - var(--health-banner-h, 0px))',
+      }}
       // position 必须二选一：`relative` 与 `fixed` 同在一条 class 里时，胜负由样式表
       // 顺序决定（实测 relative 赢），元素留在文档流里只被拉大成 100vw，量出来是
       // 「从侧栏右边开始的一大块」——.293 第一版就这么错了。
