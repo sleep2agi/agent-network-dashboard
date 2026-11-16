@@ -1638,7 +1638,10 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
               </svg>
               <div className="text-[var(--fg-muted)] text-sm">开始对话</div>
-              <div className="text-[var(--fg-dim)] text-xs mt-1">Send a task to {alias}</div>
+              {/* `.586`：无消息节点的空态副标题一直是英文（"Send a task to <alias>"），
+                  只有"没有历史消息的节点"才会渲染 → 文案门扫的样本通常有消息，从未覆盖到这里。
+                  加 data-composer-hint 让门在渲染时能取样。 */}
+              <div data-composer-hint className="text-[var(--fg-dim)] text-xs mt-1">给 {alias} 派个任务</div>
             </div>
           )}
           {/* Vincent tg923 + timeout-degrade: both bounded attempts failed —

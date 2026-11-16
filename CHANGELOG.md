@@ -6,6 +6,40 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.586 — 2026-11-16
+
+### 无消息节点的空态副标题中文化（数据依赖分支的最后一条漏网英文）
+
+```
+节点页在"该节点没有任何历史消息"时会显示空态：
+  标题：开始对话（中文）
+  副标题：Send a task to <别名>   ← 英文，同一块区域中英混排
+```
+
+### 为什么文案门没抓到
+```
+这条分支只在"节点没有消息"时渲染；门的 22 个目标里节点详情取的是第一个节点
+（通常有消息）→ 这条路径从未被采样。与 .580 离线卡、.581 首页统计同属
+"门的覆盖 = 当前数据状态下的界面"这一类。
+```
+
+### 改动
+```
+app/components/TaskChatPanel.tsx
+  "Send a task to {alias}" → 「给 {alias} 派个任务」
+  并加 data-composer-hint：该空态一旦渲染，文案门就能取样
+```
+
+### 验证
+```
+本地 /nodes/daemon-dev（该节点当前确无消息）三次采样（5/10/20s）：
+  正文均为「开始对话 / 给 daemon-dev 派个任务」，英文不再出现
+  spinner=0 · 消息数=0 · pageerror 0
+门：tsc 0 · lint 0 errors · npm test 60/60 · gates 四项回基线
+```
+
+用户可见变化：打开一个从未对话的节点，空态整块都是中文。
+
 ## 0.6.4-preview.585 — 2026-11-16
 
 ### 浅色主题下军团 3D 不再"看不见"：画布加一层极浅中性底
