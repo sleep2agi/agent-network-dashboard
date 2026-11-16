@@ -6,7 +6,41 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
-## 0.6.4-preview.597 — 2026-11-17
+## 0.6.4-preview.598 — 2026-11-17
+
+### 内容与 .597 相同（侧栏错误态 + 衔接态水合），外加**契约测试升级**
+
+```
+.597 为什么作废：CI 的 unit tests 红在 tests/sidebar-presence-states.test.mjs
+  断言 A：失败态必须由 `error && total === 0` 驱动 —— 我把判据改成了 statusError，正则不再匹配
+  断言 B：`loading…` 必须出现在 `waiting for agents` 之前 ——
+          我在注释里引用了同一字面串，indexOf 先命中注释，顺序断言被挤反
+两次都不是产品逻辑错，而是"代码变了、契约没跟上"和"注释撞了文本断言"
+```
+
+### 契约升级（比原来更严，不是为了变绿而放宽）
+
+```
+保留：四态顺序断言（loading < waiting、unavailable < waiting）
+升级：失败态判据 error → statusError
+新增：statusError 必须 = error || networksError
+      （Hub 不可达 ⇒ networks 502 ⇒ 无 network_id ⇒ 计数请求 key=null ×不发请求也不报错
+        ⇒ 旧判据会把"读不到"渲染成"空舰队"）
+新增：失败信号必须复用 /api/hub/networks 的同 key 缓存（不产生第二个请求）
+```
+
+### 验证
+
+```
+本地：=== 60/60 test files passed (44 via bun test, 16 self-executing) ===
+单跑：sidebar presence states: PASS（顺序正确，且失败信号含 networksError）
+探针：resilience-hubdown PASS（4 路由 × 6 判据，pageerror 0）
+      legion-assemble-chip PASS（16 条：默认不出现 / 对比度 7.36·6.38 / 320 无溢出）
+```
+
+---
+
+## 0.6.4-preview.597 — 2026-11-17（**作废，从未上线**：CI unit tests 红，见 .598 说明）
 
 ### 侧栏：Hub 不可达时不再显示「waiting for agents」（把"读不到"说成"空舰队"）
 
