@@ -47,7 +47,7 @@
 | 5 | 运行时矩阵公开展示 | 未变（`?matrix=1` 预览可用，默认隐藏） | 等 admin 决策 |
 | 8 | **`?pitch=` 诊断参数不生效**（军团 3D） | 极端值实测：`?pitch=0.20` 与 `?pitch=1.45` 的同一层环投影长宽比均为 0.93；常规值 0.55/0.70/0.85 的环包围盒均为 643×734（逐像素一致） | **待办**：2026-11-14 追加定位——URL 未丢参、无重定向（`location.search` 仍是 `?pitch=0.55&debug=1`），排除路由层；剩余怀疑是**模块级常量在 chunk 加载时捕获**（`PITCH_PARAM` 在模块顶层用 IIFE 读 `location.search`，若 chunk 早于带参导航加载，就会固化为 null）。修法：改为在组件内运行时读取，或把参数写进 `view=yaw,pitch,zoom` 通道。当前可用替代：`?view`（已验证生效） |
 | 7 | **移动端「刚好一屏」的页面多出 80px 滚动**（`/nodes` `/legion` `/legion/plaza`） | 390×1600 实测：页面根 min-height = 1543（=1600−横幅 57，正确），但外壳内容区带 `pb-[calc(5rem+…)] = 80px` 底部让位（给固定 Tab 栏），两者相加 1623 > 1600 ⇒ 溢出恰为 80。桌面不受影响（桌面 pb=0） | **待定**：修法需新增 `--shell-bottom-pad`（AppShell 写入 80px/0）并把页面根改成 `min-h-[calc(100dvh - var(--health-banner-h) - var(--shell-bottom-pad))]`；涉及 3 页 + 外壳，需桌面与移动两档复测，并确认内容不被 Tab 栏遮挡 |
-| 6 | **短内容态多出一条 31px 滚动条**（横幅高度未扣除） | 已修并验证 5 处：`/legion`（`.546`）、`/`、`/messages`、`/requirements`（`.552`）、`/node` 三处根（`.553`）。剩余：`app/tasks/TasksView.tsx`（**需同时改 3 处：根 + aside + section，实测三者 min-height 均为 1000**）、`app/requirements/[id]/page.tsx`（6 处）、`app/legion/plaza/page.tsx`（**已修，`.555`**：1440×2400 下溢出 31 → 0；1000 高时看不到）、`app/login/page.tsx`（无外壳，变量恒 0，不需要） | **待办**：只需处理 `TasksView` 与 `requirements/[id]`；每处都改成 `min-h-[calc(100dvh-var(--health-banner-h,0px))]`，验证用 computed min-height=969 或骨架期溢出=0 |
+| 6 | **短内容态多出一条 31px 滚动条**（横幅高度未扣除） | **已关闭（2026-11-17 复测）**：原记「剩余 TasksView 3 处 + requirements/[id] 6 处」已不可复现 —— 线上 `0.6.4-preview.596` 实测：`/requirements/4925`、`/requirements/4924`、`/tasks?status=blocked` 在 1440×1000 与 1440×2400 下 `scrollH − innerHeight = 0`；`/tasks` 全量列表仍有 265px 滚动，但那是 100 行真实内容，不是横幅差 31px。其余 5 处早已修完（`.546` `.552` `.553` `.555`） | **关闭** |
 
 ### 关于"±2.2% 残留"的更正
 
