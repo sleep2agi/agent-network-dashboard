@@ -3,12 +3,22 @@
 // 事故：加载期间侧栏显示「waiting for agents」，用户据此以为舰队为空；
 //      接口失败时也可能伪装成空态。修好后用这条测试锁住「分支顺序」：
 //        1) 加载中（isLoading && total===0） → loading…
-//        2) 失败（error && total===0）      → status unavailable
-//        3) 真空（total===0）               → waiting for agents
-//        4) 有数据                          → N/M online
+//        2) 失败（statusError && total===0） → status unavailable
+//        3) 真空（total===0）                → waiting for agents
+//        4) 有数据                           → N/M online
 //
 // 断言的是**语义顺序**（先判加载、再判失败、最后才是空），不是具体写法：
 // 只要有人把「空态」提到「加载/失败」之前，这条就会红。
+//
+// 2026-11-17（`.597`）第二次事故，同一个坑换了个入口：
+//   Hub 不可达 ⇒ /api/hub/networks 502 ⇒ 拿不到 network_id
+//   ⇒ 计数用的 /api/hub/overview 的 SWR key 变成 null ⇒ **根本不发请求**
+//   ⇒ 该 useSWR 既不 load 也不 error ⇒ 渲染成「total=0 且无 error」
+//   ⇒ 侧栏显示「waiting for agents」，把「读不到」说成「空舰队」
+// 修法：失败信号不能只看计数请求自己的 error，还要并入取不到 network_id 的那次失败
+//   const statusError = error || networksError;
+// 因此本测试的失败态判据从「error 驱动」升级为「statusError 驱动」，
+// 并额外要求 statusError 必须包含 networksError —— 否则这个坑会再次出现。
 
 import { readFileSync } from 'node:fs';
 import { strict as assert } from 'node:assert';
@@ -38,9 +48,22 @@ assert.ok(
   '「status unavailable」分支必须出现在「waiting for agents」之前（否则失败会显示空态文案）',
 );
 
-// 三态必须由不同条件驱动：isLoading / error / total===0
+// 三态必须由不同条件驱动：isLoading / statusError / total===0
 assert.match(src, /isLoading && total === 0/, '加载态必须由 isLoading && total===0 驱动');
-assert.match(src, /error && total === 0/, '失败态必须由 error && total===0 驱动');
+assert.match(src, /statusError && total === 0/, '失败态必须由 statusError && total===0 驱动');
 assert.match(src, /total === 0 \?/, '空态必须由 total===0 驱动');
 
-console.log('sidebar presence states: PASS（loading / unavailable / empty 顺序正确）');
+// `.597`：失败信号必须并入「取不到 network_id 的那次请求」的失败，
+// 否则 Hub 不可达时会退化成「total=0 且无 error」= 伪装空态。
+assert.match(
+  src,
+  /const statusError = error \|\| networksError/,
+  '失败态必须并入 networksError（networks 502 时计数请求不发也不报错）',
+);
+assert.match(
+  src,
+  /useSWR<\{ networks: SidebarNetwork\[\] \}>\('\/api\/hub\/networks'/,
+  '必须复用同一 key 的 networks 缓存来判断错误（同 key 不会产生第二个请求）',
+);
+
+console.log('sidebar presence states: PASS（loading / unavailable / empty 顺序正确，且失败信号含 networksError）');
