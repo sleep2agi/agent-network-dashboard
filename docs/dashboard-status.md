@@ -58,6 +58,20 @@ C 浅色主题改"墨线"绘制：节点用压暗 45% 的状态色实心 + 无�
   再判断是否需要做法（如展台骨架、分帧布局、惰性属性）。
 ```
 
+## 更正：#4863 不属于 Dashboard 仓库（2026-11-16）
+
+```
+先前的判断（错）：把 #4863「在节点聊天信息里调整所属部门」当成 Dashboard 侧改动。
+复核证据（在 agent-network-dashboard 全仓 grep，排除 node_modules）：
+  · departmentPathLabel —— 0 处
+  · moveAgentDepartment —— 0 处
+  · 「聊天信息」「所属部门」 —— 0 处
+  · app/components 下也没有 info/聊天信息 面板组件（只有 NodeDetailHeader / NodeSettingsPanel / …）
+⇒ #4863 改的是另一个 app 仓库（描述里写的 "app main ce2f2d92" 不是本仓库的 main），
+  不是 Dashboard 的工作面；我写在该仓库的验收探针已删除，避免留下死工具。
+另外给通信欧发的那条"按 A 我只做验收"的消息也一并更正，免得他等我。
+```
+
 ## 客户端对齐 2 项的当前边界（2026-11-16 核对）
 
 ```
