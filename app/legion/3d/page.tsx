@@ -4014,7 +4014,10 @@ export default function Legion3DPage() {
       // 无论 JS 量到的是什么、横幅什么时候到，渲染高度都不可能超过视口减横幅。
       style={{
         height: presenting || isFullscreen ? '100dvh' : (stageHeight ?? 'calc(100dvh - 7.5rem)'),
-        maxHeight: 'calc(100dvh - var(--health-banner-h, 0px))',
+        // `.588`：演示态/全屏时舞台必须铺满视口（present:stageCoversViewport 断言），
+        // 而横幅在演示态被盖住、CSS 变量仍是 31px —— 上界只能作用于非演示态，
+        // 否则演示态底下会留 31px 缝（.587 验收就是这么红的）。
+        maxHeight: presenting || isFullscreen ? undefined : 'calc(100dvh - var(--health-banner-h, 0px))',
       }}
       // position 必须二选一：`relative` 与 `fixed` 同在一条 class 里时，胜负由样式表
       // 顺序决定（实测 relative 赢），元素留在文档流里只被拉大成 100vw，量出来是

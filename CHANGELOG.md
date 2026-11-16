@@ -6,6 +6,38 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.588 — 2026-11-16
+
+### 军团 3D 舞台高度上界：只在非演示态生效（`.587` 作废后的正确版本）
+
+```
+.587 内容：给舞台加 maxHeight: calc(100dvh - var(--health-banner-h))
+.587 验收：legion 套件 271/272，红在 present:stageCoversViewport
+  原因：演示态舞台要铺满视口（height:100dvh），但横幅在演示态被盖住、CSS 变量仍是 31px
+        ⇒ 上界把演示态舞台压到 969px，底部留 31px 缝
+.587 未发布，按作废处理（与 .574/.582 同规）；本版是其修正版
+```
+
+### 最终改动
+```tsx
+style={{
+  height:    presenting || isFullscreen ? '100dvh' : (stageHeight ?? 'calc(100dvh - 7.5rem)'),
+  maxHeight: presenting || isFullscreen ? undefined : 'calc(100dvh - var(--health-banner-h, 0px))',
+}}
+```
+
+### 验证（两种模式同时成立，缺一不可）
+```
+1440×1000 本地：
+  普通态  稳态 溢出 0px · 舞台 969 · 横幅 31
+  普通态  强制 height=1000px ⇒ 实际 969（被上界夹住）· 溢出 0
+  演示态  舞台 1000×1440 · top=0 · maxHeight=none · 横幅变量仍是 31px
+  演示态  铺满视口 = true
+门：tsc 0 · lint 0 errors · npm test 60/60 · gates 回基线
+```
+
+用户可见变化：带健康横幅时进入军团 3D 不再出现 31px 滚动条；进演示态仍然严丝合缝铺满全屏。
+
 ## 0.6.4-preview.587 — 2026-11-16
 
 ### 军团 3D 首屏 31px 永久溢出：高度上界改由 CSS 派生
