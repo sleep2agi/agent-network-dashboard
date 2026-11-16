@@ -2729,14 +2729,24 @@ export default function Legion3DPage() {
             ctx.save();
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.font = `600 ${fs1}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
-            ctx.fillStyle = tk.fg;
-            ctx.globalAlpha = dark ? 0.96 : 0.9;
-            ctx.fillText(`${layout.stats.agents} Agent`, p.x, yBase);
-            ctx.font = `400 ${Math.max(9, fs1 * 0.8)}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
-            ctx.fillStyle = tk.dim;
-            ctx.globalAlpha = dark ? 0.8 : 0.72;
-            ctx.fillText(`${layout.stats.groups} 部门 · ${layout.stats.people} 成员`, p.x, yBase + fs1 * 1.20);
+            // `.595`：编制还没到时不要画「0 Agent · 0 部门 · 0 成员」——
+            // 那三个 0 是把「未知」当成了「0」（与顶部「正在读取编制…」也自相矛盾）。
+            const pending = loadingRef.current;
+            if (pending) {
+              ctx.font = `400 ${Math.max(9, fs1 * 0.9)}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+              ctx.fillStyle = tk.dim;
+              ctx.globalAlpha = dark ? 0.85 : 0.78;
+              ctx.fillText('读取中…', p.x, yBase);
+            } else {
+              ctx.font = `600 ${fs1}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+              ctx.fillStyle = tk.fg;
+              ctx.globalAlpha = dark ? 0.96 : 0.9;
+              ctx.fillText(`${layout.stats.agents} Agent`, p.x, yBase);
+              ctx.font = `400 ${Math.max(9, fs1 * 0.8)}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+              ctx.fillStyle = tk.dim;
+              ctx.globalAlpha = dark ? 0.8 : 0.72;
+              ctx.fillText(`${layout.stats.groups} 部门 · ${layout.stats.people} 成员`, p.x, yBase + fs1 * 1.20);
+            }
             ctx.restore();
             if (canvasRef.current) canvasRef.current.dataset.coreBig = '1';
           }
@@ -3980,6 +3990,11 @@ export default function Legion3DPage() {
 
   // 网络未确定 ⇒ 也算 loading（null key 时 SWR 的 isLoading 是 false，会把等待误判成「空」）
   const loading = !networkReady || people.isLoading || hierarchy.isLoading || status.isLoading;
+  // `.595`：画布里的核心也会画「N Agent / N 部门 · N 成员」。数据没到的那 1 秒里
+  // 它画的是三个 0 —— 与标题行「正在读取编制…」自相矛盾，也违反「未知 ≠ 0」。
+  // 渲染循环是独立 effect，用 ref 把 loading 喂进去（不把它加进依赖，避免重启动画）。
+  const loadingRef = useRef(loading);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
   const readError = legionReadError(people.error, hierarchy.error);
   // #73 —— 不再维护 needsLogin 这个「只置位不清零」的 state：SWR 成功后 error 会自己清掉，
   // 直接派生就能「登录恢复后立刻收起过期提示」。no-network 分支是 #72 的网络就绪判定。
