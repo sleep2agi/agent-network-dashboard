@@ -117,6 +117,13 @@ const CORE_BOTH = CORE_PARAM === 'both' || CORE_PARAM === null;
 const CORE_BIG = CORE_PARAM === 'big' || CORE_BOTH;
 const CORE_TICKS = CORE_PARAM === null || CORE_PARAM === 'ticks' || CORE_BOTH;
 const CORE_SCALE = CORE_BIG ? 1.6 : 1;
+// `?assemble=1`（`.596`）：首屏「正在编队 · 接入节点中…」衔接态。
+// 背景（`.595` 实测，1440）：编制数据到达前约 1.1s（+414ms…+1546ms）画面只有核心。
+// 现在核心已显示「读取中…」，但这行小字在深色星空里很轻；加上一句说明能让
+// "正在接入"这件事读得更明确。**默认关闭** —— 这属审美取舍，等 owner 决定后再改默认。
+const ASSEMBLE = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('assemble') === '1'
+  : false;
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
 // 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
@@ -4102,6 +4109,21 @@ export default function Legion3DPage() {
         aria-describedby="legion-3d-hint"
         tabIndex={-1}
       />
+
+      {/* `?assemble=1`（`.596`，默认关闭）：编制到达前的「正在编队」衔接态。
+          只在 loading 时出现，数据一到立即消失；不拦截指针，不改画布内容。 */}
+      {ASSEMBLE && loading && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center" data-testid="legion-3d-assemble">
+          <p
+            role="status"
+            aria-live="polite"
+            className="inline-flex translate-y-[74px] items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-secondary)]/80 px-3 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur sm:translate-y-[92px] sm:text-xs"
+          >
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" aria-hidden />
+            正在编队 · 接入节点中…
+          </p>
+        </div>
+      )}
 
       {!presenting && depthPreview !== null && (
         <span
