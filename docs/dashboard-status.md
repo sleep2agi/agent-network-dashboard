@@ -84,6 +84,32 @@ deploy/legion-assemble-chip.mjs
 首次运行：ASSEMBLE-CHIP: PASS (16 条)
 ```
 
+## 2026-11-17 Hub 不可达场景的界面行为（`.596` 复测）
+
+```
+方法：Playwright 拦截 **/api/hub/** → 502（模拟 Hub 挂掉，非真实故障）
+视口 1440×1000 · 路由 /legion/3d(?assemble=1) · /nodes · /tasks · /
+
+结果（全部符合"不知道就说不知道"）：
+  · 顶部横幅：CommHub unreachable — agents may be offline（红）
+  · 侧栏：status unavailable（红点，不伪装成 0）
+  · 军团页：不挂起、不空转「读取中…」，无胶囊（loading 已转为错误态）
+  · pageerror：0（4 条路由各 1 次）+ /legion/3d 重复 6 次 = 0/6
+  · 早前单次观察到的 React #418（文本水合不一致）未复现 ⇒ 记为瞬时现象，不作缺陷
+```
+
+### 同时发现一处文案不一致（候选，未改）
+
+```
+写在中文 UI 里的英文串：
+  HealthBanner.tsx:113  'CommHub unreachable — agents may be offline'
+  HealthBanner.tsx:116  'Unable to read presence — hub reports N live SSE, but the session map is missing'
+  HealthBanner.tsx:112·118  CTA 'Open Settings'（同组件其它分支的 CTA 是中文「查看失败」）
+  Sidebar.tsx:604/607/606  'loading…' / 'status unavailable' / 'waiting for agents'
+判断：属"文案一致性"而非缺陷（同屏对照：横幅中文「近 24 小时 N 个任务失败」）
+处置：**不单方面改** —— 每处 1 行改动，合计约 5 分钟 + 一次发版；等 owner 一句话
+```
+
 ## 2026-11-17 `.596`（军团首屏衔接态 `?assemble=1`，默认关闭）—— 完整记录
 
 ```
