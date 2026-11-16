@@ -6,6 +6,41 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.590 — 2026-11-16
+
+### 移动端页面高度算式全站统一：`min-h` 一律扣掉底部让位（13 处 / 6 文件）
+
+```
+.589 修了 /nodes 的 80px 与 320 下 3D 的 49px 之后，把 20 个路由在 390 下扫了一遍
+（判据：0 < overflowY ≤ 120 即"可疑带"，与桌面 site-scroll 门同一标准）
+结果：/legion/plaza 恰好 80px = 5rem，其余全 0 或"内容长"
+
+根因是一类：移动端内容区已有 pb-[5rem]（给底部导航让位），
+而页面自己的 min-h 仍写 calc(100dvh − 横幅) ⇒ 短内容页 = 视口 + 80px。
+```
+
+### 改动（机械但必须做全）
+```
+app/requirements/[id]/page.tsx  6 处
+app/node/page.tsx               3 处
+app/page.tsx                    1 处
+app/messages/page.tsx           1 处
+app/requirements/page.tsx       1 处
+app/legion/plaza/page.tsx       1 处
+统一：min-h-[calc(100dvh-横幅)] → min-h-[calc(100dvh-横幅---shell-bottom-pad)]
+不在范围：/legion 2D 与 TasksView 早已扣全；NodesView 在 JS 侧扣
+```
+
+### 验证（本地 .590，390×844，20 条路由）
+```
+/legion/plaza  80 → 0
+/legion/3d     0 → 0（无回归）      /nodes 0 → 0（无回归）
+20 条路由中 **0 条**落在 (0,120] 可疑带
+门：tsc 0 · lint 0 errors · npm test 60/60 · gates 回基线
+```
+
+用户可见变化：移动端短页面（广场、节点详情、需求详情等）到底后不再多出 80px 空白滚动。
+
 ## 0.6.4-preview.589 — 2026-11-16
 
 ### 移动端"视口高度算式"两处修正：底部让位被重复计算 / 地板值压过剩余空间
