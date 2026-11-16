@@ -6,6 +6,41 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.593 — 2026-11-16
+
+### 标签页 / PWA 名称中文化（"可见英文清零"的最后一格）+ 写死文字色棘轮收紧
+
+```
+发现路径：清完正文、错误态、管理视图徽标之后，逐个读 8 个主要路由的 document.title，
+         发现全部是 "Agent Network Dashboard"；PWA 安装名同样是英文。
+         这类文案不在任何门的覆盖里（i18n 扫正文、a11y 扫控件名、contrast 扫颜色）。
+```
+
+### 改动
+```
+app/layout.tsx                    title / openGraph.title → 「Agent Network 控制台」
+public/manifest.webmanifest       name → 「Agent Network 控制台」· description → 中文
+app/manifest.ts                   加注释：真正生效的是 public 那份（静态文件优先于路由）
+scripts/accent-text-baseline.json 棘轮收紧：119 处/26 文件 → 71 处/19 文件
+```
+
+### 为什么 manifest 要改两处（.593 实测教训）
+```
+只改 app/manifest.ts 时，GET /manifest.webmanifest 返回的仍是旧值 ——
+public/manifest.webmanifest 是静态文件，优先于 app 路由，遮蔽了它。
+⇒ 改 PWA 名称必须改 public 那份；app 那份留作对等备份并加注释。
+```
+
+### 验证
+```
+/ /legion/3d /nodes → document.title = 「Agent Network 控制台」
+/manifest.webmanifest → name = 「Agent Network 控制台」· short_name 仍 Agent Net
+棘轮：✓ 19 个文件、71 处，无新增（新增写死文字色会立刻红）
+门：tsc 0 · lint 0 errors · npm test 60/60 · gates 回基线
+```
+
+用户可见变化：浏览器标签页、收藏夹、分享卡片、PWA 安装名都显示中文「控制台」。
+
 ## 0.6.4-preview.592 — 2026-11-16
 
 ### 错误态三处：管理视图标题与徽标仍是英文、Hub 错误码直接漏给用户

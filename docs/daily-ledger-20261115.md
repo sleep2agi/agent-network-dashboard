@@ -1642,3 +1642,34 @@ fetch 之后确认 origin/main 与 HEAD 一致（65541e46）。
 20 门里 legion-cold-start 报 DEGRADED（load1 8.01）。若只写"有 1 条 DEGRADED"，
 读的人会以为军团变慢；正确写法是：负载高 ⇒ 样本不可信 ⇒ 不据此做性能结论。
 今日两次尝试都在高负载下，故明确记录"未取到干净读数"，而不是编一个数字。
+
+---
+
+## 55. 发布：`0.6.4-preview.593` —— 标签页/PWA 名中文化 + 棘轮从 119 收紧到 71
+
+| 项 | 值 |
+|---|---|
+| 版本 | `0.6.4-preview.593` |
+| 内容 | document.title / OG 标题 / PWA name+description 中文化；accent-text 棘轮收紧 |
+| 触发 | 逐路由读 `document.title` 时发现 8 页全是 "Agent Network Dashboard" |
+| 回退锚点 | `preview.592-899784b` |
+
+### 教训 BU：可见文案不止页面正文
+```
+今天三处"清零后仍有英文"都出自同一类：
+  ① 管理视图标题（非默认视图）
+  ② 统计徽标 `N online / N total`（数字+英文，正则不认）
+  ③ 标签页、OG 分享标题、PWA 安装名（元数据，任何门都不看）
+⇒ 以后说"英文清零"必须同时验证：正文字、非默认视图、错误态、document.title、manifest。
+```
+
+### 教训 BV：静态文件会遮蔽同名路由
+```
+只改 app/manifest.ts 后 GET /manifest.webmanifest 仍是旧值 —— public 静态文件优先。
+⇒ 改任何"有同名静态资源"的配置，必须用**用户实际请求的 URL**验证，而不是看源码。
+```
+
+### 教训 BW：棘轮的余量本身就是缺陷
+```
+基线 119 处、实际 71 处 ⇒ 允许再新增 48 处才红，"新增就红"名存实亡。
+今天收紧到 71（随发版一起提交，因为 main 只允许 chore: release / docs: / Merge）。

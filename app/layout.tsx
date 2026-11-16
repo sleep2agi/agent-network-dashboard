@@ -27,7 +27,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Agent Network Dashboard",
+  title: "Agent Network 控制台",
   description: "Real-time monitoring dashboard for Agent Network nodes via CommHub",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     shortcut: '/favicon.svg',
   },
   openGraph: {
-    title: "Agent Network Dashboard",
+    title: "Agent Network 控制台",
     description: "Real-time monitoring dashboard for Agent Network nodes",
     type: "website",
   },

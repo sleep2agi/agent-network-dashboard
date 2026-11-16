@@ -1,7 +1,7 @@
 {
-  "name": "Agent Network Dashboard",
+  "name": "Agent Network 控制台",
   "short_name": "Agent Net",
-  "description": "Real-time monitoring dashboard for Agent Network nodes",
+  "description": "Agent Network 与 CommHub 的移动指挥台",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
