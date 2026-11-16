@@ -58,6 +58,22 @@ C 浅色主题改"墨线"绘制：节点用压暗 45% 的状态色实心 + 无�
   再判断是否需要做法（如展台骨架、分帧布局、惰性属性）。
 ```
 
+## 客户端对齐 2 项的当前边界（2026-11-16 核对）
+
+```
+① 模型切换
+   已具备：节点级 —— NodeSettingsPanel 的「模型 / Preset」下拉，写节点 config
+          （选项 = 节点当前模型 ∪ Hub preset；hub config 工具不可达时禁用保存）
+   缺口：会话级（切换后只影响该 session）—— Dashboard 代理的 34 条 hub 路径里
+        没有任何 model 端点；nodes 下只有 config / attrs / avatar / permission-mode /
+         secrets / external-schedule-edits。要做得等 Hub 提供会话级合同。
+
+② 节点接管（takeover）
+   现状：Dashboard 只读展示 managed / 接管状态；无写入入口
+   缺口：同样缺 hub 端点（现有代理清单里没有 takeover）
+⇒ 两项都不是前端能"自己补一个按钮"解决的，写入口必须等 Hub 合同；不伪造绑定。
+```
+
 ## 大屏基线（2026-11-16 新增，军团 3D 讲到 4K）
 
 ```
