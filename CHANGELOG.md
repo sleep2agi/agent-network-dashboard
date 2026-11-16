@@ -6,6 +6,48 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.591 — 2026-11-16
+
+### 修两处 hydration 文本不一致（React #418）：用户偏好读在 state 初始化里
+
+```
+起因：给"俯角 43° vs 49°"做 A/B 测量时，把偏好设成 readable 后发现页面报 1 个 pageerror；
+      同一次探测还发现 /nodes 在 anet-nodes-rail=0 时也报 1 个。两处同一个模式。
+```
+
+### 根因
+```
+app/legion/3d/page.tsx   pitchMode 初值读 localStorage ⇒
+  SSR 渲染「俯角：49°」，客户端首帧渲染「俯角：43°」⇒ 文本不一致 ⇒ #418
+app/nodes/NodesView.tsx  showRail 初值读 localStorage ⇒
+  它同时决定列表栏是否挂载（结构）+ 折叠按钮 title「隐藏/显示节点列表」与 ☷/☰（文本）
+  ⇒ SSR 恒 true、客户端 false ⇒ 文本不一致 ⇒ #418
+```
+
+### 修法（同一模式）
+```tsx
+const [pitchMode, setPitchMode] = useState<'deep' | 'readable'>('deep');   // 首帧=服务端值
+useEffect(() => { if (localStorage.getItem('anet-legion-pitch') === 'readable') setPitchMode('readable'); }, []);
+
+const [showRail, setShowRail] = useState<boolean>(true);
+useEffect(() => { if (localStorage.getItem('anet-nodes-rail') === '0') setShowRail(false); }, []);
+```
+```
+原则：首帧必须是"服务端也能算出来的值"，存储只在挂载后同步。
+相机俯角本身仍由既有 effect 的 viewRef.current.pitch = 0.75 决定，不受按钮状态影响。
+```
+
+### 验证（偏好注入用例，四条全过）
+```
+/legion/3d pitch=deep       pageerror 0 · 按钮「俯角：49°」
+/legion/3d pitch=readable   pageerror 0 · 按钮「俯角：43°」   ← 修复前 1
+/nodes anet-nodes-rail=0    pageerror 0                      ← 修复前 1
+/nodes anet-nodes-manage-view=1  pageerror 0
+门：tsc 0 · lint 0 errors · npm test 60/60 · gates 回基线
+```
+
+用户可见变化：把俯角切到 43°、或隐藏过节点列表栏的用户，再次进入页面不会再触发 React 重新整树渲染（表现为一次短暂重画/闪烁）。
+
 ## 0.6.4-preview.590 — 2026-11-16
 
 ### 移动端页面高度算式全站统一：`min-h` 一律扣掉底部让位（13 处 / 6 文件）

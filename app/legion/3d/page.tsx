@@ -3438,10 +3438,17 @@ export default function Legion3DPage() {
     lastInteract.current = performance.now();
   }, []);
 
-  const [pitchMode, setPitchMode] = useState<'deep' | 'readable'>(() => {
-    if (typeof window === 'undefined') return 'deep';
-    try { return localStorage.getItem('anet-legion-pitch') === 'readable' ? 'readable' : 'deep'; } catch { return 'deep'; }
-  });
+  // `.591`：#418（hydration 文本不一致）。原实现在 useState 初始化里读 localStorage：
+  //   服务端没有 storage ⇒ SSR 渲染「俯角：49°」；客户端读到 readable ⇒ 首帧渲染「43°」
+  //   ⇒ 两边文本不一致 ⇒ React #418（实测：readable 模式下 1440/390 各报 1 次，deep 模式 0）
+  // 修法：首帧一律用默认值（与服务端一致），挂载后再按存储同步。
+  //   相机俯角本身仍由上方 effect 里的 viewRef.current.pitch 0.75 决定，不受这里影响。
+  const [pitchMode, setPitchMode] = useState<'deep' | 'readable'>('deep');
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('anet-legion-pitch') === 'readable') setPitchMode('readable');
+    } catch { /* ignore */ }
+  }, []);
 
   const resetView = useCallback(() => {
     sharedLock.current = false;

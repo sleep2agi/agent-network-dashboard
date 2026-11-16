@@ -304,11 +304,19 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
   // pattern MUST stay reachable — 通信龙 07-31 explicit constraint).
   // Persisted in localStorage so a returning user gets the same layout
   // they left.
-  const [showRail, setShowRail] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const v = window.localStorage.getItem('anet-nodes-rail');
-    return v === null ? true : v !== '0';
-  });
+  // `.591`：#418（hydration 文本不一致）。这条偏好同时决定
+  //   · 列表栏是否挂载（结构）
+  //   · 折叠按钮的 title「隐藏/显示节点列表」与图标 ☷/☰（文本）
+  // 原实现在 useState 初始化里读 localStorage ⇒ SSR 恒为 true、客户端可能为 false
+  // ⇒ 文本不一致 ⇒ React #418（实测 anet-nodes-rail=0 时 /nodes 报 1 次）。
+  // 修法：首帧与 SSR 一致（true），挂载后再按存储同步。
+  const [showRail, setShowRail] = useState<boolean>(true);
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem('anet-nodes-rail');
+      if (v === '0') setShowRail(false);
+    } catch { /* ignore */ }
+  }, []);
   const toggleRail = () => {
     setShowRail(v => {
       const next = !v;
