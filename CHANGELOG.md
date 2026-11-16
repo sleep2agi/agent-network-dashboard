@@ -6,6 +6,32 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.594 — 2026-11-17
+
+### `/tasks` 移动端：消除"双层滚动"（页面 484px + 列表栏内部各滚一份）
+
+```
+实测（390×844，.593）：
+  文档 1328 / 视口 844 ⇒ 整页多滚 484px
+  同时 列表栏（844 高）内部也可滚 ⇒ 两个滚动容器叠加
+  表现：筛选/计数那一行会随页面滚走，而列表又在自己那一屏里滚，手势归属不清晰
+```
+
+### 改动（全部 `max-lg:` 作用域，≥1024px 完全惰性）
+```
+app/tasks/TasksView.tsx   root/aside：窄屏固定为 calc(100dvh − 横幅 − 让位)，overflow hidden
+app/components/TaskList  rail：窄屏 flex-1 + min-h-0 + 取消 max-h-screen
+```
+
+### 验证（分支上先验完再合并）
+```
+390×844   doc=844（一屏）· 溢出 0 · 筛选行常驻 · 列表栏内滚 · pageerror 0
+1440×1000 root/col/rail 的 computed 与线上逐项一致（max-lg 惰性）
+单测 60/60 · lint 0 errors · board 套件 171/171
+```
+
+用户可见变化：手机上看任务列表，筛选条件始终可见，只有列表在滚动，不再出现"整页跟着滚"。
+
 ## 0.6.4-preview.593 — 2026-11-16
 
 ### 标签页 / PWA 名称中文化（"可见英文清零"的最后一格）+ 写死文字色棘轮收紧
