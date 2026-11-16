@@ -66,3 +66,24 @@ node scripts/check-accent-text-ratchet.mjs --update   # 改少了以后收紧基
 跟随主题，浅色下必须换色，这种就该迁移成 token。
 
 新增白名单时同时更新本清单，并在 PR 描述里写一句「为什么它不跟随主题」。
+
+---
+
+## 2026-11-16 复核：基线有 48 处余量，可在下次发版时收紧
+
+```
+实跑：node scripts/check-accent-text-ratchet.mjs
+  → ✓ 19 个文件、71 处，无新增（有文件低于基线，可 --update 收紧）
+本文件记录的历史基线：119 处 / 26 个文件
+⇒ 现在的棘轮允许"再新增 48 处"才会红 —— 与"新增就红"的承诺不符
+
+收紧动作（一条命令，会改写 scripts/accent-text-baseline.json）：
+  node scripts/check-accent-text-ratchet.mjs --update
+
+为什么今天没提交：main 的提交策略只允许 `chore: release …` / `docs: …` / `Merge …`，
+纯基线文件改动不属于这三类；已把改动回退，保持工作树干净。
+→ 下次发版（任何 `chore: release`）时顺手执行上面的 --update 并一起提交即可，
+  届时基线与真实数量对齐，再新增写死文字色就会立刻变红。
+
+顺带一处文档校正：本文件开头写"a11y:contrast 只扫 12 个页面" —— 现已覆盖
+17 路由 × 1440 与 17 路由 × 390（`contrast390/*` 为本次新增第 19、20 门）。
