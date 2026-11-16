@@ -46,7 +46,7 @@
 | 4 | `?weights` / `?intro2` 默认值未定 | 未变 | 等 admin 决策 |
 | 5 | 运行时矩阵公开展示 | 未变（`?matrix=1` 预览可用，默认隐藏） | 等 admin 决策 |
 | 8 | **`?pitch=` 诊断参数** | **已生效（2026-11-17 复测，线上 `.596`）**：同一份数据、同一视口（1440×1000），按 18 个部门节点包围盒测长宽比：`pitch=0.20 → 391×229（1.707）` · `pitch=0.86（默认 49°）→ 528×460（1.148）` · `pitch=1.45 → 524×528（0.992）`。三档单调变化、差异远超噪声 ⇒ 参数在运行时确实作用于视角；此前「模块级常量捕获」的怀疑已不成立（改为组件内运行时读取） | **关闭** |
-| 7 | **移动端「刚好一屏」的页面多出 80px 滚动**（`/nodes` `/legion` `/legion/plaza`） | 390×1600 实测：页面根 min-height = 1543（=1600−横幅 57，正确），但外壳内容区带 `pb-[calc(5rem+…)] = 80px` 底部让位（给固定 Tab 栏），两者相加 1623 > 1600 ⇒ 溢出恰为 80。桌面不受影响（桌面 pb=0） | **待定**：修法需新增 `--shell-bottom-pad`（AppShell 写入 80px/0）并把页面根改成 `min-h-[calc(100dvh - var(--health-banner-h) - var(--shell-bottom-pad))]`；涉及 3 页 + 外壳，需桌面与移动两档复测，并确认内容不被 Tab 栏遮挡 |
+| 7 | **移动端「刚好一屏」的页面多出 80px 滚动**（`/nodes` `/legion` `/legion/plaza`） | **已修（`.556`，2026-11-17 复核）**：`AppShell` 把内容区底部让位镜像成 `--shell-bottom-pad`（`app/components/AppShell.tsx:40/49`，移动 80px / 桌面 0），页面根改为`min-h-[calc(100dvh-var(--health-banner-h)-var(--shell-bottom-pad))]`；消费方：`tasks/TasksView` · `legion/page` · `legion/plaza/page` · `node/page`。线上 `.596` 实测（390×844）：`/nodes` scrollH 844 / 溢出 **0**；`/legion` 与 `/legion/plaza` 仍可滚，但那是内容本身高（984 / 2025），不是多出的 80px 让位 | **关闭** |
 | 6 | **短内容态多出一条 31px 滚动条**（横幅高度未扣除） | **已关闭（2026-11-17 复测）**：原记「剩余 TasksView 3 处 + requirements/[id] 6 处」已不可复现 —— 线上 `0.6.4-preview.596` 实测：`/requirements/4925`、`/requirements/4924`、`/tasks?status=blocked` 在 1440×1000 与 1440×2400 下 `scrollH − innerHeight = 0`；`/tasks` 全量列表仍有 265px 滚动，但那是 100 行真实内容，不是横幅差 31px。其余 5 处早已修完（`.546` `.552` `.553` `.555`） | **关闭** |
 
 ### 关于"±2.2% 残留"的更正
