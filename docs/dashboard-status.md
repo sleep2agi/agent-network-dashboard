@@ -878,6 +878,30 @@ canvas.dataset.coreTicks = 当时布局里的部门 group 数量（depts.length�
    复核批的复量结论照样打印（`复测：首批 7243ms → 复核批 3338ms`），不隐藏首轮。
 ```
 
+#### 那 3.3s 花在哪（`.595` 分解实测，1440，相对 canvas 出现时刻）
+
+| 时刻 | 事件 | 说明 |
+|---|---|---|
+| +0ms | canvas 挂载 1232×880 | 首帧无内容 |
+| +185ms | 舞台定高 1000 | 健康横幅变量落位 |
+| +414ms | **只有核心 1 个节点** | 数据未到 |
+| +753ms | 定高 969（最终） | 布局稳定 |
+| **+1546ms** | **366 个节点一次性出现** → 入场推镜开始 | 同一帧 |
+| +2599ms | 入场结束（introState=done） | 推镜约 1.05s |
+
+```
+服务端接口本身不慢（同机 curl：/api/hub/networks 0.24s · session-status 0.12s
+· overview 0.16s · people 0.17s，overview 响应仅 67 字节）
+真实耗时在浏览器侧：JS 分块 253→1150ms 才加载完，请求链
+  /api/hub/networks(824ms 完成) → /api/hub/overview(1802ms) → people(1928ms)
+⇒ 3.3s ≈ JS 启动 ~1.5s + 入场动画 ~1.05s + 余量；**不是三维渲染慢**
+
+已知观感缺口：+414ms…+1546ms 之间画面只有一颗核心（约 1.1s，无说明文字）。
+候选改法（待 owner 定，属审美取舍）：该窗口显示「正在编队 · 正在接入 N 个节点」一类的
+轻量说明，数据到达时淡出，与入场推镜衔接。成本 ~40 分钟 + 一次发版。
+```
+
+
 ```
 方法：全新 browser context（冷缓存）→ 记 domcontentloaded 与 introState=done
 **不要用 networkidle 做判据**：本项目用共享 EventSource（app/lib/useSSE.ts）维持常开连接，
