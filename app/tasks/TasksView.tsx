@@ -314,7 +314,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     <div
       data-testid="tasks-layout"
       data-selected-id={selectedId ?? ''}
-      className="min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] max-w-full overflow-x-hidden bg-[var(--bg)] text-[var(--fg)] flex"
+      className="min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] max-lg:h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] max-lg:overflow-hidden max-w-full overflow-x-hidden bg-[var(--bg)] text-[var(--fg)] flex"
     >
       {/* Rail — desktop always visible; on mobile it holds the whole
           page (detail becomes a full-screen overlay). No "toggle
@@ -325,7 +325,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           layout showing "one thing twice". */}
       <aside
         data-testid="task-list-column"
-        className={`flex flex-col w-full sm:w-[380px] shrink-0 min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] sticky top-0 border-r border-[var(--border)] ${
+        className={`flex flex-col w-full sm:w-[380px] shrink-0 min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] max-lg:h-full max-lg:min-h-0 max-lg:overflow-hidden sticky top-0 border-r border-[var(--border)] ${
           selectedId && !isDesktop ? 'hidden' : 'flex'
         }`}
       >

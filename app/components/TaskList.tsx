@@ -46,7 +46,7 @@ export function TaskList({
   return (
     <div
       data-testid="task-list-rail"
-      className="flex flex-col h-full max-h-screen overflow-y-auto"
+      className="flex flex-col h-full max-h-screen max-lg:max-h-none max-lg:min-h-0 max-lg:flex-1 overflow-y-auto"
     >
       {tasks.length === 0 ? (
         <div className="px-4 py-6 text-center text-xs text-[var(--fg-muted)]">
