@@ -121,9 +121,10 @@ const CORE_SCALE = CORE_BIG ? 1.6 : 1;
 // 背景（`.595` 实测，1440）：编制数据到达前约 1.1s（+414ms…+1546ms）画面只有核心。
 // 现在核心已显示「读取中…」，但这行小字在深色星空里很轻；加上一句说明能让
 // "正在接入"这件事读得更明确。**默认关闭** —— 这属审美取舍，等 owner 决定后再改默认。
-const ASSEMBLE = typeof window !== 'undefined'
-  ? new URLSearchParams(window.location.search).get('assemble') === '1'
-  : false;
+//
+// `.597`：不能在模块顶层读 location.search —— SSR 时是 false、客户端首帧是 true，
+// 而它决定的是一个 DOM 节点，于是水合不一致（React #418，实测 Hub 502 时 4/4 复现）。
+// 改法：挂在 state 里，mount 之后再读；SSR 与客户端首帧完全一致（都不渲染），随后出现。
 // `?look=light`：连线（主干 + 叶子 + 流动光点）整体提亮，让骨架在暗场里读得出来。
 // `?look=nolinks`：**只用于测量**，关掉全部连线（节点/标签照常），
 // 这样「连线可见像素」可以由两张截图的差集精确得到，而不是靠肉眼估。
@@ -4002,6 +4003,14 @@ export default function Legion3DPage() {
   // 渲染循环是独立 effect，用 ref 把 loading 喂进去（不把它加进依赖，避免重启动画）。
   const loadingRef = useRef(loading);
   useEffect(() => { loadingRef.current = loading; }, [loading]);
+  // `.597`：`?assemble=1` 的开关必须在 mount 后读（见文件顶部注释：模块顶层读会让
+  // SSR 与客户端首帧不一致，实测 React #418 4/4）。默认 false ⇒ 默认路径完全不变。
+  const [assembleOn, setAssembleOn] = useState(false);
+  useEffect(() => {
+    try {
+      setAssembleOn(new URLSearchParams(window.location.search).get('assemble') === '1');
+    } catch { /* 无法读 search 时保持关闭 */ }
+  }, []);
   const readError = legionReadError(people.error, hierarchy.error);
   // #73 —— 不再维护 needsLogin 这个「只置位不清零」的 state：SWR 成功后 error 会自己清掉，
   // 直接派生就能「登录恢复后立刻收起过期提示」。no-network 分支是 #72 的网络就绪判定。
@@ -4112,7 +4121,7 @@ export default function Legion3DPage() {
 
       {/* `?assemble=1`（`.596`，默认关闭）：编制到达前的「正在编队」衔接态。
           只在 loading 时出现，数据一到立即消失；不拦截指针，不改画布内容。 */}
-      {ASSEMBLE && loading && (
+      {assembleOn && loading && (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center" data-testid="legion-3d-assemble">
           <p
             role="status"
