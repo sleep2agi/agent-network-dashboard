@@ -1693,3 +1693,23 @@ fetch 之后确认 origin/main 与 HEAD 一致（65541e46）。
 风险：/tasks 有 board 套件 171 条断言，改动要跑全链 + 该套件。
 结论：从"双层滚动"这个角度看，B 更像缺陷修复而不是观感偏好；
       但重构高度语义属设计取舍，等 owner 一句话再动（A 立即结案 / B 约 1–1.5 小时）。
+
+### 追加：B 方案不是"一行"，撑高来自根容器（2026-11-16 实测）
+
+```
+实验（只注入样式，不改代码）：[data-testid="task-list-rail"]{min-height:0 !important}
+结果：doc 仍 1328、溢出仍 484 ⇒ 列表栏的 844 不是它自己的 min-height 撑的
+
+computed 实测：
+  rail  h=844  minH=0   maxH=844  flex=0 1 auto  overflow-y=auto
+  col   h=1191 minH=707 maxH=none flex=0 0 auto
+  root  h=1191 minH=707 maxH=none flex=0 1 auto  overflow-y=auto
+⇒ 撑高来自 root/col 的 min-height(707) + rail 的 844 + 栏内 chrome(347) 三者叠加
+
+B 的真实改法（与 `.590` 那类同族，但涉及 3 处）：
+  1) root/col 在移动端改成固定高度：h-[calc(100dvh - --health-banner-h - --shell-bottom-pad)]
+  2) rail 改成 flex-1 min-h-0（在父级高度内伸缩，内部滚动）
+  3) 栏内 chrome（筛选/计数）保持固定高度，不参与滚动
+验证口径：doc=844（一屏）、rail 内可滚、筛选栏滚不动、board 171 条断言全过
+成本：1–1.5 小时（含验收与全链），不是 40 分钟
+```
