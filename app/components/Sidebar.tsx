@@ -567,6 +567,12 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
     statusFetcher as (url: string) => Promise<{ ok: boolean; total: number; online: number; presence: 'ready' | 'blind' | 'loading' }>,
     { refreshInterval: 10000, dedupingInterval: 4000 },
   );
+  // `.597`：网络列表读不到时，overview 的 key 是 null（拿不到 network_id）⇒ 这个
+  // useSWR 既不请求也不报错，于是渲染成「total=0 + 无 error」=「队伍还没建」——
+  // 实测 Hub 502 时侧栏显示 "waiting for agents"，把"读不到"说成了"空舰队"。
+  // 同一份 networks 缓存（同 key，不发第二个请求）拿来判断错误，避免再犯这个坑。
+  const { error: networksError } = useSWR<{ networks: SidebarNetwork[] }>('/api/hub/networks', networkFetcher, { refreshInterval: 15000, dedupingInterval: 10000 });
+  const statusError = error || networksError;
   // 三态（ready/blind/loading）由服务端用同一个 presence.ts 判定，
   // 避免侧栏、统计卡、拓扑各算一套（#53 的老问题）。
   const presenceState = data?.presence ?? 'loading';
@@ -593,15 +599,15 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
         <div className="text-white text-[12px] font-semibold leading-tight">Agent Network</div>
         <div className="text-[11px] text-[var(--fg-muted)] flex items-center gap-1.5 mt-0.5">
           <span
-            className={`inline-block w-1.5 h-1.5 rounded-full ${isLoading && total === 0 ? 'bg-[var(--fg-dim)]/60' : error && total === 0 ? 'bg-[var(--danger)]' : online > 0 ? 'bg-emerald-400 anet-brand-pulse' : 'bg-gray-600'}`}
+            className={`inline-block w-1.5 h-1.5 rounded-full ${isLoading && total === 0 ? 'bg-[var(--fg-dim)]/60' : statusError && total === 0 ? 'bg-[var(--danger)]' : online > 0 ? 'bg-emerald-400 anet-brand-pulse' : 'bg-gray-600'}`}
             aria-hidden
           />
           {isLoading && total === 0 ? (
             // 数据还没到：既不是「空」也不是「挂」，只是一个尚未知的状态。
             <span aria-live="polite">loading…</span>
-          ) : error && total === 0 ? (
+          ) : statusError && total === 0 ? (
             // 取失败：必须说清是「读不到」，不能伪装成空舰队。
-            <span className="text-[var(--danger)]" title={String(error?.message || error)}>status unavailable</span>
+            <span className="text-[var(--danger)]" title={String(statusError?.message || '')}>status unavailable</span>
           ) : total === 0 ? (
             <span>waiting for agents</span>
           ) : (
