@@ -6,6 +6,37 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.592 — 2026-11-16
+
+### 错误态三处：管理视图标题与徽标仍是英文、Hub 错误码直接漏给用户
+
+```
+起因：做"错误态"巡检（不存在的节点 / 需求 / 路由）时顺带发现——
+所有门只跑有效路由，错误态从未被覆盖。
+```
+
+### 发现与修复
+```
+① /nodes 管理视图（密视图）大标题写死英文 "Nodes"
+   → 改「节点」
+② 同一视图两个统计徽标是 "N online" / "N total"
+   → 改「N 在线」/「N 总数」（走 t()）
+③ /requirements/<无效ID> 显示 "读取失败：invalid_requirement_id"（原始错误码）
+   → 映射中文：「需求 ID 无效（链接可能过期或拼写有误）（invalid_requirement_id）」
+     其它已知码同样映射（不存在 / 无权限），未知码保留原样便于排查
+```
+
+### 验证（本地 .592，四条用例 + 徽标补验）
+```
+/nodes 管理视图       标题「节点」· 徽标「59 在线」「424 总数」        pageerror 0
+/nodes/daemon-dev     rail 头部「节点 424」（回归）                  pageerror 0
+/requirements/无效ID  「需求 ID 无效（…）（invalid_requirement_id）」 pageerror 0
+/definitely-not-a-page 「404 页面不存在 · 这个地址没有对应页面…」        pageerror 0
+门：tsc 0 · lint 0 errors · npm test 60/60 · gates 回基线
+```
+
+用户可见变化：管理视图全中文；打开失效需求链接时看到的是能读懂的原因，仍是可核验的原始码。
+
 ## 0.6.4-preview.591 — 2026-11-16
 
 ### 修两处 hydration 文本不一致（React #418）：用户偏好读在 state 初始化里

@@ -592,12 +592,27 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     );
   }
 
+  // `.592`：Hub 的错误码直接透出会变成「读取失败：invalid_requirement_id」——
+  // 用户看不懂、也不知道该怎么办。这里把已知码翻译成中文，并保留原始码便于排查。
+  const friendlyRequirementError = (code: string) => {
+    const raw = String(code || '');
+    const map: Record<string, string> = {
+      invalid_requirement_id: '需求 ID 无效（链接可能过期或拼写有误）',
+      requirement_not_found: '这条需求不存在或已被删除',
+      not_found: '这条需求不存在或不可见',
+      unauthorized: '没有权限查看这条需求',
+      forbidden: '没有权限查看这条需求',
+    };
+    const zh = map[raw.toLowerCase()];
+    return zh ? `${zh}（${raw}）` : raw;
+  };
+
   if (error || !req) {
     return (
       <div className="min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] bg-[var(--bg)] p-6">
         <div className="mx-auto max-w-4xl">
           <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
-            {error ? `读取失败：${error}` : '这条需求不存在或不可见。'}
+            {error ? `读取失败：${friendlyRequirementError(error)}` : '这条需求不存在或不可见。'}
           </div>
           <Link href={backHref} className="text-sm text-blue-400 hover:underline" data-testid="requirement-back">← 返回需求列表</Link>
         </div>
