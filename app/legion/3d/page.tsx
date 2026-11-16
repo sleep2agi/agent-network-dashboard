@@ -1198,7 +1198,10 @@ export default function Legion3DPage() {
     const fit = () => {
       const top = el.getBoundingClientRect().top + window.scrollY;
       const padB = parseFloat(getComputedStyle(el.parentElement ?? document.body).paddingBottom) || 0;
-      setStageHeight(Math.max(480, Math.round(window.innerHeight - top - padB)));
+      // `.589`：原来这里是 Math.max(480, …)。320×568 上「视口 − 横幅57 − 让位80 = 431」，
+      // 480 的地板把舞台顶回 480 ⇒ 文档 = 57+480+80 = 617 > 568，多滚 49px。
+      // 地板的意义只是"别小到没法看"，240 足够；剩余空间才是真值。
+      setStageHeight(Math.max(240, Math.round(window.innerHeight - top - padB)));
     };
     // 首帧时 HealthBanner / 侧栏可能还没定高，直接读 top 会读到 0；
     // 放到下一帧再量，并补一次 300ms 后的校正（字体/横幅落位）。

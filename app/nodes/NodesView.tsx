@@ -183,7 +183,12 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
       // +80px、布局高 +80px，无上限（924→1004→1084→1164）。
       // 高度一旦与滚动无关，这个自激就断了；滚到页面底部看到的是外壳的留白。
       const top = el.getBoundingClientRect().top + window.scrollY;
-      el.style.height = `${Math.max(240, window.innerHeight - top)}px`;
+      // `.589`：外壳内容区在移动端有 `pb-[5rem]`（给底部导航让位），
+      // 这里若只按「视口 − 顶部」算，页面就会比视口正好高 80px ——
+      // 实测 390/320 都是 80px（= 5rem），滚下去只露出空白。
+      // padB 与滚动无关（是父级 padding），扣掉它不会重新引入历史那个"越滚越高"的自激。
+      const padB = parseFloat(getComputedStyle(el.parentElement ?? document.body).paddingBottom) || 0;
+      el.style.height = `${Math.max(240, window.innerHeight - top - padB)}px`;
     };
     apply();
     window.addEventListener('resize', apply);

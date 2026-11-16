@@ -314,7 +314,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
     <div
       data-testid="tasks-layout"
       data-selected-id={selectedId ?? ''}
-      className="min-h-[calc(100dvh-var(--health-banner-h,0px))] max-w-full overflow-x-hidden bg-[var(--bg)] text-[var(--fg)] flex"
+      className="min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] max-w-full overflow-x-hidden bg-[var(--bg)] text-[var(--fg)] flex"
     >
       {/* Rail — desktop always visible; on mobile it holds the whole
           page (detail becomes a full-screen overlay). No "toggle
@@ -325,7 +325,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
           layout showing "one thing twice". */}
       <aside
         data-testid="task-list-column"
-        className={`flex flex-col w-full sm:w-[380px] shrink-0 min-h-[calc(100dvh-var(--health-banner-h,0px))] sticky top-0 border-r border-[var(--border)] ${
+        className={`flex flex-col w-full sm:w-[380px] shrink-0 min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] sticky top-0 border-r border-[var(--border)] ${
           selectedId && !isDesktop ? 'hidden' : 'flex'
         }`}
       >
@@ -533,7 +533,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       {selectedId && isDesktop && (
         <section
           data-testid="task-detail-column"
-          className="flex-1 min-w-0 min-h-[calc(100dvh-var(--health-banner-h,0px))]"
+          className="flex-1 min-w-0 min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))]"
         >
           <TaskDetail taskId={selectedId} onClose={closeDetail} onRetried={fetchTasks} />
         </section>
@@ -549,7 +549,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       {!selectedId && isDesktop && (
         <section
           data-testid="task-detail-empty"
-          className="flex-1 min-w-0 min-h-[calc(100dvh-var(--health-banner-h,0px))] flex flex-col items-center justify-center gap-2 px-6 text-center"
+          className="flex-1 min-w-0 min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] flex flex-col items-center justify-center gap-2 px-6 text-center"
         >
           {/* `.577`：整块右侧区域此前只有一句灰字，1366 上看起来像"没加载出来"。
               改为"标题 + 可执行提示 + 当前条数"，让这块空白说明自己在等什么。 */}
@@ -569,7 +569,7 @@ export function TasksView({ initialSelectedId = null }: { initialSelectedId?: st
   return (
     <Suspense
       fallback={
-        <div className="min-h-[calc(100dvh-var(--health-banner-h,0px))] bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
+        <div className="min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
           <div className="lg:ml-0 ml-10 text-gray-500 text-sm">正在加载任务…</div>
         </div>
       }
