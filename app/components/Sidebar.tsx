@@ -569,7 +569,7 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
   );
   // `.597`：网络列表读不到时，overview 的 key 是 null（拿不到 network_id）⇒ 这个
   // useSWR 既不请求也不报错，于是渲染成「total=0 + 无 error」=「队伍还没建」——
-  // 实测 Hub 502 时侧栏显示 "waiting for agents"，把"读不到"说成了"空舰队"。
+  // 实测 Hub 502 时侧栏显示的是空态文案，把"读不到"说成了"空舰队"。
   // 同一份 networks 缓存（同 key，不发第二个请求）拿来判断错误，避免再犯这个坑。
   const { error: networksError } = useSWR<{ networks: SidebarNetwork[] }>('/api/hub/networks', networkFetcher, { refreshInterval: 15000, dedupingInterval: 10000 });
   const statusError = error || networksError;
