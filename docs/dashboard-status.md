@@ -58,6 +58,19 @@ C 浅色主题改"墨线"绘制：节点用压暗 45% 的状态色实心 + 无�
   再判断是否需要做法（如展台骨架、分帧布局、惰性属性）。
 ```
 
+## 军团手机手势基线（2026-11-16，军团复验第 9 条）
+
+```
+390×844 · mobile 上下文 · CDP Input.dispatchTouchEvent（真实触摸）
+  双指张开：zoom 0.948 → 3.791（Δ=+2.843）
+  单指拖拽：pageerror = 0
+  节点数：381 → 381（手势不改数据）
+探针：evidence/probes/legion-touch.mjs → LEGION-VERIFY: PASS (9/9)
+
+注：必须用 CDP 注入真实触摸。用 `new TouchEvent(...)` 直接派发**不会**生成 pointer 事件，
+    产品监听的是 pointer（onPointerDown/Move 里实现 pinch），合成 TouchEvent 会误判成"没实现"。
+```
+
 ## 体检 18 门（2026-11-16 定型，追加第 18 门）
 
 ```
