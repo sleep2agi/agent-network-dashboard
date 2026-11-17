@@ -58,12 +58,14 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
           <span className="text-gray-700">·</span>
           <span className="inline-flex items-center gap-1.5">
             <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
-            <span className="text-gray-300 tabular-nums">0</span> 运行中
+            {/* `.599`：presenceUnknown（Hub 不可达 / 被 blind）时，"0 运行中""0 registered"
+                是把未知说成 0 —— 与同一行已改成 '?' 的「在线」自相矛盾。三格必须同口径。 */}
+            <span className="text-gray-300 tabular-nums">{presenceUnknown ? '?' : working}</span> 运行中
           </span>
           <span className="text-gray-700">·</span>
           <span className="inline-flex items-center gap-1.5">
             <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-gray-600" />
-            <span className="text-gray-300 tabular-nums">0</span> registered
+            <span className="text-gray-300 tabular-nums">{presenceUnknown ? '?' : total}</span> registered
           </span>
         </div>
       ) : (
