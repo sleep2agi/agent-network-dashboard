@@ -181,7 +181,7 @@ deploy/legion-assemble-chip.mjs
 ### 交付物（官网 hero）
 
 ```
-/home/vansin/comm-dash-ou/evidence/hero-delivery-20261117/
+<工作区>/evidence/hero-delivery-20261117/
   hero-12s.mp4 4.0 MB · hero-12s.webm 5.3 MB · hero-3s.gif 750 KB · hero-still-1280.png 553 KB
   standalone/ (index.html 936 B + assets/index-*.js 12.9 KB + fixture.json 15.6 KB ≈ 29 KB)
   README.md（接入示例 / 数据口径 / 复现命令 / 软件渲染边界）
