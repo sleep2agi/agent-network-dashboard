@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useSWRConfig } from 'swr';
+import { useHealth } from '../lib/hooks';
 
 /**
  * #1636-P1 —— 「网络还没确定」时的显式提示。
@@ -13,6 +15,31 @@ import Link from 'next/link';
  * 所以：ready 且 networkId 为空 ⇒ 不发请求、不显示空态，显示这个提示。
  */
 export function NetworkRequiredNotice({ className = '' }: { className?: string }) {
+  // `.603`：这个提示有两种成因，但旧实现只有一套文案 ——「请先在左侧选择网络」。
+  //   ① 账号确实没有网络 / 用户没选 → 选网络是对的指令；
+  //   ② /api/hub/networks 读不到（Hub 不可达）→ 让用户去"选择网络"是把"读不到"说成"你没选"，
+  //      而这正是今晚在侧栏 / 统计条 / 节点列表修过的同一个坑（key=null ⇒ 不发请求也不报错）。
+  //   用 /api/hub/health 的 error 区分两者（同 vscroll/site-scroll 的口径：读不到就直说）。
+  const { error } = useHealth();
+  const { mutate } = useSWRConfig();
+  if (error) {
+    return (
+      <div
+        role="alert"
+        data-testid="network-required"
+        className={`rounded-lg border border-red-500/25 bg-red-500/5 px-4 py-3 text-sm text-[var(--danger)] ${className}`}
+      >
+        读不到网络信息（Hub 不可达）—— 这不是「你没有网络」。
+        <button
+          type="button"
+          onClick={() => mutate((k: unknown) => typeof k === 'string' && k.startsWith('/api/hub/'))}
+          className="ml-1 underline underline-offset-2"
+        >
+          重试
+        </button>
+      </div>
+    );
+  }
   return (
     <div
       role="status"
