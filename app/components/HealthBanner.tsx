@@ -62,7 +62,7 @@ export function HealthBanner() {
   // 只需要「近 24h 失败数」，不需要失败任务本体。
   // 旧实现拉 tasks?status=failed&limit=100（含 result 全文，生产实测约 400 KB），
   // 再在前端按时间过滤计数；现在服务端数好只回一个数字。
-  const { data: failedStat } = useSWR<{ ok: boolean; recent?: number }>(
+  const { data: failedStat } = useSWR<{ ok: boolean; recent?: number; truncated?: boolean }>(
     useDeferredKey(idle && allTimeFailed > 0 ? '/api/hub/task-stats?status=failed&sinceHours=24' : null, chromeDeferMs()),
     fetcher,
     { refreshInterval: 60000, dedupingInterval: 30000, shouldRetryOnError: false },
@@ -102,6 +102,9 @@ export function HealthBanner() {
   const presenceBlind = !hubDown && health && presenceStatus(health.sse_sessions, health) === 'blind';
   // Coarse 24h window for the failed-task banner; poll-level freshness.
   const failed = failedStat?.recent ?? 0;
+  // CommHub 单次最多回 200 条任务（limit=500 也只回 200，offset/page 无效）。
+  // 当接口声明窗口被截断时，这个数字只是下界 —— 按确定值展示就是把 "≥162" 说成 "162"。
+  const failedIsLowerBound = failedStat?.truncated === true;
   const fleetEmpty = stats?.nodes?.total === 0;
 
   let kind: 'red' | 'amber' | 'green';
@@ -122,7 +125,9 @@ export function HealthBanner() {
     cta = { label: 'Open Settings', href: '/settings' };
   } else if (failed > 0) {
     kind = 'amber';
-    message = `近 24 小时 ${failed} 个任务失败`;
+    message = failedIsLowerBound
+      ? `近 24 小时 ≥${failed} 个任务失败`
+      : `近 24 小时 ${failed} 个任务失败`;
     cta = { label: '查看失败', href: '/tasks?status=failed' };
   } else if (fleetEmpty) {
     // Round 70 — was "All systems go" before, which is misleading when

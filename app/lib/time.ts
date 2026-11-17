@@ -11,13 +11,19 @@
  *  (R37) and utils.ts::timeAgo all mirrored the same SQL→UTC rewrite;
  *  one source of truth here. */
 
-/** Parse a hub timestamp to ms-since-epoch, treating SQL-style strings
- *  as UTC. ISO strings (with `T`) bypass the rewrite and are parsed as-is.
+/** Parse a hub timestamp to ms-since-epoch, treating zone-less strings as UTC.
+ *
+ *  🔴 只补 `Z` 给「带空格」的 SQL 格式是不够的：CommHub 的 /api/tasks 实测回的是
+ *  `2026-11-16T19:18:08`（**带 T、无时区**）。旧实现遇到带 T 的直接原样解析，
+ *  浏览器按本地时区解释 ⇒ 本机 UTC+8 下整段时间偏移 8 小时：
+ *  实测同一份 200 条失败任务，按 UTC = 200 条在 24h 内，按本地 = 162 条。
+ *  现在两种无时区写法（空格分隔 / 带 T）都补 `Z`；已有 Z 或 ±HH:MM 的原样保留。
  *  Returns null for empty / unparseable input. */
 export function parseHubTime(dateStr: string | null | undefined): number | null {
   if (!dateStr) return null;
-  const iso = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T') + 'Z';
-  const t = Date.parse(iso);
+  const iso = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+  const withTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso) ? iso : `${iso}Z`;
+  const t = Date.parse(withTz);
   return Number.isFinite(t) ? t : null;
 }
 

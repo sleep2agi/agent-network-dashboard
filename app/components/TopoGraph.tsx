@@ -8039,7 +8039,10 @@ export function TopoGraph({ sessions, sseSessions, renameSignal }: TopoGraphProp
             // decay curve shape (linear) unchanged. The visual delta
             // is most pronounced on edges between 5-60 minutes old —
             // where the floor was binding pre-R406.
-            const ageMs = link.last_at ? Math.max(0, Date.now() - Date.parse(link.last_at)) : 0;
+            // R607: 裸 Date.parse 会把无时区时间戳按本地解释（UTC+8 偏移 8 小时），
+            // 连线新鲜度因此整体虚老 —— 统一走 parseHubTime（无时区按 UTC）。
+            const linkAt = parseHubTime(link.last_at || null);
+            const ageMs = linkAt === null ? 0 : Math.max(0, Date.now() - linkAt);
             const fresh = Math.max(0.40, 1 - ageMs / (5 * 60 * 1000));
             // Round 16 arrow-tier binning — keep `topo-arrow` as the
             // medium tier id so the legend swatch picks it up unchanged.
