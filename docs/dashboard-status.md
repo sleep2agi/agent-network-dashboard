@@ -168,6 +168,25 @@ deploy/legion-assemble-chip.mjs
 军团广场与 /org 的计数会静默少报。触发条件与检查方法记在此处，不预先改代码。
 ```
 
+### 等待中的合同：会话级模型 / 思考深度（触发条件已自动化）
+
+```
+现状（2026-11-18 04:xx 实测，探针 evidence/probes/hub-model-contract.mjs）：
+  nodes.model          274/354 有值（`.609` 已在手机节点行展示）
+  /api/hub/status      status.model 存在（聊天头已展示，见 ChatPane）
+  思考深度字段         不存在（reasoning / thinking / depth / effort 全无）
+  queue_depth          存在但它是**队列深度**，不是思考深度
+⇒ 结论 DEGRADED：读取能做，切换缺合同；不猜路径、不打生产写接口
+
+探针把"合同有没有到位"变成一条可复查判据：
+  0 = 齐全（可开始做展示与切换）
+  3 = 不齐（缺哪些写在输出里，避免把"没有能力"读成"实现 bug"）
+
+教训（已写进探针注释）：第一版判据用 /reason|think|depth|effort/ 兜底，
+把 status.queue_depth 误认成思考深度，探针错误报 PASS ——
+判据太宽会把"没有能力"读成"已支持"，与放宽阈值同类。
+```
+
 ## 2026-11-18 `.609`（手机节点列表显示模型短名）
 
 ```
