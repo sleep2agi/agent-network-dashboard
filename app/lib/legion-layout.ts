@@ -355,8 +355,8 @@ export function deptWorldRadius(depth: number): number {
   return depth <= 1 ? 0.05 : 0.042;
 }
 
-function deptRadius(depth: number, maxDepth: number): number {
-  if (maxDepth <= 1) return RING_RADIUS.group;
+function deptRadius(depth: number, maxDepth: number, groupRadius?: number): number {
+  if (maxDepth <= 1) return groupRadius ?? RING_RADIUS.group;
   const t = (depth - 1) / (maxDepth - 1);
   return DEPT_BAND.inner + (DEPT_BAND.outer - DEPT_BAND.inner) * t;
 }
@@ -393,6 +393,12 @@ function distribute(slots: Slot[], start: number, span: number): void {
  *  2D 是正视图，用等角均分才均匀。默认 false = 2D 行为，3D 页显式传 true。 */
 export interface LegionLayoutOptions {
   projected?: boolean;
+  /**
+   * 单层编制（maxDepth ≤ 1）时第一圈部门的半径，默认 RING_RADIUS.group (0.5)。
+   * `.606`：官网 hero 的示例数据是「核心 + 一圈 6 个部门」，核心按 0.22H 放大后
+   * 0.5 的环会压到核心环上（负责人截图反馈「财务被核心环挡住」）⇒ demo 用 0.72。
+   */
+  groupRadius?: number;
 }
 
 export function buildLegionLayout(input: LegionInput, options: LegionLayoutOptions = {}): LegionLayout {
@@ -417,7 +423,7 @@ export function buildLegionLayout(input: LegionInput, options: LegionLayoutOptio
   const emitDept = (node: DeptNode, start: number, span: number, parentId: string) => {
     // 部门多的时候（生产 13 个）挤在内层环上会互相压：同层交替错开一点半径，
     // 形成两条细环，圆心文字不再叠在一起。
-    const radius = deptRadius(node.depth, depth) + (node.depth === 1 && order % 2 === 1 ? 0.11 : 0);
+    const radius = deptRadius(node.depth, depth, options.groupRadius) + (node.depth === 1 && order % 2 === 1 ? 0.11 : 0);
     const center = start + span / 2;
     const isCollapsed = collapsed.has(node.id) && (node.children.length > 0 || node.people.length > 0 || node.orphans.length > 0);
     nodes.push({
@@ -590,7 +596,7 @@ export function buildLegionLayout(input: LegionInput, options: LegionLayoutOptio
       collapsed: nodes.filter(n => n.kind === 'group' && n.collapsed).length,
     },
     rings: [
-      { ring: 1, radius: deptRadius(1, depth) },
+      { ring: 1, radius: deptRadius(1, depth, options.groupRadius) },
       { ring: 2, radius: RING_RADIUS.person },
       { ring: 3, radius: RING_RADIUS.agent },
     ],
