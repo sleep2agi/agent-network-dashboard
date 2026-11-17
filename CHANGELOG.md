@@ -6,6 +6,32 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.602 — 2026-11-17
+
+### `/nodes`：Hub 不可达时不再显示「0 在线 0 总数」并劝你"创建第一个 Agent"
+
+```
+修复前（拦截 /api/hub/** → 502）：
+  节点 0 在线 0 总数 … 创建你的第一个 Agent  npx --yes …
+  ⇒ 不只把未知写成 0，还把"读不到"渲染成 onboarding 引导
+修复后：
+  节点 ? 在线 ? 总数 … 读不到节点列表 / Hub 不可达（读不到节点列表） / 重试
+```
+
+```
+根因（与侧栏 .598 同源）：节点列表的 SWR key 依赖 network_id，
+  Hub 挂 ⇒ /api/hub/networks 502 ⇒ key=null ⇒ 不发请求、不报错 ⇒ loadError 恒为 null
+  ⇒ 页面落到 EmptyState。该页面本就有"读不到节点列表"的错误面板，只是这条路径走不到。
+修法：readFailure = loadError ?? (hubUnreadable ? Error('Hub 不可达（读不到节点列表）') : null)
+      hubUnreadable = !loading && healthError && sessions.length === 0
+      三处生效：头部两枚徽标（? 在线 / ? 总数）、错误面板条件与文案
+契约：hub-error-propagation.test.mjs 升级为"readFailure 必须成链且并入 healthError"
+探针：resilience-hubdown 新增第 8 条判据「不得出现 0 在线 / 0 总数」
+     对线上 .601 验证会红、对修复版验证会绿（先红后绿）
+```
+
+---
+
 ## 0.6.4-preview.601 — 2026-11-17
 
 ### 军团 3D：844×330 页面多滚 21px（舞台高度地板高于剩余空间）
