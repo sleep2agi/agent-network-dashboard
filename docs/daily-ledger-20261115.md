@@ -2061,7 +2061,7 @@ b) 加固必须能被验证两次：
 
 | # | 被谁拦住 | 性质 | 处置 |
 |---|---|---|---|
-| 1 | CI `OSS readiness gates` 34 项里 1 项红（`personal_home`） | 我把 `/home/vansin/...` 写进了公开仓库的文档 | 改占位符 `<工作区>`，本地 `npm run oss:check` 34/34 |
+| 1 | CI `OSS readiness gates` 34 项里 1 项红（`personal_home`） | 我把本机主目录的绝对路径写进了公开仓库的文档 | 改占位符 `<工作区>`，本地 `npm run oss:check` 34/34 |
 | 2 | 目标 SHA 过期（`42c48f1` → `d1e2749c`） | 修完文档产生新提交，旧验收证据不再对应 | 清理旧生成脚本，用新 SHA 重新生成并重跑验收 |
 | 3 | `stale suite output`（21 个 `*-607` 目录） | 同版本号重跑，按版本号命名的产物目录没清 | 整体移入 voided 证据目录（保留可追溯），再跑 |
 | 4 | 军团 `perf:denseMedianFrame`（33.3ms > 26ms） | 共享机负载把软件光栅帧时间推高一倍 | 交替 A/B 复测（见教训 CJ），确认与版本无关后复跑通过 |
