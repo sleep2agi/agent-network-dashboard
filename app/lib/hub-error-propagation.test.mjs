@@ -48,7 +48,13 @@ describe('读失败必须冒泡，不能伪装成空数据', () => {
 
   test('页面在 error 时不得渲染空态引导', () => {
     const nodes = read('app/nodes/NodesView.tsx');
-    expect(nodes).toMatch(/loadError\s*&&\s*sessions\.length === 0/);
+    // `.602`：失败信号不能只看节点列表自己的 error。
+    // Hub 不可达时 /api/hub/networks 也 502 ⇒ 节点列表的 SWR key 变成 null
+    // ⇒ 不发请求、不报错（loadError 恒为 null）⇒ 页面走「npx init 建第一个 Agent」引导。
+    // 契约因此升级为：readFailure = loadError ?? (health 读不到 ⇒ 视为失败)。
+    expect(nodes).toMatch(/readFailure\s*&&\s*sessions\.length === 0/);
+    expect(nodes).toMatch(/const readFailure: Error \| null = loadError \?\?/);
+    expect(nodes).toMatch(/hubUnreadable[^;]*healthError[^;]*sessions\.length === 0/);
     const tasks = read('app/tasks/TasksView.tsx');
     expect(tasks).toMatch(/error\s*&&\s*tasks\.length === 0/);
     const versions = read('app/versions/page.tsx');
