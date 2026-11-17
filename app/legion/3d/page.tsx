@@ -848,6 +848,9 @@ export default function Legion3DPage() {
   // 开关必须在 mount 后读（模块顶层读会让 SSR 与首帧不一致，见 `.597` 的 #418 教训）。
   // 打开后三个 SWR 的 key 全为 null ⇒ **一个 /api/hub 请求都不发**，只用本地夹具。
   const [demoOn, setDemoOn] = useState(false);
+  const demoRef = useRef(false);
+  const demoFramed = useRef(false);
+  useEffect(() => { demoRef.current = demoOn; }, [demoOn]);
   useEffect(() => {
     try { setDemoOn(new URLSearchParams(window.location.search).get('demo') === '1'); } catch { /* 忽略 */ }
   }, []);
@@ -874,7 +877,7 @@ export default function Legion3DPage() {
       orphans,
       departments: demo ? demo.departments : hierarchy.data?.departments,
       members: demo ? demo.members : hierarchy.data?.members,
-    }, { projected: true });
+    }, { projected: true, groupRadius: demo ? 0.72 : undefined });
     // 3D 专用：同深度、跨父部门的盘做角度松弛（§89：三对深碰撞全是 d2↔d2）。
     // 只改 angle，不动 radius/ring；2D 页面完全不经过这里（共享布局未改）。
     return { ...built, nodes: relaxDepartmentAngles(built.nodes, LOOK_TIER) };
@@ -1944,15 +1947,19 @@ export default function Legion3DPage() {
           const want = Math.min(MAX_ZOOM, Math.max(fit.zoom, focusZoomRef.current) * boost);
           const prevZoom = view.zoom;
           if (debugProjRef.current && canvasRef.current) canvasRef.current.dataset.zoomWriter = 'fit';
-          Object.assign(view, { ...fit, zoom: want });
+          // `.606`：demo（官网 hero）取景规格 —— 核心直径 ≈ 0.22H、核心中心落在 0.45H。
+          // 实测默认 fit 下核心只有约 0.13H 且偏上（负责人反馈"头重脚轻"）。
+          // 必须作用在 `want` 本身：入场推镜的 to 值就取自 want，事后改 view.zoom 会被推镜覆盖。
+          const wantFinal = demoRef.current ? want * 1.7 : want;
+          Object.assign(view, { ...fit, zoom: wantFinal, panY: (fit.panY ?? 0) + (demoRef.current ? size.height * 0.30 : 0) });
           const reduceMotion = typeof window !== 'undefined'
             && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
           const quiet = now < abortQuietUntilRef.current;
-          if (Math.abs(want - prevZoom) > 0.005 && !reduceMotion && !introRef.current && !quiet) {
+          if (Math.abs(wantFinal - prevZoom) > 0.005 && !reduceMotion && !introRef.current && !quiet) {
             view.zoom = prevZoom;
-            zoomAnimRef.current = { t0: now, from: prevZoom, to: want };
+            zoomAnimRef.current = { t0: now, from: prevZoom, to: wantFinal };
           } else {
-            setZoomPct(Math.round(want * 100));
+            setZoomPct(Math.round(wantFinal * 100));
           }
           // 首次进入：先落在 62% 处，再缓动到目标（镜头推近的感觉）。
           // `.524`：节点数太少时不开演。生产实测出现过「入场结束时只有 1 个节点（核心）」，
@@ -1969,7 +1976,7 @@ export default function Legion3DPage() {
               // 且因为缓动是定时的（480ms），不会影响「入场后镜头必须停住」的断言。
               view.yaw -= 0.35;
               yawTarget.current = view.yaw + 0.35;
-              view.zoom = want * 0.62;
+              view.zoom = wantFinal * 0.62;
               // `?intro=fly`：从更低的角度进场，再抬升到最终视角（默认仍是纯推镜）。
               const pitchTo = view.pitch;
               const pitchFrom = INTRO_MODE === 'fly'
@@ -1978,7 +1985,7 @@ export default function Legion3DPage() {
               view.pitch = pitchFrom;
               // 动画期间也别让「尺寸漂移」触发重算。
               userAdjusted.current = true;
-              introRef.current = { t0: now, from: want * 0.62, to: want, pitchFrom, pitchTo };
+              introRef.current = { t0: now, from: wantFinal * 0.62, to: wantFinal, pitchFrom, pitchTo };
               // 镜头推进之外，部门环再按顺序亮起（第二段入场）。
               revealT0.current = now;
               try { sessionStorage.setItem('legion3d-intro', '1'); } catch {}
@@ -2641,7 +2648,11 @@ export default function Legion3DPage() {
         }
         // Compact/expanded mobile framing can bring Agent dots beside the core
         // label. Every painted body participates, even when it has no label.
-        labelBodies.push(anchor);
+        // `.606`：核心的实际可读范围比 body 大 —— 外圈还有刻度环(1.36r)与光晕，
+        // 实测部门标签会压在「军团」与环上（负责人截图反馈）。把核心的避让椭圆放大 1.8×。
+        labelBodies.push(node.kind === 'core'
+          ? { ...anchor, rx: anchor.rx * 1.8, ry: anchor.ry * 1.8 }
+          : anchor);
 
         // B 案：入场「由内向外点亮」——只乘不透明度，不改几何。
         // 减动效（prefers-reduced-motion）必须被尊重：直接到终态，不产生动画。
@@ -2660,11 +2671,15 @@ export default function Legion3DPage() {
 
         // 头像：成员用 display_name、Agent 用 alias 取头像（和列表页同一套解析链）。
         // 半径太小时照片必然糊成噪点，所以 Agent 只在近处（>5px）才换头像。
-        const avatarUrl = node.kind === 'person'
-          ? getAvatarUrl(node.sublabel?.replace(/^@/, '') || node.label)
-          : node.kind === 'agent'
-            ? getAvatarUrl(node.label)
-            : '';
+        // `.606`：demo 模式不取头像 —— 官网 hero 不能被误认成真实员工。
+        // avatarUrl 为空时走「纯色点 + 描边」分支（本来就有，给 Agent 用的那套）。
+        const avatarUrl = demoRef.current
+          ? ''
+          : node.kind === 'person'
+            ? getAvatarUrl(node.sublabel?.replace(/^@/, '') || node.label)
+            : node.kind === 'agent'
+              ? getAvatarUrl(node.label)
+              : '';
         const face = avatarUrl && radiusPx >= 4.5 ? avatarImage(avatarUrl) : null;
         if (node.kind === 'core') {
           drawLegionCore(ctx, p.x, p.y, radiusPx, { ...tk, isDark: dark }, corePhaseRef.current, !interacting,
