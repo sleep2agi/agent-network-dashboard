@@ -84,6 +84,43 @@ deploy/legion-assemble-chip.mjs
 首次运行：ASSEMBLE-CHIP: PASS (16 条)
 ```
 
+## 2026-11-17 `.602`（/nodes 读失败不再伪装空舰队）—— 完整记录
+
+```
+上线：0.6.4-preview.602 / acc296c3（回退锚点 preview.601-bebe4d5）
+验收 20/20（1146/1146，detail 115 · nodesKbd 14 · pageSmoke 47 全绿）· CI 4/4 · 自检 4/4
+体检：第三轮 20/20（1911s）—— 前两轮各 2 红，全部定性为"样本不可用"并加固
+探针：军团 9/9 · 六档 6×4 · 衔接态 17 · Hub-down 4 路由 × 8 判据
+```
+
+### 问题（"未知 ≠ 0"家族第 4 处，也是最严重的一处）
+
+```
+Hub 不可达时 /nodes 显示：0 在线 · 0 总数 · 创建你的第一个 Agent（npx 引导）
+⇒ 不只把未知写成 0，还劝用户去创建一个其实已经存在的 Agent
+根因与侧栏 .598 同源：列表 SWR key 依赖 network_id（networks 502 ⇒ key=null
+  ⇒ 不发请求、不报错 ⇒ loadError 恒空 ⇒ 落到 EmptyState）
+修法：readFailure = loadError ?? (hubUnreadable ? Error('Hub 不可达（读不到节点列表）') : null)
+  hubUnreadable = !loading && healthError && sessions.length === 0
+  作用点：头部两枚徽标（? 在线 / ? 总数）+ 错误面板条件与文案
+契约：hub-error-propagation.test.mjs 升级（readFailure 必须成链且并入 healthError）
+```
+
+### 三轮体检：四次"尺子失效"的集中爆发（load1 11–13）
+
+| 轮 | 红门 | 形态 | 处置 |
+|---|---|---|---|
+| 第一轮 19/20 | `legion-label-drop` 1440 四变体 attempted 2/1 | 数据漂移（四变体串行量测间数据变动） | 先比 nodeCount，节点数不同则明写跳过 |
+| 第一轮 | `site-scroll` 1440 `/nodes` overflowY=31 · banner=0 | 横幅未渲染窗口 | banner=0 且溢出>0 ⇒ 等横幅出现重取；等不到 INVALID→DEGRADED |
+| 第二轮 18/20 | `contrast/light` `/org` 导航 30s 超时 | 并发争用 | 导航超时复测一次（[transient] 留痕） |
+| 第二轮 | `contrast390/cyber` `/changelog` 导航 30s 超时 | 同上 | 同上 |
+| 第三轮 20/20 | — | — | 四门均干净通过：`VSCROLL 40/40（可疑带 0）` · `SCROLL-AUDIT 20 条路由` |
+
+```
+关键证据（本轮可引用）：四个"曾红门"在第三轮全部干净通过，日志无 transient / INVALID
+⇒ 加固没有被滥用；它们只在样本不可用时才介入
+```
+
 ## 2026-11-17 `.601`（矮横屏舞台地板）—— 完整记录
 
 ```
