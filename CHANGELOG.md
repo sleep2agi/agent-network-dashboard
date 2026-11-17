@@ -6,6 +6,22 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.609 — 2026-11-18
+
+### 手机节点列表：空闲/离线时显示这个节点跑的是什么模型
+
+```
+此前手机端每一行只有「alias + 状态点 + 任务预览」，模型只在桌面列表可见
+（Hub /api/hub/nodes 354 个节点里 274 个带 model，数据本来就有）。
+
+改动（app/components/NodeList.tsx）：
+  · 没有任务文本时（空闲 / 离线），第二行追加模型短名：
+      「空闲 · deepseek-flash」/「离线 · deepseek-flash」
+  · 有任务时保持任务优先，不挤占预览
+  · 没有 model 时保持原文案（不留孤立分隔点）
+  · 完整模型名放在 title，供悬停与读屏；短名去掉厂商前缀
+```
+
 ## 0.6.4-preview.608 — 2026-11-18
 
 ### 任务列表不再把"这一页有多少"说成"全共有多少"
