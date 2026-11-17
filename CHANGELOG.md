@@ -6,6 +6,38 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.599 — 2026-11-17
+
+### 首页统计条：Hub 不可达时三格同口径（不再把未知写成 0）
+
+```
+修复前（拦截 /api/hub/** → 502，1440）：
+  ? 在线 · 0 运行中 · 0 registered
+  ↑ 已正确显示"不知道"   ↑↑ 同一行却断言是 0 —— 自相矛盾
+修复后：
+  ? 在线 · ? 运行中 · ? registered
+```
+
+```
+根因：StatsBar 的"空舰队"分支把 运行中 / registered 硬编码成 0，
+      而同一行的"在线"早已按 presenceUnknown 显示 '?'。
+修法：两处改为 presenceUnknown ? '?' : working / total（不改布局、不改文案）。
+这是"未知 ≠ 0"家族的第 3 处（.595 画布核心、.598 侧栏、本版首页统计条）。
+```
+
+### 探针同步加固
+
+```
+deploy/resilience-hubdown.mjs 新增第 7 条判据：统计条不得出现 0 运行中 / 0 registered
+并修掉一个真 bug：原判据用 body.innerText 直接匹配 "0 运行中"，
+  而 innerText 会把数字与标签拆成两个 span（换行分隔）⇒ 漏判；
+  改为先把空白压平再匹配。
+验证方式（台账 59 的规矩）：对线上 .598（缺陷仍在）跑一次必须红 →
+  实测 FAIL 1 条「/ 统计条把未知写成 0」；对修复后的本地构建跑必须绿。
+```
+
+---
+
 ## 0.6.4-preview.598 — 2026-11-17
 
 ### 内容与 .597 相同（侧栏错误态 + 衔接态水合），外加**契约测试升级**
