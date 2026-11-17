@@ -7,11 +7,11 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | `0.6.4-preview.609` |
-| commit | `1cc9f0422fe321ec760c911dbc5b5d62457b9a23` |
+| 版本 | `0.6.4-preview.610` |
+| commit | `b60e0f4fe30b5b45e658def9bc1d803a2cf54946` |
 | 公网 | https://dm.vansin.top |
-| 进程 | cwd `releases/preview.609-1cc9f04`（pid 由 `ss -ltnp` 核验） |
-| 回滚锚点 | `preview.608-dff3009` |
+| 进程 | cwd `releases/preview.610-b60e0f4`（pid 由 `ss -ltnp` 核验） |
+| 回滚锚点 | `preview.609-1cc9f04` |
 
 > `.574` **作废未上线**：20 套件全绿，但 CI 的 `gates`（color-ratchet 发现 404 页用了
 > 任意尺寸 `min-h-[70vh]`）失败，发布脚本按契约拒绝发布。改发 `.575` 后四条 workflow 全绿。
