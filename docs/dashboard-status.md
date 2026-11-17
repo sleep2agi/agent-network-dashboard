@@ -84,6 +84,32 @@ deploy/legion-assemble-chip.mjs
 首次运行：ASSEMBLE-CHIP: PASS (16 条)
 ```
 
+## 2026-11-17 `.598`（侧栏错误态正确化 + 衔接态水合修复）—— 完整记录
+
+```
+上线：0.6.4-preview.598 / 1275630a（回退锚点 preview.596-f3b1ad0）
+验收 20/20（1146/1146）· CI 4/4 · 自检 4/4 · 体检 20/20（1849s）
+
+问题 1（真缺陷，Hub 不可达时）：
+  拦截 /api/hub/** → 502 后，侧栏显示空态文案（形如"队伍还没建"），而不是"读不到"
+  链路：networks 502 ⇒ 无 network_id ⇒ 计数请求的 SWR key=null ⇒ 不发请求也不报错
+        ⇒ 渲染成 total=0 且无 error ⇒ 走空态分支
+  修法：const statusError = error || networksError（复用同 key 缓存，不发第二个请求）
+        三处判据（圆点 / loading / unavailable）改用它
+
+问题 2（我自己引入的水合不一致）：
+  ?assemble=1 的开关在模块顶层读 location.search ⇒ SSR 无、客户端首帧有 ⇒ React #418
+  Hub 502 时 loading 恒真 ⇒ 4/4 复现
+  修法：改用 useState + useEffect 在 mount 后读；SSR 与客户端首帧一致（都不渲染）
+
+作废记录：.597 已构建但 CI unit tests 红（契约断言未升级 + 注释字面串撞顺序断言），
+  从未上线；.598 为同内容 + 契约升级后的重发。
+
+线上验证（同一探针，.597 红 → .598 绿）：
+  resilience-hubdown 4 路由 × 6 判据：横幅有 / 无伪在线数 / status unavailable / 无胶囊 / pageerror 0
+  legion-assemble-chip 16 条：默认不出现 / 对比度 7.36·6.38 / 320 无溢出
+```
+
 ## 2026-11-17 Hub 不可达场景的界面行为（`.596` 复测）
 
 ```
