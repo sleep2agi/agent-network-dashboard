@@ -6,7 +6,42 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
-## 0.6.4-preview.603 — 2026-11-17
+## 0.6.4-preview.604 — 2026-11-17
+
+### 内容与 .603 相同（Hub 读不到时公共提示不再让用户"去选择网络"），外加颜色改用 token
+
+```
+.603 为什么作废：CI 的 gates 工作流红在 color-ratchet
+  app/components/NetworkRequiredNotice.tsx 命名色板类 2 → 4（border-red-500/25、bg-red-500/5）
+  该门的意义是"不让新代码绕过 token"（命名色板类换主题不变色）
+修法：改用 token —— border-[var(--border)] · bg-[var(--bg-secondary)] · text-[var(--danger)]
+  基线保持 131/1037，**没有上调基线**
+```
+
+### 验收（同一产物，三次不同负载的对照）
+
+| 时刻 | load1 | 结果 |
+|---|---|---|
+| 17:32 | 10–13 | legion 271/272（`perf:denseMedianFrame` 红）→ 中止 |
+| 17:48 | 14.47 | legion 270/272 → 中止 |
+| 18:07 | **5.59** | **20/20（1146/1146），legion 272/272** |
+
+```
+性能断言阈值未改动；结论是"负载窗口"而不是"产品回归"
+（该断言在 legion-593…602 十批全绿，今天两次红都发生在 load1 ≥ 10 的窗口）
+```
+
+### 探针（先红后绿）
+
+```
+resilience-hubdown：路由 4→6（/org /requirements），判据 8→9
+  线上 .602 → FAIL 4 条（/tasks /org /requirements /legion/3d）
+  本地修复版 → PASS（6 路由 × 9 判据）
+```
+
+---
+
+## 0.6.4-preview.603 — 2026-11-17（**作废，从未上线**：CI gates 的 color-ratchet 红，见 .604）
 
 ### Hub 读不到时，公共提示不再让用户"去选择网络"
 
