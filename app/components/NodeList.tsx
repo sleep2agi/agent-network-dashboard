@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { shortModel } from '../lib/node-format';
 import { AliasAvatar } from './AliasAvatar';
 import { densityAvatarSize, useDensity } from '../lib/density';
 import { scaleRowHeight, useFontScale } from '../lib/font-scale';
@@ -219,6 +220,12 @@ export function nodeListWindow(
 
 function LastLine({ alias, session }: { alias: string; session: SessionRow }) {
   const draft = useHasDraft(alias);
+  // `.609`：模型可观测性 —— 手机行只有两行，任务文本优先；当没有任务时
+  // （空闲/离线）这一行是空的，正好放模型短名，不挤占任务预览。
+  // 有 model 才追加，没有 model 时保持原文案（不留孤零零的分隔点）。
+  const model = shortModel(session.model);
+  const modelSuffix = model ? ` · ${model}` : '';
+  const modelTitle = session.model ? `模型 / Model: ${session.model}` : undefined;
   if (draft) {
     return (
       <span className="text-[11px] text-red-400/90 truncate" aria-label={t('有未发送草稿', 'Unsent draft')}>
@@ -230,9 +237,9 @@ function LastLine({ alias, session }: { alias: string; session: SessionRow }) {
     return <span className="text-[11px] text-gray-500 truncate">{session.task}</span>;
   }
   if (!session.online) {
-    return <span className="text-[11px] text-gray-600 italic">{t('离线', 'offline')}</span>;
+    return <span title={modelTitle} className="text-[11px] text-gray-600 italic">{t('离线', 'offline')}{modelSuffix}</span>;
   }
-  return <span className="text-[11px] text-gray-600">{t('空闲', 'idle')}</span>;
+  return <span title={modelTitle} className="text-[11px] text-gray-600">{t('空闲', 'idle')}{modelSuffix}</span>;
 }
 
 export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchChange }: NodeListProps) {
