@@ -27,7 +27,7 @@ export function NetworkRequiredNotice({ className = '' }: { className?: string }
       <div
         role="alert"
         data-testid="network-required"
-        className={`rounded-lg border border-red-500/25 bg-red-500/5 px-4 py-3 text-sm text-[var(--danger)] ${className}`}
+        className={`rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--danger)] ${className}`}
       >
         读不到网络信息（Hub 不可达）—— 这不是「你没有网络」。
         <button
