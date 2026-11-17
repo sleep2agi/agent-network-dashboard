@@ -6,6 +6,38 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.603 — 2026-11-17
+
+### Hub 读不到时，公共提示不再让用户"去选择网络"
+
+```
+修复前（拦截 /api/hub/** → 502）：
+  /tasks /org /requirements /legion 共用 NetworkRequiredNotice：
+  「还没有确定当前网络。请先在左侧选择网络，或前往网络管理查看可用网络。」
+  ⇒ 把"读不到网络信息"说成了"你没有选择网络"，指了一条当时无效的路
+修复后：
+  「读不到网络信息（Hub 不可达）—— 这不是「你没有网络」。[重试]」
+```
+
+```
+根因：该组件只有一套文案，但有两种成因
+  ① 账号确实没有网络 / 用户没选 ⇒ "去选网络"是对的指令
+  ② /api/hub/networks 读不到（Hub 不可达）⇒ 用户无从选择
+修法：用 /api/hub/health 的 error 区分（与 .598/.602 同一判定口径）
+这是"未知 ≠ 0"家族的第 5 处 —— 也是唯一一处通过共用组件一次覆盖四个页面的修复
+```
+
+### 验证（先红后绿）
+
+```
+探针 resilience-hubdown：路由 4 → 6（加入 /org /requirements），判据 8 → 9
+  对线上 .602 运行 → FAIL 4 条（/tasks /org /requirements /legion/3d 均被判"把读不到说成没选"）
+  对修复后的本地构建 → PASS（6 路由 × 9 判据，三行「伪 没选网络」全为无）
+tsc 0 error · eslint 0 error（直引号已改为「」）· npm test 60/60 · build 通过
+```
+
+---
+
 ## 0.6.4-preview.602 — 2026-11-17
 
 ### `/nodes`：Hub 不可达时不再显示「0 在线 0 总数」并劝你"创建第一个 Agent"
