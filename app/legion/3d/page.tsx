@@ -35,6 +35,7 @@ import { EXPORT_FPS, LOOP_DURATION_MS, containRect, exportDimensions, loopProgre
 import { EmptyState } from '../../components/EmptyState';
 import { getAvatarUrl } from '../../lib/avatars';
 import { LegionChat } from '../LegionChat';
+import { buildDemoData } from './demo-data';
 
 // 镜头参数（2026-11-14 校准，改之前先读完这段，别把注释当唯一依据）：
 //   · 原始设计意图（PPT 首页图，admin 认可）：俯仰 25–30°、柔和透视、自转 0.02–0.03 rad/s
@@ -843,32 +844,41 @@ export default function Legion3DPage() {
     }
   }, [networkId]);
 
-  const people = useSWR<PeopleResponse>(networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
+  // `.605`：`?demo=1` —— 官网/README 用的示例数据模式。
+  // 开关必须在 mount 后读（模块顶层读会让 SSR 与首帧不一致，见 `.597` 的 #418 教训）。
+  // 打开后三个 SWR 的 key 全为 null ⇒ **一个 /api/hub 请求都不发**，只用本地夹具。
+  const [demoOn, setDemoOn] = useState(false);
+  useEffect(() => {
+    try { setDemoOn(new URLSearchParams(window.location.search).get('demo') === '1'); } catch { /* 忽略 */ }
+  }, []);
+  const demo = useMemo(() => (demoOn ? buildDemoData() : null), [demoOn]);
+
+  const people = useSWR<PeopleResponse>(!demo && networkReady && networkId ? scopedUrl('/api/hub/people?limit=200&offset=0', networkId) : null, legionFetcher, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
   });
-  const hierarchy = useSWR<DepartmentsResponse | null>(networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
+  const hierarchy = useSWR<DepartmentsResponse | null>(!demo && networkReady && networkId ? scopedUrl('/api/hub/departments', networkId) : null, deptFetcher, {
     refreshInterval: 60000,
     shouldRetryOnError: false,
   });
-  const status = useSWR<StatusResponse>(networkReady && networkId ? scopedUrl('/api/hub/session-status', networkId) : null, legionFetcher, {
+  const status = useSWR<StatusResponse>(!demo && networkReady && networkId ? scopedUrl('/api/hub/session-status', networkId) : null, legionFetcher, {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });
 
-  const peopleList = people.data?.people ?? [];
-  const orphans = people.data?.agents_without_owner ?? [];
+  const peopleList = demo ? demo.people : (people.data?.people ?? []);
+  const orphans = demo ? demo.orphans : (people.data?.agents_without_owner ?? []);
   const layout = useMemo(() => {
     const built = buildLegionLayout({
       people: peopleList,
       orphans,
-      departments: hierarchy.data?.departments,
-      members: hierarchy.data?.members,
+      departments: demo ? demo.departments : hierarchy.data?.departments,
+      members: demo ? demo.members : hierarchy.data?.members,
     }, { projected: true });
     // 3D 专用：同深度、跨父部门的盘做角度松弛（§89：三对深碰撞全是 d2↔d2）。
     // 只改 angle，不动 radius/ring；2D 页面完全不经过这里（共享布局未改）。
     return { ...built, nodes: relaxDepartmentAngles(built.nodes, LOOK_TIER) };
-  }, [peopleList, orphans, hierarchy.data]);
+  }, [peopleList, orphans, hierarchy.data, demo]);
 
   // 只在「结构变了」（人数/部门数/节点数）时重新取景；30s 轮询刷新同一批人
   // 不能把用户拖好的视角弹回去。
@@ -989,9 +999,9 @@ export default function Legion3DPage() {
 
   const statusByAlias = useMemo(() => {
     const map = new Map<string, string>();
-    for (const s of status.data?.sessions ?? []) map.set(s.alias, s.status);
+    for (const s of (demo ? demo.sessions : (status.data?.sessions ?? []))) map.set(s.alias, s.status);
     return map;
-  }, [status.data]);
+  }, [status.data, demo]);
 
   // 图例带数量：一眼知道「现在有几个在跑」，不用逐个看。
   const statusCounts = useMemo(() => {
@@ -4009,7 +4019,7 @@ export default function Legion3DPage() {
   /* ── 页面 ───────────────────────────────────────────────────────── */
 
   // 网络未确定 ⇒ 也算 loading（null key 时 SWR 的 isLoading 是 false，会把等待误判成「空」）
-  const loading = !networkReady || people.isLoading || hierarchy.isLoading || status.isLoading;
+  const loading = demo ? false : (!networkReady || people.isLoading || hierarchy.isLoading || status.isLoading);
   // `.595`：画布里的核心也会画「N Agent / N 部门 · N 成员」。数据没到的那 1 秒里
   // 它画的是三个 0 —— 与标题行「正在读取编制…」自相矛盾，也违反「未知 ≠ 0」。
   // 渲染循环是独立 effect，用 ref 把 loading 喂进去（不把它加进依赖，避免重启动画）。
@@ -4023,7 +4033,7 @@ export default function Legion3DPage() {
       setAssembleOn(new URLSearchParams(window.location.search).get('assemble') === '1');
     } catch { /* 无法读 search 时保持关闭 */ }
   }, []);
-  const readError = legionReadError(people.error, hierarchy.error);
+  const readError = demo ? null : legionReadError(people.error, hierarchy.error);
   // #73 —— 不再维护 needsLogin 这个「只置位不清零」的 state：SWR 成功后 error 会自己清掉，
   // 直接派生就能「登录恢复后立刻收起过期提示」。no-network 分支是 #72 的网络就绪判定。
   const fatal = readError?.status === 401 ? 'login'
