@@ -1209,7 +1209,10 @@ export default function Legion3DPage() {
       // `.589`：原来这里是 Math.max(480, …)。320×568 上「视口 − 横幅57 − 让位80 = 431」，
       // 480 的地板把舞台顶回 480 ⇒ 文档 = 57+480+80 = 617 > 568，多滚 49px。
       // 地板的意义只是"别小到没法看"，240 足够；剩余空间才是真值。
-      setStageHeight(Math.max(240, Math.round(window.innerHeight - top - padB)));
+      // `.601`：同一类问题在更矮的横屏上又出现一次 —— 844×330 时剩余空间只有 219，
+      // 240 的地板把舞台顶回 240 ⇒ 文档 = 31+240+80 = 351 ⇒ 多滚 21px。
+      // 结论：地板不能高于剩余空间。改为"剩余空间为准，只留 120 的兜底"。
+      setStageHeight(Math.max(120, Math.round(window.innerHeight - top - padB)));
     };
     // 首帧时 HealthBanner / 侧栏可能还没定高，直接读 top 会读到 0；
     // 放到下一帧再量，并补一次 300ms 后的校正（字体/横幅落位）。
