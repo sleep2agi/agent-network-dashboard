@@ -6,6 +6,32 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.607 — 2026-11-18
+
+### 「近 24 小时 N 个任务失败」不再报错数：下界标注 + 时区修正
+
+```
+横幅这个数字此前有两处独立错误，都只在用户看不见的地方：
+
+  ① 把下界当确定值：CommHub /api/tasks 单次最多回 200 条
+     （limit=500 也只回 200，offset/page 被忽略）。24h 内失败超过 200 时，
+     数到的只是下界，横幅却写成 "162 个"。
+     ⇒ 接口带出 truncated / coveredFrom（判据只用数据：列表顶到页上限且最老一条
+       仍晚于窗口起点 ⇒ 窗口没走完），横幅改显示 "近 24 小时 ≥N 个任务失败"。
+
+  ② 窗口起点算错 8 小时：Hub 时间戳是 2026-11-16T19:18:08（带 T、无时区），
+     浏览器 Date.parse 按本地时区解释。实测同一份 200 条失败任务：
+     按 UTC = 200 条在 24h 内，按本地 = 162 条 —— 线上横幅报的正是 162，
+     即 16–24 小时那一段的失败被系统性漏掉。
+     ⇒ parseHubTime 对"带 T 但无时区"的串也补 Z；
+       军团连线新鲜度的裸 Date.parse 一并改掉（同一原因会让连线整体虚老 8 小时）。
+
+  M app/api/hub/task-stats/route.ts
+  M app/components/HealthBanner.tsx
+  M app/components/TopoGraph.tsx
+  M app/lib/time.ts
+```
+
 ## 0.6.4-preview.606 — 2026-11-17
 
 ### 军团 `?demo=1` 按负责人视觉规格定稿（官网 hero / README）
