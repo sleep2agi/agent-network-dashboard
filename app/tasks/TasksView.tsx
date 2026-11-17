@@ -75,6 +75,10 @@ export function decodeIdSegment(seg: string): string {
   }
 }
 
+// 任务列表单页请求上限。CommHub 侧另有 200 条硬上限（limit=500 也只回 200），
+// 因此「返回条数 == 本上限」时总数不可知，界面用 ≥N 表达（`.608`）。
+const TASKS_PAGE_LIMIT = 100;
+
 function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: string | null }) {
   const searchParams = useSearchParams();
   const { networkId, ready: networkReady } = useNetworkId();
@@ -88,6 +92,10 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
   const sameNetwork = taskNetwork === networkId;
   const tasks = sameNetwork ? taskRows : [];
   const count = sameNetwork ? taskCount : 0;
+  // `.608`：CommHub /api/tasks 的 count 是「本次回了几条」，不是总数
+  // （实测 len 200 / count 200，且 limit=500 也只回 200、offset/page 被忽略）。
+  // 所以当返回条数顶到本页请求上限时，总数不可知 —— 页面必须显示 ≥N，不能显示 N。
+  const totalSaturated = tasks.length >= TASKS_PAGE_LIMIT && count <= tasks.length;
   const loading = !sameNetwork || taskLoading;
   const error = sameNetwork ? taskError : '';
   const taskGeneration = useRef(0);
@@ -210,7 +218,7 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
       if (filterStatus) params.set('status', filterStatus);
       if (filterFrom) params.set('from_name', filterFrom);
       if (filterTo) params.set('to_name', filterTo);
-      params.set('limit', '100');
+      params.set('limit', String(TASKS_PAGE_LIMIT));
 
       const res = await fetch(`/api/hub/tasks?${params.toString()}`);
       if (!isCurrent()) return;
@@ -332,12 +340,14 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
         <div className="px-4 py-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-3 mb-3">
             <h1 className="text-xl font-semibold text-[var(--fg)] lg:ml-0 ml-10">任务</h1>
-            {tasksScoped.length < count && (
+            {(tasksScoped.length < count || totalSaturated) && (
               <span
                 className="text-xs bg-[var(--bg-elevated)] text-[var(--fg-muted)] px-2 py-0.5 rounded-full tabular-nums"
-                title={`Showing ${tasksScoped.length} of ${count} tasks`}
+                title={totalSaturated
+                  ? `已加载 ${tasksScoped.length} 条；服务端单次最多回 ${TASKS_PAGE_LIMIT} 条，实际可能更多`
+                  : `Showing ${tasksScoped.length} of ${count} tasks`}
               >
-                {tasksScoped.length} / {count}
+                {tasksScoped.length} / {totalSaturated ? '≥' : ''}{count}
               </span>
             )}
           </div>
@@ -555,7 +565,9 @@ function TasksViewInner({ initialSelectedId = null }: { initialSelectedId?: stri
               改为"标题 + 可执行提示 + 当前条数"，让这块空白说明自己在等什么。 */}
           <p className="text-sm text-[var(--fg-muted)]">未选择任务</p>
           <p className="text-xs text-[var(--fg-dim)]">从左侧点任意一条查看详情，或用 ↑ ↓ 键切换。</p>
-          <p className="text-xs text-[var(--fg-dim)]">当前列表共 {tasksScoped.length} 条</p>
+          <p className="text-xs text-[var(--fg-dim)]">
+            当前列表共 {tasksScoped.length} 条{totalSaturated ? `（服务端单次最多回 ${TASKS_PAGE_LIMIT} 条，实际可能更多）` : ''}
+          </p>
         </section>
       )}
     </div>
