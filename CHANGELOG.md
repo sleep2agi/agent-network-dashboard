@@ -6,6 +6,25 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.608 — 2026-11-18
+
+### 任务列表不再把"这一页有多少"说成"全共有多少"
+
+```
+同一家族的第 3 处（前两处：首页失败横幅的 ≥N、其背后的时区修正）。
+
+CommHub /api/tasks 的 count 是**本次回了几条**，不是总数：
+  实测 status=failed&limit=500 → len 200 / count 200
+       limit=500               → len 200 / count 200
+任务页请求 limit=100，于是底部写「当前列表共 100 条」，读者会理解成全量。
+
+改动（app/tasks/TasksView.tsx）：
+  · 抽出 TASKS_PAGE_LIMIT 常量，请求参数与饱和判定共用，避免两处漂移
+  · 饱和判定：返回条数顶到本上限 且 count ≤ 返回条数 ⇒ 总数不可知
+  · 饱和时顶部徽标显示「已加载 / ≥N」，并说明单次上限；未饱和时保持原样
+  · 底部说明同步补一句「服务端单次最多回 100 条，实际可能更多」
+```
+
 ## 0.6.4-preview.607 — 2026-11-18
 
 ### 「近 24 小时 N 个任务失败」不再报错数：下界标注 + 时区修正
