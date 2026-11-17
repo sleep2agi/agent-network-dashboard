@@ -86,7 +86,13 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
   // 而列表只用 alias/status/agent/server/task/progress/model/… 这些字段。
   // 投影后 204 KB（−71%）。ChatPane / ChatPopover 必须用同一个 key，否则会变成两次请求。
   const { sessions, isLoading: loading, error: loadError, mutate: mutateSessions } = useSessions({ lite: true, initial: initialSessions });
-  const { health } = useHealth();
+  const { health, error: healthError } = useHealth();
+  // `.602`：Hub 不可达时 /api/hub/health 会失败，而节点列表的 SWR key 依赖 network_id
+  //（网络列表也读不到 ⇒ key=null ⇒ 不发请求、不报错）⇒ 页面走「新装引导」，
+  // 告诉用户 "创建你的第一个 Agent"，把"读不到"说成了"你没有节点"。
+  // 用 health 的错误作为"Hub 读不到"的信号，让错误态与 ? 计数同时成立。
+  const hubUnreadable = !loading && !!healthError && sessions.length === 0;
+  const readFailure: Error | null = loadError ?? (hubUnreadable ? new Error('Hub 不可达（读不到节点列表）') : null);
   const { lifecycleByAlias, nodeIdByAlias, attrsByAlias } = useNodeLifecycle();
   const { hasUnread, unreadCount, lastActivityAt } = useChatUnread();
   const { mutate } = useSWRConfig();
@@ -522,10 +528,10 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <h1 className="text-2xl font-bold text-white lg:ml-0 ml-10">节点</h1>
           <span className="text-xs bg-[var(--success)]/5 text-[var(--success)] px-2 py-0.5 rounded-full border border-[var(--success)]/25 shrink-0">
-            {onlineCount} {t('在线', 'online')}
+            {readFailure ? '?' : onlineCount} {t('在线', 'online')}
           </span>
           <span className="text-xs bg-[var(--bg-elevated)] text-[var(--fg-muted)] px-2 py-0.5 rounded-full border border-[var(--border)] shrink-0">
-            {sessions.length} {t('总数', 'total')}
+            {readFailure ? '?' : sessions.length} {t('总数', 'total')}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -700,11 +706,11 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
 
       {/* 读失败不是「没有节点」：旧实现在 error 时继续走 EmptyState，
           新用户会看到「npx … init」引导，以为队伍还没建起来。 */}
-      {!loading && loadError && sessions.length === 0 ? (
+      {!loading && readFailure && sessions.length === 0 ? (
         <div role="alert" className="rounded-2xl bg-[var(--bg-secondary)] p-6 text-center text-sm">
           <p className="font-medium text-[var(--danger)]">{t('读不到节点列表', 'Could not load nodes')}</p>
           <p className="mt-1 text-xs text-[var(--fg-muted)]">
-            {loadError instanceof Error ? loadError.message : String(loadError)}
+            {readFailure instanceof Error ? readFailure.message : String(readFailure)}
           </p>
           <button
             type="button"
