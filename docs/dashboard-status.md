@@ -84,6 +84,44 @@ deploy/legion-assemble-chip.mjs
 首次运行：ASSEMBLE-CHIP: PASS (16 条)
 ```
 
+## 2026-11-17 `.604`–`.606`（读不到就说读不到（收口）+ 军团 demo 模式与官网 hero）
+
+### `.604`：公共网络提示区分「没选」与「读不到」
+
+```
+/tasks · /org · /requirements · /legion 共用 NetworkRequiredNotice，旧实现只有一套文案
+  Hub 读不到时仍提示「还没有确定当前网络，请先在左侧选择网络」⇒ 指了一条无效的路
+修法：用 /api/hub/health 的 error 区分两种成因（同 .598/.602 的判定口径）
+探针：resilience-hubdown 路由 4→6、判据 8→9（不得出现「请先在左侧选择网络」）
+  线上 .602 FAIL 4 条 → .604 PASS（先红后绿）
+作废记录：.603 因 CI gates 的 color-ratchet（命名色板类 +2）作废，从未上线；
+  .604 改用 token（border/bg-secondary/danger），基线 131/1037 未上调
+```
+
+### `.605`+`.606`：军团示例数据模式 + 官网 hero 视觉规格
+
+```
+?demo=1：三个 SWR key 置 null（图形数据零 /api/hub 请求），改用本地夹具
+  6 部门（研发/设计/运营/市场/客服/财务）· 24 成员 · 60 Agent（P-01…P-60）
+负责人四点反馈全部落地：
+  ① 核心标签避让 1.8× + 单层编制第一圈半径参数化（demo 0.72，生产默认 0.5）
+  ② 取景：核心直径 0.22H、中心 45%H —— 关键：系数必须作用在推镜目标 want 上（wantFinal）
+  ③ 头像：demo 不加载任何头像图片（成员字母点、Agent 色点）
+  ④ 读数保留「60 Agent / 6 部门 · 24 成员」
+体检：20/20（1 DEGRADED：冷启动 load1 9.14 样本不可信，判据 6000ms 未动）
+```
+
+### 交付物（官网 hero）
+
+```
+/home/vansin/comm-dash-ou/evidence/hero-delivery-20261117/
+  hero-12s.mp4 4.0 MB · hero-12s.webm 5.3 MB · hero-3s.gif 750 KB · hero-still-1280.png 553 KB
+  standalone/ (index.html 936 B + assets/index-*.js 12.9 KB + fixture.json 15.6 KB ≈ 29 KB)
+  README.md（接入示例 / 数据口径 / 复现命令 / 软件渲染边界）
+A 实测：只有 3 个本地请求、外网 0；file:// 双击亦可用（内联 fallback）
+12s 循环 = 60°，与 6 部门旋转对称重合 ⇒ 首尾无缝
+```
+
 ## 2026-11-17 `.602`（/nodes 读失败不再伪装空舰队）—— 完整记录
 
 ```
