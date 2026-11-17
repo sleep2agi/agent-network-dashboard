@@ -1903,13 +1903,22 @@ export default function Legion3DPage() {
       // 触发时刻取决于加载耗时 ⇒ 同一份数据得到 121 / 113 / 115 三种 zoom（实测）。
       // 它原本是为了救 `.293` 那次"内容缩成一小坨"；现在有了「编制签名事件触发 + 容纳兜底」，
       // 内容不会再缩成一小坨，这条周期性检查只剩下"制造不确定性"的作用。
-      const sizeReady = size.width > 240 && size.height > 300;
+      // `.600`：高度门槛 300 → 140。原阈值挡的是"首帧 stage 只有几十像素"，
+      // 但它同时把手机横屏挡在门外（844×390 画布 279、667×375 画布 264），
+      // 实测调试导出：844×390 一度 sizeReady=false 而其余条件全真 ⇒ 取景与入场合成都未执行，
+      // 50–143 个节点落在画布外。140 仍远高于"几十像素"，宽度门槛保留，MIN_ZOOM 兜底手动缩放。
+      const sizeReady = size.width > 240 && size.height > 140;
       // 只有 core 时不取景；仅有部门的编制也有真实实体和轨道，需要避让展开控件。
       const dataReady = layout.stats.groups + layout.stats.people + layout.stats.agents > 0;
       // `.558`：边界纪元不匹配也要取景 —— 这样"安全区变了但当时取景被挡"不会永久丢失。
       const boundsStale = fittedEpochRef.current !== boundsEpochRef.current;
       if (sizeReady && dataReady && fitBoundsRef.current !== null && !sharedLock.current && (fitPending.current || boundsStale || (sizeDrift && !userAdjusted.current)) && !introRef.current && nodes.length > 0) {
-        const fit = fitProjectedBodies(framingBodies, view, size, fitBounds, { min: MIN_ZOOM, max: MAX_ZOOM });
+        // `.600`：短画布（手机横屏）允许取景低于 MIN_ZOOM 的 0.25。
+        //   页头折叠后 844×390 的可用区约 94px，25% 仍装不下（需要 ≈16%）⇒ contain 搜索落空
+        //   ⇒ 取景与入场都不执行，50 个节点出界。这里只放宽"取景"的下限；
+        //   用户手动缩放的下限（MIN_ZOOM）不变。
+        const fitMin = size.height < 320 ? Math.min(MIN_ZOOM, 0.15) : MIN_ZOOM;
+        const fit = fitProjectedBodies(framingBodies, view, size, fitBounds, { min: fitMin, max: MAX_ZOOM });
         // If controls exhaust the usable area, keep drawing the current scene.
         // A later valid bounds measurement will request another fit.
         if (fit) {
@@ -4330,11 +4339,13 @@ export default function Legion3DPage() {
             : `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`
               + (statusOnly ? ` · 仅显示 ${({ working: '运行中', idle: '空闲', blocked: '阻塞', error: '错误', offline: '未上报' } as const)[statusOnly]}` : '')}
         </p>
-        {/* 第一次看 3D 的人不知道三环各是什么；2D 页有这行说明，这里补上（演示时更不用口头解释）。 */}
-        <p className="mt-0.5 hidden text-[11px] text-[var(--fg-dim)] sm:block" data-testid="legion-3d-legend">
+        {/* 第一次看 3D 的人不知道三环各是什么；2D 页有这行说明，这里补上（演示时更不用口头解释）。
+            `.600`：短画布（手机横屏，高度 < 420）隐藏图例行与搜索框，把画布还给图形。
+            实测 844×390：页头 178px / 画布 279px ⇒ 取景可用区仅约 61px ⇒ fit 返回 null、整圈出界。 */}
+        <p className="mt-0.5 hidden text-[11px] text-[var(--fg-dim)] sm:block [@media(max-height:420px)]:hidden" data-testid="legion-3d-legend">
           圆心是网络；外三环：部门 / 成员 / Agent。
         </p>
-        <div className="pointer-events-auto mt-2 flex items-center gap-2">
+        <div className="pointer-events-auto mt-2 flex items-center gap-2 [@media(max-height:420px)]:hidden">
           <input
             ref={searchRef}
             value={query}
@@ -4681,7 +4692,7 @@ export default function Legion3DPage() {
       )}
 
       {/* 底部左：图例与操作提示 */}
-      <div ref={footerRef} className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''}`}>
+      <div ref={footerRef} className={`pointer-events-none absolute bottom-4 left-4 space-y-1 text-[11px] text-[var(--fg-dim)] ${cleanView ? 'invisible' : 'visible'} ${selectedNode ? 'hidden sm:block' : ''} [@media(max-height:420px)]:hidden`}>
         <div className={tightHeight ? "flex flex-nowrap items-center gap-x-2 overflow-x-auto" : "flex flex-wrap items-center gap-x-3 gap-y-1"}>
           {/* 图例即筛选：点一下只看这个状态，再点取消（Esc 也能清）。 */}
           {([
@@ -4835,7 +4846,7 @@ export default function Legion3DPage() {
 
       {/* 大网络提示：节点多时给一条可关掉的建议，不挡图 */}
       {!hintDismissed && layout.nodes.length > 120 && (
-        <div className={`pointer-events-auto absolute bottom-16 left-1/2 max-w-[94vw] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-[var(--bg-secondary)]/92 px-3 py-0 text-[11px] sm:py-1 text-[var(--fg-muted)] backdrop-blur sm:bottom-24 ${selectedNode || cleanView ? 'hidden' : 'hidden sm:flex'}`} data-testid="legion-3d-scale-hint">
+        <div className={`pointer-events-auto absolute bottom-16 left-1/2 max-w-[94vw] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-[var(--bg-secondary)]/92 px-3 py-0 text-[11px] sm:py-1 text-[var(--fg-muted)] backdrop-blur sm:bottom-24 ${selectedNode || cleanView ? 'hidden' : 'hidden sm:flex'} [@media(max-height:420px)]:hidden`} data-testid="legion-3d-scale-hint">
           <span>规模较大 · {layout.nodes.length} 节点 · 试试搜索或部门聚焦</span>
           <button
             type="button"
