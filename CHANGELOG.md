@@ -6,6 +6,32 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.605 — 2026-11-17
+
+### 军团 3D 新增示例数据模式 `?demo=1`（给官网首页 / README 头图）
+
+```
+用途：admin 想把 3D 军团作为官网 hero。演示不能登录、不能碰 Hub、不能露真实节点名。
+实现：?demo=1 时三个 SWR key 全部置 null（一个 /api/hub 请求都不发），
+      改用本地夹具 app/legion/3d/demo-data.ts：
+        6 部门（研发/设计/运营/市场/客服/财务）· 24 成员 · 60 Agent
+        Agent 别名 P-01…P-60（成员 m-01…m-24）
+        状态分布 4/6 working · 1/6 idle · 少量 error/blocked（画面有层次）
+夹具硬规矩写进文件头：只允许虚构名，不得从生产数据抄改
+开关在 mount 后读 location.search（沿用 .597 的 #418 教训）
+```
+
+```
+实测（本地构建，1440×1000，?demo=1&present=1）：
+  画布节点 91（6 部门 + 24 成员 + 60 Agent + 1 核心）
+  核心显示「60 Agent / 6 部门 · 24 成员」——与规格一致
+  标签全部为 P-xx / m-xx；部门名为通用职能词
+  外壳仍会发 health/SSE（B 模式需要登录）；A 单文件构建为零网络请求
+已知美化项（A 版处理）：核心与顶部部门略拥挤 ⇒ A 会在构建内调整环半径与核心缩放
+```
+
+---
+
 ## 0.6.4-preview.604 — 2026-11-17
 
 ### 内容与 .603 相同（Hub 读不到时公共提示不再让用户"去选择网络"），外加颜色改用 token
