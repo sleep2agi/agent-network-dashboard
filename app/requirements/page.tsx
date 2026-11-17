@@ -1120,6 +1120,10 @@ function RequirementsContent({ networkId }: { networkId: string }) {
         <div role="group" aria-label="状态筛选，数量为当前已加载结果" className="mb-4 flex flex-wrap items-center gap-1.5">
           {COLUMNS.map(col => {
             const count = col.key ? counts[col.key] || 0 : rows.length;
+            // `.610`：加载期间 rows 为空，`|| 0` 会把"还不知道"显示成 0
+            // （与 `.595`/`.602`/`.604`/`.608` 同族）。首屏未就绪时显示 '—'，
+            // 只有"确实读到了空列表"（loading 结束）才显示 0。
+            const countText = loading && rows.length === 0 ? '—' : String(count);
             const active = status === col.key;
             return (
               <button
@@ -1134,7 +1138,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 }`}
               >
                 {col.label}
-                <span className="ml-1.5 text-[11px] tabular-nums">{count}</span>
+                <span className="ml-1.5 text-[11px] tabular-nums">{countText}</span>
               </button>
             );
           })}
@@ -1493,7 +1497,7 @@ function RequirementsContent({ networkId }: { networkId: string }) {
                 onClick={() => setShowAbandoned(value => !value)}
                 className="rounded-lg px-2.5 py-1 text-[11px] text-[var(--fg-muted)] transition-colors hover:bg-[var(--hover-tint)] hover:text-gray-200"
               >
-                {showAbandoned ? '收起已放弃' : `已放弃 ${counts.abandoned || 0}`}
+                {showAbandoned ? '收起已放弃' : `已放弃 ${loading && rows.length === 0 ? '—' : counts.abandoned || 0}`}
               </button>
             )}
           </div>
