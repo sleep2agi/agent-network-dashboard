@@ -245,7 +245,31 @@ deploy/legion-assemble-chip.mjs
 判据太宽会把"没有能力"读成"已支持"，与放宽阈值同类。
 ```
 
-## 2026-11-18 `.611` / `.612`（节点详情页中英一致性）
+## 2026-11-18 `.613`（`<html lang>` 按语言设置 · 可访问性）
+
+```
+线上 HTML 一直是 <html lang="en">，而界面以中文为主：
+  ① 读屏器会用英文语音读中文内容
+  ② 浏览器"是否翻译此页"提示、CJK 字体回退判断都会按英文处理
+
+改动：新增 app/components/LangAttribute.tsx（客户端组件），挂载后按 navigator.language
+把 document.documentElement.lang 设为 zh-CN / en。
+SSR 仍输出 en —— 服务端没有 navigator，按语言渲染会触发 #418 丢树（lib/ui-lang.ts 的 #182）；
+属性变更不参与 hydration 比对，因此不引入白屏风险。
+```
+
+| 项 | 读数 |
+|---|---|
+| 线上 | `0.6.4-preview.613` / `a2b3cd9a` |
+| 回滚锚点 | `preview.612-3683295` |
+| 验收 | 20/20 |
+| 主 CI | 4/4 |
+| 发布自检 | POST_EXIT=0 |
+| 体检 | **20/20，1947s，零 DEGRADED** |
+| lang 验证（读属性实际值） | zh → `zh-CN` · en → `en` · 两侧 #418 = 0 · pageerror = 0 |
+| i18n 门 | 连续第四次通过（`.609` `.610` `.612` `.613`） |
+
+
 
 ```
 问题：节点「信息」卡片标题是中文「节点信息」，18 个字段名却全是英文
