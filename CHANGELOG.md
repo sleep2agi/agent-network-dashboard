@@ -6,6 +6,21 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.611 — 2026-11-18
+
+### 节点「信息」卡片：字段名不再中英混杂
+
+```
+现象：卡片标题是中文「节点信息」，下面 18 个字段名全是英文：
+  Node ID / Session ID / Resume ID / Alias / Agent / Model / Version / Server /
+  Hostname / IP / Project / Config / Channels / Tmux / SSE / Progress / Score /
+  Last Seen / Registered / Updated
+
+改动（app/node/page.tsx）：
+  · 用 useT() 包裹为 t('中文', 'English')：中文环境显示中文，英文环境保持原样
+  · 选 useT() 而非模块级 t()：这张卡片进 SSR HTML，直接读 navigator 会触发 #418
+```
+
 ## 0.6.4-preview.610 — 2026-11-18
 
 ### 需求列表：加载期间不再把「还不知道」显示成 0
