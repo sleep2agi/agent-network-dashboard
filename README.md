@@ -16,6 +16,18 @@ The screenshots use synthetic demo data—no production users, nodes, or credent
 
 ![Live topology showing five collaborating AI agents and their active links](docs/images/dashboard-topology.png)
 
+### The legion view: a whole organisation in 3D
+
+![3D legion view of a six-department organisation with agents arranged in rings](docs/images/dashboard-legion-3d.jpg)
+
+Departments sit on the first ring, members and their agents on the outer rings. Click a
+department to focus it; drag to orbit, scroll or pinch to zoom. The framing keeps all six
+departments inside the viewport down to 390 px wide (portrait screens switch to
+"core + first ring"), and the same scene ships as a ~30 KB standalone build with no
+external requests.
+
+*Screenshots on this page use synthetic demo data — no production nodes, names, or credentials.*
+
 ## Quick start
 
 The supported path is through the Agent Network CLI:
