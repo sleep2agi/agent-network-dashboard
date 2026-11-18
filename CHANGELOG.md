@@ -6,6 +6,23 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.615 — 2026-11-18
+
+### 消除 SSR 首帧的 0：用「数据是否到达」而不是「是否在加载」
+
+```
+`.614` 把 /admin 与 /messages 的加载态改成 '—'，但线上采样序列是 0 → — → 30：
+  · SSR 首帧 isLoading=false 且 data 未到 ⇒ 服务端渲染出 0
+  · 客户端挂载后 isLoading=true ⇒ 变 —
+  · 数据到达 ⇒ 变真实数字
+
+改法：
+  hooks：useSessions / useMessages 增加 loaded = (data !== undefined)
+  /admin：notReady = !sessionsLoaded
+  /messages：!messagesLoaded
+⇒ 首帧直接渲染 '—'；有 SSR 注入首帧数据的页面（data 已存在）不受影响。
+```
+
 ## 0.6.4-preview.614 — 2026-11-18
 
 ### 加载期不再显示 0：`/admin` 在线数与 `/messages` 消息数
