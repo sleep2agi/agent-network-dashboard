@@ -6,6 +6,21 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.613 — 2026-11-18
+
+### 可访问性：`<html lang>` 不再恒为 en
+
+```
+线上 HTML 一直是 <html lang="en">，而界面以中文为主：
+  ① 读屏器会用英文语音读中文内容
+  ② 浏览器"是否翻译此页"提示、CJK 字体回退判断都会按英文处理
+
+改动：新增 app/components/LangAttribute.tsx，挂载后按 navigator.language 把
+document.documentElement.lang 设为 zh-CN / en。
+SSR 仍输出 en —— 服务端没有 navigator，按语言渲染会触发 #418 丢树；
+属性变更不参与 hydration 比对，所以这条修法不引入白屏风险。
+```
+
 ## 0.6.4-preview.612 — 2026-11-18
 
 ### 节点详情：tab 与信息卡标题双语化（英文环境不再出现中文）
