@@ -65,7 +65,9 @@ export function useSessions(options?: {
       ...(fallback ? { fallbackData: fallback, revalidateOnMount: false } : {}),
     },
   );
-  return { sessions: data?.sessions || [], hint: data?._hint, error, isLoading, mutate };
+  // `.615`：loaded = SWR 是否已有数据。SSR 首帧 data 为 undefined 而 isLoading 为 false，
+  // 只判 isLoading 会让服务端渲染出 0（在线数），客户端挂载后才变 —。
+  return { sessions: data?.sessions || [], hint: data?._hint, error, isLoading, loaded: data !== undefined, mutate };
 }
 
 // RFC-027 PR2 — alias → lifecycle_state map sourced from /api/nodes
@@ -208,5 +210,6 @@ export function useMessages(limit = 100) {
     fetcher,
     { ...SWR_OPTIONS, keepPreviousData: true },
   );
-  return { messages: data?.messages || [], error, isLoading, mutate };
+  // `.615`：同上，loaded 用于区分「还没到」与「确实是空」
+  return { messages: data?.messages || [], error, isLoading, loaded: data !== undefined, mutate };
 }
