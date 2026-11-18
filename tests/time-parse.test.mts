@@ -15,7 +15,8 @@ import test from 'node:test';
 import { parseHubTime } from '../app/lib/time.ts';
 import { shortModel, shortServer } from '../app/lib/node-format.ts';
 
-const expectUtc = (y, m, d, h, mi, s) => Date.UTC(y, m - 1, d, h, mi, s);
+const expectUtc = (y: number, m: number, d: number, h: number, mi: number, s: number): number =>
+  Date.UTC(y, m - 1, d, h, mi, s);
 
 test('parseHubTime: 带 T 但无时区 → 按 UTC（今天的 8 小时 bug）', () => {
   const iso = '2026-11-16T19:18:08';
