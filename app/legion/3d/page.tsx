@@ -4732,13 +4732,17 @@ export default function Legion3DPage() {
           ] as const).map(([key, label, color]) => {
             const active = statusOnly === key;
             return (
+              /* 触控命中区：外观只有 21px 高（底部图例要紧凑），但手机拇指点不准。
+                 用与 HealthBanner 相同的做法 —— 透明 ::before 撑开 ±4px/±3px，
+                 命中高度 21 → 29px（越过 WCAG 2.2 SC 2.5.8 的 24px），像素外观不变。
+                 水平只扩 3px：相邻药丸间距 12px，不会互相吞掉点击。 */
               <button
                 key={key}
                 type="button"
                 onClick={() => setStatusOnly(active ? null : key)}
                 aria-pressed={active}
                 data-testid={`legion-3d-filter-${key}`}
-                className={`pointer-events-auto inline-flex items-center gap-1.5 rounded px-1 py-0.5 transition-colors ${active ? 'bg-[var(--accent)]/15 text-[var(--fg)]' : 'hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+                className={`pointer-events-auto inline-flex relative items-center gap-1.5 rounded px-1 py-0.5 transition-colors before:absolute before:inset-y-[-4px] before:inset-x-[-3px] before:content-[''] ${active ? 'bg-[var(--accent)]/15 text-[var(--fg)]' : 'hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
               >
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                 {label}
