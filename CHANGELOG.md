@@ -6,6 +6,27 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.618 — 2026-11-19
+
+### 军团 3D：图例筛选的结果现在会被读屏播报
+
+```
+此前：按下图例「运行中」→ 只有 canvas 变，读屏用户只听到 aria-pressed 变化，
+      不知道筛完还剩几个；页头虽有「仅显示 运行中」，但内容变化不触发播报。
+现在：sr-only live region（role=status / aria-live=polite）
+      「已筛选：仅显示运行中，N 个 Agent」/「已取消筛选，显示全部 Agent」
+      内容只在筛选状态变化时改变 ⇒ 数据刷新不会反复播报；计数未知用「—」不报 0。
+视觉：零变化（sr-only），桌面/手机/平板/2K 均不受影响。
+```
+
+### 首页「查看全部 →」命中高 16 → 24px（外观不变）
+
+```
+手机拇指点不准：链接外观 16px 高，低于 WCAG 2.2 SC 2.5.8 的 24×24 AA 门槛。
+做法：透明 ::before 上下左右各扩 4px ⇒ 命中 24px；像素外观不变。
+对照实验（同一份构建 CSS、同一段标记）：新类 28px vs 对照 22px，外观 rect 完全相同。
+```
+
 ## 0.6.4-preview.617 — 2026-11-19
 
 ### 3D 军团页：底部图例筛选片的手指命中区从 21px 扩到 28px（外观不变）
