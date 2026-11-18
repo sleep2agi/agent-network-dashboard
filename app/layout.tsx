@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { AppShell } from "./components/AppShell";
 import { NetworkProvider } from "./lib/network-context";
+import { LangAttribute } from './components/LangAttribute';
 import { ThemeProvider } from "./components/ThemeSwitcher";
 import { PwaInstaller } from "./components/PwaInstaller";
 
@@ -128,6 +129,8 @@ export default function RootLayout({
       <body className="min-h-full" style={{ background: 'var(--bg)', color: 'var(--fg)' }}>
         <ThemeProvider>
           <NetworkProvider>
+            {/* `.613`：挂载后把 <html lang> 按浏览器语言改成 zh-CN / en（SSR 仍输出 en，避免 #418） */}
+            <LangAttribute />
             <PwaInstaller />
             <AppShell>{children}</AppShell>
           </NetworkProvider>
