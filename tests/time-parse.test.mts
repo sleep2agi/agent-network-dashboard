@@ -12,7 +12,7 @@
 // 纯函数，无需 React/Next，按仓里 .test.mts 惯例走 bun。
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { parseHubTime } from '../app/lib/time.ts';
+import { parseHubTime, formatHubTime } from '../app/lib/time.ts';
 import { shortModel, shortServer } from '../app/lib/node-format.ts';
 
 const expectUtc = (y: number, m: number, d: number, h: number, mi: number, s: number): number =>
@@ -58,4 +58,20 @@ test('shortServer: 长主机名截断到 8 字符 + 省略号，短名原样', (
   assert.equal(shortServer('iZrj93pr2rcf5r2y9uo1oyZ'), 'iZrj93pr…');
   assert.equal(shortServer('short'), 'short');
   assert.equal(shortServer(null), '—');
+});
+
+test('formatHubTime: UTC 输入 → 本地时间字符串（与运行时时区无关的写法）', () => {
+  const ms = Date.UTC(2026, 10, 18, 12, 30, 26);   // Hub 的 UTC 串
+  const d = new Date(ms);
+  const p2 = (n: number) => String(n).padStart(2, '0');
+  const expected = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+  assert.equal(formatHubTime('2026-11-18T12:30:26'), expected);
+  assert.equal(formatHubTime('2026-11-18 12:30:26'), expected);   // 空格分隔同样按 UTC
+});
+
+test('formatHubTime: 空/不可解析 → 空串（不能变成 1970-01-01）', () => {
+  assert.equal(formatHubTime(''), '');
+  assert.equal(formatHubTime(null), '');
+  assert.equal(formatHubTime(undefined), '');
+  assert.equal(formatHubTime('nope'), '');
 });
