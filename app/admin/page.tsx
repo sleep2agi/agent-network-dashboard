@@ -8,7 +8,9 @@ import { AliasAvatar } from '../components/AliasAvatar';
 import { SESSION_STATUS_LABEL, SESSION_STATUS_CHIP_CLASS } from '../lib/status';
 
 export default function AdminPage() {
-  const { sessions } = useSessions({ lite: true }) // 只读 alias/status/network_id/version：lite 投影已包含（app/lib/lite-status.ts KEEP）
+  // `.614`：加载期间 sessions 为空，在线/离线两格会显示 0 —— 那是"还不知道"被写成了 0。
+  // 与 `.610`（需求页）、`.600`（任务列表）同族；这里改为未就绪时显示 '—'。
+  const { sessions, isLoading: sessionsLoading } = useSessions({ lite: true }) // 只读 alias/status/network_id/version：lite 投影已包含（app/lib/lite-status.ts KEEP）
   // 全量 /api/hub/status 实测 735 KB（413 会话），lite 266 KB ⇒ 本页每访省约 470 KB;
   const { health } = useHealth();
   const { stats } = useStats();
@@ -77,6 +79,10 @@ export default function AdminPage() {
 
   const onlineNodes = sessions.filter(s => sseFor(s));
   const offlineNodes = sessions.filter(s => !sseFor(s));
+  // `.614`：加载期间 sessions 为空，"在线 0 / 离线 0"就是"还不知道"被写成 0
+  // （与 `.600` 任务列表、`.610` 需求页同族）。未就绪时显示 '—'。
+  const notReady = sessionsLoading && sessions.length === 0;
+  const onlineText = notReady ? '—' : String(onlineNodes.length);
 
   return (
     <div className="min-h-full bg-[#0b0b0d] text-[var(--fg)] p-4 sm:p-6">
@@ -126,11 +132,11 @@ export default function AdminPage() {
           <h2 className="text-sm font-semibold text-[var(--fg)] mb-3 sm:mb-4">服务概览</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-[var(--success)] tabular-nums">{onlineNodes.length}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-[var(--success)] tabular-nums">{onlineText}</div>
               <div className="text-xs text-[var(--fg-muted)]">在线</div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-[var(--fg-muted)] tabular-nums">{offlineNodes.length}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-[var(--fg-muted)] tabular-nums">{notReady ? '—' : offlineNodes.length}</div>
               <div className="text-xs text-[var(--fg-muted)]">离线</div>
             </div>
             <div>
