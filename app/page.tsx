@@ -197,7 +197,10 @@ export default function Dashboard() {
             <span className="text-gray-600"> &middot; </span>
             <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} 失败</span>
           </div>
-          <Link href="/tasks" prefetch={false} className="text-[var(--accent-text)] hover:opacity-80">查看全部 →</Link>
+          {/* 命中区：链接外观只有 16px 高（与左侧计数同行，保持紧凑），
+              手机拇指点不准。透明 ::before 上下各扩 4px ⇒ 命中 24px（WCAG 2.2 SC 2.5.8 AA），
+              像素外观不变。做法与 HealthBanner / 军团图例一致。 */}
+          <Link href="/tasks" prefetch={false} className="relative text-[var(--accent-text)] hover:opacity-80 before:absolute before:inset-y-[-4px] before:inset-x-[-4px] before:content-['']">查看全部 →</Link>
         </section>
       )}
 
