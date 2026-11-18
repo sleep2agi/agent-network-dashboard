@@ -6,6 +6,24 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.614 — 2026-11-18
+
+### 加载期不再显示 0：`/admin` 在线数与 `/messages` 消息数
+
+```
+来源不是"又看到了"，而是 13 页普查：
+  每 500ms 采样 innerText 共 12 秒，找「同一标签早期 0 → 后期 N」的模式
+  命中两处：
+    /admin    在线 0 → 364（offlineNodes.length 同理）
+    /messages 消息 0 → 30（标题旁计数胶囊）
+  其余 11 页无命中：/ /nodes /tasks /requirements /settings /servers
+                    /scheduled-tasks /skillhub /versions /changelog /org
+
+改法（两文件，显示层）：
+  · isLoading 且列表为空 ⇒ 显示 '—'；加载完成后显示真实数字（包括真实的 0）
+  · /messages 的胶囊在未就绪时给 title「正在读取消息」
+```
+
 ## 0.6.4-preview.613 — 2026-11-18
 
 ### 可访问性：`<html lang>` 不再恒为 en
