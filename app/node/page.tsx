@@ -8,6 +8,7 @@ import { TaskChatPanel } from '../components/TaskChatPanel';
 import { timeAgo } from '../components/utils';
 import { NodeDetailHeader } from '../components/NodeDetailHeader';
 import { useChatUnread, badgeLabel } from '../lib/chat-unread';
+import { useT } from '../lib/ui-lang';
 
 interface SessionDetail {
   resume_id: string;
@@ -319,6 +320,10 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
 }) {
   const [tab, setTab] = useState<'chat' | 'events' | 'info'>('chat');
   const { hasUnread, unreadCount } = useChatUnread();
+  // `.611`：这张卡片的标题是中文「节点信息」，20 个字段名却全是英文
+  // （Node ID / Model / Last Seen…），同一张卡里中英混杂。
+  // 用 useT() 而不是模块级 t()：这张卡片进 SSR HTML，直接读 navigator 会触发 #418。
+  const t = useT();
   // 面板高度按「视口底部还剩多少」实测，而不是写死 calc(100vh - 140px)：
   // 页头在 390 宽会换行变高，写死的减法算不准，输入区的语音按钮会被切在
   // 折线下方 11px。外壳（AppShell）根是 min-h、HealthBanner 在流内，文档
@@ -407,26 +412,26 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
               <h2 className="text-sm font-semibold text-gray-300 mb-3">节点信息</h2>
             <div className="space-y-2 text-xs">
               {[
-                { label: 'Node ID', value: session?.node_id, alwaysShow: true },
-                { label: 'Session ID', value: session?.session_id, alwaysShow: true },
-                { label: 'Resume ID', value: session?.resume_id, alwaysShow: true },
-                { label: 'Alias', value: session?.alias, alwaysShow: true },
-                { label: 'Agent', value: session?.agent, alwaysShow: true },
-                { label: 'Model', value: session?.model, alwaysShow: true },
-                { label: 'Version', value: session?.version },
-                { label: 'Server', value: session?.server, alwaysShow: true },
-                { label: 'Hostname', value: session?.hostname, alwaysShow: true },
+                { label: t('节点 ID', 'Node ID'), value: session?.node_id, alwaysShow: true },
+                { label: t('会话 ID', 'Session ID'), value: session?.session_id, alwaysShow: true },
+                { label: t('续跑 ID', 'Resume ID'), value: session?.resume_id, alwaysShow: true },
+                { label: t('别名', 'Alias'), value: session?.alias, alwaysShow: true },
+                { label: t('Agent', 'Agent'), value: session?.agent, alwaysShow: true },
+                { label: t('模型', 'Model'), value: session?.model, alwaysShow: true },
+                { label: t('版本', 'Version'), value: session?.version },
+                { label: t('服务器', 'Server'), value: session?.server, alwaysShow: true },
+                { label: t('主机名', 'Hostname'), value: session?.hostname, alwaysShow: true },
                 { label: 'IP', value: session?.ip, alwaysShow: true },
-                { label: 'Project', value: session?.project_dir },
-                { label: 'Config', value: session?.config_path, alwaysShow: true },
-                { label: 'Channels', value: session?.channels?.length ? (Array.isArray(session.channels) ? session.channels.join(', ') : session.channels) : null, alwaysShow: true },
-                { label: 'Tmux', value: session?.tmux_name },
+                { label: t('项目目录', 'Project'), value: session?.project_dir },
+                { label: t('配置路径', 'Config'), value: session?.config_path, alwaysShow: true },
+                { label: t('频道', 'Channels'), value: session?.channels?.length ? (Array.isArray(session.channels) ? session.channels.join(', ') : session.channels) : null, alwaysShow: true },
+                { label: t('Tmux', 'Tmux'), value: session?.tmux_name },
                 { label: 'SSE', value: sse > 0 ? `Connected (${sse})` : 'Disconnected', alwaysShow: true },
-                { label: 'Progress', value: session?.progress ? `${session.progress}%` : null },
-                { label: 'Score', value: session?.score },
-                { label: 'Last Seen', value: session?.last_seen_at, alwaysShow: true },
-                { label: 'Registered', value: session?.registered_at, alwaysShow: true },
-                { label: 'Updated', value: session?.updated_at, alwaysShow: true },
+                { label: t('进度', 'Progress'), value: session?.progress ? `${session.progress}%` : null },
+                { label: t('评分', 'Score'), value: session?.score },
+                { label: t('最后心跳', 'Last Seen'), value: session?.last_seen_at, alwaysShow: true },
+                { label: t('注册时间', 'Registered'), value: session?.registered_at, alwaysShow: true },
+                { label: t('更新时间', 'Updated'), value: session?.updated_at, alwaysShow: true },
               ].map(({ label, value, alwaysShow }) => (value || alwaysShow) ? (
                 <div key={label} className="flex justify-between gap-3">
                   <span className="text-gray-500 shrink-0">{label}</span>
