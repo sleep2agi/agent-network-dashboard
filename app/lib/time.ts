@@ -92,3 +92,18 @@ export function formatWeChatTime(value: string | null | undefined): string {
   }).format(d);
   return `${md} ${hm}`;
 }
+
+/** 把 Hub 时间戳格式化成"本地时间"字符串（`.616`）。
+ *
+ *  为什么需要：信息卡此前直接把 `2026-11-18 12:30:26`（UTC）渲染出来，
+ *  本机 UTC+8 下用户看到的时间比真实时间早 8 小时，会把"34 秒前的心跳"读成"8 小时前"。
+ *  解析用 parseHubTime（无时区按 UTC），格式化用本地时区 —— 两者缺一不可。
+ *  返回空串表示"没有值"，调用方据此显示占位符，不要显示 1970。
+ */
+export function formatHubTime(dateStr: string | null | undefined): string {
+  const ms = parseHubTime(dateStr);
+  if (ms === null) return '';
+  const d = new Date(ms);
+  const p2 = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+}

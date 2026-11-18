@@ -9,6 +9,7 @@ import { timeAgo } from '../components/utils';
 import { NodeDetailHeader } from '../components/NodeDetailHeader';
 import { useChatUnread, badgeLabel } from '../lib/chat-unread';
 import { useT } from '../lib/ui-lang';
+import { formatHubTime } from '../lib/time';
 
 interface SessionDetail {
   resume_id: string;
@@ -429,9 +430,9 @@ function NodeFullPanel({ alias, session, sse, sendMsg, setSendMsg, sending, send
                 { label: 'SSE', value: sse > 0 ? `Connected (${sse})` : 'Disconnected', alwaysShow: true },
                 { label: t('进度', 'Progress'), value: session?.progress ? `${session.progress}%` : null },
                 { label: t('评分', 'Score'), value: session?.score },
-                { label: t('最后心跳', 'Last Seen'), value: session?.last_seen_at, alwaysShow: true },
-                { label: t('注册时间', 'Registered'), value: session?.registered_at, alwaysShow: true },
-                { label: t('更新时间', 'Updated'), value: session?.updated_at, alwaysShow: true },
+                { label: t('最后心跳', 'Last Seen'), value: formatHubTime(session?.last_seen_at), alwaysShow: true },
+                { label: t('注册时间', 'Registered'), value: formatHubTime(session?.registered_at), alwaysShow: true },
+                { label: t('更新时间', 'Updated'), value: formatHubTime(session?.updated_at), alwaysShow: true },
               ].map(({ label, value, alwaysShow }) => (value || alwaysShow) ? (
                 <div key={label} className="flex justify-between gap-3">
                   <span className="text-gray-500 shrink-0">{label}</span>
