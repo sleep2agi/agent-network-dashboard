@@ -4367,6 +4367,15 @@ export default function Legion3DPage() {
             : `${layout.stats.groups} 个部门 · ${layout.stats.people} 名成员 · ${layout.stats.agents} 个 Agent`
               + (statusOnly ? ` · 仅显示 ${({ working: '运行中', idle: '空闲', blocked: '阻塞', error: '错误', offline: '未上报' } as const)[statusOnly]}` : '')}
         </p>
+        {/* 读屏播报：图例筛选只改 canvas —— 视力用户立刻看到，读屏用户此前只听到
+            aria-pressed 变化，不知道"筛完剩几个"。这里把状态接到 live region，
+            内容只在 statusOnly 变化时改变，所以不会因数据刷新反复播报。
+            计数未知时用「—」，不报 0（unknown ≠ 0）。 */}
+        <p role="status" aria-live="polite" className="sr-only" data-testid="legion-3d-filter-status">
+          {statusOnly
+            ? `已筛选：仅显示${({ working: '运行中', idle: '空闲', blocked: '阻塞', error: '错误', offline: '未上报' } as const)[statusOnly]}，${agentsKnown ? statusCounts[statusOnly] : '—'} 个 Agent`
+            : '已取消筛选，显示全部 Agent'}
+        </p>
         {/* 第一次看 3D 的人不知道三环各是什么；2D 页有这行说明，这里补上（演示时更不用口头解释）。
             `.600`：短画布（手机横屏，高度 < 420）隐藏图例行与搜索框，把画布还给图形。
             实测 844×390：页头 178px / 画布 279px ⇒ 取景可用区仅约 61px ⇒ fit 返回 null、整圈出界。 */}
