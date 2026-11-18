@@ -234,9 +234,16 @@ export default function MessagesPage() {
               hiding. Same pattern as r88 /tasks chip. */}
           <span
             className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums shrink-0"
-            title={filtered.length < messages.length ? `Showing ${filtered.length} of ${messages.length} messages` : undefined}
+            title={isLoading && messages.length === 0
+              ? '正在读取消息'
+              : filtered.length < messages.length ? `Showing ${filtered.length} of ${messages.length} messages` : undefined}
           >
-            {filtered.length < messages.length ? `${filtered.length} / ${messages.length}` : messages.length}
+            {/* `.614`：加载期 messages 为空，直接渲染 messages.length 会显示 "0"，
+                读起来像"一条消息都没有"（与 /admin 在线数、需求页计数同族）。
+                未就绪时显示 '—'。 */}
+            {isLoading && messages.length === 0
+              ? '—'
+              : filtered.length < messages.length ? `${filtered.length} / ${messages.length}` : messages.length}
           </span>
           {filtered.length > 0 && (
             <button
