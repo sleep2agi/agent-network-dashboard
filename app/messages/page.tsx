@@ -141,7 +141,7 @@ const HISTORY_PAGE = 30;
 
 export default function MessagesPage() {
   const [histLimit, setHistLimit] = useState(HISTORY_PAGE);
-  const { messages, isLoading, error, mutate } = useMessages(histLimit);
+  const { messages, isLoading, loaded: messagesLoaded, error, mutate } = useMessages(histLimit);
   // The hub returned a full page → assume more history exists beyond it.
   const hasOlder = messages.length >= histLimit;
   const loadingOlder = isLoading && messages.length > 0;
@@ -234,14 +234,13 @@ export default function MessagesPage() {
               hiding. Same pattern as r88 /tasks chip. */}
           <span
             className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full border border-blue-800/30 tabular-nums shrink-0"
-            title={isLoading && messages.length === 0
+            title={!messagesLoaded
               ? '正在读取消息'
               : filtered.length < messages.length ? `Showing ${filtered.length} of ${messages.length} messages` : undefined}
           >
-            {/* `.614`：加载期 messages 为空，直接渲染 messages.length 会显示 "0"，
-                读起来像"一条消息都没有"（与 /admin 在线数、需求页计数同族）。
-                未就绪时显示 '—'。 */}
-            {isLoading && messages.length === 0
+            {/* `.615`：用 loaded 而不是 isLoading —— SSR 首帧 isLoading=false、data 为空，
+                只判 isLoading 会先渲染 "0"（探针实测序列 0 → — → 30）。 */}
+            {!messagesLoaded
               ? '—'
               : filtered.length < messages.length ? `${filtered.length} / ${messages.length}` : messages.length}
           </span>

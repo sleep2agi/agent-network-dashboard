@@ -10,7 +10,7 @@ import { SESSION_STATUS_LABEL, SESSION_STATUS_CHIP_CLASS } from '../lib/status';
 export default function AdminPage() {
   // `.614`：加载期间 sessions 为空，在线/离线两格会显示 0 —— 那是"还不知道"被写成了 0。
   // 与 `.610`（需求页）、`.600`（任务列表）同族；这里改为未就绪时显示 '—'。
-  const { sessions, isLoading: sessionsLoading } = useSessions({ lite: true }) // 只读 alias/status/network_id/version：lite 投影已包含（app/lib/lite-status.ts KEEP）
+  const { sessions, loaded: sessionsLoaded } = useSessions({ lite: true }) // 只读 alias/status/network_id/version：lite 投影已包含（app/lib/lite-status.ts KEEP）
   // 全量 /api/hub/status 实测 735 KB（413 会话），lite 266 KB ⇒ 本页每访省约 470 KB;
   const { health } = useHealth();
   const { stats } = useStats();
@@ -79,9 +79,9 @@ export default function AdminPage() {
 
   const onlineNodes = sessions.filter(s => sseFor(s));
   const offlineNodes = sessions.filter(s => !sseFor(s));
-  // `.614`：加载期间 sessions 为空，"在线 0 / 离线 0"就是"还不知道"被写成 0
-  // （与 `.600` 任务列表、`.610` 需求页同族）。未就绪时显示 '—'。
-  const notReady = sessionsLoading && sessions.length === 0;
+  // `.615`：判「数据是否已到达」而不是 isLoading —— SSR 首帧 isLoading=false 但 data 为空，
+  // 只判 isLoading 会让服务端先渲染「在线 0」（探针实测序列 0 → — → 61）。
+  const notReady = !sessionsLoaded;
   const onlineText = notReady ? '—' : String(onlineNodes.length);
 
   return (
