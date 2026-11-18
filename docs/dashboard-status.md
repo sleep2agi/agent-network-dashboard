@@ -245,7 +245,37 @@ deploy/legion-assemble-chip.mjs
 判据太宽会把"没有能力"读成"已支持"，与放宽阈值同类。
 ```
 
-## 2026-11-18 `.613`（`<html lang>` 按语言设置 · 可访问性）
+## 2026-11-18 `.614` + `.615`（加载期不再显示 0：两版一件）
+
+```
+来源：13 页普查（每 500ms 采样 innerText 共 12 秒，找「同一标签早期 0 → 后期 N」）
+命中两处：
+  /admin     在线 0 → 364 · 离线 0 → N   ← onlineNodes.length / offlineNodes.length
+  /messages  消息 0 → 30                ← 标题旁计数胶囊
+其余 11 页无命中：/ /nodes /tasks /requirements /settings /servers
+                 /scheduled-tasks /skillhub /versions /changelog /org
+
+`.614`：用 isLoading && 列表为空 判定未就绪 → 显示 '—'
+        线上复验序列却是 0 → — → 30 ⇒ SSR 首帧仍是 0（isLoading 首帧为 false、data 未到）
+`.615`：hooks 暴露 loaded = (data !== undefined)，页面用 !loaded 判定
+        复验序列变为 — → 61 / — → 30 ⇒ 全程无 0
+```
+
+| 项 | `.614` | `.615` |
+|---|---|---|
+| 线上 | `0.6.4-preview.614` / `a6b7719` | `0.6.4-preview.615` / `e8820398` |
+| 验收 · CI · 自检 | 20/20 · 4/4 · POST_EXIT=0 | 20/20 · 4/4 · POST_EXIT=0 |
+| 体检 | —（被 `.615` 接续） | **20/20，1905s，零 DEGRADED** |
+| 序列复验 | `0 → — → 30` ❌ | `— → 61` / `— → 30` ✅ |
+| 回滚锚点 | `preview.613-a2b3cd9` | `preview.614-a6b7719` |
+
+```
+为什么记成"两版一件"：判据是"采样序列里不得出现 0"。
+`.614` 让客户端加载中显示 —，但首帧仍是 0；只有 `.615` 才满足判据。
+⇒ 这也是教训 CS 的来源：优先用事实信号（data 是否到达），不要用过程信号（isLoading）。
+```
+
+
 
 ```
 线上 HTML 一直是 <html lang="en">，而界面以中文为主：
