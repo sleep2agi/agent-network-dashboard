@@ -6,6 +6,32 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.634 — 2026-11-20
+
+### 修：6 处节点弹窗的焦点容纳（`aria-modal` 继续兑现到节点流程）
+
+`.633` 之后，节点/会话流程里的弹窗仍无焦点容纳。本次把 `useFocusTrap` 接到 6 处：
+
+```
+运行日志 · 项目文件夹 · 技能 · 规则文件 · 密钥名称 · 编辑属性
+（NodeLogsDialog / NodeFilesDialog / NodeSkillsDialog / NodeRulesDialog /
+  NodeSecretsDialog / NodeAttrsEditor，各 +3 行 import + hook 调用）
+```
+
+实测（本地构建，路径 `/nodes → 节点 → 会话面板 → 溢出菜单`）：
+
+```
+运行日志   dialog ✅ · Tab×30 逃逸 0
+项目文件夹 dialog ✅ · Tab×30 逃逸 0
+技能       dialog ✅ · Tab×30 逃逸 0
+规则文件   dialog ✅ · Tab×30 逃逸 0
+密钥名称   dialog ✅ · Tab×30 逃逸 0
+编辑属性   入口需该节点存在 attrs 快照（无快照时该菜单项不显示）⇒ 本次未逐项验证，
+           与其余 5 处为同一行改动（import + useFocusTrap(true, dialogRef)）
+```
+
+外观零变化。
+
 ## 0.6.4-preview.633 — 2026-11-20
 
 ### 修：全站帮助浮层（`?`）的焦点容纳
