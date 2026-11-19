@@ -6,6 +6,28 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.629 — 2026-11-19
+
+### 修：全局命令面板（⌘K）也不是焦点陷阱的漏勺
+
+`.628` 修了军团页两个帮助弹窗后，用同一把尺子量了全站其它 `aria-modal` 弹窗：
+`app/components/CommandPalette.tsx` 同样是"声明了模态、没兑现"。它只做了打开时
+聚焦输入框、关闭时归还焦点，**没有拦 Tab**。
+
+实测（`evidence/probes/cmdk-focus-trap.mjs`，线上 `.628`）：
+
+```
+/nodes        Tab ×40 → 5 次逃到遮罩背后    Shift+Tab ×40 → 4 次
+/legion/3d    Tab ×40 → 5 次逃到遮罩背后    Shift+Tab ×40 → 4 次
+打开时焦点正确落在输入框，Esc 关闭后焦点也归还 —— 缺的只有"出不去"
+```
+
+量法说明（自己也踩过）：第一版探针只按 8 次 Tab，结果全是 0 逃逸 —— 不是因为有
+陷阱，而是面板结果列表按钮很多，8 次根本没越过最后一项。改到 40 次才量到真实逃逸。
+
+现在：复用 `.628` 的 `useFocusTrap`，面板打开时 Tab / Shift+Tab 在面板内循环，
+关闭归还焦点。命令面板是全站最高频的键盘入口，这个洞影响每个页面。
+
 ## 0.6.4-preview.628 — 2026-11-19
 
 ### 修：军团页的「键盘快捷键」弹窗不再是焦点陷阱的漏勺

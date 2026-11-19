@@ -5,6 +5,7 @@ import { applyTheme } from './ThemeSwitcher';
 import { useRouter } from 'next/navigation';
 import { clearPrivateChatStorage } from '../lib/chat-outbox';
 import { useNetworkId } from '../lib/network-context';
+import { useFocusTrap } from '../lib/focus-trap';
 
 /** Command palette — ⌘K / Ctrl+K / `/` opens; Esc closes;
  *  ↑↓ navigates results; Enter activates.
@@ -336,6 +337,12 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, networkId]);
 
+  // `.629`：命令面板声明了 `aria-modal="true"`，但此前只把焦点送进输入框、
+  // 关闭时归还，并没有拦住 Tab —— 焦点会跑到遮罩背后的页面元素上（看不见焦点环）。
+  // 复用军团页那套 useFocusTrap：打开即入内、Tab/Shift+Tab 在面板内循环、关闭归还。
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(open, dialogRef);
+
   // Reset state on open + auto-focus input
   const lastFocusRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -475,9 +482,11 @@ export function CommandPalette() {
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="命令面板"
+      tabIndex={-1}
       className="anet-cmdk fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] sm:pt-[15vh] px-4"
       onClick={() => setOpen(false)}
       onKeyDown={onModalKey}
