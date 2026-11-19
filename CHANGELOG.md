@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.626 — 2026-11-19
+
+### 修：R 重置视角在未聚焦画布时无效；帮助里的「/ 搜索」与实际行为不符
+
+```
+R：与 F 同在舞台元素的 onKeyDown 上（case 'r': resetView()），未聚焦收不到。
+   现并入 .625 的 window 级监听（输入框内跳过、舞台内让位），打开页面直接按即可重置。
+/：按 / 打开的是全局命令面板（placeholder「Type a command or search…」），
+   而页面帮助写「/ 搜索」，会让用户以为在搜军团成员。
+   处置：只改帮助文案（三处 → 「⌘K 全局搜索（本页搜索框可直接输入）」），
+   不动全局快捷键 —— 那是全站行为，影响面远大于收益。
+顺带：把该 effect 的依赖补上 resetView（此前靠 useCallback 稳定引用侥幸成立）。
+```
 ## 0.6.4-preview.625 — 2026-11-19
 
 ### 修：帮助里写的「F 全屏演示」，打开页面直接按却没反应
