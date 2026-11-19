@@ -3547,6 +3547,27 @@ export default function Legion3DPage() {
     return () => window.removeEventListener('keydown', onKey, true);
   }, [cleanView, helpOpen]);
 
+  // `.625`：F（全屏演示）此前只挂在舞台元素的 onKeyDown 上 ——
+  // 打开页面直接按 F 没有任何反应（实测：fsEl=null），必须先用鼠标点一下画布。
+  // 帮助里写的是「F 全屏演示」，用户第一次用多半就是直接按。
+  // 这里补一条 window 级监听（捕获阶段），并在"事件已由舞台处理"时跳过，避免双重切换。
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key !== 'f' && e.key !== 'F') return;
+      const t = e.target as HTMLElement | null;
+      // 正在输入时不抢键（搜索框/评论框）
+      const tag = t?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || t?.isContentEditable) return;
+      // 舞台自己会处理（点过画布后焦点在 stage 内），交给它，避免双重切换
+      if (t && wrapRef.current?.contains(t)) return;
+      e.preventDefault();
+      void toggleFullscreen();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [toggleFullscreen]);
+
   useEffect(() => {
     const onFs = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onFs);
