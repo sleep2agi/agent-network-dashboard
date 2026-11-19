@@ -3554,7 +3554,8 @@ export default function Legion3DPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key !== 'f' && e.key !== 'F') return;
+      const k = e.key.toLowerCase();
+      if (k !== 'f' && k !== 'r') return;
       const t = e.target as HTMLElement | null;
       // 正在输入时不抢键（搜索框/评论框）
       const tag = t?.tagName?.toLowerCase();
@@ -3562,11 +3563,12 @@ export default function Legion3DPage() {
       // 舞台自己会处理（点过画布后焦点在 stage 内），交给它，避免双重切换
       if (t && wrapRef.current?.contains(t)) return;
       e.preventDefault();
-      void toggleFullscreen();
+      if (k === 'f') void toggleFullscreen();
+      else resetView();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [toggleFullscreen]);
+  }, [toggleFullscreen, resetView]);
 
   useEffect(() => {
     const onFs = () => setIsFullscreen(!!document.fullscreenElement);
@@ -4149,7 +4151,7 @@ export default function Legion3DPage() {
           }}
         />
       )}
-      <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击 Agent 在页内对话，双击成员或部门进入组织列表；按 / 搜索，R 重置视角。</p>
+      <p id="legion-3d-hint" className="sr-only">可拖动旋转、滚轮或双指缩放；点击节点查看详情，双击 Agent 在页内对话，双击成员或部门进入组织列表；按 ⌘K 打开全局搜索（本页搜索框可直接输入），R 重置视角。</p>
       {perfHudOn && (
         <div
           ref={perfElRef}
@@ -4786,7 +4788,7 @@ export default function Legion3DPage() {
         ) : (
           <>
             {/* 桌面：完整两段提示 */}
-            <p className="max-sm:hidden">拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · / 搜索 · 回车打开选中 · R 重置</p>
+            <p className="max-sm:hidden">拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · ⌘K 全局搜索 · 回车打开选中 · R 重置</p>
             <p className="max-sm:hidden text-[var(--fg-muted)]">
               光流示意组织连接，节点状态以图例为准。
               部门名在静息时可能留白（避免挤在一起），<strong>悬停该部门或选中它会立即显示名字</strong> —— 看不到名字不代表没有这个部门。
@@ -4797,7 +4799,7 @@ export default function Legion3DPage() {
               <summary className="cursor-pointer truncate text-[var(--fg-muted)]">
                 拖动环绕 · 双指缩放（当前 {zoomPct}%）· 双击对话 —— 更多说明
               </summary>
-              <p className="mt-1">滚轮或双指缩放 · / 搜索 · 回车打开选中 · R 重置</p>
+              <p className="mt-1">滚轮或双指缩放 · ⌘K 全局搜索 · 回车打开选中 · R 重置</p>
               <p className="mt-1 text-[var(--fg-muted)]">
                 光流示意组织连接，节点状态以图例为准；部门名在静息时可能留白，点按该部门会立即显示名字。
               </p>
