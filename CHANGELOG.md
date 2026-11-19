@@ -6,6 +6,17 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.621 — 2026-11-19
+
+### 修：`.620` 的「统计读取中…」实际从未出现
+
+```
+.620 把渲染条件写成 (taskStatsReady || Object.keys(taskStats).length > 0)，
+但 keys>0 必然意味着 ready ⇒ 条件等价于 ready ⇒ 占位分支不可达。
+线上实测：占位态 20 秒内一次都没出现，数字态 6096ms 才出现。
+现在：统计条常驻，未读到显示「统计读取中…」/「统计暂不可用」，读到显示数字。
+```
+
 ## 0.6.4-preview.620 — 2026-11-19
 
 ### 首页任务概览改为三态：不再整块消失
