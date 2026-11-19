@@ -6,6 +6,19 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.627 — 2026-11-19
+
+### 3D 军团页：`/` 与 `?` 与 2D 页对齐
+
+```
+实测（.626）：2D 页按 / 聚焦"搜索军团成员"（searchFocused=true）、按 ? 弹本页速查表；
+             3D 页按 / 却打开全局命令面板 —— 同一产品的两个军团页行为不一致。
+现在：3D 页在 window 捕获阶段拦下 / 与 ?（与 app/legion/page.tsx 同一做法）：
+      /  → 聚焦本页搜索框
+      ?  → 开/关本页速查表
+      ⌘K → 仍打开全局命令面板（不受影响）
+      输入框内不拦（那里它们是普通字符）
+```
 ## 0.6.4-preview.626 — 2026-11-19
 
 ### 修：R 重置视角在未聚焦画布时无效；帮助里的「/ 搜索」与实际行为不符
