@@ -6,6 +6,24 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.625 — 2026-11-19
+
+### 修：帮助里写的「F 全屏演示」，打开页面直接按却没反应
+
+```
+实测（.624）：焦点在页面主体时直接按 F → document.fullscreenElement 仍为 null，画面无变化；
+             先用鼠标点一下画布再按 F → 正常进入全屏（fsEl = legion-3d-stage）。
+原因：F 只绑定在舞台元素的 onKeyDown 上，未聚焦就收不到。
+现在：window 级捕获监听兜底，并做三点防误伤：
+      ① 带修饰键 / 事件已被处理 → 不抢
+      ② 焦点在 input / textarea / contentEditable → 不抢（用户正在打字）
+      ③ 焦点在舞台容器内 → 让位给舞台自身处理（避免"进全屏又立刻退出"）
+```
+
+```
+旁证修正：此前把"全屏后横幅仍可见"当成缺陷，属误判 ——
+全屏元素之外的内容不渲染在屏幕上，getBoundingClientRect 仍会返回尺寸。
+```
 ## 0.6.4-preview.624 — 2026-11-19
 
 ### 需求详情：写操作失败也改成中文（与读路径同一原则）
