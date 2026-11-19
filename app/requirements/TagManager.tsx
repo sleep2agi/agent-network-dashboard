@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TAG_COLORS, MAX_MERGE_SOURCES, tagOpMessage, tagTreeMessage, validateTagCreate, validateTagMove, validateTagOp, type TagOp } from '../lib/tag-ops';
 import { tagParentOptions, tagTreeRows, type TagCatalog } from '../lib/tag-catalog';
+import { useFocusTrap } from '../lib/focus-trap';
 
 type Action =
   | { kind: 'create' }
@@ -38,6 +39,8 @@ export function TagManager({ catalog, networkId, treeSupported, onClose, onAppli
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const panelRef = useRef<HTMLDivElement | null>(null);
+  // `.635`：该弹窗声明了 aria-modal，但此前无 Tab 容纳 —— 焦点会跑到遮罩背后。
+  useFocusTrap(true, panelRef);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
   const tags = useMemo(() => tagTreeRows(catalog), [catalog]);

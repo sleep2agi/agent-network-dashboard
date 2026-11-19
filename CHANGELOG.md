@@ -6,6 +6,30 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.635 — 2026-11-20
+
+### 修：需求页两处弹窗的焦点容纳（全站 `aria-modal` 收官）
+
+按"是否有 `useFocusTrap` 或自有 Tab 处理"逐个核对全站 15 个含 `aria-modal` 的文件，
+真正缺口的只有两处（此前"8 处"是粗筛结果）：
+
+```
+app/requirements/CreateRequirement.tsx  新建需求
+app/requirements/TagManager.tsx         管理标签
+```
+
+实测与修复：
+
+```
+新建需求：修复前 Tab×30 逃逸 19 次 → 修复后 0 次
+         根因：组件常驻挂载，传 useFocusTrap(true, ref) 时 effect 在 ref 为 null 时跑过就
+         不再执行 ⇒ 改为传内部 open 状态
+管理标签：入口需 canManage 权限（当前身份不渲染该按钮），与 6 个节点弹窗同为
+         "打开时才挂载"，传 true 正确；未在本地打开验证
+```
+
+另在 `app/lib/focus-trap.ts` 补了这条用法规避说明。
+
 ## 0.6.4-preview.634 — 2026-11-20
 
 ### 修：6 处节点弹窗的焦点容纳（`aria-modal` 继续兑现到节点流程）
