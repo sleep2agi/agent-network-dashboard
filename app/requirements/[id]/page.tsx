@@ -605,6 +605,8 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
       not_found: '这条需求不存在或不可见',
       unauthorized: '没有权限查看这条需求',
       forbidden: '没有权限查看这条需求',
+      // `.622`：跨网络切换时 Hub 回这个码。此前落到兜底文案，用户读不出"是网络权限问题"。
+      network_access_denied: '当前网络无权访问这条需求',
     };
     const zh = map[raw.toLowerCase()];
     return zh ? { text: zh, code: raw } : { text: '读取需求失败（悬停可查看错误码）', code: raw };
