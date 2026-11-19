@@ -6,7 +6,7 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
-## 0.6.4-preview.619 — 2026-11-19
+## 0.6.4-preview.620 — 2026-11-19
 
 ### 首页任务概览改为三态：不再整块消失
 
@@ -18,6 +18,9 @@ Format: chronological release notes; each entry lists what *changed for a user* 
       · 失败 ≠ 读取中：接口报错后继续显示"读取中"等于宣称一件没发生的事
       · 「查看全部 →」在加载期也保留（跳转始终有用）
 判据与 .610 / .615 同一原则（unknown ≠ 0，loaded = data !== undefined）
+
+占位色用 token（`var(--fg-dim)`）而不是 `text-gray-500`：
+命名调色板类有 color-ratchet 守住（不走 token、换主题不变色），本次 +1 曾让 CI gates 变红。
 ```
 
 ## 0.6.4-preview.618 — 2026-11-19
