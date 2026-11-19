@@ -206,7 +206,8 @@ export default function Dashboard() {
             ) : (
               // 读不到 ≠ 没有：占位而不是把整条藏起来，也不再显示 0。
               // 失败与加载分开写：失败后继续显示"读取中"等于宣称一件没发生的事。
-              <span className="text-gray-500">{fallbackError ? '统计暂不可用' : '统计读取中…'}</span>
+              // 用 token 色而不是 text-gray-500：命名调色板类有 ratchet（不走 token、换主题不变色）。
+              <span className="text-[var(--fg-dim)]">{fallbackError ? '统计暂不可用' : '统计读取中…'}</span>
             )}
           </div>
           {/* 命中区：链接外观只有 16px 高（与左侧计数同行，保持紧凑），
