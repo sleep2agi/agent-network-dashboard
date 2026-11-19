@@ -593,8 +593,11 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
   }
 
   // `.592`：Hub 的错误码直接透出会变成「读取失败：invalid_requirement_id」——
-  // 用户看不懂、也不知道该怎么办。这里把已知码翻译成中文，并保留原始码便于排查。
-  const friendlyRequirementError = (code: string) => {
+  // 用户看不懂、也不知道该怎么办。这里把已知码翻译成中文。
+  // `.622`：原始码此前被直接拼进正文（「…拼写有误）（invalid_requirement_id）」），
+  // 属开发者文本漏到界面。现在正文只留中文，原始码进 title —— 用户看得懂，
+  // 排查时悬停仍能看到。未知码同理：中文兜底 + 原始码进 title。
+  const friendlyRequirementError = (code: string): { text: string; code: string } => {
     const raw = String(code || '');
     const map: Record<string, string> = {
       invalid_requirement_id: '需求 ID 无效（链接可能过期或拼写有误）',
@@ -604,15 +607,16 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
       forbidden: '没有权限查看这条需求',
     };
     const zh = map[raw.toLowerCase()];
-    return zh ? `${zh}（${raw}）` : raw;
+    return zh ? { text: zh, code: raw } : { text: '读取需求失败（悬停可查看错误码）', code: raw };
   };
 
   if (error || !req) {
+    const friendly = error ? friendlyRequirementError(error) : null;
     return (
       <div className="min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] bg-[var(--bg)] p-6">
         <div className="mx-auto max-w-4xl">
           <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
-            {error ? `读取失败：${friendlyRequirementError(error)}` : '这条需求不存在或不可见。'}
+            {friendly ? <span title={friendly.code}>读取失败：{friendly.text}</span> : '这条需求不存在或不可见。'}
           </div>
           <Link href={backHref} className="text-sm text-blue-400 hover:underline" data-testid="requirement-back">← 返回需求列表</Link>
         </div>
