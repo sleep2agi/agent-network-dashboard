@@ -2327,3 +2327,56 @@ evidence/probes/touch-target-hittest.mjs   边缘命中测试（≥24px 判据�
 可能只是采样时机问题；若要确认需在录制全程连续采样。
 影响很小（录制 16 秒、系统有下载提示），暂记为"待确认"，不单独发版。
 ```
+
+## `.623`（2026-11-19）演示模式清屏 + 需求详情错误态
+
+### 发版日志
+
+| 项 | 值 |
+|---|---|
+| 提交 | `5f2f3b63c78e600998e116f69d26ca27c84cedbc` |
+| 版本 | `0.6.4-preview.623` |
+| BUILD_ID | `QKEiMxDTL_AyWTzyFCAKt` |
+| 最终验收 | 20/20 套件（detail **117/117**，比原 115 多 2 条新判据） |
+| CI | 4/4（scrub-guard · gates · unit tests · OSS） |
+| 后置自检 | 4/4 PASS |
+| 巡检 | 20/20 PASS（1851s，零 DEGRADED） |
+| 回滚 | `.621`（`608f1e9` / `pGOYvqAbxoxMrm6ynItoI`） |
+
+### ① 演示模式：投屏第一屏只剩军团（场景驱动的修复）
+
+```
+问题（.621 实测）：进入演示模式后侧栏已隐藏、画布已铺满 1440×900、正文 562→264 字符，
+                  但顶部仍挂着「近 24 小时 N 个任务失败」的红色横幅，正文仍含"任务失败"。
+修法：html[data-legion-present='1'] .anet-health-banner { display: none }
+      与既有 [data-app-shell-nav] / [data-servers-drawer] 同一套机制（根属性 + CSS）。
+实测（.623）：进入前 banner=true sidebar=true canvas=1232×869 fail=true
+             演示后 banner=false sidebar=false canvas=1440×900 fail=false
+非演示态未受影响：巡检 legion-visual PASS（视觉基线门）
+判据已固化：evidence/probes/legion-present-clean.mjs（四判据，FAIL 返回 exit 1）
+```
+
+### ② 需求详情错误态：用户读中文，支持能定位
+
+```
+读路径（页面加载失败）：正文「需求 ID 无效（…）」/「当前网络无权访问这条需求」，
+                        原始 reason code 移入 title（悬停可见）
+写路径（actionError）  ：仍直接显示原始码 —— 未改
+⇒ 两条路径文案不一致，记为后续项（需把 actionError 也做映射）
+```
+
+### 过程教训（本轮最贵的部分）
+
+| 步 | 事实 |
+|---|---|
+| 1 | `.622` 验收在 detail 中断（75/75）：套件断言「可见文本须含 network_access_denied」，实现已改为 title |
+| 2 | 只改了 503 行 → 重跑在 574 行再撞同一断言（86/86） |
+| 3 | 改 574 时同作用域重名 `const deniedMsg` → SyntaxError，探针 0 项 |
+| 4 | 最终区分读/写两条路径后：507/579 走 title 判据，529/534（写路径）保持原断言 |
+| 5 | detail 单套件 117/117 exit 0；完整验收串行同样 117/117 |
+
+```
+⇒ 规矩一：改判据前先 grep -c 同类出现次数（本次有两处，我只修了一处）
+⇒ 规矩二：改测试脚本也要跑语法检查（否则证据变 0 项，比断言失败更难读）
+⇒ 规矩三：断言要区分"读路径"与"写路径"——它们可能本来就该显示不同内容
+```
