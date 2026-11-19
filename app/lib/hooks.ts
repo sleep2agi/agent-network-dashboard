@@ -191,12 +191,21 @@ export function useStats() {
  */
 export function useTaskStats(enabled: boolean) {
   const { networkId, ready } = useNetworkId();
-  const { data } = useSWR<{ ok: boolean; total: number; byStatus: Record<string, number> }>(
+  const { data, error } = useSWR<{ ok: boolean; total: number; byStatus: Record<string, number> }>(
     enabled ? scopedOrNull('/api/hub/task-stats', networkId, ready) : null,
     fetcher,
     SWR_OPTIONS,
   );
-  return { taskStats: data?.byStatus ?? null, taskTotal: data?.total ?? null };
+  // `.619`：loaded 用于区分「统计还没到」与「确实没有任务」——
+  // 首页此前把整个统计条藏起来，用户无法分辨"没有任务"和"还没读到"。
+  // 与 `.610`/`.615` 同一原则（unknown ≠ 0），不在这里伪造 0。
+  // error 单独返回：失败后若仍显示"读取中"，等于宣称一件没发生的事。
+  return {
+    taskStats: data?.byStatus ?? null,
+    taskTotal: data?.total ?? null,
+    loaded: data !== undefined,
+    error: error ?? null,
+  };
 }
 
 export function useMessages(limit = 100) {
