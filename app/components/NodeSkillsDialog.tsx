@@ -5,6 +5,7 @@ import type { Session } from './types';
 import { DialogTitle } from './DialogTitle';
 import { useDialogFocus } from './useDialogFocus';
 import { t } from '../lib/ui-lang';
+import { useFocusTrap } from '../lib/focus-trap';
 
 /**
  * 节点「技能」只读面板。
@@ -31,6 +32,8 @@ const POLL_MAX = 10;
 export function NodeSkillsDialog({ session, onClose }: { session: Session; onClose: () => void }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  // `.634`：该弹窗声明了 aria-modal，但此前无 Tab 容纳 —— 键盘焦点会跑到遮罩背后。
+  useFocusTrap(true, dialogRef);
   useDialogFocus(dialogRef, '[data-testid="chat-pane-more"]');
   const [phase, setPhase] = useState<ListPhase>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);

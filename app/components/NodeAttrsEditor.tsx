@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { NodeAttrsSnapshot } from '../lib/hooks';
+import { useFocusTrap } from '../lib/focus-trap';
 
 // #492 goal-item-3 — dashboard editor for node display attributes.
 //
@@ -140,6 +141,8 @@ export function NodeAttrsEditor({ alias, nodeId, snapshot, onClose, onSaved }: N
   const [baseRev, setBaseRev] = useState<number>(snapshot.attrs_revision);
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // `.634`：该弹窗声明了 aria-modal，但此前无 Tab 容纳 —— 键盘焦点会跑到遮罩背后。
+  useFocusTrap(true, dialogRef);
   // Re-sync baseline + fields when parent hands us a new snapshot
   // (post-conflict reload OR external revalidation). Only pull in
   // the FIELDS if the user hasn't started editing yet — otherwise

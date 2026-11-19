@@ -5,6 +5,7 @@ import type { Session } from './types';
 import { DialogTitle } from './DialogTitle';
 import { useDialogFocus } from './useDialogFocus';
 import { t } from '../lib/ui-lang';
+import { useFocusTrap } from '../lib/focus-trap';
 
 /**
  * 节点「运行日志」面板（.448）—— 走 Hub MCP 的 tail_node_logs。
@@ -65,6 +66,8 @@ const LEVEL_CLASS: Record<string, string> = {
 export function NodeLogsDialog({ session, onClose }: { session: Session; onClose: () => void }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  // `.634`：该弹窗声明了 aria-modal，但此前无 Tab 容纳 —— 键盘焦点会跑到遮罩背后。
+  useFocusTrap(true, dialogRef);
   useDialogFocus(dialogRef, '[data-testid="chat-pane-more"]');
   const { node_id: nodeId, alias } = session;
   const [phase, setPhase] = useState<Phase>({ kind: 'loading' });
