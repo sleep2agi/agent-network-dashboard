@@ -194,8 +194,9 @@ export default function Dashboard() {
           9-status colored chip wall is now a single quiet line — the
           only two numbers that drive action are running and failed;
           everything else lives on /tasks. */}
-      {(taskStatsReady || Object.keys(taskStats).length > 0) && (
-        <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg bg-[var(--bg-secondary)] px-4 py-2.5 text-xs">
+      {/* `.621`：不再用"有数据才渲染"守门 —— 那样占位分支永远不可达（.620 实测占位态从未出现）。
+          统计条常驻：未读到显示占位，读到显示数字。 */}
+      <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg bg-[var(--bg-secondary)] px-4 py-2.5 text-xs">
           <div className="text-gray-400 tabular-nums">
             {taskStatsReady ? (
               <>
@@ -214,8 +215,7 @@ export default function Dashboard() {
               手机拇指点不准。透明 ::before 上下各扩 4px ⇒ 命中 24px（WCAG 2.2 SC 2.5.8 AA），
               像素外观不变。做法与 HealthBanner / 军团图例一致。 */}
           <Link href="/tasks" prefetch={false} className="relative text-[var(--accent-text)] hover:opacity-80 before:absolute before:inset-y-[-4px] before:inset-x-[-4px] before:content-['']">查看全部 →</Link>
-        </section>
-      )}
+      </section>
 
       {/* #217 S5 (less is more): Quick Navigation stat cards, the nav
           rail, and Recent Activity are deleted. Every route they linked
