@@ -2493,3 +2493,49 @@ evidence/probes/touch-target-hittest.mjs   边缘命中测试（≥24px 判据�
    + 必须带对照组（未进入演示时横幅应可见）
 ⛔ 曾经据此误报两处"缺陷"（全屏后横幅可见 / 演示态侧栏可见），均已撤回。
 ```
+
+## `.626`（2026-11-19）R 快捷键全局生效 + 帮助文案对齐
+
+### 发版日志
+
+| 项 | 值 |
+|---|---|
+| 提交 | `ca34337fea7cd6b9f4c7aad01750f7a6dd7f492e` |
+| 版本 | `0.6.4-preview.626` |
+| 最终验收 | 20/20（legion 272/272 · detail 119/119） |
+| CI | 4/4 · 自检 4/4 |
+| 回滚 | `.625`（`92acc09` / `MiPTW6vfZHPO2YnhLJVs4`） |
+
+### 两处改动
+
+```
+① R 重置视角：与 F 同处舞台 onKeyDown（case 'r': resetView()）⇒ 未聚焦收不到。
+   并入 .625 的 window 级监听（输入框内跳过 · 舞台内让位）。
+② 帮助文案：按 / 打开的是全局命令面板（Type a command or search…），
+   而页面写「/ 搜索」⇒ 改为「⌘K 全局搜索（本页搜索框可直接输入）」共 3 处。
+   不改全局快捷键：那是全站行为，影响面远大于收益。
+顺带：effect 依赖补 resetView（此前靠 useCallback 稳定引用侥幸成立）。
+```
+
+### 线上实测（关键：必须让焦点回到 BODY 再按 R）
+
+| 阶段 | viewYaw | 焦点 |
+|---|---|---|
+| 初始 | 0.689 | BODY |
+| 拖动后 | 3.093 | CANVAS |
+| 点页面空白处 | 3.093 | **BODY** |
+| 按 R | **0.62**（重置） | BODY |
+
+```
+⇒ 拖动会夺焦点，所以"拖动后按 R 生效"不能证明全局可用；
+   必须先点空白处让焦点回 BODY —— 本次 focusWasBody=true 后才判定通过。
+```
+
+### 首轮验收红项（已归档，非代码问题）
+
+```
+tour:yawSettlesWithin500ms = false（dense-frames load1 = 11.35）
+同轮 perf:denseMedianFrame = TRUE（33.3→16.7ms）
+⇒ 两条计时判据在负载高时轮流踩雷；低负载重跑 272/272。
+证据：evidence/voided/acc-626-yaw-load11-1737/
+```
