@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useFocusTrap, focusablesIn } from '../lib/focus-trap';
 import { useRouter } from 'next/navigation';
 
 /** Help overlay — press `?` to see keyboard shortcuts.
@@ -203,6 +204,20 @@ const SHORTCUTS: { group: string; items: Shortcut[] }[] = [
 
 export function HelpOverlay() {
   const [open, setOpen] = useState(false);
+  // `.633`：全站帮助浮层声明了 `aria-modal="true"`，但没有焦点容纳 ——
+  // Tab 会跑到遮罩背后的页面元素上（与 `.628`/`.629` 修的四处同一问题）。
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(open, dialogRef);
+  // `.633`：实测打开瞬间焦点仍留在背后的 textarea（hook 的同步 focus 被后续事件覆盖）。
+  // 补一次延迟聚焦：与 CommandPalette 的 50ms 做法一致，确保"打开即入内"。
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => {
+      const el = dialogRef.current;
+      (focusablesIn(el)[0] ?? el)?.focus();
+    }, 60);
+    return () => clearTimeout(t);
+  }, [open]);
   const router = useRouter();
   /** Timestamp when `g` was last pressed. The next single letter within
    *  1500ms is interpreted as the target page. vim-style `g o`, `g t`, etc. */
@@ -246,8 +261,10 @@ export function HelpOverlay() {
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      tabIndex={-1}
       aria-label="键盘快捷键"
       className="anet-help fixed inset-0 z-[101] flex items-center justify-center px-4"
       onClick={() => setOpen(false)}
