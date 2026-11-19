@@ -24,6 +24,7 @@ import { getAvatarUrl, useAvatarsVersion } from '../lib/avatars';
 import { legionFetcher as fetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../lib/legion-data';
 import { EmptyState } from '../components/EmptyState';
 import { restoreFocusAfterUnmount } from '../lib/focus-fallback';
+import { useFocusTrap } from '../lib/focus-trap';
 import { useNetworkId } from '../lib/network-context';
 import { NetworkRequiredNotice } from '../components/NetworkRequiredNotice';
 
@@ -149,6 +150,7 @@ export default function LegionPage() {
   const [listOpen, setListOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const helpRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [exportError, setExportError] = useState('');
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
@@ -406,6 +408,11 @@ export default function LegionPage() {
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
   }, [selected, canCollapse, toggleCollapse, query, layout.nodes, router, helpOpen, statusOnly, cleanView]);
+
+  // `.628`：帮助弹窗声明了 `aria-modal="true"`，但此前没有任何焦点容纳 ——
+  // 实测按 Tab 8 次全部逃到背后导航（network-switcher / 节点 / 军团）。
+  // 与 3D 页共用 useFocusTrap：打开即入内、Tab 循环、关闭还原焦点（无原位则回舞台）。
+  useFocusTrap(helpOpen, helpRef, stageRef);
 
   // 从 /org 的「在军团图里看」跳过来：/legion?focus=<部门名>
   // 用 location.search 而不是 useSearchParams，避免这个客户端页要额外包 Suspense。
@@ -1107,7 +1114,7 @@ export default function LegionPage() {
           </div>
         ) : null}
         {helpOpen && (
-          <div role="dialog" aria-modal="true" aria-label="键盘快捷键" data-testid="legion-help"
+          <div role="dialog" aria-modal="true" aria-label="键盘快捷键" data-testid="legion-help" ref={helpRef} tabIndex={-1}
             className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg)]/70 p-4" onClick={() => setHelpOpen(false)}>
             <div className="w-full max-w-sm rounded-2xl bg-[var(--bg-secondary)] p-4 text-sm text-[var(--fg)]" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between">

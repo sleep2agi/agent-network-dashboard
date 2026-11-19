@@ -6,6 +6,30 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.628 — 2026-11-19
+
+### 修：军团页的「键盘快捷键」弹窗不再是焦点陷阱的漏勺
+
+两个军团页（2D `/legion`、3D `/legion/3d`）的速查表都写着 `aria-modal="true"`，
+但此前没有任何焦点容纳。实测（`evidence/focus-trap-20261119/`）：
+
+```
+线上 .626：
+  2D 弹窗  Tab ×8      → 8/8 逃到背后（network-switcher / 节点 / 军团）
+  2D 弹窗  Shift+Tab×8 → 8/8 逃逸
+  3D 弹窗（点过画布）Tab×8 → 0/8（舞台 onKeyDown 临时兜住）
+  3D 弹窗（焦点在 body）Tab×6 → 6/6 逃逸
+  两页打开时焦点都不进弹窗，Esc 关闭后也不归还
+
+现在：两页共用 app/lib/focus-trap.ts
+  打开即入内（首个可聚焦元素）、Tab/Shift+Tab 在弹窗内循环、
+  Esc 关闭后焦点回到打开前的元素（原位已移除则回画布/主区）
+  实测：两页 0/16 逃逸，焦点进入 ✕ 按钮，关闭后回到 CANVAS / MAIN
+```
+
+影响：键盘与读屏用户在弹窗里按 Tab 不再"看不见地"落到被遮罩盖住的导航上，
+也不会因为回车而误触背后的操作。
+
 ## 0.6.4-preview.627 — 2026-11-19
 
 ### 3D 军团页：`/` 与 `?` 与 2D 页对齐
