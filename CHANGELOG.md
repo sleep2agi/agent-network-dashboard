@@ -6,6 +6,26 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.622 — 2026-11-19
+
+### 演示模式：顶部健康横幅一并隐藏（投屏第一屏只剩军团）
+
+```
+此前：进入「演示模式」后侧栏已隐藏、画布铺满 1440×900、正文 562→264 字符，
+      但顶部仍挂着「近 24 小时 N 个任务失败」的红色横幅，正文里也仍有"任务失败"。
+      投屏时第一眼看到的不是军团，而是运维告警。
+现在：html[data-legion-present='1'] .anet-health-banner { display: none }
+      与既有侧栏 / Servers 抽屉的隐藏方式同源，不碰组件、不影响非演示场景。
+```
+
+### 需求详情页：错误码不再内联进正文
+
+```
+「读取失败：需求 ID 无效（…）（invalid_requirement_id）」→ 「读取失败：需求 ID 无效（…）」
+原始码移入 title（悬停可见），未知码也给中文兜底 + title。
+判据来源：8 页 snake_case 扫描，仅此 1 处属开发者文本漏到界面。
+```
+
 ## 0.6.4-preview.621 — 2026-11-19
 
 ### 修：`.620` 的「统计读取中…」实际从未出现
