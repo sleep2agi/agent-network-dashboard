@@ -2423,3 +2423,48 @@ evidence/probes/touch-target-hittest.mjs   边缘命中测试（≥24px 判据�
 ② publish 期望值：detail 115 → 119（新增 4 条断言，非删减）
    ⇒ 改它必须说明"是新增"，否则等同悄悄放宽
 ```
+
+## `.625`（2026-11-19）F 全屏演示在任意焦点下生效
+
+### 发版日志
+
+| 项 | 值 |
+|---|---|
+| 提交 | `92acc0954053aebe03c1ed1e9d0f51d3577642a7` |
+| 版本 | `0.6.4-preview.625` |
+| BUILD_ID | `MiPTW6vfZHPO2YnhLJVs4` |
+| 最终验收 | 20/20（legion 272/272 · detail 119/119） |
+| CI | 4/4 · 自检 4/4 · 巡检 20/20（1861s，零 DEGRADED） |
+| 回滚 | `.624`（`94745bf` / `i8aRFnQAyTehteGgBz224`） |
+
+### 缺陷与修法
+
+```
+实测（.624）：焦点在页面主体时直接按 F → document.fullscreenElement = null，画面无变化；
+             先用鼠标点一下画布再按 F → 正常（fsEl = legion-3d-stage）。
+原因：F 只绑在舞台元素的 onKeyDown 上。
+修法：window 级捕获监听兜底，三点防误伤：
+  ① 带修饰键 / 事件已被处理 → 不抢
+  ② 焦点在 input / textarea / contentEditable → 不抢
+  ③ 焦点在舞台容器内 → 让位给舞台自身（避免"进全屏又立刻退出"）
+```
+
+### 线上三态实测（.625）
+
+| 操作 | document.fullscreenElement | 画布宽 |
+|---|---|---|
+| 初始 | null | 1232 |
+| **直接按 F（未点任何地方）** | **legion-3d-stage** | **1440** |
+| 再按 F | null | 1232 |
+
+```
+⇒ 打开页面直接按 F 即进全屏；再按退出；无双重触发
+```
+
+### 判据修正（本轮重要一课）
+
+```
+此前把"全屏后横幅仍可见"当作缺陷 —— 属误判。
+全屏元素之外的内容不渲染在屏幕上，但 getBoundingClientRect 仍返回尺寸。
+⇒ 判"是否可见"时，必须考虑全屏/模态层的裁剪，不能只看 rect。
+```
