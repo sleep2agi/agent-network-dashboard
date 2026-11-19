@@ -3554,12 +3554,23 @@ export default function Legion3DPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
-      const k = e.key.toLowerCase();
-      if (k !== 'f' && k !== 'r') return;
       const t = e.target as HTMLElement | null;
-      // 正在输入时不抢键（搜索框/评论框）
+      const k = e.key.toLowerCase();
       const tag = t?.tagName?.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || t?.isContentEditable) return;
+      const inField = tag === 'input' || tag === 'textarea' || tag === 'select' || !!t?.isContentEditable;
+      // `.627`：与 2D 军团页对齐 —— 军团页上 `/` 应当是"搜军团成员"，
+      // `?` 应当是本页速查表。两者在捕获阶段拦下（与 app/legion/page.tsx 同一做法），
+      // 全局面板仍可用 ⌘K。输入框内不拦（那里它们是普通字符）。
+      if (!inField && (e.key === '/' || e.key === '?')) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (e.key === '/') searchRef.current?.focus();
+        else setHelpOpen(v => !v);
+        return;
+      }
+      if (k !== 'f' && k !== 'r') return;
+      // 正在输入时不抢键（搜索框/评论框）
+      if (inField) return;
       // 舞台自己会处理（点过画布后焦点在 stage 内），交给它，避免双重切换
       if (t && wrapRef.current?.contains(t)) return;
       e.preventDefault();
@@ -3568,7 +3579,7 @@ export default function Legion3DPage() {
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [toggleFullscreen, resetView]);
+  }, [toggleFullscreen, resetView, setHelpOpen]);
 
   useEffect(() => {
     const onFs = () => setIsFullscreen(!!document.fullscreenElement);
