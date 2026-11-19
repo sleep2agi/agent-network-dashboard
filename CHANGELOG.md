@@ -6,6 +6,28 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.633 — 2026-11-20
+
+### 修：全站帮助浮层（`?`）的焦点容纳
+
+`.628`/`.629` 修好军团两页速查表与 ⌘K 面板后，全站统计发现共 **11 处** `aria-modal="true"`，
+其中帮助浮层仍无焦点容纳。实测（线上 `.632`，`/nodes` 页）：
+
+```
+按 ? 打开浮层后：焦点停在背后的 TEXTAREA（inside=false）
+Tab ×30 → 28 次逃到遮罩背后；Shift+Tab ×30 → 28 次
+Esc 可关闭（这一条本来就是对的）
+```
+
+修复：复用 `.628` 的 `useFocusTrap`，并补一次 60ms 延迟聚焦
+（实测同步聚焦会被后续事件覆盖，与 CommandPalette 的 50ms 做法一致）。修复后：
+
+```
+焦点落在浮层内（BUTTON）· Tab ×30 零逃逸 · Shift+Tab ×30 零逃逸 · Esc 关闭
+```
+
+未改任何外观。
+
 ## 0.6.4-preview.632 — 2026-11-20
 
 ### 新增（可选，默认关闭）：军团 3D 取景松紧 `?fit=`
