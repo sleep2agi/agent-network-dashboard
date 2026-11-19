@@ -24,6 +24,7 @@ import { buildLegionLayout, nearestDept, deptWorldRadius, tourOrder, type Legion
 import { getLastRelaxStats, polarMaxDeviation, relaxDepartmentAngles } from './relax-dept-angles';
 import { tourStepMs } from '../../lib/legion-tour';
 import { restoreFocusAfterUnmount } from '../../lib/focus-fallback';
+import { useFocusTrap } from '../../lib/focus-trap';
 import { LEGION_HEAVY_NODES, LEGION_HUGE_NODES, LEGION_LABEL_AGENTS, LEGION_LABEL_PEOPLE } from '../../lib/legion-view-constants';
 import { legionFetcher, deptFetcher, legionReadError, scopedUrl, type PeopleResponse, type DepartmentsResponse, type StatusResponse } from '../../lib/legion-data';
 import { useNetworkId } from '../../lib/network-context';
@@ -1202,16 +1203,10 @@ export default function Legion3DPage() {
     return () => wide.removeEventListener('change', onBreakpoint);
   }, []);
 
-  useEffect(() => {
-    if (!helpOpen) return;
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const stage = wrapRef.current;
-    helpRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
-    return () => {
-      if (previous?.isConnected && previous.getClientRects().length) previous.focus();
-      else stage?.focus();
-    };
-  }, [helpOpen]);
+  // `.628`：帮助弹窗是 `aria-modal="true"`，但原来只在舞台的 onKeyDown 里兜 Tab ——
+  // 焦点一旦不在舞台子树（点过遮罩、从导航进来），Tab 就会跑到背后的按钮上。
+  // 统一交给 useFocusTrap：打开即入内、Tab 循环、关闭还原焦点（无原位则回舞台）。
+  useFocusTrap(helpOpen, helpRef, wrapRef);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -3717,12 +3712,10 @@ export default function Legion3DPage() {
     // The help dialog owns keyboard input above the disclosure and canvas.
     if (helpOpen) {
       e.stopPropagation();
+      // Tab 由 useFocusTrap 在 document 捕获阶段循环，这里不再拦（否则会双重 preventDefault）
       if (e.key === 'Escape' || e.key === '?') {
         e.preventDefault();
         setHelpOpen(false);
-      } else if (e.key === 'Tab') {
-        e.preventDefault();
-        helpRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
       }
       return;
     }
@@ -4723,6 +4716,7 @@ export default function Legion3DPage() {
           aria-modal="true"
           aria-label="键盘快捷键"
           data-testid="legion-3d-help"
+          tabIndex={-1}
           className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--bg)]/70 p-4"
           onClick={() => setHelpOpen(false)}
         >
