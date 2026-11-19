@@ -66,7 +66,7 @@ export default function Dashboard() {
   // 以前回退是拉 tasks?limit=500（生产实测 665,867 B）；现在改叫服务端计数端点
   //（/api/hub/task-stats，回几百字节），浏览器不再为 5 个数字下载 666 KB。
   const statsHasTaskStatus = Boolean(stats?.tasks?.by_status?.length);
-  const { taskStats: fallbackTaskStats } = useTaskStats(stats != null && !statsHasTaskStatus);
+  const { taskStats: fallbackTaskStats, loaded: fallbackLoaded, error: fallbackError } = useTaskStats(stats != null && !statsHasTaskStatus);
   const [showTopo, setShowTopo] = useState(typeof window !== 'undefined' && window.innerWidth >= 1024);
   const cmd = useCommandCenter();
   // R8: one page-level unread computation; counts flow to memo'd cards as props.
@@ -151,6 +151,10 @@ export default function Dashboard() {
     Object.assign(taskStats, fallbackTaskStats);
   }
 
+  // `.619`：统计是否已经读到（决定显示数字还是「读取中」）。
+  // 两条路径任一完成即算读到：/api/stats 自带 by_status，或兜底端点的 SWR 已返回。
+  const taskStatsReady = statsHasTaskStatus || fallbackLoaded;
+
   // R29 (通信龙批准): 'working' demoted from sort key to visual badge —
   // it flipped constantly on the live fleet and reshuffled ~100 cards per
   // 12s window (measured [100,101,100] ×3). WeChat doesn't reorder your
@@ -190,12 +194,20 @@ export default function Dashboard() {
           9-status colored chip wall is now a single quiet line — the
           only two numbers that drive action are running and failed;
           everything else lives on /tasks. */}
-      {Object.keys(taskStats).length > 0 && (
+      {(taskStatsReady || Object.keys(taskStats).length > 0) && (
         <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg bg-[var(--bg-secondary)] px-4 py-2.5 text-xs">
           <div className="text-gray-400 tabular-nums">
-            <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} 运行中</span>
-            <span className="text-gray-600"> &middot; </span>
-            <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} 失败</span>
+            {taskStatsReady ? (
+              <>
+                <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} 运行中</span>
+                <span className="text-gray-600"> &middot; </span>
+                <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} 失败</span>
+              </>
+            ) : (
+              // 读不到 ≠ 没有：占位而不是把整条藏起来，也不再显示 0。
+              // 失败与加载分开写：失败后继续显示"读取中"等于宣称一件没发生的事。
+              <span className="text-gray-500">{fallbackError ? '统计暂不可用' : '统计读取中…'}</span>
+            )}
           </div>
           {/* 命中区：链接外观只有 16px 高（与左侧计数同行，保持紧凑），
               手机拇指点不准。透明 ::before 上下各扩 4px ⇒ 命中 24px（WCAG 2.2 SC 2.5.8 AA），
