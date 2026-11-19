@@ -612,6 +612,26 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
     return zh ? { text: zh, code: raw } : { text: '读取需求失败（悬停可查看错误码）', code: raw };
   };
 
+  // `.624`：写操作失败（保存/评论/清单等）此前直接把 Hub 的原始码显示给用户
+  //（`network_access_denied` 之类）。与读路径同一原则：正文说人话，原始码进 title。
+  // 只对"形如 some_reason_code"的串做包装；本地生成的中文/英文句子原样显示。
+  const describeActionError = (rawErr: string): { text: string; title?: string } => {
+    const code = String(rawErr || '').trim();
+    const map: Record<string, string> = {
+      network_access_denied: '当前网络无权修改这条需求',
+      invalid_requirement_id: '需求 ID 无效',
+      requirement_not_found: '这条需求不存在或已被删除',
+      unauthorized: '没有权限修改这条需求',
+      forbidden: '没有权限修改这条需求',
+    };
+    const zh = map[code.toLowerCase()];
+    if (zh) return { text: zh, title: code };
+    if (/^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$/.test(code)) {
+      return { text: '保存失败（悬停可查看错误码）', title: code };
+    }
+    return { text: code };
+  };
+
   if (error || !req) {
     const friendly = error ? friendlyRequirementError(error) : null;
     return (
@@ -956,7 +976,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
           )}
           {editError && !editingDescription && <span role="alert" className="text-[11px] text-[var(--danger)]">{editError}</span>}
           {busy && <span className="text-[11px] text-gray-500">saving…</span>}
-          {actionError && <span className="text-[11px] text-red-400">{actionError}</span>}
+          {actionError && (() => { const d = describeActionError(actionError); return <span className="text-[11px] text-red-400" title={d.title}>{d.text}</span>; })()}
         </section>
 
         <section className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
@@ -1310,7 +1330,7 @@ function RequirementDetailContent({ networkId }: { networkId: string }) {
               >
                 添加评论
               </button>
-              {actionError && <span className="text-[11px] text-red-400">{actionError}</span>}
+              {actionError && (() => { const d = describeActionError(actionError); return <span className="text-[11px] text-red-400" title={d.title}>{d.text}</span>; })()}
             </div>
           </div>
         </section>
