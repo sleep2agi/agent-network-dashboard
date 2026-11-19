@@ -37,6 +37,13 @@ export function focusablesIn(node: HTMLElement | null): HTMLElement[] {
   );
 }
 
+/**
+ * 用法注意（`.635` 实测）：
+ * - 组件"打开时才挂载"（如 `{open && <Dialog/>}`）⇒ 传 `true` 即可；
+ * - 组件**常驻挂载**、弹窗由内部 state 条件渲染 ⇒ 必须传那个 state，
+ *   否则 effect 在挂载那一刻执行、`containerRef.current` 还是 null，
+ *   陷阱永不生效（`CreateRequirement` 就是这样逃逸了 19/30 次）。
+ */
 export function useFocusTrap(
   open: boolean,
   containerRef: RefObject<HTMLElement | null>,

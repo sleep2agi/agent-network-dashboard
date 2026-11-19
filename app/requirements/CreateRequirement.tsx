@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { projectOptions, type RequirementProject } from '../lib/requirement-projects';
+import { useFocusTrap } from '../lib/focus-trap';
 
 const PRIORITIES = [
   { key: 'normal', label: '普通' },
@@ -38,6 +39,11 @@ export function CreateRequirement({ networkId, onCreated }: {
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  // `.635`：该弹窗声明了 aria-modal，但此前无 Tab 容纳 —— 焦点会跑到遮罩背后。
+  // 注意：本组件**常驻挂载**、弹窗由内部 `open` 条件渲染，所以必须传 `open`。
+  // 传 `true` 时 effect 在挂载那一刻执行，此时 panelRef 还是 null ⇒ 陷阱根本不生效
+  //（实测 Tab×30 逃逸 19 次才发现的）。
+  useFocusTrap(open, panelRef);
 
   useEffect(() => {
     if (!open) return;
