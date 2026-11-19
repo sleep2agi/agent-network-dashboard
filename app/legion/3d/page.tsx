@@ -105,6 +105,22 @@ const LABEL_PAD = 12;
 const CORE_PARAM = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).get('core')
   : 'off';
+
+// `.632`（可选，默认关闭）：取景松紧。军团页要不要"多留白"是审美取向，由负责人拍板；
+// 先给一条可对比的链接（`?fit=loose`），比在文字里争论"少推 7% 好不好看"有效。
+// 只乘最终 zoom 一个标量，不碰取景求解器（`.498`/`.504` 那些确定性约束原样保留）。
+const FIT_PARAM = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('fit')
+  : null;
+// `?fit=auto`（分档）：笔电/平板（宽 < 2000）多留白，超宽屏（≥2000）保持满幅 ——
+// 依据：1440 下 ×0.93 更像"一张构图"，而 3440 下缩小会让底部发空、少了大屏气势
+//（`evidence/fit-compare-20261120/` 六张实图 + 119/110/125 与 133/124/141 读数）。
+const fitScaleFor = (width: number): number => {
+  if (FIT_PARAM === 'loose') return 0.93;
+  if (FIT_PARAM === 'tighter') return 1.06;
+  if (FIT_PARAM === 'auto') return width < 2000 ? 0.93 : 1;
+  return 1;
+};
 // `?core=big`（`.511`）：中心区 A 案 —— 核心环放大 1.6×，规模数字进环内。默认关闭。
 // `.535`：`?core=both` —— 混合变体：大核心（规模数字在环内）+ 部门刻度环。
 // 几何上互不冲突：数字画在核心内部，刻度环在 1.36r（核心 1.6× 之后更外）。
@@ -1945,7 +1961,8 @@ export default function Legion3DPage() {
           // `.606`：demo（官网 hero）取景规格 —— 核心直径 ≈ 0.22H、核心中心落在 0.45H。
           // 实测默认 fit 下核心只有约 0.13H 且偏上（负责人反馈"头重脚轻"）。
           // 必须作用在 `want` 本身：入场推镜的 to 值就取自 want，事后改 view.zoom 会被推镜覆盖。
-          const wantFinal = demoRef.current ? want * 1.7 : want;
+          // `.632`：`?fit=loose` 只把最终取景乘一个标量（默认 1，行为完全不变）
+          const wantFinal = (demoRef.current ? want * 1.7 : want) * fitScaleFor(size.width);
           Object.assign(view, { ...fit, zoom: wantFinal, panY: (fit.panY ?? 0) + (demoRef.current ? size.height * 0.30 : 0) });
           const reduceMotion = typeof window !== 'undefined'
             && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
