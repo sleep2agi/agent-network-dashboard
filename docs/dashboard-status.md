@@ -2250,3 +2250,34 @@ CI gates 因此变红 —— 这是 CI 拦住的一次真实指标退化（已�
    CHANGELOG 写入 → 构建 → /changelog 渲染 这条链是通的。
 注：`.619` 被 CI gates 拦下未发布，因此不应出现在页面上（未检查为不计入）。
 ```
+
+## 已验证：3D 军团页 120 秒无内存泄漏趋势（方法经三次修正）
+
+### 方法（前两次作废，记录在此避免重犯）
+
+| 尝试 | 方法 | 结果 |
+|---|---|---|
+| 1 | `performance.memory.usedJSHeapSize` | ❌ 无头 Chromium 不更新：主动分配 60MB 也纹丝不动 |
+| 2 | CDP `JSHeapUsedSize` + `Float64Array` 对照 | ❌ 类型化数组属**堆外内存**，不计入 JS 堆 ⇒ 对照不成立 |
+| 3 | **CDP + `HeapProfiler.collectGarbage` + JS 对象对照** | ✅ 对照 6.7 → 61.2 → 7.3MB，指标有效 |
+
+### 读数（线上 .621，1440×900，强制 GC 后采样）
+
+```
+阳性对照：6.7MB → 61.2MB → 7.3MB（+54.5MB，证明指标随 JS 堆变化）
+趋势（7 点 / 120 秒）：6.0 / 6.3 / 6.2 / 7.0 / 6.1 / 7.2 / 6.6 MB
+变化 +0.6MB，全程 6.0–7.2MB 波动，无单调上升
+⇒ 120 秒内活对象稳定，无泄漏趋势
+```
+
+### 复用脚本（已固化）
+
+```
+evidence/probes/legion-heap-120s.mjs    两分钟筛查（含内置阳性对照）
+evidence/probes/legion-heap-10min.mjs   十分钟延长测（每分钟一点）
+evidence/probes/legion-reduced-motion.mjs  reduce-motion 两档对照
+evidence/probes/touch-target-hittest.mjs   边缘命中测试（≥24px 判据）
+
+⚠️ 使用时注意：内存指标必须带阴性/阳性对照，否则"数值不动"分不清是
+   "真的稳"还是"尺子坏了"（本次踩过两次）。
+```
