@@ -2468,3 +2468,28 @@ evidence/probes/touch-target-hittest.mjs   边缘命中测试（≥24px 判据�
 全屏元素之外的内容不渲染在屏幕上，但 getBoundingClientRect 仍返回尺寸。
 ⇒ 判"是否可见"时，必须考虑全屏/模态层的裁剪，不能只看 rect。
 ```
+
+## 已验证：演示态两个入口都干净（按钮 / 深链 `?present=1`）
+
+2026-11-19 实测（线上 .625），判据固化在 `evidence/probes/legion-present-clean.mjs`。
+
+| 入口 | present | 横幅 | 侧栏（opacity） | 画布 | 含「任务失败」 |
+|---|---|---|---|---|---|
+| 按钮「演示模式」 | true | 不可见 | 不可见（0） | 1440 | 否 |
+| 深链 `?present=1` | true | 不可见 | 不可见（0） | 1440 | 否 |
+| 无参数（对照） | false | 可见 | 可见（1） | 1232 | 是 |
+
+```
+⇒ 把演示链接发给别人，对方打开即是干净全屏军团
+⇒ 对照组防止"页面整体空白导致所有项都是 false"被误判为通过
+```
+
+### 判据演进（同一个"可见性"错了三次，最终写法）
+
+```
+① 只看 getBoundingClientRect：把 opacity:0 的侧栏算成可见
+② 只看 rect + display：浏览器全屏时元素仍有 rect（全屏外内容不渲染但尺寸仍在）
+③ 最终：el.checkVisibility({ opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true })
+   + 必须带对照组（未进入演示时横幅应可见）
+⛔ 曾经据此误报两处"缺陷"（全屏后横幅可见 / 演示态侧栏可见），均已撤回。
+```
