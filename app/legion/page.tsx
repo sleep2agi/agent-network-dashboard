@@ -1397,7 +1397,53 @@ export default function LegionPage() {
                         onMouseLeave={() => setHovered(h => (h === node.id ? null : h))}
                         onFocus={() => setHovered(node.id)}
                         onBlur={() => setHovered(h => (h === node.id ? null : h))}
-                        onClick={(e) => { e.stopPropagation(); setSelected(node.id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // `.631`：密集图里"命中最上层"≠"用户想点的那颗"。
+                          // 实测（390 视口）：agent 节点的命中直径只有 19.6px，节点中心常常
+                          // 落在邻居的命中圈里 —— 点 A 的中心却选中 B。这里改成"取离触点最近的节点"：
+                          // 谁接住这次点击都一样，结果指向用户手指下的那颗。
+                          // 注意坐标系：节点位置 p 是"父组空间"里的值（父组可能带平移/缩放的取景变换），
+                          // 用整张 SVG 的 CTM 会把触点换算到根空间，390 视口下取景有缩放时就会算错
+                          // （实测 390 修复无效、1440 正常，差别正在这里）。所以取**节点父组**的 CTM。
+                          const host = (e.currentTarget as SVGGElement).parentElement as SVGGElement | null;
+                          const ctm = host?.getScreenCTM() ?? svgRef.current?.getScreenCTM();
+                          if (ctm) {
+                            const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+                            // 评分要"具体优先"：部门盘半径 16–24px，会盖住盘边上的 agent 点（7px）。
+                            // 只比圆心距离会让大圆盘总是赢，实测 390 下 2/24 就是这样选错。
+                            // 规则：触点落在某节点可视圆内 → 取半径**最小**的那个（最具体）；
+                            //       都不在圆内 → 取到边缘最近的。
+                            const radiusOf = (n: LegionNode) => {
+                              const deptR = n.kind === 'group' ? ((n.depth ?? 1) <= 1 ? 24 : 16) : 0;
+                              const crowd = n.kind === 'person' && layout.stats.people > LEGION_LABEL_PEOPLE ? 0.72 : 1;
+                              return (n.kind === 'core' ? 48 : n.kind === 'group' ? deptR : n.kind === 'person' ? 16 : 7) * nodeScale * crowd;
+                            };
+                            // 比较顺序（缺一不可）：
+                            //   1) 触点在圆内优于圆外（点在谁身上就选谁）
+                            //   2) 都在圆内：半径小的更具体（agent 点优于部门盘）
+                            //   3) 半径相同：**离触点更近**的胜
+                            // 第 3 条是 v3 漏掉的：两个 16px 的人环互相覆盖时，v3 按遍历顺序取第一个，
+                            // 实测造成 12–14.6px 间距的真误选（不是"重叠不可分辨"）。
+                            let bestId = node.id;
+                            let bestInside = false;
+                            let bestR = Infinity;
+                            let bestD = Infinity;
+                            for (const n of layout.nodes) {
+                              const q = toPixel(n, size, 0.84);
+                              const d = Math.hypot(q.x - pt.x, q.y - pt.y);
+                              const rNode = radiusOf(n);
+                              const inside = d <= rNode;
+                              const better = inside !== bestInside
+                                ? inside
+                                : (inside && rNode !== bestR ? rNode < bestR : d < bestD);
+                              if (better) { bestInside = inside; bestR = rNode; bestD = d; bestId = n.id; }
+                            }
+                            setSelected(bestId);
+                            return;
+                          }
+                          setSelected(node.id);
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') { e.preventDefault(); setSelected(node.id); return; }
                           if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
