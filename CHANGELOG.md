@@ -33,6 +33,13 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 响应头 `X-Dashboard-Cache: hit|miss` 便于线上核验。契约测试 `tests/hub-response-cache.test.mts` 钉住
 「不同用户不同 key / TTL 命中 / 过期重取 / 单飞 / 失败不缓存 / 404 透传」六条。
 
+### 夹具环境自动旁路缓存（验收踩出来的）
+
+首次验收时 legion 套件红了两次，都不是产品回退问题，而是缓存把夹具切换吃掉了：
+`legion-empty-members` 不可见、`2d:legacy404WasDeliberate` 收不到 404。
+修法：检测到 `FIXTURE_HUB`（所有验收 runner 都会给被测服务器设这个变量，生产没有）时
+完全旁路缓存。这是"测试确定性"开关，不是生产后门。
+
 ### 说明：这一版不改变任何观感默认值
 
 编队衔接、活流、取景、44px 四项仍保持原状，等 owner 决策。
