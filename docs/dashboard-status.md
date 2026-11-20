@@ -115,6 +115,30 @@
 对应到今天的记录：3D 点选（坐标错）、reduce 动效（6s 取样误读入场）、present+flow（单次采样）
 三类假缺陷全部出在同一条根因上——**把"这一次没读到"当成"不存在"**。
 
+## 节点可控性：服务端已给事实，界面不得给出假按钮（`.646` / `.647`）
+
+Hub `/api/hub/nodes` 每个节点都带 `lifecycle_controllable`。`.645` 线上实测 361 个节点：
+
+| 字段 | 分布 |
+| --- | --- |
+| `lifecycle_controllable` | **True 62 / False 299** |
+| `restart_readiness.path` | `manual` 299（服务端明确"现在不能重启"） |
+
+此前 Dashboard 的 BFF `lite=1` 投影把该字段剥掉，前端只看到 `lifecycle_state=active`，
+于是 **299 个节点渲染了"点了必然失败"的重启/停止/删除**，违反本仓 no-dead-buttons 规则。
+
+修复分两版，因为同类入口有两处：
+
+| 版本 | 入口 | 行为 |
+| --- | --- | --- |
+| `.646` | `/nodes` 行尾 ⋮ 生命周期菜单（三处调用点） | `canControl === false` ⇒ 只显示「需在所在机器上手动操作（未由 daemon 托管）」 |
+| `.647` | 首页/聊天页「节点设置」面板的「重启节点」 | `canControl === false` ⇒ 禁用，文案「需在所在机器上手动重启（未由 daemon 托管）」 |
+
+两处共同约定：`undefined`（旧接口/未知）保持原行为，**不擅自禁用**。
+
+验证方式（可复用）：首页节点卡片的 `aria-label="<alias> 节点设置"` 可直接打开面板，
+不必走“聊天页 → 溢出菜单 → 会话设置”三步（后者在自动化里多次超时）。
+
 ## 3D 冷启动：门内可信读数（`.644` 首次在低负载窗口取得）
 
 `legion-cold-start` 的判据是 `introState=done ≤ 6000ms`（冷缓存、新 context，不用 networkidle，
