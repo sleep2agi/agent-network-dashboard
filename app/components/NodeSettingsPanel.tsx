@@ -387,7 +387,11 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
   positioning?: 'fixed' | 'absolute';
 }) {
   // 权限模式展示：与 AvatarSection 共用同一个 SWR 缓存（lite nodes），不额外发请求。
-  const { attrsByAlias } = useNodeLifecycle();
+  const { attrsByAlias, controllableByAlias } = useNodeLifecycle();
+  // `.647`：同一事实的第二处入口。⋮ 菜单已在 `.646` 按节点判断可托管性；
+  // 这里（会话设置 → 节点操作）此前只看 hub 全局能力，仍会对 299 个未托管节点给出「重启节点」。
+  // undefined（旧接口/未知）保持原行为，不擅自禁用。
+  const canControl = controllableByAlias[s.alias];
   // 权限模式写入（.447）：只在 viewer_can.permission_mode 为真时给下拉。
   // 失败必须如实回显原因（Hub 的 invalid_permission_mode / permission_denied 都是可解释的），
   // 不允许「看起来改了」——成功后由 SWR 刷新回读真实值。
@@ -1100,9 +1104,10 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
             <button
               type="button"
               onClick={handleRestart}
-              disabled={lcBusy}
+              disabled={lcBusy || canControl === false}
+              title={canControl === false ? '该节点未由 daemon 托管，无法在这里重启' : undefined}
               className={`flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[12px] font-medium transition-colors ${
-                lcBusy
+                lcBusy || canControl === false
                   ? 'border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg-dim)] cursor-not-allowed'
                   : 'border-amber-700/50 bg-[var(--warning)]/15/15 text-[var(--warning)] hover:bg-[var(--warning)]/15/25'
               }`}
@@ -1113,7 +1118,7 @@ export function NodeSettingsPanel({ session: s, onClose, positioning = 'fixed' }
                   <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
               )}
-              重启节点
+              {canControl === false ? '需在所在机器上手动重启（未由 daemon 托管）' : '重启节点'}
             </button>
             {lcResult && (() => {
               const tone = lcResult.tone === 'ok' ? 'border-green-800/50 bg-green-900/15 text-[var(--success)]'
