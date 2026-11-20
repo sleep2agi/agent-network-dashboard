@@ -37,6 +37,9 @@ export interface NodeLifecycleMenuProps {
   nodeId: string;
   alias: string;
   lifecycleState: LifecycleState | null | undefined;
+  /** `.646`：该节点是否由 daemon 托管。false ⇒ 本菜单三个操作都不可用，只给出原因。
+   *  undefined（未知/旧接口）保持原有行为，不擅自禁用。 */
+  canControl?: boolean;
   networkId?: string | null;
   /** Called when a lifecycle op completes successfully (caller refreshes nodes list). */
   onCompleted?: () => void;
@@ -111,6 +114,7 @@ export function NodeLifecycleMenu({
   networkId,
   onCompleted,
   attrsSnapshot,
+  canControl,
 }: NodeLifecycleMenuProps) {
   // All hooks above any early return (avoid hooks-order regression that
   // bit the mobile app at v0.1.29; 通信龙 explicit call-out for PR2).
@@ -167,6 +171,11 @@ export function NodeLifecycleMenu({
       key: 'loading', disabled: true, onClick: () => {},
     });
   } else if (isActive) {
+    if (canControl === false) {
+      // `.646`：未托管节点在这里做不了任何生命周期操作，直接给出一条可核验的说明，
+      // 而不是渲染"点了会失败"的按钮（本仓 no-dead-buttons 规则）。
+      items.push({ label: '需在所在机器上手动操作（未由 daemon 托管）', key: 'hint', disabled: true, onClick: () => {} });
+    } else {
     items.push({ label: restartBusy ? '重启中…' : '重启节点', key: 'restart', disabled: restartBusy, onClick: onRestart });
     // #492 goal-3: attribute editor — available in every non-loading
     // state (you can edit a stopped node's metadata too). Hidden when
@@ -174,6 +183,7 @@ export function NodeLifecycleMenu({
     if (attrsSnapshot) items.push({ label: '编辑属性', key: 'edit-attrs', onClick: () => { setMenuOpen(false); setAttrsModal(true); } });
     if (caps === null || caps.stop) items.push({ label: '停止节点', key: 'stop', onClick: () => { setMenuOpen(false); setStopModal(true); } });
     if (caps === null || caps.delete) items.push({ label: '删除节点', key: 'delete', danger: true, onClick: () => { setMenuOpen(false); setDeleteModal(true); } });
+    }
   } else if (isStopped) {
     // stopped + stop_failed: "启动" = restart_node (hub resets lifecycle_state→active on success per PR1.2a)
     items.push({ label: restartBusy ? '启动中…' : '启动节点', key: 'restart', disabled: restartBusy, onClick: onRestart });

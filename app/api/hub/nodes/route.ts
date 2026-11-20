@@ -42,6 +42,11 @@ const NODE_LITE_KEEP = ['alias', 'node_id', 'network_id', 'lifecycle_state', 'av
   'display_name', 'team', 'tags', 'attrs_revision', 'status', 'agent',
   // 权限模式（.439）：与 APP 对齐的只读展示。viewer_can.permission_mode 决定是否可改，
   // 两个都是小字段（字符串 + 布尔对象），对 63KB 的 lite 体积影响可忽略。
+  // `.646`：每个节点是否由 daemon 托管（可重启/停止/删除）。生产实测 361 个节点里
+  // 只有 62 个可控，299 个 `restart_readiness.path = 'manual'`（服务端明确说"现在不能重启"）。
+  // 不传这个布尔，前端就只能给 299 个节点渲染"点了会失败"的按钮 —— 违反本仓
+  // "no dead buttons" 规则。字段是布尔，体积约 +30B/节点。
+  'lifecycle_controllable',
   'permission_mode', 'viewer_can'] as const;
 
 type NodesPayload = { nodes?: Array<Record<string, unknown>> } & Record<string, unknown>;
