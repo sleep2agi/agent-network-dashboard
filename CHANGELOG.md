@@ -6,6 +6,32 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.647 — 2026-11-21
+
+### 修：会话设置里的「重启节点」也按节点可控性判断
+
+`.646` 修了 `/nodes` 的 ⋮ 菜单，但同一事实的第二处入口仍是旧行为：
+`ChatPane / AgentCard → NodeSettingsPanel` 的「节点操作」只看 hub 全局能力，
+照样会对 299 个未托管节点给出可点的「重启节点」。
+
+该面板本来就调用 `useNodeLifecycle()`（为了显示属性），所以直接取 `controllableByAlias` 即可，
+不需要额外请求、也不需要从父组件传参。
+
+| 情形 | 行为 |
+| --- | --- |
+| `canControl === false` | 按钮禁用，文案改为「需在所在机器上手动重启（未由 daemon 托管）」+ title 说明 |
+| `canControl === true` | 不变（重启节点，可点） |
+| `undefined`（旧接口 / 未知） | 保持原行为，不擅自禁用 |
+
+### 验证（本地，两种节点对照）
+
+| 节点 | 结果 |
+| --- | --- |
+| `tang05_课程组长`（不可控） | `disabled=true`，文案「需在所在机器上手动重启（未由 daemon 托管）」 |
+| `TM基建欧`（可控） | `disabled=false`，文案「重启节点」 |
+
+入口：首页节点卡片的「节点设置」按钮（`aria-label="<alias> 节点设置"`）。
+
 ## 0.6.4-preview.646 — 2026-11-21
 
 ### 修：未由 daemon 托管的节点不再渲染可点的生命周期操作
