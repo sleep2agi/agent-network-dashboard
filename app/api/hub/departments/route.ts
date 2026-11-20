@@ -1,4 +1,5 @@
-import { requireDashboardAuth } from '@/app/lib/dashboard-auth';
+import { requireDashboardAuth, getV3UserToken } from '@/app/lib/dashboard-auth';
+import { cachedJson, cacheKey } from '@/app/lib/hub-response-cache';
 import { hubFetch } from '@/app/lib/hub';
 import { resolveDefaultNetworkId } from '@/app/lib/hub-mcp';
 
@@ -26,19 +27,29 @@ export async function GET(req: Request) {
   }
 
   try {
-    const res = await hubFetch(`/api/networks/${encodeURIComponent(networkId)}/departments`);
-    const contentType = res.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      return Response.json(
-        { ok: false, error: 'hub_not_json', status: res.status },
-        { status: res.status === 404 ? 404 : 502 },
-      );
-    }
-    const json = (await res.json()) as { departments?: unknown; members?: unknown; ok?: boolean };
-    return Response.json(
-      { ok: res.ok ? (json.ok ?? true) : false, ...json, network_id: networkId },
-      { status: res.status },
-    );
+    // `.650`：与 people 同一套 10s 短缓存（理由见 hub-response-cache.ts）。
+    // 404 也必须原样透传且不缓存成"成功"——老 Hub 没有这条路由时前端要回退到扁平分组。
+    const token = await getV3UserToken();
+    const key = cacheKey('departments', token || '', new URLSearchParams({ network_id: networkId }));
+    const { status, json, hit } = await cachedJson(key, 10_000, async () => {
+      const res = await hubFetch(`/api/networks/${encodeURIComponent(networkId)}/departments`);
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        return {
+          status: res.status === 404 ? 404 : 502,
+          json: { ok: false, error: 'hub_not_json', status: res.status },
+        };
+      }
+      const parsed = (await res.json()) as { departments?: unknown; members?: unknown; ok?: boolean };
+      return {
+        status: res.status,
+        json: { ok: res.ok ? (parsed.ok ?? true) : false, ...parsed, network_id: networkId },
+      };
+    });
+    return Response.json(json, {
+      status,
+      headers: { 'X-Dashboard-Cache': hit ? 'hit' : 'miss' },
+    });
   } catch (e: unknown) {
     return Response.json(
       { ok: false, error: 'CommHub unreachable', detail: e instanceof Error ? e.message : String(e) },
