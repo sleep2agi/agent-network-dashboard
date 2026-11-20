@@ -611,7 +611,7 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
           ) : total === 0 ? (
             <span>waiting for agents</span>
           ) : (
-            <span><span className="text-[var(--fg)] font-medium tabular-nums">{onlineDisplay}</span><span className="text-[var(--fg-dim)]">/{total}</span> online</span>
+            <span><span className="text-[var(--fg)] font-medium tabular-nums">{onlineDisplay}</span><span className="text-[var(--fg-dim)]">/{total}</span> {/* `.645`：原来这里写 "online"，而客户端把 idle/working 也算"在线"（同一时刻 78 vs 130）。同一个词不能指两个数：这里显式标注是"实时在线"（presence 口径）。 */}<span title="实时在线：此刻真的连着（SSE/心跳）；与客户端「非离线」（最近一次状态）不是同一口径">在线（实时）</span></span>
           )}
         </div>
       </div>
