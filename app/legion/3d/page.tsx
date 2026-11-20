@@ -2067,6 +2067,10 @@ export default function Legion3DPage() {
       if (flowLiveRef.current && taskFlowRef.current.edges.length) {
         const tf = taskFlowRef.current;
         const tsec = now / 1000;
+        // 活流虚线原本一直在流动。`.638` 加它时漏了减动效偏好 —— 系统开了「减少动态效果」的用户
+        // 仍会看到持续流动的线（WCAG 2.3.3）。尊重偏好：线照常画，但不流动。
+        const reduceMotionForFlow = typeof window !== 'undefined'
+          && (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
         for (const fe of tf.edges) {
           const target = byId.get(fe.to);
           if (!target) continue;
@@ -2083,7 +2087,7 @@ export default function Legion3DPage() {
           ctx.strokeStyle = src ? tk.fg : tk.success;
           ctx.lineWidth = 0.7 + strength * 1.3;
           ctx.setLineDash([7, 9]);
-          ctx.lineDashOffset = -((tsec * 30) % 16);
+          ctx.lineDashOffset = reduceMotionForFlow ? 0 : -((tsec * 30) % 16);
           ctx.beginPath();
           ctx.moveTo(ax, ay);
           ctx.quadraticCurveTo(cx, cy, bx, by);
