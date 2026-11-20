@@ -195,10 +195,25 @@ export default function LegionPage() {
     [peopleList, orphans, hierarchy.data, collapsed],
   );
 
+  // `.649`：页内打点。冷启动门（`legion-2d-cold-start`）以前只测「导航 → 首个节点出现」，
+  // 这个数里混了网络与服务端耗时，于是只要 load1 > 6 就判"样本不可信"——白天几乎永远 DEGRADED。
+  // 打点后可以把「数据到达 → 首帧绘制」这一段单独拿出来判：那才是本仓能改的部分。
+  useEffect(() => {
+    if (typeof performance === 'undefined') return;
+    if (layout.nodes.length <= 1) return;
+    try {
+      if (!performance.getEntriesByName('legion:2d:data-ready').length) performance.mark('legion:2d:data-ready');
+      requestAnimationFrame(() => {
+        try {
+          if (!performance.getEntriesByName('legion:2d:first-frame').length) performance.mark('legion:2d:first-frame');
+        } catch { /* 老浏览器没有 mark 不影响页面 */ }
+      });
+    } catch { /* 同上 */ }
+  }, [layout.nodes.length]);
+
   useEffect(() => {
     const memberCount = layout.nodes.filter(n => n.kind === 'person' || n.kind === 'agent').length;
-    if (memberCount <= 120) { setMemberBudget(null); return; }
-    setMemberBudget(60);
+    if (memberCount <= 120) { setMemberBudget(null); return; }    setMemberBudget(60);
     let cur = 60;
     let cancelled = false;
     const step = () => {
