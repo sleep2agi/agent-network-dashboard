@@ -151,9 +151,11 @@ const CORE_SCALE = CORE_BIG ? 1.6 : 1;
 // `?look=light` 的提亮系数按视口分档：桌面 ×2 实测「连线光能 ×1.52 / 区域绝对亮度 ×1.18」达标；
 // 手机同样 ×2 只有 ×1.18 / ×1.07（连线像素占比 5.64%，区域里叠了大量节点，提亮被稀释），
 // 因此窄屏提到 ×3 再测。判据同 deploy/legion-metrics/link-light.mjs（能量 ≥1.3 且绝对 ≥1.15）。
-const LINK_BOOST = LOOK_PARAM !== 'light'
-  ? 1
-  : (typeof window !== 'undefined' && window.innerWidth < 640 ? 3 : 2);
+const NARROW_LINK_BOOST = typeof window !== 'undefined' && window.innerWidth < 640 ? 3 : 2;
+/** `.651`：提亮从「只能靠链接参数」变成可点开关。
+ *  渲染循环每帧读这个模块级绑定，所以切换立刻生效、不需要重挂组件。
+ *  默认值不变：没参数、没存过偏好时仍然是 1（不提亮）。 */
+let LINK_BOOST = LOOK_PARAM === 'light' ? NARROW_LINK_BOOST : 1;
 // 测量开关只在 `?debug=1` 下生效，避免误加参数时线上出现「没有连线」的画布。
 const DEBUG_PROJ = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('debug') === '1';
@@ -4185,6 +4187,18 @@ export default function Legion3DPage() {
   useEffect(() => { loadingRef.current = loading; }, [loading]);
   // `.597`：`?assemble=1` 的开关必须在 mount 后读（见文件顶部注释：模块顶层读会让
   // SSR 与客户端首帧不一致，实测 React #418 4/4）。默认 false ⇒ 默认路径完全不变。
+  // `.651`：骨架提亮开关（?look=light）。URL 优先，其次用户上次的选择；默认仍关闭。
+  const [lookLight, setLookLight] = useState(false);
+  useEffect(() => {
+    try {
+      const param = new URLSearchParams(window.location.search).get('look');
+      const on = param === 'light' ? true
+        : param ? false
+        : window.localStorage.getItem('legion3d-look-light') === '1';
+      setLookLight(on);
+      LINK_BOOST = on ? NARROW_LINK_BOOST : 1;
+    } catch { /* ignore */ }
+  }, []);
   const [assembleOn, setAssembleOn] = useState(false);
   useEffect(() => {
     try {
@@ -4775,6 +4789,23 @@ export default function Legion3DPage() {
         </button>
         {/* `.649`：`?assemble=1` 从"只有链接才知道"变成可点开关。默认仍是关闭，
             用户的显式选择存 localStorage，下次进入沿用（链接参数优先）。 */}
+        <button
+          type="button"
+          onClick={() => {
+            setLookLight(next => {
+              const on = !next;
+              LINK_BOOST = on ? NARROW_LINK_BOOST : 1;
+              try { window.localStorage.setItem('legion3d-look-light', on ? '1' : '0'); } catch { /* ignore */ }
+              return on;
+            });
+          }}
+          aria-pressed={lookLight}
+          aria-label={lookLight ? '关闭骨架提亮' : '开启骨架提亮（连线更亮，暗场里更容易读出层级）'}
+          data-testid="legion-3d-looklight-toggle"
+          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:px-2 ${lookLight ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+        >
+          {lookLight ? '骨架提亮开' : '骨架提亮关'}
+        </button>
         <button
           type="button"
           onClick={() => {
