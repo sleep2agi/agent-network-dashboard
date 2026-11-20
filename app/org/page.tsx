@@ -85,7 +85,7 @@ function GroupSection({ group, depth, counts, focusName, expandAll, overrides, o
           onClick={() => onToggle(group.id, !isOpen)}
           aria-expanded={isOpen}
           aria-label={`${isOpen ? '收起' : '展开'} ${group.name} 的成员`}
-          className="inline-flex items-center gap-1 rounded px-1 py-0.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+          className="inline-flex items-center gap-1 rounded px-1 py-0.5 text-[11px] text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] relative before:absolute before:inset-y-[-6px] before:inset-x-[-6px] before:content-['']"
         >
           <span aria-hidden className={`inline-block transition-transform ${isOpen ? 'rotate-90' : ''}`}>▸</span>
           {group.totalPeople} 人 · {group.totalAgents} Agent
@@ -94,7 +94,7 @@ function GroupSection({ group, depth, counts, focusName, expandAll, overrides, o
           href={`/legion?focus=${encodeURIComponent(group.name)}`}
           title="在军团图里看这个部门"
           aria-label={`在军团图里看 ${group.name}`}
-          className="rounded-full bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]"
+          className="rounded-full bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] relative before:absolute before:inset-y-[-6px] before:inset-x-[-6px] before:content-['']"
         >
           看军团
         </Link>
@@ -103,7 +103,7 @@ function GroupSection({ group, depth, counts, focusName, expandAll, overrides, o
             href={`/tasks?department=${encodeURIComponent(group.id.replace(/^dept:/, ''))}`}
             data-testid="org-dept-task-link"
             title="到任务页按这个部门筛选：数字是当前这批任务里的通讯录投影命中数，不是部门全量"
-            className="rounded-full bg-[var(--accent)]/12 px-1.5 py-0.5 text-[11px] text-[var(--fg)] hover:bg-[var(--accent)]/25"
+            className="rounded-full bg-[var(--accent)]/12 px-1.5 py-0.5 text-[11px] text-[var(--fg)] hover:bg-[var(--accent)]/25 relative before:absolute before:inset-y-[-6px] before:inset-x-[-6px] before:content-['']"
           >
             {taskCount} 条任务 →
           </Link>
