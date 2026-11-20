@@ -115,13 +115,6 @@ const FIT_PARAM = typeof window !== 'undefined'
 // `?fit=auto`（分档）：笔电/平板（宽 < 2000）多留白，超宽屏（≥2000）保持满幅 ——
 // 依据：1440 下 ×0.93 更像"一张构图"，而 3440 下缩小会让底部发空、少了大屏气势
 //（`evidence/fit-compare-20261120/` 六张实图 + 119/110/125 与 133/124/141 读数）。
-// `.638`（可选，默认关闭）：`?flow=live` —— 近 10 分钟"谁派活给谁"的心跳流。
-// 数据来自 /api/hub/tasks（单次上限 200 条）⇒ 撞上限时数字只是下界，界面标「≥N」。
-// 形态依据：实测近 10 分钟 88% 的派活来自 scheduler（空 from）⇒ 主体是"核心→节点"的心跳，
-// 少量"人→人"才是真正的协作线（见 evidence/flow-data-20261120.md）。
-const FLOW_LIVE = typeof window !== 'undefined'
-  ? new URLSearchParams(window.location.search).get('flow') === 'live'
-  : false;
 
 const fitScaleFor = (width: number): number => {
   if (FIT_PARAM === 'loose') return 0.93;
@@ -894,10 +887,19 @@ export default function Legion3DPage() {
     shouldRetryOnError: false,
   });
 
+  // `.638`：`?flow=live` 的开关必须**挂载后**再决定 —— 直接在模块级读 window
+  // 会让 SSR(false) 与首帧(true) 不一致，实测线上触发 React #418（文本 hydration 不匹配）。
+  const [flowLive, setFlowLive] = useState(false);
+  useEffect(() => {
+    setFlowLive(new URLSearchParams(window.location.search).get('flow') === 'live');
+  }, []);
+  const flowLiveRef = useRef(false);
+  flowLiveRef.current = flowLive;
+
   // `.638`：仅在 ?flow=live 时拉任务流，默认路径完全不发这个请求。
   type FlowTask = { from_node_id?: string | null; to_node_id?: string | null; from_name?: string | null; created_at?: string | null };
   const flowTasks = useSWR<{ ok?: boolean; tasks?: FlowTask[] }>(
-    FLOW_LIVE && !demo && networkReady && networkId ? scopedUrl('/api/hub/tasks?limit=200', networkId) : null,
+    flowLive && !demo && networkReady && networkId ? scopedUrl('/api/hub/tasks?limit=200', networkId) : null,
     legionFetcher,
     { refreshInterval: 30000, shouldRetryOnError: false },
   );
@@ -2062,7 +2064,7 @@ export default function Legion3DPage() {
       // `.638`（opt-in）：`?flow=live` 的近 10 分钟派活心跳流。
       // 从核心（无 from / scheduler）射向节点的是主体；真正的人→人只占少数，
       // 所以线宽/亮度按 count 分级，别让"定时器心跳"看起来像"密集协作"。
-      if (FLOW_LIVE && taskFlowRef.current.edges.length) {
+      if (flowLiveRef.current && taskFlowRef.current.edges.length) {
         const tf = taskFlowRef.current;
         const tsec = now / 1000;
         for (const fe of tf.edges) {
@@ -4890,7 +4892,7 @@ export default function Legion3DPage() {
           <>
             {/* 桌面：完整两段提示 */}
             <p className="max-sm:hidden">拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · ⌘K 全局搜索 · 回车打开选中 · R 重置</p>
-          {FLOW_LIVE && (
+          {flowLive && (
             <p data-testid="legion-3d-flow-live-note" className="max-sm:hidden text-[var(--fg-muted)]">
               活流：近 10 分钟 {taskFlow.edges.length} 对派活
               {taskFlow.truncated ? ` · ≥${taskFlow.total} 条（单次上限 200，可能不全）` : ` · ${taskFlow.total} 条任务`}
