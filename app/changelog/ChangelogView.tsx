@@ -95,7 +95,11 @@ export default function ChangelogView({ markdown }: { markdown: string }) {
           <a
             key={`index-${section.title}`}
             href={`#${slugOf(section.title)}`}
-            className="text-[11px] text-[var(--fg-muted)] underline-offset-2 hover:text-[var(--hl)] hover:underline"
+            // 390 宽实测：视觉 18×17，低于 WCAG 2.5.8 的 24×24。
+            // 这里不用 `::before` 扩命中区：导航是 flex-wrap + 12px 间距，隐形区会互相压住，
+            // 反而让两端各少一块（实测仍有 1 个判红）。直接把盒子做到 24 高、左右各加 4px，
+            // 用 `-mx-1` 抵掉横向增量，行距节奏不变。
+            className="-mx-1 inline-flex min-h-6 items-center px-1 text-[11px] text-[var(--fg-muted)] underline-offset-2 hover:text-[var(--hl)] hover:underline"
           >
             {section.title.split('—')[0].trim().replace('0.6.4-preview.', '')}
           </a>
