@@ -115,6 +115,14 @@ const FIT_PARAM = typeof window !== 'undefined'
 // `?fit=auto`（分档）：笔电/平板（宽 < 2000）多留白，超宽屏（≥2000）保持满幅 ——
 // 依据：1440 下 ×0.93 更像"一张构图"，而 3440 下缩小会让底部发空、少了大屏气势
 //（`evidence/fit-compare-20261120/` 六张实图 + 119/110/125 与 133/124/141 读数）。
+// `.638`（可选，默认关闭）：`?flow=live` —— 近 10 分钟"谁派活给谁"的心跳流。
+// 数据来自 /api/hub/tasks（单次上限 200 条）⇒ 撞上限时数字只是下界，界面标「≥N」。
+// 形态依据：实测近 10 分钟 88% 的派活来自 scheduler（空 from）⇒ 主体是"核心→节点"的心跳，
+// 少量"人→人"才是真正的协作线（见 evidence/flow-data-20261120.md）。
+const FLOW_LIVE = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('flow') === 'live'
+  : false;
+
 const fitScaleFor = (width: number): number => {
   if (FIT_PARAM === 'loose') return 0.93;
   if (FIT_PARAM === 'tighter') return 1.06;
@@ -885,6 +893,39 @@ export default function Legion3DPage() {
     refreshInterval: 15000,
     shouldRetryOnError: false,
   });
+
+  // `.638`：仅在 ?flow=live 时拉任务流，默认路径完全不发这个请求。
+  type FlowTask = { from_node_id?: string | null; to_node_id?: string | null; from_name?: string | null; created_at?: string | null };
+  const flowTasks = useSWR<{ ok?: boolean; tasks?: FlowTask[] }>(
+    FLOW_LIVE && !demo && networkReady && networkId ? scopedUrl('/api/hub/tasks?limit=200', networkId) : null,
+    legionFetcher,
+    { refreshInterval: 30000, shouldRetryOnError: false },
+  );
+  const taskFlow = useMemo(() => {
+    const list = flowTasks.data?.tasks ?? [];
+    const truncated = list.length >= 200;
+    const ts = list
+      .map((t) => (t.created_at ? Date.parse(String(t.created_at).replace(' ', 'T')) : NaN))
+      .filter((n) => Number.isFinite(n));
+    const newest = ts.length ? Math.max(...ts) : 0;
+    const cut = newest - 10 * 60 * 1000;
+    const pairs = new Map<string, { from: string | null; to: string; count: number }>();
+    for (const t of list) {
+      const at = t.created_at ? Date.parse(String(t.created_at).replace(' ', 'T')) : NaN;
+      if (!Number.isFinite(at) || at < cut) continue;
+      const toId = t.to_node_id ? `agent:${t.to_node_id}` : null;
+      if (!toId) continue;
+      const fromId = !t.from_node_id || t.from_name === 'scheduler' ? null : `agent:${t.from_node_id}`;
+      if (fromId === toId) continue;
+      const key = `${fromId ?? 'core'}|${toId}`;
+      const cur = pairs.get(key);
+      if (cur) cur.count += 1;
+      else pairs.set(key, { from: fromId, to: toId, count: 1 });
+    }
+    return { edges: [...pairs.values()], truncated, total: list.length };
+  }, [flowTasks.data]);
+  const taskFlowRef = useRef(taskFlow);
+  taskFlowRef.current = taskFlow;
 
   const peopleList = demo ? demo.people : (people.data?.people ?? []);
   const orphans = demo ? demo.orphans : (people.data?.agents_without_owner ?? []);
@@ -2017,6 +2058,44 @@ export default function Legion3DPage() {
       }
       screenRef.current = nodes;
       const byId = new Map(nodes.map(n => [n.item.id, n]));
+
+      // `.638`（opt-in）：`?flow=live` 的近 10 分钟派活心跳流。
+      // 从核心（无 from / scheduler）射向节点的是主体；真正的人→人只占少数，
+      // 所以线宽/亮度按 count 分级，别让"定时器心跳"看起来像"密集协作"。
+      if (FLOW_LIVE && taskFlowRef.current.edges.length) {
+        const tf = taskFlowRef.current;
+        const tsec = now / 1000;
+        for (const fe of tf.edges) {
+          const target = byId.get(fe.to);
+          if (!target) continue;
+          const src = fe.from ? byId.get(fe.from) : null;
+          const ax = src ? src.projected.x : size.width / 2;
+          const ay = src ? src.projected.y : size.height / 2;
+          const bx = target.projected.x;
+          const by = target.projected.y;
+          const cx = (ax + bx) / 2 + (size.width / 2 - (ax + bx) / 2) * 0.12;
+          const cy = (ay + by) / 2 + (size.height / 2 - (ay + by) / 2) * 0.12;
+          const strength = Math.min(1, 0.3 + Math.log2(1 + fe.count) * 0.25);
+          ctx.save();
+          ctx.globalAlpha = 0.16 + strength * 0.34;
+          ctx.strokeStyle = src ? tk.fg : tk.success;
+          ctx.lineWidth = 0.7 + strength * 1.3;
+          ctx.setLineDash([7, 9]);
+          ctx.lineDashOffset = -((tsec * 30) % 16);
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.quadraticCurveTo(cx, cy, bx, by);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+        if (canvasRef.current) {
+          canvasRef.current.dataset.flowLive = String(tf.edges.length);
+          canvasRef.current.dataset.flowTruncated = tf.truncated ? '1' : '0';
+        }
+      }
       const core = byId.get('core');
       const byIdProbe = () => (core ? { x: core.projected.x, y: core.projected.y } : null);
 
@@ -4811,6 +4890,13 @@ export default function Legion3DPage() {
           <>
             {/* 桌面：完整两段提示 */}
             <p className="max-sm:hidden">拖动环绕 · 滚轮或双指缩放（当前 {zoomPct}%）· 双击 Agent 对话 · ⌘K 全局搜索 · 回车打开选中 · R 重置</p>
+          {FLOW_LIVE && (
+            <p data-testid="legion-3d-flow-live-note" className="max-sm:hidden text-[var(--fg-muted)]">
+              活流：近 10 分钟 {taskFlow.edges.length} 对派活
+              {taskFlow.truncated ? ` · ≥${taskFlow.total} 条（单次上限 200，可能不全）` : ` · ${taskFlow.total} 条任务`}
+              {taskFlow.edges.some(e => !e.from) ? ' · 核心→X = 定时/系统派活' : ''}
+            </p>
+          )}
             <p className="max-sm:hidden text-[var(--fg-muted)]">
               光流示意组织连接，节点状态以图例为准。
               部门名在静息时可能留白（避免挤在一起），<strong>悬停该部门或选中它会立即显示名字</strong> —— 看不到名字不代表没有这个部门。

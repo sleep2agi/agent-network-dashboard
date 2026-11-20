@@ -6,6 +6,24 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.638 — 2026-11-20
+
+### 新增（可选，默认关闭）：军团 3D「活流」`?flow=live`
+
+近 10 分钟"谁派活给谁"以流动虚线画在 3D 图上。**默认关闭**，默认路径连请求都不发。
+
+设计依据（`evidence/flow-data-20261120.md`）：实测近 10 分钟 88% 的派活来自 `scheduler`（空 from），
+所以主体是"核心 → 节点"的心跳线（绿色虚线），少量人→人用正文色区分；图例自动注明
+「核心→X = 定时/系统派活」。数据来自 `/api/hub/tasks?limit=200`（单次上限）
+⇒ 撞上限时注明「≥N 条（可能不全）」，不把下界当确数。
+
+实测（本地 `.638`，1440）：
+
+```
+默认（无参数）：dataset.flowLive = null，不发 /api/hub/tasks
+?flow=live    ：14 对派活 · truncated=1（200 条上限）· 控制台 0 error
+```
+
 ## 0.6.4-preview.637 — 2026-11-20
 
 ### 撤回 `.636`：2D 渐进渲染未在同机 A/B 中复现收益
