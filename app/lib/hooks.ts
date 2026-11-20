@@ -89,6 +89,8 @@ interface NodesResp { nodes?: Array<{
   alias?: string;
   node_id?: string;
   lifecycle_state?: string | null;
+  /** `.646`：该节点是否由 daemon 托管（服务端权威）。false ⇒ 重启/停止/删除在这里做不了。 */
+  lifecycle_controllable?: boolean | null;
   // #492 goal-item-3: node display attributes (hub PR #497). Legacy
   // rows read as null/[]/0 respectively — no guard needed by callers.
   display_name?: string | null;
@@ -128,11 +130,15 @@ export function useNodeLifecycle() {
     (nodesByServer[host] ||= []).push({ alias: n.alias, status: n.status ?? null, lifecycle_state: n.lifecycle_state ?? null });
   }
   const lifecycleByAlias: Record<string, string> = {};
+  // `.646`：把"这个节点能不能在这里被控制"单独收集起来。生产实测 361 个节点里 62 个可控、
+  // 299 个 `restart_readiness.path='manual'`；此前 lite 投影把它剥掉了，前端只能给出"点了会失败"的按钮。
+  const controllableByAlias: Record<string, boolean> = {};
   const nodeIdByAlias: Record<string, string> = {};
   const attrsByAlias: Record<string, NodeAttrsSnapshot> = {};
   for (const n of data?.nodes ?? []) {
     if (n.alias && typeof n.lifecycle_state === 'string') lifecycleByAlias[n.alias] = n.lifecycle_state;
     if (n.alias && typeof n.node_id === 'string') nodeIdByAlias[n.alias] = n.node_id;
+    if (n.alias && typeof n.lifecycle_controllable === 'boolean') controllableByAlias[n.alias] = n.lifecycle_controllable;
     if (n.alias) {
       attrsByAlias[n.alias] = {
         display_name: typeof n.display_name === 'string' ? n.display_name : null,
@@ -144,7 +150,7 @@ export function useNodeLifecycle() {
       };
     }
   }
-  return { lifecycleByAlias, nodeIdByAlias, attrsByAlias, nodesByServer, error, refreshNodes: mutate };
+  return { lifecycleByAlias, controllableByAlias, nodeIdByAlias, attrsByAlias, nodesByServer, error, refreshNodes: mutate };
 }
 export type { NodeAttrsSnapshot };
 

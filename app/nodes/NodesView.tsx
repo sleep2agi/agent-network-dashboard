@@ -93,7 +93,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
   // 用 health 的错误作为"Hub 读不到"的信号，让错误态与 ? 计数同时成立。
   const hubUnreadable = !loading && !!healthError && sessions.length === 0;
   const readFailure: Error | null = loadError ?? (hubUnreadable ? new Error('Hub 不可达（读不到节点列表）') : null);
-  const { lifecycleByAlias, nodeIdByAlias, attrsByAlias } = useNodeLifecycle();
+  const { lifecycleByAlias, controllableByAlias, nodeIdByAlias, attrsByAlias } = useNodeLifecycle();
   const { hasUnread, unreadCount, lastActivityAt } = useChatUnread();
   const { mutate } = useSWRConfig();
   // RFC-027 PR2 — after a stop/delete/restart dispatch lands, refresh
@@ -840,6 +840,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
                     nodeId={nodeIdByAlias[s.alias] || s.node_id || s.alias}
                     alias={s.alias}
                     lifecycleState={lifecycleByAlias[s.alias]}
+                    canControl={controllableByAlias[s.alias]}
                     networkId={s.network_id || null}
                     onCompleted={refreshNodes}
                     attrsSnapshot={attrsByAlias[s.alias]}
@@ -929,6 +930,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
                       nodeId={nodeIdByAlias[s.alias] || s.node_id || s.alias}
                       alias={s.alias}
                       lifecycleState={lifecycleByAlias[s.alias]}
+                    canControl={controllableByAlias[s.alias]}
                       networkId={s.network_id || null}
                       onCompleted={refreshNodes}
                       attrsSnapshot={attrsByAlias[s.alias]}
@@ -970,6 +972,7 @@ export function NodesView({ initialAlias = null, initialSessions = null }: { ini
                       nodeId={nodeIdByAlias[s.alias] || s.node_id || s.alias}
                       alias={s.alias}
                       lifecycleState={lifecycleByAlias[s.alias]}
+                    canControl={controllableByAlias[s.alias]}
                       networkId={s.network_id || null}
                       onCompleted={refreshNodes}
                       attrsSnapshot={attrsByAlias[s.alias]}
