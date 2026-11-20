@@ -4821,7 +4821,7 @@ export default function Legion3DPage() {
           <div className="w-full max-w-sm rounded-2xl bg-[var(--bg-secondary)] p-4 text-sm text-[var(--fg)]" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">键盘快捷键</h2>
-              <button type="button" onClick={() => setHelpOpen(false)} aria-label="关闭" className="rounded px-1.5 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)]">✕</button>
+              <button type="button" onClick={() => setHelpOpen(false)} aria-label="关闭" className="rounded px-1.5 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] relative before:absolute before:inset-y-[-10px] before:inset-x-[-8px] before:content-['']">✕</button>
             </div>
             <dl className="mt-3 space-y-1.5 text-xs text-[var(--fg-muted)]">
               {[
@@ -5029,7 +5029,7 @@ export default function Legion3DPage() {
               try { sessionStorage.setItem('legion3d-hint-dismissed', '1'); } catch {}
             }}
             aria-label="关闭提示"
-            className="shrink-0 rounded px-1 text-[var(--fg-dim)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+            className="shrink-0 rounded px-1 text-[var(--fg-dim)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] relative before:absolute before:inset-y-[-10px] before:inset-x-[-8px] before:content-['']"
           >
             ✕
           </button>
@@ -5098,7 +5098,7 @@ export default function Legion3DPage() {
                 setSelected(null);
               }}
               aria-label="关闭详情"
-              className="shrink-0 rounded px-1.5 py-0.5 text-xs text-[var(--fg-dim)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]"
+              className="shrink-0 rounded px-1.5 py-0.5 text-xs text-[var(--fg-dim)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)] relative before:absolute before:inset-y-[-10px] before:inset-x-[-8px] before:content-['']"
             >
               ✕
             </button>
