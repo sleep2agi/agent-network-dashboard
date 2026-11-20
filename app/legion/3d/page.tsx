@@ -5040,6 +5040,9 @@ export default function Legion3DPage() {
       {selectedNode && (
         <div
           data-testid="legion-3d-detail"
+          // 详情面板暴露"当前选中了谁"：探针此前只能靠标题文本比对，遇到同名节点/面包屑就会误判
+          // （实测 3D 点选准确率因此量不出来：4%→8% 都是识别错误，不是命中错误）。
+          data-node-id={selected ?? ''}
           role="status"
           aria-live="polite"
           className={`absolute inset-x-3 bottom-3 rounded-2xl bg-[var(--bg-secondary)]/95 p-3 backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-72 ${cleanView ? 'invisible' : 'visible'} ${listOpen || toolsOpen ? 'hidden sm:block' : 'block'}`}
