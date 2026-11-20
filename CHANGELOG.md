@@ -6,6 +6,30 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.641 — 2026-11-20
+
+### 改：`/api/hub/networks` 不再重复请求（`NetworkProvider` 改用与 Sidebar 同 key 的 SWR）
+
+`NetworkProvider` 用裸 `fetch('/api/hub/networks')`，`Sidebar` 用 `useSWR` 拉同一个 URL。
+首次访问（无网络记忆）时同一 URL 发两遍，实测 `fresh` 画像每次都出现 `networks×2`，
+且**解析完成要等慢的那一条**，随后 4 个带 scope 的请求（people / departments / overview / session-status）
+整体被推后。
+
+改法：Provider 用与 Sidebar 相同的 SWR key（`/api/hub/networks`）+ `dedupingInterval: 10000`，
+共用同一次在途请求；已有网络记忆时不再发解析请求（key=null）。
+
+### 同机交替 A/B（A=`preview.640`，B=本次构建，各 2 轮 × 2 视口，`fresh` 画像）
+
+| 观测量 | A（旧） | B（新） |
+| --- | --- | --- |
+| `/api/hub/networks` 重复 | **8/8 次采样都是 ×2** | **0/8 次出现重复** |
+| 关键路径（1440） | 1671 / 1784 / 2635 / 3233 ms | 1005 / 1370 / 2421 / 3225 ms |
+| 关键路径（390） | 1470 / 1907 / 2468 / 2635 ms | 1805 / 4896 / 5470 / 5849 ms |
+
+**结论只认结构性那一条**：重复请求确实消除（每次采样都可复现）。
+耗时差异在负载 10 的机器上被噪声淹没（同一构建 390 视口自己就从 1805 漂到 5849），
+**本版不宣称任何性能百分比提升** —— 按规矩，测不出来的就不写进结论。
+
 ## 0.6.4-preview.640 — 2026-11-20
 
 ### 修：3D 页三个关闭按钮的触控命中区（20–22px → 约 40px）
