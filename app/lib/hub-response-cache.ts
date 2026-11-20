@@ -32,6 +32,21 @@ const INFLIGHT = new Map<string, Promise<Entry>>();
 /** 上限保护：key 是有限集合（用户 × 网络 × 参数），但仍然兜底，避免内存无界增长。 */
 const MAX_ENTRIES = 128;
 
+/**
+ * 夹具（fixture）环境下关闭缓存。
+ *
+ * 验收套件会在同一个 Next 进程里反复切 Hub 夹具状态（有编制 → 空编制 → 404 → dense），
+ * 并断言页面随夹具变化。10s 缓存会让第二次切换读到上一次的 200，
+ * 表现为"前端没反应"，而实际是缓存没过期（`.650` 首次验收就在这里红了：
+ * `legion-empty-members` 不可见、`2d:legacy404WasDeliberate` 收不到 404）。
+ *
+ * 判据用 `FIXTURE_HUB`：所有验收 runner 都给被测服务器设了这个变量，
+ * 生产环境没有它 —— 所以这是"测试确定性"开关，不是给生产开后门。
+ */
+const DISABLED = typeof process !== 'undefined'
+  && typeof process.env?.FIXTURE_HUB === 'string'
+  && process.env.FIXTURE_HUB.length > 0;
+
 function prune(now: number, ttlMs: number): void {
   for (const [k, v] of STORE) {
     if (now - v.at > ttlMs) STORE.delete(k);
@@ -54,6 +69,10 @@ export async function cachedJson(
   ttlMs: number,
   load: () => Promise<{ status: number; json: unknown }>,
 ): Promise<CachedJson> {
+  if (DISABLED) {
+    const { status, json } = await load();
+    return { status, json, hit: false };
+  }
   const now = Date.now();
   const hitEntry = STORE.get(key);
   if (hitEntry && now - hitEntry.at <= ttlMs) {
