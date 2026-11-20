@@ -1,4 +1,5 @@
 import { requireDashboardAuth, getV3UserToken } from '@/app/lib/dashboard-auth';
+import { cachedJson, cacheKey } from '@/app/lib/hub-response-cache';
 
 const HUB_URL = process.env.COMMHUB_URL || 'http://127.0.0.1:9200';
 
@@ -32,15 +33,26 @@ export async function GET(req: Request) {
   if (!params.has('limit')) params.set('limit', '100');
 
   try {
-    const res = await fetch(`${HUB_URL}/api/requirements/people/directory?${params.toString()}`, {
-      headers: await hubHeaders(),
-      next: { revalidate: 0 },
+    // `.650`：军团首帧 = max(people, departments) + 2ms，Hub 侧这两个接口 0.7–3s。
+    // 2D / 3D / org 三页共用这份目录，10s 内的重复访问不该重复付这笔钱。
+    // key 里带用户 token 的哈希：人员目录按权限过滤，不能跨用户复用。
+    const token = await getV3UserToken();
+    const key = cacheKey('people', token || '', params);
+    const { status, json, hit } = await cachedJson(key, 10_000, async () => {
+      const res = await fetch(`${HUB_URL}/api/requirements/people/directory?${params.toString()}`, {
+        headers: await hubHeaders(),
+        next: { revalidate: 0 },
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        return { status: 502, json: { ok: false, error: 'hub_not_json', status: res.status } };
+      }
+      return { status: res.status, json: await res.json() };
     });
-    const contentType = res.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      return Response.json({ ok: false, error: 'hub_not_json', status: res.status }, { status: 502 });
-    }
-    return Response.json(await res.json(), { status: res.status });
+    return Response.json(json, {
+      status,
+      headers: { 'X-Dashboard-Cache': hit ? 'hit' : 'miss' },
+    });
   } catch (e: unknown) {
     return Response.json(
       { ok: false, error: 'CommHub unreachable', detail: e instanceof Error ? e.message : String(e) },

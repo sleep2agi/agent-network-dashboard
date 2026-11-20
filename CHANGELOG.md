@@ -6,6 +6,37 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.650 — 2026-11-21
+
+### 改：军团的人员目录与部门树走 BFF 短缓存（10s），并合并并发请求
+
+实测（2026-11-21，load1≈15，同一时刻对照）：
+
+| 场景 | 首帧 | 数据到达 | 客户端段 |
+| --- | --- | --- | --- |
+| 老用户（有 network cookie） | 4073 / 3230ms | 4059 / 3219ms | 2 / 2ms |
+| 冷访问（无 cookie） | 6096 / 6094ms | 6010 / 6086ms | 48 / 2ms |
+
+即：**首帧 ≈ max(people, departments)，客户端画完只要 2ms**。
+2D 军团、3D 军团、/org 三页都要这两份数据，来回切换等于重复付这笔钱。
+
+修法（`app/lib/hub-response-cache.ts`）：
+
+| 规则 | 原因 |
+| --- | --- |
+| 10s TTL | 军团页本来就 30s 轮询；10s 内的陈旧可接受，换来切页几乎瞬时 |
+| key 含**用户 token 哈希** | 人员目录按权限过滤，只按网络做 key 会把 A 的可见范围发给 B |
+| 单飞（single-flight） | 并发的 2D/3D 请求共享同一次在途调用 |
+| 只缓存 2xx | 一次 502 不该被冻住 10s |
+| 404 原样透传 | 老 Hub 没有 departments 路由时，前端要按 404 回退到扁平分组 |
+
+响应头 `X-Dashboard-Cache: hit|miss` 便于线上核验。契约测试 `tests/hub-response-cache.test.mts` 钉住
+「不同用户不同 key / TTL 命中 / 过期重取 / 单飞 / 失败不缓存 / 404 透传」六条。
+
+### 说明：这一版不改变任何观感默认值
+
+编队衔接、活流、取景、44px 四项仍保持原状，等 owner 决策。
+
 ## 0.6.4-preview.649 — 2026-11-21
 
 ### 新：军团 3D 的「编队衔接」开关（默认仍关闭）
