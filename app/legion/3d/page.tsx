@@ -1340,6 +1340,20 @@ export default function Legion3DPage() {
     if (layout.nodes.length > 100) document.documentElement.dataset.legionDataReady = '1';
   }, [layout.nodes.length]);
 
+  // `.649`：与 2D 同一套页内打点，让 3D 与 2D 的「客户端段」可直接比较。
+  useEffect(() => {
+    if (typeof performance === 'undefined') return;
+    if (layout.nodes.length <= 100) return;
+    try {
+      if (!performance.getEntriesByName('legion:3d:data-ready').length) performance.mark('legion:3d:data-ready');
+      requestAnimationFrame(() => {
+        try {
+          if (!performance.getEntriesByName('legion:3d:first-frame').length) performance.mark('legion:3d:first-frame');
+        } catch { /* ignore */ }
+      });
+    } catch { /* ignore */ }
+  }, [layout.nodes.length]);
+
   const layoutKeyRef = useRef<string>('');
   useEffect(() => {
     const key = `${layout.stats.groups}:${layout.stats.people}:${layout.stats.agents}:${layout.nodes.length}`;
@@ -4174,8 +4188,13 @@ export default function Legion3DPage() {
   const [assembleOn, setAssembleOn] = useState(false);
   useEffect(() => {
     try {
-      setAssembleOn(new URLSearchParams(window.location.search).get('assemble') === '1');
-    } catch { /* 无法读 search 时保持关闭 */ }
+      const param = new URLSearchParams(window.location.search).get('assemble');
+      if (param === '1') { setAssembleOn(true); return; }
+      if (param === '0') { setAssembleOn(false); return; }
+      // `.649`：URL 没表态时读用户上次在「更多操作」里的选择。
+      // 默认值仍然是关闭 —— 这里只是把开关交到用户手里，不改默认观感。
+      if (window.localStorage.getItem('legion3d-assemble') === '1') setAssembleOn(true);
+    } catch { /* 无法读 search/localStorage 时保持关闭 */ }
   }, []);
   const readError = demo ? null : legionReadError(people.error, hierarchy.error);
   // #73 —— 不再维护 needsLogin 这个「只置位不清零」的 state：SWR 成功后 error 会自己清掉，
@@ -4753,6 +4772,23 @@ export default function Legion3DPage() {
           className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:px-2 ${cleanView ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
         >
           {cleanView ? '恢复界面' : '净屏'}
+        </button>
+        {/* `.649`：`?assemble=1` 从"只有链接才知道"变成可点开关。默认仍是关闭，
+            用户的显式选择存 localStorage，下次进入沿用（链接参数优先）。 */}
+        <button
+          type="button"
+          onClick={() => {
+            setAssembleOn(next => {
+              try { window.localStorage.setItem('legion3d-assemble', next ? '0' : '1'); } catch { /* ignore */ }
+              return !next;
+            });
+          }}
+          aria-pressed={assembleOn}
+          aria-label={assembleOn ? '关闭编队衔接态' : '开启编队衔接态（数据到达前的「正在编队」提示）'}
+          data-testid="legion-3d-assemble-toggle"
+          className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors sm:px-2 ${assembleOn ? 'bg-[var(--accent)]/15 text-[var(--accent-text)]' : 'text-[var(--fg-muted)] hover:bg-[var(--hover-tint)] hover:text-[var(--fg)]'}`}
+        >
+          {assembleOn ? '编队衔接开' : '编队衔接关'}
         </button>
         <button
           type="button"
