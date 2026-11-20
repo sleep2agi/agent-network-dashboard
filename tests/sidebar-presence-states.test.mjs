@@ -5,7 +5,7 @@
 //        1) 加载中（isLoading && total===0） → loading…
 //        2) 失败（statusError && total===0） → status unavailable
 //        3) 真空（total===0）                → waiting for agents
-//        4) 有数据                           → N/M online
+//        4) 有数据                           → N/M 在线（实时）
 //
 // 断言的是**语义顺序**（先判加载、再判失败、最后才是空），不是具体写法：
 // 只要有人把「空态」提到「加载/失败」之前，这条就会红。
@@ -31,7 +31,10 @@ const pos = {
   loading: src.indexOf('loading…'),
   unavailable: src.indexOf('status unavailable'),
   waiting: src.indexOf('waiting for agents'),
-  online: src.indexOf(' online</span>'),
+  // `.645`：有数据态文案从 "N/M online" 改为 "N/M 在线（实时）"（口径对齐客户端时改的）。
+  // 本测试锁的是**分支顺序与驱动条件**，不是具体措辞，所以这里改用只在该分支出现的
+  // `{onlineDisplay}` 作为定位标记 —— 换文案不该让契约失效，但也不该因此放宽顺序断言。
+  online: src.indexOf('{onlineDisplay}'),
 };
 
 assert.ok(pos.loading > 0, '必须存在「loading…」态（加载中不得冒充空态）');
