@@ -132,15 +132,6 @@ export default function LegionPage() {
   // 做法：部门盘与核心先画，成员/Agent 点按预算分批补，避免"进入后先白等好几秒"。
   // 预算为 null 表示"全量"（人少时直接全画，与小网络体验一致）。
   const [memberBudget, setMemberBudget] = useState<number | null>(null);
-  // `.636`：2D 冷启动实测 1440 中位 5.0s（网络仅 0.6s，其余是 430 个节点的一次性渲染）。
-  // 先画部门/核心（少量锚点），成员与 Agent 让出两帧再画 —— 用户先看到"图"，再看到"点"。
-  // 终态与原先完全一致（两帧后全量渲染），只改变首屏出现顺序。
-  const [membersDrawn, setMembersDrawn] = useState(false);
-  useEffect(() => {
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => { raf2 = requestAnimationFrame(() => setMembersDrawn(true)); });
-    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2); };
-  }, []);
   // 与 3D 共用同一个本地偏好：切视图后不用重新勾一次。
   useEffect(() => {
     setListDeptsOnly(window.localStorage.getItem('legion-list-depts-only') === '1');
@@ -1372,8 +1363,7 @@ export default function LegionPage() {
                     // 部门/核心始终先画；成员与 Agent 受预算限制
                     const anchors = layout.nodes.filter(n => n.kind !== 'person' && n.kind !== 'agent');
                     const members = layout.nodes.filter(n => n.kind === 'person' || n.kind === 'agent');
-                    const budgeted = memberBudget === null ? members : members.slice(0, memberBudget);
-                    const shown = membersDrawn ? budgeted : [];
+                    const shown = memberBudget === null ? members : members.slice(0, memberBudget);
                     return [...anchors, ...shown].sort((a, b) => {
                       const rank = (n: typeof a) => (n.kind === 'group' ? 1 : 0);
                       return rank(a) - rank(b);
