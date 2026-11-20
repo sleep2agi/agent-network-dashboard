@@ -6,6 +6,29 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.639 — 2026-11-20
+
+### 修：`?flow=live` 的 hydration 不匹配（React #418）
+
+`.638` 把开关写成了模块级常量（`typeof window !== 'undefined' ? …`）：
+SSR 得到 `false`、客户端首帧得到 `true` ⇒ 新加的说明文字两端不一致 ⇒ hydration mismatch，
+React 丢弃该子树，流线也就画不出来。
+
+线上复测（`.638`）：
+
+```
+默认（无参数）：flowLive=null · 0 error      ← 普通用户不受影响
+?flow=live   ：flowLive=null · React #418    ← opt-in 路径坏了
+```
+
+修复：开关改为**挂载后**由 `useEffect` 决定（state + ref），SSR 与首帧都渲染同一份内容。
+本地 `.639` 复测：
+
+```
+默认：flowLive=null · 0 error
+?flow=live：flowLive=12 对 · truncated=1 · 0 error
+```
+
 ## 0.6.4-preview.638 — 2026-11-20
 
 ### 新增（可选，默认关闭）：军团 3D「活流」`?flow=live`
