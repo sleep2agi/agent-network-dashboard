@@ -6,6 +6,32 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.648 — 2026-11-21
+
+### 修：可托管性"还在读"不再被当成"可以重启"
+
+`.646`/`.647` 让两个入口按 `lifecycle_controllable` 判断能不能重启，但只处理了"值是 false"。
+节点列表还没返回时 `controllableByAlias[alias]` 是 `undefined`，而 undefined 被当成
+"旧接口，保持原行为"——于是**开头约 3–4 秒仍是一个点了必然失败的按钮**。
+
+线上实测（2026-11-21，`dm.vansin.top`，不可控节点「通信Mac马」）：
+
+| 打开面板后 | 按钮 |
+| --- | --- |
+| 200 / 600 / 1200 / 2500 ms | 「重启节点」可点 |
+| 5000 ms | 「需在所在机器上手动重启（未由 daemon 托管）」禁用 |
+
+修法是把"未知"拆成两种，分别处理：
+
+| 情形 | 判据 | 行为 |
+| --- | --- | --- |
+| 列表还没回来 | `canControl === undefined && !nodesLoaded` | 禁用，文案「正在读取可托管状态…」，title 说明在读取 |
+| 列表已回来但没有该字段（旧 Hub） | `canControl === undefined && nodesLoaded` | **保持原行为**，不禁用 |
+
+覆盖两个入口：`/nodes` 的 ⋮ 菜单（`NodeLifecycleMenu` 新增 `controlLoading`）与
+`NodeSettingsPanel` 的「重启节点」。`handleRestart` 也再挡一层，避免键盘/程序化触发绕过
+`disabled`。契约测试 `tests/node-lifecycle-unknown.test.mjs` 锁住"两种未知必须分开判断"。
+
 ## 0.6.4-preview.647 — 2026-11-21
 
 ### 修：会话设置里的「重启节点」也按节点可控性判断

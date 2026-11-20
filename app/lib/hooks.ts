@@ -150,7 +150,13 @@ export function useNodeLifecycle() {
       };
     }
   }
-  return { lifecycleByAlias, controllableByAlias, nodeIdByAlias, attrsByAlias, nodesByServer, error, refreshNodes: mutate };
+  // `.648`：`nodesLoaded` 用来区分两种"查不到可托管性"：
+  //   ① 节点列表还没回来（loading）—— 此时禁用并显示"读取中"，不能给可点按钮
+  //   ② 列表已回来但这个 alias 没有该字段（旧 Hub）—— 保持旧行为，不禁用
+  // 线上实测：面板打开后约 3.5 秒里 `controllableByAlias[alias]` 是 undefined，
+  // 不可控节点因此短暂显示可点的「重启节点」（点了必然失败）。
+  const nodesLoaded = data !== undefined;
+  return { lifecycleByAlias, controllableByAlias, nodeIdByAlias, attrsByAlias, nodesByServer, nodesLoaded, error, refreshNodes: mutate };
 }
 export type { NodeAttrsSnapshot };
 
