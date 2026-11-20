@@ -38,8 +38,11 @@ export interface NodeLifecycleMenuProps {
   alias: string;
   lifecycleState: LifecycleState | null | undefined;
   /** `.646`：该节点是否由 daemon 托管。false ⇒ 本菜单三个操作都不可用，只给出原因。
-   *  undefined（未知/旧接口）保持原有行为，不擅自禁用。 */
+   *  undefined（未知/旧接口）保持原有行为，不擅自禁用。
+   *  `.648`：配合 `controlLoading` 区分"未知"的两种来源——列表还没回来时不能当成可控制。 */
   canControl?: boolean;
+  /** `.648`：节点列表尚未返回，`canControl` 的 undefined 只代表"还在读"。 */
+  controlLoading?: boolean;
   networkId?: string | null;
   /** Called when a lifecycle op completes successfully (caller refreshes nodes list). */
   onCompleted?: () => void;
@@ -115,6 +118,7 @@ export function NodeLifecycleMenu({
   onCompleted,
   attrsSnapshot,
   canControl,
+  controlLoading,
 }: NodeLifecycleMenuProps) {
   // All hooks above any early return (avoid hooks-order regression that
   // bit the mobile app at v0.1.29; 通信龙 explicit call-out for PR2).
@@ -171,7 +175,11 @@ export function NodeLifecycleMenu({
       key: 'loading', disabled: true, onClick: () => {},
     });
   } else if (isActive) {
-    if (canControl === false) {
+    if (controlLoading && canControl === undefined) {
+      // `.648`：节点列表还没回来——此时"未知"不代表可控制。线上实测 /nodes 与设置面板
+      // 都会先渲染一版可点按钮，约 3 秒后才变成"未托管"。这里直接给读取态。
+      items.push({ label: '正在读取可托管状态…', key: 'control-loading', disabled: true, onClick: () => {} });
+    } else if (canControl === false) {
       // `.646`：未托管节点在这里做不了任何生命周期操作，直接给出一条可核验的说明，
       // 而不是渲染"点了会失败"的按钮（本仓 no-dead-buttons 规则）。
       items.push({ label: '需在所在机器上手动操作（未由 daemon 托管）', key: 'hint', disabled: true, onClick: () => {} });
