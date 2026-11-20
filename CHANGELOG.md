@@ -6,6 +6,29 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.646 — 2026-11-21
+
+### 修：未由 daemon 托管的节点不再渲染可点的生命周期操作
+
+线上实测（`.645`，361 个节点）：
+
+| 字段 | 分布 |
+| --- | --- |
+| `lifecycle_controllable` | **True 62 / False 299** |
+| `restart_readiness.path` | `manual` 299（服务端明确"现在不能重启"） |
+
+但 Dashboard 的 BFF `lite=1` 投影把该字段剥掉了，前端只看到 `lifecycle_state=active`，
+于是 **299 个节点都渲染了"点了必然失败"的重启/停止/删除**，违反本仓
+注释里写明的 *usability-audit rule: no dead buttons*。
+
+改动：
+- `NODE_LITE_KEEP` 保留 `lifecycle_controllable`（布尔，约 +30B/节点）
+- `useNodeLifecycle()` 暴露 `controllableByAlias`
+- 菜单在 `canControl === false` 时只显示「需在所在机器上手动操作（未由 daemon 托管）」；
+  `undefined`（旧接口 / 未知）保持原行为，不擅自禁用
+
+本地管理视图验证：不可控节点菜单仅 1 条说明；可控节点菜单不变。
+
 ## 0.6.4-preview.645 — 2026-11-20
 
 ### 改：侧栏在线数标注「在线（实时）」，与客户端「非离线」区分口径
