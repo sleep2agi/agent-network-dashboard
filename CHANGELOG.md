@@ -6,6 +6,10 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.656 — 2026-11-22
+
+- 军团 2D 概览中的成员名会在所属节点附近避开部门圆、其他文字和状态图例。名称绘制在节点上方，不拦截节点点击；放大查看详情后可重置回概览。
+
 ## 0.6.4-preview.655 — 2026-11-22
 
 ### 军团：先看部门，再看 Agent
