@@ -420,6 +420,11 @@ export function projectOrgScene(scene: OrgScene, proj: Projector): { depts: Proj
 
 /** 屏幕点命中：先节点（前面的优先，命中半径至少 6px），再部门盘（椭圆）。 */
 export function hitOrg(projected: { depts: ProjectedBody[]; nodes: ProjectedBody[] }, x: number, y: number, pitch: number, labels: readonly PlacedLabel[] = []): OrgBody | null {
+  // Labels are painted after nodes. Pick the topmost visible label first.
+  for (let i = labels.length - 1; i >= 0; i--) {
+    const l = labels[i];
+    if (x >= l.x && x <= l.x + l.w && y >= l.y && y <= l.y + l.h) return l.body;
+  }
   let best: ProjectedBody | null = null;
   let bestD = Infinity;
   for (let i = projected.nodes.length - 1; i >= 0; i--) {
@@ -429,7 +434,6 @@ export function hitOrg(projected: { depts: ProjectedBody[]; nodes: ProjectedBody
     if (d <= reach && d / reach < bestD) { best = n; bestD = d / reach; }
   }
   if (best) return best.body;
-  for (const l of labels) if (x >= l.x && x <= l.x + l.w && y >= l.y && y <= l.y + l.h) return l.body;
   const squash = Math.max(0.2, Math.sin(pitch));
   let dept: ProjectedBody | null = null;
   for (const d of projected.depts) {
