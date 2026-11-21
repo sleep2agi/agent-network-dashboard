@@ -277,6 +277,19 @@ export default function LegionPage() {
     if (size.width === 0 || size.height === 0) return new Map<string, { x: number; y: number }>();
     const map = new Map<string, { x: number; y: number }>();
     for (const node of layout.nodes) map.set(node.id, toPixel(node, size, 0.84));
+    // In a sparse diagram, keep each satellite outside its owner's click target.
+    // Use the projected direction so edges and labels stay attached at every size.
+    if (layout.nodes.length <= 32) {
+      for (const node of layout.nodes) {
+        if (node.kind !== 'agent' || !node.parentId?.startsWith('person:')) continue;
+        const owner = map.get(node.parentId), point = map.get(node.id);
+        if (!owner || !point) continue;
+        const dx = point.x - owner.x, dy = point.y - owner.y;
+        if (Math.hypot(dx, dy) >= 36) continue;
+        const angle = dx || dy ? Math.atan2(dy, dx) : node.angle;
+        map.set(node.id, { x: owner.x + 36 * Math.cos(angle), y: owner.y + 36 * Math.sin(angle) });
+      }
+    }
     return map;
   }, [layout, size]);
 
@@ -1555,7 +1568,8 @@ export default function LegionPage() {
                             let bestR = Infinity;
                             let bestD = Infinity;
                             for (const n of layout.nodes) {
-                              const q = toPixel(n, size, 0.84);
+                              const q = points.get(n.id);
+                              if (!q) continue;
                               const d = Math.hypot(q.x - pt.x, q.y - pt.y);
                               const rNode = radiusOf(n);
                               const inside = d <= rNode;
