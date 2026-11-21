@@ -3001,7 +3001,7 @@ export default function Legion3DPage() {
         // （旧写法硬编码 3/2 字，1366 下把「未分组」切成「未分」）。
         // `.654`：圆点内短名的可读门槛从 9px 提到 16px。9px 圆点里画 11–13px 的字，
         // 既是"读不出来的白饼"，又会与相邻圆点的内字互相压住（label-overlap 判据 18 对）。
-        const circleShort = node.kind === 'group' && radiusPx >= 16
+        let circleShort = node.kind === 'group' && radiusPx >= 16
           ? legionCircleName(node.label, legionCircleBudget(rx, Math.min(13, Math.max(11, ry * 1.25))))
           : '';
         const drawGroupNameInside = !dim && alpha >= 0.5 && circleShort.length > 0;
@@ -3018,10 +3018,13 @@ export default function Legion3DPage() {
               nodeTextAlphaMin = Math.min(nodeTextAlphaMin, alpha);
               const fs = Math.min(13, Math.max(11, ry * 1.25));
               ctx.font = `600 ${fs}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+              // A mixed-script full name may fit even when a character-count budget truncates it.
+              if ((node.depth ?? 1) <= 1 && short !== node.label && !/[*+]/.test(node.label)
+                && ctx.measureText(node.label).width + 8 <= 2 * rx * Math.sqrt(Math.max(0, 1 - ((fs + 2) / (2 * ry)) ** 2))) circleShort = node.label;
               ctx.fillStyle = tk.fg;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
-              ctx.fillText(short, p.x, p.y + 0.5);
+              ctx.fillText(circleShort, p.x, p.y + 0.5);
             }
           } else if (alpha >= 0.5 && node.kind === 'person' && !face && radiusPx >= 8) {
             nodeTextAlphaMin = Math.min(nodeTextAlphaMin, alpha);
@@ -3088,7 +3091,7 @@ export default function Legion3DPage() {
         // 只有在圆点真的够大（投影半径 ≥16px）时，才允许用"写在圆点里"代替外侧标签。
         const depthOfNode = node.depth ?? 1;
         const readableInside = depthOfNode <= 1 ? Math.max(rx, ry) >= 16 : true;
-        const shortInside = drawGroupNameInside && readableInside && circleShort === Array.from(node.label.replace(/[*+\s]/g, '')).join('');
+        const shortInside = drawGroupNameInside && readableInside && (circleShort === node.label || circleShort === node.label.replace(/[*+\s]/g, ''));
         // 一级部门是「结构骨架」：即使占位面积小也要尝试画名字（放在最低优先级之后排，
         // 由 placeLegionLabel 决定能不能放下），否则 14 个部门里只有 6 个看得到名字。
         const groupWanted = node.kind === 'group'
