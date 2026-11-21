@@ -931,7 +931,20 @@ export default function LegionPage() {
       }
       occupied.push({ ...rect, x: rect.x + dx, y: rect.y + dy });
     }
-  }, [points, detailZoom, nodeScale, selected, hovered, memberBudget, personLabelAllowed, view.k, size.width]);
+    // Adjust only the untouched fit snapshot, never a drag or manual zoom.
+    if (size.width < 640 && !userZoomed.current && view === fitViewRef.current) {
+      const names = labels.filter(t => role(t) === 1).map(t => t.getBoundingClientRect());
+      if (!names.length) return;
+      const lo = stage.left + 2 - Math.min(...names.map(r => r.left));
+      const hi = stage.right - 2 - Math.max(...names.map(r => r.right));
+      const shift = Math.min(hi, Math.max(0, lo));
+      if (lo <= hi && Math.abs(shift) > 0.5) {
+        const next = { ...view, tx: view.tx + shift };
+        fitViewRef.current = next;
+        setView(next);
+      }
+    }
+  }, [points, detailZoom, nodeScale, selected, hovered, memberBudget, personLabelAllowed, view, size.width]);
   // 网络还没确定时也计入 loading：否则 SWR 的 null key 让 isLoading=false，
   // 页面会误显示「军团还没有成员」。
   const loading = !networkReady || (people.isLoading && !people.data) || hierarchy.isLoading;
