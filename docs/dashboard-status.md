@@ -157,6 +157,27 @@
 固定 5.2s 等待 → 等 `legionDataReady` + 2.6s；单次采样 → 3 次取中位；打印 `load1` 与三次原始比值；
 修掉统计阶段的 `w`/`W`/`coveredA` 作用域错误。同一命令因此从「×1.217 / ×0.795 互相矛盾」变为稳定可读。
 
+## 军团 3D：为什么 20 个部门只有约 5 个名字可见（待修，已定位）
+
+`app/legion/3d/page.tsx` 的标签判定：
+
+```ts
+const shortInside = circleShort === Array.from(node.label.replace(/[*+\s]/g, '')).join('');
+const showLabel = ... || (groupWanted && !shortInside) || ...
+```
+
+`LABELS_MODE` 默认是 `'all'`（一级部门本来就该画名字），但 `shortInside` 为真时**外面不再画**：
+
+1. 多数部门名很短（`A站`、`B站`、`TMAI`），被判为"能塞进圆点"；
+2. 361 节点规模下圆点投影只有几像素，圆点里的字读不出来；
+3. 余下的名字还要过 `placeLegionLabel` 的避让，再掉一批。
+
+⇒ 这不是"默认值偏好"，是**判定在大规模数据下失效**。
+
+修法（待实施）：`shortInside` 只在圆点投影半径 ≥ 可读门槛（如 28px）时成立，
+否则照常在圆点外画名字，由避让算法决定落点；一级部门再给更高占位优先级。
+验收用现有三道判据：`legion-label-drop` / `legion-canvas-text` / `legion-visual`。
+
 ## 两条被数据推翻的猜测（2026-11-21，`.648` 期间）
 
 写在这里是因为它们进过我的口头计划，撤回要有记录。
