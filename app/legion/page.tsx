@@ -913,9 +913,11 @@ export default function LegionPage() {
     const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
     const stage = svg.getBoundingClientRect();
     const labels = Array.from(svg.querySelectorAll<SVGTextElement>('[data-node-id] text'));
-    const role = (t: SVGTextElement) => t.dataset.role === 'dept-name' ? 1 : t.dataset.role === 'dept-count' ? 2 : 0;
+    const moveMembers = size.width < 640 && detailZoom === 1;
+    const role = (t: SVGTextElement) => t.dataset.role === 'dept-name' ? 1 : t.dataset.role === 'dept-count' ? 2 : moveMembers && t.closest('[data-node-id^="person:"]') ? 3 : 0;
     for (const t of labels.sort((a, b) => role(a) - role(b))) {
       const owner = t.closest('[data-node-id]')?.getAttribute('data-node-id');
+      if (!moveMembers && owner?.startsWith('person:')) t.removeAttribute('transform');
       const anchor = owner && points.get(owner);
       if (!anchor) continue;
       // getBBox is in the element's local space, unaffected by its own transform.
@@ -935,7 +937,9 @@ export default function LegionPage() {
         }
       }
       if (role(t) && !fits(dx, 0)) {
-        search: for (const r of [6, 12, 18, 24, 30, 36, 42]) for (const [u, v] of [[0,-1],[0,1],[1,0],[-1,0],[1,-1],[-1,-1],[1,1],[-1,1]]) {
+        const member = role(t) === 3;
+        search: for (const r of member ? [3, 6, 9, 12] : [6, 12, 18, 24, 30, 36, 42]) for (const [u, v] of [[0,-1],[0,1],[1,0],[-1,0],[1,-1],[-1,-1],[1,1],[-1,1]]) {
+          if (member && ((rect.x+u*r)*view.k+view.tx < 0 || (rect.x+rect.w+u*r)*view.k+view.tx > stage.width || (rect.y+v*r)*view.k+view.ty < 0 || (rect.y+rect.h+v*r)*view.k+view.ty > stage.height)) continue;
           if (fits(u*r, v*r)) { dx = u*r; dy = v*r; break search; }
         }
       }
