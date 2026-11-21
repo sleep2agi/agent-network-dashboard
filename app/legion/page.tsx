@@ -892,6 +892,35 @@ export default function LegionPage() {
   // 节点尺寸随画布缩放：1280 下取 1，375 下约 0.66。不缩的话部门圆直径
   // 44px 会大于环差，父子部门在窄屏上叠成一坨（实测 375 下圆心只差 29px）。
   const nodeScale = Math.max(0.62, Math.min(1, Math.min(size.width, size.height) / 520));
+  // Offset only department text; keep the node coordinates and hit areas intact.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+    const labels = Array.from(svg.querySelectorAll<SVGTextElement>('[data-node-id] text'));
+    const role = (t: SVGTextElement) => t.dataset.role === 'dept-name' ? 1 : t.dataset.role === 'dept-count' ? 2 : 0;
+    for (const t of labels.sort((a, b) => role(a) - role(b))) {
+      const owner = t.closest('[data-node-id]')?.getAttribute('data-node-id');
+      const anchor = owner && points.get(owner);
+      if (!anchor) continue;
+      // getBBox is in the element's local space, unaffected by its own transform.
+      const box = t.getBBox();
+      if (!box.width || !box.height) continue;
+      const rect = { x: anchor.x + box.x, y: anchor.y + box.y, w: box.width, h: box.height };
+      const fits = (dx: number, dy: number) => !occupied.some(b => rect.x + dx < b.x + b.w + 1 && b.x < rect.x + dx + rect.w + 1 && rect.y + dy < b.y + b.h + 1 && b.y < rect.y + dy + rect.h + 1);
+      let dx = 0, dy = 0;
+      if (role(t) && !fits(0, 0)) {
+        search: for (const r of [6, 12, 18, 24, 30, 36, 42]) for (const [u, v] of [[0,-1],[0,1],[1,0],[-1,0],[1,-1],[-1,-1],[1,1],[-1,1]]) {
+          if (fits(u*r, v*r)) { dx = u*r; dy = v*r; break search; }
+        }
+      }
+      if (role(t)) {
+        if (dx || dy) t.setAttribute('transform', `translate(${dx} ${dy})`);
+        else t.removeAttribute('transform');
+      }
+      occupied.push({ ...rect, x: rect.x + dx, y: rect.y + dy });
+    }
+  }, [points, detailZoom, nodeScale, selected, hovered, memberBudget, personLabelAllowed, view.k]);
   // 网络还没确定时也计入 loading：否则 SWR 的 null key 让 isLoading=false，
   // 页面会误显示「军团还没有成员」。
   const loading = !networkReady || (people.isLoading && !people.data) || hierarchy.isLoading;
@@ -1541,6 +1570,7 @@ export default function LegionPage() {
                                 就写」：小盘写 2 个字，大盘写 4 个字。 */}
                             {((node.span ?? 0) >= 1.0 || isSelected || hovered === node.id || view.k >= 1.25 || r >= 9) && (
                               <text
+                                data-role="dept-name"
                                 textAnchor="middle"
                                 y={3.5 * labelScale}
                                 className="fill-[var(--fg)]"
