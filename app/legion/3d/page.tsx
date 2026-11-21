@@ -3068,7 +3068,8 @@ export default function Legion3DPage() {
         // `.654`：`shortInside` 表示"短名能写在圆点里"。361 节点规模下圆点投影常只有几像素，
         // 字写进去读不出来，而它又抑制了外侧标签 —— 于是 20 个部门只剩约 5 个名字可读。
         // 只有在圆点真的够大（投影半径 ≥16px）时，才允许用"写在圆点里"代替外侧标签。
-        const readableInside = Math.max(rx, ry) >= 16;
+        const depthOfNode = node.depth ?? 1;
+        const readableInside = depthOfNode <= 1 ? Math.max(rx, ry) >= 16 : true;
         const shortInside = readableInside && circleShort === Array.from(node.label.replace(/[*+\s]/g, '')).join('');
         // 一级部门是「结构骨架」：即使占位面积小也要尝试画名字（放在最低优先级之后排，
         // 由 placeLegionLabel 决定能不能放下），否则 14 个部门里只有 6 个看得到名字。
