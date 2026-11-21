@@ -897,6 +897,7 @@ export default function LegionPage() {
     const svg = svgRef.current;
     if (!svg) return;
     const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+    const stage = svg.getBoundingClientRect();
     const labels = Array.from(svg.querySelectorAll<SVGTextElement>('[data-node-id] text'));
     const role = (t: SVGTextElement) => t.dataset.role === 'dept-name' ? 1 : t.dataset.role === 'dept-count' ? 2 : 0;
     for (const t of labels.sort((a, b) => role(a) - role(b))) {
@@ -909,7 +910,17 @@ export default function LegionPage() {
       const rect = { x: anchor.x + box.x, y: anchor.y + box.y, w: box.width, h: box.height };
       const fits = (dx: number, dy: number) => !occupied.some(b => rect.x + dx < b.x + b.w + 1 && b.x < rect.x + dx + rect.w + 1 && rect.y + dy < b.y + b.h + 1 && b.y < rect.y + dy + rect.h + 1);
       let dx = 0, dy = 0;
-      if (role(t) && !fits(0, 0)) {
+      // Keep a near-edge name a couple of pixels inside the initial frame.
+      // Never pull a distant, off-screen label away from its department.
+      if (role(t) === 1 && size.width < 640 && detailZoom === 1) {
+        const m = (t.parentElement as unknown as SVGGraphicsElement)?.getScreenCTM();
+        if (m && m.a > 0) {
+          const left = m.e + box.x * m.a, right = left + box.width * m.a;
+          const shift = Math.max(0, stage.left + 2 - left) - Math.max(0, right - stage.right + 2);
+          if (Math.abs(shift) <= 6 && fits(shift / m.a, 0)) dx = shift / m.a;
+        }
+      }
+      if (role(t) && !fits(dx, 0)) {
         search: for (const r of [6, 12, 18, 24, 30, 36, 42]) for (const [u, v] of [[0,-1],[0,1],[1,0],[-1,0],[1,-1],[-1,-1],[1,1],[-1,1]]) {
           if (fits(u*r, v*r)) { dx = u*r; dy = v*r; break search; }
         }
@@ -920,7 +931,7 @@ export default function LegionPage() {
       }
       occupied.push({ ...rect, x: rect.x + dx, y: rect.y + dy });
     }
-  }, [points, detailZoom, nodeScale, selected, hovered, memberBudget, personLabelAllowed, view.k]);
+  }, [points, detailZoom, nodeScale, selected, hovered, memberBudget, personLabelAllowed, view.k, size.width]);
   // 网络还没确定时也计入 loading：否则 SWR 的 null key 让 isLoading=false，
   // 页面会误显示「军团还没有成员」。
   const loading = !networkReady || (people.isLoading && !people.data) || hierarchy.isLoading;
