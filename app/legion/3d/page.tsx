@@ -3019,8 +3019,15 @@ export default function Legion3DPage() {
               const fs = Math.min(13, Math.max(11, ry * 1.25));
               ctx.font = `600 ${fs}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
               // A mixed-script full name may fit even when a character-count budget truncates it.
-              if ((node.depth ?? 1) <= 1 && short !== node.label && !/[*+]/.test(node.label)
-                && ctx.measureText(node.label).width + 8 <= 2 * rx * Math.sqrt(Math.max(0, 1 - ((fs + 2) / (2 * ry)) ** 2))) circleShort = node.label;
+              if ((node.depth ?? 1) <= 1 && short !== node.label && !/[*+]/.test(node.label)) {
+                const fitsAt = (px: number) => ctx.measureText(node.label).width + 8 <= 2 * rx * Math.sqrt(Math.max(0, 1 - ((px + 2) / (2 * ry)) ** 2));
+                if (fitsAt(fs)) circleShort = node.label;
+                else if (fs > 12) {
+                  ctx.font = '600 12px system-ui, -apple-system, "Noto Sans SC", sans-serif';
+                  if (fitsAt(12)) circleShort = node.label;
+                  else ctx.font = `600 ${fs}px system-ui, -apple-system, "Noto Sans SC", sans-serif`;
+                }
+              }
               ctx.fillStyle = tk.fg;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
