@@ -142,7 +142,9 @@ export default function LegionPage() {
   };
   // 深链 ?focus= 指向的部门不存在时，要明确告诉用户，而不是静默给一张没聚焦的图。
   const [focusMissing, setFocusMissing] = useState<string | null>(null);
-  const [view, setView] = useState({ k: 1, tx: 0, ty: 0 });
+  const [view, setView] = useState<{ k: number; tx: number; ty: number; fitK?: number }>({ k: 1, tx: 0, ty: 0 });
+  // Auto-fit frames the overview. Only zoom beyond that framing reveals detail.
+  const detailZoom = view.k / (view.fitK ?? 1);
   // 折叠的是布局节点 id（dept:xxx），不是 Hub 的 department_id。
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
   const [exporting, setExporting] = useState(false);
@@ -611,6 +613,7 @@ export default function LegionPage() {
       const k = Math.max(1, Math.min(1.8, shortWide ? Math.min(kWide, kTall) : kWide));
       const next = {
         k,
+        fitK: k,
         tx: size.width / 2 - k * px,
         ty: topInset + (size.height - topInset) / 2 - k * py,
       };
@@ -669,7 +672,7 @@ export default function LegionPage() {
       // 有锚点（滚轮）就以指针为准，没有就用容器中心（＋/－ 按钮、键盘）。
       const cx = anchor?.x ?? size.width / 2;
       const cy = anchor?.y ?? size.height / 2;
-      return { k, tx: cx - (cx - v.tx) * (k / v.k), ty: cy - (cy - v.ty) * (k / v.k) };
+      return { ...v, k, tx: cx - (cx - v.tx) * (k / v.k), ty: cy - (cy - v.ty) * (k / v.k) };
     });
   }, [layout, size.height, size.width, statusByAlias]);
 
@@ -1521,7 +1524,7 @@ export default function LegionPage() {
                                 被旁边的子部门盘盖住（研发 就是这样丢掉行的那一个）；小盘/子部门
                                 仍只在悬停、选中或放大后出现在盘下方，右侧面板本来也有总数。 */}
                             {((node.memberCount ?? 0) + (node.agentCount ?? 0)) > 0
-                              && (isSelected || hovered === node.id || view.k >= 1.4
+                              && (isSelected || hovered === node.id || detailZoom >= 1.4
                                 || (layout.stats.people <= LEGION_LABEL_PEOPLE && insideCount)) && (
                               <text
                                 textAnchor="middle"
@@ -1594,7 +1597,7 @@ export default function LegionPage() {
                                 {(node.label || '?').slice(0, 1).toUpperCase()}
                               </text>
                             )}
-                            {((layout.stats.people <= LEGION_LABEL_PEOPLE && personLabelAllowed.has(node.id)) || view.k >= 1.15 || isSelected || hovered === node.id) && (
+                            {((layout.stats.people <= LEGION_LABEL_PEOPLE && personLabelAllowed.has(node.id)) || detailZoom >= 1.15 || isSelected || hovered === node.id) && (
                               <text
                                 textAnchor="middle"
                                 x={-Math.sin(node.angle) * (r + 22 * labelScale)}
@@ -1613,7 +1616,7 @@ export default function LegionPage() {
                             {/* 状态色外圈：离线也保持低亮，不掉成灰点。 */}
                             <circle r={r + 5} fill={statusTone(statusValue)} opacity={statusValue === 'offline' ? 0.08 : 0.16} />
                             <circle r={r} fill={statusTone(statusValue)} stroke={isSelected ? 'var(--hl)' : 'none'} strokeWidth={isSelected ? 2 : 0} />
-                            {(view.k >= 1.4 || isSelected) && (
+                            {(detailZoom >= 1.4 || isSelected) && (
                               <text
                                 textAnchor="middle"
                                 y={r + 14 * labelScale}
