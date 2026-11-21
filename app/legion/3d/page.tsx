@@ -3004,6 +3004,7 @@ export default function Legion3DPage() {
         const circleShort = node.kind === 'group' && radiusPx >= 16
           ? legionCircleName(node.label, legionCircleBudget(rx, Math.min(13, Math.max(11, ry * 1.25))))
           : '';
+        const drawGroupNameInside = !dim && alpha >= 0.5 && circleShort.length > 0;
 
         // 圆心内容：部门写短名、没有头像的成员写首字母 —— 否则大圆点就是一片空白，
         // 远看全是「白饼」（admin 截图里最扎眼的就是这个）。
@@ -3011,7 +3012,7 @@ export default function Legion3DPage() {
           const textColor = dark ? tk.bg : tk.fg;
           // alpha < 0.5 的实体是「故意淡出」的（深一层部门/空部门）：这时画字
           // 只会留下读不清的残影。要么清楚，要么不画。
-          if (alpha >= 0.5 && node.kind === 'group' && radiusPx >= 16) {
+          if (drawGroupNameInside) {
             const short = circleShort;
             if (short) {
               nodeTextAlphaMin = Math.min(nodeTextAlphaMin, alpha);
@@ -3087,7 +3088,7 @@ export default function Legion3DPage() {
         // 只有在圆点真的够大（投影半径 ≥16px）时，才允许用"写在圆点里"代替外侧标签。
         const depthOfNode = node.depth ?? 1;
         const readableInside = depthOfNode <= 1 ? Math.max(rx, ry) >= 16 : true;
-        const shortInside = readableInside && circleShort === Array.from(node.label.replace(/[*+\s]/g, '')).join('');
+        const shortInside = drawGroupNameInside && readableInside && circleShort === Array.from(node.label.replace(/[*+\s]/g, '')).join('');
         // 一级部门是「结构骨架」：即使占位面积小也要尝试画名字（放在最低优先级之后排，
         // 由 placeLegionLabel 决定能不能放下），否则 14 个部门里只有 6 个看得到名字。
         const groupWanted = node.kind === 'group'
