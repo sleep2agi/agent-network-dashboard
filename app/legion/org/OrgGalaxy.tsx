@@ -1,4 +1,5 @@
 'use client';
+import { leaderPath } from '../../lib/org-leader';
 
 import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react';
 import {
@@ -326,7 +327,11 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
         g.lineWidth = 1;
         g.beginPath();
         g.moveTo(l.anchorX, l.anchorY);
-        g.lineTo(Math.max(l.x, Math.min(l.x + l.w, l.anchorX)), Math.max(l.y, Math.min(l.y + l.h, l.anchorY)));
+        if (spinRef.current || animRef.current || drag.current?.moved) {
+          g.lineTo(Math.max(l.x, Math.min(l.x + l.w, l.anchorX)), Math.max(l.y, Math.min(l.y + l.h, l.anchorY)));
+        } else {
+          for (const point of leaderPath({ x: l.anchorX, y: l.anchorY }, l, labels, width, height)) g.lineTo(point.x, point.y);
+        }
         g.stroke();
       }
       const isSel = sel?.id === l.body.id || hovered?.id === l.body.id;
