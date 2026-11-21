@@ -3545,6 +3545,9 @@ export default function Legion3DPage() {
     const current = depts.findIndex(d => d.id === focus);
     const nextIndex = current < 0 ? 0 : (current + dir + depts.length) % depts.length;
     const target = depts[nextIndex];
+    // Manual stepping is an interaction: give the new department the same
+    // reading pause as a drag before idle rotation resumes.
+    lastInteract.current = performance.now();
     setFocus(target.id);
     tourIndex.current = nextIndex;
     tourAt.current = 0;
