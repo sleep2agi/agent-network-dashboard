@@ -2984,7 +2984,9 @@ export default function Legion3DPage() {
 
         // 圆心短名：绘制与「外层标签去重」两处共用一份，预算按圆的像素宽度算
         // （旧写法硬编码 3/2 字，1366 下把「未分组」切成「未分」）。
-        const circleShort = node.kind === 'group' && radiusPx >= 9
+        // `.654`：圆点内短名的可读门槛从 9px 提到 16px。9px 圆点里画 11–13px 的字，
+        // 既是"读不出来的白饼"，又会与相邻圆点的内字互相压住（label-overlap 判据 18 对）。
+        const circleShort = node.kind === 'group' && radiusPx >= 16
           ? legionCircleName(node.label, legionCircleBudget(rx, Math.min(13, Math.max(11, ry * 1.25))))
           : '';
 
@@ -2994,7 +2996,7 @@ export default function Legion3DPage() {
           const textColor = dark ? tk.bg : tk.fg;
           // alpha < 0.5 的实体是「故意淡出」的（深一层部门/空部门）：这时画字
           // 只会留下读不清的残影。要么清楚，要么不画。
-          if (alpha >= 0.5 && node.kind === 'group' && radiusPx >= 9) {
+          if (alpha >= 0.5 && node.kind === 'group' && radiusPx >= 16) {
             const short = circleShort;
             if (short) {
               nodeTextAlphaMin = Math.min(nodeTextAlphaMin, alpha);

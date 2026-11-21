@@ -33,7 +33,7 @@ export function placeLegionLabel({ anchor, width, height, bounds, occupied, bodi
   const angle = dx === 0 && dy === 0 ? Math.PI / 2 : Math.atan2(dy, dx);
   // Prefer the existing outward direction, then try nearby sides. Space which
   // cannot fit a readable label stays empty; the node and details remain usable.
-  for (const extra of [0, 12, 28]) {
+  for (const extra of [0, 12, 22, 34, 48]) {
     for (const turn of [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, Math.PI]) {
       const ux = Math.cos(angle + turn);
       const uy = Math.sin(angle + turn);
