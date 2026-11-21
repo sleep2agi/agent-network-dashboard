@@ -311,11 +311,10 @@ const COMMANDS: Command[] = [
     } },
 ];
 
-export function CommandPalette() {
+export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
   // 当前网络：命令面板取数必须带作用域（否则会列出其它网络的 Agent）
   const { networkId } = useNetworkId();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -323,12 +322,6 @@ export function CommandPalette() {
   // Global hotkey ⌘K / Ctrl+K / `/`
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const meta = e.metaKey || e.ctrlKey;
-      if (meta && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setOpen(prev => !prev);
-        return;
-      }
       // `/` opens only when no input is currently focused
       if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA' && !open) {
         e.preventDefault();
