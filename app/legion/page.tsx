@@ -1707,7 +1707,8 @@ export default function LegionPage() {
                             {((layout.stats.people <= LEGION_LABEL_PEOPLE && personLabelAllowed.has(node.id)) || detailZoom >= 1.15 || isSelected || hovered === node.id) && (
                               <text
                                 textAnchor="middle"
-                                x={-Math.sin(node.angle) * (r + 22 * labelScale)}
+                                 x={-Math.sin(node.angle) * (r + 22 * labelScale)}
+                                 id={`legion-member-text-${node.id}`}
                                 y={Math.cos(node.angle) * (r + 22 * labelScale) + 3}
                                 className="fill-[var(--fg)] [paint-order:stroke] [stroke:var(--bg-secondary)] [stroke-width:3px]"
                                 style={{ fontSize: 10 * labelScale }}
@@ -1738,6 +1739,13 @@ export default function LegionPage() {
                       </g>
                     );
                   })}
+                  {detailZoom === 1 && <g aria-hidden="true" pointerEvents="none">
+                    {layout.nodes.filter(n => n.kind === 'person').map(n => {
+                      const point = points.get(n.id);
+                      if (!point) return null;
+                      return <use key={n.id} href={`#${encodeURIComponent(`legion-member-text-${n.id}`)}`} transform={`translate(${point.x} ${point.y})`} opacity={activeSet && !activeSet.has(n.id) ? 0.2 : 1} />;
+                    })}
+                  </g>}
                 </g>
               </svg>
 
