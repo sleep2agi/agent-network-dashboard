@@ -1508,6 +1508,8 @@ export default function Legion3DPage() {
     // 空白画布那次排查需要区分「没启动」「被反复重建」「size 为 0」三种情况。
     const runId = (window as unknown as { __legion3dRun?: number }).__legion3dRun = ((window as unknown as { __legion3dRun?: number }).__legion3dRun ?? 0) + 1;
     let bgLayer: HTMLCanvasElement | null = null;
+    let coreGlow: HTMLCanvasElement | null = null;
+    let coreGlowKey = '';
     let bgKey = '';
     const buildBackdrop = () => {
       const cv = document.createElement('canvas');
@@ -2283,14 +2285,27 @@ export default function Legion3DPage() {
       // 圆心光晕：给整张图一个视觉重心，不然四周的环会散掉。
       const coreCenter = byIdProbe();
       if (coreCenter) {
-        const halo = ctx.createRadialGradient(coreCenter.x, coreCenter.y, 0, coreCenter.x, coreCenter.y, Math.min(size.width, size.height) * (fxOn() ? FX.haloRadius : 0.34));
-        // 浅底上这层核心光晕是整张图泛绿的主因：只留到能看出重心为止。
+        const radius = Math.min(size.width, size.height) * (fxOn() ? FX.haloRadius : 0.34);
         const haloInk = (fxOn() ? FX?.accent : null) ?? tk.accent;
-        halo.addColorStop(0, hexToRgba(haloInk, dark ? (fxOn() ? FX.haloAlpha : 0.16) : 0.035));
-        halo.addColorStop(0.45, hexToRgba(haloInk, dark ? (fxOn() ? 0.07 : 0.05) : 0.012));
-        halo.addColorStop(1, hexToRgba(haloInk, 0));
-        ctx.fillStyle = halo;
-        ctx.fillRect(0, 0, size.width, size.height);
+        const alpha = dark ? (fxOn() ? FX.haloAlpha : 0.16) : 0.035;
+        const middle = dark ? (fxOn() ? 0.07 : 0.05) : 0.012;
+        const key = `${radius}:${haloInk}:${alpha}:${middle}`;
+        const half = Math.ceil(radius) + 1;
+        if (coreGlowKey !== key) {
+          coreGlow ??= document.createElement('canvas');
+          coreGlow.width = coreGlow.height = half * 2;
+          const g = coreGlow.getContext('2d');
+          if (g) {
+            const halo = g.createRadialGradient(half, half, 0, half, half, radius);
+            halo.addColorStop(0, hexToRgba(haloInk, alpha));
+            halo.addColorStop(0.45, hexToRgba(haloInk, middle));
+            halo.addColorStop(1, hexToRgba(haloInk, 0));
+            g.fillStyle = halo;
+            g.fillRect(0, 0, half * 2, half * 2);
+            coreGlowKey = key;
+          }
+        }
+        if (coreGlow) ctx.drawImage(coreGlow, coreCenter.x - half, coreCenter.y - half);
       }
 
       // 选中节点的聚光：把视线钉在被选中的那一个上，周围再按 activeSet 压暗。
