@@ -178,6 +178,22 @@ const showLabel = ... || (groupWanted && !shortInside) || ...
 否则照常在圆点外画名字，由避让算法决定落点；一级部门再给更高占位优先级。
 验收用现有三道判据：`legion-label-drop` / `legion-canvas-text` / `legion-visual`。
 
+## 判据必须对应被测页面的渲染方式（2026-11-21，`.654` 期间的教训）
+
+`deploy/legion-metrics/label-overlap.mjs` 长期写死 `/legion`（2D），靠读取
+`svg[aria-label="军团组织架构图"]` 里的标签矩形来算重叠。3D 是 canvas，没有这些矩形，
+所以：
+
+- 拿它去判 3D 改动，**永远得到同一组数**（连续四次：49 个标签 / 18 对重叠）——我因此误判过四次；
+- 给脚本加 `--page /legion/3d` 后会超时，因为没有 SVG 可读 ⇒ 3D 目前**没有标签重叠判据**；
+- 3D 可用的判据只有 `legion-label-drop`（labelStats）、`legion-canvas-text`（对比度）+ 人工看截图。
+
+同时确认了一个与 3D 无关的**既有缺陷**：2D `/legion`（侧栏默认入口）本身有
+**18 对标签重叠**（上限 3），值得单独修。
+
+规则：新增/使用判据前，先确认它读的是被测页面的渲染物（SVG rect / canvas 采样 / DOM），
+否则测量结果与改动无关而自己不知道。
+
 ## 两条被数据推翻的猜测（2026-11-21，`.648` 期间）
 
 写在这里是因为它们进过我的口头计划，撤回要有记录。
