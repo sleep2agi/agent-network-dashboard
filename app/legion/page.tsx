@@ -960,6 +960,8 @@ export default function LegionPage() {
       const names = labels.filter(t => t.hasAttribute('x') && t.closest('[data-node-id^="person:"]'));
       const bounds = new Map(labels.map(t => [t, t.getBoundingClientRect()]));
       const discs = Array.from(svg.querySelectorAll('[data-node-id^="dept:"] circle'), c => c.getBoundingClientRect());
+      const legend = stageRef.current?.querySelector('[data-role="legion-status-legend"]')?.getBoundingClientRect();
+      if (legend) discs.push(legend);
       const hits = (a: DOMRect, b: DOMRect) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
       for (const t of names) {
         const a = bounds.get(t)!;
@@ -1746,7 +1748,7 @@ export default function LegionPage() {
                 <span className="px-1 text-[11px] tabular-nums text-[var(--fg-muted)]">{Math.round(view.k * 100)}%</span>
               </div>
 
-              <div className="absolute right-3 top-3 flex flex-wrap items-center gap-2 rounded-lg bg-[var(--bg)]/80 px-2 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur">
+              <div data-role="legion-status-legend" className="absolute right-3 top-3 flex flex-wrap items-center gap-2 rounded-lg bg-[var(--bg)]/80 px-2 py-1 text-[11px] text-[var(--fg-muted)] backdrop-blur">
                 {/* 和 3D 页、导出图用同一套中文图例（之前这里是 working/idle/offline，
                     同一张图在页面上是英文、导出后是中文）。 */}
                 {([
