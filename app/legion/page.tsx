@@ -956,6 +956,33 @@ export default function LegionPage() {
       if (moveMembers && owner.startsWith('person:') && !reserved) memberSlots.set(t, slot);
     }
     // Adjust only the untouched fit snapshot, never a drag or manual zoom.
+    if (detailZoom === 1) {
+      const names = labels.filter(t => t.hasAttribute('x') && t.closest('[data-node-id^="person:"]'));
+      const bounds = new Map(labels.map(t => [t, t.getBoundingClientRect()]));
+      const discs = Array.from(svg.querySelectorAll('[data-node-id^="dept:"] circle'), c => c.getBoundingClientRect());
+      const hits = (a: DOMRect, b: DOMRect) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+      for (const t of names) {
+        const a = bounds.get(t)!;
+        if (!discs.some(d => hits(a, d))) continue;
+        const body = t.closest('[data-node-id]')?.querySelector('circle')?.getBoundingClientRect();
+        const matrix = t.getScreenCTM();
+        if (!body || !matrix?.a || !matrix.d) continue;
+        const obstacles = [...bounds].filter(([other]) => other !== t).map(([, b]) => b);
+        let best: DOMRect | null = null, cost = Infinity;
+        for (const gap of [2, 5, 8, 12]) for (let i = 0; i < 32; i++) {
+          const u = Math.cos(i * Math.PI / 16), v = Math.sin(i * Math.PI / 16);
+          const r = body.width / 2 + gap + (Math.abs(u)*a.width + Math.abs(v)*a.height)/2;
+          const b = new DOMRect(body.left + body.width/2 + r*u - a.width/2, body.top + body.height/2 + r*v - a.height/2, a.width, a.height);
+          const score = r + 0.1*Math.hypot(b.x-a.x, b.y-a.y);
+          if (score >= cost || b.left < stage.left || b.right > stage.right || b.top < stage.top || b.bottom > stage.bottom || discs.some(d => hits(b,d)) || obstacles.some(o => hits(b,o))) continue;
+          best = b; cost = score;
+        }
+        if (best) {
+          t.setAttribute('transform', `translate(${(best.x-a.x)/matrix.a} ${(best.y-a.y)/matrix.d}) ${t.getAttribute('transform') || ''}`);
+          bounds.set(t, best);
+        }
+      }
+    }
     if (size.width < 640 && !userZoomed.current && view === fitViewRef.current) {
       const names = labels.filter(t => role(t) === 1).map(t => t.getBoundingClientRect());
       if (!names.length) return;
