@@ -2984,7 +2984,9 @@ export default function Legion3DPage() {
 
         // 圆心短名：绘制与「外层标签去重」两处共用一份，预算按圆的像素宽度算
         // （旧写法硬编码 3/2 字，1366 下把「未分组」切成「未分」）。
-        const circleShort = node.kind === 'group' && radiusPx >= 9
+        // `.654`：圆点内短名的可读门槛从 9px 提到 16px。9px 圆点里画 11–13px 的字，
+        // 既是"读不出来的白饼"，又会与相邻圆点的内字互相压住（label-overlap 判据 18 对）。
+        const circleShort = node.kind === 'group' && radiusPx >= 16
           ? legionCircleName(node.label, legionCircleBudget(rx, Math.min(13, Math.max(11, ry * 1.25))))
           : '';
 
@@ -2994,7 +2996,7 @@ export default function Legion3DPage() {
           const textColor = dark ? tk.bg : tk.fg;
           // alpha < 0.5 的实体是「故意淡出」的（深一层部门/空部门）：这时画字
           // 只会留下读不清的残影。要么清楚，要么不画。
-          if (alpha >= 0.5 && node.kind === 'group' && radiusPx >= 9) {
+          if (alpha >= 0.5 && node.kind === 'group' && radiusPx >= 16) {
             const short = circleShort;
             if (short) {
               nodeTextAlphaMin = Math.min(nodeTextAlphaMin, alpha);
@@ -3065,7 +3067,12 @@ export default function Legion3DPage() {
         // 标签：Agent 太多，只有近处或高亮时才画，避免糊成一片。
         // 部门的短名已经写在圆点里；名字短到圆心能写全时，外面再画一个一样的
         // 名字只是重复（密集网络里尤其明显），只有悬停/选中才补。
-        const shortInside = circleShort === Array.from(node.label.replace(/[*+\s]/g, '')).join('');
+        // `.654`：`shortInside` 表示"短名能写在圆点里"。361 节点规模下圆点投影常只有几像素，
+        // 字写进去读不出来，而它又抑制了外侧标签 —— 于是 20 个部门只剩约 5 个名字可读。
+        // 只有在圆点真的够大（投影半径 ≥16px）时，才允许用"写在圆点里"代替外侧标签。
+        const depthOfNode = node.depth ?? 1;
+        const readableInside = depthOfNode <= 1 ? Math.max(rx, ry) >= 16 : true;
+        const shortInside = readableInside && circleShort === Array.from(node.label.replace(/[*+\s]/g, '')).join('');
         // 一级部门是「结构骨架」：即使占位面积小也要尝试画名字（放在最低优先级之后排，
         // 由 placeLegionLabel 决定能不能放下），否则 14 个部门里只有 6 个看得到名字。
         const groupWanted = node.kind === 'group'
