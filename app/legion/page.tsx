@@ -348,6 +348,20 @@ export default function LegionPage() {
   }, [layout]);
 
   const selectedNode = layout.nodes.find(n => n.id === selected) ?? null;
+  const agentGroupPath = useMemo(() => {
+    if (selectedNode?.kind !== 'agent') return '';
+    const byId = new Map(layout.nodes.map(n => [n.id, n]));
+    const names: string[] = [], seen = new Set<string>();
+    let parentId = selectedNode.parentId;
+    while (parentId && !seen.has(parentId)) {
+      seen.add(parentId);
+      const parent = byId.get(parentId);
+      if (!parent || parent.kind === 'core') break;
+      if (parent.kind === 'group') names.unshift(parent.label);
+      parentId = parent.parentId;
+    }
+    return names.join(' › ');
+  }, [selectedNode, layout.nodes]);
   // 选中部门时把它名下的成员/Agent 标出来：3D 那边已经这么做了（飞到正面 +
   // 成员描环），2D 只有「选中高亮」，来回切视图会失去方向感。
   const selectedMemberIds = useMemo(() => {
@@ -1765,6 +1779,7 @@ export default function LegionPage() {
                     </button>
                   </div>
                   {selectedNode.sublabel && <p className="text-[11px] text-[var(--fg-muted)]">{selectedNode.sublabel}</p>}
+                  {agentGroupPath && <p className="mt-1 break-words text-xs text-[var(--fg-muted)]">组织路径：{agentGroupPath}</p>}
                   {selectedNode.kind === 'group' && (
                     <p className="mt-1 text-[11px] text-[var(--fg-muted)]">
                       {selectedNode.leader ? `负责人 ${selectedNode.leader} · ` : '未设负责人 · '}
