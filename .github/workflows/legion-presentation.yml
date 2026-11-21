@@ -18,8 +18,12 @@ on:
     paths:
       - 'app/legion/**'
       - 'app/lib/legion*.ts'
+      - 'app/lib/org-*.ts'
+      - 'app/components/CommandPalette.tsx'
+      - 'app/components/AppShell.tsx'
       - 'app/globals.css'
       - 'tests/e2e-legion-presentation.spec.ts'
+      - 'tests/e2e-legion-org3d.spec.ts'
       - '.github/workflows/legion-presentation.yml'
   workflow_dispatch:
 
@@ -54,3 +58,7 @@ jobs:
           ANET_DASHBOARD_PASSWORD: admin123
           TEST_URL: http://localhost:3000
         run: npx playwright test tests/e2e-legion-presentation.spec.ts --reporter=line
+
+      # Both specs use the same isolated Hub port; run them sequentially.
+      - name: Department-clustered 3D organization (340 agents)
+        run: npx playwright test tests/e2e-legion-org3d.spec.ts --workers=1 --reporter=line
