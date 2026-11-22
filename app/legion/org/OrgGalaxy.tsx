@@ -83,6 +83,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const legendRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<OrgView>({ ...DEFAULT_ORG_VIEW });
   const sizeRef = useRef({ width: 0, height: 0 });
   const tokensRef = useRef<Tokens | null>(null);
@@ -315,7 +316,8 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
         requests.push({ id: n.body.id, body: n.body, x: n.x, y: n.y, r: n.r, w: measure(n.body.name, subFont) + 10, h: 16, priority: 10 - n.depth, required: false });
       }
     }
-    const labels = layoutOrgLabels(requests, { width, height });
+    const labelHeight = width < 640 && legendRef.current ? Math.min(height, legendRef.current.offsetTop) : height;
+    const labels = layoutOrgLabels(requests, { width, height: labelHeight });
     canvas.dataset.deptLabels = String(labels.filter(l => l.body.kind === 'dept').length);
     canvas.dataset.personLabels = String(labels.filter(l => l.body.kind === 'person').length);
     labelsRef.current = labels;
@@ -574,11 +576,11 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
       <button type="button" onClick={resetView} data-testid="org3d-reset"
         className="min-h-11 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]">重置视角</button>
     </div>
-    <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center gap-1" role="group" aria-label="按状态筛选 Agent" data-testid="org3d-legend">
+    <div ref={legendRef} className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center gap-1 max-[375px]:grid max-[375px]:grid-cols-5" role="group" aria-label="按状态筛选 Agent" data-testid="org3d-legend">
       {ORG_STATUSES.map(s => <button key={s} type="button" aria-pressed={statusFilter === s} onClick={() => onStatusFilter(statusFilter === s ? null : s)}
-        className={`flex min-h-11 items-center gap-1.5 rounded-lg border px-2.5 text-xs ${statusFilter === s ? 'border-[var(--accent-text)] bg-[var(--bg-elevated)]' : 'border-[var(--border)] bg-[var(--bg-secondary)]'} text-[var(--fg)] hover:bg-[var(--hover-tint)]`}>
+        className={`flex min-h-11 items-center gap-1.5 rounded-lg border px-2.5 text-xs max-[375px]:flex-col max-[375px]:justify-center max-[375px]:gap-0 max-[375px]:px-0.5 ${statusFilter === s ? 'border-[var(--accent-text)] bg-[var(--bg-elevated)]' : 'border-[var(--border)] bg-[var(--bg-secondary)]'} text-[var(--fg)] hover:bg-[var(--hover-tint)]`}>
         <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: `var(--${({ working: 'success', idle: 'info', blocked: 'warning', error: 'danger', offline: 'fg-muted' } as const)[s]})` }} />
-        {ORG_STATUS_LABEL[s]} {scene.totals.counts[s]}
+        <span>{ORG_STATUS_LABEL[s]}</span> <span>{scene.totals.counts[s]}</span>
       </button>)}
       <span className="ml-auto hidden text-[11px] text-[var(--fg-muted)] md:inline">拖动旋转 · 滚轮缩放 · Shift+拖动平移 · 双击聚焦 · R 重置</span>
     </div>
