@@ -554,7 +554,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
     return lines;
   })();
 
-  const summary = `组织 3D：${scene.totals.depts} 个部门、${scene.totals.people} 名成员、${scene.totals.agents} 个 Agent。拖动旋转，滚轮缩放，Shift+拖动平移，点击查看详情，双击聚焦，R 重置视角。`;
+  const summary = `组织 3D：${scene.totals.depts} 个部门、${scene.totals.people} 名成员、${scene.totals.agents} 个 Agent。拖动旋转，滚轮或双指缩放，Shift+拖动平移，点击查看详情，双击聚焦，R 重置视角。`;
   return <div ref={wrapRef} className="relative h-full min-h-[420px] w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)]" data-testid="org3d-stage">
     <canvas ref={canvasRef} tabIndex={0} role="img" aria-label={summary} data-testid="org3d-canvas"
       data-depts={scene.totals.depts} data-people={scene.totals.people} data-agents={scene.totals.agents}

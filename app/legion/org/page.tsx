@@ -135,7 +135,7 @@ export default function LegionOrg3DPage() {
         <p className="mt-1 text-xs text-[var(--fg-muted)]" data-testid="org3d-counts">
           {loading ? '正在读取完整编制…' : `${scene.totals.depts} 个部门 · ${scene.totals.people} 名成员 · ${scene.totals.agents} 个 Agent`}
         </p>
-        <p className="mt-1 text-[11px] text-[var(--fg-muted)]">每块圆盘是一个部门，盘内的小丘是同一负责人名下的 Agent，负责人悬浮在小丘上方。</p>
+        <p className="mt-1 text-[11px] text-[var(--fg-muted)]"><span className="md:hidden">圆盘代表部门，小丘聚合成员的 Agent。单指旋转，双指缩放。</span><span className="hidden md:inline">每块圆盘是一个部门，盘内的小丘是同一负责人名下的 Agent，负责人悬浮在小丘上方。</span></p>
       </div>
       <div className="flex flex-wrap items-center gap-1">
         <div className="relative">
