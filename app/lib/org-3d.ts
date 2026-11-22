@@ -487,7 +487,7 @@ function rectHitsCircle(rect: { x: number; y: number; w: number; h: number }, cx
  * 贪心标签避让：按优先级逐个放，候选位置为锚点上/下/右/左，再逐圈外扩。
  * 保证：非 forced 的标签两两不重叠、不出界、不盖住任何 required 标签的锚点。
  */
-export function layoutOrgLabels(requests: readonly LabelRequest[], size: ScreenSize, margin = 4): PlacedLabel[] {
+export function layoutOrgLabels(requests: readonly LabelRequest[], size: ScreenSize, margin = 4, toolbar?: { x: number; y: number; w: number; h: number }): PlacedLabel[] {
   const placed: PlacedLabel[] = [];
   const anchors = requests.filter(r => r.required);
   const sorted = [...requests].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
@@ -515,7 +515,7 @@ export function layoutOrgLabels(requests: readonly LabelRequest[], size: ScreenS
     for (const c of candidates) {
       const rect = { x: c.x, y: c.y, w: req.w, h: req.h };
       if (rect.x < margin || rect.y < margin || rect.x + rect.w > size.width - margin || rect.y + rect.h > size.height - margin) continue;
-      if (placed.some(p => rectsOverlap(rect, p, 2))) continue;
+      if ((toolbar && rectsOverlap(rect, toolbar, 2)) || placed.some(p => rectsOverlap(rect, p, 2))) continue;
       if (anchors.some(a => a.id !== req.id && rectHitsCircle(rect, a.x, a.y, Math.min(a.r, 24)))) continue;
       chosen = c;
       break;
@@ -529,7 +529,7 @@ export function layoutOrgLabels(requests: readonly LabelRequest[], size: ScreenS
           const distance = (x + req.w / 2 - req.x) ** 2 + (y + req.h / 2 - req.y) ** 2;
           if (distance >= best) continue;
           const rect = { x, y, w: req.w, h: req.h };
-          if (placed.some(p => rectsOverlap(rect, p, 2)) || anchors.some(a => a.id !== req.id && rectHitsCircle(rect, a.x, a.y, Math.min(a.r, 24)))) continue;
+          if ((toolbar && rectsOverlap(rect, toolbar, 2)) || placed.some(p => rectsOverlap(rect, p, 2)) || anchors.some(a => a.id !== req.id && rectHitsCircle(rect, a.x, a.y, Math.min(a.r, 24)))) continue;
           best = distance; chosen = { x, y, far: true };
         }
       }

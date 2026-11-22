@@ -84,6 +84,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const legendRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<OrgView>({ ...DEFAULT_ORG_VIEW });
   const sizeRef = useRef({ width: 0, height: 0 });
   const tokensRef = useRef<Tokens | null>(null);
@@ -317,7 +318,10 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
       }
     }
     const labelHeight = width < 640 && legendRef.current ? Math.min(height, legendRef.current.offsetTop) : height;
-    const labels = layoutOrgLabels(requests, { width, height: labelHeight });
+    const bar = width < 640 ? toolbarRef.current : null;
+    const labels = layoutOrgLabels(requests, { width, height: labelHeight }, 4, bar ? {
+      x: bar.offsetLeft, y: bar.offsetTop, w: bar.offsetWidth, h: bar.offsetHeight,
+    } : undefined);
     canvas.dataset.deptLabels = String(labels.filter(l => l.body.kind === 'dept').length);
     canvas.dataset.personLabels = String(labels.filter(l => l.body.kind === 'person').length);
     labelsRef.current = labels;
@@ -570,7 +574,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
       <div className="font-semibold text-[var(--fg)]">{tooltip[0]}</div>
       {tooltip.slice(1).map(l => <div key={l} className="text-[var(--fg-muted)]">{l}</div>)}
     </div>}
-    <div className="absolute right-3 top-3 flex gap-1">
+    <div ref={toolbarRef} className="absolute right-3 top-3 flex gap-1">
       <button type="button" onClick={() => setSpinning(s => !s)} aria-pressed={spinning} data-testid="org3d-spin"
         className="min-h-11 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 text-xs text-[var(--fg)] hover:bg-[var(--hover-tint)]">{spinning ? '停止自转' : '自转'}</button>
       <button type="button" onClick={resetView} data-testid="org3d-reset"
