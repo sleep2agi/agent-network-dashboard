@@ -52,5 +52,22 @@ export function leaderPath(start: Point, target: Box, boxes: readonly Box[], wid
     if (length >= limit || boxes.some(box => crosses(a,b,box))) continue;
     best = [a,b,dest]; limit = length;
   }
+  if (best.length < 3 && width <= 360 && corners.length <= 72) {
+    // Try one extra corner only for compact settled views with a remaining obstruction.
+    for (const mid of corners) {
+      let first: Point | undefined, prefix = Infinity;
+      for (const a of starts) {
+        const length = Math.hypot(a.x-start.x,a.y-start.y) + Math.hypot(mid.x-a.x,mid.y-a.y);
+        if (length >= Math.min(prefix,limit) || boxes.some(box => crosses(a,mid,box))) continue;
+        first = a; prefix = length;
+      }
+      if (!first) continue;
+      for (const {p:b,dest} of ends) {
+        const length = prefix + Math.hypot(b.x-mid.x,b.y-mid.y) + Math.hypot(dest.x-b.x,dest.y-b.y);
+        if (length >= limit || boxes.some(box => crosses(mid,b,box))) continue;
+        best = [first,mid,b,dest]; limit = length;
+      }
+    }
+  }
   return best;
 }
