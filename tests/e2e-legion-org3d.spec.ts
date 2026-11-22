@@ -128,3 +128,24 @@ test('a failed directory read is an error with retry, never an empty org', async
   await expect(page.getByRole('button', { name: '重试' })).toBeVisible();
   await expect(page.getByTestId('org3d-empty')).toHaveCount(0);
 });
+
+test('touch pinch zooms the diagram in and out', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  const canvas = await open(page);
+  const session = await page.context().newCDPSession(page);
+  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 2 });
+  const box = (await canvas.boundingBox())!;
+  const x = box.x + box.width / 2, y = box.y + box.height / 2;
+  const zoom = async () => Number(await canvas.getAttribute('data-zoom'));
+  const before = await zoom();
+  for (const [i, gap] of [24, 36, 48, 60].entries()) {
+    await session.send('Input.dispatchTouchEvent', { type: i ? 'touchMove' : 'touchStart', touchPoints: [{ x: x-gap, y, id: 1 }, { x: x+gap, y, id: 2 }] });
+  }
+  await expect.poll(zoom).toBeGreaterThan(before * 1.1);
+  for (const gap of [48, 36, 24]) {
+    await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x-gap, y, id: 1 }, { x: x+gap, y, id: 2 }] });
+  }
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect.poll(zoom).toBeCloseTo(before, 1);
+  await expect(page.getByTestId('org3d-clear')).toHaveCount(0);
+});

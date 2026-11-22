@@ -451,12 +451,32 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
     const x = clientX - rect.left, y = clientY - rect.top;
     return { x, y, body: projectedRef.current ? hitOrg(projectedRef.current, x, y, viewRef.current.pitch, labelsRef.current) : null };
   };
+  const touches = useRef(new Map<number, { x: number; y: number }>());
+  const span = () => {
+    const [a,b] = touches.current.values();
+    return a && b ? Math.hypot(a.x-b.x, a.y-b.y) : 0;
+  };
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     canvasRef.current?.setPointerCapture(e.pointerId);
     drag.current = { x: e.clientX, y: e.clientY, moved: false, pan: e.shiftKey || e.button === 2, id: e.pointerId };
     animRef.current = null;
+    if (e.pointerType === 'touch') {
+      touches.current.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if (touches.current.size > 1) drag.current.moved = true;
+    }
   };
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (touches.current.has(e.pointerId)) {
+      const prev = span();
+      touches.current.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if (touches.current.size >= 2) {
+        const next = span(), v = viewRef.current;
+        if (prev > 0 && next > 0) viewRef.current = { ...v, zoom:clampZoom(v.zoom * next / prev) };
+        userMoved.current = true;
+        requestDraw();
+        return;
+      }
+    }
     const d = drag.current;
     if (d && d.id === e.pointerId) {
       const dx = e.clientX - d.x, dy = e.clientY - d.y;
@@ -481,9 +501,16 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
     setHover(body ? { body, x, y, maxX: sizeRef.current.width - 270 } : null);
   };
   const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    touches.current.delete(e.pointerId);
+    const remaining = touches.current.entries().next().value;
+    if (remaining) {
+      drag.current = { id:remaining[0], ...remaining[1], moved:true, pan:false };
+      return;
+    }
     const d = drag.current;
     drag.current = null;
-    if (!d || d.moved) return;
+    requestDraw();
+    if (e.type === 'pointercancel' || !d || d.moved) return;
     const { body } = pick(e.clientX, e.clientY);
     onSelect(body && body.id === selected?.id ? null : body);
   };
@@ -532,7 +559,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
     <canvas ref={canvasRef} tabIndex={0} role="img" aria-label={summary} data-testid="org3d-canvas"
       data-depts={scene.totals.depts} data-people={scene.totals.people} data-agents={scene.totals.agents}
       className="absolute inset-0 block cursor-grab touch-none outline-none focus-visible:outline-2 focus-visible:outline-[var(--accent-text)] active:cursor-grabbing"
-      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
+      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
       onPointerLeave={() => { if (!drag.current) { hoverRef.current = null; setHover(null); requestDraw(); } }}
       onDoubleClick={onDoubleClick} onKeyDown={onKeyDown} onContextMenu={e => e.preventDefault()} />
     {tooltip && hover && <div role="tooltip" data-testid="org3d-tooltip"
