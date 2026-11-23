@@ -6,7 +6,11 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
-## 0.6.4-preview.657 — Unreleased
+## 0.6.4-preview.658 — 2026-11-24
+
+- 军团组织图的部门详情按含下级的总数展示 Agent；画布、悬停提示及直属列表标明「直属」，与客户端的部门计数一致。
+
+## 0.6.4-preview.657 — 2026-11-23
 
 - 新增「组织 3D」：从军团概览、网络拓扑或命令面板进入，按部门圆盘查看成员和 Agent，可搜索聚焦、查看详情和筛选状态。
 - 窄屏优先保留部门全名，停稳后用短引线标明归属；点击前景标签直接打开对应详情。
