@@ -169,7 +169,7 @@ export default function LegionOrg3DPage() {
       {statusError && <p role="alert" className="mb-2 text-xs text-[var(--warning)]">{statusError.status === 401 ? '会话已过期，Agent 状态无法更新。' : 'Agent 状态读取失败，颜色显示为未上报。'}
         <button type="button" className={control} onClick={() => { void nodes.mutate(); void status.mutate(); }}>重试状态</button></p>}
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="h-[72dvh] min-h-[420px] lg:h-[calc(100dvh-150px)]">
+        <div className="h-[72dvh] min-h-105 lg:h-[calc(100dvh-150px)]">
           <OrgGalaxy key={networkId} handleRef={galaxy} scene={scene} selected={selected} onSelect={select} statusFilter={statusFilter} onStatusFilter={setStatusFilter} />
         </div>
         <aside className="min-w-0 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3 lg:max-h-[calc(100dvh-140px)] lg:overflow-auto">

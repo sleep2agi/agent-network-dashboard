@@ -98,6 +98,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
   const hoverRef = useRef<OrgBody | null>(null);
   const [spinning, setSpinning] = useState(false);
   const spinRef = useRef(false);
+  const drag = useRef<{ x: number; y: number; moved: boolean; pan: boolean; id: number } | null>(null);
   const lastTick = useRef(0);
   const userMoved = useRef(false);
   const fitted = useRef(false);
@@ -451,7 +452,6 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
   }, [spinning, requestDraw]);
 
   // ─── 交互 ───
-  const drag = useRef<{ x: number; y: number; moved: boolean; pan: boolean; id: number } | null>(null);
   const pick = (clientX: number, clientY: number) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = clientX - rect.left, y = clientY - rect.top;
@@ -561,7 +561,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
   })();
 
   const summary = `组织 3D：${scene.totals.depts} 个部门、${scene.totals.people} 名成员、${scene.totals.agents} 个 Agent。拖动旋转，滚轮或双指缩放，Shift+拖动平移，点击查看详情，双击聚焦，R 重置视角。`;
-  return <div ref={wrapRef} className="relative h-full min-h-[420px] w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)]" data-testid="org3d-stage">
+  return <div ref={wrapRef} className="relative h-full min-h-105 w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)]" data-testid="org3d-stage">
     <canvas ref={canvasRef} tabIndex={0} role="img" aria-label={summary} data-testid="org3d-canvas"
       data-depts={scene.totals.depts} data-people={scene.totals.people} data-agents={scene.totals.agents}
       className="absolute inset-0 block cursor-grab touch-none outline-none focus-visible:outline-2 focus-visible:outline-[var(--accent-text)] active:cursor-grabbing"
@@ -569,7 +569,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
       onPointerLeave={() => { if (!drag.current) { hoverRef.current = null; setHover(null); requestDraw(); } }}
       onDoubleClick={onDoubleClick} onKeyDown={onKeyDown} onContextMenu={e => e.preventDefault()} />
     {tooltip && hover && <div role="tooltip" data-testid="org3d-tooltip"
-      className="pointer-events-none absolute z-10 max-w-[260px] rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-xs shadow-lg"
+      className="pointer-events-none absolute z-10 max-w-65 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-xs shadow-lg"
       style={{ left: Math.min(hover.x + 14, hover.maxX), top: Math.max(8, hover.y - 64) }}>
       <div className="font-semibold text-[var(--fg)]">{tooltip[0]}</div>
       {tooltip.slice(1).map(l => <div key={l} className="text-[var(--fg-muted)]">{l}</div>)}
