@@ -103,6 +103,22 @@ export interface OrgScene {
 
 export type OrgBody = OrgDept | OrgPerson | OrgAgent;
 
+/** Details-only totals: geometry and status colors still describe direct agents. */
+export function orgSubtreeCounts(depts: readonly Pick<OrgDept, 'id' | 'parentId' | 'agents'>[]) {
+  const byId = new Map(depts.map(d => [d.id, d]));
+  const totals = new Map<string, number>();
+  for (const d of depts) {
+    const seen = new Set<string>();
+    let id: string | null = d.id;
+    while (id !== null && byId.has(id) && !seen.has(id)) {
+      seen.add(id);
+      totals.set(id, (totals.get(id) ?? 0) + d.agents);
+      id = byId.get(id)!.parentId;
+    }
+  }
+  return totals;
+}
+
 interface Circle { r: number; anchor?: { x: number; z: number } }
 interface Placed { x: number; z: number; r: number }
 

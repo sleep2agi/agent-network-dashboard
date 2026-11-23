@@ -9,7 +9,7 @@ import { useNetworkId } from '../../lib/network-context';
 import { NetworkRequiredNotice } from '../../components/NetworkRequiredNotice';
 import type { Session } from '../../components/types';
 import { plazaAgentSnapshots, type PlazaNodeMetadata } from '../plaza/plaza-perspective-metadata';
-import { buildOrgScene, countsSummary, ORG_STATUS_LABEL, searchOrg, type OrgBody, type OrgScene, type OrgStatus } from '../../lib/org-3d';
+import { buildOrgScene, countsSummary, orgSubtreeCounts, ORG_STATUS_LABEL, searchOrg, type OrgBody, type OrgScene, type OrgStatus } from '../../lib/org-3d';
 import { OrgGalaxy, type OrgGalaxyHandle } from './OrgGalaxy';
 
 /**
@@ -29,6 +29,7 @@ function Details({ scene, body, onPick, snapshots }: {
   snapshots: ReturnType<typeof plazaAgentSnapshots>;
 }) {
   const deptName = (id: string) => scene.depts.find(d => d.id === id)?.name ?? '—';
+  const totals = useMemo(() => orgSubtreeCounts(scene.depts), [scene.depts]);
   const item = (b: OrgBody, extra: string) => <li key={b.id}>
     <button type="button" onClick={() => onPick(b)} className="flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-2 text-left text-xs hover:bg-[var(--hover-tint)]">
       <span className="min-w-0 truncate">{b.name}</span><span className="shrink-0 text-[var(--fg-muted)]">{extra}</span>
@@ -53,15 +54,15 @@ function Details({ scene, body, onPick, snapshots }: {
       <dl className="mt-2 grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-2 gap-y-1.5 text-xs">
         <Row name="上级部门" value={parent?.name ?? '顶层'} />
         <Row name="成员" value={`${body.people} 名`} />
-        <Row name="Agent" value={`${body.agents} 个`} />
-        <Row name="状态" value={countsSummary(body.counts)} />
+        <Row name="Agent" value={children.length ? `含下级共 ${totals.get(body.id)} 个` : `${body.agents} 个`} />
+        <Row name="直属状态" value={countsSummary(body.counts)} />
       </dl>
       {body.unknown && <p className="mt-2 text-xs text-[var(--warning)]">该部门不在当前可见部门树中，已保留节点归属。</p>}
-      {children.length > 0 && <><h3 className="mt-3 text-xs font-semibold">下级部门</h3><ul className="mt-1 grid gap-0.5">{children.map(d => item(d, `${d.agents} Agent`))}</ul></>}
+      {children.length > 0 && <><h3 className="mt-3 text-xs font-semibold">下级部门</h3><ul className="mt-1 grid gap-0.5">{children.map(d => item(d, `${totals.get(d.id)} Agent`))}</ul></>}
       <h3 className="mt-3 text-xs font-semibold">成员</h3>
       {members.length ? <ul className="mt-1 grid gap-0.5">{members.map(p => item(p, `${p.agents} Agent`))}</ul> : <p className="mt-1 text-xs text-[var(--fg-muted)]">暂无成员</p>}
-      <h3 className="mt-3 text-xs font-semibold">Agent（{agents.length}）</h3>
-      {agents.length ? <ul className="mt-1 grid max-h-64 gap-0.5 overflow-auto">{agents.map(a => item(a, ORG_STATUS_LABEL[a.status]))}</ul> : <p className="mt-1 text-xs text-[var(--fg-muted)]">暂无 Agent</p>}
+      <h3 className="mt-3 text-xs font-semibold">直属 Agent（{agents.length}）</h3>
+      {agents.length ? <ul className="mt-1 grid max-h-64 gap-0.5 overflow-auto">{agents.map(a => item(a, ORG_STATUS_LABEL[a.status]))}</ul> : <p className="mt-1 text-xs text-[var(--fg-muted)]">暂无直属 Agent</p>}
     </section>;
   }
   if (body.kind === 'person') {

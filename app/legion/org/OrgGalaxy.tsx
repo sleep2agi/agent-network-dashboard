@@ -296,7 +296,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
       const d = pd.body;
       if (d.kind !== 'dept') continue;
       // 锚点取盘的「远端」边缘：标签像立在盘后方的路牌，不压住盘里的节点。
-      const sub = `${d.people} 人 · ${d.agents} Agent`;
+      const sub = `直属 ${d.people} 人 · ${d.agents} Agent`;
       const w = Math.max(measure(d.name, deptFont), measure(sub, subFont)) + 16;
       requests.push({ id: d.id, body: d, x: pd.x, y: pd.y - pd.r * Math.sin(view.pitch), r: 2, w, h: 34, priority: 1000 + d.agents + d.people * 10, required: true });
     }
@@ -357,7 +357,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
         g.fillText(l.body.name, l.x + 8, l.y + 11);
         g.fillStyle = t.muted;
         g.font = subFont;
-        g.fillText(`${l.body.people} 人 · ${l.body.agents} Agent`, l.x + 8, l.y + 24);
+        g.fillText(`直属 ${l.body.people} 人 · ${l.body.agents} Agent`, l.x + 8, l.y + 24);
       } else if (l.body.kind === 'person') {
         g.fillStyle = t.fg;
         g.font = deptFont;
@@ -553,7 +553,7 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
   const tooltip = hover && (() => {
     const b = hover.body;
     const lines = b.kind === 'dept'
-      ? [b.name, `${b.people} 名成员 · ${b.agents} 个 Agent`, countsSummary(b.counts)]
+      ? [b.name, `直属 ${b.people} 名成员 · ${b.agents} 个 Agent`, countsSummary(b.counts)]
       : b.kind === 'person'
         ? [b.name, `名下 ${b.agents} 个 Agent`, countsSummary(b.counts)]
         : [b.name, ORG_STATUS_LABEL[b.status], `负责人：${b.agent.owner ?? '无'}`];
