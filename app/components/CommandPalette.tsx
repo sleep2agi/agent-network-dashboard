@@ -126,6 +126,9 @@ const COMMANDS: Command[] = [
   { id: 'go-legion-3d', title: '打开军团（3D）', hint: '3D 军团拓扑', group: '导航',
     icon: <NavIcon d="M12 3l7 4v6c0 4-3 6.5-7 8-4-1.5-7-4-7-8V7l7-4zM12 8v5m0 0l3 2m-3-2l-3 2" />,
     perform: r => r.push('/legion/3d') },
+  { id: 'go-legion-org3d', title: '打开军团组织 3D', hint: '按部门查看成员和 Agent', group: '导航',
+    icon: <NavIcon d="M12 3v7M4 17v-4h16v4M12 10v7" />,
+    perform: r => r.push('/legion/org') },
   { id: 'go-requirements', title: '打开需求', hint: '需求池 / 进行中 / 完成', group: '导航',
     icon: <NavIcon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 9h6M9 13h6M9 17h3" />,
     perform: r => r.push('/requirements') },
@@ -308,11 +311,10 @@ const COMMANDS: Command[] = [
     } },
 ];
 
-export function CommandPalette() {
+export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
   // 当前网络：命令面板取数必须带作用域（否则会列出其它网络的 Agent）
   const { networkId } = useNetworkId();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -320,12 +322,6 @@ export function CommandPalette() {
   // Global hotkey ⌘K / Ctrl+K / `/`
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const meta = e.metaKey || e.ctrlKey;
-      if (meta && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setOpen(prev => !prev);
-        return;
-      }
       // `/` opens only when no input is currently focused
       if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA' && !open) {
         e.preventDefault();

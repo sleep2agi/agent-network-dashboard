@@ -29,13 +29,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // 命令面板：idle 后挂载；若用户在这之前就按了 ⌘K / Ctrl+K，立刻挂载（行为不变）。
   const idle = useIdle(2000);
   const [paletteForced, setPaletteForced] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') setPaletteForced(true);
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        if (NO_SHELL_PATHS.includes(pathname)) return;
+        e.preventDefault();
+        setPaletteForced(true);
+        setPaletteOpen(v => !v);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [pathname]);
 
   // `.556`：把内容区「底部让位」镜像成 --shell-bottom-pad（移动 80 / 桌面 0）。
   // 只写变量，不改变任何布局；页面根用它把 100dvh 扣干净，移动端一屏页就不会多滚 80px。
@@ -86,7 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div ref={contentRef} className="flex-1 min-w-0 max-w-full overflow-x-hidden pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
       </main>
       <MobileNav />
-      {(idle || paletteForced) && <CommandPalette />}
+      {(idle || paletteForced) && <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />}
       <HelpOverlay />
       <ServersDrawer />
     </div>
