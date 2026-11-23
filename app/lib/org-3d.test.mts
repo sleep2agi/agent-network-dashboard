@@ -2,10 +2,19 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   AGENT_RADIUS, DEFAULT_ORG_VIEW, buildOrgScene, enclosingCircle, fitOrgView, focusView, hitOrg, layoutOrgLabels, makeProjector, orgStatus,
-  packCircles, projectOrgScene, projectedBounds, relatedIds, searchOrg, type LabelRequest, type OrgScene,
+  packCircles, projectOrgScene, projectedBounds, relatedIds, searchOrg, orgSubtreeCounts, type LabelRequest, type OrgScene,
 } from './org-3d.ts';
 import { buildPlazaDirectory } from './legion-directory.ts';
 import type { PeopleResponse, DepartmentsResponse } from './legion-data.ts';
+
+test('parent with no direct agents includes all descendants, excluding sibling roots', () => {
+  const counts = orgSubtreeCounts([
+    { id: 'root', parentId: null, agents: 0 }, { id: 'a', parentId: 'root', agents: 6 },
+    { id: 'b', parentId: 'root', agents: 10 }, { id: 'bb', parentId: 'b', agents: 4 },
+    { id: 'c', parentId: 'root', agents: 16 }, { id: 'outside', parentId: null, agents: 7 },
+  ]);
+  assert.deepEqual(['root','a','b','c','outside'].map(id => counts.get(id)), [36,6,14,16,7]);
+});
 
 /** 与生产同量级：14 个部门（两级树）、9 个人、280 个有主 + 60 个无主 Agent。 */
 function fixture() {
