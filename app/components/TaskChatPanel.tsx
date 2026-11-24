@@ -5,6 +5,12 @@ import { AliasAvatar } from './AliasAvatar';
 import { AttachmentBlock, extractAttachments } from './AttachmentBlock';
 import ChatSecretCard from './ChatSecretCard';
 import { chatSecretRequestFromMeta, secretSavedAfter } from '../lib/chat-secret-request';
+import {
+  canRecallDashboardTask,
+  isRecalledTask,
+  markDashboardTaskRecalled,
+  reeditContentOf,
+} from '../lib/message-recall';
 import { isOnline as presenceIsOnline } from '../lib/presence';
 import {
   buildTaskHistoryUrl,
@@ -676,6 +682,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
   const [priority, setPriority] = useState('normal');
   const [sending, setSending] = useState(false);
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
+  const [recallingIds, setRecallingIds] = useState<Set<string>>(new Set());
+  const [recallError, setRecallError] = useState<string | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const [historyErrorReason, setHistoryErrorReason] = useState('');
@@ -1376,6 +1384,62 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     }
   };
 
+  const recallMessage = async (m: ChatTask) => {
+    if (!canRecallDashboardTask(m, isOwnSender(m.from_name))) return;
+    if (recallingIds.has(m.task_id)) return;
+    setRecallError(null);
+    setRecallingIds(prev => new Set(prev).add(m.task_id));
+    try {
+      const res = await fetch(`/api/hub/tasks/${encodeURIComponent(m.task_id)}/recall`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      const data = await res.json().catch(() => ({})) as {
+        ok?: boolean;
+        recalled_at?: string;
+        recalled_by?: string;
+        message?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.ok) {
+        setRecallError(data.message || data.error || t('撤回失败，请稍后重试', 'Failed to recall message'));
+        return;
+      }
+      setMessages(prev => prev.map(x =>
+        x.task_id === m.task_id ? markDashboardTaskRecalled(x, data.recalled_at, data.recalled_by) : x,
+      ));
+      setPollingIds(prev => {
+        if (!prev.has(m.task_id)) return prev;
+        const next = new Set(prev);
+        next.delete(m.task_id);
+        return next;
+      });
+    } catch {
+      setRecallError(t('网络异常，撤回失败', 'Network error while recalling message'));
+    } finally {
+      setRecallingIds(prev => {
+        if (!prev.has(m.task_id)) return prev;
+        const next = new Set(prev);
+        next.delete(m.task_id);
+        return next;
+      });
+    }
+  };
+
+  const reeditMessage = (m: ChatTask) => {
+    const editable = reeditContentOf(m.content);
+    if (!editable) return;
+    setRecallError(null);
+    setInput(editable);
+    requestAnimationFrame(() => {
+      if (textareaRef.current) {
+        autoResize(textareaRef.current);
+        textareaRef.current.focus({ preventScroll: !!scopeNetworkId });
+      }
+    });
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // R22: while the @ mention dropdown is open the keyboard drives IT —
     // previously Enter SENT the half-typed "@通" as a message. ↑↓ move,
@@ -1540,7 +1604,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       const events: ChatEvent[] = [{ kind: 'task', task, at: task.created_at }];
       // R19: a FAILED send stores its error in `result` — that must not
       // masquerade as an agent reply bubble; the red ! badge carries it.
-      if (task.result && task.status !== 'failed') events.push({ kind: 'reply', task, at: task.completed_at || task.created_at });
+      if (task.result && task.status !== 'failed' && !isRecalledTask(task)) events.push({ kind: 'reply', task, at: task.completed_at || task.created_at });
       return events;
     })
     .sort((a, b) => {
@@ -1748,6 +1812,33 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                 </Fragment>
               );
             }
+            if (isRecalledTask(m)) {
+              const editable = fromUser ? reeditContentOf(m.content) : '';
+              return (
+                <Fragment key={`${m.task_id}:recalled`}>
+                  {sepEl}
+                  <div className="flex justify-center py-1" data-testid="chat-recalled-row" data-ev={`${m.task_id}:task`}>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[11px] text-[var(--fg-dim)]">
+                      <span>
+                        {fromUser
+                          ? t('你撤回了一条消息', 'You recalled a message')
+                          : t(`${senderLabel} 撤回了一条消息`, `${senderLabel} recalled a message`)}
+                      </span>
+                      {editable && (
+                        <button
+                          type="button"
+                          data-testid="chat-recalled-reedit"
+                          onClick={() => reeditMessage(m)}
+                          className="font-medium text-[var(--accent-text)] hover:underline cursor-pointer"
+                        >
+                          {t('重新编辑', 'Re-edit')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </Fragment>
+              );
+            }
             return (
             <Fragment key={`${m.task_id}:task`}>
             {sepEl}
@@ -1802,6 +1893,17 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                           <span aria-hidden>↻</span> {t('重发', 'Resend')}
                         </button>
                       )}
+                      {canRecallDashboardTask(m, fromUser) && (
+                        <button
+                          type="button"
+                          data-testid="chat-recall-btn"
+                          disabled={recallingIds.has(m.task_id)}
+                          onClick={() => void recallMessage(m)}
+                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-[var(--fg-dim)] hover:text-[var(--fg)] hover:bg-[var(--bg-elevated)] disabled:opacity-50 cursor-pointer"
+                        >
+                          {recallingIds.has(m.task_id) ? t('撤回中…', 'Recalling…') : t('撤回', 'Recall')}
+                        </button>
+                      )}
                       {senderBadge}
                     </div>
                   </div>
@@ -1853,6 +1955,12 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
 
         {/* Input area */}
         <div className="border-t border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-4">
+          {recallError && (
+            <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-1.5 text-[11px] text-[var(--danger)]" data-testid="chat-recall-error">
+              <span>{recallError}</span>
+              <button type="button" onClick={() => setRecallError(null)} aria-label={t('关闭提示', 'Dismiss')} className="text-[var(--fg-dim)] hover:text-[var(--fg)] cursor-pointer">×</button>
+            </div>
+          )}
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               {/* @ mention dropdown */}
