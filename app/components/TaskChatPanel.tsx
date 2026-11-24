@@ -1326,18 +1326,18 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
   const retryLockRef = useRef<Set<string>>(new Set());
   // admin 2026-11-24 —— 聊天密钥卡保存成功后，以用户身份发一句「已在卡片里保存 X」（只含名字，不含值），
   // 走和手打文字消息相同的乐观回显 + 落盘 + postTask 路径；AI 收到它才继续。
-  const sendPlainText = (content: string) => {
+  const sendPlainText = (content: string, target: string) => {
     const requestId = newDashboardRequestId();
     const localTaskId = `tmp-${requestId}`;
     const created_at = new Date().toISOString();
-    setMessages(prev => [...prev, { task_id: localTaskId, from_name: 'Dashboard', to_name: alias, status: 'created', priority: 'normal', content, result: '', created_at, client_request_id: requestId }]);
+    setMessages(prev => [...prev, { task_id: localTaskId, from_name: 'Dashboard', to_name: target, status: 'created', priority: 'normal', content, result: '', created_at, client_request_id: requestId }]);
     putChatOutbox({
-      requestId, localTaskId, panelAlias: alias, targetAlias: alias,
-      content, priority: 'normal', networkId: scopeNetworkId || aliasNetRef.current[alias] || networkId || '',
+      requestId, localTaskId, panelAlias: alias, targetAlias: target,
+      content, priority: 'normal', networkId: scopeNetworkId || aliasNetRef.current[target] || networkId || '',
       createdAt: created_at,
     }, privateStorageScope);
     forceScrollRef.current = true;
-    void postTask(content, alias, localTaskId, [], requestId);
+    void postTask(content, target, localTaskId, [], requestId);
   };
   const retrySend = async (m: ChatTask) => {
     // R5 (R4 self-review debt): double-click guard — a second tap while the
@@ -1551,7 +1551,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     });
 
   // admin 2026-11-24 —— 重开聊天时密钥卡直接显示已保存，不发请求：只认**本人**在**这张卡之后**发的「已在卡片里保存 X」。
-  const secretConfirmRows = useMemo(() => messages.map(x => ({ content: x.content, at: x.created_at, own: isOwnSender(x.from_name) && x.status !== 'failed' })), [messages]);
+  const secretConfirmRows = useMemo(() => messages.map(x => ({ target: x.to_name, content: x.content, at: x.created_at, own: isOwnSender(x.from_name) && x.status !== 'failed' })), [messages]);
   const query = searchQuery.trim().toLowerCase();
   const searchMatches = query
     ? chatEvents
@@ -1727,7 +1727,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                     </div>
                     <div className="text-[14px] leading-[1.65] text-[var(--fg)]">
                       {secretCard ? (
-                        <ChatSecretCard request={secretCard} alreadySaved={secretSavedAfter(secretConfirmRows, secretCard.key, m.completed_at || m.created_at)} onSaved={sendPlainText} />
+                        <ChatSecretCard request={secretCard} alreadySaved={secretSavedAfter(secretConfirmRows.filter(row => row.target === m.to_name), secretCard.key, m.completed_at || m.created_at)} onSaved={message => sendPlainText(message, m.to_name)} />
                       ) : (<>
                       <CollapsibleText><MarkdownContent text={m.result} onImageClick={openLightbox} /></CollapsibleText>
                       <AttachmentPreviews text={m.result} onOpen={openLightbox} />
