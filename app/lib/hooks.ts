@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { hydrateHubAvatars } from './avatars';
+import { descriptionSummary } from './node-description';
 import useSWR from 'swr';
 import { Session, Health, AnetConfig } from '../components/types';
 import { useNetworkId } from './network-context';
@@ -83,6 +84,7 @@ interface NodeAttrsSnapshot {
   can_edit_permission: boolean;
   team: string | null;
   tags: string[];
+  description: string | null;
   attrs_revision: number;
 }
 interface NodesResp { nodes?: Array<{
@@ -96,6 +98,7 @@ interface NodesResp { nodes?: Array<{
   display_name?: string | null;
   team?: string | null;
   tags?: string[];
+  description?: string | null;
   attrs_revision?: number;
   // avatar 接线单: cross-device custom avatar (hub #462 projection)
   avatar_url?: string | null;
@@ -135,19 +138,24 @@ export function useNodeLifecycle() {
   const controllableByAlias: Record<string, boolean> = {};
   const nodeIdByAlias: Record<string, string> = {};
   const attrsByAlias: Record<string, NodeAttrsSnapshot> = {};
+  const descriptionByAlias: Record<string, string> = {};
   for (const n of data?.nodes ?? []) {
     if (n.alias && typeof n.lifecycle_state === 'string') lifecycleByAlias[n.alias] = n.lifecycle_state;
     if (n.alias && typeof n.node_id === 'string') nodeIdByAlias[n.alias] = n.node_id;
     if (n.alias && typeof n.lifecycle_controllable === 'boolean') controllableByAlias[n.alias] = n.lifecycle_controllable;
     if (n.alias) {
+      const desc = typeof n.description === 'string' ? n.description : null;
       attrsByAlias[n.alias] = {
         display_name: typeof n.display_name === 'string' ? n.display_name : null,
         permission_mode: typeof n.permission_mode === 'string' ? n.permission_mode : null,
         can_edit_permission: n.viewer_can?.permission_mode === true,
         team: typeof n.team === 'string' ? n.team : null,
         tags: Array.isArray(n.tags) ? n.tags : [],
+        description: desc,
         attrs_revision: typeof n.attrs_revision === 'number' ? n.attrs_revision : 0,
       };
+      const summary = descriptionSummary(desc);
+      if (summary) descriptionByAlias[n.alias] = summary;
     }
   }
   // `.648`：`nodesLoaded` 用来区分两种"查不到可托管性"：
@@ -156,7 +164,7 @@ export function useNodeLifecycle() {
   // 线上实测：面板打开后约 3.5 秒里 `controllableByAlias[alias]` 是 undefined，
   // 不可控节点因此短暂显示可点的「重启节点」（点了必然失败）。
   const nodesLoaded = data !== undefined;
-  return { lifecycleByAlias, controllableByAlias, nodeIdByAlias, attrsByAlias, nodesByServer, nodesLoaded, error, refreshNodes: mutate };
+  return { lifecycleByAlias, controllableByAlias, nodeIdByAlias, attrsByAlias, descriptionByAlias, nodesByServer, nodesLoaded, error, refreshNodes: mutate };
 }
 export type { NodeAttrsSnapshot };
 

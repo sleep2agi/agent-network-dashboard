@@ -16,7 +16,7 @@ import { NodeSkillsDialog } from './NodeSkillsDialog';
 import { NodeLogsDialog } from './NodeLogsDialog';
 import { NodeFilesDialog } from './NodeFilesDialog';
 import { NodeSecretsDialog } from './NodeSecretsDialog';
-import { useSessions } from '../lib/hooks';
+import { useNodeLifecycle, useSessions } from '../lib/hooks';
 import type { Session } from './types';
 import { shortModel, shortServer } from '../lib/node-format';
 import { t } from '../lib/ui-lang';
@@ -76,7 +76,9 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
   // network cost.
   // 与 NodesView 同一个 SWR key（lite=1）：两边 key 不一致会导致同一页发起两次请求。
   const { sessions } = useSessions({ lite: true });
+  const { descriptionByAlias } = useNodeLifecycle();
   const session = sessions.find(s => s.alias === alias);
+  const nodeDescription = descriptionByAlias[alias] || '';
 
   // 抽屉关闭后把焦点还给 ⋮：触屏上按钮不会被 focus，useReturnFocus 记不到来源
   //（实测 390 下 Esc 关闭后 activeElement = BODY），这里显式归还一次。
@@ -121,7 +123,18 @@ export function ChatPane({ alias, onClose, variant = 'column', onBack }: ChatPan
           )}
           <AliasAvatar alias={alias} size={26} />
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-white">{alias}</div>
+            <div className="flex items-baseline gap-2 min-w-0">
+              <div className={nodeDescription ? 'shrink-0 max-w-[55%] truncate text-sm font-semibold text-white' : 'truncate text-sm font-semibold text-white'}>{alias}</div>
+              {nodeDescription && (
+                <span
+                  title={nodeDescription}
+                  data-testid="chat-pane-desc"
+                  className="flex-1 min-w-0 truncate text-[11px] text-[var(--fg-muted)]"
+                >
+                  {nodeDescription}
+                </span>
+              )}
+            </div>
             {/* 副行：agent · server · model（2026-11-09）。此前桌面三栏的聊天头只有别名，
                 想确认「这个节点跑什么模型」得进设置面板翻。
                 model 缺失时整段不渲染，不留下孤立的分隔点；窄屏靠 truncate 收尾。 */}
