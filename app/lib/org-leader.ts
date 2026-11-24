@@ -1,6 +1,37 @@
 type Point = { x: number; y: number };
 type Box = Point & { w: number; h: number };
 
+/** Refine only settled routes. Keep existing endpoints and never add a card obstruction. */
+export function untangleLeaders(routes: Point[][], boxes: readonly Box[], width: number, height: number) {
+  const side = (a: Point, b: Point, c: Point) => (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+  for (const [i, path] of routes.entries()) {
+    const score = (p: Point[]) => {
+      let n = 0;
+      for (let j=1;j<p.length;j++) for (const [k,q] of routes.entries()) if (k !== i) for (let s=1;s<q.length;s++) {
+        const a=p[j-1], b=p[j], c=q[s-1], d=q[s];
+        if (side(a,b,c)*side(a,b,d)<0 && side(c,d,a)*side(c,d,b)<0) n++;
+      }
+      return n;
+    };
+    let hits = score(path);
+    if (!hits) continue;
+    const a=path[0], b=path[path.length-1];
+    const dist=(p:Point,q:Point)=>Math.hypot(p.x-q.x,p.y-q.y);
+    const budget=dist(a,b)+60;
+    let best=path, length=Infinity;
+    const touched=(p:Point[],box:Box)=>p.some((v,j)=>j>0 && crosses(p[j-1],v,box));
+    const clear=boxes.filter(box=>!touched(path,box));
+    for (const box of boxes) for (const x of [box.x-4,box.x+box.w+4]) for (const y of [box.y-4,box.y+box.h+4]) {
+      const mid={x,y}, len=dist(a,mid)+dist(mid,b);
+      if(x<2||x>width-2||y<2||y>height-2||len>budget) continue;
+      const p=[a,mid,b], n=score(p);
+      if((n<hits || (best!==path && n===hits && len<length)) && !clear.some(box=>touched(p,box))) {best=p; hits=n; length=len;}
+    }
+    routes[i]=best;
+  }
+  return routes;
+}
+
 function edge(p: Point, b: Box): Point {
   return { x: Math.max(b.x, Math.min(b.x + b.w, p.x)), y: Math.max(b.y, Math.min(b.y + b.h, p.y)) };
 }

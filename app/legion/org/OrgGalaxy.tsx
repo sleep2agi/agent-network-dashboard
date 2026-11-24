@@ -1,5 +1,5 @@
 'use client';
-import { leaderPath } from '../../lib/org-leader';
+import { leaderPath, untangleLeaders } from '../../lib/org-leader';
 
 import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react';
 import {
@@ -326,6 +326,12 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
     canvas.dataset.deptLabels = String(labels.filter(l => l.body.kind === 'dept').length);
     canvas.dataset.personLabels = String(labels.filter(l => l.body.kind === 'person').length);
     labelsRef.current = labels;
+    const compactSettled = width < 640 && labels.length <= 32 && !spinRef.current && !animRef.current && !drag.current?.moved;
+    const routes = compactSettled ? untangleLeaders(labels.filter(l => l.leader).map(l => {
+      const start = { x: l.anchorX, y: l.anchorY };
+      return [start, ...leaderPath(start, l, labels, width, height)];
+    }), labels, width, height) : null;
+    let routeIndex = 0;
     for (const l of labels) {
       const a = l.body.kind === 'agent' ? 1 : visibleAlpha(l.body.id) < 1 ? 0.45 : 1;
       g.globalAlpha = a;
@@ -334,7 +340,9 @@ export function OrgGalaxy({ scene, selected, onSelect, statusFilter, onStatusFil
         g.lineWidth = 1;
         g.beginPath();
         g.moveTo(l.anchorX, l.anchorY);
-        if (spinRef.current || animRef.current || drag.current?.moved) {
+        if (routes) {
+          for (const point of routes[routeIndex++].slice(1)) g.lineTo(point.x, point.y);
+        } else if (spinRef.current || animRef.current || drag.current?.moved) {
           g.lineTo(Math.max(l.x, Math.min(l.x + l.w, l.anchorX)), Math.max(l.y, Math.min(l.y + l.h, l.anchorY)));
         } else {
           for (const point of leaderPath({ x: l.anchorX, y: l.anchorY }, l, labels, width, height)) g.lineTo(point.x, point.y);
