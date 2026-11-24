@@ -6,6 +6,10 @@ Format: chronological release notes; each entry lists what *changed for a user* 
 
 ---
 
+## 0.6.4-preview.659 — 2026-11-24
+
+- 窄屏军团组织图优先将部门标签放在所属圆盘附近，停稳后调整引线路径，减少交叉。
+
 ## 0.6.4-preview.658 — 2026-11-24
 
 - 军团组织图的部门详情按含下级的总数展示 Agent；画布、悬停提示及直属列表标明「直属」，与客户端的部门计数一致。
