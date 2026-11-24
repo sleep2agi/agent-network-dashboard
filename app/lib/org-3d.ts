@@ -538,8 +538,8 @@ export function layoutOrgLabels(requests: readonly LabelRequest[], size: ScreenS
     }
     // Near the phone's edges the regular rings can miss usable space between
     // their spokes. Search the visible area only for an otherwise forced label.
-    if (!chosen && req.required && size.width < 640) {
-      let best = Infinity;
+    if ((!chosen || chosen.far) && req.required && size.width < 640) {
+      let best = chosen ? (chosen.x + req.w / 2 - req.x) ** 2 + (chosen.y + req.h / 2 - req.y) ** 2 : Infinity;
       for (let y = margin; y <= size.height - margin - req.h; y += 12) {
         for (let x = margin; x <= size.width - margin - req.w; x += 12) {
           const distance = (x + req.w / 2 - req.x) ** 2 + (y + req.h / 2 - req.y) ** 2;
