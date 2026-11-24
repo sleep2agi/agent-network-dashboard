@@ -14,6 +14,7 @@
 export function LoadingSkeleton() {
   return (
     <div className="min-h-full bg-[var(--bg)] text-[var(--fg)] p-4 sm:p-6">
+      <p role="status" className="mb-3 text-sm text-[var(--fg-muted)]">正在读取节点列表和任务统计…</p>
       {/* KPI top strip — 4 cards matching StatsBar.
           #209 R38: mb-8 → mb-4 sm:mb-8 to track the live StatsBar
           wrapper after R29 mobile-tighten. Without this the skeleton

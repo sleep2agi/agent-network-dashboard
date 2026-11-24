@@ -68,6 +68,14 @@ export default function Dashboard() {
   const statsHasTaskStatus = Boolean(stats?.tasks?.by_status?.length);
   const { taskStats: fallbackTaskStats, loaded: fallbackLoaded, error: fallbackError } = useTaskStats(stats != null && !statsHasTaskStatus);
   const [showTopo, setShowTopo] = useState(typeof window !== 'undefined' && window.innerWidth >= 1024);
+  const [mountTopo, setMountTopo] = useState(false);
+  useEffect(() => {
+    if (isLoading || !showTopo) return;
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => setMountTopo(true));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isLoading, showTopo]);
   const cmd = useCommandCenter();
   // R8: one page-level unread computation; counts flow to memo'd cards as props.
   const { unreadCount, lastActivityAt } = useChatUnread();
@@ -253,7 +261,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {showTopo && sessions.length > 0 && (
+      {showTopo && mountTopo && sessions.length > 0 && (
         // #209 R41: mobile-only soft cap on the rendered TopoGraph.
         // Default behaviour on desktop is unchanged (lg: drops the cap
         // entirely). On phones the SVG card was free to claim ~600+ px
