@@ -1,7 +1,9 @@
 import { requireDashboardAuth, getV3UserToken } from '@/app/lib/dashboard-auth';
+import { knownSecretError } from '@/app/lib/secret-errors';
 
 const HUB_URL = process.env.COMMHUB_URL || 'http://127.0.0.1:9200';
 const REF_REGEX = /^[^\x00-\x1f/]{1,120}$/;
+
 
 /**
  * POST /api/hub/nodes/:ref/secrets —— 节点密钥「请求入队」（RFC-028）。list 看名称；put 只供聊天密钥卡保存。
@@ -20,8 +22,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ ref: st
   const { ref } = await params;
   if (!ref || !REF_REGEX.test(ref)) return Response.json({ ok: false, error: 'invalid_ref' }, { status: 400 });
 
-  let body: Record<string, unknown> = {};
-  try { body = (await req.json()) as Record<string, unknown>; } catch { body = {}; }
+  // 只认 JSON 对象：坏 JSON / null / 数组一律 400（以前坏 JSON 会被当成 list，null 会在读 action 时抛）。
+  let raw: unknown;
+  try { raw = await req.json(); } catch { return Response.json({ ok: false, error: 'invalid_json' }, { status: 400 }); }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return Response.json({ ok: false, error: 'invalid_json' }, { status: 400 });
+  const body = raw as Record<string, unknown>;
   const action = body.action ?? 'list';
   // admin 2026-11-24 —— 聊天里的密钥卡要「保存」：放行 put，但只放这一种写，且边界严格校验。
   // 值只进转发给 Hub 的请求体：不写日志、不回显（响应仍是下面的三字段白名单）。
@@ -59,10 +64,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ ref: st
   }
   const j = (await hubRes.json().catch(() => ({}))) as Record<string, unknown>;
   if (!hubRes.ok || j.ok === false) {
-    return Response.json(
-      { ok: false, error: typeof j.error === 'string' ? j.error : 'hub_error', message: typeof j.message === 'string' ? j.message : undefined },
-      { status: hubRes.status === 200 ? 400 : hubRes.status },
-    );
+    // 只回已知错误码，不透传上游 error/message 原文：put 时上游异常正文里万一夹带了值，也到不了浏览器（Dash 欧评审 #463）。
+    return Response.json({ ok: false, error: knownSecretError(j.error) }, { status: hubRes.status === 200 ? 400 : hubRes.status });
   }
   // 响应白名单：只回这三个字段
   return Response.json({

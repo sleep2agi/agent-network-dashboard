@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, memo, Fragment } fro
 import { AliasAvatar } from './AliasAvatar';
 import { AttachmentBlock, extractAttachments } from './AttachmentBlock';
 import ChatSecretCard from './ChatSecretCard';
-import { chatSecretRequestFromMeta, savedSecretKeys } from '../lib/chat-secret-request';
+import { chatSecretRequestFromMeta, secretSavedAfter } from '../lib/chat-secret-request';
 import { isOnline as presenceIsOnline } from '../lib/presence';
 import {
   buildTaskHistoryUrl,
@@ -1550,8 +1550,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       return a.kind === 'task' ? -1 : 1;
     });
 
-  // admin 2026-11-24 —— 聊天里已出现「已在卡片里保存 X」的变量名：重开聊天时密钥卡直接显示已保存，不发请求。
-  const savedSecrets = useMemo(() => savedSecretKeys(messages.map(x => x.content)), [messages]);
+  // admin 2026-11-24 —— 重开聊天时密钥卡直接显示已保存，不发请求：只认**本人**在**这张卡之后**发的「已在卡片里保存 X」。
+  const secretConfirmRows = useMemo(() => messages.map(x => ({ content: x.content, at: x.created_at, own: isOwnSender(x.from_name) })), [messages]);
   const query = searchQuery.trim().toLowerCase();
   const searchMatches = query
     ? chatEvents
@@ -1727,7 +1727,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                     </div>
                     <div className="text-[14px] leading-[1.65] text-[var(--fg)]">
                       {secretCard ? (
-                        <ChatSecretCard request={secretCard} alreadySaved={savedSecrets.has(secretCard.key)} onSaved={sendPlainText} />
+                        <ChatSecretCard request={secretCard} alreadySaved={secretSavedAfter(secretConfirmRows, secretCard.key, m.completed_at || m.created_at)} onSaved={sendPlainText} />
                       ) : (<>
                       <CollapsibleText><MarkdownContent text={m.result} onImageClick={openLightbox} /></CollapsibleText>
                       <AttachmentPreviews text={m.result} onOpen={openLightbox} />

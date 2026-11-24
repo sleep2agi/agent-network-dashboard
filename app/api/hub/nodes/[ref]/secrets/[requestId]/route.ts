@@ -1,4 +1,5 @@
 import { requireDashboardAuth, getV3UserToken } from '@/app/lib/dashboard-auth';
+import { knownSecretError } from '@/app/lib/secret-errors';
 
 const HUB_URL = process.env.COMMHUB_URL || 'http://127.0.0.1:9200';
 const REF_REGEX = /^[^\x00-\x1f/]{1,120}$/;
@@ -32,7 +33,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ ref: str
   }
   const j = (await hubRes.json().catch(() => ({}))) as Record<string, unknown>;
   if (!hubRes.ok || j.ok === false) {
-    return Response.json({ ok: false, error: typeof j.error === 'string' ? j.error : 'hub_error' }, { status: hubRes.status === 200 ? 400 : hubRes.status });
+    // 只回已知错误码，不透传上游原文（Dash 欧评审 #463）。
+    return Response.json({ ok: false, error: knownSecretError(j.error) }, { status: hubRes.status === 200 ? 400 : hubRes.status });
   }
 
   const snap = (j.snapshot ?? {}) as { revision?: unknown; keys?: unknown };
@@ -44,7 +46,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ ref: str
   return Response.json({
     ok: true,
     status: typeof j.status === 'string' ? j.status : undefined,
-    error: typeof j.error === 'string' ? j.error : undefined,
+    error: typeof j.error === 'string' ? knownSecretError(j.error) : undefined,
     revision: typeof snap.revision === 'number' ? snap.revision : undefined,
     keys,
   });
