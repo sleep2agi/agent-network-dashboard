@@ -5,6 +5,7 @@ import type { Session } from './types';
 import { DialogTitle } from './DialogTitle';
 import { useDialogFocus } from './useDialogFocus';
 import { t } from '../lib/ui-lang';
+import { secretErrorText } from '../lib/secret-errors';
 import { useFocusTrap } from '../lib/focus-trap';
 
 /**
@@ -53,16 +54,16 @@ export function NodeSecretsDialog({ session, onClose }: { session: Session; onCl
     });
     const pj = (await post.json().catch(() => ({}))) as { ok?: boolean; request_id?: string; message?: string; error?: string };
     if (!post.ok || pj.ok === false || !pj.request_id) {
-      return { ok: false as const, message: pj.message || pj.error || `HTTP ${post.status}` };
+      return { ok: false as const, message: t(...secretErrorText(pj.error)) };
     }
     for (let i = 0; i < POLL_MAX; i += 1) {
       await new Promise((r) => setTimeout(r, POLL_MS));
       if (cancelled.current) return { ok: false as const, message: t('已取消', 'Cancelled') };
       const g = await fetch(`/api/hub/nodes/${encodeURIComponent(ref)}/secrets/${encodeURIComponent(pj.request_id)}`);
       const gj = (await g.json().catch(() => ({}))) as { ok?: boolean; status?: string; error?: string; keys?: KeyEntry[]; revision?: number };
-      if (!g.ok || gj.ok === false) return { ok: false as const, message: gj.error || `HTTP ${g.status}` };
+      if (!g.ok || gj.ok === false) return { ok: false as const, message: t(...secretErrorText(gj.error)) };
       if (gj.status === 'done') return { ok: true as const, keys: gj.keys ?? [], revision: gj.revision };
-      if (gj.status === 'failed' || gj.error) return { ok: false as const, message: gj.error || t('节点返回失败', 'Node reported failure') };
+      if (gj.status === 'failed' || gj.error) return { ok: false as const, message: t(...secretErrorText(gj.error)) };
     }
     return { ok: false as const, message: t('等待超时：节点未在 30 秒内返回（密钥请求 120 秒后过期）', 'Timed out: the node did not answer within 30s') };
   }, [nodeId, alias]);
