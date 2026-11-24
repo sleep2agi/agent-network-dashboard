@@ -1551,7 +1551,7 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
     });
 
   // admin 2026-11-24 —— 重开聊天时密钥卡直接显示已保存，不发请求：只认**本人**在**这张卡之后**发的「已在卡片里保存 X」。
-  const secretConfirmRows = useMemo(() => messages.map(x => ({ content: x.content, at: x.created_at, own: isOwnSender(x.from_name) })), [messages]);
+  const secretConfirmRows = useMemo(() => messages.map(x => ({ content: x.content, at: x.created_at, own: isOwnSender(x.from_name) && x.status !== 'failed' })), [messages]);
   const query = searchQuery.trim().toLowerCase();
   const searchMatches = query
     ? chatEvents

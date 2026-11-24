@@ -95,7 +95,11 @@ export default function ChatSecretCard({ request, alreadySaved, onSaved }: {
             <button type="button" data-testid={`chat-secret-${request.key}-reveal`} onClick={() => setShown((s) => !s)}
               aria-label={shown ? t('隐藏', 'Hide') : t('显示', 'Show')}
               className="shrink-0 rounded px-1 text-[var(--fg-dim)] hover:text-[var(--fg)]">
-              {shown ? '🙈' : '👁'}
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+                <circle cx="12" cy="12" r="3" />
+                {shown ? <path strokeLinecap="round" d="M4 4l16 16" /> : null}
+              </svg>
             </button>
             <button type="submit" data-testid={`chat-secret-${request.key}-submit`} disabled={phase === 'saving' || !value.trim()}
               className="shrink-0 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50">
