@@ -17,7 +17,8 @@ async function ScopedHome() {
   const read = async (path: string) => {
     if (!network) return null;
     try {
-      const res = await hubFetch(path + query);
+      // Hub 卡住时不能让首页一直停在骨架：1.5 秒没回就放弃服务端首帧，交给浏览器自己取。
+      const res = await hubFetch(path + query, { signal: AbortSignal.timeout(1500) });
       return res.ok ? await res.json() : null;
     } catch { return null; }
   };
