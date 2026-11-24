@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo, Fragment } from 'react';
 import { AliasAvatar } from './AliasAvatar';
 import { AttachmentBlock, extractAttachments } from './AttachmentBlock';
+import ChatSecretCard from './ChatSecretCard';
+import { chatSecretRequestFromMeta, secretSavedAfter } from '../lib/chat-secret-request';
 import { isOnline as presenceIsOnline } from '../lib/presence';
 import {
   buildTaskHistoryUrl,
@@ -1322,6 +1324,21 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
   // retry after an upload failure lost the attachment entirely).
   const pendingFilesRef = useRef<Map<string, File[]>>(new Map());
   const retryLockRef = useRef<Set<string>>(new Set());
+  // admin 2026-11-24 —— 聊天密钥卡保存成功后，以用户身份发一句「已在卡片里保存 X」（只含名字，不含值），
+  // 走和手打文字消息相同的乐观回显 + 落盘 + postTask 路径；AI 收到它才继续。
+  const sendPlainText = (content: string, target: string) => {
+    const requestId = newDashboardRequestId();
+    const localTaskId = `tmp-${requestId}`;
+    const created_at = new Date().toISOString();
+    setMessages(prev => [...prev, { task_id: localTaskId, from_name: 'Dashboard', to_name: target, status: 'created', priority: 'normal', content, result: '', created_at, client_request_id: requestId }]);
+    putChatOutbox({
+      requestId, localTaskId, panelAlias: alias, targetAlias: target,
+      content, priority: 'normal', networkId: scopeNetworkId || aliasNetRef.current[target] || networkId || '',
+      createdAt: created_at,
+    }, privateStorageScope);
+    forceScrollRef.current = true;
+    void postTask(content, target, localTaskId, [], requestId);
+  };
   const retrySend = async (m: ChatTask) => {
     // R5 (R4 self-review debt): double-click guard — a second tap while the
     // retry POST is in flight must not fire a duplicate send.
@@ -1533,6 +1550,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
       return a.kind === 'task' ? -1 : 1;
     });
 
+  // admin 2026-11-24 —— 重开聊天时密钥卡直接显示已保存，不发请求：只认**本人**在**这张卡之后**发的「已在卡片里保存 X」。
+  const secretConfirmRows = useMemo(() => messages.map(x => ({ target: x.to_name, content: x.content, at: x.created_at, own: isOwnSender(x.from_name) && x.status !== 'failed' })), [messages]);
   const query = searchQuery.trim().toLowerCase();
   const searchMatches = query
     ? chatEvents
@@ -1683,6 +1702,8 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
               ? null
               : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-[11px] text-purple-300 font-medium">↳ {senderLabel}</span>;
             if (event.kind === 'reply') {
+              // admin 2026-11-24 —— AI 调 request_secret 回的那条：画成密钥卡，代替兜底文字。
+              const secretCard = chatSecretRequestFromMeta(m.meta_json);
               return (
                 <Fragment key={`${m.task_id}:reply`}>
                 {sepEl}
@@ -1705,8 +1726,12 @@ export function TaskChatPanel({ alias, onClose, inline, availableNodes, active, 
                       </div>
                     </div>
                     <div className="text-[14px] leading-[1.65] text-[var(--fg)]">
+                      {secretCard ? (
+                        <ChatSecretCard request={secretCard} alreadySaved={secretSavedAfter(secretConfirmRows.filter(row => row.target === m.to_name), secretCard.key, m.completed_at || m.created_at)} onSaved={message => sendPlainText(message, m.to_name)} />
+                      ) : (<>
                       <CollapsibleText><MarkdownContent text={m.result} onImageClick={openLightbox} /></CollapsibleText>
                       <AttachmentPreviews text={m.result} onOpen={openLightbox} />
+                      </>)}
                       {/* #492: structured attachments from meta.attachments —
                           hub delivers file_id + name/mime/size and the
                           <AttachmentBlock> click path fetches via the
