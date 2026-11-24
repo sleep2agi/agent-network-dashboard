@@ -7,26 +7,28 @@ import type { Session } from './components/types';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import HomeView from './HomeView';
 
-export default function HomePage() {
-  return <Suspense fallback={<LoadingSkeleton />}><ScopedHome /></Suspense>;
+import {HomeTaskStats, type Counts} from './HomeTaskStats';
+
+async function read(path: string, network: string, timeout: number) {
+  if (!network) return null;
+  try {
+    const res = await hubFetch(`${path}?network_id=${encodeURIComponent(network)}`, { signal: AbortSignal.timeout(timeout) });
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
 }
 
-async function ScopedHome() {
+export default async function HomePage() {
   const network = (await cookies()).get('anet_network_id')?.value ?? '';
-  const query = `?network_id=${encodeURIComponent(network)}`;
-  const read = async (path: string) => {
-    if (!network) return null;
-    try {
-      // Hub 卡住时不能让首页一直停在骨架：1.5 秒没回就放弃服务端首帧，交给浏览器自己取。
-      const res = await hubFetch(path + query, { signal: AbortSignal.timeout(1500) });
-      return res.ok ? await res.json() : null;
-    } catch { return null; }
-  };
-  const [status, stats] = await Promise.all([read('/api/status'), read('/api/stats')]);
-  const initialSessions = Array.isArray(status?.sessions)
-    ? projectLiteSessions(normalizeSessions(status.sessions as Session[])) : null;
+  const stats = await read('/api/stats', network, 300);
   const rows = stats?.tasks?.by_status;
-  const initialCounts = stats?.ok && Array.isArray(rows) && rows.every(r => r && typeof r.status === 'string' && Number.isFinite(r.count))
+  const counts: Counts = stats?.ok && Array.isArray(rows) && rows.every(r => r && typeof r.status === 'string' && Number.isFinite(r.count))
     ? rows.map(({status, count}: {status:string;count:number}) => ({status, count})) : null;
-  return <HomeView initialNetwork={network} initialSessions={initialSessions} initialCounts={initialCounts} />;
+  return <><div className="px-4 pt-4 sm:px-6 sm:pt-6"><HomeTaskStats network={network} counts={counts} /></div>
+    <Suspense fallback={<LoadingSkeleton />}><ScopedNodes network={network} counts={counts} /></Suspense></>;
+}
+
+async function ScopedNodes({network, counts}: {network:string; counts:Counts}) {
+  const status = await read('/api/status', network, 1500);
+  const sessions = Array.isArray(status?.sessions) ? projectLiteSessions(normalizeSessions(status.sessions as Session[])) : null;
+  return <HomeView initialNetwork={network} initialSessions={sessions} initialCounts={counts} />;
 }

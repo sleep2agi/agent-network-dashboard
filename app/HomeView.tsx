@@ -40,7 +40,7 @@ import { AgentCard } from './components/AgentCard';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { NodesEmptyState as EmptyState } from './components/EmptyState';
 import { CommandCenter, useCommandCenter } from './components/CommandCenter';
-import { useSessions, useHealth, useTaskStats, useStats } from './lib/hooks';
+import { useSessions, useHealth,  } from './lib/hooks';
 import { useChatUnread } from './lib/chat-unread';
 import { isPinned, usePinVersion } from './lib/chat-pin';
 import { useSSE } from './lib/useSSE';
@@ -49,6 +49,7 @@ import { isOnline as presenceIsOnline, sseCountFor as presenceSseCountFor, prese
 import { useSWRConfig } from 'swr';
 
 import type { Session } from './components/types';
+import {useHomeCounts} from './HomeTaskStats';
 import { useNetworkId } from './lib/network-context';
 export default function HomeView({initialNetwork, initialSessions, initialCounts}: {initialNetwork: string; initialSessions: Session[] | null; initialCounts: {status:string;count:number}[] | null}) {
   const {networkId,ready} = useNetworkId();
@@ -65,13 +66,7 @@ export default function HomeView({initialNetwork, initialSessions, initialCounts
   // lite：首页只用 alias/status/network_id 等字段；不拉 host / process_telemetry（约 65% 体积）。
   const { sessions, hint: sessHint, error: sessError, isLoading } = useSessions({ lite: true, initial: seeded ? initialSessions : null });
   const { health } = useHealth();
-  const { stats: liveStats } = useStats();
-  const stats = liveStats ?? (seeded && initialCounts ? {tasks:{by_status:initialCounts}} : null);
-  // 首页只在 /api/stats 没给 by_status 时才需要统计任务状态。
-  // 以前回退是拉 tasks?limit=500（生产实测 665,867 B）；现在改叫服务端计数端点
-  //（/api/hub/task-stats，回几百字节），浏览器不再为 5 个数字下载 666 KB。
-  const statsHasTaskStatus = Boolean(stats?.tasks?.by_status?.length);
-  const { taskStats: fallbackTaskStats, loaded: fallbackLoaded, error: fallbackError } = useTaskStats(stats != null && !statsHasTaskStatus);
+  const {taskStats} = useHomeCounts(initialNetwork, initialCounts);
   const [showTopo, setShowTopo] = useState(typeof window !== 'undefined' && window.innerWidth >= 1024);
   const [mountTopo, setMountTopo] = useState(false);
   useEffect(() => {
@@ -154,20 +149,6 @@ export default function HomeView({initialNetwork, initialSessions, initialCounts
   const presenceUnknown = presenceState !== 'ready';
   const total = sessions.length;
   const working = sessions.filter(s => s.status === 'working').length;
-  // Task stats: prefer /api/stats, fallback to manual
-  const taskStats: Record<string, number> = {};
-  if (stats?.tasks?.by_status?.length) {
-    for (const s of stats.tasks.by_status) {
-      taskStats[s.status] = s.count;
-    }
-  } else if (fallbackTaskStats) {
-    Object.assign(taskStats, fallbackTaskStats);
-  }
-
-  // `.619`：统计是否已经读到（决定显示数字还是「读取中」）。
-  // 两条路径任一完成即算读到：/api/stats 自带 by_status，或兜底端点的 SWR 已返回。
-  const taskStatsReady = statsHasTaskStatus || fallbackLoaded;
-
   // R29 (通信龙批准): 'working' demoted from sort key to visual badge —
   // it flipped constantly on the live fleet and reshuffled ~100 cards per
   // 12s window (measured [100,101,100] ×3). WeChat doesn't reorder your
@@ -196,46 +177,6 @@ export default function HomeView({initialNetwork, initialSessions, initialCounts
   return (
     <div className="min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
       <StatsBar online={online} working={working} total={total} presenceUnknown={presenceUnknown} />
-
-      {/* #217 S5 (Vincent: "极简极简，这些都可以放到设置里面去"): the
-          Dispatch button and UserBar row are gone from Overview.
-          Dispatch lives in /admin (Send Task panel); sign-out lives in
-          Settings and the sidebar; network switching lives in the
-          sidebar. */}
-
-      {/* Task summary. #217 S5 (Vincent: "乱七八糟的东西太多"): the
-          9-status colored chip wall is now a single quiet line — the
-          only two numbers that drive action are running and failed;
-          everything else lives on /tasks. */}
-      {/* `.621`：不再用"有数据才渲染"守门 —— 那样占位分支永远不可达（.620 实测占位态从未出现）。
-          统计条常驻：未读到显示占位，读到显示数字。 */}
-      <section className="mb-4 sm:mb-6 flex items-center justify-between rounded-lg bg-[var(--bg-secondary)] px-4 py-2.5 text-xs">
-          <div className="text-gray-400 tabular-nums">
-            {taskStatsReady ? (
-              <>
-                <span className={taskStats['running'] ? 'text-green-400' : 'text-gray-500'}>{taskStats['running'] || 0} 运行中</span>
-                <span className="text-gray-600"> &middot; </span>
-                <span className={taskStats['failed'] ? 'text-red-400' : 'text-gray-500'}>{taskStats['failed'] || 0} 失败</span>
-              </>
-            ) : (
-              // 读不到 ≠ 没有：占位而不是把整条藏起来，也不再显示 0。
-              // 失败与加载分开写：失败后继续显示"读取中"等于宣称一件没发生的事。
-              // 用 token 色而不是 text-gray-500：命名调色板类有 ratchet（不走 token、换主题不变色）。
-              <span className="text-[var(--fg-dim)]">{fallbackError ? '统计暂不可用' : '统计读取中…'}</span>
-            )}
-          </div>
-          {/* 命中区：链接外观只有 16px 高（与左侧计数同行，保持紧凑），
-              手机拇指点不准。透明 ::before 上下各扩 4px ⇒ 命中 24px（WCAG 2.2 SC 2.5.8 AA），
-              像素外观不变。做法与 HealthBanner / 军团图例一致。 */}
-          <Link href="/tasks" prefetch={false} className="relative text-[var(--accent-text)] hover:opacity-80 before:absolute before:inset-y-[-4px] before:inset-x-[-4px] before:content-['']">查看全部 →</Link>
-      </section>
-
-      {/* #217 S5 (less is more): Quick Navigation stat cards, the nav
-          rail, and Recent Activity are deleted. Every route they linked
-          to is one tap away in the bottom tab bar (mobile) or sidebar
-          (desktop), the headline numbers already live in the KPI cards
-          and the task summary line, and recent tasks live on /tasks.
-          Restore path: git revert this commit. */}
 
       {sessError && (
         <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-4 py-3 rounded-lg mb-6 text-sm flex items-center justify-between gap-3" role="alert">
