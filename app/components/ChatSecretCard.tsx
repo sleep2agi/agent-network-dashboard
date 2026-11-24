@@ -43,15 +43,15 @@ export default function ChatSecretCard({ request, alreadySaved, onSaved }: {
 }) {
   const [value, setValue] = useState('');
   const [shown, setShown] = useState(false);
-  const [phase, setPhase] = useState<'idle' | 'saving' | 'saved' | 'error'>(alreadySaved ? 'saved' : 'idle');
+  const [phase, setPhase] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [error, setError] = useState('');
   const live = useRef(true);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
-  useEffect(() => { if (alreadySaved) setPhase('saved'); }, [alreadySaved]);
+  const saved = alreadySaved || phase === 'saved';
   const title = request.label || request.key;
 
   const save = async () => {
-    if (phase === 'saving' || phase === 'saved' || !value.trim()) return;
+    if (phase === 'saving' || saved || !value.trim()) return;
     setPhase('saving'); setError('');
     const listed = await secretsCall(request.nodeId, { action: 'list' }, live);
     if (!live.current) return;
@@ -70,7 +70,7 @@ export default function ChatSecretCard({ request, alreadySaved, onSaved }: {
         <span className="text-[14px] font-semibold text-[var(--fg)]">{title}</span>
         <span className="text-[11px] text-[var(--fg-dim)]">{request.key}</span>
       </div>
-      {phase === 'saved' ? (
+      {saved ? (
         <div data-testid={`chat-secret-${request.key}-saved`} className="text-[12px] text-[var(--success)]">
           {t(`${request.key} 已保存。`, `${request.key} saved.`)}
         </div>
