@@ -2,7 +2,7 @@
 
 import { startTransition, useState, useRef, memo, useEffect } from 'react';
 import Link from 'next/link';
-import { StatsBar } from './components/StatsBar';
+
 import { TopoGraph } from './components/TopoGraph';
 // Loop R23: opening a chat tab (openTab state) re-rendered the whole
 // Overview including the 15k-line TopoGraph SVG — measured ~300ms of the
@@ -145,10 +145,6 @@ export default function HomeView({initialNetwork, initialSessions, initialCounts
   // topology halos always agree. See presence.ts for why hub `status` is
   // an unreliable signal on its own (#520).
   const isOnline = (s: { alias: string; network_id?: string }) => presenceIsOnline(s, sseSessions);
-  const online = sessions.filter(isOnline).length;
-  const presenceUnknown = presenceState !== 'ready';
-  const total = sessions.length;
-  const working = sessions.filter(s => s.status === 'working').length;
   // R29 (通信龙批准): 'working' demoted from sort key to visual badge —
   // it flipped constantly on the live fleet and reshuffled ~100 cards per
   // 12s window (measured [100,101,100] ×3). WeChat doesn't reorder your
@@ -175,8 +171,8 @@ export default function HomeView({initialNetwork, initialSessions, initialCounts
   });
 
   return (
-    <div className="min-h-[calc(100dvh-var(--health-banner-h,0px)-var(--shell-bottom-pad,0px))] bg-[#0b0b0d] text-gray-100 p-4 sm:p-6">
-      <StatsBar online={online} working={working} total={total} presenceUnknown={presenceUnknown} />
+    <div>
+
 
       {sessError && (
         <div className="bg-red-900/20 border border-red-800/40 text-red-300 px-4 py-3 rounded-lg mb-6 text-sm flex items-center justify-between gap-3" role="alert">
