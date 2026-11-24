@@ -312,14 +312,14 @@ export default function HomeView({initialNetwork, initialSessions, initialCounts
           and Vincent flagged it as misleading more than once. The SSE /
           polling dot stays: it's a real connection-status indicator, not
           a sales surface. */}
-      <div className="mt-8 text-center text-xs text-gray-600 flex items-center justify-center gap-2 flex-wrap">
+      {mountTopo && <div className="mt-8 text-center text-xs text-gray-600 flex items-center justify-center gap-2 flex-wrap">
         {sseSupported && (
           <>
             <span className={`w-1.5 h-1.5 rounded-full ${sseConnected ? 'bg-green-400' : 'bg-gray-600'}`} />
             {sseConnected ? 'SSE live' : 'SWR polling'}
           </>
         )}
-      </div>
+      </div>}
 
       {/* Command Center (multi-tab chat) */}
       {cmd.tabs.length > 0 && (
