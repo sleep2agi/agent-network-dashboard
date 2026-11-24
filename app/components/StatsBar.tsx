@@ -10,9 +10,10 @@ interface StatsBarProps {
   // dot so the card doesn't confidently show 0 while HealthBanner is
   // already surfacing the alert with the CTA.
   presenceUnknown?: boolean;
+  placeholder?: boolean;
 }
 
-export function StatsBar({ online, working, total, presenceUnknown = false }: StatsBarProps) {
+export function StatsBar({ online, working, total, presenceUnknown = false, placeholder = false }: StatsBarProps) {
   const onlinePercent = !presenceUnknown && total > 0 ? Math.round((online / total) * 100) : 0;
   // #53: don't render the "fleet is empty" quickstart strip when we
   // literally can't see presence — that state's "0 registered" copy is
@@ -21,7 +22,7 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
   // truly 0 in this scope; when total is 0 AND presence unknown, we
   // still emit the strip but leave the online cell as '?' so the copy
   // stops asserting "you have nothing".
-  const fleetEmpty = total === 0;
+  const fleetEmpty = !placeholder && total === 0;
   const onlineDisplay: number | string = presenceUnknown ? '?' : online;
   const offlineDisplay: number | string = presenceUnknown ? '?' : (total - online);
 
@@ -34,15 +35,6 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
   // so this only touches the populated case.
   return (
     <div className={fleetEmpty ? 'mb-4' : 'mb-4 sm:mb-8'}>
-      {/* Title row. #217 S3 dropped the version/uptime subtitle (lives in
-          Settings → CommHub Connection). S9 (Vincent tg 613 "没居中"):
-          WeChat-style centered title on phones — centering also clears
-          the fixed hamburger symmetrically, replacing the old ml-10
-          indent that read as misalignment. Left-aligned from lg: up. */}
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-white tracking-tight text-center lg:text-left">Agent Network</h1>
-      </div>
-
       {fleetEmpty ? (
         /* Round 72: thin status strip replaces the 4-card grid when fleet
            is empty. Saves ~280px on mobile (CTA y=650 → ~370) and keeps
@@ -79,7 +71,7 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
             <span aria-hidden className={`inline-block w-1.5 h-1.5 rounded-full ${presenceUnknown ? 'bg-gray-500' : 'bg-green-400'}`} />
             <span className="text-gray-200 tabular-nums">{onlineDisplay}</span> 在线
           </span>
-          {working > 0 && (
+          {(placeholder || working > 0) && (
             <>
               <span className="text-gray-700">·</span>
               <span className="inline-flex items-center gap-1.5">
@@ -101,16 +93,16 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
         {/* Populated state, sm: up. #217 S2 (less is more): the Working
            card only earns its grid cell when something is actually
            working. */}
-        <div className={`hidden sm:grid gap-3 ${working > 0 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
+        <div className={`hidden sm:grid gap-3 ${(placeholder || working > 0) ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
           <StatCard
             value={onlineDisplay}
             label="在线"
             sub={presenceUnknown ? '在线状态不可用' : `占全队 ${onlinePercent}%`}
             color={presenceUnknown ? 'text-gray-400' : 'text-green-400'}
           />
-          {working > 0 && (
+          {(placeholder || working > 0) && (
             <StatCard
-              value={working}
+              value={placeholder ? "—" : working}
               label="工作中"
               sub={!presenceUnknown && online > 0 ? `利用率 ${Math.round((working / online) * 100)}%` : '--'}
               color="text-cyan-400"
@@ -123,7 +115,7 @@ export function StatsBar({ online, working, total, presenceUnknown = false }: St
             color="text-gray-400"
           />
           <StatCard
-            value={total}
+            value={placeholder ? "—" : total}
             label="总数"
             sub="Registered nodes"
             color="text-white"
