@@ -9,6 +9,7 @@ import { useChatUnread } from '../lib/chat-unread';
 import { useHasDraft } from '../lib/chat-drafts';
 import { usePinned } from '../lib/chat-pin';
 import { useMuted } from '../lib/chat-mute';
+import { useNodeLifecycle } from '../lib/hooks';
 import { NodeListContextMenu } from './NodeListContextMenu';
 import type { Session } from './types';
 import { t } from '../lib/ui-lang';
@@ -70,10 +71,11 @@ interface NodeListRowProps {
   height: number;
   selected: boolean;
   unread: number;
+  description: string;
   onSelect: (alias: string) => void;
   onContextMenu: (alias: string, e: React.MouseEvent) => void;
 }
-function NodeListRow({ session: s, height, selected, unread, onSelect, onContextMenu }: NodeListRowProps) {
+function NodeListRow({ session: s, height, selected, unread, description, onSelect, onContextMenu }: NodeListRowProps) {
   const pinned = usePinned(s.alias);
   const muted = useMuted(s.alias);
   const density = useDensity();
@@ -130,8 +132,8 @@ function NodeListRow({ session: s, height, selected, unread, onSelect, onContext
           {/* SPEC §11: alias + optional bell-slash icon at RIGHT of
               alias when muted (12×12, #64748B). NO pin icon — pinned
               state is signaled by row background per §11.1. */}
-          <span className={`text-[12px] truncate flex items-center gap-1.5 min-w-0 ${selected ? 'text-cyan-200 font-medium' : 'text-gray-200'}`}>
-            <span className="truncate">{s.alias}</span>
+          <span className={`text-[12px] flex items-center gap-1.5 min-w-0 flex-1 ${selected ? 'text-cyan-200 font-medium' : 'text-gray-200'}`}>
+            <span className={description ? 'shrink-0 max-w-[60%] truncate' : 'truncate'}>{s.alias}</span>
             {muted && (
               <svg
                 aria-label={t('已免打扰', 'Muted')}
@@ -151,6 +153,15 @@ function NodeListRow({ session: s, height, selected, unread, onSelect, onContext
                 <path d="M13.7 21a2 2 0 01-3.4 0" />
                 <path d="M3 3l18 18" />
               </svg>
+            )}
+            {description && (
+              <span
+                title={description}
+                data-testid="node-list-desc"
+                className="flex-1 min-w-0 truncate text-[11px] font-normal text-[var(--fg-muted)]"
+              >
+                {description}
+              </span>
             )}
           </span>
           {/* SPEC §11.3: unread badge color depends on mute:
@@ -248,6 +259,7 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
   const fontScale = useFontScale();
   // 字号放大时固定行高会把字裁掉：行高按同一倍率放大（虚拟化窗口同步用这个值）。
   const rowHeight = scaleRowHeight(nodeRowHeight(density), fontScale);
+  const { descriptionByAlias } = useNodeLifecycle();
   // Batch (07-31) segment 2: right-click context menu state. `null` when
   // closed; `{alias, x, y}` when open. Positioning is at the mouse
   // coords from the contextmenu event so the menu appears where the
@@ -429,6 +441,7 @@ export function NodeList({ sessions, selectedAlias, onSelect, search, onSearchCh
               session={s}
               selected={s.alias === selectedAlias}
               unread={unreadCount(s.alias)}
+              description={descriptionByAlias[s.alias] || ''}
               onSelect={onSelect}
               onContextMenu={(alias, e) => {
                 e.preventDefault();
